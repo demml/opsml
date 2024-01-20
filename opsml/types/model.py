@@ -9,6 +9,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 import numpy as np
@@ -17,13 +18,31 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.types.extra import Description
 from opsml.types.huggingface import HuggingFaceORTModel
 from opsml.version import __version__
 
+logger = ArtifactLogger.get_logger()
+
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
 ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
 ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
+
+try:
+    import onnxruntime as rt
+
+    InferenceSession = rt.InferenceSession
+
+except ModuleNotFoundError:
+    InferenceSession = Any
+
+try:
+    from huggingface import Pipeline
+    from optimum.onnxruntime import ORTModel
+except ModuleNotFoundError:
+    ORTModel = Any
+    Pipeline = Any
 
 
 class DataDtypes(str, Enum):
@@ -104,7 +123,35 @@ class DataSchema(BaseModel):
 
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    sess: Any = Field(None, description="Onnx model session")
+    sess: Union[InferenceSession, ORTModel, Pipeline] = Field(None, description="Onnx model session")
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def sess_to_path(self, path: Path) -> None:
+        """Helper method for taking existing onnx model session and saving to path
+
+        Args:
+            path:
+                Path to save onnx model
+        """
+
+        if not isinstance(self.sess, rt.InferenceSession):
+            return
+
+        logger.info("Saving existing onnx model")
+
+        if self.sess._model_bytes:  # pylint: disable=protected-access
+            path.write_bytes(self.sess._model_bytes)  # pylint: disable=protected-access
+
+        else:
+            # copy model path to new path
+            from fsspec.implementations.local import LocalFileSystem
+
+            file_sys = LocalFileSystem()
+            lpath = self.sess._model_path  # pylint: disable=protected-access
+            file_sys.copy(lpath, str(path))
+
+        return
 
 
 class ModelReturn(BaseModel):

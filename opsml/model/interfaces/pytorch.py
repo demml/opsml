@@ -37,7 +37,7 @@ try:
                 Optional preprocessor
             sample_data:
                 Sample data to be used for type inference and ONNX conversion/validation.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input.
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:
@@ -53,7 +53,9 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[ValidData] = None
+        sample_data: Optional[
+            Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
+        ] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
@@ -160,7 +162,15 @@ try:
                 kwargs:
                     Additional arguments to be passed to torch.load
             """
-            self.model = torch.load(path)
+            model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
+
+            if model_arch is not None:
+                model_arch.load_state_dict(torch.load(path))
+                model_arch.eval()
+                self.model = model_arch
+
+            else:
+                self.model = torch.load(path)
 
         def save_onnx(self, path: Path) -> ModelReturn:
             """Saves an onnx model
@@ -178,6 +188,10 @@ try:
 
             if self.onnx_model is None:
                 self.convert_to_onnx(**{"path": path})
+
+            else:
+                # save onnx model
+                self.onnx_model.sess_to_path(path)
 
             # no need to save onnx to bytes since its done during onnx conversion
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))

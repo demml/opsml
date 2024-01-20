@@ -74,7 +74,9 @@ class OpsmlLightGBMSklearnWorkflow:
         )
 
         # setup lgb regressor
-        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
+        pipe = Pipeline(
+            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
+        )
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)

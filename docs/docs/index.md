@@ -38,7 +38,7 @@ After using various open-source and vendor tooling to manage different aspects o
 
 ## Our Goal
 
-Our goal is 2-fold. (1) We want to provide a simple and consistent interface for managing and tracking ML artifacts that is easy for DSs to use and incorporate and (2) we want to inject quality control by providing standardized interfaces to DSs that automate the creation and governance of ML artifacts for our engineers.
+Our goal is 2-fold. (1) We want to provide a simple and consistent interface for managing and tracking ML artifacts that is easy for DSs to use and incorporate, and (2) we want to inject quality control by providing standardized interfaces to DSs that automate the creation and governance of ML artifacts for our engineers.
 
 
 ## Why Use OpsML vs other open source or vendor tooling?
