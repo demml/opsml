@@ -57,7 +57,7 @@ Interface for saving an Sklearn model
 `sample_data`: `Union[pd.DataFrame, NDArray[Any]]`
 : Sample data to be used for model inference.
 For sklearn models this should be a pandas DataFrame or numpy array.
-This should match exactly what the model expects as input. See example below.
+This should match exactly what the model expects as input.
 
 
 ### Example

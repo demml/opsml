@@ -53,7 +53,7 @@ try:
                 HuggingFace feature extractor or image processor. If passing pipeline, feature extractor will be extracted
             sample_data:
                 Sample data to be used for type inference.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input.
             task_type:
                 Task type for HuggingFace model. See `HuggingFaceTask` for supported tasks.
             model_type:
