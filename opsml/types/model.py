@@ -32,10 +32,10 @@ ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: i
 try:
     import onnxruntime as rt
 
-    InferenceSession = rt.InferenceSession
+    OnnxInferenceSession = rt.InferenceSession
 
 except ModuleNotFoundError:
-    InferenceSession = Any
+    OnnxInferenceSession = Any
 
 try:
     from huggingface import Pipeline
@@ -123,7 +123,7 @@ class DataSchema(BaseModel):
 
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    sess: Union[InferenceSession, ORTModel, Pipeline] = Field(None, description="Onnx model session")
+    sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(None, description="Onnx model session")  # type: ignore
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
