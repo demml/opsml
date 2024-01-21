@@ -251,22 +251,18 @@ class ModelCardMetadata(BaseModel):
     """Create modelcard metadata
 
     Args:
+        interface_type:
+            Type of interface
         description:
             Description for your model
-        onnx_model_data:
-            Pydantic model containing onnx data schema
-        onnx_model:
-            Pydantic model containing OnnxModel definition
-        model_type:
-            Type of model
         data_schema:
-            Optional dictionary of the data schema used in model training
-        onnx_args:
-            Optional pydantic model containing either Torch or HuggingFace args for model conversion to onnx.
+            Data schema for your model
         runcard_uid:
             RunCard associated with the ModelCard
         pipelinecard_uid:
             Associated PipelineCard
+        auditcard_uid:
+            Associated AuditCard
     """
 
     interface_type: str = ""

@@ -1,6 +1,78 @@
-# Metadata
+# Card Metadata
 
-One of the benefits to the model registration process (especially when auto-converting to onnx) is the creation of model metadata that can be used in downstream application to load and run models via apis or batch jobs. The example below shows sample metadata that is produced with a registered model.
+Both `ModelCard` and `ModelCardBatch` objects have a `metadata` attribute that can be used to store information about the model. If not provided, a default object is created. When registering a card, the metadata is updated with the latest information. In addition to automatically generated attributes, the `metadata` object can be used to store custom information about the model like descriptions.
+
+### Optional User-Defined Attributes for both `ModelCardMetadata` and `DataCardMetadata
+
+`description`: `Description`
+: Description object for your model
+
+### Description
+
+Description is a simple data structure that can be used to store extra descriptive information about your model or data.
+
+#### Args
+
+`Summary`:  `Optional[str]`
+: Summary text or pointer to a markdown file that describes the model or data
+
+`Sample Code`: `Optional[str]`
+: Sample code that can be used to load and run the model or data
+
+`Notes`: `Optional[str]`
+: Any additional information not captured by the other attributes
+
+
+### Example
+  
+```python hl_lines="2 13"
+from opsml import ModelCard, ModelCardMetadata
+from opsml.types import Description, ModelCardMetadata
+
+# logic for datacard or modelcard
+...
+
+modelcard = ModelCard(
+  name="my_model",
+  repository="my_repo",
+  contact="user",
+  interface=interface,
+  datacard_uid=datacard.uid,
+  metadata=ModelCardMetadata(description=Description(summary="my_summary.md")
+  )
+)
+```
+
+## Generate Model Metadata for Registered Models
+
+One of the benefits to the model registration process (especially when auto-converting to onnx) is the creation of model metadata that can be used in downstream applications to load and run models via apis or batch jobs. The example below shows sample metadata that is produced with a registered model.
+
+
+---
+## Docs
+
+::: opsml.types.Description
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
+
+::: opsml.types.ModelCardMetadata
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
+
+
+::: opsml.types.DataCardMetadata
+    options:
+      show_root_heading: true
+      show_source: true
+      heading_level: 3
+
+## Generate Model Metadata for Registered Models
+
+One of the benefits to the model registration process (especially when auto-converting to onnx) is the creation of model metadata that can be used in downstream applications to load and run models via apis or batch jobs. The example below shows sample metadata that is produced with a registered model.
 
 
 ### **Example**
