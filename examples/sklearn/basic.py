@@ -10,6 +10,7 @@ from opsml import (
     SklearnModel,
 )
 from opsml.helpers.data import create_fake_data
+from opsml.types import Description, ModelCardMetadata
 
 
 class OpsmlWorkflow:
@@ -51,6 +52,9 @@ class OpsmlWorkflow:
             dependent_vars=["target"],
         )
 
+        # Create data profile
+        data_interface.create_data_profile()
+
         # Create datacard
         datacard = DataCard(interface=data_interface, info=info)
         self.registries.data.register_card(card=datacard)
@@ -87,6 +91,9 @@ class OpsmlWorkflow:
             info=self.info,
             to_onnx=True,  # lets convert onnx
             datacard_uid=datacard.uid,  # modelcards must be associated with a datacard
+            metadata=ModelCardMetadata(
+                description=Description(summary="card_summary.md"),  # add markdown summary
+            ),
         )
         self.registries.model.register_card(card=modelcard)
 

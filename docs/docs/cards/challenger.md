@@ -72,7 +72,7 @@ We will now train a linear regression model and score it with the test dataset
 
 info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
 project = OpsmlProject(info=info)
-with project.run(run_name="challenger-lin-reg") as run:
+with project.run() as run:
     datacard = data_reg.load_card(uid=datacard.uid)
     splits = datacard.split_data()
 
