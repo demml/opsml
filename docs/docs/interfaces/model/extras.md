@@ -2,6 +2,7 @@
 
 In addition to interface and onnx-related objects, there are a few objects that may be of use when interactions with models. 
 
+---
 ## HuggingFaceORTModel
 
 The `HuggingFaceORTModel` is an enum that allows you to specify an ORT type for a `HuggingFaceModel`. Refer to the source code below for the available options.
@@ -22,6 +23,8 @@ HuggingFaceOnnxArgs(
         show_source: true
         heading_level: 3
 
+
+---
 ## HuggingFaceTask
 
 HuggingFaceTask is an enum that allows you to specify a task type for a `HuggingFaceModel`. Refer to the source code below for the available options.
@@ -42,13 +45,27 @@ HuggingFaceModel(
         heading_level: 3
 
 
+
+---
+## TorchSaveArgs
+
+Optional `TorchModel` arguments for saving a `TorchModel` object. Only `as_state_dict` is currently supported. If True, the `TorchModel` model object's state dict will be
+
+::: opsml.types.TorchSaveArgs
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
+
+
+
 ---
 ## OnnxModel
 
 OnnxModel is a pydantic class that is used to store converted onnx models. In the case of a BYO onnx model, you will need to supply an `OnnxModel` object to the `ModelInterface` class.
 
 
-```python hl_lines="2  13-16 22"
+```python hl_lines="79"
 from opsml import OnnxModel, TorchModel
 import onnx
 import onnxruntime as ort

@@ -1,8 +1,4 @@
-# Interfaces
-
-As mentioned in the [overview](../overview.md), the `DataInterface` supports the following subclasses:
-
-## Data Interface
+# Data Interface
 
 The `DataInterface` is the primary interface for working with data in `Opsml`. It is designed to be subclassed and can be used to store data in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
@@ -17,29 +13,35 @@ The `DataInterface` is the primary interface for working with data in `Opsml`. I
 
 ### Required Arguments
 
-`data`
+`data`: See data interface for required type
 : Data to save. See subclasses for supported data types
 
-`name`
+`name`: `str`
 : Name for the data
 
-`repository`
+`repository`: `str`
 : Repository data belongs to
 
-`contact`
+`contact`: `str`
 : Contact information (can be anything you define such as an email or slack channel) (Required)
 
 
 ### Optional Arguments
 
-`sql_logic`
+`sql_logic`: `Dict[str, str]`
 : SQL query or path to sql file containing logic to build data. Required if `data` is not provided.
 
-`data_splits`
+`data_splits`: `List[DataSplit]`
 : Split logic for your data. Optional list of `DataSplit`. See [DataSplit](./data_splits.md) for more information.
 
-`data_profile`
-: `ydata-profiling` data profile. This can also be generated via `create_data_profile` method after instantiation.
+`data_profile`: `Optional[ProfileReport]`
+: `ydata-profiling` data profile. This can also be generated via `create_data_profile` method after instantiation. See [DataProfile](./data_profile.md) for more information.
+
+`feature_map`: `Dict[str, Feature]`
+: Feature map for your data. Optional dictionary of `Feature`. See [Feature](./feature.md) for more information. This is automatically inferred from data.
+
+`feature_descriptions`: `Dict[str, str]`
+: Optional dictionary of feature descriptions.
 
 
 ---

@@ -45,6 +45,9 @@ nav:
       - 'interfaces/data/interfaces.md'
       - 'interfaces/data/data_splits.md'
       - 'interfaces/data/datasets.md'
+      - 'interfaces/data/data_profile.md'
+      - 'interfaces/data/feature.md'
+      
     - Model Interface:
       - 'interfaces/model/interfaces.md'
       - 'interfaces/model/onnx.md'
@@ -60,8 +63,6 @@ nav:
       - ModelCard:
         - 'cards/modelcard.md'
         - 'cards/challenger.md'
-        - 'cards/model_metadata.md'
-        - 'cards/onnx.md'
       - 'cards/runcard.md'
       - 'cards/auditcard.md'
   - CLI:

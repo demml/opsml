@@ -1,8 +1,4 @@
-# Interfaces
-
-As mentioned in the [overview](../overview.md), the `ModelInterface` supports the following subclasses:
-
-## Model Interface
+# Model Interface
 
 The `ModelInterface` is the primary interface for working with models in `Opsml`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
@@ -284,16 +280,13 @@ Interface for saving a PyTorch model.
 
 ### Note On Saving and Loading
 
-If you wish to save the model's state dict, as is recommended by pytorch,
-you will need to specify `save_args=TorchSaveArgs(as_state_dict=True)` or
-`save_args{"as_state_dict": True}` to the `TorchModel` interface. This will
-save the model's learned parameters ONLY. If you wish to load the state dict back into the model during loading, you can supply an optional
-`model_arch` named attr to `load_card` that will be used to load the state dict (`load_card(model_arch=model)`). If you do not supply a `model_arch` only the state dict will be loaded into the model as is. If you do not specify `save_args` the pytorch will attempt to save the model architecture which may raise a `local object pickle error`.
+If you wish to save the model's state dict, as is recommended by pytorch, you will need to specify `save_args=TorchSaveArgs(as_state_dict=True)` or
+`save_args{"as_state_dict": True}` to the `TorchModel` interface. This will save the model's learned parameters ONLY. If you wish to load the state dict back into the model during loading, you can supply an optional `model_arch` named attr to `load_model` that will be used to load the state dict (`load_model(model_arch=model)`). If you do not supply a `model_arch` only the state dict will be loaded into the model. If you do not specify `save_args`, pytorch will attempt to save the model architecture which may raise a `local object pickle error`.
 
 
 ### Example
 
-```py hl_lines="1  15"
+```py hl_lines="1  15-19 34"
 from opsml import TorchModel, CardInfo, ModelCard, CardRegistry
 from examples.torch.polynomial_nn import Polynomial3 # see examples/torch/polynomial_nn.py
 
@@ -325,8 +318,9 @@ modelcard = ModelCard(
 # register
 model_registry.register_card(card=modelcard)
 
-# load model
-modelcard = model_registry.load_card(model_arch=model)
+# load card
+modelcard = model_registry.load_card()
+modelcard.load_model(model_arch=model)
 ```
 
 ---
@@ -356,9 +350,13 @@ Interface for saving a PyTorch Lightning model.
 `onnx_args`: `Optional[TorchOnnxArgs]`
 : Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
 
+### Note on Saving and Loading
+
+During saving, `LightningModel` will extract the model from the trainer and save a checkpoint. Upon loading, you can supply an optional `model_arch` argument to `load_model` (e.g. `load_model(model_arch=model)`) to load the model from a checkpoint. If no model architecture is provided, the checkpoint will be loaded from the path object via `torch.load`.
+
 ### Example
 
-```py hl_lines="1  18-26"
+```py hl_lines="1  18-26 41"
 from opsml import LightningModel, TorchOnnxArgs, CardInfo, ModelCard, CardRegistry
 from examples.torch.lightning_module import RegressionModel # see examples/torch/
 import lightning as L
@@ -396,6 +394,10 @@ modelcard = ModelCard(
 
 # register
 model_registry.register_card(card=modelcard)
+
+# load
+modelcard = model_registry.load_card()
+modelcard.load_model(model_arch=model)
 ```
 
 ---
@@ -491,7 +493,7 @@ Interface for saving a huggingface model.
 : Optional arguments for converting to onnx. See [HuggingFaceOnnxArgs](./onnx.md#huggingfaceonnxargs) for more information.
 
 `task_type`: `str`
-: Model task. Must be task from `HuggingFaceTask`. See [HuggingFaceTask](./huggingface.md#huggingfacetask) for more information.
+: Model task. Must be task from `HuggingFaceTask`. See [HuggingFaceTask](./extras.md#huggingfacetask) for more information.
 
 ### Example
 
