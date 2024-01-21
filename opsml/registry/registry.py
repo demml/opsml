@@ -35,7 +35,8 @@ class CardRegistry:
             Instantiated connection to specific Card registry
 
         Example:
-            data_registry = CardRegistry(RegistryType.DATA, settings)s
+            data_registry = CardRegistry(RegistryType.DATA, settings)
+            data_registry.list_cards()
         """
 
         self._registry = self._set_registry(registry_type)

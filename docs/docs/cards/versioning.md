@@ -17,8 +17,7 @@ Cards can also be versioned as a release candidate and/or attached with a build 
 modelcard = ModelCard(
     name="model", 
     repository="opsml", 
-    sample_input_data=data, 
-    trained_model=model,
+    interface=model_interface,
     datacard_uid=datacard.uid,
     )
 

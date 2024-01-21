@@ -25,7 +25,7 @@ from sklearn.metrics import mean_absolute_error
 import numpy as np
 
 # Opsml
-from opsml import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard
+from opsml import CardInfo, DataCard, CardRegistry, DataSplit, ModelCard, PandasData, SklearnModel
 from opsml.projects import ProjectInfo, OpsmlProject
 from opsml.model.challenger import ModelChallenger
 ```
@@ -49,12 +49,15 @@ card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.c
 # Create card
 datacard = DataCard(
     info=card_info,
-    data=data,
-    dependent_vars=["Pulse"],
-    data_splits=[
-        DataSplit(label="train", indices=train_idx),
-        DataSplit(label="test", indices=test_idx),
-    ],
+    interface = PandasData(
+        data=data,
+        dependent_vars=["Pulse"],
+        # define splits
+        data_splits=[
+            DataSplit(label="train", indices=train_idx),
+            DataSplit(label="test", indices=test_idx),
+        ],
+    ),
 )
 data_reg = CardRegistry(registry_name="data")
 data_reg.register_card(card=datacard)
@@ -81,8 +84,7 @@ with project.run(run_name="challenger-lin-reg") as run:
     run.log_metric("mae", value=mae)
 
     model_card = ModelCard(
-        trained_model=reg,
-        sample_input_data=splits.train.X[0:1],
+        interface = SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
         name="linear_reg",
         repository="mlops",
         contact="mlops.com",
@@ -113,8 +115,7 @@ with project.run(run_name="challenger-lasso") as run:
     run.log_metric("mae", value=mae)
 
     model_card = ModelCard(
-        trained_model=reg,
-        sample_input_data=splits.train.X[0:1],
+        interface = SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
         name="lasso_reg",
         repository="mlops",
         contact="mlops.com",
@@ -146,8 +147,7 @@ with project.run(run_name="challenger-poisson") as run:
     run.log_metric("mae", value=mae)
 
     model_card = ModelCard(
-        trained_model=reg,
-        sample_input_data=splits.train.X[0:1],
+        interface = SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
         name="poisson_reg",
         repository="mlops",
         contact="mlops.com",
@@ -241,7 +241,7 @@ import numpy as np
 
 from opsml.projects import ProjectInfo, OpsmlProject
 
-from opsml import DataCard, ModelCard
+from opsml import DataCard, ModelCard, PandasData, SklearModel
 from opsml.model.challenger import ModelChallenger
 
 
@@ -270,7 +270,7 @@ with project.run(run_name="create-model") as run:
     reg = LinearRegression().fit(X.to_numpy(), y)
     mae = mean_absolute_error(y, reg.predict(X))
     data_card = DataCard(
-        data=X,
+        interface= PandasData(data=X)
         name="pipeline-data1",
         repository="mlops-test",
         contact="mlops.com",
@@ -281,8 +281,7 @@ with project.run(run_name="create-model") as run:
 
     # register champion model - needed for example
     champion_model = ModelCard(
-        trained_model=reg,
-        sample_input_data=X[0:1],
+        interface = SklearnModel(model=reg, sample_data=X.to_numpy()),
         name=f"linear-reg",
         repository="mlops-test",
         contact="mlops.com",
@@ -309,9 +308,8 @@ with project.run(run_name="challenge-model") as run:
 
     # create challenger model card
     challenger_model = ModelCard(
-        trained_model=reg,
-        sample_input_data=X[0:1],
-        name=f"linear-reg",
+        interface = SklearnModel(model=reg, sample_data=X.to_numpy()),
+        name="linear-reg",
         repository="mlops-test",
         contact="mlops.com",
     )
@@ -329,7 +327,7 @@ with project.run(run_name="challenge-model") as run:
     if report["mae"][0].challenger_win:
         # now we register cards
         data_card = DataCard(
-            data=X,
+            interface=PandasData(data=X)
             name="pipeline-data1",
             repository="mlops-test",
             contact="mlops.com",

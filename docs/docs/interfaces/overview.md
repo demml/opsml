@@ -4,9 +4,9 @@ Interfaces are one of the 3 primary objects in `Opsml` and can be viewed as a lo
 
 ## Interface Types
 
-- `DataInterface`: Interface used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
+- [`DataInterface`](./data/interfaces.md): Interface used to store data-related information (data, dependent variables, feature descriptions, split logic, etc.)
 
-- `ModelInterface`: Interface used to store trained model and model information
+- [`ModelInterface`](./model/interfaces.md): Interface used to store trained model and model information
 
 ## Data Interface
 
