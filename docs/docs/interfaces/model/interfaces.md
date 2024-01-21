@@ -276,8 +276,20 @@ Interface for saving a PyTorch model.
 `sample_data`: `Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]`
 : Sample data to be used for model inference.
 
+`save_args`: `Optional[TorchSaveArgs]
+: Optional arguments for saving the model. See [TorchSaveArgs](./extras.md#torchsaveargs) for more information.
+
 `onnx_args`: `Optional[TorchOnnxArgs]`
 : Optional arguments for converting to onnx. See [TorchOnnxArgs](./onnx.md#torchonnxargs) for more information.
+
+### Note On Saving and Loading
+
+If you wish to save the model's state dict, as is recommended by pytorch,
+you will need to specify `save_args=TorchSaveArgs(as_state_dict=True)` or
+`save_args{"as_state_dict": True}` to the `TorchModel` interface. This will
+save the model's learned parameters ONLY. If you wish to load the state dict back into the model during loading, you can supply an optional
+`model_arch` named attr to `load_card` that will be used to load the state dict (`load_card(model_arch=model)`). If you do not supply a `model_arch` only the state dict will be loaded into the model as is. If you do not specify `save_args` the pytorch will attempt to save the model architecture which may raise a `local object pickle error`.
+
 
 ### Example
 
@@ -296,7 +308,11 @@ model = Polynomial3()
 model.train_model(X, y)
 
 # torch interface
-interface = TorchModel(model=model, sample_data=X)
+interface = TorchModel(
+    model=model, 
+    sample_data=X, 
+    save_args= TorchSaveArgs(as_state_dict=True),
+)
 
 # create modelcard
 modelcard = ModelCard(
@@ -308,6 +324,9 @@ modelcard = ModelCard(
 
 # register
 model_registry.register_card(card=modelcard)
+
+# load model
+modelcard = model_registry.load_card(model_arch=model)
 ```
 
 ---

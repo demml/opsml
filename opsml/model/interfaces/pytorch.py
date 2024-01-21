@@ -38,6 +38,8 @@ try:
             sample_data:
                 Sample data to be used for type inference and ONNX conversion/validation.
                 This should match exactly what the model expects as input.
+            save_args:
+                Optional arguments for saving model. See `TorchSaveArgs` for supported arguments.
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:
@@ -53,9 +55,7 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[
-            Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
-        ] = None
+        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
