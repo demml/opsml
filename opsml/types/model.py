@@ -320,6 +320,50 @@ class OnnxAttr:
 
 
 class ModelMetadata(BaseModel):
+
+    """Model metadata associated with all registered models
+
+    Args:
+        model_name:
+            Name of model
+        model_class:
+            Name of model class
+        model_type:
+            Type of model
+        model_interface:
+            Type of interface
+        onnx_uri:
+            URI to onnx model
+        onnx_version:
+            Version of onnx model
+        model_uri:
+            URI to model
+        model_version:
+            Version of model
+        model_repository:
+            Model repository
+        sample_data_uri:
+            URI to sample data
+        opsml_version:
+            Opsml version
+        data_schema:
+            Data schema for model
+        preprocessor_uri: (only present if preprocessor is used)
+            URI to preprocessor
+        preprocessor_name: (only present if preprocessor is used)
+            Name of preprocessor
+        quantized_model_uri: (only present if huggingface model is quantized)
+            URI to huggingface quantized onnx model
+        tokenizer_uri: (only present if huggingface tokenizer is used)
+            URI to tokenizer
+        tokenizer_name: (only present if huggingface is used)
+            Name of tokenizer
+        feature_extractor_uri: (only present if huggingface feature extractor is used)
+            URI to feature extractor
+        feature_extractor_name: (only present if huggingface feature_extractor is used)
+            Name of feature extractor
+    """
+
     model_name: str
     model_class: str
     model_type: str

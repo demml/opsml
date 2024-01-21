@@ -55,11 +55,9 @@ nav:
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
+      - 'cards/metadata.md'
       - DataCard:
         - 'cards/datacard.md'
-        - 'cards/data_profile.md'
-        - 'cards/data_splits.md'
-        - 'cards/image_dataset.md'
       - ModelCard:
         - 'cards/modelcard.md'
         - 'cards/challenger.md'
