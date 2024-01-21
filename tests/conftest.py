@@ -146,6 +146,9 @@ def cleanup() -> None:
     # delete catboost dir
     shutil.rmtree("catboost_info", ignore_errors=True)
 
+    # delete lightning_logs
+    shutil.rmtree("lightning_logs", ignore_errors=True)
+
 
 @pytest.fixture
 def gcp_cred_path():
