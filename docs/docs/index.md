@@ -74,30 +74,29 @@ To get started using `OpsML`, check out the [installation](installation.md) and 
 
 ## Data Libraries
 
-| Name          |  Opsml Implementation    |    Docs     |                                
-|---------------|:-----------------------: |:-----------:|
-| Pandas        | `PandasData`             | [link]()    |
-| Polars        | `PolarsData`             | [link]()    |                                                            
-| Torch         | `TorchData`              | [link]()    |                                                                     
-| Arrow         | `ArrowData`              | [link]()    |                                                                              
-| Numpy         | `NumpyData`              | [link]()    |                        
-| Sql           | `SqlData`                | [link]()    |                     
-| Text          | `TextDataset`            | [link]()    | 
-| Image         | `ImageDataset`           | [link]()    | 
+| Name          |  Opsml Implementation    |                                
+|---------------|:-----------------------: |
+| Pandas        | `PandasData`             |
+| Polars        | `PolarsData`             |                                                            
+| Torch         | `TorchData`              |                                                                     
+| Arrow         | `ArrowData`              |                                                                              
+| Numpy         | `NumpyData`              |                        
+| Sql           | `SqlData`                |                     
+| Text          | `TextDataset`            | 
+| Image         | `ImageDataset`           | 
 
 ## Model Libraries
 
-| Name          |  Opsml Implementation      |    Docs     |    Example                                          |                                
-|-----------------|:-----------------------: |:-----------:|:--------------------------------------------------: |
-| Sklearn         | `SklearnModel`           | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py)                   |
-| LightGBM        | `LightGBMModel`          | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py)         |                                                           
-| XGBoost         | `XGBoostModel`           | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py)        |                                                                     
-| CatBoost        | `CatBoostModel`          | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                              
-| Torch           | `TorchModel`             | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py)             |                        
-| Torch Lightning | `LightningModel`         | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
-| TensorFlow      | `TensorFlowModel`        | [link]()    | [link]()                                            | 
-| HuggingFace     | `HuggingFaceModel`       | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)          | 
-
+| Name          |  Opsml Implementation      |    Example                                          |                                
+|-----------------|:-----------------------: |:--------------------------------------------------: |
+| Sklearn         | `SklearnModel`           | [link](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py)                   |
+| LightGBM        | `LightGBMModel`          | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py)         |                                             
+| XGBoost         | `XGBoostModel`           | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py)        |                                                       
+| CatBoost        | `CatBoostModel`          | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                
+| Torch           | `TorchModel`             | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py)             |                        
+| Torch Lightning | `LightningModel`         | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
+| TensorFlow      | `TensorFlowModel`        | [link](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py)           | 
+| HuggingFace     | `HuggingFaceModel`       | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)          |
 
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/shipt/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
