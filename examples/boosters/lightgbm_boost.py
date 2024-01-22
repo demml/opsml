@@ -75,13 +75,13 @@ class OpsmlLightGBMBoosterWorkflow:
 
         # create standard scaler
         scaler = StandardScaler()
-        scaler.fit(data.train.X)
+        scaler.fit(data["train"].X)
 
-        X_train = scaler.transform(data.train.X)
-        X_test = scaler.transform(data.test.X)
+        X_train = scaler.transform(data["train"].X)
+        X_test = scaler.transform(data["test"].X)
 
-        lgb_train = lgb.Dataset(X_train, data.train.y)
-        lgb_eval = lgb.Dataset(X_test, data.test.y, reference=lgb_train)
+        lgb_train = lgb.Dataset(X_train, data["train"].y)
+        lgb_eval = lgb.Dataset(X_test, data["test"].y, reference=lgb_train)
 
         # fit model
         gbm = lgb.train(
@@ -126,7 +126,7 @@ class OpsmlLightGBMBoosterWorkflow:
         # load onnx model
         modelcard.load_onnx_model()
 
-        prediction = modelcard.onnx_model.sess.run(None, {"predict": data.test.X.to_numpy()[:5]})
+        prediction = modelcard.onnx_model.sess.run(None, {"predict": data["test"].X.to_numpy()[:5]})
         print(prediction)
 
     def run_workflow(self):

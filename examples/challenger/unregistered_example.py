@@ -41,14 +41,14 @@ def create_champion():
         splits = datacard.split_data()
 
         reg = LinearRegression()
-        reg.fit(splits.train.X.to_numpy(), splits.train.y)
+        reg.fit(splits["train"].X.to_numpy(), splits["train"].y)
 
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+        reg_preds = reg.predict(splits["test"].X.to_numpy())
+        mae = mean_absolute_error(splits["test"].y.to_numpy(), reg_preds)
         run.log_metric("mae", value=mae)
 
         modelcard = ModelCard(
-            interface=SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
+            interface=SklearnModel(model=reg, sample_data=splits["test"].X.to_numpy()),
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
         )
@@ -84,14 +84,14 @@ def create_challenger():
         splits = datacard.split_data()
 
         reg = Lasso()
-        reg.fit(splits.train.X.to_numpy(), splits.train.y)
+        reg.fit(splits["train"].X.to_numpy(), splits["train"].y)
 
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+        reg_preds = reg.predict(splits["test"].X.to_numpy())
+        mae = mean_absolute_error(splits["test"].y.to_numpy(), reg_preds)
         run.log_metric("mae", value=mae)
 
         modelcard = ModelCard(
-            interface=SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
+            interface=SklearnModel(model=reg, sample_data=splits["test"].X.to_numpy()),
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
         )

@@ -18,8 +18,8 @@ def test_data_card_splits_column_pandas(pandas_data: PandasData):
 
     splits = data_card.split_data()
 
-    assert splits.train.X.shape[0] == 3
-    assert splits.test.X.shape[0] == 1
+    assert splits["train"].X.shape[0] == 3
+    assert splits["test"].X.shape[0] == 1
 
     data_card = DataCard(interface=pandas_data, info=card_info)
     assert data_card.data_splits[0].column_name == "year"
@@ -27,9 +27,9 @@ def test_data_card_splits_column_pandas(pandas_data: PandasData):
 
     splits = data_card.split_data()
 
-    assert splits.train.y.shape[0] == 3
-    assert splits.test.y.shape[0] == 1
-    assert isinstance(splits.train.X, pd.DataFrame)
+    assert splits["train"].y.shape[0] == 3
+    assert splits["test"].y.shape[0] == 1
+    assert isinstance(splits["train"].X, pd.DataFrame)
 
 
 def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp_df: PandasData):
@@ -54,10 +54,10 @@ def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp
     data_card = DataCard(interface=data, info=card_info)
 
     data_splits = data_card.split_data()
-    assert data_splits.train.X.shape[0] == 93
-    assert data_splits.train.y.shape[0] == 93
-    assert data_splits.test.X.shape[0] == 57
-    assert data_splits.test.y.shape[0] == 57
+    assert data_splits["train"].X.shape[0] == 93
+    assert data_splits["train"].y.shape[0] == 93
+    assert data_splits["test"].X.shape[0] == 57
+    assert data_splits["test"].y.shape[0] == 57
 
     data_splits = [
         DataSplit(
@@ -79,10 +79,10 @@ def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp
     data_card = DataCard(interface=data, info=card_info)
 
     data_splits = data_card.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
+    assert data_splits["train"].X is not None
+    assert data_splits["train"].y is not None
+    assert data_splits["test"].X is not None
+    assert data_splits["test"].y is not None
 
     data_splits = [
         DataSplit(
@@ -102,10 +102,10 @@ def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp
     data_card = DataCard(interface=data, info=card_info)
 
     data_splits = data_card.split_data()
-    assert data_splits.train.X is not None
-    assert data_splits.train.y is not None
-    assert data_splits.test.X is not None
-    assert data_splits.test.y is not None
+    assert data_splits["train"].X is not None
+    assert data_splits["train"].y is not None
+    assert data_splits["test"].X is not None
+    assert data_splits["test"].y is not None
 
     ### test timestamp
     date_split = pd.to_datetime("2019-01-01").floor("D")
@@ -122,7 +122,7 @@ def test_data_splits_pandas_inequalities(iris_data: PandasData, pandas_timestamp
     data_card = DataCard(interface=pandas_timestamp_df, info=card_info)
 
     data_splits = data_card.split_data()
-    assert data_splits.train.X.shape[0] == 1
+    assert data_splits["train"].X.shape[0] == 1
 
 
 def test_data_card_splits_row_pandas(pandas_data: PandasData):
@@ -139,14 +139,14 @@ def test_data_card_splits_row_pandas(pandas_data: PandasData):
     assert data_card.data_splits[0].stop == 2
 
     splits = data_card.split_data()
-    assert splits.train.X.shape[0] == 2
-    assert splits.test.X.shape[0] == 1
+    assert splits["train"].X.shape[0] == 2
+    assert splits["test"].X.shape[0] == 1
 
     # use interface
     pandas_data.dependent_vars = ["n_legs"]
     splits = pandas_data.split_data()
-    assert splits.train.y.shape[0] == 2
-    assert splits.test.y.shape[0] == 1
+    assert splits["train"].y.shape[0] == 2
+    assert splits["test"].y.shape[0] == 1
 
 
 def test_data_card_splits_index_pandas(pandas_data: PandasData):
@@ -155,8 +155,8 @@ def test_data_card_splits_index_pandas(pandas_data: PandasData):
     pandas_data.dependent_vars = ["n_legs"]
 
     splits = pandas_data.split_data()
-    assert splits.train.X.shape[0] == 3
-    assert splits.train.y.shape[0] == 3
+    assert splits["train"].X.shape[0] == 3
+    assert splits["train"].y.shape[0] == 3
 
 
 ########## Numpy
@@ -165,8 +165,8 @@ def test_numpy_splits_index(numpy_data: NumpyData):
     data_split = [DataSplit(label="train", indices=[0, 1, 2])]
     numpy_data.data_splits = data_split
     splits = numpy_data.split_data()
-    assert splits.train.X.shape[0] == 3
-    assert isinstance(splits.train.X, np.ndarray)
+    assert splits["train"].X.shape[0] == 3
+    assert isinstance(splits["train"].X, np.ndarray)
 
 
 def test_numpy_splits_row(numpy_data: NumpyData):
@@ -174,7 +174,7 @@ def test_numpy_splits_row(numpy_data: NumpyData):
     data_split = [DataSplit(label="train", start=0, stop=3)]
     numpy_data.data_splits = data_split
     splits = numpy_data.split_data()
-    assert splits.train.X.shape[0] == 3
+    assert splits["train"].X.shape[0] == 3
 
 
 ########## Polars
@@ -197,10 +197,10 @@ def test_data_splits_polars_column_value(polars_data: PolarsData):
     polars_data.data_splits = data_splits
     data_splits = polars_data.split_data()
 
-    assert data_splits.train.X.shape[0] == 4
-    assert data_splits.train.y.shape[0] == 4
-    assert data_splits.test.X.shape[0] == 2
-    assert data_splits.test.y.shape[0] == 2
+    assert data_splits["train"].X.shape[0] == 4
+    assert data_splits["train"].y.shape[0] == 4
+    assert data_splits["test"].X.shape[0] == 2
+    assert data_splits["test"].y.shape[0] == 2
 
     # test "> and <="
     data_splits = [
@@ -220,10 +220,10 @@ def test_data_splits_polars_column_value(polars_data: PolarsData):
     polars_data.data_splits = data_splits
 
     data_splits = polars_data.split_data()
-    assert data_splits.train.X.shape[0] == 3
-    assert data_splits.train.y.shape[0] == 3
-    assert data_splits.test.X.shape[0] == 3
-    assert data_splits.test.y.shape[0] == 3
+    assert data_splits["train"].X.shape[0] == 3
+    assert data_splits["train"].y.shape[0] == 3
+    assert data_splits["test"].X.shape[0] == 3
+    assert data_splits["test"].y.shape[0] == 3
 
     # test "=="
     data_splits = [
@@ -241,11 +241,11 @@ def test_data_splits_polars_column_value(polars_data: PolarsData):
     polars_data.data_splits = data_splits
 
     data_splits = polars_data.split_data()
-    assert data_splits.train.X.shape[0] == 1
-    assert data_splits.train.y.shape[0] == 1
-    assert data_splits.test.X.shape[0] == 1
-    assert data_splits.test.y.shape[0] == 1
-    assert isinstance(data_splits.train.X, pl.DataFrame)
+    assert data_splits["train"].X.shape[0] == 1
+    assert data_splits["train"].y.shape[0] == 1
+    assert data_splits["test"].X.shape[0] == 1
+    assert data_splits["test"].y.shape[0] == 1
+    assert isinstance(data_splits["train"].X, pl.DataFrame)
 
 
 def test_data_splits_polars_index(polars_data: PolarsData):
@@ -253,14 +253,14 @@ def test_data_splits_polars_index(polars_data: PolarsData):
     polars_data.data_splits = data_split
     data_splits = polars_data.split_data()
 
-    assert data_splits.train.X.shape[0] == 5
-    assert data_splits.train.y.shape[0] == 5
+    assert data_splits["train"].X.shape[0] == 5
+    assert data_splits["train"].y.shape[0] == 5
 
     # no depen vars
     polars_data.dependent_vars = None
     data_splits = polars_data.split_data()
 
-    assert data_splits.train.X.shape[0] == 5
+    assert data_splits["train"].X.shape[0] == 5
 
 
 def test_data_splits_polars_row(polars_data: PolarsData):
@@ -269,14 +269,14 @@ def test_data_splits_polars_row(polars_data: PolarsData):
     polars_data.data_splits = data_split
 
     data_splits = polars_data.split_data()
-    assert data_splits.train.X.shape[0] == 3
-    assert data_splits.train.y.shape[0] == 3
+    assert data_splits["train"].X.shape[0] == 3
+    assert data_splits["train"].y.shape[0] == 3
 
     # no depen vars
     polars_data.dependent_vars = None
     data_splits = polars_data.split_data()
 
-    assert data_splits.train.X.shape[0] == 3
+    assert data_splits["train"].X.shape[0] == 3
 
 
 def test_datacard_split_fail(pandas_data: PandasData, db_registries: CardRegistries):

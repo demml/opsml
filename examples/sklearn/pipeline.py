@@ -74,12 +74,12 @@ pipe = Pipeline([("preprocess", preprocessor), ("stacking", stack)])
 data = datacard.split_data()
 
 # fit
-pipe.fit(data.train.X, data.train.y)
+pipe.fit(data["train"].X, data["train"].y)
 
 # create model interface
 interface = SklearnModel(
     model=pipe,
-    sample_data=data.train.X,
+    sample_data=data["train"].X,
     task_type="regression",  # optional
 )
 
@@ -90,8 +90,8 @@ registries.model.register_card(card=modelcard)
 """-------------------------------------Onnx-------------------------------------"""
 
 inputs = {}
-for c in data.test.X.columns:
-    values = data.test.X[c][:1].values
+for c in data["test"].X.columns:
+    values = data["test"].X[c][:1].values
     if c in cat_cols:
         values = values.astype(str).reshape(-1, 1)
     else:

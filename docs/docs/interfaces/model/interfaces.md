@@ -188,7 +188,7 @@ reg = xgb.XGBRegressor(n_estimators=3, max_depth=3)
 reg.fit(X_train, y_train)
 
 # create model interface
-interface = XGBoostModel(model=reg, sample_data=data.train.X.to_numpy()[:, 0:5])
+interface = XGBoostModel(model=reg, sample_data=data["train"].X.to_numpy()[:, 0:5])
 
 # create modelcard
 modelcard = ModelCard(info=info, interface=interface, datacard_uid=datacard.uid)

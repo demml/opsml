@@ -54,14 +54,14 @@ def populate_registry():
 
     with project.run() as lin_run:
         reg = LinearRegression()
-        reg.fit(splits.train.X.to_numpy(), splits.train.y)
+        reg.fit(splits["train"].X.to_numpy(), splits["train"].y)
 
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+        reg_preds = reg.predict(splits["test"].X.to_numpy())
+        mae = mean_absolute_error(splits["test"].y.to_numpy(), reg_preds)
         lin_run.log_metric("mae", value=mae)
 
         model_card = ModelCard(
-            interface=SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
+            interface=SklearnModel(model=reg, sample_data=splits["test"].X.to_numpy()),
             name="linear_reg",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
@@ -72,14 +72,14 @@ def populate_registry():
     logger.info("starting lasso regression model")
     with project.run() as las_run:
         reg = Lasso()
-        reg.fit(splits.train.X.to_numpy(), splits.train.y)
+        reg.fit(splits["train"].X.to_numpy(), splits["train"].y)
 
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+        reg_preds = reg.predict(splits["test"].X.to_numpy())
+        mae = mean_absolute_error(splits["test"].y.to_numpy(), reg_preds)
         las_run.log_metric("mae", value=mae)
 
         model_card = ModelCard(
-            interface=SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
+            interface=SklearnModel(model=reg, sample_data=splits["test"].X.to_numpy()),
             name="lasso_reg",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
@@ -90,12 +90,12 @@ def populate_registry():
     logger.info("starting quantile regression model")
     with project.run() as quant_run:
         reg = QuantileRegressor(solver="highs")
-        reg.fit(splits.train.X.to_numpy(), splits.train.y)
-        reg_preds = reg.predict(splits.test.X.to_numpy())
-        mae = mean_absolute_error(splits.test.y.to_numpy(), reg_preds)
+        reg.fit(splits["train"].X.to_numpy(), splits["train"].y)
+        reg_preds = reg.predict(splits["test"].X.to_numpy())
+        mae = mean_absolute_error(splits["test"].y.to_numpy(), reg_preds)
         quant_run.log_metric("mae", value=mae)
         model_card = ModelCard(
-            interface=SklearnModel(model=reg, sample_data=splits.test.X.to_numpy()),
+            interface=SklearnModel(model=reg, sample_data=splits["test"].X.to_numpy()),
             name="quantile_reg",
             datacard_uid=datacard.uid,
             tags={"example": "challenger"},
