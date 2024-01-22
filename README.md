@@ -229,16 +229,16 @@ set is `OPSML_TRACKING_URI`.
 
 ## Model Libraries
 
-| Name          |  Opsml Implementation      |    Docs     |    Example                                          |                                
-|-----------------|:-----------------------: |:-----------:|:--------------------------------------------------: |
-| Sklearn         | `SklearnModel`           | [link]()    | [link](examples/sklearn/basic.py)                   |
-| LightGBM        | `LightGBMModel`          | [link]()    | [link](examples/boosters/lightgbm_boost.py)         |                                                           
-| XGBoost         | `XGBoostModel`           | [link]()    | [link](examples/boosters/xgboost_sklearn.py)        |                                                                     
-| CatBoost        | `CatBoostModel`          | [link]()    | [link](examples/boosters/catboost_example.py)       |                                                                              
-| Torch           | `TorchModel`             | [link]()    | [link](examples/torch/torch_example.py)             |                        
-| Torch Lightning | `LightningModel`         | [link]()    | [link](examples/torch/torch_lightning_example.py)   |                     
-| TensorFlow      | `TensorFlowModel`        | [link]()    | [link](examples/tensorflow/tf_example.py)             | 
-| HuggingFace     | `HuggingFaceModel`       | [link]()    | [link](examples/huggingface/hf_example.py)          | 
+| Name          |  Opsml Implementation      |    Example                                          |                                
+|-----------------|:-----------------------: |:--------------------------------------------------: |
+| Sklearn         | `SklearnModel`           | [link](examples/sklearn/basic.py)                   |
+| LightGBM        | `LightGBMModel`          | [link](examples/boosters/lightgbm_boost.py)         |                                                           
+| XGBoost         | `XGBoostModel`           | [link](examples/boosters/xgboost_sklearn.py)        |                                                                     
+| CatBoost        | `CatBoostModel`          | [link](examples/boosters/catboost_example.py)       |                                                                              
+| Torch           | `TorchModel`             | [link](examples/torch/torch_example.py)             |                        
+| Torch Lightning | `LightningModel`         | [link](examples/torch/torch_lightning_example.py)   |                     
+| TensorFlow      | `TensorFlowModel`        | [link](examples/tensorflow/tf_example.py)             | 
+| HuggingFace     | `HuggingFaceModel`       | [link](examples/huggingface/hf_example.py)          | 
 
 
 ## Contributing
