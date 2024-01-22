@@ -100,9 +100,9 @@ To get started using `OpsML`, check out the [installation](installation.md) and 
 
 
 ## Contributing
-If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/shipt/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
 
-Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) and people for creating a great foundation to build from!
+Thanks goes to these phenomenal [projects and people](https://github.com/shipt/opsml/blob/main/ATTRIBUTIONS.md) and people for creating a great foundation to build from!
 
 <a href="https://github.com/shipt/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
