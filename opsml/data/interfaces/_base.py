@@ -6,7 +6,7 @@ import pandas as pd
 import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from opsml.data.splitter import DataSplit, DataSplitter, Data
+from opsml.data.splitter import Data, DataSplit, DataSplitter
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.types import CommonKwargs, Feature, Suffix
