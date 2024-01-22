@@ -237,7 +237,7 @@ set is `OPSML_TRACKING_URI`.
 | CatBoost        | `CatBoostModel`          | [link](examples/boosters/catboost_example.py)       |                                                                              
 | Torch           | `TorchModel`             | [link](examples/torch/torch_example.py)             |                        
 | Torch Lightning | `LightningModel`         | [link](examples/torch/torch_lightning_example.py)   |                     
-| TensorFlow      | `TensorFlowModel`        | [link](examples/tensorflow/tf_example.py)             | 
+| TensorFlow      | `TensorFlowModel`        | [link](examples/tensorflow/tf_example.py)           | 
 | HuggingFace     | `HuggingFaceModel`       | [link](examples/huggingface/hf_example.py)          | 
 
 
