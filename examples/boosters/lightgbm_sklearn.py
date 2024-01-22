@@ -67,16 +67,14 @@ class OpsmlLightGBMSklearnWorkflow:
         This example highlights the uses of the LightGBMModel.
         """
 
-        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse=False, handle_unknown="ignore"))])
+        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
         preprocessor = ColumnTransformer(
             transformers=[("cat", categorical_transformer, self.cat_cols)],
             remainder="passthrough",
         )
 
         # setup lgb regressor
-        pipe = Pipeline(
-            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
-        )
+        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
