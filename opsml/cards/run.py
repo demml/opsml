@@ -17,6 +17,7 @@ from opsml.types import (
     Artifact,
     ArtifactUris,
     CardType,
+    CommonKwargs,
     Metric,
     Metrics,
     Param,
@@ -24,7 +25,6 @@ from opsml.types import (
     RegistryTableNames,
     SaveName,
 )
-from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
