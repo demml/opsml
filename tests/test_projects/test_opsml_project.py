@@ -1,3 +1,4 @@
+import os
 from typing import Tuple, cast
 
 import pytest
@@ -241,3 +242,7 @@ def test_project_card_info_env_var(
     assert modelcard.name == card_info.name
     assert modelcard.repository == card_info.repository
     assert modelcard.contact == card_info.contact
+
+    # revert opsml env vars
+    for key in ["name", "repository", "contact"]:
+        os.environ.pop(f"OPSML_RUNTIME_{key.upper()}", None)
