@@ -35,17 +35,16 @@
   - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
 
 
-## Incorporate into Existing Workflows?
+## Incorporate into Existing Workflows
 
-Add quality control to your ML projects with little effort!
+Add quality control to your ML projects with little effort! With `opsml`, data and models are added to interfaces and cards, which are then registered via card registries. 
 
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-flow-chart.png?raw=true"  width="706" alt="opsml flow"/>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-flow-chart.png?raw=true"  width="470" alt="opsml flow"/>
   <br>
 </h1>
 
-```python
 
 ## Installation:
 
