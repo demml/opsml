@@ -67,7 +67,7 @@ class OpsmlXGBoostPipelineWorkflow:
         This example highlights the uses of the XGBoostModel.
         """
 
-        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse=False, handle_unknown="ignore"))])
+        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
         preprocessor = ColumnTransformer(
             transformers=[("cat", categorical_transformer, self.cat_cols)],
             remainder="passthrough",
