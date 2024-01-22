@@ -1,102 +1,45 @@
-<p align="center">
-  <img src="images/opsml-logo.png"  width="400" height="400" alt="opsml logo"/>
-</p>
+<h1 align="center">
+  <br>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
+  <br>
+</h1>
 
-<h4 align="center">Tooling for machine learning workflows</h4>
+<h4 align="center">Adding Quality Management to Machine Learning</h4>
 ---
 
 [![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
+[![Examples](https://github.com/shipt/opsml/actions/workflows/example-tests.yml/badge.svg)](https://github.com/shipt/opsml/actions/workflows/example-tests.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://docs.pydantic.dev/latest/contributing/#badges)
+[![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
 
-<h4 align="left">Supported Model Types</h4>
+## **What is it?**
 
-[![Keras](https://img.shields.io/badge/Keras-FF0000?logo=keras&logoColor=white)]()
-[![Pytorch](https://img.shields.io/badge/PyTorch--EE4C2C.svg?style=flat&logo=pytorch)]()
-[![Sklearn](https://img.shields.io/badge/scikit_learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/stable/)
-[![Xgboost](https://img.shields.io/badge/Package-XGBoost-blueviolet)](https://xgboost.readthedocs.io/en/stable/)
-[![Lightgbm](https://img.shields.io/badge/Package-LightGBM-success)](https://lightgbm.readthedocs.io/en/v3.3.2/)
+`OpsML` provides tooling that enables data science and engineering teams to better govern, track and manage their machine learning projects and artifacts.
 
+## **Why?**
 
-<h4 align="left">Supported Storage Types</h4>
+After using various open-source and vendor tooling to manage different aspects of the machine learning project lifecycle, we found that we were still spending ample time stitching together different tooling in order to adequately govern, manage and deploy artifacts. Thus, we decided to create `OpsML` as a way to combine what we loved about existing tooling and add in the missing pieces in order to create a more consistent and standardized process for governing, managing and tracking machine learning artifacts.
 
-[![GCS](https://img.shields.io/badge/google_cloud_storage-grey.svg?logo=google-cloud)](https://cloud.google.com/storage)
-[![S3](https://img.shields.io/badge/aws_s3-grey?logo=amazons3)](https://aws.amazon.com/)
+## **Features**:
+  - **Simple Design**: Standardized design that can easily be incorporated into existing projects.
 
+  - **Cards**: Track, version and store a variety of ML artifacts via cards (data, models, runs, projects) and a SQL-based card registry system. Think `trading cards for machine learning`.
 
-**Source Code**: [Code](https://github.com/shipt/opsml)
+  - **Type Checking**: Strongly typed and type checking for data and model artifacts.
 
-:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
-## Version 2
-The `opsml` repository is currently working on version 2 of `opsml` and will not be adding any new features to version 1. Version 2 has an expected release of early January 2024.
+  - **Support**: Robust support for a variety of ML and data libraries.
 
-Core features of version 2 include:
-
-- Better decoupling and encapsulation of server, client and storage logic
-- Introduction of `model` and `data` interfaces for better type checking and library artifact saving and loading
-- Full support for `sklearn`, `xgboost`, `lightgbm`, `pytorch`, `torch lightning`, `tensorflow` and `huggingface` libraries.
-- Replace `mlflow` with homegrown ui
-- New cli ([link](https://github.com/shipt/opsml-cli))
-  
-:star::star::star::star::star::star::star::star::star::star::star::star::star::star::star::star:
-
-## What is it?
-
-`OpsML` is an ML tooling library that simplifies the machine learning project lifecycle and provides process consistency.
-
-## Why?
-
-The end-result of a machine learning project is often an artifact that is used as a component in a production process. Because of this, ML artifacts must conform to and meet engineering specifications in order to provide businesses with service guarantees and customers with a consistent experience. Thus, the creation and use of ML artifacts is no different than a manufacturing process. With this in mind, `OpsML` aims to help DS and Eng repositories by providing consistency and standardization across the entire ML workflow in the production of ML artifacts.
-
-## Features
-  
-  - `Simple Design`: Standardized design that can easily be incorporated into existing workflows.
-
-  - `Cards`: Track, version, and store a variety of ML artifacts via `cards`` (data, models, runs, projects) and a SQL-based card registry system. Think **"trading cards for machine learning"**.
-
-  - `Prioritization`: Every `Card` is given the same priority. No more treating `data` as a model artifact.
-
-  - `Automation`: Automated processes including Onnx model conversion, data schema inference, code conversion and packaging for production.
-
-  - `Consistency`: No surpises. Outputs and generated artifacts follow engineering standards providing consistency across the entire ML workflow. `Varying input --> Standardized output`.
-
-  - `Shareable`: Share cards and workflows across repositories
-
-  - `Server`: Run `Opsml` as a server to provide a centralized location for ML artifacts and metadata. Easily setup on any system that supports Docker.
+  - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
 
 
-### Two sides of the same coin (dev as prod)
+## Our Goal
 
-Taking a data science project from ideation :bulb: to deployment :rocket: often involves a `development` side and a `production` side. 
+Our goal is 2-fold. (1) We want to provide a simple and consistent interface for managing and tracking ML artifacts that is easy for DSs to use and incorporate, and (2) we want to inject quality control by providing standardized interfaces to DSs that automate the creation and governance of ML artifacts for our engineers.
 
-#### Development Themes
-
-- Experimentation and iteration in order to generate many potential solutions
-- Feature/Data engineering
-- Algorithm development
-- Flexible work environment (often **Jupyter Notebooks**)
-- Many other things
-
-#### Production Themes
-
-- Compute infrastructure for hosting
-- Conversion of data science code to production code (data/model artifacts, metadata, etc.)
-- CI/CD
-- Versioning
-- Monitoring
-- Security
-
-#### Resulting Pain Points
-
-- :angry: Overhead in packaging data science code into production code. This results in duplicating data science code just to run in another environment (necessary, but can this be simplified?). 
-
-- :watch: Time lag in deployment due to different repositories having different priorities (especially true if developers/ML engineers are needed to help data scientists deploy their code). Lack of consistency in the production process.
-
-- :rage: Inflexible prod code that is not easily updatable
-
-- :sob: Often no linking of metadata across the entire workflow (data, runs/experiments, models, pipelines)
-
-What `Opsml` aims to do is provide an interface into both sides and simplify the entire workflow experience by removing non-value added time from `development` and `production` processes and help repositories go from ideation to deployment quicker :smile: with the added benefits of reproducibility and auditability.
 
 ## Why Use OpsML vs other open source or vendor tooling?
 
@@ -108,130 +51,61 @@ With the plethora of available ML tooling it can be difficult to decide which to
 - You want all artifacts to be given the same priority (no more treating data as less of a priority than models)
 - Don't want to worry about implementation details (how to version, store and track artifacts)
 - You'd like to have auto-generated metadata that meets engineering standards and can be used in production
-- You want to be able to share artifacts and workflows across repositories
+- You want to be able to share artifacts and workflows across teams
 
-## Example
+### Nitty Gritty Details and OpsML
 
-The primary interface for `Opsml` is an `ArtifactCard` (see [here](cards/overview.md) for detailed information). All Cards within `Opsml` follow the same design with a few specific required arguments for each card type. The following example shows how to create a `DataCard` and a `ModelCard`.
-
-```python
-# Data and Model
-from sklearn.datasets import load_linnerud
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-import numpy as np
-
-# Opsml
-from opsml import CardInfo, DataCard, CardRegistry, ModelCard, DataSplit
-
-# set up registries
-data_registry = CardRegistry(registry_name="data")
-model_registry = CardRegistry(registry_name="model")
-
-# card info (optional, but is used to simplify required args a bit)
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
-
-# get X, y
-data, target = load_linnerud(return_X_y=True, as_frame=True)
-data["Pulse"] = target.Pulse
-
-# Split indices
-indices = np.arange(data.shape[0])
-
-# usual train-test split
-train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-
-datacard = DataCard(
-    info=card_info,
-    data=data,
-    dependent_vars=["Pulse"],
-    # define splits
-    data_splits=[
-        DataSplit(label="train", indices=train_idx),
-        DataSplit(label="test", indices=test_idx),
-    ],
-)
-
-# register card
-data_registry.register_card(datacard)
-
-# split data
-data_splits = datacard.split_data()
-X_train = data_splits.train.X
-y_train = data_splits.train.y
-
-# fit model
-linreg = LinearRegression()
-linreg = linreg.fit(X=X_train, y=y_train)
-
-# Create ModelCard
-modelcard = ModelCard(
-    info=card_info,
-    trained_model=linreg,
-    sample_input_data=X_train,
-    datacard_uid=datacard.uid,
-)
-
-model_registry.register_card(card=modelcard)
-
-# >{"level": "INFO", "message": "OPSML_DATA_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
-# >{"level": "INFO", "message": "Validating converted onnx model", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
-# >{"level": "INFO", "message": "Onnx model validated", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
-# >{"level": "INFO", "message": "OPSML_MODEL_REGISTRY: linnerrud, version:1.0.0 registered", "timestamp": "2023-04-27T19:12:30", "app_env": "development"}
+- Supports streaming (can use big data and models!) 
+- Supports a variety of storage backends (local, gcs, s3) 
+- Supports a variety of databases (sqlite, postgres, mysql)
+- Supports many ML and data libraries (sklearn, pytorch, tensorflow, huggingface, xgboost, lightgbm, catboost, polars, pandas, numpy, pyarrow, onnx, etc.)
+- Can create your own interfaces if we're missing anything!
+- Supports semantic versioning for all cards
+- Type checking for all interfaces
+- Strongly typed codebase 
 
 
-print(data_registry.list_cards(info=card_info, ))
-print(model_registry.list_cards(info=card_info, ))
-```
-*(Code will run as-is)*
+To get started using `OpsML`, check out the [installation](installation.md) and [quickstart](quickstart.md) guides.
 
-Outputs:
+# Supported Libraries
 
-data registry output
-```json
-[
-    {
-        "name": "linnerrud",
-        "version": "1.0.0",
-        "tags": {},
-        "data_type": "PandasDataFrame",
-        "pipelinecard_uid": null,
-        "date": "2023-10-29",
-        "timestamp": 1698622188318014,
-        "app_env": "development",
-        "uid": "07131023c60d4a6892092851eab0f86d",
-        "repository": "opsml",
-        "contact": "user@email.com",
-        "data_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/linnerrud.parquet",
-        "runcard_uid": null,
-        "datacard_uri": "***/OPSML_DATA_REGISTRY/opsml/linnerrud/v1.0.0/datacard.joblib",
-    }
+`Opsml` is designed to work with a variety of ML and data libraries. The following libraries are currently supported:
 
-]
-```
 
-model registry output
-```json
-[
-    {
-        "uid": "1e68ef7851b34974bfaac764f348491d",
-        "app_env": "development",
-        "repository": "opsml",
-        "contact": "user@email.com",
-        "modelcard_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/modelcard.joblib",
-        "trained_model_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model/trained-model.joblib",
-        "sample_data_uri": "***//OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/sample-model-data.parquet",
-        "model_type": "sklearn_estimator",
-        "pipelinecard_uid": null,
-        "date": "2023-10-29",
-        "name": "linnerrud",
-        "timestamp": 1698622188320834,
-        "version": "1.0.0",
-        "tags": {},
-        "datacard_uid": "07131023c60d4a6892092851eab0f86d",
-        "model_metadata_uri": "***/OPSML_MODEL_REGISTRY/opsml/linnerrud/v1.0.0/model-metadata.json",
-        "sample_data_type": "PandasDataFrame",
-        "runcard_uid": null,
-    }
-]
-```
+## Data Libraries
+
+| Name          |  Opsml Implementation    |    Docs     |                                
+|---------------|:-----------------------: |:-----------:|
+| Pandas        | `PandasData`             | [link]()    |
+| Polars        | `PolarsData`             | [link]()    |                                                            
+| Torch         | `TorchData`              | [link]()    |                                                                     
+| Arrow         | `ArrowData`              | [link]()    |                                                                              
+| Numpy         | `NumpyData`              | [link]()    |                        
+| Sql           | `SqlData`                | [link]()    |                     
+| Text          | `TextDataset`            | [link]()    | 
+| Image         | `ImageDataset`           | [link]()    | 
+
+## Model Libraries
+
+| Name          |  Opsml Implementation      |    Docs     |    Example                                          |                                
+|-----------------|:-----------------------: |:-----------:|:--------------------------------------------------: |
+| Sklearn         | `SklearnModel`           | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py)                   |
+| LightGBM        | `LightGBMModel`          | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py)         |                                                           
+| XGBoost         | `XGBoostModel`           | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py)        |                                                                     
+| CatBoost        | `CatBoostModel`          | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                              
+| Torch           | `TorchModel`             | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py)             |                        
+| Torch Lightning | `LightningModel`         | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
+| TensorFlow      | `TensorFlowModel`        | [link]()    | [link]()                                            | 
+| HuggingFace     | `HuggingFaceModel`       | [link]()    | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)          | 
+
+
+## Contributing
+If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/shipt/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+
+Thanks goes to these phenomenal [projects and people](https://github.com/shipt/opsml/blob/main/ATTRIBUTIONS.md) and people for creating a great foundation to build from!
+
+<a href="https://github.com/shipt/opsml/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=shipt/opsml" />
+</a>
+
+

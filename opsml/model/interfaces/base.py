@@ -124,13 +124,14 @@ class ModelInterface(BaseModel):
 
         if self.onnx_model is None:
             self.convert_to_onnx()
+            sess: rt.InferenceSession = self.onnx_model.sess
+            path.write_bytes(sess._model_bytes)  # pylint: disable=protected-access
+
+        else:
+            self.onnx_model.sess_to_path(path.with_suffix(Suffix.ONNX.value))
 
         assert self.onnx_model is not None, "No onnx model detected in interface"
         metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
-
-        sess: rt.InferenceSession = self.onnx_model.sess
-        path = path.with_suffix(Suffix.ONNX.value)
-        path.write_bytes(sess._model_bytes)  # pylint: disable=protected-access
 
         return metadata
 

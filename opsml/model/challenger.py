@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import experimental_feature
 from opsml.registry.registry import CardRegistries
 from opsml.types import CardInfo, Metric
 
@@ -96,7 +95,6 @@ class ChallengeInputs(BaseModel):
 
 
 class ModelChallenger:
-    @experimental_feature
     def __init__(self, challenger: ModelCard):
         """
         Instantiates ModelChallenger class
@@ -173,7 +171,6 @@ class ModelChallenger:
             `BattleReport`
 
         """
-
         if lower_is_better:
             challenger_win = self.challenger_metric.value < champion_metric.value
         else:
@@ -223,6 +220,7 @@ class ModelChallenger:
     ) -> List[BattleReport]:
         """Loops through and creates a `BattleReport` for each champion"""
         battle_reports = []
+
         for champion in champions:
             champion_record = self._registries.model.list_cards(
                 info=champion,

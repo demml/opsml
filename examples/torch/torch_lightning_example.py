@@ -36,7 +36,7 @@ class OpsmlLightningWorkflow:
         In your data getting step, you will get your data, create a data interface,
         and then create/register a datacard, which will be stored in the registry.
 
-        This example highlights the uses of the PandasData interface
+        This example highlights the uses of the TorchData interface
         """
 
         # create fake data
@@ -53,8 +53,7 @@ class OpsmlLightningWorkflow:
     def _create_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
-        and split data from a datacard.
+        This example highlights the uses of the LightningModel.
         """
 
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -72,7 +71,7 @@ class OpsmlLightningWorkflow:
         trainer = L.Trainer(max_epochs=10)
         trainer.fit(model)
 
-        # torch interface
+        # lightning interface
         interface = LightningModel(
             model=trainer,
             sample_data=X,

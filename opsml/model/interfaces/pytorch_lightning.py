@@ -25,7 +25,7 @@ try:
                 Optional preprocessor
             sample_data:
                 Sample data to be used for type inference.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input.
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:

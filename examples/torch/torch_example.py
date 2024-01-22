@@ -45,8 +45,7 @@ class OpsmlTorchWorkflow:
     def _create_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
-        and split data from a datacard.
+        This example highlights the uses of the TorchModel.
         """
 
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
@@ -54,7 +53,7 @@ class OpsmlTorchWorkflow:
         # load data from server
         datacard.load_data()
 
-        # split data
+        # instantiate model
         model = Polynomial3()
 
         x = datacard.data[:, 0]

@@ -53,7 +53,7 @@ Example:
 
 ### Run Command
 
-- During local development/testing, you can spin up and test the `Opsml` server via the **CLI** command `opsml-cli launch-uvicorn-app` which will launch a Uvicorn server.
+- During local development/testing, you can spin up and test the `Opsml` server via the **CLI** command `opsml-uvicorn-server` which will launch a Uvicorn server.
 - For production, it is recommended that you run Gunicorn.
 - The following command can be used to run a Gunicorn `Opsml` server.
 
@@ -70,5 +70,5 @@ authors = ["data-devops"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.11"
-opsml = {version = "^0.41.0", extras = ["gcp-postgres", "server"]}
+opsml = {version = "^2.0.0", extras = ["gcs", "postgres", "server"]}
 ```

@@ -4,14 +4,13 @@ ModelCards are cards for storing, versioning, and tracking model objects.
 
 ## Features
 - **shareable**: All cards including ModelCards are shareable and searchable.
-- **auto-onnx**: Automatic conversion of trained model into onnx model format and associated onnx-model api definition. Currently supports `lightgbm`, `xgboost`, `sklearn` and most flavors of `Tensorflow`, `Pytorch` and `HuggingFace`.
+- **auto-onnx**: Automatic conversion of trained model into onnx model format.
 - **auto-schema**: Auto-infer data schema and input and output signature.
 - **versioning**: SemVer for your model.
 
 ## Create a Card
 
-```python
-
+```python hl_lines="5 28 31-36"
 # load data card from earlier
 from sklearn.linear_model import LinearRegression
 
@@ -39,77 +38,39 @@ y_train = data_splits.train.y
 # fit model
 linreg = LinearRegression()
 linreg = linreg.fit(X=X_train, y=y_train)
+model_interface = SklearnModel(model=linreg, sample_data=X_train)
 
 # lets test the onnx model before registering
 modelcard = ModelCard(
     info=card_info,
-    trained_model=linreg,
-    sample_input_data=X_train,
+    interface = model_interface,
     datacard_uid=datacard.uid,
+    to_onnx=True,
 )
 
-onnx_predictor = modelcard.onnx_model()
-record = list(modelcard.sample_input_data[0:1].T.to_dict().values())[0]
+# if you'd like to convert to onnx before registering, you can do that as well
+modelcard.convert_to_onnx()
 
-pred_onnx = onnx_predictor.predict(record)["value"]
-pred_orig = onnx_predictor.predict_with_model(linreg, record)[0][0]
-
-print(f"Original: {pred_orig}, Onnx: {pred_onnx}")
-# > Original: 54.4616866, Onnx: 54.4616866
-
-print(onnx_predictor.input_sig.model_json_schema())
-print(onnx_predictor.output_sig.model_json_schema())
+# custom onnx testing logic
+...
 
 # everything looks good
 model_registry.register_card(modelcard)
-
-```
-*(code requires DataCard to be registered. Refer to homepage example)*
-
-Outputs 
-
-```json
-# input sig
-{
-    "title": "Features",
-    "type": "object",
-    "properties": {
-        "Chins": {"title": "Chins", "type": "number"},
-        "Situps": {"title": "Situps", "type": "number"},
-        "Jumps": {"title": "Jumps", "type": "number"},
-    },
-    "required": ["Chins", "Situps", "Jumps"],
-}
-
-# output sig
-{
-    "title": "Features",
-    "type": "object",
-    "properties": {"variable": {"title": "Variable", "type": "number"}},
-    "required": ["variable"],
-}
-
 ```
 
 ## ModelCard Args
 
-`trained_model`
-: You're trained model (Required)
+`name`: `str`
+: Name for the data (Required)
 
-`sample_input_data`
-: Sample of data used to train model (Required)
+`repository`: `str`
+: repository data belongs to (Required)
 
-`name`
-: Name for the model (Required)
+`contact`: `str`
+: Email to associate with data (Required)
 
-`repository`
-: repository model belongs to (Required)
-
-`contact`
-: Email to associate with model (Required)
-
-`datacard_uid`
-: uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
+`interface`: `ModelInterface`
+: ModelInterface used to interact with model. See [ModelInterface](../interfaces/model/interfaces.md) for more information
 
 `datacard_uid`
 : uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
@@ -117,11 +78,11 @@ Outputs
 `to_onnx`
 : Whether to convert model to onnx or not. Default is True
 
+`metadata`: `ModelCardMetadata`
+: Optional ModelCardMetadata used to store metadata about the model. See [ModelCardMetadata](./metadata.md) for more information. If not provided, a default object is created. When registering a card, the metadata is updated with the latest information. 
 
-## Supported Models
 
-Out of the box, `Opsml` supports a variety of common model libraries and types including [sklearn](https://scikit-learn.org/stable/index.html), [tensorflow](https://www.tensorflow.org/), [lightgbm](https://lightgbm.readthedocs.io/en/v3.3.5/), [xgboost](https://xgboost.readthedocs.io/en/stable/), [pytorch](https://pytorch.org/) and [huggingface](https://huggingface.co/).
-
+---
 ## Docs
 
 ::: opsml.ModelCard

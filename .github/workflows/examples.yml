@@ -1,0 +1,76 @@
+name: Examples
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - main
+      
+jobs:
+  Test-Examples:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.5.1"]
+        os: [ubuntu]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+          
+      - run : make setup.project
+
+      - name: Run Sklearn Basic example
+        run : poetry run python examples/sklearn/basic.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Sklearn Basic Polars example
+        run : poetry run python examples/sklearn/basic_polars.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Sklearn Pipeline example
+        run : poetry run python examples/sklearn/pipeline.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Catboost example
+        run : poetry run python examples/boosters/catboost_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run LightGBM Booster example
+        run : poetry run python examples/boosters/lightgbm_boost.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run LightGBM Sklearn example
+        run : poetry run python examples/boosters/lightgbm_sklearn.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run XGBoost Booster example
+        run : poetry run python examples/boosters/xgboost_sklearn.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run TensorFlow example
+        run : poetry run python examples/torch/torch_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Torch example
+        run : poetry run python examples/tensorflow/tf_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Torch Lightning example
+        run : poetry run python examples/torch/torch_lightning_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run HuggingFace example
+        run : poetry run python examples/huggingface/hf_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Project example
+        run : poetry run python examples/run_tracking/opsml_run_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Challenger examples
+        run : |
+          poetry run python examples/challenger/registered_example.py && rm -rf mlruns && rm tmp.db
+          poetry run python examples/challenger/unregistered_example.py && rm -rf mlruns && rm tmp.db

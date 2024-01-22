@@ -11,6 +11,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: dark mode
+        
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: stylesheets/extra.css
@@ -38,19 +39,28 @@ nav:
   - Overview: 'index.md'
   - Installation: 'installation.md'
   - Quickstart: 'quickstart.md'
+  - Interfaces:
+    - 'interfaces/overview.md'
+    - Data Interface:
+      - 'interfaces/data/interfaces.md'
+      - 'interfaces/data/data_splits.md'
+      - 'interfaces/data/datasets.md'
+      - 'interfaces/data/data_profile.md'
+      - 'interfaces/data/feature.md'
+      
+    - Model Interface:
+      - 'interfaces/model/interfaces.md'
+      - 'interfaces/model/onnx.md'
+      - 'interfaces/model/extras.md'
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'
+      - 'cards/metadata.md'
       - DataCard:
         - 'cards/datacard.md'
-        - 'cards/data_profile.md'
-        - 'cards/data_splits.md'
-        - 'cards/image_dataset.md'
       - ModelCard:
         - 'cards/modelcard.md'
         - 'cards/challenger.md'
-        - 'cards/model_metadata.md'
-        - 'cards/onnx.md'
       - 'cards/runcard.md'
       - 'cards/auditcard.md'
   - CLI:
@@ -63,9 +73,7 @@ nav:
       - How It Works: 'engineering/how-it-works.md'
   - Contributing:
       - Contributing: 'faq/contributing.md'
-  - RoadMap:
-      - RoadMap: 'roadmap/roadmap.md'
- 
+
 markdown_extensions:
   - tables
   - toc:
@@ -85,8 +93,8 @@ markdown_extensions:
         class: mermaid
         format: !!python/name:pymdownx.superfences.fence_code_format ''
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji 
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
   - search

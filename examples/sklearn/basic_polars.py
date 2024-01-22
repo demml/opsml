@@ -34,7 +34,7 @@ class OpsmlWorkflow:
         In your data getting step, you will get your data, create a data interface,
         and then create/register a datacard, which will be stored in the registry.
 
-        This example highlights the uses of the PandasData interface
+        This example highlights the uses of the PolarsData interface
         """
 
         # create fake data

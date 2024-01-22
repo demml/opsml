@@ -14,7 +14,6 @@ from opsml.model.interfaces.base import (
 )
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
-ValidData = Union[pd.DataFrame, NDArray[Any]]
 try:
     from sklearn.base import BaseEstimator
 
@@ -29,7 +28,7 @@ try:
             sample_data:
                 Sample data to be used for type inference.
                 For sklearn models this should be a pandas DataFrame or numpy array.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input.
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:
@@ -43,7 +42,7 @@ try:
         """
 
         model: Optional[BaseEstimator] = None
-        sample_data: Optional[ValidData] = None
+        sample_data: Optional[Union[pd.DataFrame, NDArray[Any]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
