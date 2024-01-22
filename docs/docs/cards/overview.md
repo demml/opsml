@@ -74,8 +74,7 @@ DataCard(interface=data_interface)
 
 ### Name Uniqueness
 
-When registering cards, `Opsml` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the repository/name level. Thus, different repositories can share cards with the same name.
-
+When registering cards, `Opsml` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the `repository/name` level. Thus, different repositories can share cards with the same name.
 
 ### Listing Cards
 Returns a list of dictionaries. 

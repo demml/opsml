@@ -174,6 +174,8 @@ class CardRegistry:
                 precedence.
             tags:
                 Optional tags associated with model.
+            repository:
+                Optional repository associated with card
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
