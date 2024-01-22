@@ -71,8 +71,8 @@ def test_comment():
 
 def test_argument_fail():
     card_info = CardInfo(
-        name="i_am_longer_than_53_characters",
-        repository="repository_i_am_longer_than_53_characters",
+        name="name",
+        repository="repository",
     )
 
     with pytest.raises(ValueError):
