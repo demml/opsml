@@ -249,7 +249,7 @@ The recommended way to interact with `AuditCards` is through the UI.
 Navigate to the model tab and find your specific model and version.
 
 <p align="left">
-  <img src="../../images/model-ui.png" width="703" height="536"/>
+  <img src="../../images/model-ui.png" width="669"/>
 </p>
 
 ### Click the Audit link and fill out the audit form
@@ -257,5 +257,5 @@ Navigate to the model tab and find your specific model and version.
 You can also upload and existing audit csv, download the current audit as a csv, and add comments via the comment button.
 
 <p align="left">
-  <img src="../../images/audit-ui.png" width="716" height="427"/>
+  <img src="../../images/audit-ui.png" width="958"/>
 </p>

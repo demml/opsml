@@ -157,7 +157,7 @@ p {
 
 #VersionColumn {
   float:left;
-  width:22%;
+  width:18%;
   padding-right: 1%;
   font-size: 15px;
 }
@@ -179,7 +179,7 @@ p {
 
 #MetadataColumn {
   float:left;
-  width:78%;
+  width:80%;
   padding-right: 1%;
 }
 
