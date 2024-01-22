@@ -50,7 +50,7 @@ registries.data.register_card(card=datacard)
 
 # setup columntransformer
 cat_cols = ["cat_col_0", "cat_col_1"]
-categorical_transformer = Pipeline([("onehot", OneHotEncoder(spars_output=False, handle_unknown="ignore"))])
+categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
 preprocessor = ColumnTransformer(
     transformers=[("cat", categorical_transformer, cat_cols)],
     remainder="passthrough",
