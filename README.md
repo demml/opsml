@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h2 align="center">Adding Quality Management to Machine Learning</h2>
+<h2 align="center">Adding Quality Control to Machine Learning</h2>
 
 <h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 

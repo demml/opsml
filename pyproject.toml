@@ -1,6 +1,6 @@
 [project]
 name = "opsml"
-description = "A production MLOps tooling framework for python"
+description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
     { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' },
     { name = 'Damon Allison', email = 'damon@shipt.com' },

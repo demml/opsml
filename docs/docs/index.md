@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h4 align="center">Adding Quality Management to Machine Learning</h4>
+<h4 align="center">Adding Quality Control to Machine Learning</h4>
 ---
 
 [![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
