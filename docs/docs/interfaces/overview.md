@@ -1,5 +1,10 @@
 # Overview
 
+<p align="center">
+  <img src="../../images/opsml-interfaces.png" width="577"/>
+</p>
+
+
 Interfaces are one of the 3 primary objects in `Opsml` and can be viewed as a low-level object with the most flexibility. Although each subclassed interface is unique, they are all designed to be injected into a `ModelCard` or `DataCard`
 
 ## Interface Types
