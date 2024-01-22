@@ -18,14 +18,14 @@ In many organizations there is often a separation of concerns between data scien
 
 - `Opsml` server that is packaged into a docker container and deployed through K8s
 - Storage system (local or cloud) that will be used to store `ArtifactCard` artifacts (models, data, figures, etc.) 
-- Database that will be use to store `ArtifactCard` metadata. This will typically be a mysql or postgresql database
+- Database that will be used to store `ArtifactCard` metadata. This will typically be a mysql or postgresql database
 - K8s and compute infrastructure for hosting applications
 - CI/CD build process
 
 #### Other Considerations
 
 - In this scenario it is expected that the infrastructure hosting the `Opsml` server is also responsible for authentication and security. As an example, the host system may be placed on an internal network that is only accessible via authentication through a VPN. `Opsml` was built to be an ML tooling interface, not a security system. Thus, security should be configured on the host system.
-- Credentialing for external systems (storage, databases, etc.) should also be configured and embedded in the environment that hosts the `Opsml` server. This enables engineering to limit and control the credentials needed for `Opsml`. It also eliminates the need for data scientists to have to specify credentials when working with `Opsml` (apart for security authentication).
+- Credentialing for external systems (storage, databases, etc.) should also be configured and embedded in the environment that hosts the `Opsml` server. This enables engineering to limit and control the credentials needed for `Opsml`. It also eliminates the need for data scientists to have to specify credentials when working with `Opsml` (apart for security authentication). **Note** - `OpsML` does support basic auth (single username and password) and we may expand this a on optional full authentication system in the future if there is a need.
 
 ### Scenario 1: DS Workflows
 
@@ -42,6 +42,6 @@ It is recommended to setup `Opsml` on each of your environments (dev/staging and
 
 ## Limit write access in prod
 
-By design, so long as a data scientist has an `OPSML_TRACKING_URI` they should be able to read and write objects to the `Opsml` server. However, we usually don't want anyone to write/update a prod artifact from a non-prod environment. As an added measure of security, only requests coming from a prod environment will be allowed to write/update prod artifacts (anything can be read). This is accomplished through a `verify_token` dependency that checks for an `OPSML_PROD_TOKEN` token in your request and matches it to the `OPSML_PROD_TOKEN` in the prod environment. **Note** This is only checked if the `APP_ENV` is set to 'production'.
+By design, so long as a data scientist has an `OPSML_TRACKING_URI` they should be able to read and write objects to the `Opsml` server. However, we usually don't want anyone to write/update a prod artifact from a non-prod environment. As an added measure of security, only requests coming from a prod environment will be allowed to write/update prod artifacts (anything can be read). This is accomplished through a `verify_token` dependency that checks for an `OPSML_PROD_TOKEN` token in your request and matches it to the `OPSML_PROD_TOKEN` in the prod environment. **Note** This is only checked if the `APP_ENV` is set to **production**.
 
 For this functionality to work you will need to set `OPSML_PROD_TOKEN` env var in both the **production** compute environment that your data scientists use to train models and in the **production** environment that hosts the `Opsml Server`. Once these are set, `Opsml` will take care of the rest. It's also recommended that you use `APP_ENV` as the env var that specifies the current environment (dev, staging, production).

@@ -9,6 +9,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, Tuple, Union
 
 import numpy as np
@@ -17,13 +18,31 @@ import polars as pl
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from opsml.helpers.logging import ArtifactLogger
 from opsml.types.extra import Description
 from opsml.types.huggingface import HuggingFaceORTModel
 from opsml.version import __version__
 
+logger = ArtifactLogger.get_logger()
+
 # Dict[str, Any] is used because an input value can be a numpy, torch, or tensorflow tensor
 ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
 ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
+
+try:
+    import onnxruntime as rt
+
+    OnnxInferenceSession = rt.InferenceSession
+
+except ModuleNotFoundError:
+    OnnxInferenceSession = Any
+
+try:
+    from huggingface import Pipeline
+    from optimum.onnxruntime import ORTModel
+except ModuleNotFoundError:
+    ORTModel = Any
+    Pipeline = Any
 
 
 class DataDtypes(str, Enum):
@@ -104,7 +123,35 @@ class DataSchema(BaseModel):
 
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    sess: Any = Field(None, description="Onnx model session")
+    sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(None, description="Onnx model session")  # type: ignore
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def sess_to_path(self, path: Path) -> None:
+        """Helper method for taking existing onnx model session and saving to path
+
+        Args:
+            path:
+                Path to save onnx model
+        """
+
+        if not isinstance(self.sess, rt.InferenceSession):
+            return
+
+        logger.info("Saving existing onnx model")
+
+        if self.sess._model_bytes:  # pylint: disable=protected-access
+            path.write_bytes(self.sess._model_bytes)  # pylint: disable=protected-access
+
+        else:
+            # copy model path to new path
+            from fsspec.implementations.local import LocalFileSystem
+
+            file_sys = LocalFileSystem()
+            lpath = self.sess._model_path  # pylint: disable=protected-access
+            file_sys.copy(lpath, str(path))
+
+        return
 
 
 class ModelReturn(BaseModel):
@@ -204,22 +251,18 @@ class ModelCardMetadata(BaseModel):
     """Create modelcard metadata
 
     Args:
+        interface_type:
+            Type of interface
         description:
             Description for your model
-        onnx_model_data:
-            Pydantic model containing onnx data schema
-        onnx_model:
-            Pydantic model containing OnnxModel definition
-        model_type:
-            Type of model
         data_schema:
-            Optional dictionary of the data schema used in model training
-        onnx_args:
-            Optional pydantic model containing either Torch or HuggingFace args for model conversion to onnx.
+            Data schema for your model
         runcard_uid:
             RunCard associated with the ModelCard
         pipelinecard_uid:
             Associated PipelineCard
+        auditcard_uid:
+            Associated AuditCard
     """
 
     interface_type: str = ""
@@ -277,6 +320,50 @@ class OnnxAttr:
 
 
 class ModelMetadata(BaseModel):
+
+    """Model metadata associated with all registered models
+
+    Args:
+        model_name:
+            Name of model
+        model_class:
+            Name of model class
+        model_type:
+            Type of model
+        model_interface:
+            Type of interface
+        onnx_uri:
+            URI to onnx model
+        onnx_version:
+            Version of onnx model
+        model_uri:
+            URI to model
+        model_version:
+            Version of model
+        model_repository:
+            Model repository
+        sample_data_uri:
+            URI to sample data
+        opsml_version:
+            Opsml version
+        data_schema:
+            Data schema for model
+        preprocessor_uri: (only present if preprocessor is used)
+            URI to preprocessor
+        preprocessor_name: (only present if preprocessor is used)
+            Name of preprocessor
+        quantized_model_uri: (only present if huggingface model is quantized)
+            URI to huggingface quantized onnx model
+        tokenizer_uri: (only present if huggingface tokenizer is used)
+            URI to tokenizer
+        tokenizer_name: (only present if huggingface is used)
+            Name of tokenizer
+        feature_extractor_uri: (only present if huggingface feature extractor is used)
+            URI to feature extractor
+        feature_extractor_name: (only present if huggingface feature_extractor is used)
+            Name of feature extractor
+    """
+
     model_name: str
     model_class: str
     model_type: str

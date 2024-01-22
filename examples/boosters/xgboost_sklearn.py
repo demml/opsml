@@ -64,17 +64,16 @@ class OpsmlXGBoostPipelineWorkflow:
     def _create_pipeline_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
-        and split data from a datacard.
+        This example highlights the uses of the XGBoostModel.
         """
 
-        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse=False, handle_unknown="ignore"))])
+        categorical_transformer = Pipeline([("onehot", OneHotEncoder(sparse_output=False, handle_unknown="ignore"))])
         preprocessor = ColumnTransformer(
             transformers=[("cat", categorical_transformer, self.cat_cols)],
             remainder="passthrough",
         )
 
-        # setup lgb regressor
+        # setup xgb regressor
         pipe = Pipeline([("preprocess", preprocessor), ("rf", xgb.XGBRegressor(n_estimators=3, max_depth=3))])
 
         # split data

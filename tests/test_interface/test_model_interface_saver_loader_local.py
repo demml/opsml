@@ -742,3 +742,121 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
     assert loaded_card.interface.onnx_model.sess is not None
     assert loaded_card.metadata.data_schema.input_features["input_0"].shape == (10,)
     assert loaded_card.metadata.data_schema.output_features["outputs"].shape == (1,)
+
+
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
+def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel):
+    model: TorchModel = pytorch_onnx_byo_bytes
+
+    modelcard = ModelCard(
+        interface=model,
+        name="test_model",
+        repository="mlops",
+        contact="test_email",
+        datacard_uid=uuid.uuid4().hex,
+        to_onnx=True,
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test summary"),
+        ),
+    )
+
+    save_card_artifacts(modelcard)
+
+    # check paths exist on server
+    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".pt").exists()
+    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
+    assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
+    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
+
+    # load objects
+    loader = CardLoader(
+        card_args={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "version": modelcard.version,
+        },
+        registry_type=RegistryType.MODEL,
+    )
+
+    loaded_card = cast(ModelCard, loader.load_card())
+    assert isinstance(loaded_card, ModelCard)
+
+    #
+    loaded_card.load_model()
+
+    model.model.load_state_dict(loaded_card.interface.model)
+    loaded_card.interface.model = model.model
+
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+
+    #
+    loaded_card.load_onnx_model()
+    assert loaded_card.interface.onnx_model is not None
+    assert loaded_card.interface.onnx_model.sess is not None
+
+    loader = ModelLoader(modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model()
+    loader.load_onnx_model()
+
+
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
+def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel):
+    model: TorchModel = pytorch_onnx_byo_file
+
+    modelcard = ModelCard(
+        interface=model,
+        name="test_model",
+        repository="mlops",
+        contact="test_email",
+        datacard_uid=uuid.uuid4().hex,
+        to_onnx=True,
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test summary"),
+        ),
+    )
+
+    save_card_artifacts(modelcard)
+
+    # check paths exist on server
+    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".pt").exists()
+    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib").exists()
+    assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(".onnx").exists()
+    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
+
+    # load objects
+    loader = CardLoader(
+        card_args={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "version": modelcard.version,
+        },
+        registry_type=RegistryType.MODEL,
+    )
+
+    loaded_card = cast(ModelCard, loader.load_card())
+    assert isinstance(loaded_card, ModelCard)
+
+    #
+    loaded_card.load_model()
+
+    model.model.load_state_dict(loaded_card.interface.model)
+    loaded_card.interface.model = model.model
+
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+
+    #
+    loaded_card.load_onnx_model()
+    assert loaded_card.interface.onnx_model is not None
+    assert loaded_card.interface.onnx_model.sess is not None
+
+    loader = ModelLoader(modelcard.uri)
+    loader.load_preprocessor()
+    loader.load_model(model_arch=model.model)
+
+    assert type(loader.interface.model) == type(model.model)
+    loader.load_onnx_model()

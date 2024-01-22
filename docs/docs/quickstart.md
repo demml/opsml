@@ -5,12 +5,11 @@ To get a quick feel for `Opsml`, run the following code in a new terminal. The f
 <div class="termy">
 
 ```console
-$ opsml-cli launch-uvicorn-app
+$ opsml-uvicorn-server
 
 ...
 <span style="color: green;">INFO</span>:     [INFO] Started server process
 <span style="color: green;">INFO</span>:     [INFO] Waiting for application startup
-<span style="color: green;">INFO</span>:     [INFO] Using worker: uvicorn.workers.
 
 ...
 <span style="color: green;">INFO</span>:     [INFO] Application startup complete
@@ -29,110 +28,101 @@ export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
 ```
 
 ```python
-
-import pandas as pd
+# imports
 from sklearn.linear_model import LinearRegression
-import numpy as np
-
-from opsml.projects import ProjectInfo
-from opsml.projects.mlflow import MlflowProject
-from opsml import DataCard, ModelCard
-
-
-def fake_data():
-    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X = pd.DataFrame(X_train, columns=col_names)
-    y = np.random.randint(1, 10, size=(1000, 1))
-    return X, y
+from opsml import (
+    CardInfo,
+    CardRegistries,
+    DataCard,
+    DataSplit,
+    ModelCard,
+    PandasData,
+    SklearnModel,
+)
+from opsml.helpers.data import create_fake_data
 
 
-info = ProjectInfo(
-    name="opsml",
-    repository="devops",
-    contact="test_email",
+info = CardInfo(name="linear-regression", repository="opsml", user_email="user@email.com")
+registries = CardRegistries()
+
+
+#--------- Create DataCard ---------#
+
+# create fake data
+X, y = create_fake_data(n_samples=1000, task_type="regression")
+X["target"] = y
+
+# Create data interface
+data_interface = PandasData(
+    data=X,
+    data_splits=[
+        DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
+        DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+    ],
+    dependent_vars=["target"],
 )
 
-# start mlflow run
-project = MlflowProject(info=info)
-with project.run(run_name="test-run") as run:
+# Create and register datacard
+datacard = DataCard(interface=data_interface, info=info)
+registries.data.register_card(card=datacard)
 
-    # create data and train model
-    X, y = fake_data()
-    reg = LinearRegression().fit(X.to_numpy(), y)
+#--------- Create ModelCard ---------#
 
-    # Create and registry DataCard with data profile
-    data_card = DataCard(
-        data=X,
-        name="pipeline-data",
-        repository="mlops",
-        contact="mlops.com",
-    )
-    data_card.create_data_profile()
-    run.register_card(card=data_card)
+# split data
+data = datacard.split_data()
 
-    # Create and register ModelCard with auto-converted onnx model
-    model_card = ModelCard(
-        trained_model=reg,
-        sample_input_data=X[0:1],
-        name="linear_reg",
-        repository="mlops",
-        contact="mlops.com",
-        datacard_uid=data_card.uid,
-        tags={"name": "model_tag"},
-    )
-    run.register_card(card=model_card)
+# fit model
+reg = LinearRegression()
+reg.fit(data.train.X.to_numpy(), data.train.y.to_numpy())
 
-    # log some metrics
-    for i in range(0, 10):
-        run.log_metric("mape", i, step=i)
+# create model interface
+interface = SklearnModel(
+    model=reg,
+    sample_data=data.train.X.to_numpy(),
+    task_type="regression",  # optional
+)
+
+# create modelcard
+modelcard = ModelCard(
+    interface=interface,
+    info=info,
+    to_onnx=True,  # lets convert onnx
+    datacard_uid=datacard.uid,  # modelcards must be associated with a datacard
+)
+registries.model.register_card(card=modelcard)
 ```
 
 
 ## Opsml UI
 
-### Models
+Next, navigate to `OPSML_TRACKING_URI` and you should see the following:
 
-List models by repository
 
 <p align="left">
-  <img src="../images/list-models.png"  width="449" height="413"/>
+  <img src="../images/quickstart-list.png"  width="450" height="230"/>
 </p>
 
-List models by version
+Click on the `linear-regression` card and you should see the following:
 
 <p align="left">
-  <img src="../images/model-screen.png" width="540" height="508"/>
+  <img src="../images/quickstart-model.png"  width="651" height="410"/>
 </p>
 
-### Data
-
-Show data by version
+Click on the `DataCard` button and you should see the following:
 
 <p align="left">
-  <img src="../images/data-screen.png" width="612" height="508"/>
+  <img src="../images/quickstart-data.png"  width="559" height="410"/>
 </p>
 
+## Download your model via CLI
 
-### Project UI
+Try downloading your model via the CLI:
 
-Project UI lists all projects and recent runs
+```bash
+opsml-cli download-model --name 'linear-regression' --version '1.0.0'
+```
+Here we are downloading the model with name `linear-regression` and version `1.0.0`. You could also provide the `uid` of the model instead of the name and version. By default, the cli command will download objects to the `models` directory. You will see both the model `joblib` file as well as the model's associated `metadata`. If you'd wish to download the `onnx` version of the model, you can add the `--onnx` flag to the command.
 
-
-TODO(@thorrester): opsml image
-<p align="center">
-  <img src="../images/opsml_ui.png"  width="1512" height="402" alt="opsml"/>
-</p>
-
-### Run UI
-
-Within the run UI, you will see the various auto-recorded artifacts from your `Cards` and `Run`
-
-TODO(@thorrester): opsml image
-<p align="center">
-  <img src="../images/opsml_run.png"  width="1841" height="792" alt="opsml run"/>
-</p>
+```bash
+opsml-cli download-model --name 'linear-regression' --version '1.0.0' --onnx
+```

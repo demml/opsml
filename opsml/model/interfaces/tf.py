@@ -18,7 +18,6 @@ try:
     import tensorflow as tf
 
     ArrayType = Union[NDArray[Any], tf.Tensor]
-    ValidData = Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]
 
     class TensorFlowModel(ModelInterface):
         """Model interface for Tensorflow models.
@@ -30,7 +29,7 @@ try:
                 Optional preprocessor
             sample_data:
                 Sample data to be used for type inference and ONNX conversion/validation.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input. ArrayType = Union[NDArray[Any], tf.Tensor]
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:
@@ -44,7 +43,7 @@ try:
         """
 
         model: Optional[tf.keras.Model] = None
-        sample_data: Optional[ValidData] = None
+        sample_data: Optional[Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 

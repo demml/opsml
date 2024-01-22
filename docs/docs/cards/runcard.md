@@ -1,6 +1,6 @@
 # RunCard
 
-`RunCards` are use to store metrics and artifacts related to `DataCards`, `ModelCards` and `PipelineCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
+`RunCards` are use to store metrics and artifacts related to `DataCards` and `ModelCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
 
 ### Creating A Run
 Runs are unique context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
@@ -8,124 +8,77 @@ Runs are unique context-managed executions associated with a `Project` that reco
 The following example shows how to create a simple run as well as use `CardInfo` to store helper info
 
 ```python
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import Lasso
-from sklearn.metrics import mean_absolute_percentage_error
-
-from opsml.projects import OpsmlProject, ProjectInfo
-from opsml import CardInfo, DataCard, ModelCard
-
-card_info = CardInfo(name="linear-reg", repository="opsml", contact="user@email.com")
-
-# to use runs, you must create and use a project
-project_info = ProjectInfo(name="opsml-dev", repository="opsml", contact="user@email.com")
-project = OpsmlProject(info=project_info)
-
-
-def create_fake_data():
-    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X = pd.DataFrame(X_train, columns=col_names)
-    y = np.random.randint(1, 10, size=(1000, 1))
-
-    return X, y
-
-
-# start the run
-with project.run(run_name="optional_run_name") as run:
-
-    X, y = create_fake_data()
-
-    # train model
-    lasso = Lasso(alpha=0.5)
-    lasso = lasso.fit(X.to_numpy(), y)
-
-    preds = lasso.predict(X.to_numpy())
-
-    mape = mean_absolute_percentage_error(y, preds)
-
-    # Create metrics / params
-    run.log_metric(key="mape", value=mape)
-    run.log_parameter(key="alpha", value=0.5)
-
-    data_card = DataCard(data=X, info=card_info)
-    run.register_card(card=data_card, version_type="major")  # you can specify "major", "minor", "patch"
-
-    model_card = ModelCard(
-        trained_model=lasso,
-        sample_input_data=X,
-        datacard_uid=data_card.uid,
-        info=card_info,
-    )
-    run.register_card(card=model_card)
-
-print(run.runcard.get_metric("mape"))
-# > Metric(name='mape', value=0.8489706297619047, step=None, timestamp=None)
-
-print(run.runcard.get_parameter("alpha"))
-# > Param(name='alpha', value=0.5)
-
-```
-
-### Creating A Run with an OpsmlProject
-If an `Opsml` server has been setup, you can also associate an `OpsmlProject` with a `RunCard`. The process is the same as above
-
-```python
-
 from sklearn.linear_model import LinearRegression
-import numpy as np
-import pandas as pd
 
-from opsml.projects import ProjectInfo, OpsmlProject
+from opsml import (
+    CardInfo,
+    DataCard,
+    DataSplit,
+    ModelCard,
+    OpsmlProject,
+    PandasData,
+    ProjectInfo,
+    SklearnModel,
+)
+from opsml.helpers.data import create_fake_data
 
-from opsml.cards import CardInfo
-from opsml import DataCard, ModelCard, CardRegistry
+info = ProjectInfo(name="opsml-project", repository="opsml", contact="user@email.com")
 
+# create card info and set NAME, REPOSITORY, and CONTACT as environment variables
+card_info = CardInfo(name="linear-reg", repository="opsml", contact="user@email.com").set_env()
 
-def fake_data():
-    X_train = np.random.normal(-4, 2.0, size=(1000, 10))
-
-    col_names = []
-    for i in range(0, X_train.shape[1]):
-        col_names.append(f"col_{i}")
-
-    X = pd.DataFrame(X_train, columns=col_names)
-    y = np.random.randint(1, 10, size=(1000, 1))
-    return X, y
-
-
-info = ProjectInfo(name="opsml", repository="devops", contact="test_email",)
+# create project
 project = OpsmlProject(info=info)
-with project.run(run_name="opsml-test") as run:
 
-    X, y = fake_data()
-    reg = LinearRegression().fit(X.to_numpy(), y)
+with project.run() as run:
+    # create fake data
+    X, y = create_fake_data(n_samples=1000, task_type="regression")
+    X["target"] = y
 
-    data_card = DataCard(
+    # Create data interface
+    data_interface = PandasData(
         data=X,
-        name="pipeline-data",
-        repository="mlops",
-        contact="mlops.com",
+        data_splits=[
+            DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
+            DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+        ],
+        dependent_vars=["target"],
     )
-    run.register_card(card=data_card)
 
-    model_card = ModelCard(
-        trained_model=reg,
-        sample_input_data=X[0:1],
-        name="linear_reg",
-        repository="mlops",
-        contact="mlops.com",
-        datacard_uid=data_card.uid,
-    )
-    run.register_card(card=model_card)
-    for i in range(0, 10):
-        run.log_metric("test", i)
+    # Create datacard
+    datacard = DataCard(interface=data_interface)
+    run.register_card(card=datacard)
+
+    # split data
+    data = datacard.split_data()
+
+    # fit model
+    reg = LinearRegression()
+    reg.fit(data.train.X.to_numpy(), data.train.y.to_numpy())
+
+    # create model interface
+    interface = SklearnModel(model=reg, sample_data=data.train.X.to_numpy())
+
+    # create modelcard
+    modelcard = ModelCard(interface=interface, to_onnx=True, datacard_uid=datacard.uid)
+
+    # you can log metrics view log_metric or log_metrics
+    run.log_metric("test_metric", 10)
+    run.log_metrics({"test_metric2": 20})
+
+    # log parameter
+    run.log_parameter("test_parameter", 10)
+
+    # register modelcard
+    run.register_card(card=modelcard)
+
+    # example of logging artifact to file
+    with Path("artifact.txt").open("w") as f:
+        f.write("This is a test")
+
+    run.log_artifact_from_file("artifact", "artifact.txt")
 ```
+
 
 You can now log into the `Opsml` server and see your recent run and associated metadata
 

@@ -21,7 +21,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class CardRegistry:
-    def __init__(self, registry_type: RegistryType):
+    def __init__(self, registry_type: Union[RegistryType, str]):
         """
         Interface for connecting to any of the ArtifactCard registries
 
@@ -35,10 +35,19 @@ class CardRegistry:
             Instantiated connection to specific Card registry
 
         Example:
-            data_registry = CardRegistry(RegistryType.DATA, settings)s
+            data_registry = CardRegistry(RegistryType.DATA)
+            data_registry.list_cards()
+
+            or
+            data_registry = CardRegistry("data")
+            data_registry.list_cards()
         """
 
-        self._registry = self._set_registry(registry_type)
+        _registry_type = (
+            registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
+        )
+
+        self._registry = self._set_registry(_registry_type)
         self.table_name = self._registry.table_name
 
     @property
@@ -147,6 +156,7 @@ class CardRegistry:
     def load_card(
         self,
         name: Optional[str] = None,
+        repository: Optional[str] = None,
         uid: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         version: Optional[str] = None,
@@ -164,6 +174,8 @@ class CardRegistry:
                 precedence.
             tags:
                 Optional tags associated with model.
+            repository:
+                Optional repository associated with card
             version:
                 Optional version number of existing data. If not specified, the
                 most recent version will be used
@@ -191,6 +203,7 @@ class CardRegistry:
         records = self.list_cards(
             uid=uid,
             name=name,
+            repository=repository,
             version=version,
             tags=tags,
             ignore_release_candidates=ignore_release_candidates,

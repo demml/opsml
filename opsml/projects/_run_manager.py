@@ -31,23 +31,30 @@ class _RunManager:
         """
 
         self._project_info = project_info
-        self._active_run: Optional[ActiveRun] = None
-
+        self.active_run: Optional[ActiveRun] = None
         self.registries = CardRegistries()
 
         run_id = project_info.run_id
         if run_id is not None:
             self._verify_run_id(run_id)
             self.run_id = run_id
+            self._run_exists = self._card_exists(run_id=self.run_id)
+
         else:
-            self.run_id = uuid.uuid4().hex
+            self.run_id = None
+            self._run_exists = False
 
         self._project_id = self._get_project_id()
-        self._run_exists = self._card_exists(run_id=self.run_id)
 
     @property
     def project_id(self) -> int:
         return self._project_id
+
+    @property
+    def run_hash(self) -> str:
+        """Returns the first 7 characters of the run_id"""
+        assert self.run_id is not None, "run_id should not be None"
+        return self.run_id[:7]
 
     @property
     def base_tags(self) -> Dict[str, Union[str, Optional[str], int]]:
@@ -56,20 +63,9 @@ class _RunManager:
             Tags.ID.value: self.project_id,
         }
 
-    @property
-    def active_run(self) -> ActiveRun:
-        if self._active_run is not None:
-            return self._active_run
-        raise ValueError("No active run has been set")
-
-    @active_run.setter
-    def active_run(self, active_run: ActiveRun) -> None:
-        """Sets the active run"""
-        self._active_run = active_run
-
     def _card_exists(self, run_id: str) -> bool:
         """Verifies the run exists for the given project."""
-
+        assert self.run_id is not None, "run_id should not be None"
         card = self.registries.run._registry.list_cards(uid=run_id)
         if card:
             return True
@@ -84,6 +80,10 @@ class _RunManager:
             raise ValueError("Invalid run_id")
 
     def _create_active_opsml_run(self, run_name: Optional[str]) -> ActiveRun:
+        # set run_id
+        if self.run_id is None:
+            self.run_id = uuid.uuid4().hex
+
         # Create opsml active run
         runcard = self._load_runcard(run_name)
 
@@ -122,7 +122,7 @@ class _RunManager:
                 Optional run name
         """
 
-        if self._active_run is not None:
+        if self.active_run is not None:
             raise ActiveRunException("Could not start run. Another run is currently active")
 
         active_run = self._create_active_opsml_run(run_name)
@@ -131,7 +131,7 @@ class _RunManager:
         if active_run.runcard.version is None:
             active_run.add_tags(tags=self.base_tags)
 
-        logger.info("starting run: {}", self.run_id)
+        logger.info("starting run: {}", self.run_hash)
 
         # Create the RunCard when the run is started to obtain a version and
         # storage path for artifact storage to use.
@@ -145,7 +145,8 @@ class _RunManager:
 
         self.verify_active()
 
-        logger.info("ending run: {}", self.run_id)
+        logger.info("ending run: {}", self.run_hash)
+        assert self.active_run is not None, "active_run should not be None"
         self.active_run.create_or_update_runcard()
 
         #
@@ -154,8 +155,9 @@ class _RunManager:
         self.active_run._active = (  # pylint: disable=protected-access
             False  # prevent use of detached run outside of context manager
         )
-        self._active_run = None
+        self.active_run = None
         self.run_id = None
+        self._run_exists = False
 
     def _get_project_id(self) -> int:
         """

@@ -26,8 +26,6 @@ from opsml.types import (
 
 logger = ArtifactLogger.get_logger()
 
-ValidData = Union[List[Any], NDArray[Any]]
-
 try:
     from catboost import CatBoost
 
@@ -42,7 +40,7 @@ try:
             sample_data:
                 Sample data to be used for type inference and sample prediction.
                 For catboost models this should be a numpy array (either 1d or 2d) or list of feature values.
-                This should match exactly what the model expects as input. See example below.
+                This should match exactly what the model expects as input.
             task_type:
                 Task type for model. Defaults to undefined.
             model_type:
@@ -56,12 +54,12 @@ try:
         """
 
         model: Optional[CatBoost] = None
-        sample_data: Optional[ValidData] = None
+        sample_data: Optional[Union[List[Any], NDArray[Any]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
         @classmethod
-        def _get_sample_data(cls, sample_data: NDArray[Any]) -> ValidData:
+        def _get_sample_data(cls, sample_data: NDArray[Any]) -> Union[List[Any], NDArray[Any]]:
             """Check sample data and returns one record to be used
             during type inference and sample prediction.
 
@@ -184,6 +182,9 @@ try:
 
             if self.onnx_model is None:
                 self.convert_to_onnx(**{"path": path})
+
+            else:
+                self.onnx_model.sess_to_path(path)
 
             # no need to save onnx to bytes since its done during onnx conversion
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))

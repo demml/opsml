@@ -1,29 +1,22 @@
 # Overview
 
-DataCards are cards for storing, splitting, versioning, and tracking data. DataCards currently support `pd.DataFrames`, `np.Arrays`, `pyarrow.Tables` and `ImageDatasets`.
+DataCards are used for storing, versioning, and tracking data. All DataCards require a `DataInterface` and optional metadata. See [DataInterface](../interfaces/data/interfaces.md) for more information
 
-## Features
-- **shareable**: All cards including DataCards are shareable and searchable.
-- **auto-schema**: Automatic shema detection and feature map creation for features and feature data types.
-- **data-conversion**: Auto-conversion to either [parquet](https://arrow.apache.org/docs/python/index.html) (pa.Table, pd.DataFrame) or [zarr](https://github.com/zarr-developers/zarr-python) (np.Arrays) for fast reading and writing to storage.
-- **data_splits**: Define split logic for your data to generate splits (i.e., train, test, eval)
-- **extra-info**: Additional optional arguments that allow you to associate your data with feature descriptions or extra info (sql scripts etc.)
-- **versioning**: SemVer for your data.
 
 ## Creating a Card
 
-```py
+```py hl_lines="6 19-27 29 45"
 # Data
 from sklearn.datasets import load_linnerud
 from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Opsml
-from opsml import CardInfo, DataCard, CardRegistry, DataSplit
+from opsml import CardInfo, DataCard, CardRegistry, DataSplit, PandasData
 
+card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
 data, target = load_linnerud(return_X_y=True, as_frame=True)
 data["Pulse"] = target.Pulse
-
 
 # Split indices
 indices = np.arange(data.shape[0])
@@ -31,9 +24,7 @@ indices = np.arange(data.shape[0])
 # usual train-val split
 train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
 
-card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.com")
-data_card = DataCard(
-    info=card_info,
+data_interface = PandasData(
     data=data,
     dependent_vars=["Pulse"],
     # define splits
@@ -42,6 +33,8 @@ data_card = DataCard(
         DataSplit(label="test", indices=test_idx),
     ],
 )
+
+data_card = DataCard(info=card_info, interface=data_interface)
 
 # splits look good
 splits = data_card.split_data()
@@ -60,69 +53,26 @@ data_registry = CardRegistry(registry_name="data")
 data_registry.register_card(card=data_card)
 print(data_card.version)
 # > 1.0.0
-
-# list cards
-cards = data_registry.list_cards(
-    uid=data_card.uid, 
-    ,
-    )  # can also supply, name, repository, version
-print(cards[0])
-
 ```
-*(Code will run as-is)*
-
-Output:
-
-```json
-{
-    "name": "linnerrud",
-    "date": "2023-04-28",
-    "version": "1.0.0",
-    "data_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/linnerrud.parquet",
-    "runcard_uid": None,
-    "datacard_uri": "opsml_artifacts/OPSML_DATA_REGISTRY/opsml/linnerrud/v-1.0.0/datacard.joblib",
-    "uid": "06a28a3bc2504bdd83c20a622439236d",
-    "app_env": "staging",
-    "timestamp": 1682699807492552,
-    "repository": "opsml",
-    "contact": "user@email.com",
-    "data_type": "DataFrame",
-    "pipelinecard_uid": None,
-}
-```
-
 
 ## DataCard Args
 
-`data`
-: np.ndarray, pd.DataFrame, polars.DataFrame, pyarrow Table or `ImageDataset`. You're data (Required)
-
-`name`
+`name`: `str`
 : Name for the data (Required)
 
-`repository`
+`repository`: `str`
 : repository data belongs to (Required)
 
-`contact`
+`contact`: `str`
 : Email to associate with data (Required)
 
-`sql_logic`
-: SQL query or path to sql file containing logic to build data. Required if `data` is not provided.
+`interface`: `DataInterface`
+: DataInterface used to interact with data. See [DataInterface](../interfaces/data/interfaces.md) for more information
 
-`data_splits`
-: Split logic for your data. Optional list of `DataSplit`.
+`metadata`: `DataCardMetadata`
+: Optional DataCardMetadata used to store metadata about data. See [DataCardMetadata](./data_metadata.md) for more information. If not provided, a default object is created. When registering a card, the metadata is updated with the latest information. 
 
-`data_profile`
-: `ydata-profiling` data profile. This can also be generated via `create_data_profile` method after instantiation.
-
-`feature_descriptions`
-: Dictionary contain feature descriptions (key -> feature name, value -> Description)
-
-`additional_info`
-: Dictionary used as storage object for extra information you'd like to provide.
-
-
-
+---
 ## Docs
 
 ::: opsml.DataCard
