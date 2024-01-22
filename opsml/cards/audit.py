@@ -109,6 +109,13 @@ class AuditCard(ArtifactCard):
             Repository that this card is associated with
         contact:
             Contact to associate with the AuditCard
+        info:
+            `CardInfo` object containing additional metadata. If provided, it will override any
+            values provided for `name`, `repository`, `contact`, and `version`.
+
+            Name, repository, and contact are required arguments for all cards. They can be provided
+            directly or through a `CardInfo` object.
+
         audit:
             AuditSections object containing the audit questions and responses
         approved:

@@ -42,6 +42,13 @@ class DataCard(ArtifactCard):
             Repository that this data is associated with
         contact:
             Contact to associate with data card
+        info:
+            `CardInfo` object containing additional metadata. If provided, it will override any
+            values provided for `name`, `repository`, `contact`, and `version`.
+
+            Name, repository, and contact are required arguments for all cards. They can be provided
+            directly or through a `CardInfo` object.
+
         version:
             DataCard version
         uid:
