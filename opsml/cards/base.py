@@ -66,7 +66,7 @@ class ArtifactCard(BaseModel):
             card_args[key] = val
 
         # need to check that name, repository and contact are set
-        if not all([card_args[key] for key in ["name", "repository", "contact"]]):
+        if not all(card_args[key] for key in ["name", "repository", "contact"]):
             raise ValueError("name, repository and contact must be set either as named arguments or through CardInfo")
 
         # validate name and repository for pattern

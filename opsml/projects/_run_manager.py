@@ -11,6 +11,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import ProjectInfo, Tags
 from opsml.registry import CardRegistries
+from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -103,7 +104,7 @@ class _RunManager:
         return RunCard(
             name=run_name or self.run_id[:7],  # use short run_id if no name
             repository=self._project_info.repository,
-            contact="",
+            contact=CommonKwargs.UNDEFINED.value,
             uid=self.run_id,
             project=self._project_info.name,
         )
