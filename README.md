@@ -35,6 +35,18 @@
   - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
 
 
+## Incorporate into Existing Workflows?
+
+Add quality control to your ML projects with little effort!
+
+<h1 align="center">
+  <br>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-flow-chart.png?raw=true"  width="706" alt="opsml flow"/>
+  <br>
+</h1>
+
+```python
+
 ## Installation:
 
 ### Poetry
