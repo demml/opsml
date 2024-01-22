@@ -32,8 +32,8 @@ datacard.load_data()
 data_splits = datacard.split_data()
 
 
-X_train = data_splits.train.X
-y_train = data_splits.train.y
+X_train = data_splits["train"].X
+y_train = data_splits["train"].y
 
 # fit model
 linreg = LinearRegression()

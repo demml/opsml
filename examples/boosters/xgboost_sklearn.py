@@ -81,12 +81,12 @@ class OpsmlXGBoostPipelineWorkflow:
         data = datacard.split_data()
 
         # fit
-        pipe.fit(data.train.X, data.train.y)
+        pipe.fit(data["train"].X, data["train"].y)
 
         # create model interface
         interface = SklearnModel(
             model=pipe,
-            sample_data=data.train.X,
+            sample_data=data["train"].X,
             task_type="regression",  # optional
         )
 
@@ -108,10 +108,10 @@ class OpsmlXGBoostPipelineWorkflow:
 
         # fit
         # Only using the first 5 numerical features for convenience
-        reg.fit(data.train.X.to_numpy()[:, 0:5], data.train.y.to_numpy())
+        reg.fit(data["train"].X.to_numpy()[:, 0:5], data["train"].y.to_numpy())
 
         # create model interface
-        interface = XGBoostModel(model=reg, sample_data=data.train.X.to_numpy()[:, 0:5])
+        interface = XGBoostModel(model=reg, sample_data=data["train"].X.to_numpy()[:, 0:5])
 
         # create modelcard
         modelcard = ModelCard(
@@ -141,8 +141,8 @@ class OpsmlXGBoostPipelineWorkflow:
         modelcard.load_onnx_model()
 
         inputs = {}
-        for c in data.test.X.columns:
-            values = data.test.X[c][:1].values
+        for c in data["test"].X.columns:
+            values = data["test"].X[c][:1].values
             if c in self.cat_cols:
                 values = values.astype(str).reshape(-1, 1)
             else:

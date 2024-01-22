@@ -47,10 +47,10 @@ def run_project():
 
         # fit model
         reg = LinearRegression()
-        reg.fit(data.train.X.to_numpy(), data.train.y.to_numpy())
+        reg.fit(data["train"].X.to_numpy(), data["train"].y.to_numpy())
 
         # create model interface
-        interface = SklearnModel(model=reg, sample_data=data.train.X.to_numpy())
+        interface = SklearnModel(model=reg, sample_data=data["train"].X.to_numpy())
 
         # create modelcard
         modelcard = ModelCard(interface=interface, info=card_info, to_onnx=True, datacard_uid=datacard.uid)

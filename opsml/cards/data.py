@@ -18,7 +18,7 @@ from pydantic import SerializeAsAny
 from opsml.cards.base import ArtifactCard
 from opsml.data import Dataset
 from opsml.data.interfaces._base import DataInterface
-from opsml.data.splitter import DataHolder, DataSplit
+from opsml.data.splitter import DataSplit, Data
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
 
@@ -133,12 +133,10 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data profile can only be created for a DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
-    def split_data(self) -> DataHolder:
+    def split_data(self) -> Dict[str, Data]:
         """Splits data interface according to data split logic"""
 
         assert isinstance(self.interface, DataInterface), "Splitting is only support for DataInterface subclasses"
@@ -156,9 +154,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property
