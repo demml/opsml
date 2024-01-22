@@ -24,6 +24,7 @@ from opsml.types import (
     RegistryTableNames,
     SaveName,
 )
+from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -86,7 +87,7 @@ class RunCard(ArtifactCard):
         contact = card_args.get("contact")
 
         if contact is None:
-            card_args["contact"] = ""
+            card_args["contact"] = CommonKwargs.UNDEFINED.value
 
         repository = card_args.get("repository")
 
