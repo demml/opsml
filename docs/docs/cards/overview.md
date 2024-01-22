@@ -1,4 +1,4 @@
-Cards (aka Artifact Cards) are one of the primary interfaces for working with `Opsml`.
+Cards (aka ArtifactCards) are one of the primary data structures for working with `Opsml` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
 
 <p align="center">
   <img src="../../images/card-flow.png" width="457" height="332"/>
@@ -14,6 +14,68 @@ Cards (aka Artifact Cards) are one of the primary interfaces for working with `O
 ## Registries
 
 Each card type is associated with a specific registry (`DataCard` with data registry, `ModelCard` with model registry, etc.), and registries can be used to `list`, `load` and `register` cards.
+
+### Card Information
+
+You'll notice when working with `ArtifactCards` and `CardRegistries` that there are a few common arguments that are always required. These arguments are:
+
+- **name**: Name of card
+- **repository**: Repository associated with card
+- **contact**: Contact information for card
+
+These arguments are required for card registration and can be supplied through named arguments or through a `CardInfo` dataclass.
+
+`CardInfo` is a helper class that can be used to store these arguments so you don't need to make repetitive calls. In addition, the `CardInfo` class allows you to set `runtime` environment variables through a `set_env()` method. This will allow to create cards without having to specify `name`, `repository` and/or `contact`. Examples are below.
+
+#### Example of named arguments
+
+```python hl_lines="1 6-9"
+from opsml import DataCard
+
+# skip data interface logic
+...
+
+DataCard(
+  name="linnerud", 
+  repository="opsml", 
+  contact="mlops.com", 
+  interface=data_interface
+  )
+```
+
+#### Example of CardInfo
+
+```python hl_lines="1 3 8-9"
+from opsml import DataCard, CardInfo
+
+info = CardInfo(name="linnerud", repository="opsml", contact="mlops.com")
+
+# skip data interface logic
+...
+
+DataCard(
+  info=info,
+  interface=data_interface
+  )
+```
+
+#### Example of Runtime Env Vars
+
+```python hl_lines="1 3 8"
+from opsml import DataCard, CardInfo
+
+info = CardInfo(name="linnerud", repository="opsml", contact="mlops.com").set_env()
+
+# skip data interface logic
+...
+
+DataCard(interface=data_interface)
+```
+
+### Name Uniqueness
+
+When registering cards, `Opsml` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the repository/name level. Thus, different repositories can share cards with the same name.
+
 
 ### Listing Cards
 Returns a list of dictionaries. 

@@ -26,8 +26,7 @@ class ModelCard(ArtifactCard):
         contact:
             Contact to associate with card
         interface:
-            Trained model interface. Can be one of SklearnModel, TensorFlowModel, TorchModel
-            LightningModel, LGBModel, XGBoostModel, HuggingFaceModel
+            Trained model interface.
         uid:
             Unique id (assigned if card has been registered)
         version:
