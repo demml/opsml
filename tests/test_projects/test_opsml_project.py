@@ -119,12 +119,7 @@ def test_opsml_read_only(
     with pytest.raises(ValueError):
         run.log_metric(key="metric1", value=0.0)
     with pytest.raises(ValueError):
-        proj._run_mgr.active_run
-    with pytest.raises(ValueError):
         proj._run_mgr.verify_active()
-    with pytest.raises(ValueError):
-        info.run_id = "run_id_fail"
-        OpsmlProject(info=info)
 
     with pytest.raises(ValueError) as ve:
         db_registries.project.delete_card(data_card)

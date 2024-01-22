@@ -3,14 +3,7 @@ from sklearn.linear_model import Lasso, LinearRegression
 from sklearn.metrics import mean_absolute_error
 
 # Opsml
-from opsml import (
-    CardInfo,
-    DataCard,
-    DataSplit,
-    ModelCard,
-    PandasData,
-    SklearnModel,
-)
+from opsml import CardInfo, DataCard, DataSplit, ModelCard, PandasData, SklearnModel
 from opsml.helpers.data import create_fake_data
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
