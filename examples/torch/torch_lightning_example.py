@@ -47,7 +47,7 @@ class OpsmlLightningWorkflow:
         data_interface = TorchData(data=torch.concatenate((x, y), dim=1))
 
         # Create datacard
-        datacard = DataCard(interface=data_interface, info=info)
+        datacard = DataCard(interface=data_interface, info=self.info)
         self.registries.data.register_card(card=datacard)
 
     def _create_modelcard(self):

@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name
+
 from typing import Any, Dict
 
 import lightgbm as lgb
@@ -56,7 +58,7 @@ class OpsmlLightGBMBoosterWorkflow:
         )
 
         # Create datacard
-        datacard = DataCard(interface=data_interface, info=info)
+        datacard = DataCard(interface=data_interface, info=self.info)
         self.registries.data.register_card(card=datacard)
 
     def _create_modelcard(self):

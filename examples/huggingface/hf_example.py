@@ -33,8 +33,8 @@ class ExampleDataset(torch.utils.data.Dataset):
         self.labels = labels
 
     def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item["labels"] = torch.tensor(self.labels[idx])
+        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}  # pylint: disable=no-member
+        item["labels"] = torch.tensor(self.labels[idx])  # pylint: disable=no-member
         return item
 
     def __len__(self):
@@ -69,7 +69,7 @@ class OpsmlHuggingFaceWorkflow:
         data_interface = TextDataset(data_dir="examples/huggingface/data")
 
         # Create datacard
-        datacard = DataCard(interface=data_interface, info=info)
+        datacard = DataCard(interface=data_interface, info=self.info)
         self.registries.data.register_card(card=datacard)
 
     def _get_data(self, dir_path: Path) -> Tuple[List[str], List[int]]:
@@ -78,8 +78,8 @@ class OpsmlHuggingFaceWorkflow:
         texts = []
         labels = []
         for text_file in (dir_path).rglob("*.txt"):
-            with open(text_file, "r") as f:
-                record_str = f.read()
+            with open(text_file, "r", encoding="utf-8") as file_:
+                record_str = file_.read()
                 record = json.loads(record_str)
                 texts.append(record["text"])
                 labels.append(record["label"])
@@ -178,8 +178,13 @@ if __name__ == "__main__":
     writer = TextWriterHelper()
     writer.generate_text_records()
 
-    info = CardInfo(name="huggingface", repository="opsml", contact="user@email.com")
-    workflow = OpsmlHuggingFaceWorkflow(info=info)
+    workflow = OpsmlHuggingFaceWorkflow(
+        info=CardInfo(
+            name="huggingface",
+            repository="opsml",
+            contact="user@email.com",
+        )
+    )
     workflow.run_workflow()
 
     # cleanup data

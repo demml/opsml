@@ -23,8 +23,8 @@ class TextWriterHelper:
 
             save_path = self.write_path / f"text_{i}.txt"
 
-            with open(save_path, "w") as f:
-                f.write(json.dumps(record))
+            with open(save_path, "w", encoding="utf-8") as file_:
+                file_.write(json.dumps(record))
 
             records.append(TextRecord(filepath=save_path))
 

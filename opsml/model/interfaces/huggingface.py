@@ -93,7 +93,7 @@ try:
         tokenizer: Optional[Union[PreTrainedTokenizer, PreTrainedTokenizerFast]] = None
         feature_extractor: Optional[Union[FeatureExtractionMixin, ImageProcessingMixin]] = None
         is_pipeline: bool = False
-        backend: str
+        backend: str = CommonKwargs.PYTORCH.value
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
         tokenizer_name: str = CommonKwargs.UNDEFINED.value
         feature_extractor_name: str = CommonKwargs.UNDEFINED.value
