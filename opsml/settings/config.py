@@ -14,7 +14,7 @@ from opsml.types import StorageSystem
 
 class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
-    app_env: str = Field(default="development")
+    app_env: str = "development"
 
     opsml_storage_uri: str = "./mlruns"
     opsml_tracking_uri: str = "sqlite:///tmp.db"
