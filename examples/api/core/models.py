@@ -1,3 +1,5 @@
+# pylint: disable=import-error
+
 from functools import cached_property
 from typing import Any, List, cast
 

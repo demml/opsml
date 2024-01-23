@@ -15,9 +15,8 @@ logger = ArtifactLogger.get_logger()
 def create_champion():
     """This function is used to populate the data and model registry in order to test the ModelChallenger class"""
     """-------------------------------------DataCard-------------------------------------"""
-    info = CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
-    info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
-    project = OpsmlProject(info=info)
+    CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
+    project = OpsmlProject(info=ProjectInfo(name="opsml", repository="devops", contact="test_email"))
 
     with project.run() as run:
         # create fake data
@@ -58,9 +57,8 @@ def create_champion():
 def create_challenger():
     """This function is used to populate the data and model registry in order to test the ModelChallenger class"""
     """-------------------------------------DataCard-------------------------------------"""
-    info = CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
-    info = ProjectInfo(name="opsml", repository="devops", contact="test_email")
-    project = OpsmlProject(info=info)
+    CardInfo(name="regression", repository="opsml", contact="user@example").set_env()
+    project = OpsmlProject(info=ProjectInfo(name="opsml", repository="devops", contact="test_email"))
 
     with project.run() as run:
         # create fake data
