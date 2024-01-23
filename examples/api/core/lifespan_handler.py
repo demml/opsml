@@ -1,3 +1,5 @@
+# pylint: disable=import-error
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 

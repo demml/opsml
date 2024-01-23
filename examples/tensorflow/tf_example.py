@@ -68,7 +68,7 @@ class OpsmlTensorFlowWorkflow:
             dependent_vars=["MPG"],
         )
 
-        datacard = DataCard(interface=data_interface, info=info)
+        datacard = DataCard(interface=data_interface, info=self.info)
         self.registries.data.register_card(card=datacard)
 
     def _build_and_compile_model(self) -> tf.keras.Model:
@@ -144,6 +144,11 @@ class OpsmlTensorFlowWorkflow:
 
 if __name__ == "__main__":
     # set info (easier than specifying in each card)
-    info = CardInfo(name="tensorflow", repository="opsml", contact="user@email.com")
-    workflow = OpsmlTensorFlowWorkflow(info=info)
+    workflow = OpsmlTensorFlowWorkflow(
+        info=CardInfo(
+            name="tensorflow",
+            repository="opsml",
+            contact="user@email.com",
+        )
+    )
     workflow.run_workflow()

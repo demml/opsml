@@ -1,5 +1,7 @@
 # Example taken from https://pytorch.org/tutorials/beginner/examples_nn/two_layer_net_module.html
 
+from typing import Any
+
 import torch
 
 from opsml.helpers.logging import ArtifactLogger
@@ -8,7 +10,7 @@ logger = ArtifactLogger.get_logger()
 
 
 class Polynomial3(torch.nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         """
         In the constructor we instantiate four parameters and assign them as
         member parameters.
@@ -19,7 +21,7 @@ class Polynomial3(torch.nn.Module):
         self.c = torch.nn.Parameter(torch.randn(()))
         self.d = torch.nn.Parameter(torch.randn(()))
 
-    def forward(self, x):
+    def forward(self, x) -> Any:
         """
         In the forward function we accept a Tensor of input data and we must return
         a Tensor of output data. We can use Modules defined in the constructor as
@@ -27,7 +29,7 @@ class Polynomial3(torch.nn.Module):
         """
         return self.a + self.b * x + self.c * x**2 + self.d * x**3
 
-    def string(self):
+    def string(self) -> str:
         """
         Just like any class in Python, you can also define custom method on PyTorch modules
         """
