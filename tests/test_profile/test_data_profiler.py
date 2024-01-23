@@ -119,8 +119,8 @@ def test_compare_data_profile(
 
     splits = data_card.split_data()
 
-    train_profile = DataProfiler.create_profile_report(splits.train.X, name="train")
-    test_profile = DataProfiler.create_profile_report(splits.test.X, name="test")
+    train_profile = DataProfiler.create_profile_report(splits["train"].X, name="train")
+    test_profile = DataProfiler.create_profile_report(splits["test"].X, name="test")
 
     comparison = DataProfiler.compare_reports([train_profile, test_profile])
 

@@ -24,9 +24,9 @@ class ArtifactCard(BaseModel):
         validate_default=True,
     )
 
-    name: str
-    repository: str
-    contact: str
+    name: Optional[str] = None
+    repository: Optional[str] = None
+    contact: Optional[str] = None
     version: Optional[str] = None
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
@@ -65,6 +65,10 @@ class ArtifactCard(BaseModel):
 
             card_args[key] = val
 
+        # need to check that name, repository and contact are set
+        if not all(card_args[key] for key in ["name", "repository", "contact"]):
+            raise ValueError("name, repository and contact must be set either as named arguments or through CardInfo")
+
         # validate name and repository for pattern
         validate_name_repository_pattern(name=card_args["name"], repository=card_args["repository"])
 
@@ -82,6 +86,10 @@ class ArtifactCard(BaseModel):
         """The base URI to use for the card and it's artifacts."""
         if self.version is None:
             raise ValueError("Could not create card uri - version is not set")
+
+        assert self.repository is not None, "Repository must be set"
+        assert self.name is not None, "Name must be set"
+
         return Path(
             config.storage_root,
             RegistryTableNames.from_str(self.card_type).value,

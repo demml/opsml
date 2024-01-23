@@ -19,14 +19,21 @@ class ModelCard(ArtifactCard):
     This Card is used in conjunction with the ModelCardCreator class.
 
     Args:
+        interface:
+                Trained model interface.
         name:
             Name for the model specific to your current project
         repository:
             Repository that this model is associated with
         contact:
             Contact to associate with card
-        interface:
-            Trained model interface.
+        info:
+            `CardInfo` object containing additional metadata. If provided, it will override any
+            values provided for `name`, `repository`, `contact`, and `version`.
+
+            Name, repository, and contact are required arguments for all cards. They can be provided
+            directly or through a `CardInfo` object.
+
         uid:
             Unique id (assigned if card has been registered)
         version:

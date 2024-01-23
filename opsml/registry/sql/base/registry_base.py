@@ -153,6 +153,8 @@ class SQLRegistryBase:
         """
 
         card_version = None
+        assert card.name is not None
+        assert card.repository is not None
 
         # validate pre-release and/or build tag
         if version_type in [VersionType.PRE, VersionType.BUILD, VersionType.PRE_BUILD]:

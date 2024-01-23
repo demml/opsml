@@ -67,3 +67,26 @@ def test_comment():
     comment2 = Comment(name="foo", comment="bar")
 
     assert comment1.__eq__(comment2)
+
+
+def test_argument_fail():
+    card_info = CardInfo(
+        name="name",
+        repository="repository",
+    )
+
+    with pytest.raises(ValueError):
+        ArtifactCard(
+            repository=card_info.repository,
+            contact=card_info.contact,
+        )
+
+    with pytest.raises(ValueError):
+        ArtifactCard(
+            repository=card_info.repository,
+        )
+
+    with pytest.raises(ValueError):
+        ArtifactCard(
+            info=card_info,
+        )

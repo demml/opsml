@@ -14,12 +14,6 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from opsml.types import AllowedDataType
 
 
-class DataHolder(BaseModel):
-    """Class for holding data objects"""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
-
-
 @dataclass
 class Data:
     X: Union[pl.DataFrame, pd.DataFrame, pa.Table, NDArray[Any]]

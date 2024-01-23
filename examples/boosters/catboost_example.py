@@ -71,10 +71,10 @@ class OpsmlCatBoostWorkflow:
 
         # fit model
         clf = catboost.CatBoostClassifier()
-        clf.fit(data.train.X.to_numpy(), data.train.y.to_numpy())
+        clf.fit(data["train"].X.to_numpy(), data["train"].y.to_numpy())
 
         # create model interface
-        interface = CatBoostModel(model=clf, sample_data=data.train.X.to_numpy())
+        interface = CatBoostModel(model=clf, sample_data=data["train"].X.to_numpy())
 
         # create modelcard
         modelcard = ModelCard(
@@ -100,7 +100,7 @@ class OpsmlCatBoostWorkflow:
         # load onnx model
         modelcard.load_onnx_model()
 
-        inputs = data.test.X.to_numpy()[:2].astype("float32")
+        inputs = data["test"].X.to_numpy()[:2].astype("float32")
 
         print(modelcard.onnx_model.sess.run(None, {"features": inputs}))
 

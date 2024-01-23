@@ -72,12 +72,12 @@ class OpsmlWorkflow:
 
         # fit model
         reg = LinearRegression()
-        reg.fit(data.train.X.to_numpy(), data.train.y.to_numpy())
+        reg.fit(data["train"].X.to_numpy(), data["train"].y.to_numpy())
 
         # create model interface
         interface = SklearnModel(
             model=reg,
-            sample_data=data.train.X.to_numpy(),
+            sample_data=data["train"].X.to_numpy(),
             task_type="regression",  # optional
         )
 
@@ -108,7 +108,7 @@ class OpsmlWorkflow:
         # load onnx model
         modelcard.load_onnx_model()
 
-        prediction = modelcard.onnx_model.sess.run(None, {"predict": data.test.X.to_numpy()[:5].astype("float32")})
+        prediction = modelcard.onnx_model.sess.run(None, {"predict": data["test"].X.to_numpy()[:5].astype("float32")})
         print(prediction)
 
     def run_workflow(self):

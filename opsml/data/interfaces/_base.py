@@ -6,7 +6,7 @@ import pandas as pd
 import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from opsml.data.splitter import DataHolder, DataSplit, DataSplitter
+from opsml.data.splitter import Data, DataSplit, DataSplitter
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
 from opsml.types import CommonKwargs, Feature, Suffix
@@ -198,7 +198,7 @@ class DataInterface(BaseModel):
 
         raise ValueError("A pandas dataframe type is required to create a data profile")
 
-    def split_data(self) -> DataHolder:
+    def split_data(self) -> Dict[str, Data]:
         """
         Loops through data splits and splits data either by indexing or
         column values
@@ -213,14 +213,14 @@ class DataInterface(BaseModel):
                 dependent_vars=["Pulse"],
                 # define splits
                 data_splits=[
-                    {"label": "train", "indices": train_idx},
-                    {"label": "test", "indices": test_idx},
+                    DataSplit(label="train", indices=train_idx),
+                    DataSplit(label="test", indices=test_idx),
                 ],
 
             )
 
             splits = data_card.split_data()
-            print(splits.train.X.head())
+            print(splits["train"].X.head())
 
                Chins  Situps  Jumps
             0    5.0   162.0   60.0
@@ -237,7 +237,7 @@ class DataInterface(BaseModel):
             raise ValueError("Data must not be None. Either supply data or load data")
 
         if len(self.data_splits) > 0:
-            data_holder = DataHolder()
+            data_holder: Dict[str, Data] = {}
             for data_split in self.data_splits:
                 label, data = DataSplitter.split(
                     split=data_split,
@@ -245,7 +245,7 @@ class DataInterface(BaseModel):
                     data=self.data,
                     data_type=self.data_type,
                 )
-                setattr(data_holder, label, data)
+                data_holder[label] = data
 
             return data_holder
         raise ValueError("No data splits provided")
