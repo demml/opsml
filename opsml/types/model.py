@@ -123,7 +123,7 @@ class DataSchema(BaseModel):
 
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
-    sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(None, description="Onnx model session")  # type: ignore
+    sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(default=None, description="Onnx model session")  # type: ignore
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 

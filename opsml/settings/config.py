@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 from opsml.types import StorageSystem
@@ -14,7 +14,7 @@ from opsml.types import StorageSystem
 
 class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
-    app_env: str = Field(default="development")
+    app_env: str = "development"
 
     opsml_storage_uri: str = "./mlruns"
     opsml_tracking_uri: str = "sqlite:///tmp.db"
