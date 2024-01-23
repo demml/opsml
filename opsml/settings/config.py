@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 from opsml.types import StorageSystem
