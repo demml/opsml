@@ -37,8 +37,8 @@ interface = PolarsData(
 )
 
 splits = interface.split_data()
-assert splits.train.X.shape[0] == 5
-assert splits.test.X.shape[0] == 1
+assert splits["train"].X.shape[0] == 5
+assert splits["test"].X.shape[0] == 1
 ```
 
 #### **Indices**
@@ -65,7 +65,7 @@ interface = NumpyData(
 )
 
 splits = interface.split_data()
-assert splits.train.X.shape[0] == 3
+assert splits["train"].X.shape[0] == 3
 ```
 
 #### **Start and Stop Slicing**
@@ -92,7 +92,7 @@ interface = NumpyData(
 )
 
 splits = interface.split_data()
-assert splits.train.X.shape[0] == 3
+assert splits["train"].X.shape[0] == 3
 ```
 
 ::: opsml.DataSplit

@@ -38,7 +38,7 @@ data_card = DataCard(info=card_info, interface=data_interface)
 
 # splits look good
 splits = data_card.split_data()
-print(splits.train.X.head())
+print(splits["train"].X.head())
 
 """   
     Chins  Situps  Jumps

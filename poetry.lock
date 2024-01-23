@@ -3825,13 +3825,13 @@ twisted = ["twisted"]
 
 [[package]]
 name = "prometheus-fastapi-instrumentator"
-version = "5.11.2"
+version = "6.1.0"
 description = "Instrument your FastAPI with Prometheus metrics."
 optional = true
 python-versions = ">=3.7.0,<4.0.0"
 files = [
-    {file = "prometheus_fastapi_instrumentator-5.11.2-py3-none-any.whl", hash = "sha256:c84ae3dc98bebb44f29d0af0c17c9f0782c2fb964ef83353664d9858a632cf81"},
-    {file = "prometheus_fastapi_instrumentator-5.11.2.tar.gz", hash = "sha256:9d8d0df8de7d6a73ae387121629dbf32fe022cdfc63e8bacd51f4b8ff21059ea"},
+    {file = "prometheus_fastapi_instrumentator-6.1.0-py3-none-any.whl", hash = "sha256:2279ac1cf5b9566a4c3a07f78c9c5ee19648ed90976ab87d73d672abc1bfa017"},
+    {file = "prometheus_fastapi_instrumentator-6.1.0.tar.gz", hash = "sha256:1820d7a90389ce100f7d1285495ead388818ae0882e761c1f3e6e62a410bdf13"},
 ]
 
 [package.dependencies]
@@ -6894,4 +6894,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "d81792921543e6164aaad0c2cd07a3b1b9e5d85d4784b7f25da64b831aedff06"
+content-hash = "3aea344620763b7a514718777d2da289254b6923bfecac658883669e6b444217"

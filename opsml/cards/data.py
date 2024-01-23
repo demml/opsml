@@ -18,7 +18,7 @@ from pydantic import SerializeAsAny
 from opsml.cards.base import ArtifactCard
 from opsml.data import Dataset
 from opsml.data.interfaces._base import DataInterface
-from opsml.data.splitter import DataHolder, DataSplit
+from opsml.data.splitter import Data, DataSplit
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
 
@@ -42,6 +42,13 @@ class DataCard(ArtifactCard):
             Repository that this data is associated with
         contact:
             Contact to associate with data card
+        info:
+            `CardInfo` object containing additional metadata. If provided, it will override any
+            values provided for `name`, `repository`, `contact`, and `version`.
+
+            Name, repository, and contact are required arguments for all cards. They can be provided
+            directly or through a `CardInfo` object.
+
         version:
             DataCard version
         uid:
@@ -131,7 +138,7 @@ class DataCard(ArtifactCard):
         ), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, self.name)
 
-    def split_data(self) -> DataHolder:
+    def split_data(self) -> Dict[str, Data]:
         """Splits data interface according to data split logic"""
 
         assert isinstance(self.interface, DataInterface), "Splitting is only support for DataInterface subclasses"

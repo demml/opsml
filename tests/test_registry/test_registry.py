@@ -668,8 +668,8 @@ def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData):
     datacard.load_data()
 
     splits = datacard.interface.split_data()
-    assert splits.train.X.dtypes["animals"] == "category"
-    assert splits.test.X.dtypes["animals"] == "category"
+    assert splits["train"].X.dtypes["animals"] == "category"
+    assert splits["test"].X.dtypes["animals"] == "category"
 
 
 def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsData):
@@ -698,8 +698,8 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
     datacard.load_data()
 
     splits = datacard.interface.split_data()
-    assert splits.train.X.schema["test_cat"] == orig_schema["test_cat"]
-    assert splits.test.X.schema["test_cat"] == orig_schema["test_cat"]
+    assert splits["train"].X.schema["test_cat"] == orig_schema["test_cat"]
+    assert splits["test"].X.schema["test_cat"] == orig_schema["test_cat"]
 
 
 def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries):

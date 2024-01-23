@@ -74,19 +74,21 @@ class OpsmlLightGBMSklearnWorkflow:
         )
 
         # setup lgb regressor
-        pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
+        pipe = Pipeline(
+            [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
+        )
 
         # split data
         datacard: DataCard = self.registries.data.load_card(name=self.info.name)
         data = datacard.split_data()
 
         # fit
-        pipe.fit(data.train.X, data.train.y)
+        pipe.fit(data["train"].X, data["train"].y)
 
         # create model interface
         interface = SklearnModel(
             model=pipe,
-            sample_data=data.train.X,
+            sample_data=data["train"].X,
             task_type="regression",  # optional
         )
 
@@ -107,10 +109,10 @@ class OpsmlLightGBMSklearnWorkflow:
 
         # fit
         # Only using the first 5 numerical features for convenience
-        reg.fit(data.train.X.to_numpy()[:, 0:5], data.train.y.to_numpy())
+        reg.fit(data["train"].X.to_numpy()[:, 0:5], data["train"].y.to_numpy())
 
         # create model interface
-        interface = LightGBMModel(model=reg, sample_data=data.train.X.to_numpy()[:, 0:5])
+        interface = LightGBMModel(model=reg, sample_data=data["train"].X.to_numpy()[:, 0:5])
 
         # create modelcard
         # Here we are registering the pipeline which contains an sklearn model
@@ -141,8 +143,8 @@ class OpsmlLightGBMSklearnWorkflow:
         modelcard.load_onnx_model()
 
         inputs = {}
-        for c in data.test.X.columns:
-            values = data.test.X[c][:1].values
+        for c in data["test"].X.columns:
+            values = data["test"].X[c][:1].values
             if c in self.cat_cols:
                 values = values.astype(str).reshape(-1, 1)
             else:

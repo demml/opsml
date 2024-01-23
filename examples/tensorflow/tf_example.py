@@ -98,15 +98,15 @@ class OpsmlTensorFlowWorkflow:
 
         model = self._build_and_compile_model()
         model.fit(
-            splits.train.X.to_numpy().astype(np.float32),
-            splits.train.y.to_numpy(),
+            splits["train"].X.to_numpy().astype(np.float32),
+            splits["train"].y.to_numpy(),
             epochs=10,
             verbose=1,
         )
 
         interface = TensorFlowModel(
             model=model,
-            sample_data=splits.train.X.to_numpy().astype(np.float32),
+            sample_data=splits["train"].X.to_numpy().astype(np.float32),
         )
 
         modelcard = ModelCard(
@@ -131,7 +131,7 @@ class OpsmlTensorFlowWorkflow:
         modelcard.load_model()
 
         splits = datacard.split_data()
-        inputs = splits.train.X.to_numpy()[:1].astype(np.float32)
+        inputs = splits["train"].X.to_numpy()[:1].astype(np.float32)
 
         print(modelcard.onnx_model.sess.run(None, {"dense_input": inputs}))
 

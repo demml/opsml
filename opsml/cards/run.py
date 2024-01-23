@@ -17,6 +17,7 @@ from opsml.types import (
     Artifact,
     ArtifactUris,
     CardType,
+    CommonKwargs,
     Metric,
     Metrics,
     Param,
@@ -43,6 +44,13 @@ class RunCard(ArtifactCard):
             Repository that this card is associated with
         contact:
             Contact to associate with card
+        info:
+            `CardInfo` object containing additional metadata. If provided, it will override any
+            values provided for `name`, `repository`, `contact`, and `version`.
+
+            Name, repository, and contact are required arguments for all cards. They can be provided
+            directly or through a `CardInfo` object.
+
         datacard_uids:
             Optional DataCard uids associated with this run
         modelcard_uids:
@@ -79,7 +87,7 @@ class RunCard(ArtifactCard):
         contact = card_args.get("contact")
 
         if contact is None:
-            card_args["contact"] = ""
+            card_args["contact"] = CommonKwargs.UNDEFINED.value
 
         repository = card_args.get("repository")
 
