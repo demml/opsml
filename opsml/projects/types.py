@@ -19,24 +19,24 @@ class ProjectInfo(BaseModel):
     """
 
     name: str = Field(
-        ...,
+        default=...,
         description="The project name",
         min_length=1,
     )
 
     repository: str = Field(
-        "opsml",
+        default="opsml",
         description="Optional repository to associate with the project. If not provided, defaults to opsml",
         min_length=1,
     )
 
     run_id: Optional[str] = Field(
-        config.opsml_run_id,
+        default=config.opsml_run_id,
         description="An existing run_id to use. If None, a new run is created when the project is activated",
     )
 
     tracking_uri: str = Field(
-        config.opsml_tracking_uri,
+        default=config.opsml_tracking_uri,
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
     )
 
