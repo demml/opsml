@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name, import-error
+
 from metaflow import FlowSpec, step
 from sklearn.linear_model import LinearRegression
 

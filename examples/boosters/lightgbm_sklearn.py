@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name
+
 import lightgbm as lgb
 import numpy as np
 from sklearn.compose import ColumnTransformer
@@ -58,7 +60,7 @@ class OpsmlLightGBMSklearnWorkflow:
         )
 
         # Create datacard
-        datacard = DataCard(interface=data_interface, info=info)
+        datacard = DataCard(interface=data_interface, info=self.info)
         self.registries.data.register_card(card=datacard)
 
     def _create_pipeline_modelcard(self):

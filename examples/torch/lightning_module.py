@@ -7,6 +7,14 @@ from torch.utils.data import DataLoader, Dataset
 
 class SimpleDataset(Dataset):
     def __init__(self, X: torch.Tensor, y: torch.Tensor):
+        """Create a simple dataset
+
+        Args:
+            X:
+                input data
+            y:
+                target data
+        """
         self.X = X
         self.y = y
 
@@ -19,6 +27,7 @@ class SimpleDataset(Dataset):
 
 class RegressionModel(L.LightningModule):
     def __init__(self):
+        """Instantiate a simple regression model"""
         super().__init__()
         self.fc = nn.Linear(1, 1)
         self.criterion = nn.MSELoss()
