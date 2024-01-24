@@ -20,7 +20,7 @@ class PipelineCard(ArtifactCard):
         repository:
             repository that this card is associated with
         contact:
-            Email to associate with card
+            Contact to associate with card
         info:
             `CardInfo` object containing additional metadata. If provided, it will override any
             values provided for `name`, `repository`, `contact`, and `version`.

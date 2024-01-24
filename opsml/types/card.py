@@ -84,7 +84,7 @@ class CardInfo:
         repository:
             repository name
         contact:
-            Email
+            Contact information
         uid:
             Unique id of card
         version:
