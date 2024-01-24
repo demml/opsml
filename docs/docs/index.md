@@ -37,14 +37,32 @@ After using various open-source and vendor tooling to manage different aspects o
 
 ## Incorporate into Existing Workflows
 
-Add quality control to your ML projects with little effort! With `opsml`, data and models are added to interfaces and cards, which are then registered via card registries. 
+Add quality control to your ML projects with little effort! With `opsml`, data and models are represented as `cards` and stored in a `card registry`. This allows for easy versioning, tracking and storage of ML artifacts. 
 
-<h1 align="center">
-  <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-flow-chart.png?raw=true"  width="470" alt="opsml flow"/>
-  <br>
-</h1>
+```mermaid
+flowchart LR
 
+subgraph DS Workflow
+A[Data Scientist]-->|Create|B(Data)
+B -->|Train|C(Model)
+B --> D[Save Data]
+C --> E[Save Model]
+end
+
+subgraph OpsML Workflow
+D --> |use|F[DataCard]
+E --> |use|G[ModelCard]
+F --> |associate|G
+F --> |put in|H[(DataRegistry)]
+G --> |put in|I[(ModelRegistry)]
+end
+
+style F fill:#028e6b,stroke:black,stroke-width:2px
+style G fill:#028e6b,stroke:black,stroke-width:2px
+
+style I fill:#5e0fb7,stroke:black,stroke-width:2px
+style H fill:#5e0fb7,stroke:black,stroke-width:2px
+```
 
 ## Our Goal
 

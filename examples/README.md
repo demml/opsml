@@ -1,14 +1,14 @@
 # Opsml Examples
 
-This directory contains different examples of Opsml usage.
+To help get you started with `OpsML`, we've provided a few examples of how to use `OpsML` with some popular libraries. If you'd like to contribute an example, please see the [contributing guide](../CONTRIBUTING.md)
 
 ## Examples
 
-- [Basic (Sklearn and Pandas Interfaces)](basic/README.md)
-- [LightGBM](basic/README.md)
-- [XGBoost](basic/README.md)
-- [TensorFlow](basic/README.md)
-- [Pytorch](basic/README.md)
-- [Pytorch Lightning](basic/README.md)
-- [HuggingFace](basic/README.md)
-- [Opsml Runs](basic/README.md)
+- [Sklearn](../examples/sklearn/README.md)
+- [Boosters(CatBoost, LightGBM, XGBoost)](../examples/boosters/README.md)
+- [TensorFlow](../examples//tensorflow/README.md)
+- [Torch(Torch and Torch Lightning)](../examples/torch/README.md)
+- [HuggingFace](../examples/huggingface/README.md)
+- [Opsml Runs](../examples/run_tracking/README.md)
+- [Model Challenger](../examples/challenger/README.md)
+- [API Deployment](../examples/api/README.md)
