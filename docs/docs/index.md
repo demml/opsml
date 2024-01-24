@@ -41,27 +41,40 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
 
 ```mermaid
 flowchart LR
+  subgraph Client
+    user(fa:fa-user DS) -->|create| data(fa:fa-table Data)
+    data -->|create|model(fa:fa-brain Model)
+    data -->|package in|datacard(DataCard)
+    model -->|package in|modelcard(ModelCard)
+    datacard -->|associate|modelcard
+  end 
 
-subgraph DS Workflow
-A[Data Scientist]-->|Create|B(Data)
-B -->|Train|C(Model)
-B --> D[Save Data]
-C --> E[Save Model]
-end
+  subgraph Server
+    datacard -->|insert into|datareg[(DataRegistry)]
+    modelcard -->|insert into|modelreg[(ModelRegistry)]
+  end
 
-subgraph OpsML Workflow
-D --> |use|F[DataCard]
-E --> |use|G[ModelCard]
-F --> |associate|G
-F --> |put in|H[(DataRegistry)]
-G --> |put in|I[(ModelRegistry)]
-end
+  subgraph UI
+    vis(visualize)
+  end
 
-style F fill:#028e6b,stroke:black,stroke-width:2px
-style G fill:#028e6b,stroke:black,stroke-width:2px
+  user --> vis
+  modelreg -->|view in|UI
+  datareg -->|view in|UI
 
-style I fill:#5e0fb7,stroke:black,stroke-width:2px
-style H fill:#5e0fb7,stroke:black,stroke-width:2px
+  style Client rx:10,ry:10
+  style Server rx:10,ry:10
+  style UI rx:10,ry:10
+
+  style user fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style data fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style datacard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style modelcard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style vis fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+
+  style datareg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 ```
 
 ## Our Goal
