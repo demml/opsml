@@ -5,7 +5,7 @@ While `Opsml` is not an all-in-one platform that will deploy your model in one c
 ```mermaid
 flowchart LR
     subgraph Client
-    user[fa:fa-user DS] -->|create| data(fa:fa-table Data)
+    user(fa:fa-user DS) -->|create| data(fa:fa-table Data)
     data -->|create|model(fa:fa-brain Model)
     data -->|package in|datacard(DataCard)
     model -->|package in|modelcard(ModelCard)
@@ -29,15 +29,35 @@ flowchart LR
 
     docker --> API
 
+    subgraph UI
+    vis(visualize)
+    end
+
+    user --> vis
+    modelreg -->|view in|UI
+    datareg -->|view in|UI
+
+
     style Client rx:10,ry:10
     style Server rx:10,ry:10
     style CICD rx:10,ry:10
-    style datacard fill:#028e6b,stroke:black,stroke-width:2px
-    style modelcard fill:#028e6b,stroke:black,stroke-width:2px
+    style API rx:10,ry:10
+    style UI rx:10,ry:10
 
-    style datareg fill:#5e0fb7,stroke:black,stroke-width:2px
-    style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px
-    style loaded fill:#5e0fb7,stroke:black,stroke-width:2px
+
+    style user fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style data fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style datacard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style modelcard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style loaded fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style dir fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style docker fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style loaded_model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style vis fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+
+    style datareg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+    style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolderack
 ```
 
 ## Steps:
