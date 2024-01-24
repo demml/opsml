@@ -9,7 +9,7 @@ By default, all cards can be registered, listed, loaded and updated outside of a
 
 Recommendation based on needs
 
-- I'd like to be able to view all artifacts, metris, graphs, reports in a UI
+- I'd like to be able to view all artifacts, metrics, graphs, reports in a UI
     * Use the `OpsmlProject` context manager
 - I don't really need to *see* all of the artifacts, I care more that they are tracked and callable when needed
     * Use whatever you prefer
