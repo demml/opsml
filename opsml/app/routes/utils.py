@@ -283,13 +283,13 @@ class AuditFormParser:
                 audit_card = AuditCard(
                     name=self.audit_form_dict["name"],
                     repository=self.audit_form_dict["repository"],
-                    contact=self.audit_form_dict["email"],
+                    contact=self.audit_form_dict["contact"],
                 )
         else:
             audit_card = AuditCard(
                 name=self.audit_form_dict["name"],
                 repository=self.audit_form_dict["repository"],
-                contact=self.audit_form_dict["email"],
+                contact=self.audit_form_dict["contact"],
             )
 
         return audit_card

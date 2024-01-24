@@ -647,10 +647,10 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         selected_model_name=modelcard.name,
         selected_model_repository=modelcard.repository,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.contact,
+        selected_model_contact=modelcard.contact,
         name="model_audit",
         repository="mlops",
-        email="mlops.com",
+        contact="mlops.com",
     )
 
     response = test_app.post(
@@ -669,11 +669,11 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         uid=auditcard.uid,
         name=auditcard.name,
         repository=auditcard.repository,
-        email=auditcard.contact,
+        contact=auditcard.contact,
         selected_model_name=modelcard.name,
         selected_model_version=modelcard.version,
         selected_model_repository=modelcard.repository,
-        selected_model_email=modelcard.contact,
+        selected_model_contact=modelcard.contact,
         comment_name="test",
         comment_text="test",
     )
@@ -700,10 +700,10 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
         selected_model_name=modelcard.name,
         selected_model_repository=modelcard.repository,
         selected_model_version=modelcard.version,
-        selected_model_email=modelcard.contact,
+        selected_model_contact=modelcard.contact,
         name="model_audit",
         repository="mlops",
-        email="mlops.com",
+        contact="mlops.com",
         uid=auditcard.uid,
     )
 
