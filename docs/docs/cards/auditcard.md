@@ -4,36 +4,6 @@
 
 `AuditCards` are created by instantiating the `AuditCard` class and passing in the required arguments. When working in python, you can list and answer questions as part of your normal workflow. However, the easiest and most intuitive way to create and update `AuditCards` is through the `OpsML` UI (Audit tab). 
 
-## Code Example
-
-```python
-from opsml import AuditCard, CardRegistry
-
-... # create model and data cards
-
-auditcard = AuditCard(
-    name="linear-regressor-audit",
-    repository="my_repository", 
-    contact="contact"
-)
-
-# add modelcard to auditcard
-auditcard.add_card(modelcard)
-
-
-# list questions
-auditcard.list_questions()
-
-# list by section
-card.list_questions(section="business")
-
-# answer question
-card.answer_question(section="business", question_nbr=1, response="response")
-
-# register
-audit_registry = CardRegistry("audit")
-audit_registry.register_card(auditcard)
-```
 
 ## AuditCard Audit Sections
 
@@ -259,3 +229,35 @@ You can also upload and existing audit csv, download the current audit as a csv,
 <p align="left">
   <img src="../../images/audit-ui.png" width="958"/>
 </p>
+
+
+## Code Example
+
+```python
+from opsml import AuditCard, CardRegistry
+
+... # create model and data cards
+
+auditcard = AuditCard(
+    name="linear-regressor-audit",
+    repository="my_repository", 
+    contact="contact"
+)
+
+# add modelcard to auditcard
+auditcard.add_card(modelcard)
+
+
+# list questions
+auditcard.list_questions()
+
+# list by section
+card.list_questions(section="business")
+
+# answer question
+card.answer_question(section="business", question_nbr=1, response="response")
+
+# register
+audit_registry = CardRegistry("audit")
+audit_registry.register_card(auditcard)
+```
