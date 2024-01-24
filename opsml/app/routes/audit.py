@@ -50,7 +50,7 @@ async def audit_list_homepage(
     request: Request,
     repository: Optional[str] = None,
     model: Optional[str] = None,
-    email: Optional[str] = None,
+    contact: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
 ) -> HTMLResponse:
@@ -63,8 +63,8 @@ async def audit_list_homepage(
             repository name
         model:
             Model name
-        email:
-            User email
+        contact:
+            User contact
         version:
             Model version
         uid:
@@ -90,7 +90,7 @@ async def audit_list_homepage(
         request=request,
         repository=str(repository),
         name=str(model),
-        email=email,
+        contact=contact,
         version=version,
         uid=uid,
     )
@@ -138,7 +138,7 @@ async def save_audit_form(
             "selected_repository": form.selected_model_repository,
             "models": model_names,
             "selected_model": form.selected_model_name,
-            "selected_email": form.selected_model_email,
+            "selected_contact": form.selected_model_contact,
             "versions": versions,
             "version": form.selected_model_version,
             "audit_report": audit_report.model_dump(),
@@ -197,7 +197,7 @@ async def save_audit_comment(
             "selected_repository": comment.selected_model_repository,
             "models": model_names,
             "selected_model": comment.selected_model_name,
-            "selected_email": comment.selected_model_email,
+            "selected_contact": comment.selected_model_contact,
             "versions": versions,
             "version": comment.selected_model_version,
             "audit_report": audit_report.model_dump(),
@@ -267,7 +267,7 @@ async def upload_audit_data(
         audit_report = AuditReport(
             name=form.name or form.selected_model_name,
             repository=form.repository or form.selected_model_repository,
-            contact=form.email or form.selected_model_email,
+            contact=form.contact or form.selected_model_contact,
             version=form.version,
             uid=form.uid,
             status=form.status,
@@ -291,7 +291,7 @@ async def upload_audit_data(
             "selected_repository": form.selected_model_repository,
             "models": model_names,
             "selected_model": form.selected_model_name,
-            "selected_email": form.selected_model_name,
+            "selected_contact": form.selected_model_contact,
             "versions": versions,
             "version": form.selected_model_version,
             "audit_report": audit_report.model_dump(),
