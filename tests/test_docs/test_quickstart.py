@@ -16,7 +16,7 @@ def test_quickstart():
     )
     from opsml.helpers.data import create_fake_data
 
-    info = CardInfo(name="linear-regression", repository="opsml", user_email="user@email.com")
+    info = CardInfo(name="linear-regression", repository="opsml", contact="user@email.com")
     registries = CardRegistries()
 
     # create fake data

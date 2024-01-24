@@ -26,7 +26,7 @@ If you'd like to create your onnx model yourself and associate that with the Mod
 
 ### What's with using name, repository, and contact or `CardInfo` in the examples?
 
-Every `ArtifactCard` requires a name, repository and user email. For convenience, you can instead provide a `CardInfo` instance.
+Every `ArtifactCard` requires a name, repository and contact. For convenience, you can instead provide a `CardInfo` instance.
 
 ### How is `Opsml` different than other products out there?
 

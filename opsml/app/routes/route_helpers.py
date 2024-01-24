@@ -197,7 +197,7 @@ class AuditRouteHelper(RouteHelper):
         repository: str,
         name: str,
         version: Optional[str] = None,
-        email: Optional[str] = None,
+        contact: Optional[str] = None,
         uid: Optional[str] = None,
     ) -> _TemplateResponse:
         """Get audit information for model version
@@ -213,8 +213,8 @@ class AuditRouteHelper(RouteHelper):
                 The model version.
             uid:
                 The model uid.
-            email:
-                The user email.
+            contact:
+                The user contact.
         """
 
         model_names, repositories, versions = get_names_repositories_versions(
@@ -229,7 +229,7 @@ class AuditRouteHelper(RouteHelper):
             uid=uid,
         )[0]
 
-        email = model_record.get("contact") if email is None else email
+        contact = model_record.get("contact") if contact is None else contact
 
         audit_report = self._get_audit_report(
             audit_registry=request.app.state.registries.audit,
@@ -244,7 +244,7 @@ class AuditRouteHelper(RouteHelper):
                 "selected_repository": repository,
                 "models": model_names,
                 "selected_model": name,
-                "selected_email": email,
+                "selected_contact": contact,
                 "versions": versions,
                 "version": version,
                 "audit_report": audit_report.model_dump(),
