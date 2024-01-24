@@ -52,6 +52,7 @@ nav:
       - 'interfaces/model/interfaces.md'
       - 'interfaces/model/onnx.md'
       - 'interfaces/model/extras.md'
+      - 'interfaces/model/deployment.md'
   - Cards:
       - 'cards/overview.md'
       - 'cards/versioning.md'

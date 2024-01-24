@@ -64,7 +64,7 @@ Types of extras that can be installed:
 ```
 
 ## Environment Variables
-`Opsml` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `Opsml` [server](server/overview.md).
+`Opsml` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `Opsml` [server](./engineering/server.md).
 
 - **OPSML_TRACKING_URI**: This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
 
@@ -81,4 +81,4 @@ If running `Opsml` as an all-in-one interface, this variable is required and wil
 
   - Set `OPSML_TRACKING_URI` to the sql tracking uri of your card registry database
   - Set `OPSML_STORAGE_URI` to the storage uri of your choice
-  - Follow instructions in [server](server/overview.md) docs
+  - Follow instructions in [server](./engineering/server.md) docs
