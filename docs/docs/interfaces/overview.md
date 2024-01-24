@@ -5,17 +5,16 @@
 title: Opsml Primary Artifacts
 ---
 flowchart LR
-    i["`__Interface__`"]
+    interface[["Interface"]]
     
-    artifacts("`
-    __ArtifactCard__
+    artifacts("
+    ArtifactCard
     #bull; Interface
-    #bull; Metadata 
-    `")
+    #bull; Metadata")
 
-    db[("`__Card Registry__`")]
+    db[("Card Registry")]
 
-    i --stored in--> artifacts --stored in--> db
+    interface --stored in--> artifacts --stored in--> db
 ```
 
 
