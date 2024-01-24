@@ -533,3 +533,79 @@ modelcard = ModelCard(
 # register
 model_registry.register_card(card=modelcard)
 ```
+
+
+---
+## Subclassing `ModelInterface`
+
+In the event that the currently supported `ModelInterfaces` do not meet your needs, you can subclass the parent `ModelInterface` and implement your own interface. However, there are a few requirements:
+
+- `_get_sample_data` Helper that returns a single sample of data to be used for inference. This is used to validate the model during saving and loading.
+- `get_sample_prediction` Will use the model to make a prediction on the sample data and returns a `SamplePrediction` class.
+- `model_class` Returns a string value with your model class name.
+- `save_model` Logic for saving the model from a `Path` object.
+- `load_model` Logic for loading the model from a `Path` object.
+- `model_suffix` The suffix to be used when saving the model. This is used to determine the file extension when saving the model.
+- `save_onnx` If you plan to save your model via onnx, you will also need to specify your onnx conversion logic. (Optional, but to_onnx must be set to False if you don't plan on using onnx). Must return a `ModelReturn` class.
+
+These requirements are necessary for `Opsml` to properly save and load your model, as these are called during either saving or loading via the `ModelCard`.
+
+
+### Example
+
+```python
+from opsml import ModelInterface, CardInfo, DataCard, CardRegistry
+
+info = CardInfo(name="model", repository="opsml", contact="opsml_user")
+registry = CardRegistry("model")
+
+# ModelInterface is a pydantic BaseModel
+class MyModelInterface(ModelInterface):
+    
+    model: ModelType
+
+    @property
+    def model_class(self) -> str:
+        return "MyModel"
+
+    def save_model(self, path: Path) -> None:
+        # save logic here
+
+    def load_model(self, path: Path, **kwargs: Any) -> None:
+        # load logic here
+
+    @classmethod
+    def _get_sample_data(cls, sample_data: Any) -> Any:
+        # sample data logic here
+        # return 1 record of sample_data
+
+    def get_sample_prediction(self) -> SamplePrediction:
+        # prediction logic here
+        # return SamplePrediction class
+
+    @property
+    def model_suffix(self) -> str:
+        """Returns suffix for storage"""
+        return ".my_model"
+
+    # optional
+    def save_onnx(self, path: Path) -> ModelReturn:
+        # onnx save logic here
+
+    # optional
+    def load_onnx_model(self, path: Path) -> None:
+        # onnx load logic here
+
+interface = MyModelInterface(model={{my_model}})
+
+# Create and register datacard
+modelcard = ModelCard(interface=interface, info=info)
+registry.register_card(card=modelcard)
+
+# Now you can load your model via the registry
+# you will need to supply the interface subclass
+modelcard = registry.load_card(uid=modelcard.uid, interface=MyModelInterface)
+```
+
+### **Final Note** 
+It is up to you to make sure your subclass works as expected and is compatible with the `ModelCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.
