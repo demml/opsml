@@ -16,7 +16,7 @@ jobs:
       - run: pip install smokeshow
 
       - name: get coverage artifacts
-        uses: actions/download-artifact@v3
+        uses: dawidd6/action-download-artifact@v3
         with:
           name: coverage
           path: coverage
