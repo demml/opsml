@@ -139,6 +139,7 @@ class QuerycardResponse(BaseModel):
 class CardRequest(BaseModel):
     name: Optional[str] = None
     version: Optional[str] = None
+    repository: Optional[str] = None
     uid: Optional[str] = None
     ignore_release_candidate: bool = False
 
