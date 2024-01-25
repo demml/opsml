@@ -1,0 +1,21 @@
+name: GitLeaks
+
+on:
+  workflow_run:
+    workflows: [Lint-Unit-Test]
+    types: [completed]
+      
+jobs:
+  Leaks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+            fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}

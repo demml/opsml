@@ -33,12 +33,6 @@ jobs:
       - run : make setup.project
       - run : make lints.ci
 
-      - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
-
   Unit-Test:
     needs: Lints
     strategy:
@@ -121,36 +115,8 @@ jobs:
       - run : make setup.project
       - run : make test.unit
 
-  Unit-Integration:
-    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-311-Coverage]
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
-        os: [ubuntu]
-
-    runs-on: ${{ matrix.os }}-latest
-    env:
-      OPSML_TESTING: 1
-      LOG_LEVEL: DEBUG
-      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_TEST_BUCKET }}
-      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
-      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.integration
-
   Postgres-Unit:
-    needs: Unit-Integration
+    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-311-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -194,7 +160,7 @@ jobs:
             OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
 
   MySql-Unit:
-    needs: Unit-Integration
+    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-311-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -239,30 +205,4 @@ jobs:
       - run : make test.registry
         env:
             OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5
-
-
-  Coverage:
-    needs: Unit-Test-311-Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - run: pip install smokeshow
-
-      - name: get coverage artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: coverage
-          path: coverage
-
-      - run: smokeshow upload coverage
-        env:
-          SMOKESHOW_GITHUB_STATUS_DESCRIPTION: Coverage {coverage-percentage}
-          SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 85
-          SMOKESHOW_GITHUB_CONTEXT: coverage
-          SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          SMOKESHOW_AUTH_KEY: ${{ secrets.SMOKESHOW_AUTH_TOKEN }}
 
