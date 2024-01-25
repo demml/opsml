@@ -175,6 +175,7 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
             registry.load_card(
                 uid=payload.uid,
                 name=payload.name,
+                repository=payload.repository,
                 version=payload.version,
                 ignore_release_candidates=payload.ignore_release_candidate,
             ),
