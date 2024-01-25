@@ -91,6 +91,7 @@ class Suffix(str, Enum):
     CATBOOST = ".cbm"
     JSONL = ".jsonl"
     NONE = ""
+    DMATRIX = ".dmatrix"
 
 
 @unique
