@@ -107,7 +107,7 @@ class ModelDataHelper:
 
     @property
     def num_dtypes(self) -> int:
-        raise NotImplementedError
+        return len(self.dtypes)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
