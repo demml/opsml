@@ -1,10 +1,6 @@
 name: GitLeaks
 
 on:
-  pull_request_target: # gitleaks doesn't support workflow_run
-    types:
-      - opened
-      - synchronize
   push:
     branches:
       - main
