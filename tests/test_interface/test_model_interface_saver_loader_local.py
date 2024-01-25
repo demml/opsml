@@ -16,6 +16,7 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     TorchModel,
+    XGBoostModel,
 )
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
@@ -298,6 +299,51 @@ def test_save_lgb_sklearn_modelcard(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+
+def test_save_xgb_booster_modelcard(
+    xgb_booster_regressor_model: XGBoostModel,
+):
+    model: XGBoostModel = xgb_booster_regressor_model
+
+    modelcard = ModelCard(
+        interface=model,
+        name="test_model",
+        repository="mlops",
+        contact="test_email",
+        datacard_uid=uuid.uuid4().hex,
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test summary"),
+        ),
+    )
+
+    save_card_artifacts(modelcard)
+
+    # check paths exist on server
+    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JSON.value).exists()
+    assert Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value).exists()
+    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.DMATRIX.value).exists()
+    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value).exists()
+
+    # load objects
+    loader = CardLoader(
+        card_args={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "version": modelcard.version,
+        },
+        registry_type=RegistryType.MODEL,
+    )
+
+    loaded_card = cast(ModelCard, loader.load_card())
+    assert isinstance(loaded_card, ModelCard)
+
+    #
+    loaded_card.load_model()
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert type(loaded_card.interface.sample_data) == type(model.sample_data)
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")

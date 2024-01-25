@@ -232,6 +232,11 @@ class ModelInterface(BaseModel):
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
 
+    @property
+    def data_suffix(self) -> str:
+        """Returns suffix for storage"""
+        return Suffix.JOBLIB.value
+
     @staticmethod
     def name() -> str:
         return ModelInterface.__name__

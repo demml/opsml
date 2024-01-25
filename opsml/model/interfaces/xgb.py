@@ -155,10 +155,35 @@ try:
                 ModelReturn
             """
 
-            if self.model_type == TrainedModelType.XGB_BOOSTER.value:
+            if self.model_class == TrainedModelType.XGB_BOOSTER.value:
                 logger.warning("ONNX conversion for XGBoost Booster is not supported")
 
             return super().save_onnx(path)
+
+        def save_sample_data(self, path: Path) -> None:
+            """Serialized and save sample data to path.
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            if isinstance(self.sample_data, DMatrix):
+                self.sample_data.save_binary(path)
+
+            else:
+                joblib.dump(self.sample_data, path)
+
+        def load_sample_data(self, path: Path) -> None:
+            """Serialized and save sample data to path.
+
+            Args:
+                path:
+                    Pathlib object
+            """
+            if self.model_class == TrainedModelType.XGB_BOOSTER.value:
+                self.sample_data = DMatrix(path)
+            else:
+                self.sample_data = joblib.load(path)
 
         @property
         def model_suffix(self) -> str:
@@ -166,6 +191,18 @@ try:
                 return Suffix.JSON.value
 
             return super().model_suffix
+
+        @property
+        def preprocessor_suffix(self) -> str:
+            """Returns suffix for storage"""
+            return Suffix.JOBLIB.value
+
+        @property
+        def data_suffix(self) -> str:
+            """Returns suffix for storage"""
+            if self.model_class == TrainedModelType.XGB_BOOSTER.value:
+                return Suffix.DMATRIX.value
+            return Suffix.JOBLIB.value
 
         @staticmethod
         def name() -> str:

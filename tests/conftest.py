@@ -41,6 +41,7 @@ import pyarrow as pa
 import pytest
 import torch
 import torch.nn as nn
+import xgboost as xgb
 
 # ml model packages and classes
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool
@@ -1019,6 +1020,28 @@ def lgb_regressor_model(example_dataframe):
     return LightGBMModel(
         model=reg,
         sample_data=X_train[:100],
+        preprocessor=StandardScaler(),
+    )
+
+
+@pytest.fixture
+def xgb_booster_regressor_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    dtrain = xgb.DMatrix(X_train.to_numpy(), y_train.to_numpy())
+    dtest = xgb.DMatrix(X_test.to_numpy(), y_test.to_numpy())
+
+    param = {"max_depth": 2, "eta": 1, "objective": "reg:tweedie"}
+    # specify validations set to watch performance
+    watchlist = [(dtest, "eval"), (dtrain, "train")]
+
+    # number of boosting rounds
+    num_round = 2
+    bst = xgb.train(param, dtrain, num_boost_round=num_round, evals=watchlist)
+
+    return XGBoostModel(
+        model=bst,
+        sample_data=dtrain,
         preprocessor=StandardScaler(),
     )
 
