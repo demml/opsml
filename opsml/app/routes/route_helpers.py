@@ -551,9 +551,8 @@ class ProjectRouteHelper(RouteHelper):
             limit=100,
             query_terms={"project": project},
         )
-        sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
 
-        return project_runs
+        return sorted(project_runs, key=lambda k: k["timestamp"], reverse=True)
 
     def get_project_run(
         self,
