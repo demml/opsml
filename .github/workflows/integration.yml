@@ -1,0 +1,34 @@
+name: Integration
+
+on:
+  workflow_run:
+    workflows: [Lint-Unit-Test]
+    types: [completed]
+      
+jobs:
+  Unit-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.5.1"]
+        os: [ubuntu]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_TEST_BUCKET }}
+      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
+      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - run : make setup.project
+      - run : make test.integration
