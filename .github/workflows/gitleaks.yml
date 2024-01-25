@@ -1,9 +1,13 @@
 name: GitLeaks
 
 on:
-  workflow_run:
-    workflows: [Lint-Unit-Test]
-    types: [completed]
+  pull_request_target: # gitleaks doesn't support workflow_run
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - main
       
 jobs:
   Leaks:
