@@ -8,7 +8,7 @@
 
   </colgroup>
   <tbody>
-      {% for tag_name, tag_value in runcard["tags"].items() %}
+      {% for tag_name, tag_value in selected_data.tags.items() %}
           <tr>  
           <td><font color="#999">{{tag_name}}:</font></td>
           <td>{{tag_value}}</td>
