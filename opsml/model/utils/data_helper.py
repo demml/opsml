@@ -107,7 +107,7 @@ class ModelDataHelper:
 
     @property
     def num_dtypes(self) -> int:
-        raise NotImplementedError
+        return len(self.dtypes)
 
     @property
     def feature_dict(self) -> Dict[str, Feature]:
@@ -409,6 +409,45 @@ class ImageFileData(ModelDataHelper):
     @staticmethod
     def validate(data_type: str) -> bool:
         return "ImageFile" in data_type
+
+
+class DMatrixData(ModelDataHelper):
+    def __init__(self, input_data: Any, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
+
+    @property
+    def features(self) -> List[str]:
+        return getattr(self._data, "feature_names", None) or ["inputs"]
+
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
+
+    @property
+    def dtypes(self) -> List[str]:
+        dtypes = getattr(self._data, "feature_types", None)
+        if dtypes is None:
+            return [CommonKwargs.UNDEFINED.value for _ in range(len(self.features))]
+        return cast(List[str], dtypes)
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        if len(self.features) == 1:
+            num_cols = getattr(self._data, "num_col", None)
+            if num_cols is not None:
+                return (num_cols(),)
+        return (1,)
+
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        feature_dict = {}
+        for feature, type_ in zip(self.features, self.dtypes):
+            feature_dict[feature] = Feature(feature_type=type_, shape=self.shape)
+        return feature_dict
+
+    @staticmethod
+    def validate(data_type: str) -> bool:
+        return "xgboost.core.DMatrix" in data_type
 
 
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
