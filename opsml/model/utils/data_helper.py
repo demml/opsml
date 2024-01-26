@@ -419,17 +419,23 @@ class DMatrixData(ModelDataHelper):
     def features(self) -> List[str]:
         return getattr(self._data, "feature_names", None) or ["inputs"]
 
+    @features.setter
+    def features(self, features: List[str]) -> None:
+        self._features = features
+
     @property
     def dtypes(self) -> List[str]:
         dtypes = getattr(self._data, "feature_types", None)
         if dtypes is None:
             return [CommonKwargs.UNDEFINED.value for _ in range(len(self.features))]
-        return dtypes
+        return cast(List[str], dtypes)
 
     @property
     def shape(self) -> Tuple[int, ...]:
         if len(self.features) == 1:
-            return (getattr(self._data, "num_col", None)(),)
+            num_cols = getattr(self._data, "num_col", None)
+            if num_cols is not None:
+                return (num_cols(),)
         return (1,)
 
     @property
