@@ -350,11 +350,11 @@ class ModelCardLoader(CardLoader):
             logger.info("Sample data already loaded")
             return None
 
-        load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(self.card.interface.data_suffix)
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, Suffix.JOBLIB.value)
+        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, self.card.interface.data_suffix)
 
         return self.card.interface.load_sample_data(lpath)
 
@@ -528,7 +528,6 @@ class ModelCardLoader(CardLoader):
 
             if load_preprocessor:
                 self.load_preprocessor(lpath, rpath)
-
             self._load_sample_data(lpath, rpath)
             self._load_model(lpath, rpath, **kwargs)
 

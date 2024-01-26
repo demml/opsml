@@ -65,6 +65,7 @@ class TrainedModelType(str, Enum):
     LGBM_CLASSIFIER = "LGBMClassifier"
     XGB_REGRESSOR = "XGBRegressor"
     XGB_CLASSIFIER = "XGBClassifier"
+    XGB_BOOSTER = "Booster"
     LGBM_BOOSTER = "Booster"
     TF_KERAS = "keras"
     PYTORCH = "pytorch"
