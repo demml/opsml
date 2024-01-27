@@ -46,7 +46,6 @@ setup.project:
 	# check if local python version major.minor does not equal 3.11
 
 	if [ $$(python -c 'import sys; print(sys.version_info[0:2])') = "(3, 11)" ]; then \
-		# need to exclude vowpalwabbit for now, as it doesn't support 3.11 yet
 		poetry run pip install -r $$(grep -ivE "vowpalwabbit" requirements-dev.txt); \
 	else \
 		poetry run pip install -r requirements-dev.txt; \
