@@ -2,6 +2,7 @@ PROJECT=opsml
 PYTHON_VERSION=3.11.2
 SOURCE_OBJECTS=opsml
 FORMAT_OBJECTS=opsml tests examples
+ACTIVE_PYTHON := "$$(python -c 'import sys; print(sys.version_info[0:2])')"
 
 format.black:
 	poetry run black ${FORMAT_OBJECTS}
@@ -42,14 +43,14 @@ setup.uninstall:
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
 
-	# install model libs for dev
-	# check if local python version major.minor does not equal 3.11
-
-	if [ $$(python -c 'import sys; print(sys.version_info[1:2])') = "11" ]; then \
-		poetry run pip install -r $$(grep -ivE "vowpalwabbit" requirements-dev.txt); \
+	if [ $(ACTIVE_PYTHON) = "(3, 11)" ]; then \
+		poetry run pip install -r requirements311-dev.txt; \
 	else \
 		poetry run pip install -r requirements-dev.txt; \
 	fi
+
+setup.py_311:
+
 
 setup.python:
 	@echo "Active Python version: $$(python --version)"
