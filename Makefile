@@ -38,8 +38,20 @@ setup.uninstall:
     && ((poetry env remove $$_venv_name > /dev/null 2>&1 \
          || rm -rf ./.venv) && echo "all cleaned up!") \
     || (echo "\nsetup.uninstall: failed to remove the virtualenv." && exit 1)
+
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
+
+	# install model libs for dev
+	# check if local python version major.minor does not equal 3.11
+
+	if [ $$(python -c 'import sys; print(sys.version_info[0:2])') = "(3, 11)" ]; then \
+		# need to exclude vowpalwabbit for now, as it doesn't support 3.11 yet
+		poetry run pip install -r $$(grep -ivE "vowpalwabbit" requirements-dev.txt); \
+	else \
+		poetry run pip install -r requirements-dev.txt; \
+	fi
+
 setup.python:
 	@echo "Active Python version: $$(python --version)"
 	@echo "Base Interpreter path: $$(python -c 'import sys; print(sys.executable)')"

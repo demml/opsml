@@ -1,0 +1,11 @@
+# model library requirements for development work
+lightgbm >=3.3.3, <4.0.0
+xgboost >=1.7.1,<2.0.0
+torch >=2.1.0,<3.0.0
+torchvision >=0.15
+transformers >=4.27.3,<5.0.0
+lightning >=2.1.2,<3.0.0
+optimum >=1.16.1,<2.0.0 
+accelerate >=0.26.1,<1.0.0
+catboost >=1.2.2,<2.0.0 
+vowpalwabbit >=9.9.0,<10.0.0
