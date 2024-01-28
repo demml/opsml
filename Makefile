@@ -43,15 +43,6 @@ setup.uninstall:
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
 
-	if [ $(ACTIVE_PYTHON) = "(3, 11)" ]; then \
-		poetry run pip install -r requirements311-dev.txt; \
-	else \
-		poetry run pip install -r requirements-dev.txt; \
-	fi
-
-setup.py_311:
-
-
 setup.python:
 	@echo "Active Python version: $$(python --version)"
 	@echo "Base Interpreter path: $$(python -c 'import sys; print(sys.executable)')"
