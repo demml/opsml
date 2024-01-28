@@ -221,6 +221,9 @@ class ModelCardSaver(CardSaver):
         if isinstance(self.card.interface, HuggingFaceModel):
             return self._save_huggingface_preprocessor()
 
+        if not hasattr(self.card.interface, "preprocessor"):
+            return None
+
         if self.card.interface.preprocessor is not None:
             save_path = (self.lpath / SaveName.PREPROCESSOR.value).with_suffix(self.card.interface.preprocessor_suffix)
             self.card.interface.save_preprocessor(save_path)

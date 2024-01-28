@@ -5,7 +5,7 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import ModelInterface
-from opsml.types import CommonKwargs, Suffix, TrainedModelType, ModelReturn
+from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 
 try:
     import vowpalwabbit as vw
@@ -105,9 +105,9 @@ try:
             else:
                 raise ValueError("Arguments must be a string or a list")
 
-            self.model = vw.Workpace(args)
+            self.model = vw.Workspace(args)
 
-        def save_onnx(self, path: Path) -> ModelReturn:
+        def save_onnx(self, path: Path) -> ModelReturn:  # pylint: disable=redundant-returns-doc
             """Onnx is not supported for vowpal wabbit models.
 
             Args:

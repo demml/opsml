@@ -107,6 +107,7 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     TorchModel,
+    VowpalWabbitModel,
     XGBoostModel,
 )
 from opsml.projects import OpsmlProject, ProjectInfo
@@ -888,7 +889,7 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
 
 @pytest.fixture
-def xgb_df_regressor(example_dataframe):
+def xgb_df_regressor(example_dataframe) -> XGBoostModel:
     X_train, y_train, X_test, y_test = example_dataframe
     reg = XGBRegressor(n_estimators=5, max_depth=3)
     reg.fit(X_train.to_numpy(), y_train)
@@ -897,7 +898,7 @@ def xgb_df_regressor(example_dataframe):
 
 
 @pytest.fixture
-def catboost_regressor(example_dataframe):
+def catboost_regressor(example_dataframe) -> CatBoostModel:
     X_train, y_train, X_test, y_test = example_dataframe
 
     reg = CatBoostRegressor(n_estimators=5, max_depth=3)
@@ -912,7 +913,7 @@ def catboost_regressor(example_dataframe):
 
 
 @pytest.fixture
-def catboost_classifier(example_dataframe):
+def catboost_classifier(example_dataframe) -> CatBoostModel:
     X_train, y_train, X_test, y_test = example_dataframe
 
     reg = CatBoostClassifier(n_estimators=5, max_depth=3)
@@ -923,7 +924,7 @@ def catboost_classifier(example_dataframe):
 
 
 @pytest.fixture
-def catboost_ranker():
+def catboost_ranker() -> CatBoostModel:
     from catboost.datasets import msrank_10k
 
     train_df, _ = msrank_10k()
@@ -949,6 +950,90 @@ def catboost_ranker():
     model.fit(train)
 
     yield CatBoostModel(model=model, sample_data=X_train[:100])
+    cleanup()
+
+
+@pytest.fixture
+def vowpal_wabbit_cb() -> VowpalWabbitModel:
+    import vowpalwabbit
+
+    train_data = [
+        {
+            "action": 1,
+            "cost": 2,
+            "probability": 0.4,
+            "feature1": "a",
+            "feature2": "c",
+            "feature3": "",
+        },
+        {
+            "action": 3,
+            "cost": 0,
+            "probability": 0.2,
+            "feature1": "b",
+            "feature2": "d",
+            "feature3": "",
+        },
+        {
+            "action": 4,
+            "cost": 1,
+            "probability": 0.5,
+            "feature1": "a",
+            "feature2": "b",
+            "feature3": "",
+        },
+        {
+            "action": 2,
+            "cost": 1,
+            "probability": 0.3,
+            "feature1": "a",
+            "feature2": "b",
+            "feature3": "c",
+        },
+        {
+            "action": 3,
+            "cost": 1,
+            "probability": 0.7,
+            "feature1": "a",
+            "feature2": "d",
+            "feature3": "",
+        },
+    ]
+
+    train_df = pd.DataFrame(train_data)
+
+    # Add index to data frame
+    train_df["index"] = range(1, len(train_df) + 1)
+    train_df = train_df.set_index("index")
+
+    vw = vowpalwabbit.Workspace("--cb 4 --cb_adf --cb_type mtr --csoaa_ldf multiline --csoaa_rank --no_stdin --quiet")
+    for i in train_df.index:
+        action = train_df.loc[i, "action"]
+        cost = train_df.loc[i, "cost"]
+        probability = train_df.loc[i, "probability"]
+        feature1 = train_df.loc[i, "feature1"]
+        feature2 = train_df.loc[i, "feature2"]
+        feature3 = train_df.loc[i, "feature3"]
+
+        # Construct the example in the required vw format.
+        learn_example = (
+            str(action)
+            + ":"
+            + str(cost)
+            + ":"
+            + str(probability)
+            + " | "
+            + str(feature1)
+            + " "
+            + str(feature2)
+            + " "
+            + str(feature3)
+        )
+
+        # Here we do the actual learning.
+        vw.learn(learn_example)
+    vw.finish()
+    yield VowpalWabbitModel(model=vw, sample_data=learn_example)
     cleanup()
 
 
