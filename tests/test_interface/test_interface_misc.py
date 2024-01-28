@@ -43,6 +43,7 @@ def test_backup_interfaces():
         TensorFlowModelNoModule,
         TorchModelNoModule,
         XGBoostModelNoModule,
+        VowpalWabbitModelNoModule
     )
 
     for model in [
@@ -55,6 +56,7 @@ def test_backup_interfaces():
         XGBoostModelNoModule,
         TorchDataNoModule,
         ImageDatasetNoModule,
+        VowpalWabbitModelNoModule,
     ]:
         assert model.name() == model.__name__
         with pytest.raises(ModuleNotFoundError):
