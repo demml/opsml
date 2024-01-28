@@ -1,8 +1,26 @@
 Cards (aka ArtifactCards) are one of the primary data structures for working with `Opsml` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
 
-<p align="center">
-  <img src="../../images/card-flow.png" width="457" height="332"/>
-</p>
+```mermaid
+flowchart TD
+  DS(["fa:fa-user-group" DS])
+    DS --> Model([Model])
+      Model --> Metrics([Metrics])
+        Metrics --> RunCard(RunCard)
+          RunCard --> RunRegistry[(Run Registry)]
+      Model --> ModelCard
+        subgraph ModelCard
+          OnnxModel([OnnxModel])
+          ModelCardDataCard(DataCard)
+        end
+        ModelCard --> ModelRegistry[(Model Registry)]
+        ModelCard --> DeployableArtifact(Deployable Artifact)
+    DS --> Data([Data])
+      Data --> DataCard(DataCard)
+        DataCard --> ModelCardDataCard
+        DataCard --> DataRegistry[(Data Registry)]
+
+```
+
 
 ## Card Types
 
