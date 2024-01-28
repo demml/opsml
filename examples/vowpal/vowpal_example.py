@@ -146,7 +146,7 @@ class OpsmlWorkflow:
     def _create_modelcard(self):
         """Shows how to create a model interface and modelcard
 
-        This example highlights the uses of the SklearnModel interface and how you can load
+        This example highlights the uses of the VowpalWabbitModel interface and how you can load
         and split data from a datacard.
         """
 
