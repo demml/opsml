@@ -253,6 +253,7 @@ class SQLRegistryBase:
         # checking card exists
         record = self.list_cards(uid=card.uid, limit=1)
         assert bool(record), "Card does not exist in registry. Please use register card first"
+        logger.info("Updating card {}/{} with version {}", card.repository, card.name, card.version)
         save_card_artifacts(card=card)
         save_record: SaveRecord = registry_name_record_map[card.card_type](**card.create_registry_record())
 
