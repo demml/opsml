@@ -23,8 +23,8 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     TorchModel,
-    XGBoostModel,
     VowpalWabbitModel,
+    XGBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry

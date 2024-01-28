@@ -14,6 +14,7 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     TorchModel,
+    VowpalWabbitModel,
 )
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
@@ -501,3 +502,50 @@ def test_save_catboost_modelcard(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+
+@pytest.mark.skipif(sys.version_info == (3, 11), reason="vowpal not support for py311")
+def test_save_vowpal_modelcard(
+    vowpal_wabbit_cb: VowpalWabbitModel,
+    api_storage_client: client.StorageClientBase,
+):
+    model: VowpalWabbitModel = vowpal_wabbit_cb
+
+    modelcard = ModelCard(
+        interface=model,
+        name="test_model",
+        repository="mlops",
+        contact="test_email",
+        datacard_uid=uuid.uuid4().hex,
+        version="0.0.1",
+        uid=uuid.uuid4().hex,
+        metadata=ModelCardMetadata(
+            description=Description(summary="test summary"),
+        ),
+    )
+
+    save_card_artifacts(modelcard)
+
+    # check paths exist on server
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.MODEL.value))
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+
+    # load objects
+    loader = CardLoader(
+        card_args={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "version": modelcard.version,
+        },
+        registry_type=RegistryType.MODEL,
+    )
+
+    loaded_card = cast(ModelCard, loader.load_card())
+    assert isinstance(loaded_card, ModelCard)
+
+    loaded_card.load_model(arguments="--cb 4")
+    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert loaded_card.model.predict(loaded_card.sample_data) == modelcard.model.predict(modelcard.sample_data)

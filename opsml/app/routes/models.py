@@ -4,7 +4,7 @@
 
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast, Union
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -64,9 +64,9 @@ async def model_versions_page(
     model: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-) -> Union[HTMLResponse, RedirectResponse]:
+) -> HTMLResponse:
     if model is None and uid is None:
-        return RedirectResponse(url="/opsml/models/list/")
+        return RedirectResponse(url="/opsml/models/list/")  # type: ignore
 
     registry: CardRegistry = request.app.state.registries.model
 
