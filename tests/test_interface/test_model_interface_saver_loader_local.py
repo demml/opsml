@@ -25,6 +25,7 @@ from opsml.types import CommonKwargs, RegistryType, SaveName, Suffix
 
 DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
 WINDOWS_EXCLUDE = sys.platform == "win32"
+IS_311 = sys.version_info >= (3, 11)
 
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
@@ -951,7 +952,7 @@ def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
 
 
-@pytest.mark.skipif(sys.version_info == (3, 11), reason="vowpal not support for py311")
+@pytest.mark.skipif(IS_311, reason="vowpal not support for py311")
 def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
