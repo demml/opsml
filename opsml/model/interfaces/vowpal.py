@@ -5,7 +5,7 @@ from pydantic import model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import ModelInterface
-from opsml.types import CommonKwargs, Suffix, TrainedModelType
+from opsml.types import CommonKwargs, Suffix, TrainedModelType, ModelReturn
 
 try:
     import vowpalwabbit as vw
@@ -107,7 +107,7 @@ try:
 
             self.model = vw.Workpace(args)
 
-        def save_onnx(self, path: Path) -> None:
+        def save_onnx(self, path: Path) -> ModelReturn:
             """Onnx is not supported for vowpal wabbit models.
 
             Args:
@@ -117,11 +117,7 @@ try:
             Returns:
                 ModelReturn
             """
-            pass
-
-        def load_onnx_model(self, path: Path) -> None:
-            """Onnx is not supported for vowpal wabbit models."""
-            pass
+            raise ValueError("Onnx is not supported for vowpal wabbit models")
 
         @property
         def model_suffix(self) -> str:

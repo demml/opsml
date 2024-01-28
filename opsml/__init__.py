@@ -24,6 +24,7 @@ from opsml.model import (
     TensorFlowModel,
     TorchModel,
     XGBoostModel,
+    VowpalWabbitModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
@@ -95,5 +96,6 @@ __all__ = [
     "AuditCardMetadata",
     "ModelMetadata",
     "ModelLoader",
+    "VowpalWabbitModel",
     *extra_imports,
 ]

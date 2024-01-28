@@ -4,7 +4,7 @@
 
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast, Union
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -54,7 +54,7 @@ async def model_list_homepage(request: Request, repository: Optional[str] = None
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return model_route_helper.get_homepage(request=request, repository=repository)  # type: ignore[return-value]
+    return model_route_helper.get_homepage(request=request, repository=repository)
 
 
 @router.get("/models/versions/", response_class=HTMLResponse)
@@ -64,9 +64,9 @@ async def model_versions_page(
     model: Optional[str] = None,
     version: Optional[str] = None,
     uid: Optional[str] = None,
-) -> HTMLResponse:
+) -> Union[HTMLResponse, RedirectResponse]:
     if model is None and uid is None:
-        return RedirectResponse(url="/opsml/models/list/")  # type: ignore[return-value]
+        return RedirectResponse(url="/opsml/models/list/")
 
     registry: CardRegistry = request.app.state.registries.model
 
@@ -82,7 +82,7 @@ async def model_versions_page(
         payload=CardRequest(uid=uid, name=model, version=version),
     )
 
-    return model_route_helper.get_versions_page(  # type: ignore[return-value]
+    return model_route_helper.get_versions_page(
         request=request,
         name=cast(str, model),
         version=version,
