@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
 
     steps:
       - uses: actions/checkout@v3

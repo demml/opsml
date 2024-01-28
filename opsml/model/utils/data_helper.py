@@ -455,8 +455,16 @@ class NumericData(ModelDataHelper):
         super().__init__(input_data=input_data, data_type=data_type)
 
     @property
+    def dtypes(self) -> List[str]:
+        return [self.data_type]
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return (0,)
+
+    @property
     def feature_dict(self) -> Dict[str, Feature]:
-        return {"inputs": Feature(feature_type=self.data_type, shape=(0,))}
+        return {"inputs": Feature(feature_type=self.dtypes[0], shape=self.shape)}
 
     @staticmethod
     def validate(data_type: str) -> bool:

@@ -286,7 +286,7 @@ set is `OPSML_TRACKING_URI`.
 | Torch Lightning | `LightningModel`         | [link](examples/torch/torch_lightning_example.py)   |                     
 | TensorFlow      | `TensorFlowModel`        | [link](examples/tensorflow/tf_example.py)           | 
 | HuggingFace     | `HuggingFaceModel`       | [link](examples/huggingface/hf_example.py)          | 
-
+| Vowpal Wabbit   | `VowpalWabbit`           | [link](examples/vowpal/vowpal_example.py)           | 
 
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
