@@ -13,8 +13,8 @@ jobs:
   Test-Examples:
     strategy:
       matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        python-version: ["3.10"]
+        poetry-version: ["1.7.1"]
         os: [ubuntu]
 
     runs-on: ${{ matrix.os }}-latest
@@ -66,6 +66,9 @@ jobs:
 
       - name: Run HuggingFace example
         run : poetry run python examples/huggingface/hf_example.py && rm -rf mlruns && rm tmp.db
+
+      - name: Run Vowpal Wabbit example
+        run : poetry run python examples/vowpal/vowpal_example.py && rm -rf mlruns && rm tmp.db
 
       - name: Run Project example
         run : poetry run python examples/run_tracking/opsml_run_example.py && rm -rf mlruns && rm tmp.db

@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
 
     steps:
       - uses: actions/checkout@v3
@@ -38,11 +38,11 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
         os: [ubuntu, macos]
         exclude: # ubuntu 3.11 is used for coverage tests
           - os: ubuntu
-            python-version: 3.11
+            python-version: 3.10
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -62,12 +62,12 @@ jobs:
       - run : make test.unit
 
 
-  Unit-Test-311-Coverage:
+  Unit-Test-310-Coverage:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        python-version: ["3.10"]
+        poetry-version: ["1.7.1"]
         os: [ubuntu]
 
     runs-on: ${{ matrix.os }}-latest
@@ -97,8 +97,8 @@ jobs:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        python-version: ["3.10"]
+        poetry-version: ["1.7.1"]
         os: [windows]
 
     runs-on: ${{ matrix.os }}-latest
@@ -116,7 +116,7 @@ jobs:
       - run : make test.unit
 
   Postgres-Unit:
-    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-311-Coverage]
+    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-310-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -125,7 +125,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
 
     services:
       postgres:
@@ -160,7 +160,7 @@ jobs:
             OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
 
   MySql-Unit:
-    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-311-Coverage]
+    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-310-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -169,7 +169,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
 
     services:
       mysql:

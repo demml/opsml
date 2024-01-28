@@ -536,6 +536,59 @@ model_registry.register_card(card=modelcard)
 
 
 ---
+## VowpalWabbitModel
+
+Interface for saving a Vowpal Wabbit model.
+
+|  |  |
+| --- | --- |
+| **Model Type** | `Workspace` |
+| **Save Format** | `.model` |
+| **Source** | [`VowpalWabbitModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/vowpal.py) |
+| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/vowpal/vowpal_example.py) |
+
+
+### Arguments
+
+`model`: `Workspace`
+: Vowpal Wabbit workspace
+
+`sample_data`: `str`
+: Sample data to be used for type inference. For vowpal wabbit models this should be a string.
+
+`arguments`: `Optional[HuggingFaceOnnxArgs]`
+: Optional Vowpal Wabbit arguments. This will be inferred automatically from the workspace
+
+
+### Example
+
+```py hl_lines="1  17"
+from opsml import VowpalWabbitModel, CardInfo, ModelCard, CardRegistry
+import vowpalwabbit
+
+info = CardInfo(name="model", repository="opsml", contact="user@email.com")
+model_registry = CardRegistry("model")
+
+# Skipping data step
+...
+
+vw = vowpalwabbit.Workspace("--cb 4 --quiet")
+
+for record in data:
+    vw.learn(learn_example)
+vw.finish()
+
+# vowpal wabbit interface
+model = VowpalWabbitModel(model=vw, sample_data=learn_example)
+
+# create modelcard
+modelcard = ModelCard(interface=interface, info=info, datacard_uid=datacard.uid)
+
+# register
+model_registry.register_card(card=modelcard)
+```
+
+---
 ## Subclassing `ModelInterface`
 
 In the event that the currently supported `ModelInterfaces` do not meet your needs, you can subclass the parent `ModelInterface` and implement your own interface. However, there are a few requirements:
