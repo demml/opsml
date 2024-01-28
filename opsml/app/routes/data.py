@@ -43,7 +43,7 @@ async def data_list_homepage(request: Request, repository: Optional[str] = None)
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return data_route_helper.get_homepage(request=request, repository=repository)  # type: ignore[return-value]
+    return data_route_helper.get_homepage(request=request, repository=repository)
 
 
 @router.get("/data/versions/", response_class=HTMLResponse)
@@ -57,7 +57,7 @@ async def data_versions_page(
     if name is None:
         return RedirectResponse(url="/opsml/data/list/")  # type: ignore[return-value]
 
-    return data_route_helper.get_versions_page(  # type: ignore[return-value]
+    return data_route_helper.get_versions_page(
         request=request,
         name=name,
         version=version,
