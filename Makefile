@@ -2,6 +2,7 @@ PROJECT=opsml
 PYTHON_VERSION=3.11.2
 SOURCE_OBJECTS=opsml
 FORMAT_OBJECTS=opsml tests examples
+ACTIVE_PYTHON := "$$(python -c 'import sys; print(sys.version_info[0:2])')"
 
 format.black:
 	poetry run black ${FORMAT_OBJECTS}
@@ -38,8 +39,10 @@ setup.uninstall:
     && ((poetry env remove $$_venv_name > /dev/null 2>&1 \
          || rm -rf ./.venv) && echo "all cleaned up!") \
     || (echo "\nsetup.uninstall: failed to remove the virtualenv." && exit 1)
+
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
+
 setup.python:
 	@echo "Active Python version: $$(python --version)"
 	@echo "Base Interpreter path: $$(python -c 'import sys; print(sys.executable)')"

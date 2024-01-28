@@ -130,7 +130,7 @@ async def save_audit_form(
         comments=audit_card.comments,
     )
 
-    return templates.TemplateResponse(  # type: ignore[return-value]
+    return templates.TemplateResponse(
         "include/audit/audit.html",
         {
             "request": request,
@@ -189,7 +189,7 @@ async def save_audit_comment(
         comments=audit_card.comments,
     )
 
-    return templates.TemplateResponse(  # type: ignore[return-value]
+    return templates.TemplateResponse(
         "include/audit/audit.html",
         {
             "request": request,
@@ -283,7 +283,7 @@ async def upload_audit_data(
         repository=form.selected_model_repository,
     )
 
-    return templates.TemplateResponse(  # type: ignore[return-value]
+    return templates.TemplateResponse(
         "include/audit/audit.html",
         {
             "request": request,

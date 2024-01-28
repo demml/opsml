@@ -95,3 +95,14 @@ class CatBoostModelNoModule(ModelInterface):
     @staticmethod
     def name() -> str:
         return CatBoostModelNoModule.__name__
+
+
+class VowpalWabbitModelNoModule(ModelInterface):
+    @model_validator(mode="before")
+    @classmethod
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        raise ModuleNotFoundError("VowpalWabbit requires vowpalwabbit to be installed. Please install vowpalwabbit.")
+
+    @staticmethod
+    def name() -> str:
+        return VowpalWabbitModelNoModule.__name__

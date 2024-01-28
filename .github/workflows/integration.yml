@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        poetry-version: ["1.5.1"]
+        poetry-version: ["1.7.1"]
         os: [ubuntu]
 
     runs-on: ${{ matrix.os }}-latest

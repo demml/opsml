@@ -55,6 +55,7 @@ class CommonKwargs(str, Enum):
     FEATURE_EXTRACTOR_NAME = "feature_extractor_name"
     IMAGE = "image"
     TEXT = "text"
+    VOWPAL_ARGS = "arguments"
 
 
 @unique
@@ -92,6 +93,7 @@ class Suffix(str, Enum):
     JSONL = ".jsonl"
     NONE = ""
     DMATRIX = ".dmatrix"
+    MODEL = ".model"
 
 
 @unique
