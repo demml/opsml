@@ -23,6 +23,7 @@ from opsml.model import (
     SklearnModel,
     TensorFlowModel,
     TorchModel,
+    VowpalWabbitModel,
     XGBoostModel,
 )
 from opsml.projects import ActiveRun, OpsmlProject, ProjectInfo
@@ -95,5 +96,6 @@ __all__ = [
     "AuditCardMetadata",
     "ModelMetadata",
     "ModelLoader",
+    "VowpalWabbitModel",
     *extra_imports,
 ]

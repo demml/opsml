@@ -450,6 +450,27 @@ class DMatrixData(ModelDataHelper):
         return "xgboost.core.DMatrix" in data_type
 
 
+class NumericData(ModelDataHelper):
+    def __init__(self, input_data: str, data_type: str):
+        super().__init__(input_data=input_data, data_type=data_type)
+
+    @property
+    def dtypes(self) -> List[str]:
+        return [self.data_type]
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        return (0,)
+
+    @property
+    def feature_dict(self) -> Dict[str, Feature]:
+        return {"inputs": Feature(feature_type=self.dtypes[0], shape=self.shape)}
+
+    @staticmethod
+    def validate(data_type: str) -> bool:
+        return ("int" in data_type) or ("float" in data_type)
+
+
 def get_model_data(data_type: str, input_data: Any) -> ModelDataHelper:
     """Sets the appropriate ModelData subclass depending
     on data_type passed

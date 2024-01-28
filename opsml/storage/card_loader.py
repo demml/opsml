@@ -400,6 +400,9 @@ class ModelCardLoader(CardLoader):
             self._load_huggingface_preprocessors(lpath, rpath)
             return
 
+        if not hasattr(self.card.interface, "preprocessor"):
+            return
+
         if self.card.interface.preprocessor is not None:
             logger.info("Preprocessor already loaded")
             return

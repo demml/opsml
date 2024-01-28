@@ -71,6 +71,7 @@ class TrainedModelType(str, Enum):
     PYTORCH = "pytorch"
     PYTORCH_LIGHTNING = "pytorch_lightning"
     CATBOOST = "CatBoost"
+    VOWPAL = "VowpalWabbit"
 
 
 SKLEARN_SUPPORTED_MODEL_TYPES = [

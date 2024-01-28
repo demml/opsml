@@ -42,7 +42,7 @@ async def project_list_page(
         200 if the request is successful. The body will contain a JSON string
         with the list of models.
     """
-    return project_route_helper.get_project_run(request=request, project=project, run_uid=run_uid)  # type: ignore[return-value]
+    return project_route_helper.get_project_run(request=request, project=project, run_uid=run_uid)
 
 
 @router.get("/projects/runs/plot/", response_class=HTMLResponse)
@@ -63,4 +63,4 @@ async def project_metric_page(
         with the list of models.
     """
 
-    return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)  # type: ignore[return-value]
+    return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)
