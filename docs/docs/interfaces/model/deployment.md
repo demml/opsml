@@ -18,7 +18,7 @@ flowchart LR
     end
 
     subgraph CICD
-    modelreg --> dir(Direcotry)
+    modelreg --> dir(Directory)
     dir --> |package|docker(DockerFile)
     end
 
@@ -57,7 +57,7 @@ flowchart LR
     style vis fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 
     style datareg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-    style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolderack
+    style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 ```
 
 ## Steps:
