@@ -250,19 +250,6 @@ def test_register_model_data(
 
     assert cards[0]["tags"] == {"id": "model1"}
 
-    with pytest.raises(ValueError) as ve:
-        # try registering model to different repository
-        model_card_dup = ModelCard(
-            interface=modelcard.interface,
-            name=modelcard.name,
-            repository="new-repository",
-            contact="mlops.com",
-            datacard_uid=datacard.uid,
-            to_onnx=True,
-        )
-        model_registry.register_card(card=model_card_dup)
-    assert ve.match("different repository")
-
     # load data
     loaded_data: DataCard = data_registry.load_card(name=datacard.name, version=datacard.version)
     loaded_data.load_data()

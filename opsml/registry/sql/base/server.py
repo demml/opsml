@@ -82,12 +82,14 @@ class ServerRegistry(SQLRegistryBase):
         Returns:
             List of versions
         """
-        results = self.engine.get_versions(table=self._table, name=name, version=version_to_search)
+        results = self.engine.get_versions(
+            table=self._table,
+            name=name,
+            repository=repository,
+            version=version_to_search,
+        )
 
         if bool(results):
-            if results[0].repository != repository:
-                raise ValueError("""Model name already exists for a different repository. Try a different name.""")
-
             versions = [result.version for result in results]
             return SemVerUtils.sort_semvers(versions=versions)
         return []

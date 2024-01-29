@@ -1344,6 +1344,10 @@ def populate_run(
             )
             run.register_card(modelcard)
 
+            run.log_metric("test_metric", 10)
+            run.log_parameter("test_param", "test")
+            run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
+
     # now switch config back to local for testing routes
     client.storage_client = client.get_storage_client(OpsmlConfig(opsml_tracking_uri=LOCAL_TRACKING_URI))
     return datacard, modelcard, run
