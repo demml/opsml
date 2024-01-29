@@ -1,17 +1,6 @@
 Cards (aka ArtifactCards) are one of the primary data structures for working with `Opsml` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
 
-<style>
-  .registry {
-    fill:#5e0fb7;
-    stroke:black;
-    stroke-width:2px;
-    color:white;
-    font-weight:bolder;
-  }
-</style>
 ```mermaid
-
-
 flowchart TD
   DS(["fa:fa-user-group" DS])
     DS --> Model([Model])
