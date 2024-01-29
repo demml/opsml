@@ -42,8 +42,8 @@ def test_backup_interfaces():
         SklearnModelNoModule,
         TensorFlowModelNoModule,
         TorchModelNoModule,
+        VowpalWabbitModelNoModule,
         XGBoostModelNoModule,
-        VowpalWabbitModelNoModule
     )
 
     for model in [

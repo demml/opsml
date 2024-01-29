@@ -536,7 +536,7 @@ class ProjectRouteHelper(RouteHelper):
 
         projects = project_registry.list_cards()
 
-        return list(set(project["name"] for project in projects))
+        return sorted(list(set(project["name"] for project in projects)))
 
     def get_project_runs(self, project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
         """Get runs for a project
