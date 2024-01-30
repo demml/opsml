@@ -84,11 +84,11 @@
       </colgroup>
   
       <tbody>
-        {% for name, uri in runcard["artifact_uris"].items() %}
+        {% for name, artifact in runcard["artifact_uris"].items() %}
           <tr>
             <td><font color="#999">{{name}}</font></td>
             <td>
-              <a href="/opsml/files/download?read_path={{uri}}" download={{uri.split("/")[-1]}}>
+              <a href="/opsml/files/download?read_path={{artifact.remote_path}}" download={{artifact.remote_path.split("/")[-1]}}>
                 <button id="download-button" type="submit" class="btn btn-success">Download</button>
               </a>
             </td>

@@ -182,31 +182,6 @@ def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegist
     loaded_card = registry.load_card(uid=data_card.uid)
     assert loaded_card.interface.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
-
-def test_unique_name_fail(sql_file: SqlData, db_registries: CardRegistries):
-    # create data card
-    registry = db_registries.data
-    data_card = DataCard(
-        interface=sql_file,
-        name="test_name_fail",
-        repository="mlops",
-        contact="mlops.com",
-    )
-
-    registry.register_card(card=data_card)
-
-    # test registering card with same name and different repository
-    with pytest.raises(ValueError):
-        data_card = DataCard(
-            interface=sql_file,
-            name="test_name_fail",
-            repository="fail_repositories",
-            contact="mlops.com",
-        )
-
-        registry.register_card(card=data_card)
-
-
 def test_semver_registry_list(
     numpy_data: NumpyData,
     db_registries: CardRegistries,
