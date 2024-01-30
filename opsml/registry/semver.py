@@ -22,6 +22,23 @@ class VersionType(str, Enum):
     BUILD = "build"
     PRE_BUILD = "pre_build"
 
+    @staticmethod
+    def from_str(name: str) -> "VersionType":
+        l_name = name.strip().lower()
+        if l_name == "major":
+            return VersionType.MAJOR
+        if l_name == "minor":
+            return VersionType.MINOR
+        if l_name == "patch":
+            return VersionType.PATCH
+        if l_name == "pre":
+            return VersionType.PRE
+        if l_name == "build":
+            return VersionType.BUILD
+        if l_name == "pre_build":
+            return VersionType.PRE_BUILD
+        raise NotImplementedError()
+
 
 class CardVersion(BaseModel):
     version: str
