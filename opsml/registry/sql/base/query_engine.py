@@ -147,6 +147,7 @@ class QueryEngine:
         self,
         table: CardSQLTable,
         name: str,
+        repository: str,
         version: Optional[str] = None,
     ) -> Select[Any]:
         """Creates query to get latest card version
@@ -161,7 +162,7 @@ class QueryEngine:
         Returns:
             Query to get latest card version
         """
-        table_select = select(table).filter(table.name == name)  # type: ignore
+        table_select = select(table).filter(table.name == name, table.repository == repository)  # type: ignore
 
         if version is not None:
             table_select = table_select.filter(table.version.like(f"{version}%"))  # type: ignore
@@ -172,6 +173,7 @@ class QueryEngine:
         self,
         table: CardSQLTable,
         name: str,
+        repository: str,
         version: Optional[str] = None,
     ) -> List[Any]:
         """Return all versions of a card
@@ -181,13 +183,15 @@ class QueryEngine:
                 Registry table to query
             name:
                 Name of the card
+            repository:
+                Repository name
             version:
                 Version of the card
 
         Returns:
             List of all versions of a card
         """
-        query = self._create_version_query(table=table, name=name, version=version)
+        query = self._create_version_query(table=table, name=name, version=version, repository=repository)
 
         with self.session() as sess:
             results = sess.scalars(query).all()
@@ -395,7 +399,9 @@ class QueryEngine:
         """
 
         repository_col = table.repository
-        query = select(repository_col).distinct()  # type:ignore[call-overload]
+        query = (
+            select(repository_col).distinct().order_by(repository_col.asc())  # type:ignore[call-overload, union-attr]
+        )
 
         with self.session() as sess:
             return sess.scalars(query).all()
@@ -405,7 +411,11 @@ class QueryEngine:
         query = select(table.name)  # type:ignore[call-overload]
 
         if repository is not None:
-            query = query.filter(table.repository == repository).distinct()
+            query = (
+                query.filter(table.repository == repository)
+                .distinct()
+                .order_by(table.name.asc())  # type:ignore[union-attr]
+            )  #
         else:
             query = query.distinct()
 
@@ -419,6 +429,6 @@ class QueryEngine:
     ) -> None:
         record_uid = cast(str, card.get("uid"))
         with self.session() as sess:
-            query = sess.query(table).filter(table.uid == record_uid)  # type:ignore
+            query = sess.query(table).filter(table.uid == record_uid)
             query.delete()
             sess.commit()

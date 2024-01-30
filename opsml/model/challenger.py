@@ -152,8 +152,12 @@ class ModelChallenger:
 
         """
         runcard = cast(RunCard, self._registries.run.load_card(uid=runcard_uid))
+        metric = runcard.get_metric(name=metric_name)
 
-        return cast(Metric, runcard.get_metric(name=metric_name))
+        if isinstance(metric, list):
+            metric = metric[0]
+
+        return metric
 
     def _battle(self, champion: CardInfo, champion_metric: Metric, lower_is_better: bool) -> BattleReport:
         """
