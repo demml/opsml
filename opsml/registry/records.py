@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from opsml.types import CardVersion, RegistryType, CommonKwargs
+from opsml.types import CardVersion, CommonKwargs, RegistryType
 
 
 def get_timestamp() -> int:
