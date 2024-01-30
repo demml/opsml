@@ -1,8 +1,39 @@
 Cards (aka ArtifactCards) are one of the primary data structures for working with `Opsml` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
 
-<p align="center">
-  <img src="../../images/card-flow.png" width="457" height="332"/>
-</p>
+```mermaid
+flowchart TD
+  DS(["fa:fa-user-group" DS])
+    DS --> Model([Model])
+      Model --> Metrics([Metrics])
+        Metrics --> RunCard(RunCard)
+          RunCard --> RunRegistry[(RunRegistry)]
+      Model --> ModelCard
+        subgraph ModelCard
+          OnnxModel([OnnxModel])
+          ModelCardDataCard(DataCard)
+        end
+        ModelCard --> ModelRegistry[(ModelRegistry)]
+        ModelCard --> DeployableArtifact(Deployable Artifact)
+    DS --> Data([Data])
+      Data --> DataCard(DataCard)
+        DataCard --> ModelCardDataCard
+        DataCard --> DataRegistry[(DataRegistry)]
+
+  style DS fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style Model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style Metrics fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style Data fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style RunCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style OnnxModel fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style DataCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style ModelCardDataCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style DeployableArtifact fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+
+  style RunRegistry fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style ModelRegistry fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+  style DataRegistry fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+```
+
 
 ## Card Types
 
