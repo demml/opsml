@@ -43,9 +43,7 @@ class CardRegistry:
             data_registry.list_cards()
         """
 
-        _registry_type = (
-            registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
-        )
+        _registry_type = registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
 
         self._registry = self._set_registry(_registry_type)
         self.table_name = self._registry.table_name
@@ -218,7 +216,7 @@ class CardRegistry:
     def register_card(
         self,
         card: ArtifactCard,
-        version_type: VersionType = VersionType.MINOR,
+        version_type: Union[VersionType, str] = VersionType.MINOR,
         pre_tag: str = "rc",
         build_tag: str = "build",
     ) -> None:
@@ -237,6 +235,8 @@ class CardRegistry:
                 build tag to add to card version
         """
 
+        _version_type = version_type if isinstance(version_type, VersionType) else VersionType.from_str(version_type)
+
         if card.uid is not None and card.version is not None:
             logger.info(
                 textwrap.dedent(
@@ -251,7 +251,7 @@ class CardRegistry:
         else:
             self._registry.register_card(
                 card=card,
-                version_type=version_type,
+                version_type=_version_type,
                 pre_tag=pre_tag,
                 build_tag=build_tag,
             )
