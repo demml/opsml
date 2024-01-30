@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from opsml.types import CardVersion, RegistryType
+from opsml.types import CardVersion, CommonKwargs, RegistryType
 
 
 def get_timestamp() -> int:
@@ -65,6 +65,7 @@ class ModelRegistryRecord(SaveRecord):
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
         values["auditcard_uid"] = metadata["auditcard_uid"]
+        values["datacard_uid"] = values.get("datacard_uid") or CommonKwargs.UNDEFINED.value
 
         return values
 
