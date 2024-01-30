@@ -114,6 +114,7 @@
       </td>
       </tr>
 
+      {% if selected_model.datacard_uid is not none %}
       <tr>
         <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
         <td><font color="#999">DataCard:</font></td>
@@ -123,6 +124,7 @@
           </a>
       </td>
       </tr>
+      {% endif %}
 
       {% if runcard is not none %} 
         <tr>
