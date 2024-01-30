@@ -28,7 +28,7 @@ try:
 
         model: Optional[vw.Workspace] = None
         sample_data: Optional[str] = None
-        arguments: str
+        arguments: str = CommonKwargs.UNDEFINED.value
 
         @property
         def model_class(self) -> str:
