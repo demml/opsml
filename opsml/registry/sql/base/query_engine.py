@@ -183,6 +183,8 @@ class QueryEngine:
                 Registry table to query
             name:
                 Name of the card
+            repository:
+                Repository name
             version:
                 Version of the card
 
@@ -397,7 +399,9 @@ class QueryEngine:
         """
 
         repository_col = table.repository
-        query = select(repository_col).distinct().order_by(repository_col.asc())  # type:ignore[call-overload]
+        query = (
+            select(repository_col).distinct().order_by(repository_col.asc())  # type:ignore[call-overload, union-attr]
+        )
 
         with self.session() as sess:
             return sess.scalars(query).all()
@@ -407,7 +411,11 @@ class QueryEngine:
         query = select(table.name)  # type:ignore[call-overload]
 
         if repository is not None:
-            query = query.filter(table.repository == repository).distinct().order_by(table.name.asc())
+            query = (
+                query.filter(table.repository == repository)
+                .distinct()
+                .order_by(table.name.asc())  # type:ignore[union-attr]
+            )  #
         else:
             query = query.distinct()
 
@@ -421,6 +429,6 @@ class QueryEngine:
     ) -> None:
         record_uid = cast(str, card.get("uid"))
         with self.session() as sess:
-            query = sess.query(table).filter(table.uid == record_uid)  # type:ignore
+            query = sess.query(table).filter(table.uid == record_uid)
             query.delete()
             sess.commit()
