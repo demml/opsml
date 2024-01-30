@@ -236,9 +236,6 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
-    def _has_datacard_uid(self, uid: Optional[str]) -> bool:
-        return bool(uid)
-
     def register_card(
         self,
         card: ArtifactCard,
@@ -282,9 +279,6 @@ class ClientModelCardRegistry(ClientRegistry):
                         (opsml[sklearn_onnx], opsml[tf_onnx], opsml[torch_onnx]) or set to_onnx to False.
                         """
                     )
-
-            if not self._has_datacard_uid(uid=model_card.datacard_uid):
-                raise ValueError("""ModelCard must be associated with a valid DataCard uid""")
 
             if model_card.datacard_uid is not None:
                 self._validate_datacard_uid(uid=model_card.datacard_uid)
