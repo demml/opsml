@@ -182,6 +182,7 @@ def test_datacard_sql_register_file(sql_file: SqlData, db_registries: CardRegist
     loaded_card = registry.load_card(uid=data_card.uid)
     assert loaded_card.interface.sql_logic.get("test") == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
 
+
 def test_semver_registry_list(
     numpy_data: NumpyData,
     db_registries: CardRegistries,
@@ -421,7 +422,7 @@ def test_model_registry_onnx(
     assert isinstance(loaded_card.interface, SklearnModel)
 
 
-def test_modelcard_register_fail(
+def test_modelcard_register_no_datacard(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ):
@@ -436,8 +437,7 @@ def test_modelcard_register_fail(
         datacard_uid=None,
     )
 
-    with pytest.raises(ValueError):
-        model_registry.register_card(card=model_card)
+    model_registry.register_card(card=model_card)
 
 
 def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):

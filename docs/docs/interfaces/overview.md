@@ -37,7 +37,7 @@ The `DataInterface` is the primary interface for working with data in `Opsml`. I
 - `ArrowData`: Stores data from a pyarrow table
 - `ImageDataset`: Stores data from a directory of images
 - `TextDataset`: Stores data from a directory of text files
-- `TorchtData`: Stores data from a torch tensor(s)
+- `TorchData`: Stores data from a torch tensor(s)
 - `SqlData`: Stores sql text
 
 ## Model Interface
