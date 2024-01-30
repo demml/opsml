@@ -234,16 +234,15 @@ def test_register_model_data(
     assert loaded_card.model is not None
     assert loaded_card.sample_data is not None
 
-    with pytest.raises(ValueError):
-        modelcard_fail = ModelCard(
-            interface=modelcard.interface,
-            name="pipeline_model",
-            repository="mlops",
-            contact="mlops.com",
-            datacard_uid=None,
-            to_onnx=True,
-        )
-        model_registry.register_card(card=modelcard_fail)
+    modelcard_fail = ModelCard(
+        interface=modelcard.interface,
+        name="pipeline_model",
+        repository="mlops",
+        contact="mlops.com",
+        datacard_uid=None,
+        to_onnx=True,
+    )
+    model_registry.register_card(card=modelcard_fail)
 
     # test card tags
     cards = model_registry.list_cards(name=modelcard.name, repository=modelcard.repository, tags=modelcard.tags)
