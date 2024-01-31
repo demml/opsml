@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from pathlib import Path
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -76,6 +77,16 @@ class ModelCard(ArtifactCard):
         from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_model(**kwargs)
+
+    def download_model(self, path: Path, **kwargs: Any) -> None:
+        """Downloads model, preprocessor and sample data to interface"""
+
+        from opsml.storage.card_loader import ModelCardLoader
+
+        # set path to download model
+        kwargs["path"] = path
+
+        ModelCardLoader(self).download_model(**kwargs)
 
     def load_onnx_model(self, **kwargs: Any) -> None:
         """Loads onnx model to interface"""
