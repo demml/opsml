@@ -536,6 +536,65 @@ class ModelCardLoader(CardLoader):
 
         return None
 
+    def _download_preprocessor(self, metadata: ModelMetadata, lpath: Path) -> None:
+        """Helper method for downloading preprocessor"""
+
+        if isinstance(self.card.interface, HuggingFaceModel):
+            if getattr(metadata, "tokenizer_uri", None) is not None:
+                rpath = Path(metadata.tokenizer_uri)
+                _lpath = (lpath / rpath.name).with_suffix("")
+
+            if getattr(metadata, "feature_extractor_uri", None) is not None:
+                rpath = Path(metadata.feature_extractor_uri)
+                _lpath = (lpath / rpath.name).with_suffix("")
+        else:
+            if getattr(metadata, "preprocessor_uri", None) is not None:
+                rpath = Path(metadata.preprocessor_uri)
+                _lpath = (lpath / rpath.name).with_suffix(self.preprocessor_suffix)
+
+        _lpath.mkdir(parents=True, exist_ok=True)
+        self.storage_client.get(rpath, _lpath)
+
+    def _download_onnx_model(self, metadata: ModelMetadata, lpath: Path, quantize: bool = False) -> None:
+        if quantize:
+            rpath = Path(metadata.quantized_model_uri)
+        else:
+            rpath = Path(metadata.onnx_uri)
+
+        _lpath = (lpath / rpath.name).with_suffix(self.onnx_suffix)
+        _lpath.mkdir(parents=True, exist_ok=True)
+        self.storage_client.get(rpath, _lpath)
+
+    def _download_model(self, metadata: ModelMetadata, lpath: Path):
+        rpath = Path(metadata.model_uri)
+        _lpath = (lpath / rpath.name).with_suffix(self.model_suffix)
+        self.storage_client.get(rpath, _lpath)
+
+    def download_model(self, lpath: Path, **kwargs: Any) -> None:
+        """Download model and metadata"""
+
+        load_preprocessor = kwargs.get("load_preprocessor", True)
+        load_onnx = kwargs.get("load_onnx", False)
+        lpath.mkdir(parents=True, exist_ok=True)
+        rpath = self.card.uri
+
+        # load metadaeta
+        metadata = self.load_model_metadata()
+
+        # download preprocessor
+        if load_preprocessor:
+            self._download_preprocessor(metadata, lpath)
+
+        if load_onnx:
+            self._download_onnx_model(metadata, lpath, kwargs.get("quantize", False))
+
+        else:
+            # download model
+            self._download_model(metadata, lpath)
+
+        # download metadata
+        self.download(lpath, rpath, SaveName.MODEL_METADATA.value, Suffix.JSON.value)
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
