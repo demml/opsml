@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import uuid
 from pathlib import Path
 from typing import cast
@@ -84,6 +85,20 @@ def test_save_huggingface_modelcard_api_client(
     loaded_card.load_onnx_model(load_quantized=True)
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        path = Path(tempdir)
+        modelcard.download_model(path=path, load_preprocessor=True)
+
+        assert Path(path, SaveName.TRAINED_MODEL.value).exists()
+        assert Path(path, SaveName.TOKENIZER.value).exists()
+        assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
+
+        modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True)
+        assert (path / SaveName.ONNX_MODEL.value).exists()
+
+        modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True, quantize=True)
+        assert (path / SaveName.QUANTIZED_MODEL.value).exists()
 
 
 def test_save_sklearn_modelcard_api_client(
@@ -234,6 +249,16 @@ def test_save_lgb_sklearn_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        path = Path(tempdir)
+        modelcard.download_model(path=path, load_preprocessor=True)
+        assert (path / SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value).exists()
+        assert (path / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
+        assert (path / SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value).exists()
+
+        modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True)
+        assert (path / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value).exists()
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
