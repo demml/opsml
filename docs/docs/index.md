@@ -39,43 +39,11 @@ After using various open-source and vendor tooling to manage different aspects o
 
 Add quality control to your ML projects with little effort! With `opsml`, data and models are represented as `cards` and stored in a `card registry`. This allows for easy versioning, tracking and storage of ML artifacts. 
 
-```mermaid
-flowchart LR
-  subgraph Client
-    user(fa:fa-user DS) -->|create| data(fa:fa-table Data)
-    data -->|create|model(fa:fa-brain Model)
-    data -->|package in|datacard(DataCard)
-    model -->|package in|modelcard(ModelCard)
-    datacard -->|associate|modelcard
-  end 
-
-  subgraph Server
-    datacard -->|insert into|datareg[(DataRegistry)]
-    modelcard -->|insert into|modelreg[(ModelRegistry)]
-  end
-
-  subgraph UI
-    vis(visualize)
-  end
-
-  user --> vis
-  modelreg -->|view in|UI
-  datareg -->|view in|UI
-
-  style Client rx:10,ry:10
-  style Server rx:10,ry:10
-  style UI rx:10,ry:10
-
-  style user fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style data fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style datacard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style modelcard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style vis fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-
-  style datareg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-  style modelreg fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-```
+<h1 align="center">
+  <br>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="550" alt="opsml logo"/>
+  <br>
+</h1>
 
 ## Our Goal
 
