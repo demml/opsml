@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import uuid
 from pathlib import Path
 from typing import cast
@@ -734,6 +735,14 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
     loader.load_onnx_model(
         onnx_args=loaded_card.interface.onnx_args,
     )
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        path = Path(tempdir)
+        modelcard.download_model(path=path, load_preprocessor=True)
+
+        assert Path(path, SaveName.TRAINED_MODEL.value).exists()
+        assert Path(path, SaveName.FEATURE_EXTRACTOR.value).exists()
+        assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
 def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
