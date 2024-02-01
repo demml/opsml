@@ -79,12 +79,25 @@ class ModelCard(ArtifactCard):
         ModelCardLoader(self).load_model(**kwargs)
 
     def download_model(self, path: Path, **kwargs: Any) -> None:
-        """Downloads model, preprocessor and sample data to interface"""
+        """Downloads model, preprocessor and metadata to path
+
+        Args:
+            path:
+                Path to download model
+
+            kwargs:
+                load_preprocessor:
+                    Whether to load preprocessor or not. Default is True
+                load_onnx:
+                    Whether to load onnx model or not. Default is False
+                quantize:
+                    Whether to quantize onnx model or not. Default is False
+        """
 
         from opsml.storage.card_loader import ModelCardLoader
 
         # set path to download model
-        kwargs["path"] = path
+        kwargs["lpath"] = path
 
         ModelCardLoader(self).download_model(**kwargs)
 
