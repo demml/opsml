@@ -45,7 +45,7 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
 
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="550" alt="opsml logo"/>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="800" alt="opsml logo"/>
   <br>
 </h1>
 
