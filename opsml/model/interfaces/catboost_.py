@@ -164,6 +164,7 @@ try:
             if path is None:
                 return self._convert_to_onnx_inplace()
 
+            assert self.model is not None, "No model detected in interface"
             self.model.save_model(
                 path.as_posix(),
                 format="onnx",
@@ -185,6 +186,8 @@ try:
 
             else:
                 self.onnx_model.sess_to_path(path)
+
+            assert self.onnx_model is not None, "No onnx model detected in interface"
 
             # no need to save onnx to bytes since its done during onnx conversion
             return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))

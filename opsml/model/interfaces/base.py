@@ -71,6 +71,10 @@ class ModelInterface(BaseModel):
         if model_args.get("modelcard_uid", False):
             return model_args
 
+        sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
+        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+
         return model_args
 
     @field_validator("modelcard_uid", mode="before")

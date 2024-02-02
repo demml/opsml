@@ -395,6 +395,7 @@ try:
                 self.convert_to_onnx(**{"path": path})
                 model_saved = True
 
+            assert self.onnx_model is not None, "No onnx model detected in interface"
             if self.is_pipeline:
                 if not model_saved:
                     self.onnx_model.sess.model.save_pretrained(path.with_suffix(""))

@@ -136,7 +136,7 @@ class DataCard(ArtifactCard):
         assert isinstance(
             self.interface, DataInterface
         ), "Data profile can only be created for a DataInterface subclasses"
-        self.interface.create_data_profile(sample_perc, self.name)
+        self.interface.create_data_profile(sample_perc, str(self.name))
 
     def split_data(self) -> Dict[str, Data]:
         """Splits data interface according to data split logic"""

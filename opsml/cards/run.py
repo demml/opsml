@@ -348,8 +348,8 @@ class RunCard(ArtifactCard):
         return Path(
             config.storage_root,
             RegistryTableNames.from_str(self.card_type).value,
-            self.repository,
-            self.name,
+            str(self.repository),
+            str(self.name),
             end_path,
         )
 
