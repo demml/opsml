@@ -16,8 +16,8 @@ from opsml.types import AllowedDataType
 
 @dataclass
 class Data:
-    X: Union[pl.DataFrame, pd.DataFrame, pa.Table, NDArray[Any]]
-    y: Optional[Union[pl.DataFrame, pd.DataFrame, pa.Table, NDArray[Any]]] = None
+    X: Any
+    y: Optional[Any] = None
 
 
 class DataSplit(BaseModel):
