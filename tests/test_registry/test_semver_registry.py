@@ -7,7 +7,7 @@ from opsml.registry import CardRegistries
 from opsml.registry.registry import CardRegistry
 
 
-def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
+def test_version_tags(sql_data: SqlData, db_registries: CardRegistries) -> None:
     registry: CardRegistry = db_registries.data
 
     kwargs = {
@@ -69,7 +69,7 @@ def test_version_tags(sql_data: SqlData, db_registries: CardRegistries):
     assert card.version == "1.0.0+git.1a5d783h3784"
 
 
-def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegistries):
+def test_build_tag_official_version(sql_data: SqlData, db_registries: CardRegistries) -> None:
     # create data card
     registry: CardRegistry = db_registries.data
 

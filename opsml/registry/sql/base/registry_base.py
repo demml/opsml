@@ -14,6 +14,7 @@ from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
+from opsml.types.extra import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
 
@@ -127,7 +128,7 @@ class SQLRegistryBase:
                         raise VersionError(f"Version combination already exists. {version.version}")
 
     def _validate_pre_build_version(self, version: Optional[str] = None) -> CardVersion:
-        if version is None:
+        if version == CommonKwargs.BASE_VERSION.value:
             raise ValueError("Cannot set pre-release or build tag without a version")
         card_version = CardVersion(version=version)
 
@@ -161,7 +162,10 @@ class SQLRegistryBase:
             card_version = self._validate_pre_build_version(version=card.version)
 
         # if DS specifies version and not release candidate
-        if card.version is not None and version_type not in [VersionType.PRE, VersionType.PRE_BUILD]:
+        if card.version != CommonKwargs.BASE_VERSION.value and version_type not in [
+            VersionType.PRE,
+            VersionType.PRE_BUILD,
+        ]:
             # build tags are allowed with "official" versions
             if version_type == VersionType.BUILD:
                 # check whether DS-supplied version has a build tag already

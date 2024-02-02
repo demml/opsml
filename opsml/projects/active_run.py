@@ -14,7 +14,15 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
 from opsml.storage import client
-from opsml.types import ArtifactUris, CardInfo, CardType, Metrics, Params, SaveName
+from opsml.types import (
+    ArtifactUris,
+    CardInfo,
+    CardType,
+    CommonKwargs,
+    Metrics,
+    Params,
+    SaveName,
+)
 
 logger = ArtifactLogger.get_logger()
 
@@ -141,7 +149,7 @@ class ActiveRun:
         )
 
         tag_key = f"{card.card_type}:{card.name}"
-        self.add_tag(key=tag_key, value=str(card.version))
+        self.add_tag(key=tag_key, value=card.version)
 
         # add uid to RunCard
         self.runcard.add_card_uid(card_type=card.card_type, uid=str(card.uid))
@@ -264,7 +272,7 @@ class ActiveRun:
 
         self._verify_active()
 
-        if self.runcard.uid is not None and self.runcard.version is not None:
+        if self.runcard.uid is not None and self.runcard.version != CommonKwargs.BASE_VERSION.value:
             CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
             CardHandler.register_card(registries=self._info.registries, card=self.runcard)

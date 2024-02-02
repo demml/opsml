@@ -37,7 +37,7 @@ WINDOWS_EXCLUDE = sys.platform == "win32"
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
-def test_debug(test_app: TestClient):
+def test_debug(test_app: TestClient) -> None:
     """Test debug path"""
 
     response = test_app.get("/opsml/debug")
@@ -47,7 +47,7 @@ def test_debug(test_app: TestClient):
     assert response.status_code == 200
 
 
-def test_error(test_app: TestClient):
+def test_error(test_app: TestClient) -> None:
     """Test error path"""
 
     response = test_app.get("/opsml/error")
@@ -57,7 +57,7 @@ def test_error(test_app: TestClient):
 
 def test_register_data(
     api_registries: CardRegistries, api_storage_client: client.StorageClient, pandas_data: PandasData
-):
+) -> None:
     # create data card
     registry = api_registries.data
     datacard = DataCard(
@@ -86,15 +86,20 @@ def test_register_data(
     assert "test-df" in names
 
     info = list_repository_name_info(registry=registry, repository="mlops")
+    assert info.repositories is not None
     assert "mlops" in info.repositories
+
+    assert info.names is not None
     assert "test-df" in info.names
 
     info = list_repository_name_info(registry=registry)
+    assert info.repositories is not None
     assert "mlops" in info.repositories
+    assert info.names is not None
     assert "test-df" in info.names
 
 
-def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyData):
+def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyData) -> None:
     # create data card
     registry = api_registries.data
 
@@ -131,7 +136,7 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     assert data_card.version == "3.2.0"
 
 
-def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyData):
+def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyData) -> None:
     # create data card
     registry = api_registries.data
 
@@ -189,7 +194,7 @@ def test_run_card(
     linear_regression: Tuple[SklearnModel, NumpyData],
     api_registries: CardRegistries,
     api_storage_client: client.StorageClient,
-):
+) -> None:
     registry = api_registries.run
     model, data = linear_regression
 
@@ -207,8 +212,8 @@ def test_run_card(
     # Load the card and verify artifacts / metrics
     loaded_card: RunCard = registry.load_card(uid=run.uid)
     assert loaded_card.uid == run.uid
-    assert loaded_card.get_metric("test_metric").value == 10
-    assert loaded_card.get_metric("test_metric2").value == 20
+    assert loaded_card.get_metric("test_metric").value == 10  # type: ignore
+    assert loaded_card.get_metric("test_metric2").value == 20  # type: ignore
     loaded_card.load_artifacts()
 
 
@@ -216,7 +221,7 @@ def test_register_model_data(
     api_registries: CardRegistries,
     populate_model_data_for_api: Tuple[ModelCard, DataCard],
     api_storage_client: client.StorageClient,
-):
+) -> None:
     model_registry = api_registries.model
     data_registry = api_registries.data
     modelcard, datacard = populate_model_data_for_api
@@ -259,12 +264,12 @@ def test_register_model_data(
     loaded_data.version = "1.2.0"
     data_registry.update_card(card=loaded_data)
 
-    record = data_registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
+    record = data_registry.query_value_from_card(uid=str(loaded_data.uid), columns=["version", "timestamp"])
     assert record["version"] == "1.2.0"
 
     # test assertion error
     with pytest.raises(ValueError):
-        DataCard(
+        DataCard(  # type: ignore
             name=datacard.name,
             repository=datacard.repository,
             contact=datacard.contact,
@@ -272,7 +277,7 @@ def test_register_model_data(
         )
 
 
-def test_pipeline_registry(api_registries: CardRegistry):
+def test_pipeline_registry(api_registries: CardRegistry) -> None:
     pipeline_card = PipelineCard(
         name="test_df",
         repository="mlops",
@@ -299,7 +304,7 @@ def test_pipeline_registry(api_registries: CardRegistry):
 def test_metadata_download_and_registration(
     test_app: TestClient,
     populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
-):
+) -> None:
     model_card, _, _ = populate_model_data_for_route
 
     response = test_app.post(
@@ -427,7 +432,7 @@ def test_metadata_download_and_registration(
     assert response.status_code == 200
 
 
-def test_download_model_metadata_failure(test_app: TestClient):
+def test_download_model_metadata_failure(test_app: TestClient) -> None:
     response = test_app.post(url=f"opsml/{ApiRoutes.MODEL_METADATA}", json={"name": "pip"})
 
     # should fail
@@ -435,7 +440,7 @@ def test_download_model_metadata_failure(test_app: TestClient):
     assert response.json()["detail"] == "Model not found"
 
 
-def test_app_with_login(test_app_login: TestClient):
+def test_app_with_login(test_app_login: TestClient) -> None:
     """Test healthcheck with login"""
 
     response = test_app_login.get(
@@ -474,7 +479,7 @@ def test_model_metrics(
 def test_token_fail(
     monkeypatch: pytest.MonkeyPatch,
     api_registries: CardRegistries,
-):
+) -> None:
     monkeypatch.setattr(config, "app_env", "production")
     monkeypatch.setattr(config, "opsml_prod_token", "fail")
     run = RunCard(
@@ -491,7 +496,7 @@ def test_token_fail(
         api_registries.run.register_card(card=run)
 
 
-def test_delete_fail(test_app: TestClient):
+def test_delete_fail(test_app: TestClient) -> None:
     response = test_app.get("/opsml/files/delete", params={"path": "opsml-root:/OPSML_DATA_REGISTRY/notthere"})
 
     assert response.status_code == 200
@@ -502,7 +507,7 @@ def test_delete_fail(test_app: TestClient):
     assert response.status_code == 500
 
 
-def test_card_create_fail(test_app: TestClient):
+def test_card_create_fail(test_app: TestClient) -> None:
     """Test error path"""
 
     response = test_app.post(
@@ -514,7 +519,7 @@ def test_card_create_fail(test_app: TestClient):
     assert response.status_code == 500
 
 
-def test_card_update_fail(test_app: TestClient):
+def test_card_update_fail(test_app: TestClient) -> None:
     """Test error path"""
 
     response = test_app.post(
@@ -526,7 +531,7 @@ def test_card_update_fail(test_app: TestClient):
     assert response.status_code == 500
 
 
-def test_card_list_fail(test_app: TestClient):
+def test_card_list_fail(test_app: TestClient) -> None:
     """Test error path"""
 
     response = test_app.post(
@@ -539,7 +544,7 @@ def test_card_list_fail(test_app: TestClient):
 
 
 ##### Test ui routes
-def test_homepage(test_app: TestClient):
+def test_homepage(test_app: TestClient) -> None:
     """Test settings"""
 
     response = test_app.get("/opsml")
@@ -547,7 +552,7 @@ def test_homepage(test_app: TestClient):
 
 
 ##### Test list models
-def test_model_list(test_app: TestClient):
+def test_model_list(test_app: TestClient) -> None:
     """Test settings"""
 
     response = test_app.get("/opsml/models/list/")
@@ -555,7 +560,7 @@ def test_model_list(test_app: TestClient):
 
 
 ##### Test list models
-def test_data_list(test_app: TestClient):
+def test_data_list(test_app: TestClient) -> None:
     """Test settings"""
     response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
@@ -565,7 +570,7 @@ def test_data_list(test_app: TestClient):
 def test_data_model_version(
     test_app: TestClient,
     populate_run: Tuple[DataCard, ModelCard, ActiveRun],
-):
+) -> None:
     """Test data routes"""
 
     datacard, modelcard, run = populate_run
@@ -616,7 +621,7 @@ def test_data_model_version(
 
 
 ##### Test audit
-def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]):
+def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]) -> None:
 
     modelcard, datacard, auditcard = populate_model_data_for_route
 
@@ -708,7 +713,7 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
     assert response.status_code == 200
 
 
-def test_error_wrapper():
+def test_error_wrapper() -> None:
     @error_to_500
     async def fail(request):
         raise ValueError("Fail")
@@ -716,7 +721,7 @@ def test_error_wrapper():
     fail("fail")
 
 
-def test_registry_name_fail(test_app: TestClient):
+def test_registry_name_fail(test_app: TestClient) -> None:
     response = test_app.get(
         "/opsml/registry/table",
         params={"registry_type": "blah"},
@@ -725,7 +730,7 @@ def test_registry_name_fail(test_app: TestClient):
     assert response.status_code == 500
 
 
-def test_upload_fail(test_app: TestClient):
+def test_upload_fail(test_app: TestClient) -> None:
     headers = {
         "Filename": "blah:",
         "WritePath": "fake",
@@ -742,7 +747,7 @@ def test_upload_fail(test_app: TestClient):
     assert response.status_code == 422
 
 
-def test_download_fail(test_app: TestClient):
+def test_download_fail(test_app: TestClient) -> None:
     # test register model (onnx)
     response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?read_path=fake")
     assert response.status_code == 422

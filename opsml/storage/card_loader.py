@@ -7,7 +7,7 @@ import tempfile
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, Union, cast
+from typing import Any, Dict, Iterator, Optional, Type, Union, cast
 from venv import logger
 
 import joblib
@@ -195,7 +195,7 @@ class CardLoader:
             rpath = rpath or self.card.uri
             yield self.download(lpath, rpath, object_path, suffix)
 
-    def load_card(self, interface: Optional[Union[DataInterface, ModelInterface]] = None) -> ArtifactCard:
+    def load_card(self, interface: Optional[Union[Type[DataInterface], Type[ModelInterface]]] = None) -> ArtifactCard:
         """Loads an ArtifactCard from card arguments
 
         Returns:
