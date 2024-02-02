@@ -261,7 +261,7 @@ class AuditFormParser:
 
         self.registries.audit.register_card(card=audit_card)
 
-        self._add_auditcard_to_modelcard(auditcard_uid=audit_card.uid)
+        self._add_auditcard_to_modelcard(auditcard_uid=cast(str, audit_card.uid))
 
         return None
 

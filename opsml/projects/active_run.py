@@ -105,7 +105,7 @@ class ActiveRun:
         """
         self.runcard.add_tag(key=key, value=value)
 
-    def add_tags(self, tags: Dict[str, Union[str, Optional[str]]]) -> None:
+    def add_tags(self, tags: Dict[str, Union[str, float, int]]) -> None:
         """
         Adds a tag to the current run
 

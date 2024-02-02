@@ -104,8 +104,9 @@ To get started using `OpsML`, check out the [installation](installation.md) and 
 | CatBoost        | `CatBoostModel`          | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                
 | Torch           | `TorchModel`             | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py)             |                        
 | Torch Lightning | `LightningModel`         | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
-| TensorFlow      | `TensorFlowModel`        | [link](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py)           | 
-| HuggingFace     | `HuggingFaceModel`       | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)          |
+| TensorFlow      | `TensorFlowModel`        | [link](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py)          | 
+| HuggingFace     | `HuggingFaceModel`       | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)         |
+| VowpalWabbit    | `VowpalWabbitModel``     | [link](https://github.com/shipt/opsml/blob/main/examples/vowpal/vowpal_example.py)          |
 
 ## Contributing
 If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/shipt/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
