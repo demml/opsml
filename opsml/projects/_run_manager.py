@@ -58,7 +58,7 @@ class _RunManager:
         return self.run_id[:7]
 
     @property
-    def base_tags(self) -> Dict[str, Union[str, Optional[str], int]]:
+    def base_tags(self) -> Dict[str, Union[str, float, int]]:
         return {
             Tags.NAME.value: self._project_info.name,
             Tags.ID.value: self.project_id,

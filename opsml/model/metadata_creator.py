@@ -44,12 +44,21 @@ class _ModelMetadataCreator:
 
 class _TrainedModelMetadataCreator(_ModelMetadataCreator):
     def _get_input_schema(self) -> Dict[str, Feature]:
-        model_data = get_model_data(
-            data_type=self.interface.data_type,
-            input_data=self.interface.sample_data,
-        )
+        try:
+            model_data = get_model_data(
+                data_type=self.interface.data_type,
+                input_data=self.interface.sample_data,
+            )
 
-        return model_data.feature_dict
+            return model_data.feature_dict
+        except Exception as error:
+            logger.error(
+                """Failed to determine input type. This is expected for custom subclasses or unsupported data types. 
+                Defaulting to placeholder. {}""",
+                error,
+            )
+
+            return {"placeholder": Feature(feature_type="str", shape=[1])}
 
     def _get_output_schema(self) -> Dict[str, Feature]:
         try:
