@@ -16,7 +16,7 @@ from opsml.types import SaveName
 def test_delete_data_model(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
-):
+) -> None:
     # create data card
     data_registry: CardRegistry = db_registries.data
     model, data = sklearn_pipeline
@@ -71,7 +71,7 @@ def test_delete_data_model(
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-def test_delete_runcard(db_registries: CardRegistries):
+def test_delete_runcard(db_registries: CardRegistries) -> None:
     registry = db_registries.run
     run = RunCard(
         name="test_run",
@@ -81,8 +81,8 @@ def test_delete_runcard(db_registries: CardRegistries):
     )
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
-    assert run.get_metric("test_metric").value == 10
-    assert run.get_metric("test_metric2").value == 20
+    assert run.get_metric("test_metric").value == 10  # type: ignore
+    assert run.get_metric("test_metric2").value == 20  # type: ignore
 
     registry.register_card(card=run)
     assert Path(run.uri, SaveName.CARD.value).with_suffix(".joblib").exists()
@@ -99,7 +99,7 @@ def test_delete_data_model_api(
     api_storage_client: client.StorageClientBase,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
     api_registries: CardRegistries,
-):
+) -> None:
     # create data card
     data_registry: CardRegistry = api_registries.data
     model, data = sklearn_pipeline

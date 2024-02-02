@@ -15,7 +15,7 @@ from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
-from opsml.types import RegistryType
+from opsml.types import CommonKwargs, RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -162,7 +162,7 @@ class CardRegistry:
         version: Optional[str] = None,
         info: Optional[CardInfo] = None,
         ignore_release_candidates: bool = False,
-        interface: Optional[Union[ModelInterface, DataInterface]] = None,
+        interface: Optional[Union[Type[ModelInterface], Type[DataInterface]]] = None,
     ) -> ArtifactCard:
         """Loads a specific card
 
@@ -239,7 +239,7 @@ class CardRegistry:
 
         _version_type = version_type if isinstance(version_type, VersionType) else VersionType.from_str(version_type)
 
-        if card.uid is not None and card.version is not None:
+        if card.uid is not None and card.version != CommonKwargs.BASE_VERSION.value:
             logger.info(
                 textwrap.dedent(
                     f"""

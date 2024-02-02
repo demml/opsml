@@ -56,6 +56,7 @@ class CommonKwargs(str, Enum):
     IMAGE = "image"
     TEXT = "text"
     VOWPAL_ARGS = "arguments"
+    BASE_VERSION = "0.0.0"
 
 
 @unique
