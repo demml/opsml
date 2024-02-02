@@ -129,7 +129,7 @@ class _RunManager:
         active_run = self._create_active_opsml_run(run_name)
 
         # don't need to add tags to already registered card
-        if active_run.runcard.version is None:
+        if active_run.runcard.version != CommonKwargs.BASE_VERSION.value:
             active_run.add_tags(tags=self.base_tags)
 
         logger.info("starting run: {}", self.run_hash)
