@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string, validate_name_repository_pattern
 from opsml.settings.config import config
-from opsml.types import CardInfo, RegistryTableNames
+from opsml.types import CardInfo, CommonKwargs, RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -27,7 +27,7 @@ class ArtifactCard(BaseModel):
     name: Optional[str] = None
     repository: Optional[str] = None
     contact: Optional[str] = None
-    version: Optional[str] = None
+    version: str = CommonKwargs.BASE_VERSION.value
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
     tags: Dict[str, str] = {}
@@ -44,7 +44,6 @@ class ArtifactCard(BaseModel):
         Returns:
             validated card_args
         """
-
         card_info = card_args.get("info")
 
         for key in ["name", "repository", "contact", "version", "uid"]:
@@ -62,6 +61,9 @@ class ArtifactCard(BaseModel):
             if key in ["name", "repository"]:
                 if val is not None:
                     val = clean_string(val)
+
+            if key == "version" and val is None:
+                val = CommonKwargs.BASE_VERSION.value
 
             card_args[key] = val
 
