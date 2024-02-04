@@ -7,7 +7,7 @@ from opsml.types import CardInfo, Comment, RegistryType
 card_info = CardInfo(name="test", repository="opsml", contact="opsml@email.com")
 
 
-def test_artifact_card_with_args():
+def test_artifact_card_with_args() -> None:
     card = ArtifactCard(
         name=card_info.name,
         repository=card_info.repository,
@@ -19,14 +19,14 @@ def test_artifact_card_with_args():
     assert card.contact == card_info.contact
 
 
-def test_artifact_card_without_args():
+def test_artifact_card_without_args() -> None:
     card = ArtifactCard(info=card_info)
     assert card.name == card_info.name
     assert card.repository == card_info.repository
     assert card.contact == card_info.contact
 
 
-def test_artifact_card_with_both():
+def test_artifact_card_with_both() -> None:
     card = ArtifactCard(name="override_name", info=card_info)
 
     assert card.name == "override-name"  # string cleaning
@@ -34,7 +34,7 @@ def test_artifact_card_with_both():
     assert card.contact == card_info.contact
 
 
-def test_artifact_card_name_repository_fail():
+def test_artifact_card_name_repository_fail() -> None:
     card_info = CardInfo(
         name="i_am_longer_than_53_characters",
         repository="repository_i_am_longer_than_53_characters",
@@ -57,19 +57,19 @@ def test_artifact_card_name_repository_fail():
         )
 
 
-def test_registry_type():
+def test_registry_type() -> None:
     for i in ["data", "model", "run", "pipeline", "audit", "project"]:
         assert RegistryType.from_str(i) == RegistryType(i)
 
 
-def test_comment():
+def test_comment() -> None:
     comment1 = Comment(name="foo", comment="bar")
     comment2 = Comment(name="foo", comment="bar")
 
     assert comment1.__eq__(comment2)
 
 
-def test_argument_fail():
+def test_argument_fail() -> None:
     card_info = CardInfo(
         name="name",
         repository="repository",
