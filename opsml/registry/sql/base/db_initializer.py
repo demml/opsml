@@ -32,7 +32,9 @@ class DBInitializer:
     def create_tables(self) -> None:
         """Creates tables"""
         logger.info("Creating database tables")
-        Base.metadata.create_all(self.engine)
+
+        tables = [Base.metadata.tables[table] for table in self.registry_tables]
+        Base.metadata.create_all(self.engine, checkfirst=True, tables=tables)
 
     def update_tables(self) -> None:
         """Updates tables in db based on alembic revisions"""
