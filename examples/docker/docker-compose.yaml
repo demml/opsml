@@ -1,0 +1,30 @@
+version: '3.5'
+services:
+  webserver:
+    container_name: opsml-api-service
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        GOOGLE_ACCOUNT_JSON_BASE64: ${GOOGLE_ACCOUNT_JSON_BASE64}
+        OPSML_STORAGE_URI: ${OPSML_STORAGE_URI}
+        OPSML_TRACKING_URI: sqlite:///tmp.db
+        APP_ENV: "development"
+
+    ports:
+      - "8000:8000"
+    #environment:
+    #  APP_ENV: "development"
+    #  GOOGLE_ACCOUNT_JSON_BASE64: ${GOOGLE_ACCOUNT_JSON_BASE64}
+    #  OPSML_STORAGE_URI: ${OPSML_STORAGE_URI}
+    #  OPSML_TRACKING_URI: sqlite:///tmp.db
+    #  APP_ENV: "development"
+
+    command: >
+      gunicorn 
+      -k uvicorn.workers.UvicornWorker 
+      --workers=4 
+      --bind=0.0.0.0:8000 
+      "opsml.app.main:run_app()"
