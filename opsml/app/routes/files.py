@@ -31,10 +31,10 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
 )
 from opsml.helpers.logging import ArtifactLogger
+from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
 
 logger = ArtifactLogger.get_logger()
-CHUNK_SIZE = 31457280
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
@@ -119,7 +119,7 @@ def download_file(request: Request, path: str) -> StreamingResponse:
         return StreamingResponse(
             storage_client.iterfile(
                 Path(swap_opsml_root(request, Path(path))),
-                CHUNK_SIZE,
+                config.download_chunk_size,
             ),
             media_type="application/octet-stream",
         )
@@ -166,7 +166,7 @@ def download_dir(request: Request, path: Path) -> StreamingResponse:
 
             logger.info("Server: Sending zip file for {}", path)
             return StreamingResponse(
-                storage_client.iterbuffer(zip_io, CHUNK_SIZE),
+                storage_client.iterbuffer(zip_io, config.download_chunk_size),
                 media_type="application/x-zip-compressed",
             )
 
