@@ -24,7 +24,6 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-CHUNK_SIZE = 31457280
 data_route_helper = DataRouteHelper()
 router = APIRouter()
 

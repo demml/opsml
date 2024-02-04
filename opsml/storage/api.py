@@ -112,14 +112,18 @@ class ApiClient:
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
-        self, route: str, files: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, Any]] = None
+        self,
+        route: str,
+        files: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        chunk_size: Optional[int] = None,
     ) -> Dict[str, Any]:
         result = ""
 
         with self.client.stream(
             method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
         ) as response:
-            for data in response.iter_bytes():
+            for data in response.iter_bytes(chunk_size=chunk_size):
                 result += data.decode("utf-8")
 
         response_result = cast(Dict[str, Any], py_json.loads(result))
@@ -136,7 +140,7 @@ class ApiClient:
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_download_file_request(
-        self, route: str, local_dir: Path, filename: str, read_dir: Path
+        self, route: str, local_dir: Path, filename: str, read_dir: Path, chunk_size: Optional[int] = None
     ) -> Dict[str, Any]:
         local_dir.mkdir(parents=True, exist_ok=True)  # for subdirs that may be in path
         read_path = read_dir / filename
@@ -146,7 +150,7 @@ class ApiClient:
             with self.client.stream(
                 method="GET", url=f"{self._base_url}/{route}", params={"path": read_path.as_posix()}
             ) as response:
-                for data in response.iter_bytes():
+                for data in response.iter_bytes(chunk_size=chunk_size):
                     local_file.write(data)
 
         if response.status_code == 200:

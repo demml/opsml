@@ -228,6 +228,7 @@ class ApiStorageClient(StorageClientBase):
                 local_dir=_lpath.parent,
                 read_dir=_rpath.parent,
                 filename=_rpath.name,
+                chunk_size=config.download_chunk_size,
             )
 
     def find(self, path: Path) -> List[Path]:
@@ -253,6 +254,7 @@ class ApiStorageClient(StorageClientBase):
             route=ApiRoutes.UPLOAD_FILE,
             files={"file": lpath.open("rb")},
             headers={"write_path": rpath.as_posix()},
+            chunk_size=config.upload_chunk_size,
         )
         storage_uri: Optional[str] = response.get("storage_uri")
 
