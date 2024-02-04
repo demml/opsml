@@ -143,13 +143,15 @@ class RunCard(ArtifactCard):
         """
 
         TypeChecker.check_param_type(param=value)
+        _key = TypeChecker.replace_spaces(key)
+
         param = Param(name=key, value=value)
 
-        if self.parameters.get(key) is not None:
-            self.parameters[key].append(param)
+        if self.parameters.get(_key) is not None:
+            self.parameters[_key].append(param)
 
         else:
-            self.parameters[key] = [param]
+            self.parameters[_key] = [param]
 
     def log_metric(
         self,
@@ -173,12 +175,14 @@ class RunCard(ArtifactCard):
         """
 
         TypeChecker.check_metric_type(metric=value)
-        metric = Metric(name=key, value=value, timestamp=timestamp, step=step)
+        _key = TypeChecker.replace_spaces(key)
 
-        if self.metrics.get(key) is not None:
-            self.metrics[key].append(metric)
+        metric = Metric(name=_key, value=value, timestamp=timestamp, step=step)
+
+        if self.metrics.get(_key) is not None:
+            self.metrics[_key].append(metric)
         else:
-            self.metrics[key] = [metric]
+            self.metrics[_key] = [metric]
 
     def log_metrics(self, metrics: Dict[str, Union[float, int]], step: Optional[int] = None) -> None:
         """
@@ -278,7 +282,8 @@ class RunCard(ArtifactCard):
             List of dictionaries or dictionary containing value
 
         """
-        metric = self.metrics.get(name)
+        _key = TypeChecker.replace_spaces(name)
+        metric = self.metrics.get(_key)
         if metric is not None:
             if len(metric) > 1:
                 return metric
@@ -300,7 +305,8 @@ class RunCard(ArtifactCard):
             List of dictionaries or dictionary containing value
 
         """
-        param = self.parameters.get(name)
+        _key = TypeChecker.replace_spaces(name)
+        param = self.parameters.get(_key)
         if param is not None:
             if len(param) > 1:
                 return param
@@ -337,7 +343,7 @@ class RunCard(ArtifactCard):
         """The base URI to use for the card and it's artifacts."""
 
         # when using runcard outside of run context
-        if self.version is None:
+        if self.version == CommonKwargs.BASE_VERSION.value:
             if self.uid is None:
                 self.uid = uuid.uuid4().hex
 
