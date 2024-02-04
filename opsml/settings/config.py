@@ -22,6 +22,8 @@ class OpsmlConfig(BaseSettings):
     opsml_proxy_root: str = "opsml-root:/"
     opsml_registry_path: str = "model_registry"
     opsml_testing: bool = bool(0)
+    download_chunk_size: int = 31457280  # 30MB
+    upload_chunk_size: int = 31457280  # 30MB
 
     # API client username / password
     opsml_username: Optional[str] = None
