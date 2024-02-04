@@ -73,7 +73,9 @@ def validate_name_repository_pattern(name: str, repository: str) -> None:
     pattern_match = bool(re.match(NAME_REPOSITORY_PATTERN, name_repository))
 
     if not pattern_match:
-        raise ValueError(f"Name and Repository failed to match the required pattern. Pattern: {NAME_REPOSITORY_PATTERN}")
+        raise ValueError(
+            f"Name and Repository failed to match the required pattern. Pattern: {NAME_REPOSITORY_PATTERN}"
+        )
 
     if len(name_repository) > 53:
         raise ValueError("Name and Repository combination must be 53 characters or less")
