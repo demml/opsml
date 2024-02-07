@@ -94,6 +94,10 @@ class TypeChecker:
             return param
         raise ValueError("Param is not of valid type (int, float, str)")
 
+    @staticmethod
+    def replace_spaces(key: str) -> str:
+        return key.replace(" ", "_")
+
 
 class FileUtils:
     """Helper class for finding paths to artifacts"""

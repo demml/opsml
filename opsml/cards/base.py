@@ -24,9 +24,9 @@ class ArtifactCard(BaseModel):
         validate_default=True,
     )
 
-    name: Optional[str] = None
-    repository: Optional[str] = None
-    contact: Optional[str] = None
+    name: str = CommonKwargs.UNDEFINED.value
+    repository: str = CommonKwargs.UNDEFINED.value
+    contact: str = CommonKwargs.UNDEFINED.value
     version: str = CommonKwargs.BASE_VERSION.value
     uid: Optional[str] = None
     info: Optional[CardInfo] = None
@@ -86,7 +86,7 @@ class ArtifactCard(BaseModel):
     @property
     def uri(self) -> Path:
         """The base URI to use for the card and it's artifacts."""
-        if self.version is None:
+        if self.version == CommonKwargs.BASE_VERSION.value:
             raise ValueError("Could not create card uri - version is not set")
 
         assert self.repository is not None, "Repository must be set"
