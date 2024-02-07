@@ -114,6 +114,7 @@ def download_file(request: Request, path: str) -> StreamingResponse:
     Returns:
         Streaming file response
     """
+    logger.info("Server: Downloading file {}", path)
     storage_client: StorageClientBase = request.app.state.storage_client
     try:
         return StreamingResponse(
@@ -125,6 +126,7 @@ def download_file(request: Request, path: str) -> StreamingResponse:
         )
 
     except Exception as error:
+        logger.error("Server: Error downloading file {}", path)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error downloading the file. {error}",
