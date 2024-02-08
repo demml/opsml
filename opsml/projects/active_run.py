@@ -267,6 +267,18 @@ class ActiveRun:
         self._verify_active()
         self.runcard.log_parameter(key=key, value=value)
 
+    def log_parameters(self, parameters: Dict[str, Union[float, int, str]]) -> None:
+        """
+        Logs a collection of parameters for a run
+
+        Args:
+            parameters:
+                Dictionary of parameters
+        """
+
+        self._verify_active()
+        self.runcard.log_parameters(parameters=parameters)
+
     def create_or_update_runcard(self) -> None:
         """Creates or updates an active RunCard"""
 

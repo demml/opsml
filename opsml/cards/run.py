@@ -98,7 +98,7 @@ class RunCard(ArtifactCard):
 
     def add_tag(self, key: str, value: str) -> None:
         """
-        Logs params to current RunCard
+        Logs tags to current RunCard
 
         Args:
             key:
@@ -110,7 +110,7 @@ class RunCard(ArtifactCard):
 
     def add_tags(self, tags: Dict[str, str]) -> None:
         """
-        Logs params to current RunCard
+        Logs tags to current RunCard
 
         Args:
             tags:
@@ -118,22 +118,22 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_parameters(self, params: Dict[str, Union[float, int, str]]) -> None:
+    def log_parameters(self, parameters: Dict[str, Union[float, int, str]]) -> None:
         """
-        Logs params to current RunCard
+        Logs parameters to current RunCard
 
         Args:
-            params:
+            tags:
                 Dictionary of parameters
         """
 
-        for key, value in params.items():
+        for key, value in parameters.items():
             # check key
             self.log_parameter(key, value)
 
     def log_parameter(self, key: str, value: Union[int, float, str]) -> None:
         """
-        Logs params to current RunCard
+        Logs parameter to current RunCard
 
         Args:
             key:
@@ -233,7 +233,7 @@ class RunCard(ArtifactCard):
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record from the current RunCard"""
 
-        exclude_attr = {"params", "metrics"}
+        exclude_attr = {"parameters", "metrics"}
 
         return self.model_dump(exclude=exclude_attr)
 
