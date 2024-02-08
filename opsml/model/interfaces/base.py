@@ -89,7 +89,7 @@ class ModelInterface(BaseModel):
             return modelcard_uid
 
         except ValueError as exc:
-            raise ValueError("Datacard uid is not a valid uuid") from exc
+            raise ValueError("ModelCard uid is not a valid uuid") from exc
 
     def save_model(self, path: Path) -> None:
         """Saves model to path. Base implementation use Joblib
