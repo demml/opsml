@@ -5,10 +5,22 @@ import os
 from pathlib import Path
 from typing import List
 
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import inspect
-from sqlalchemy.engine.base import Engine
+try:
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import inspect
+    from sqlalchemy.engine.base import Engine
+except ModuleNotFoundError as err:
+    from rich.console import Console
+
+    console = Console()
+    console.print(
+        """Server packages not found. If using Opsml as a client, make sure to set OPSML_TRACKING_URI with
+        the http uri of your server. If you wish to use Opsml as a server, install the server packages by running: opsml[server]
+        """,
+        style="bold red",
+    )
+    raise err
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.sql_schema import Base
