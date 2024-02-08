@@ -5,10 +5,15 @@ import os
 from pathlib import Path
 from typing import List
 
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import inspect
-from sqlalchemy.engine.base import Engine
+try:
+    from alembic import command
+    from alembic.config import Config
+    from sqlalchemy import inspect
+    from sqlalchemy.engine.base import Engine
+except ModuleNotFoundError as err:
+    from opsml.helpers.utils import startup_import_error_message
+
+    startup_import_error_message(err)
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.sql_schema import Base

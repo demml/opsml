@@ -258,6 +258,20 @@ def delete_card(
         )
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         registry._registry.delete_card_record(card=payload.card)
+
+        # check that deletion was successful
+        uid_exists = check_uid(
+            request=request,
+            payload=UidExistsRequest(
+                uid=payload.card.get("uid"),
+                table_name=payload.table_name,
+                registry_type=payload.registry_type,
+            ),
+        ).uid_exists
+
+        if uid_exists:
+            return DeleteCardResponse(deleted=False)
+
         logger.info("Deleted card: {}", payload.model_dump())
 
         return DeleteCardResponse(deleted=True)

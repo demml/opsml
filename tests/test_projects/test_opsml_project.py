@@ -137,6 +137,7 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
         run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
+        run.log_parameters(parameters={"foo": "bar", "bar": "foo"})
         info.run_id = run.run_id
         assert run.run_name == "test"
 
@@ -160,9 +161,16 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert len(read_project.metrics) == 2
     assert read_project.get_metric("m1").value == 1.1
     assert read_project.get_metric("m2").value == 1.2
-    assert len(read_project.parameters) == 2
+    assert len(read_project.parameters) == 4
     assert read_project.get_parameter("m1").value == "apple"
     assert read_project.get_parameter("m2").value == "banana"
+    assert read_project.get_parameter("foo").value == "bar"
+    assert read_project.get_parameter("bar").value == "foo"
+    runcard = read_project.run_card
+
+    assert runcard.uid == info.run_id
+    assert runcard.repository == info.repository
+    assert runcard.contact == info.contact
 
 
 def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:

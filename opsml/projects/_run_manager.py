@@ -104,7 +104,7 @@ class _RunManager:
         return RunCard(
             name=run_name or self.run_id[:7],  # use short run_id if no name
             repository=self._project_info.repository,
-            contact=CommonKwargs.UNDEFINED.value,
+            contact=self._project_info.contact,
             uid=self.run_id,
             project=self._project_info.name,
         )
@@ -176,7 +176,7 @@ class _RunManager:
             return int(projects[0]["project_id"])
 
         # get nbr of unique projects
-        cards = self.registries.project.list_cards()
+        cards = self.registries.project.list_cards(limit=1000)
 
         if cards:
             max_project = max(card["project_id"] for card in cards)
@@ -186,7 +186,7 @@ class _RunManager:
         card = ProjectCard(
             name=self._project_info.name,
             repository=self._project_info.repository,
-            contact="",
+            contact=self._project_info.contact,
             project_id=max_project + 1,
         )
         self.registries.project.register_card(card=card)
