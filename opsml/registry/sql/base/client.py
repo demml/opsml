@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 import pandas as pd
 
 from opsml.cards import ArtifactCard, ModelCard
+from opsml.helpers.exceptions import CardDeleteError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists
 from opsml.registry.semver import CardVersion, VersionType
@@ -213,7 +214,7 @@ class ClientRegistry(SQLRegistryBase):
 
         if bool(data.get("deleted")):
             return card, "deleted"
-        raise ValueError("Failed to delete card")
+        raise CardDeleteError("Failed to delete card")
 
 
 class ClientDataCardRegistry(ClientRegistry):

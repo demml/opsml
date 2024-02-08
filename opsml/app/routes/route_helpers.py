@@ -534,7 +534,7 @@ class ProjectRouteHelper(RouteHelper):
                 The project registry.
         """
 
-        projects = project_registry.list_cards()
+        projects = project_registry.list_cards(limit=1000)
 
         return sorted(list(set(project["name"] for project in projects)))
 

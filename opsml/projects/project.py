@@ -20,11 +20,11 @@ logger = ArtifactLogger.get_logger()
 class OpsmlProject:
     def __init__(self, info: ProjectInfo):
         """
-        Instantiates a project which creates cards, metrics and params to
+        Instantiates a project which creates cards, metrics and parameters to
         the opsml registry via a "run" object.
 
         If info.run_id is set, that run_id will be loaded as read only. In read
-        only mode, you can retrieve cards, metrics, and params, however you
+        only mode, you can retrieve cards, metrics, and parameters, however you
         cannot write new data. If you wish to record data/create a new run, you will
         need to enter the run context.
 
@@ -41,13 +41,13 @@ class OpsmlProject:
                 )
             )
             # the project is in "read only" mode. all read operations will work
-            for k, v in project.params:
+            for k, v in project.parameters:
                 logger.info("{} = {}", k, v)
 
             # creating a project run
             with project.run() as run:
                 # Now that the run context is entered, it's in read/write mode
-                # You can write cards, params, and metrics to the project.
+                # You can write cards, parameters, and metrics to the project.
                 run.log_parameter(key="my_param", value="12.34")
 
         Args:

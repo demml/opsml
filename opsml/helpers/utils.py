@@ -297,3 +297,21 @@ def get_class_name(object_: object) -> str:
     if module == "builtins":
         return klass.__qualname__  # avoid outputs like 'builtins.str'
     return module + "." + klass.__qualname__
+
+
+def startup_import_error_message(err: Exception) -> None:
+    """Helper function to print error message when server packages are not found."""
+
+    from rich.console import Console
+
+    console = Console()
+    console.print(
+        (
+            "Server packages not found. If using Opsml as a client, "
+            "make sure to set OPSML_TRACKING_URI with the http uri of your server. "
+            "If you wish to use Opsml as a server, install the server packages by running:"
+            "[bold green] poetry add opsml\[server] [/bold green]"  # pylint: disable=anomalous-backslash-in-string
+        ),
+        style="bold red",
+    )
+    raise SystemExit(err)
