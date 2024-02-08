@@ -123,7 +123,7 @@ class RunCard(ArtifactCard):
         Logs parameters to current RunCard
 
         Args:
-            tags:
+            parameters:
                 Dictionary of parameters
         """
 
