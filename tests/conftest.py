@@ -1394,11 +1394,12 @@ def huggingface_whisper() -> Tuple[HuggingFaceModel, TorchData]:
     # come up with some dummy test data to fake out training.
     data = torch.Tensor(joblib.load("tests/assets/whisper-data.joblib"))
 
-    return HuggingFaceModel(
+    yield HuggingFaceModel(
         model=model,
         sample_data=data,
         task_type=HuggingFaceTask.TEXT_GENERATION.value,
     ), TorchData(data=data)
+    cleanup()
 
 
 @pytest.fixture(scope="module")
@@ -1409,11 +1410,13 @@ def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
     model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
-    return HuggingFaceModel(
+    yield HuggingFaceModel(
         model=model,
         sample_data=inputs,
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
     ), TorchData(data=inputs["input_ids"])
+    cleanup()
+    
 
 
 @pytest.fixture(scope="module")

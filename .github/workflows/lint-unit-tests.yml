@@ -59,7 +59,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run : make setup.project
-      - run : make test.unit
+      - run : |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          make test.unit
 
 
   Unit-Test-310-Coverage:
@@ -85,7 +89,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run : make setup.project
-      - run : make test.unit
+      - run : |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          make test.unit
 
       - name: Store coverage files
         uses: actions/upload-artifact@v3
