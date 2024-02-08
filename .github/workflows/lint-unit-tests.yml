@@ -190,7 +190,7 @@ jobs:
             OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
 
   MySql-Unit:
-    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-310-Coverage]
+    needs: [Unit-Test-Ubuntu,Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-310-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
