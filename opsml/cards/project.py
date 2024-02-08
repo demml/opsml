@@ -8,8 +8,6 @@
 #
 from typing import Any, Dict, List, Optional  # noqa # pylint: disable=unused-import
 
-from pydantic import model_validator
-
 from opsml.cards.base import ArtifactCard
 from opsml.types import CardType
 
@@ -20,15 +18,6 @@ class ProjectCard(ArtifactCard):
     """
 
     project_id: int
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_args(cls, card_args: Dict[str, Any]) -> Dict[str, Any]:
-        # add default
-        card_args["contact"] = ""
-        card_args["repository"] = ""
-
-        return card_args
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record for a project"""
