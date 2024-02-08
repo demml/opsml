@@ -7,3 +7,7 @@ class MoreThanOnePathException(Exception):
 
 class VersionError(ValueError):
     """Invalid version"""
+
+
+class CardDeleteError(Exception):
+    """Card deletion failed"""

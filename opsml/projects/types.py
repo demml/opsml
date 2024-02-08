@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 from opsml.settings.config import config
+from opsml.types.extra import CommonKwargs
 
 
 class Tags(str, Enum):
@@ -27,6 +28,12 @@ class ProjectInfo(BaseModel):
     repository: str = Field(
         default="opsml",
         description="Optional repository to associate with the project. If not provided, defaults to opsml",
+        min_length=1,
+    )
+
+    contact: Optional[str] = Field(
+        default=CommonKwargs.UNDEFINED.value,
+        description="Optional contact information for the project",
         min_length=1,
     )
 

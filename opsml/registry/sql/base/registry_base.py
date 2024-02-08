@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from semver import VersionInfo
 
 from opsml.cards.base import ArtifactCard
-from opsml.helpers.exceptions import VersionError
+from opsml.helpers.exceptions import CardDeleteError, VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.records import SaveRecord, registry_name_record_map
 from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
@@ -294,5 +294,10 @@ class SQLRegistryBase:
 
     def delete_card(self, card: ArtifactCard) -> None:
         """Delete a specific card"""
-        self.storage_client.rm(card.uri)
-        self.delete_card_record(card=card.model_dump(include={"uid", "name", "version"}))
+
+        try:
+            # delete card record before storage artifacts (there will be loading issues if objects are deleted but not the record)
+            self.delete_card_record(card=card.model_dump(include={"uid", "name", "version"}))
+            self.storage_client.rm(card.uri)
+        except CardDeleteError as err:
+            raise CardDeleteError(f"Failed to delete card {card.name} from registry {self.table_name}") from err

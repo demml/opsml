@@ -166,6 +166,11 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_parameter("m2").value == "banana"
     assert read_project.get_parameter("foo").value == "bar"
     assert read_project.get_parameter("bar").value == "foo"
+    runcard = read_project.run_card
+
+    assert runcard.uid == info.run_id
+    assert runcard.repository == info.repository
+    assert runcard.contact == info.contact
 
 
 def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
