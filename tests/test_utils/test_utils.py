@@ -151,3 +151,12 @@ def test_gcp_creds(gcp_cred_path: str):
 def test_import_exception():
     with pytest.raises(ModuleNotFoundError):
         utils.try_import("fail", "fail", "fail")
+
+
+def test_startup_error():
+    err = ModuleNotFoundError("test")
+
+    with pytest.raises(SystemExit) as ve:
+        utils.startup_import_error_message(err)
+
+    assert ve.match("test")
