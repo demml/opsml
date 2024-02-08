@@ -56,9 +56,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run : |
-            sudo swapoff -a
-            sudo rm -f /swapfile
-            sudo apt clean
+            rm -rf /opt/hostedtoolcache/CodeQL
+            rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+            rm -rf /opt/hostedtoolcache/Ruby
+            rm -rf /opt/hostedtoolcache/go
+            rm -rf /opt/hostedtoolcache/node
             make setup.project
             make test.unit
 
@@ -111,8 +113,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run : |
-          sudo swapoff -a
-          sudo rm -f /swapfile
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
           sudo apt clean
           make setup.project
           make test.unit
