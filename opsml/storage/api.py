@@ -1,8 +1,8 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
 import json as py_json
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
@@ -120,9 +120,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
-        with self.client.stream(
-            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes(chunk_size=chunk_size):
                 result += data.decode("utf-8")
 
