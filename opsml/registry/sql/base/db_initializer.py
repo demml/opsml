@@ -15,12 +15,15 @@ except ModuleNotFoundError as err:
 
     console = Console()
     console.print(
-        """Server packages not found. If using Opsml as a client, make sure to set OPSML_TRACKING_URI with
-        the http uri of your server. If you wish to use Opsml as a server, install the server packages by running: opsml[server]
-        """,
+        (
+            "Server packages not found. If using Opsml as a client, "
+            "make sure to set OPSML_TRACKING_URI with the http uri of your server. "
+            "If you wish to use Opsml as a server, install the server packages by running: opsml[server]"
+            f"Error: {err.message}"
+        ),
         style="bold red",
     )
-    raise err
+    raise
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.sql_schema import Base
