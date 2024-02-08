@@ -82,7 +82,7 @@ __all__ = [
     "Metric",
     "Metrics",
     "Param",
-    "Params",
+    "Parameters",
     "PipelineCardArgs",
     "RegistryType",
     "RunCardArgs",
