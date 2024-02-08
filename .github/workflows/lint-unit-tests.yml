@@ -84,8 +84,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run : make setup.project
-      - run : make test.unit
+      - run : |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          make setup.project
+          make test.unit
 
       - name: Store coverage files
         uses: actions/upload-artifact@v3

@@ -439,6 +439,15 @@ def test_modelcard_register_no_datacard(
 
     model_registry.register_card(card=model_card)
 
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    loaded_card.load_model()
+    loaded_card.add_tag("test", "hello")
+    model_registry.update_card(card=loaded_card)
+
+    # try loading card again
+    loaded_card = model_registry.load_card(uid=model_card.uid)
+    assert loaded_card.tags == {"test": "hello"}
+
 
 def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
     data_name = "test_df"
