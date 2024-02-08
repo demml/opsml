@@ -59,11 +59,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run : make setup.project
-      - run : |
-          sudo swapoff -a
-          sudo rm -f /swapfile
-          sudo apt clean
-          make test.unit
+      - run : make test.unit
 
 
   Unit-Test-310-Coverage:
@@ -88,11 +84,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run : make setup.project
       - run : |
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
+          make setup.project
           make test.unit
 
       - name: Store coverage files

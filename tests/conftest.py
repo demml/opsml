@@ -1416,7 +1416,6 @@ def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
         task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
     ), TorchData(data=inputs["input_ids"])
     cleanup()
-    
 
 
 @pytest.fixture(scope="module")
