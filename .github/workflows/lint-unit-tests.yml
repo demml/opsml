@@ -33,16 +33,42 @@ jobs:
       - run : make setup.project
       - run : make lints.ci
 
-  Unit-Test:
+  Unit-Test-Ubuntu:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - run : |
+            sudo swapoff -a
+            sudo rm -f /swapfile
+            sudo apt clean
+            make setup.project
+            make test.unit
+
+  Unit-Test-MacOS:
     needs: Lints
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
         poetry-version: ["1.7.1"]
-        os: [ubuntu, macos]
-        exclude: # ubuntu 3.11 is used for coverage tests
-          - os: ubuntu
-            python-version: 3.10
+        os: [macos]
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -120,7 +146,7 @@ jobs:
       - run : make test.unit
 
   Postgres-Unit:
-    needs: [Unit-Test, Unit-Test-Windows, Unit-Test-310-Coverage]
+    needs: [Unit-Test-Ubuntu,Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-310-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
