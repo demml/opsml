@@ -47,6 +47,12 @@ class ProjectInfo(BaseModel):
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
     )
 
+    project_id: Optional[int] = Field(
+        default=None,
+        description="Optional project identifier. This is injected at runtime",
+        min_length=1,
+    )
+
     @field_validator("name", mode="before")
     def identifier_validator(cls, value: Optional[str]) -> Optional[str]:
         """Lowers and strips an identifier.

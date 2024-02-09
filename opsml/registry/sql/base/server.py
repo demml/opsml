@@ -16,7 +16,7 @@ from opsml.registry.semver import (
     VersionType,
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.sql.base.query_engine import ProjectQueryEngine, get_query_engine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.sql_schema import SQLTableGetter
 from opsml.registry.sql.base.utils import log_card_change
@@ -42,7 +42,7 @@ class ServerRegistry(SQLRegistryBase):
         )
         db_initializer.initialize()
 
-        self.engine = QueryEngine(db_initializer.engine)
+        self.engine = get_query_engine(db_engine=db_initializer.engine, registry_type=registry_type)
         self._table = SQLTableGetter.get_table(table_name=self.table_name)
 
     @property
@@ -346,6 +346,37 @@ class ServerProjectCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
+
+    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+        """get project id from project name and repository
+
+        Args:
+            project_name:
+                project name
+            repository:
+                repository name
+
+        Returns:
+            project id
+
+        """
+        assert isinstance(self.engine, ProjectQueryEngine)
+
+        return self.engine.get_project_id(
+            project_name=project_name,
+            repository=repository,
+        )
+
+    def get_max_project_id(self) -> int:
+        """get max project id
+
+        Returns:
+            max project id
+
+        """
+        assert isinstance(self.engine, ProjectQueryEngine)
+
+        return self.engine.get_max_project_id()
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")

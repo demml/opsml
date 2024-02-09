@@ -1,8 +1,9 @@
+import logging
 import os
 import tempfile
 import warnings
 from pathlib import Path
-from typing import Any, Iterator, Tuple
+from typing import Any, Generator, Tuple, TypeVar
 
 warnings.filterwarnings("ignore")
 
@@ -121,10 +122,16 @@ from opsml.types import (
     OnnxModel,
 )
 
+# httpx outputs a lot of logs
+logging.getLogger("httpx").propagate = False
+
 fourteen_days_ago = datetime.datetime.fromtimestamp(time.time()) - datetime.timedelta(days=14)
 FOURTEEN_DAYS_TS = int(round(fourteen_days_ago.timestamp() * 1_000_000))
 FOURTEEN_DAYS_STR = datetime.datetime.fromtimestamp(FOURTEEN_DAYS_TS / 1_000_000).strftime("%Y-%m-%d")
 TODAY_YMD = datetime.date.today().strftime("%Y-%m-%d")
+
+T = TypeVar("T")
+YieldFixture = Generator[T, None, None]
 
 
 def cleanup() -> None:
@@ -192,7 +199,7 @@ def mock_gcp_creds(mock_gcp_vars):
 
 
 @pytest.fixture
-def local_storage_client() -> Iterator[client.LocalStorageClient]:
+def local_storage_client() -> YieldFixture[client.LocalStorageClient]:
     cleanup()
     yield client.get_storage_client(
         OpsmlConfig(
@@ -219,7 +226,7 @@ def mock_gcsfs():
 
 
 @pytest.fixture(scope="module")
-def test_app() -> Iterator[TestClient]:
+def test_app() -> YieldFixture[TestClient]:
     cleanup()
     from opsml.app.main import OpsmlApp
 
@@ -230,7 +237,7 @@ def test_app() -> Iterator[TestClient]:
 
 
 @pytest.fixture(scope="module")
-def test_app_login() -> Iterator[TestClient]:
+def test_app_login() -> YieldFixture[TestClient]:
     cleanup()
     from opsml.app.main import OpsmlApp
 
@@ -269,7 +276,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
 
 @pytest.fixture
-def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Iterator[CardRegistries]:
+def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> YieldFixture[CardRegistries]:
     """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
     previous_client = client.storage_client
     yield mock_registries(monkeypatch, test_app)
@@ -277,7 +284,7 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Ite
 
 
 @pytest.fixture
-def db_registries() -> CardRegistries:
+def db_registries() -> YieldFixture[CardRegistries]:
     """Returns CardRegistries configured with a local client."""
     cleanup()
 
@@ -649,7 +656,7 @@ def pytorch_onnx_byo_bytes() -> TorchModel:
 
 
 @pytest.fixture
-def pytorch_onnx_byo_file() -> TorchModel:
+def pytorch_onnx_byo_file() -> YieldFixture[TorchModel]:
     import onnxruntime as ort
 
     # Super Resolution model definition in PyTorch
@@ -736,7 +743,7 @@ def pytorch_onnx_byo_file() -> TorchModel:
 
 
 @pytest.fixture(scope="session")
-def tf_transformer_example() -> TensorFlowModel:
+def tf_transformer_example() -> YieldFixture[TensorFlowModel]:
     import tensorflow as tf
 
     loaded_model = tf.keras.models.load_model("tests/assets/transformer_example")
@@ -898,7 +905,7 @@ def xgb_df_regressor(example_dataframe) -> XGBoostModel:
 
 
 @pytest.fixture
-def catboost_regressor(example_dataframe) -> CatBoostModel:
+def catboost_regressor(example_dataframe) -> YieldFixture[CatBoostModel]:
     X_train, y_train, X_test, y_test = example_dataframe
 
     reg = CatBoostRegressor(n_estimators=5, max_depth=3)
@@ -913,7 +920,7 @@ def catboost_regressor(example_dataframe) -> CatBoostModel:
 
 
 @pytest.fixture
-def catboost_classifier(example_dataframe) -> CatBoostModel:
+def catboost_classifier(example_dataframe) -> YieldFixture[CatBoostModel]:
     X_train, y_train, X_test, y_test = example_dataframe
 
     reg = CatBoostClassifier(n_estimators=5, max_depth=3)
@@ -924,7 +931,7 @@ def catboost_classifier(example_dataframe) -> CatBoostModel:
 
 
 @pytest.fixture
-def catboost_ranker() -> CatBoostModel:
+def catboost_ranker() -> YieldFixture[CatBoostModel]:
     from catboost.datasets import msrank_10k
 
     train_df, _ = msrank_10k()
@@ -954,7 +961,7 @@ def catboost_ranker() -> CatBoostModel:
 
 
 @pytest.fixture
-def vowpal_wabbit_cb() -> VowpalWabbitModel:
+def vowpal_wabbit_cb() -> YieldFixture[VowpalWabbitModel]:
     import vowpalwabbit
 
     train_data = [
@@ -1385,7 +1392,7 @@ def random_forest_api_example():
 
 
 @pytest.fixture(scope="module")
-def huggingface_whisper() -> Tuple[HuggingFaceModel, TorchData]:
+def huggingface_whisper() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]:
     import transformers
 
     model = transformers.WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny")
@@ -1403,7 +1410,7 @@ def huggingface_whisper() -> Tuple[HuggingFaceModel, TorchData]:
 
 
 @pytest.fixture(scope="module")
-def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
+def huggingface_openai_gpt() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]:
     from transformers import OpenAIGPTLMHeadModel, OpenAIGPTTokenizer
 
     tokenizer = OpenAIGPTTokenizer.from_pretrained("openai-gpt")
@@ -1419,7 +1426,7 @@ def huggingface_openai_gpt() -> Tuple[HuggingFaceModel, TorchData]:
 
 
 @pytest.fixture(scope="module")
-def huggingface_bart() -> HuggingFaceModel:
+def huggingface_bart() -> YieldFixture[HuggingFaceModel]:
     from transformers import BartModel, BartTokenizer
 
     tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
@@ -1462,7 +1469,7 @@ def huggingface_text_classification_pipeline():
 
 
 @pytest.fixture(scope="module")
-def huggingface_tf_distilbert() -> HuggingFaceModel:
+def huggingface_tf_distilbert() -> YieldFixture[HuggingFaceModel]:
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import AutoTokenizer, TFDistilBertForSequenceClassification
 
@@ -1487,7 +1494,7 @@ def huggingface_tf_distilbert() -> HuggingFaceModel:
 
 
 @pytest.fixture(scope="module")
-def huggingface_torch_distilbert() -> HuggingFaceModel:
+def huggingface_torch_distilbert() -> YieldFixture[HuggingFaceModel]:
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import AutoTokenizer, DistilBertForSequenceClassification
 
@@ -1512,7 +1519,7 @@ def huggingface_torch_distilbert() -> HuggingFaceModel:
 
 
 @pytest.fixture(scope="module")
-def huggingface_pipeline() -> HuggingFaceModel:
+def huggingface_pipeline() -> YieldFixture[HuggingFaceModel]:
     from optimum.onnxruntime.configuration import AutoQuantizationConfig
     from transformers import pipeline
 
@@ -1534,7 +1541,7 @@ def huggingface_pipeline() -> HuggingFaceModel:
 
 
 @pytest.fixture(scope="module")
-def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
+def huggingface_vit() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]:
     from PIL import Image
     from transformers import ViTFeatureExtractor, ViTForImageClassification
 
@@ -1561,7 +1568,7 @@ def huggingface_vit() -> Tuple[HuggingFaceModel, TorchData]:
 
 
 @pytest.fixture(scope="module")
-def huggingface_vit_pipeline() -> Tuple[HuggingFaceModel, TorchData]:
+def huggingface_vit_pipeline() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]:
     from PIL import Image
     from transformers import ViTFeatureExtractor, ViTForImageClassification
 
@@ -2385,7 +2392,7 @@ def lightning_regression():
 
 
 @pytest.fixture(scope="function")
-def create_image_dataset() -> Path:
+def create_image_dataset() -> YieldFixture[Path]:
     # create images
     records = []
     write_path = f"tests/assets/{uuid.uuid4().hex}"
@@ -2407,7 +2414,7 @@ def create_image_dataset() -> Path:
 
 
 @pytest.fixture(scope="function")
-def create_split_image_dataset() -> Path:
+def create_split_image_dataset() -> YieldFixture[Path]:
     # create images
     records = []
     write_path = f"tests/assets/{uuid.uuid4().hex}"
@@ -2430,7 +2437,7 @@ def create_split_image_dataset() -> Path:
 
 
 @pytest.fixture(scope="function")
-def create_text_dataset() -> Path:
+def create_text_dataset() -> YieldFixture[Path]:
     # create text files
     records = []
     write_path = f"tests/assets/{uuid.uuid4().hex}"
@@ -2451,7 +2458,7 @@ def create_text_dataset() -> Path:
 
 
 @pytest.fixture(scope="function")
-def create_split_text_dataset() -> Path:
+def create_split_text_dataset() -> YieldFixture[Path]:
     # create text files
     records = []
     write_path = f"tests/assets/{uuid.uuid4().hex}"

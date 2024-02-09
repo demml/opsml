@@ -19,7 +19,12 @@ from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.semver import get_version_to_search
-from opsml.registry.sql.base.sql_schema import CardSQLTable, SQLTableGetter
+from opsml.registry.sql.base.sql_schema import (
+    CardSQLTable,
+    ProjectSchema,
+    SQLTableGetter,
+)
+from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -432,3 +437,64 @@ class QueryEngine:
             query = sess.query(table).filter(table.uid == record_uid)
             query.delete()
             sess.commit()
+
+
+class ProjectQueryEngine(QueryEngine):
+    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+        """Get project id from project name and repository
+
+        Args:
+            project_name:
+                Name of the project
+            repository:
+                Repository name
+
+        Returns:
+            Project id or None
+        """
+        query = (
+            select(ProjectSchema.project_id)
+            .filter(ProjectSchema.name == project_name)
+            .filter(ProjectSchema.repository == repository)
+        )
+        with self.session() as sess:
+            project_id = sess.execute(query).first()
+
+            if project_id:
+                return cast(int, project_id[0])
+            return None
+
+    def get_max_project_id(self) -> int:
+        """Get max project id
+
+        Returns:
+            Max project id or 0
+        """
+        query = select(sqa_func.max(ProjectSchema.project_id))
+        with self.session() as sess:
+            result = sess.execute(query).first()
+            if not result:
+                return 0
+
+            max_project = result[0]
+
+            if max_project:
+                return cast(int, max_project)
+            return 0
+
+
+def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
+    """Get query engine based on registry type
+
+    Args:
+        db_engine:
+            Database engine
+        registry_type:
+            Registry type
+    Returns:
+        Query engine
+    """
+    # this allows us to eventually expand into custom registry logic if we need to
+    if registry_type == RegistryType.PROJECT:
+        return ProjectQueryEngine(engine=db_engine)
+    return QueryEngine(engine=db_engine)

@@ -328,6 +328,46 @@ class ClientProjectCardRegistry(ClientRegistry):
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
 
+    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+        """get project id from project name and repository
+
+        Args:
+            project_name:
+                project name
+            repository:
+                repository name
+
+        Returns:
+            project id
+        """
+
+        data = self._session.get_request(
+            route=api_routes.PROJECT_ID,
+            params={
+                "project_name": project_name,
+                "repository": repository,
+            },
+        )
+
+        return data.get("project_id")
+
+    def get_max_project_id(self) -> int:
+        """get max project id
+
+        Returns:
+            max project id
+        """
+
+        data = self._session.get_request(
+            route=api_routes.MAX_PROJECT_ID,
+        )
+
+        project_id = data.get("project_id")
+
+        # max should never be none
+        assert project_id is not None
+        return cast(int, project_id)
+
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")
 

@@ -2,6 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pylint: disable=protected-access
+
 from pathlib import Path
 from typing import Optional
 
@@ -9,9 +11,11 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from opsml.app.routes.pydantic_models import ProjectIdResponse
 from opsml.app.routes.route_helpers import ProjectRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.base.server import ServerProjectCardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -64,3 +68,48 @@ async def project_metric_page(
     """
 
     return project_route_helper.get_run_metrics(request=request, run_uid=run_uid)
+
+
+@router.get("/projects/id", response_model=ProjectIdResponse, name="project_id")
+def project_id(
+    request: Request,
+    project_name: str,
+    repository: str,
+) -> ProjectIdResponse:
+    """Get all repositories associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+        project_name:
+            Name of the project
+        repository:
+            Name of the repository
+
+    Returns:
+        `RepositoriesResponse`
+    """
+
+    registry: ServerProjectCardRegistry = request.app.state.registries.project._registry
+
+    return ProjectIdResponse(
+        project_id=registry.get_project_id(
+            project_name=project_name,
+            repository=repository,
+        )
+    )
+
+
+@router.get("/projects/max_id", response_model=ProjectIdResponse, name="project_id")
+def max_project_id(request: Request) -> ProjectIdResponse:
+    """Get all repositories associated with a registry
+
+    Args:
+        request:
+            FastAPI request object
+
+    Returns:
+        `RepositoriesResponse`
+    """
+    registry: ServerProjectCardRegistry = request.app.state.registries.project._registry
+    return ProjectIdResponse(project_id=registry.get_max_project_id())
