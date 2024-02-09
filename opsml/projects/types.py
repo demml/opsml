@@ -23,18 +23,21 @@ class ProjectInfo(BaseModel):
         default=...,
         description="The project name",
         min_length=1,
+        frozen=True,
     )
 
     repository: str = Field(
         default="opsml",
         description="Optional repository to associate with the project. If not provided, defaults to opsml",
         min_length=1,
+        frozen=True,
     )
 
     contact: Optional[str] = Field(
         default=CommonKwargs.UNDEFINED.value,
         description="Optional contact information for the project",
         min_length=1,
+        frozen=True,
     )
 
     run_id: Optional[str] = Field(
