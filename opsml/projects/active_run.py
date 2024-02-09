@@ -49,7 +49,7 @@ class CardHandler:
     def register_card(
         registries: CardRegistries,
         card: ArtifactCard,
-        version_type: VersionType = VersionType.MINOR,
+        version_type: Union[VersionType, str] = VersionType.MINOR,
     ) -> None:
         """Registers and ArtifactCard"""
 
@@ -125,7 +125,11 @@ class ActiveRun:
         for key, value in tags.items():
             self.add_tag(key=key, value=cast(str, value))
 
-    def register_card(self, card: ArtifactCard, version_type: VersionType = VersionType.MINOR) -> None:
+    def register_card(
+        self,
+        card: ArtifactCard,
+        version_type: Union[VersionType, str] = VersionType.MINOR,
+    ) -> None:
         """
         Register a given artifact card.
 
