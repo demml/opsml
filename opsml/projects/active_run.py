@@ -4,7 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
+
+from numpy.typing import NDArray
 
 from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
@@ -282,6 +284,66 @@ class ActiveRun:
 
         self._verify_active()
         self.runcard.log_parameters(parameters=parameters)
+
+    def log_graph(
+        self,
+        name: str,
+        x: Union[List[Union[float, int]], NDArray[Any]],
+        y: Union[List[Union[float, int]], NDArray[Any]],
+        x_label: str = "x",
+        y_label: str = "y",
+    ) -> None:
+        """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
+
+        Args:
+            name:
+                Name of graph
+            x:
+                List or numpy array of x values
+            x_label:
+                Label for x axis
+            y:
+                List or numpy array of y values
+            y_label:
+                Label for y axis
+
+        """
+        self.runcard.log_graph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+
+    def log_multiline_graph(
+        self,
+        name: str,
+        x: Union[List[Union[float, int]], NDArray[Any]],
+        y: Union[List[List[Union[float, int]]], NDArray[Any]],
+        group_labels: List[str],
+        x_label: str = "x",
+        y_label: str = "y",
+    ) -> None:
+        """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
+
+        Args:
+            name:
+                Name of graph
+            x:
+                List or numpy array of x values
+            y:
+                List or lists or numpy of 2 dimensional array of y values
+            group_labels:
+                List of group names
+            x_label:
+                Label for x axis
+            y_label:
+                Label for y axis
+
+        """
+        self.runcard.log_multiline_graph(
+            name=name,
+            x=x,
+            y=y,
+            x_label=x_label,
+            y_label=y_label,
+            group_labels=group_labels,
+        )
 
     def create_or_update_runcard(self) -> None:
         """Creates or updates an active RunCard"""
