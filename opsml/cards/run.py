@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from numpy.typing import NDArray
 from pydantic import model_validator
 
 from opsml.cards.base import ArtifactCard
@@ -23,10 +24,13 @@ from opsml.types import (
     Param,
     Params,
     RegistryTableNames,
+    RunGraph,
     SaveName,
 )
 
 logger = ArtifactLogger.get_logger()
+
+GraphType = Union[List[Union[float, int]], NDArray[Any]]
 
 
 class RunCard(ArtifactCard):
@@ -76,6 +80,7 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: Metrics = {}
     parameters: Params = {}
+    graphs: List[RunGraph] = []
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
     project: Optional[str] = None
@@ -117,6 +122,49 @@ class RunCard(ArtifactCard):
                 Dictionary of tags
         """
         self.tags = {**tags, **self.tags}
+
+    def log_graph(self, name: str, x: GraphType, x_label: str, y: GraphType, y_label: str) -> None:
+        """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
+
+        Args:
+            name:
+                Name of graph
+            x:
+                List or numpy array of x values
+            x_label:
+                Label for x axis
+            y:
+                List or numpy array of y values
+            y_label:
+                Label for y axis
+
+        """
+
+        if isinstance(x, list):
+            length = len(x)
+            assert length == len(y), "x and y must be the same length"
+
+        elif isinstance(x, NDArray):
+            length = x.shape[0]
+            assert length == y.shape[0], "x and y must be the same length"
+            x = x.flatten().tolist()
+            y = y.flatten().tolist()
+
+        else:
+            raise ValueError("x must be a list or numpy array")
+
+        # To increase render performance, anything >200 points will be downsampled by step
+        if length > 200:
+            step = round(length / 200)
+            x = x[::step]
+            y = y[::step]
+
+        assert isinstance(x, list), "x must be a list"
+        assert isinstance(y, list), "y must be a list"
+
+        graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+
+        self.graphs.append(graph)
 
     def log_parameters(self, parameters: Dict[str, Union[float, int, str]]) -> None:
         """

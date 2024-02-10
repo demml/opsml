@@ -15,6 +15,7 @@ from opsml.types.card import (
     PipelineCardArgs,
     RegistryType,
     RunCardArgs,
+    RunGraph,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
