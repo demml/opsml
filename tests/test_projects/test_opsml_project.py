@@ -1,6 +1,7 @@
 import os
 from typing import Tuple, cast
 
+import numpy as np
 import pytest
 
 from opsml.cards import AuditCard, CardInfo, DataCard, ModelCard
@@ -50,6 +51,14 @@ def test_opsml_read_only(
             contact="mlops.com",
         )
         run.register_card(card=data_card, version_type="major")
+
+        # test saving run graph
+        run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6])
+        run.log_graph(name="graph2", x=np.ndarray((1, 300)), y=np.ndarray((1, 300)))
+        run.log_multiline_graph(name="graph1-multi", x=[1, 2, 3], y=[[4, 5, 6], [4, 5, 6]], group_labels=["a", "b"])
+        run.log_multiline_graph(
+            name="graph1-multi2", x=np.ndarray((1, 300)), y=np.ndarray((2, 300)), group_labels=["a", "b"]
+        )
 
         model_card = ModelCard(
             interface=model,

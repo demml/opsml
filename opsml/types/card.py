@@ -58,6 +58,15 @@ class RunGraph(BaseModel):
     y: List[Union[float, int]]
 
 
+class RunMultiGraph(BaseModel):
+    name: str
+    x_label: str
+    y_label: str
+    x: List[Union[float, int]]
+    y: List[List[Union[float, int]]]
+    group_labels: List[str]
+
+
 class Artifact(BaseModel):
     local_path: str
     remote_path: str

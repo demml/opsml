@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 from numpy.typing import NDArray
 from pydantic import model_validator
 
@@ -25,6 +26,7 @@ from opsml.types import (
     Params,
     RegistryTableNames,
     RunGraph,
+    RunMultiGraph,
     SaveName,
 )
 
@@ -80,7 +82,7 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: Metrics = {}
     parameters: Params = {}
-    graphs: List[RunGraph] = []
+    graphs: List[Union[RunGraph, RunMultiGraph]] = []
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
     project: Optional[str] = None
@@ -123,7 +125,14 @@ class RunCard(ArtifactCard):
         """
         self.tags = {**tags, **self.tags}
 
-    def log_graph(self, name: str, x: GraphType, x_label: str, y: GraphType, y_label: str) -> None:
+    def log_graph(
+        self,
+        name: str,
+        x: GraphType,
+        x_label: str,
+        y: GraphType,
+        y_label: str,
+    ) -> None:
         """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
 
         Args:
@@ -134,24 +143,24 @@ class RunCard(ArtifactCard):
             x_label:
                 Label for x axis
             y:
-                List or numpy array of y values
+                (1) List or numpy array of y values
+                (2) List of lists or numpy arrays of y values if multiple lines are to be plotted for y
             y_label:
                 Label for y axis
-
+            group_labels:
+                Optional list of group labels if multiple lines are to be plotted for y.
+                This is required if y is a list
         """
 
-        if isinstance(x, list):
-            length = len(x)
-            assert length == len(y), "x and y must be the same length"
-
-        elif isinstance(x, NDArray):
-            length = x.shape[0]
-            assert length == y.shape[0], "x and y must be the same length"
+        if isinstance(x, np.ndarray):
             x = x.flatten().tolist()
             y = y.flatten().tolist()
+            length = len(x)
 
-        else:
-            raise ValueError("x must be a list or numpy array")
+        assert isinstance(x, list), "x must be a list"
+        assert isinstance(y, list), "y must be a list"
+        length = len(x)
+        assert length == len(y), "x and y must be the same length"
 
         # To increase render performance, anything >200 points will be downsampled by step
         if length > 200:
@@ -159,10 +168,53 @@ class RunCard(ArtifactCard):
             x = x[::step]
             y = y[::step]
 
+        logger.info(f"Logging graph {name} to RunCard")
+        graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+
+        self.graphs.append(graph)
+
+    def log_multiline_graph(
+        self,
+        name: str,
+        x: GraphType,
+        y: Union[List[List[Union[float, int]]], NDArray[Any]],
+        x_label: str,
+        y_label: str,
+        group_labels: List[str],
+    ) -> None:
+        """Logs a multi-line graph (one x with many y) to the RunCard, which will be rendered in the UI as a line graph
+
+        Args:
+            name:
+                Name of graph
+            x:
+                List or numpy array of x values
+            x_label:
+                Label for x axis
+            y:
+                List of lists or numpy arrays of y values
+            group:
+                List of group labels
+        """
+
+        if isinstance(x, np.ndarray):
+            x = x.flatten().tolist()
+            y = [y.flatten().tolist() for y in y]
+
         assert isinstance(x, list), "x must be a list"
         assert isinstance(y, list), "y must be a list"
+        length = len(x)
+        for y_ in y:
+            assert length == len(y_), "x and y must be the same length"
 
-        graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+        # To increase render performance, anything >200 points will be downsampled by step
+        if length > 200:
+            step = round(length / 200)
+            x = x[::step]
+            y = [y[::step] for y in y]
+
+        logger.info(f"Logging graph {name} to RunCard")
+        graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, group_labels=group_labels)
 
         self.graphs.append(graph)
 
