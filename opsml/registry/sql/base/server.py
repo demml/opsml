@@ -6,6 +6,7 @@ import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 from opsml.cards import ArtifactCard, ModelCard
+from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
 from opsml.registry.semver import (
@@ -383,7 +384,30 @@ class ServerProjectCardRegistry(ServerRegistry):
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
 
-    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+    def delete_card(self, card: ArtifactCard) -> None:
+        raise ValueError("ProjectCardRegistry does not support delete_card")
+
+    def register_card(
+        self,
+        card: ArtifactCard,
+        version_type: VersionType = VersionType.MINOR,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
+    ) -> None:
+        """Registers a ProjectCard to the registry"""
+        card = cast(ProjectCard, card)
+
+        # set project id on card even if its already registered
+        card.project_id = self.get_project_id(project_name=card.name, repository=card.repository)
+
+        # check if ProjectCard already exists
+        record = self.list_cards(name=card.name, repository=card.repository, limit=1)
+        if record:
+            return None
+
+        return super().register_card(card, version_type, pre_tag, build_tag)
+
+    def get_project_id(self, project_name: str, repository: str) -> int:
         """get project id from project name and repository
 
         Args:
@@ -402,20 +426,6 @@ class ServerProjectCardRegistry(ServerRegistry):
             project_name=project_name,
             repository=repository,
         )
-
-    def get_max_project_id(self) -> int:
-        """get max project id
-
-        Returns:
-            max project id
-
-        """
-        assert isinstance(self.engine, ProjectQueryEngine)
-
-        return self.engine.get_max_project_id()
-
-    def delete_card(self, card: ArtifactCard) -> None:
-        raise ValueError("ProjectCardRegistry does not support delete_card")
 
 
 class ServerAuditCardRegistry(ServerRegistry):

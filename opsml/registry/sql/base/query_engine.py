@@ -441,7 +441,25 @@ class QueryEngine:
 
 
 class ProjectQueryEngine(QueryEngine):
-    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+    def get_max_project_id(self) -> int:
+        """Get max project id
+
+        Returns:
+            Max project id or 0
+        """
+        query = select(sqa_func.max(ProjectSchema.project_id))
+        with self.session() as sess:
+            result = sess.execute(query).first()
+            if not result:
+                return 0
+
+            max_project = result[0]
+
+            if max_project:
+                return cast(int, max_project)
+            return 0
+
+    def get_project_id(self, project_name: str, repository: str) -> int:
         """Get project id from project name and repository
 
         Args:
@@ -462,25 +480,8 @@ class ProjectQueryEngine(QueryEngine):
 
             if project_id:
                 return cast(int, project_id[0])
-            return None
 
-    def get_max_project_id(self) -> int:
-        """Get max project id
-
-        Returns:
-            Max project id or 0
-        """
-        query = select(sqa_func.max(ProjectSchema.project_id))
-        with self.session() as sess:
-            result = sess.execute(query).first()
-            if not result:
-                return 0
-
-            max_project = result[0]
-
-            if max_project:
-                return cast(int, max_project)
-            return 0
+        return self.get_max_project_id() + 1
 
 
 class RunQueryEngine(QueryEngine):
