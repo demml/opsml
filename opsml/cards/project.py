@@ -17,7 +17,7 @@ class ProjectCard(ArtifactCard):
     Card containing project information
     """
 
-    project_id: int
+    project_id: int = 0  # placeholder
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record for a project"""

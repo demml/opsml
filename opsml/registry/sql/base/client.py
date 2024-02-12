@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 import pandas as pd
 
 from opsml.cards import ArtifactCard, ModelCard
+from opsml.cards.project import ProjectCard
 from opsml.helpers.exceptions import CardDeleteError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists
@@ -328,7 +329,27 @@ class ClientProjectCardRegistry(ClientRegistry):
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PROJECT.value
 
-    def get_project_id(self, project_name: str, repository: str) -> Optional[int]:
+    def register_card(
+        self,
+        card: ArtifactCard,
+        version_type: VersionType = VersionType.MINOR,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
+    ) -> None:
+        """Registers a ProjectCard to the registry"""
+        card = cast(ProjectCard, card)
+
+        # set project id on card even if its already registered
+        card.project_id = self.get_project_id(project_name=card.name, repository=card.repository)
+
+        # check if ProjectCard already exists
+        record = self.list_cards(name=card.name, repository=card.repository, limit=1)
+        if record:
+            return None
+
+        return super().register_card(card, version_type, pre_tag, build_tag)
+
+    def get_project_id(self, project_name: str, repository: str) -> int:
         """get project id from project name and repository
 
         Args:
@@ -349,24 +370,10 @@ class ClientProjectCardRegistry(ClientRegistry):
             },
         )
 
-        return data.get("project_id")
-
-    def get_max_project_id(self) -> int:
-        """get max project id
-
-        Returns:
-            max project id
-        """
-
-        data = self._session.get_request(
-            route=api_routes.MAX_PROJECT_ID,
-        )
-
         project_id = data.get("project_id")
 
-        # max should never be none
-        assert project_id is not None
-        return cast(int, project_id)
+        assert isinstance(project_id, int)
+        return project_id
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")
