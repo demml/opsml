@@ -285,9 +285,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -606,7 +604,10 @@ class ProjectRouteHelper(RouteHelper):
                         "project_runs": project_runs,
                     },
                 )
-            runcard = run_registry.load_card(uid=project_runs[0]["uid"])
+        runcard = run_registry.load_card(uid=project_runs[0]["uid"])
+
+        if runcard.graphs:
+            runcard.graphs = {name: graph.model_dump() for name, graph in runcard.graphs.items()}
 
         return templates.TemplateResponse(
             "include/project/projects.html",

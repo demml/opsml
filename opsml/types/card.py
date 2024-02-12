@@ -76,6 +76,7 @@ class Artifact(BaseModel):
 Metrics = Dict[str, List[Metric]]
 Params = Dict[str, List[Param]]
 ArtifactUris = Dict[str, Artifact]
+RunGraphs = Dict[str, Union[RunGraph, RunMultiGraph]]
 
 
 class Comment(BaseModel):
