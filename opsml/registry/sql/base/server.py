@@ -6,6 +6,7 @@ import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 from opsml.cards import ArtifactCard, ModelCard
+from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import check_package_exists, clean_string
 from opsml.registry.semver import (
@@ -16,7 +17,7 @@ from opsml.registry.semver import (
     VersionType,
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import QueryEngine
+from opsml.registry.sql.base.query_engine import ProjectQueryEngine, get_query_engine
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.sql_schema import SQLTableGetter
 from opsml.registry.sql.base.utils import log_card_change
@@ -42,7 +43,7 @@ class ServerRegistry(SQLRegistryBase):
         )
         db_initializer.initialize()
 
-        self.engine = QueryEngine(db_initializer.engine)
+        self.engine = get_query_engine(db_engine=db_initializer.engine, registry_type=registry_type)
         self._table = SQLTableGetter.get_table(table_name=self.table_name)
 
     @property
@@ -349,6 +350,46 @@ class ServerProjectCardRegistry(ServerRegistry):
 
     def delete_card(self, card: ArtifactCard) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")
+
+    def register_card(
+        self,
+        card: ArtifactCard,
+        version_type: VersionType = VersionType.MINOR,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
+    ) -> None:
+        """Registers a ProjectCard to the registry"""
+        card = cast(ProjectCard, card)
+
+        # set project id on card even if its already registered
+        card.project_id = self.get_project_id(project_name=card.name, repository=card.repository)
+
+        # check if ProjectCard already exists
+        record = self.list_cards(name=card.name, repository=card.repository, limit=1)
+        if record:
+            return None
+
+        return super().register_card(card, version_type, pre_tag, build_tag)
+
+    def get_project_id(self, project_name: str, repository: str) -> int:
+        """get project id from project name and repository
+
+        Args:
+            project_name:
+                project name
+            repository:
+                repository name
+
+        Returns:
+            project id
+
+        """
+        assert isinstance(self.engine, ProjectQueryEngine)
+
+        return self.engine.get_project_id(
+            project_name=project_name,
+            repository=repository,
+        )
 
 
 class ServerAuditCardRegistry(ServerRegistry):

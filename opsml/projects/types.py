@@ -23,18 +23,21 @@ class ProjectInfo(BaseModel):
         default=...,
         description="The project name",
         min_length=1,
+        frozen=True,
     )
 
     repository: str = Field(
         default="opsml",
         description="Optional repository to associate with the project. If not provided, defaults to opsml",
         min_length=1,
+        frozen=True,
     )
 
     contact: Optional[str] = Field(
         default=CommonKwargs.UNDEFINED.value,
         description="Optional contact information for the project",
         min_length=1,
+        frozen=True,
     )
 
     run_id: Optional[str] = Field(
@@ -45,6 +48,12 @@ class ProjectInfo(BaseModel):
     tracking_uri: str = Field(
         default=config.opsml_tracking_uri,
         description="Tracking URI. Defaults to OPSML_TRACKING_URI env variable",
+    )
+
+    project_id: Optional[int] = Field(
+        default=None,
+        description="Optional project identifier. This is injected at runtime",
+        min_length=1,
     )
 
     @field_validator("name", mode="before")

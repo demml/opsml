@@ -364,3 +364,7 @@ class AuditReport(BaseModel):
     audit: Optional[Dict[str, Any]] = AuditSections().model_dump()  # type: ignore
     timestamp: Optional[str] = None
     comments: List[Optional[Comment]] = []
+
+
+class ProjectIdResponse(BaseModel):
+    project_id: int

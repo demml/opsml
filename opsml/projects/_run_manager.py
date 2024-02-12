@@ -6,7 +6,7 @@
 import uuid
 from typing import Dict, Optional, Union, cast
 
-from opsml.cards import ProjectCard, RunCard
+from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import ProjectInfo, Tags
@@ -21,7 +21,7 @@ class ActiveRunException(Exception):
 
 
 class _RunManager:
-    def __init__(self, project_info: ProjectInfo):
+    def __init__(self, project_info: ProjectInfo, registries: CardRegistries):
         """
         Manages runs for a given project including storing general attributes and creating, activating and
         ending runs. Also holds storage client needed to store artifacts associated with a run.
@@ -29,11 +29,13 @@ class _RunManager:
         Args:
             project_info:
                 ProjectInfo
+            registries:
+                CardRegistries
         """
 
         self._project_info = project_info
         self.active_run: Optional[ActiveRun] = None
-        self.registries = CardRegistries()
+        self.registries = registries
 
         run_id = project_info.run_id
         if run_id is not None:
@@ -45,11 +47,10 @@ class _RunManager:
             self.run_id = None
             self._run_exists = False
 
-        self._project_id = self._get_project_id()
-
     @property
     def project_id(self) -> int:
-        return self._project_id
+        assert self._project_info.project_id is not None, "project_id should not be None"
+        return self._project_info.project_id
 
     @property
     def run_hash(self) -> str:
@@ -159,36 +160,3 @@ class _RunManager:
         self.active_run = None
         self.run_id = None
         self._run_exists = False
-
-    def _get_project_id(self) -> int:
-        """
-        Checks if the project name exists int the project registry. A ProjectCard is created if it
-        doesn't exist.
-
-        Args:
-            info:
-                Project info
-
-        """
-
-        projects = self.registries.project.list_cards(name=self._project_info.name)
-        if bool(projects):
-            return int(projects[0]["project_id"])
-
-        # get nbr of unique projects
-        cards = self.registries.project.list_cards(limit=1000)
-
-        if cards:
-            max_project = max(card["project_id"] for card in cards)
-        else:
-            max_project = 0
-
-        card = ProjectCard(
-            name=self._project_info.name,
-            repository=self._project_info.repository,
-            contact=self._project_info.contact,
-            project_id=max_project + 1,
-        )
-        self.registries.project.register_card(card=card)
-
-        return card.project_id

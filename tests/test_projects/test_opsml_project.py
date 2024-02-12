@@ -24,6 +24,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     proj.run_id = run_id
     runcard = proj.run_card
     runcard.load_artifacts()
+    assert proj.project_id == 1
 
     assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
 
@@ -212,8 +213,9 @@ def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="list_runs", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
 
-    with OpsmlProject(info=info).run() as run:
+    with project.run() as run:
         # Create metrics / params / cards
         run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
@@ -254,3 +256,31 @@ def test_project_card_info_env_var(
     # revert opsml env vars
     for key in ["name", "repository", "contact"]:
         os.environ.pop(f"OPSML_RUNTIME_{key.upper()}", None)
+
+
+def test_opsml_project_id_creation(db_registries: CardRegistries) -> None:
+    """verify that we can read artifacts / metrics / cards without making a run
+    active."""
+    info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
+
+    with project.run() as run:
+        pass
+
+    assert project.project_id == 1
+
+    # create another project
+    info = ProjectInfo(name="project2", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
+    with project.run() as run:
+        pass
+
+    assert project.project_id == 2
+
+    # resume the first project
+    info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
+
+    with project.run() as run:
+        pass
+    assert project.project_id == 1
