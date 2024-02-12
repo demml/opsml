@@ -374,4 +374,4 @@ class AuditReport(BaseModel):
 
 
 class ProjectIdResponse(BaseModel):
-    project_id: Optional[int] = None
+    project_id: int

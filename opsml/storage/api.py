@@ -31,7 +31,6 @@ class ApiRoutes:
     MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
     PROJECT_ID = "projects/id"
-    MAX_PROJECT_ID = "projects/max_id"
     UPLOAD_METRICS = "metrics/upload"
     DOWNLOAD_METRICS = "metrics/download"
     DOWNLOAD_FILE = "files/download"
@@ -127,9 +126,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
-        with self.client.stream(
-            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes(chunk_size=chunk_size):
                 result += data.decode("utf-8")
 
