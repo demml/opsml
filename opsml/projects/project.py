@@ -40,25 +40,10 @@ class _ProjectRegistrar:
             project_id: int
         """
 
-        # get project_id
-        project_id = self.project_registry.get_project_id(
-            project_name=self._project_info.name,
-            repository=self._project_info.repository,
-        )
-
-        if project_id is not None:
-            return project_id
-
-        # get nbr of unique projects
-        max_project = self.project_registry.get_max_project_id()
-
-        logger.info("New project detected! Registering card")
-
         card = ProjectCard(
             name=self._project_info.name,
             repository=self._project_info.repository,
             contact=self._project_info.contact,
-            project_id=max_project + 1,
         )
         self.registries.project.register_card(card=card)
 

@@ -87,7 +87,7 @@ def project_id(
             Name of the repository
 
     Returns:
-        `ProjetIdResponse`
+        `ProjectIdResponse`
     """
 
     registry: ServerProjectCardRegistry = request.app.state.registries.project._registry
@@ -98,18 +98,3 @@ def project_id(
             repository=repository,
         )
     )
-
-
-@router.get("/projects/max_id", response_model=ProjectIdResponse, name="project_id")
-def max_project_id(request: Request) -> ProjectIdResponse:
-    """Get the current maximum project id (used for creating new projects)
-
-    Args:
-        request:
-            FastAPI request object
-
-    Returns:
-        `ProjectIdResponse`
-    """
-    registry: ServerProjectCardRegistry = request.app.state.registries.project._registry
-    return ProjectIdResponse(project_id=registry.get_max_project_id())

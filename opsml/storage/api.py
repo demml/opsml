@@ -31,7 +31,6 @@ class ApiRoutes:
     MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
     PROJECT_ID = "projects/id"
-    MAX_PROJECT_ID = "projects/max_id"
     DOWNLOAD_FILE = "files/download"
     DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"
