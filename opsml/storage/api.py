@@ -2,11 +2,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json as py_json
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt
+
+# httpx outputs a lot of logs
+logging.getLogger("httpx").propagate = False
 
 PATH_PREFIX = "opsml"
 
@@ -26,6 +30,7 @@ class ApiRoutes:
     REGISTER_MODEL = "models/register"
     MODEL_METADATA = "models/metadata"
     MODEL_METRICS = "models/metrics"
+    PROJECT_ID = "projects/id"
     DOWNLOAD_FILE = "files/download"
     DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"

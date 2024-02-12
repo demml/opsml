@@ -2,19 +2,52 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+# pylint: disable=protected-access
 
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.cards.base import ArtifactCard
+from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._run_manager import ActiveRunException, _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
 from opsml.projects.types import ProjectInfo
+from opsml.registry import CardRegistries
+from opsml.registry.sql.base.client import ClientProjectCardRegistry
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
 
 logger = ArtifactLogger.get_logger()
+
+
+class _ProjectRegistrar:
+    def __init__(self, project_info: ProjectInfo):
+        self._project_info = project_info
+        self.registries = CardRegistries()
+
+    @property
+    def project_registry(self) -> ClientProjectCardRegistry:
+        # both server and client registries are the same for methods
+        return cast(ClientProjectCardRegistry, self.registries.project._registry)
+
+    def register_project(self) -> int:
+        """
+        Checks if the project name exists in the project registry. A ProjectCard is created if it
+        doesn't exist.
+
+        Returns:
+            project_id: int
+        """
+
+        card = ProjectCard(
+            name=self._project_info.name,
+            repository=self._project_info.repository,
+            contact=self._project_info.contact,
+        )
+        self.registries.project.register_card(card=card)
+
+        return card.project_id
 
 
 class OpsmlProject:
@@ -56,7 +89,13 @@ class OpsmlProject:
                 as the project's current run.
         """
         # Set the run manager and project_id (creates ProjectCard if project doesn't exist)
-        self._run_mgr = _RunManager(project_info=info)
+        registrar = _ProjectRegistrar(project_info=info)
+
+        # get project id or register new project
+        info.project_id = registrar.register_project()
+
+        # crete run manager
+        self._run_mgr = _RunManager(project_info=info, registries=registrar.registries)
 
     @property
     def run_id(self) -> str:
