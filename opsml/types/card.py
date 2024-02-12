@@ -63,8 +63,7 @@ class RunMultiGraph(BaseModel):
     x_label: str
     y_label: str
     x: List[Union[float, int]]
-    y: List[List[Union[float, int]]]
-    group_labels: List[str]
+    y: Dict[str, List[Union[float, int]]]
 
 
 class Artifact(BaseModel):

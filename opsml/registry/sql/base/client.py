@@ -301,6 +301,43 @@ class ClientRunCardRegistry(ClientRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
+    def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        """Inserts metrics into the run registry
+
+        Args:
+            metrics:
+                Dictionary of metrics to insert
+        """
+        self._session.post_request(
+            route=api_routes.UPLOAD_METRICS,
+            json={"metrics": metrics},
+        )
+
+    def get_metrics(
+        self, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
+    ) -> List[Dict[str, Any]]:
+        """Get run metrics. By default, all metrics are returned. If name is provided,
+        only metrics with that name are returned. Metric type can be either "metric" or "graph".
+        "metric" will return name, value, step records. "graph" will return graph (x, y) records.
+
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the metric
+            metric_type:
+                Type of metric to return. Either "metric" or "graph"
+
+        Returns:
+            List of run metrics
+        """
+        data = self._session.get_request(
+            route=api_routes.DOWNLOAD_METRICS,
+            params={"run_uid": run_uid, "name": name, "metric_type": metric_type},
+        )
+
+        return data["metrics"]
+
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value

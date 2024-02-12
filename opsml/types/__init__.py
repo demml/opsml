@@ -16,8 +16,8 @@ from opsml.types.card import (
     RegistryType,
     RunCardArgs,
     RunGraph,
-    RunMultiGraph,
     RunGraphs,
+    RunMultiGraph,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (

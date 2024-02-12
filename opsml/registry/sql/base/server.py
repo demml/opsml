@@ -16,7 +16,11 @@ from opsml.registry.semver import (
     VersionType,
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import ProjectQueryEngine, get_query_engine, RunQueryEngine
+from opsml.registry.sql.base.query_engine import (
+    ProjectQueryEngine,
+    RunQueryEngine,
+    get_query_engine,
+)
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.sql_schema import SQLTableGetter
 from opsml.registry.sql.base.utils import log_card_change
@@ -320,14 +324,18 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(self, uid: str, name: Optional[str] = None) -> Optional[float]:
+    def get_metrics(
+        self, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
+    ) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
-            uid:
+            run_uid:
                 run card uid
-            metric_name:
-                metric name
+            name:
+                name
+            metric_type:
+                metric type
 
         Returns:
             metric value
@@ -335,7 +343,7 @@ class ServerRunCardRegistry(ServerRegistry):
         """
         assert isinstance(self.engine, RunQueryEngine)
 
-        return self.engine.get_run_metrics(uid=uid, metric_name=name)
+        return self.engine.get_run_metrics(run_uid=run_uid, name=name, metric_type=metric_type)
 
     def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
         """Insert metric into run card
@@ -347,23 +355,6 @@ class ServerRunCardRegistry(ServerRegistry):
         assert isinstance(self.engine, RunQueryEngine)
 
         self.engine.insert_run_metrics(metrics=metrics)
-
-    def get_graph_data(self, uid: str, name: Optional[str] = None) -> Optional[Dict[str, Any]]:
-        """Get graph data from run card
-
-        Args:
-            uid:
-                run card uid
-            name:
-                graph name
-
-        Returns:
-            graph data
-
-        """
-        assert isinstance(self.engine, RunQueryEngine)
-
-        return self.engine.get_graph_data(uid=uid, name=name)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

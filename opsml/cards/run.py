@@ -2,6 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pylint: disable=invalid-name
+
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -13,6 +15,8 @@ from pydantic import model_validator
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
+from opsml.registry.backend import _set_registry
+from opsml.registry.sql.base.client import ClientRunCardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import (
@@ -25,9 +29,10 @@ from opsml.types import (
     Param,
     Params,
     RegistryTableNames,
+    RegistryType,
     RunGraph,
-    RunMultiGraph,
     RunGraphs,
+    RunMultiGraph,
     SaveName,
 )
 
@@ -144,13 +149,10 @@ class RunCard(ArtifactCard):
             x_label:
                 Label for x axis
             y:
-                (1) List or numpy array of y values
-                (2) List of lists or numpy arrays of y values if multiple lines are to be plotted for y
+                List or numpy array of y values
             y_label:
                 Label for y axis
-            group_labels:
-                Optional list of group labels if multiple lines are to be plotted for y.
-                This is required if y is a list
+
         """
 
         if isinstance(x, np.ndarray):
@@ -178,10 +180,9 @@ class RunCard(ArtifactCard):
         self,
         name: str,
         x: GraphType,
-        y: Union[List[List[Union[float, int]]], NDArray[Any]],
+        y: Dict[str, GraphType],
         x_label: str,
         y_label: str,
-        group_labels: List[str],
     ) -> None:
         """Logs a multi-line graph (one x with many y) to the RunCard, which will be rendered in the UI as a line graph
 
@@ -193,9 +194,9 @@ class RunCard(ArtifactCard):
             x_label:
                 Label for x axis
             y:
-                List of lists or numpy arrays of y values
-            group:
-                List of group labels
+                Dictionary of y values where key is the group label and value is a list or numpy array of y values
+            y_label:
+                Label for y axis
         """
 
         if isinstance(x, np.ndarray):
@@ -215,7 +216,7 @@ class RunCard(ArtifactCard):
             y = [y[::step] for y in y]
 
         logger.info(f"Logging graph {name} to RunCard")
-        graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, group_labels=group_labels)
+        graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
 
         self.graphs[graph.name] = graph
 
@@ -279,6 +280,12 @@ class RunCard(ArtifactCard):
         _key = TypeChecker.replace_spaces(key)
 
         metric = Metric(name=_key, value=value, timestamp=timestamp, step=step)
+
+        self._registry.insert_metrics(
+            [
+                {**metric.model_dump(), **{"metric_type": "metric", "run_uid": self.uid}},
+            ]
+        )
 
         if self.metrics.get(_key) is not None:
             self.metrics[_key].append(metric)
@@ -459,6 +466,10 @@ class RunCard(ArtifactCard):
             str(self.name),
             end_path,
         )
+
+    @property
+    def _registry(self) -> ClientRunCardRegistry:
+        return _set_registry(RegistryType.RUN)
 
     @property
     def card_type(self) -> str:
