@@ -7,7 +7,7 @@ from datetime import date
 from datetime import datetime as dt
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, Integer, String, Float
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
@@ -149,9 +149,10 @@ class MetricSchema(Base):
     name = Column("name", String(128))
     value = Column("value", Float)
     step = Column("step", Integer)
+    timestamp = Column("timestamp", BigInteger)
     graph = Column("graph", JSON)
     metric_type = Column("metric_type", String(64))
-    timestamp = Column("timestamp", String(64), default=lambda: str(dt.datetime.now()), primary_key=True)
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()), primary_key=True)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
@@ -159,7 +160,10 @@ class MetricSchema(Base):
 
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
-    if schema.__tablename__ not in [RegistryTableNames.BASE.value, RegistryTableNames.METRICS.value]:  # type: ignore[attr-defined]
+    if schema.__tablename__ not in [
+        RegistryTableNames.BASE.value,
+        RegistryTableNames.METRICS.value,
+    ]:  # type: ignore[attr-defined]
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
 
