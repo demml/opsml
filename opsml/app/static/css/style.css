@@ -717,6 +717,30 @@ p {
 }
 
 
+#graph-button.btn-success {
+  font-size: 13px;
+  color: #5e0fb7;
+  letter-spacing: 1px;
+  line-height: 15px;
+  border: 2px solid #5e0fb7;
+  border-radius: 40px;
+  background: transparent;
+  transition: all 0.3s ease 0s;
+}
+
+#graph-button.btn-success:hover {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+#graph-button.btn-success:focus {
+  color: #FFF;
+  background: #5e0fb7;
+  border: 2px solid #5e0fb7;
+}
+
+
 #MetadataRepositoriesSelect .dropdown-toggle {
     background:#04b78a;
     color:#fffefe !important;
@@ -1129,5 +1153,19 @@ clipboard-copy:focus-visible {
 
 .select2-container .select2-dropdown .select2-results ul .select2-results__option--highlighted[aria-selected] {
   background-color: #5d0fb789;
+}
+
+
+#GraphContainer {
+  column-count: 2; /* speciifes that the content inside the container should be divided into two columns */
+  column-gap: 1rem;
+  width: 100%;
+}
+.graph-child {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  break-inside: avoid; /* ensures that each child element stays within a single column */
+  padding: 0.5rem;
 }
 

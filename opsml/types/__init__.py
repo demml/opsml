@@ -17,6 +17,7 @@ from opsml.types.card import (
     RunCardArgs,
     RunGraph,
     RunMultiGraph,
+    RunGraphs,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
@@ -112,6 +113,7 @@ __all__ = [
     "Graph",
     "RunGraph",
     "RunMultiGraph",
+    "RunGraphs",
     "HuggingFaceModuleType",
     "HuggingFaceOnnxArgs",
     "ModelCardMetadata",

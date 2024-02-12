@@ -27,6 +27,7 @@ from opsml.types import (
     RegistryTableNames,
     RunGraph,
     RunMultiGraph,
+    RunGraphs,
     SaveName,
 )
 
@@ -82,7 +83,7 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: Metrics = {}
     parameters: Params = {}
-    graphs: List[Union[RunGraph, RunMultiGraph]] = []
+    graphs: RunGraphs = {}
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
     project: Optional[str] = None
@@ -171,7 +172,7 @@ class RunCard(ArtifactCard):
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
 
-        self.graphs.append(graph)
+        self.graphs[graph.name] = graph
 
     def log_multiline_graph(
         self,
@@ -216,7 +217,7 @@ class RunCard(ArtifactCard):
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, group_labels=group_labels)
 
-        self.graphs.append(graph)
+        self.graphs[graph.name] = graph
 
     def log_parameters(self, parameters: Dict[str, Union[float, int, str]]) -> None:
         """
