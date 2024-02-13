@@ -1,3 +1,4 @@
+import numpy as np
 from starlette.testclient import TestClient
 
 from opsml.projects import OpsmlProject, ProjectInfo
@@ -15,6 +16,8 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
 
     with project.run() as run:
         # test saving run graph
+        run.log_metric(key="m1", value=1.1)
+        run.log_metric(key="m2", value=1.2)
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6])
         run.log_graph(name="graph2", x=np.ndarray((1, 300)), y=np.ndarray((1, 300)))
         run.log_multiline_graph(name="graph1-multi", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
@@ -23,6 +26,17 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
             x=np.ndarray((1, 300)),
             y={"a": np.ndarray((1, 300)), "b": np.ndarray((1, 300))},
         )
+        nbr_metrics = len(run.metrics)
+        info.run_id = run.run_id
+
+    proj = OpsmlProject(info=info)
+    runcard = proj.run_card
+    # reset metrics to empty dict
+    runcard.metrics = {}
+
+    # load metrics
+    runcard.load_metrics()
+    assert len(runcard.metrics) == nbr_metrics
 
     assert project.project_id == 1
 

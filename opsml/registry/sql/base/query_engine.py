@@ -57,7 +57,11 @@ class DialectHelper:
     @staticmethod
     def get_dialect_logic(query: Select[Any], table: CardSQLTable, dialect: str) -> Select[Any]:
         helper = next(
-            (dialect_helper for dialect_helper in DialectHelper.__subclasses__() if dialect_helper.validate_dialect(dialect)),
+            (
+                dialect_helper
+                for dialect_helper in DialectHelper.__subclasses__()
+                if dialect_helper.validate_dialect(dialect)
+            ),
             None,
         )
 
@@ -72,18 +76,24 @@ class DialectHelper:
 class SqliteHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
-            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label("major"),
+            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label(
+                "major"
+            ),
             sql_cast(
                 sqa_func.substr(
                     sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
                     1,
-                    sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") - 1,
+                    sqa_func.instr(
+                        sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
+                    )
+                    - 1,
                 ),
                 Integer,
             ).label("minor"),
             sqa_func.substr(
                 sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
-                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") + 1,
+                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".")
+                + 1,
             ).label("patch"),
         )
 
@@ -112,9 +122,9 @@ class MySQLHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
             sql_cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
-            sql_cast(sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer).label(
-                "minor"
-            ),
+            sql_cast(
+                sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
+            ).label("minor"),
             sql_cast(
                 sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""),
                 Integer,
@@ -331,7 +341,9 @@ class QueryEngine:
             time stamp as integer related to `max_date`
         """
         converted_date = datetime.datetime.strptime(max_date, YEAR_MONTH_DATE)
-        max_date_: datetime.datetime = converted_date.replace(hour=23, minute=59, second=59)  # provide max values for a date
+        max_date_: datetime.datetime = converted_date.replace(
+            hour=23, minute=59, second=59
+        )  # provide max values for a date
 
         # opsml timestamp records are stored as BigInts
         return int(round(max_date_.timestamp() * 1_000_000))
@@ -405,7 +417,9 @@ class QueryEngine:
 
         if repository is not None:
             query = (
-                query.filter(table.repository == repository).distinct().order_by(table.name.asc())  # type:ignore[union-attr]
+                query.filter(table.repository == repository)
+                .distinct()
+                .order_by(table.name.asc())  # type:ignore[union-attr]
             )  #
         else:
             query = query.distinct()
