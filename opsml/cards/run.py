@@ -26,6 +26,7 @@ from opsml.types import (
     ArtifactUris,
     CardType,
     CommonKwargs,
+    GraphStyle,
     Metric,
     Metrics,
     Param,
@@ -34,15 +35,18 @@ from opsml.types import (
     RegistryType,
     RunCardRegistry,
     RunGraph,
-    RunGraphs,
-    RunMultiGraph,
     SaveName,
 )
 
 logger = ArtifactLogger.get_logger()
 
+_List = List[Union[float, int]]
+_Dict = Dict[str, List[Union[float, int]]]
+_YReturn = Union[_List, _Dict]
+_ParseReturn = Tuple[_YReturn, str]
 
-def _dump_graph_artifact(graph: Union[RunGraph, RunMultiGraph], name: str, uri: Path) -> Tuple[Path, Path]:
+
+def _dump_graph_artifact(graph: RunGraph, name: str, uri: Path) -> Tuple[Path, Path]:
     """Helper method for saving graph artifacts to storage
 
     Args:
@@ -61,6 +65,43 @@ def _dump_graph_artifact(graph: Union[RunGraph, RunMultiGraph], name: str, uri: 
         client.storage_client.put(lpath, rpath)
 
         return lpath, rpath
+
+
+def _parse_y_to_list(x_length: int, y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]]) -> _ParseReturn:
+    """Helper method for parsing y to list when logging a graph
+
+    Args:
+        x_length:
+            Length of x
+        y:
+            Y values to parse. Can be a list, dictionary or numpy array
+
+    Returns:
+        List or dictionary of y values
+
+    """
+    # if y is dictionary
+    if isinstance(y, dict):
+        _y = {}
+        for k, v in y.items():
+            if isinstance(v, np.ndarray):
+                v = v.flatten().tolist()
+
+            assert x_length == len(v), "x and y must be the same length"
+            _y[k] = v
+
+        return _y, "multi"
+
+    # if y is ndarray
+    if isinstance(y, np.ndarray):
+        y = y.flatten().tolist()
+        assert x_length == len(y), "x and y must be the same length"
+        return y, "single"
+
+    # if y is list
+    assert isinstance(y, list), "y must be a list or dictionary"
+    assert x_length == len(y), "x and y must be the same length"
+    return y, "single"
 
 
 class RunCard(ArtifactCard):
@@ -110,7 +151,6 @@ class RunCard(ArtifactCard):
     pipelinecard_uid: Optional[str] = None
     metrics: Metrics = {}
     parameters: Params = {}
-    graphs: RunGraphs = {}
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
     project: Optional[str] = None
@@ -157,9 +197,10 @@ class RunCard(ArtifactCard):
         self,
         name: str,
         x: Union[List[Union[float, int]], NDArray[Any]],
-        x_label: str,
-        y: Union[List[Union[float, int]], NDArray[Any]],
+        y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
         y_label: str,
+        x_label: str,
+        graph_style: str,
     ) -> None:
         """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
 
@@ -168,88 +209,57 @@ class RunCard(ArtifactCard):
                 Name of graph
             x:
                 List or numpy array of x values
+
             x_label:
                 Label for x axis
             y:
-                List or numpy array of y values
+                Either a list or numpy array of y values or a dictionary of y values where key is the group label and
+                value is a list or numpy array of y values
             y_label:
                 Label for y axis
+            graph_style:
+                Style of graph. Options are "line" or "scatter"
 
-        """
+            example:
 
-        if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-            x = x.flatten().tolist()
-            y = y.flatten().tolist()
-            length = len(x)
+                ### single line graph
+                x = np.arange(1, 400, 0.5)
+                y = x * x
+                run.log_graph(name="graph1", x=x, y=y, x_label="x", y_label="y", graph_style="line")
 
-        assert isinstance(x, list), "x must be a list"
-        assert isinstance(y, list), "y must be a list"
-        length = len(x)
-        assert length == len(y), "x and y must be the same length"
+                ### multi line graph
+                x = np.arange(1, 1000, 0.5)
+                y1 = x * x
+                y2 = y1 * 1.1
+                y3 = y2 * 3
+                run.log_graph(
+                    name="multiline",
+                    x=x,
+                    y={"y1": y1, "y2": y2, "y3": y3},
+                    x_label="x",
+                    y_label="y",
+                    graph_style="line",
+                )
 
-        # To increase render performance, anything >200 points will be downsampled by step
-        if length > 200:
-            step = round(length / 200)
-            x = x[::step]
-            y = y[::step]
-
-        logger.info(f"Logging graph {name} to RunCard")
-        graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
-
-        lpath, rpath = _dump_graph_artifact(graph, name, self.uri)
-
-        self._add_artifact_uri(
-            name=name,
-            local_path=lpath.as_posix(),
-            remote_path=rpath.as_posix(),
-        )
-
-    def log_multiline_graph(
-        self,
-        name: str,
-        x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]],
-        x_label: str,
-        y_label: str,
-    ) -> None:
-        """Logs a multi-line graph (one x with many y) to the RunCard, which will be rendered in the UI as a line graph
-
-        Args:
-            name:
-                Name of graph
-            x:
-                List or numpy array of x values
-            x_label:
-                Label for x axis
-            y:
-                Dictionary of y values where key is the group label and value is a list or numpy array of y values
-            y_label:
-                Label for y axis
         """
 
         if isinstance(x, np.ndarray):
             x = x.flatten().tolist()
-            _y = {}
-            for k, v in y.items():
-                assert isinstance(v, np.ndarray), "y values must be a numpy array"
-                _y[k] = v.flatten().tolist()
-            y = _y
 
-        assert isinstance(x, list), "x must be a list"
-        assert isinstance(y, dict), "y must be a dictionary"
-        length = len(x)
-        for y_ in y.values():
-            assert length == len(y_), "x and y must be the same length"
-
-        # To increase render performance, anything >200 points will be downsampled by step
-        if length > 200:
-            step = round(length / 200)
-            x = x[::step]
-            y = {k: v[::step] for k, v in y.items()}
+        parsed_y, graph_type = _parse_y_to_list(len(x), y)
 
         logger.info(f"Logging graph {name} to RunCard")
-        graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+        graph = RunGraph(
+            name=name,
+            x=x,
+            x_label=x_label,
+            y=parsed_y,
+            y_label=y_label,
+            graph_type=graph_type,
+            graph_style=GraphStyle.from_str(graph_style).value,  # validate graph style
+        )
 
+        # save graph to storage so we can view in ui while run is active
         lpath, rpath = _dump_graph_artifact(graph, name, self.uri)
 
         self._add_artifact_uri(
@@ -319,11 +329,7 @@ class RunCard(ArtifactCard):
 
         metric = Metric(name=_key, value=value, timestamp=timestamp, step=step)
 
-        self._registry.insert_metric(
-            [
-                {**metric.model_dump(), **{"run_uid": self.uid}},
-            ]
-        )
+        self._registry.insert_metric([{**metric.model_dump(), **{"run_uid": self.uid}}])
 
         if self.metrics.get(_key) is not None:
             self.metrics[_key].append(metric)
@@ -448,14 +454,17 @@ class RunCard(ArtifactCard):
         return metric
 
     def load_metrics(self) -> None:
-        """Loads metrics from registry"""
+        """Reloads metrics from registry"""
         assert self.uid is not None, "RunCard must be registered to load metrics"
+
         metrics = self._registry.get_metric(run_uid=self.uid)
 
         if metrics is None:
             logger.info("No metrics found for RunCard")
             return None
 
+        # reset metrics
+        self.metrics = {}
         for metric in metrics:
             _metric = Metric(**metric)
             if _metric.name not in self.metrics:

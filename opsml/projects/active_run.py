@@ -290,9 +290,10 @@ class ActiveRun:
         self,
         name: str,
         x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Union[List[Union[float, int]], NDArray[Any]],
+        y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
         x_label: str = "x",
         y_label: str = "y",
+        graph_style: str = "line",
     ) -> None:
         """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
 
@@ -301,15 +302,42 @@ class ActiveRun:
                 Name of graph
             x:
                 List or numpy array of x values
+
             x_label:
                 Label for x axis
             y:
-                List or numpy array of y values
+                Either of the following:
+                    (1) a list or numpy array of y values
+                    (2) a dictionary of y values where key is the group label and
+                        value is a list or numpy array of y values
             y_label:
                 Label for y axis
+            graph_style:
+                Style of graph. Options are "line" or "scatter"
+
+            example:
+
+                ### single line graph
+                x = np.arange(1, 400, 0.5)
+                y = x * x
+                run.log_graph(name="graph1", x=x, y=y, x_label="x", y_label="y", graph_style="line")
+
+                ### multi line graph
+                x = np.arange(1, 1000, 0.5)
+                y1 = x * x
+                y2 = y1 * 1.1
+                y3 = y2 * 3
+                run.log_graph(
+                    name="multiline",
+                    x=x,
+                    y={"y1": y1, "y2": y2, "y3": y3},
+                    x_label="x",
+                    y_label="y",
+                    graph_style="line",
+                )
 
         """
-        self.runcard.log_graph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+        self.runcard.log_graph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, graph_style=graph_style)
 
     def log_multiline_graph(
         self,

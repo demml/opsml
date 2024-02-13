@@ -16,14 +16,13 @@ from opsml.types.card import (
     RegistryType,
     RunCardArgs,
     RunGraph,
-    RunGraphs,
-    RunMultiGraph,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
     ArtifactClass,
     CommonKwargs,
     Description,
+    GraphStyle,
     SaveName,
     Suffix,
     UriNames,
@@ -112,8 +111,6 @@ __all__ = [
     "Feature",
     "Graph",
     "RunGraph",
-    "RunMultiGraph",
-    "RunGraphs",
     "HuggingFaceModuleType",
     "HuggingFaceOnnxArgs",
     "ModelCardMetadata",
@@ -139,4 +136,5 @@ __all__ = [
     "StorageSystem",
     "RegistryTableNames",
     "RunCardRegistry",
+    "GraphStyle",
 ]

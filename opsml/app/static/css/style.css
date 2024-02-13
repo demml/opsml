@@ -1152,14 +1152,16 @@ clipboard-copy:focus-visible {
 }
 
 .select2-container .select2-dropdown .select2-results ul .select2-results__option--highlighted[aria-selected] {
-  background-color: #5d0fb789;
+  background-color: #5d0fb7;
 }
 
 
 #GraphContainer {
-  column-count: 2; /* speciifes that the content inside the container should be divided into two columns */
+  column-count: 2; /* speciifes that the content inside the container should be divided into three columns */
   column-gap: 1rem;
   width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 .graph-child {
   display: inline-block;
@@ -1167,5 +1169,7 @@ clipboard-copy:focus-visible {
   box-sizing: border-box;
   break-inside: avoid; /* ensures that each child element stays within a single column */
   padding: 0.5rem;
+  overflow-x: auto;
 }
+
 
