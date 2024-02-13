@@ -36,10 +36,8 @@ class RegistryTableNames(str, Enum):
 
 
 class RunCardRegistry(Protocol):
-    def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         ...
 
-    def get_metrics(
-        self, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
         ...

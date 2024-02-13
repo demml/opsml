@@ -470,23 +470,18 @@ class ProjectQueryEngine(QueryEngine):
 
 
 class RunQueryEngine(QueryEngine):
-    def insert_run_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Insert run metrics
 
         Args:
-            metrics:
-                List of run metrics
+            metric:
+                List of run metric(s)
         """
         with self.session() as sess:
-            sess.execute(insert(MetricSchema), metrics)
+            sess.execute(insert(MetricSchema), metric)
             sess.commit()
 
-    def get_run_metrics(
-        self,
-        run_uid: str,
-        name: Optional[str] = None,
-        metric_type: str = "metric",
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -496,17 +491,12 @@ class RunQueryEngine(QueryEngine):
                 Run uid
             name:
                 Name of the metric
-            metric_type:
-                Type of metric to return. Either "metric" or "graph"
 
         Returns:
             List of run metrics
         """
 
-        query = select(MetricSchema).filter(
-            MetricSchema.run_uid == run_uid,
-            MetricSchema.metric_type == metric_type,
-        )
+        query = select(MetricSchema).filter(MetricSchema.run_uid == run_uid)
 
         if name is not None:
             query = query.filter(MetricSchema.name == name)

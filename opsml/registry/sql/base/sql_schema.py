@@ -150,8 +150,6 @@ class MetricSchema(Base):
     value = Column("value", Float)
     step = Column("step", Integer)
     timestamp = Column("timestamp", BigInteger)
-    graph = Column("graph", JSON)
-    metric_type = Column("metric_type", String(64))
     date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()), primary_key=True)
 
     def __repr__(self) -> str:
