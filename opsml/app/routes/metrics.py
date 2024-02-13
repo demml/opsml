@@ -42,7 +42,7 @@ def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadRespon
         raise HTTPException(status_code=400, detail="Failed to insert metrics") from error
 
 
-@router.post("/metrics/download", response_model=MetricsModel, name="metric_download")
+@router.get("/metrics/download", response_model=MetricsModel, name="metric_download")
 def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> MetricsModel:
     """Get metrics from metric table
 

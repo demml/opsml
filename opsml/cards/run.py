@@ -319,9 +319,9 @@ class RunCard(ArtifactCard):
 
         metric = Metric(name=_key, value=value, timestamp=timestamp, step=step)
 
-        self._registry.insert_metrics(
+        self._registry.insert_metric(
             [
-                {**metric.model_dump(), **{"metric_type": "metric", "run_uid": self.uid}},
+                {**metric.model_dump(), **{"run_uid": self.uid}},
             ]
         )
 
