@@ -4,11 +4,14 @@
 
 # pylint: disable=invalid-name
 
+
+import tempfile
 import uuid
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import joblib
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import model_validator
@@ -37,6 +40,27 @@ from opsml.types import (
 )
 
 logger = ArtifactLogger.get_logger()
+
+
+def _dump_graph_artifact(graph: Union[RunGraph, RunMultiGraph], name: str, uri: Path) -> Tuple[Path, Path]:
+    """Helper method for saving graph artifacts to storage
+
+    Args:
+        graph:
+            RunGraph object
+        name:
+            Name of graph
+        uri:
+            Uri to store graph artifact
+    """
+    with tempfile.TemporaryDirectory() as tempdir:
+        lpath = Path(tempdir) / f"{name}.joblib"
+        rpath = (uri / SaveName.GRAPHS.value) / lpath.name
+        joblib.dump(graph.model_dump(), lpath)
+
+        client.storage_client.put(lpath, rpath)
+
+        return lpath, rpath
 
 
 class RunCard(ArtifactCard):
@@ -172,9 +196,13 @@ class RunCard(ArtifactCard):
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
 
-        self._registry.insert_metrics([{"run_uid": self.uid, "metric_type": "graph", **graph.model_dump()}])
+        lpath, rpath = _dump_graph_artifact(graph, name, self.uri)
 
-        self.graphs[graph.name] = graph
+        self._add_artifact_uri(
+            name=name,
+            local_path=lpath.as_posix(),
+            remote_path=rpath.as_posix(),
+        )
 
     def log_multiline_graph(
         self,
@@ -201,7 +229,11 @@ class RunCard(ArtifactCard):
 
         if isinstance(x, np.ndarray):
             x = x.flatten().tolist()
-            y = {k: v.flatten().tolist() for k, v in y.items()}
+            _y = {}
+            for k, v in y.items():
+                assert isinstance(v, np.ndarray), "y values must be a numpy array"
+                _y[k] = v.flatten().tolist()
+            y = _y
 
         assert isinstance(x, list), "x must be a list"
         assert isinstance(y, dict), "y must be a dictionary"
@@ -218,9 +250,13 @@ class RunCard(ArtifactCard):
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
 
-        self._registry.insert_metrics([{"run_uid": self.uid, "metric_type": "graph", **graph.model_dump()}])
+        lpath, rpath = _dump_graph_artifact(graph, name, self.uri)
 
-        self.graphs[graph.name] = graph
+        self._add_artifact_uri(
+            name=name,
+            local_path=lpath.as_posix(),
+            remote_path=rpath.as_posix(),
+        )
 
     def log_parameters(self, parameters: Dict[str, Union[float, int, str]]) -> None:
         """
@@ -413,7 +449,8 @@ class RunCard(ArtifactCard):
 
     def load_metrics(self) -> None:
         """Loads metrics from registry"""
-        metrics = self._registry.get_metrics(run_uid=self.uid, metric_type="metric")
+        assert self.uid is not None, "RunCard must be registered to load metrics"
+        metrics = self._registry.get_metric(run_uid=self.uid)
 
         if metrics is None:
             logger.info("No metrics found for RunCard")
@@ -425,6 +462,7 @@ class RunCard(ArtifactCard):
                 self.metrics[_metric.name] = [_metric]
             else:
                 self.metrics[_metric.name].append(_metric)
+        return None
 
     def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """

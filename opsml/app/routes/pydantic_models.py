@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, model_validator
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment, RunGraphs
+from opsml.types import Comment
 
 
 class HealthCheckResult(BaseModel):
@@ -169,7 +169,9 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
+    onnx: bool = Field(
+        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
+    )
 
 
 class RepositoriesResponse(BaseModel):
@@ -214,12 +216,10 @@ class MetricModel(BaseModel):
     value: Optional[float] = None
     step: Optional[int] = None
     timestamp: Optional[int] = None
-    metric_type: str = "metric"
-    graph: Optional[RunGraphs] = None
 
 
 class MetricsModel(BaseModel):
-    metrics: Optional[List[MetricModel]]
+    metric: Optional[List[MetricModel]]
 
 
 class CompareMetricRequest(BaseModel):

@@ -325,12 +325,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metrics(
-        self,
-        run_uid: str,
-        name: Optional[str] = None,
-        metric_type: str = "metric",
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
         """Get metric from run card
 
         Args:
@@ -338,8 +333,6 @@ class ServerRunCardRegistry(ServerRegistry):
                 run card uid
             name:
                 name
-            metric_type:
-                metric type
 
         Returns:
             metric value
@@ -347,18 +340,18 @@ class ServerRunCardRegistry(ServerRegistry):
         """
         assert isinstance(self.engine, RunQueryEngine)
 
-        return self.engine.get_run_metrics(run_uid=run_uid, name=name, metric_type=metric_type)
+        return self.engine.get_metric(run_uid=run_uid, name=name)
 
-    def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Insert metric into run card
 
         Args:
-            metrics:
-                list of metrics
+            metric:
+                list of metric(s)
         """
         assert isinstance(self.engine, RunQueryEngine)
 
-        self.engine.insert_run_metrics(metrics=metrics)
+        self.engine.insert_metric(metric=metric)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

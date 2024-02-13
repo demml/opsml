@@ -77,6 +77,7 @@ class SaveName(str, Enum):
     TOKENIZER = "tokenizer"
     FEATURE_EXTRACTOR = "feature_extractor"
     METADATA = "metadata"
+    GRAPHS = "graphs"
 
 
 @unique

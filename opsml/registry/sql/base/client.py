@@ -302,24 +302,19 @@ class ClientRunCardRegistry(ClientRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Inserts metrics into the run registry
 
         Args:
-            metrics:
-                Dictionary of metrics to insert
+            metric:
+                List of metric(s) to insert
         """
         self._session.post_request(
             route=api_routes.UPLOAD_METRICS,
-            json={"metrics": metrics},
+            json={"metric": metric},
         )
 
-    def get_metrics(
-        self,
-        run_uid: str,
-        name: Optional[str] = None,
-        metric_type: str = "metric",
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -329,21 +324,19 @@ class ClientRunCardRegistry(ClientRegistry):
                 Run uid
             name:
                 Name of the metric
-            metric_type:
-                Type of metric to return. Either "metric" or "graph"
 
         Returns:
             List of run metrics
         """
-        params = {"run_uid": run_uid, "metric_type": metric_type}
+        params = {"run_uid": run_uid}
 
         if name is not None:
             params["name"] = name
 
         data = self._session.get_request(route=api_routes.DOWNLOAD_METRICS, params=params)
 
-        metrics = data.get("metrics")
-        return cast(Optional[List[Dict[str, Any]]], metrics)
+        metric = data.get("metric")
+        return cast(Optional[List[Dict[str, Any]]], metric)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

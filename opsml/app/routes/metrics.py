@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/metrics/upload", response_model=MetricUploadResponse, name="metric_upload")
-def insert_metrics(request: Request, payload: MetricsModel) -> MetricUploadResponse:
+def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadResponse:
     """Inserts metrics into metric table
 
     Args:
@@ -33,9 +33,9 @@ def insert_metrics(request: Request, payload: MetricsModel) -> MetricUploadRespo
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
-    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metrics"])
+    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
     try:
-        run_reg.insert_metrics(metrics)
+        run_reg.insert_metric(metrics)
         return MetricUploadResponse(uploaded=True)
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
@@ -43,9 +43,7 @@ def insert_metrics(request: Request, payload: MetricsModel) -> MetricUploadRespo
 
 
 @router.post("/metrics/download", response_model=MetricsModel, name="metric_download")
-def get_metrics(
-    request: Request, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
-) -> MetricsModel:
+def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> MetricsModel:
     """Get metrics from metric table
 
     Args:
@@ -55,8 +53,6 @@ def get_metrics(
             Run uid
         name:
             Name of metric
-        metric_type:
-            Type of metric
 
     Returns:
         `MetricUploadResponse`
@@ -65,8 +61,8 @@ def get_metrics(
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
     try:
-        metrics = run_reg.get_metrics(run_uid, name, metric_type)
-        return MetricsModel(metrics=metrics)
+        metrics = run_reg.get_metric(run_uid, name)
+        return MetricsModel(metric=metrics)
 
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
