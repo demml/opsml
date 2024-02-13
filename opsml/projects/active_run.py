@@ -315,26 +315,26 @@ class ActiveRun:
             graph_style:
                 Style of graph. Options are "line" or "scatter"
 
-            example:
+        example:
 
-                ### single line graph
-                x = np.arange(1, 400, 0.5)
-                y = x * x
-                run.log_graph(name="graph1", x=x, y=y, x_label="x", y_label="y", graph_style="line")
+            ### single line graph
+            x = np.arange(1, 400, 0.5)
+            y = x * x
+            run.log_graph(name="graph1", x=x, y=y, x_label="x", y_label="y", graph_style="line")
 
-                ### multi line graph
-                x = np.arange(1, 1000, 0.5)
-                y1 = x * x
-                y2 = y1 * 1.1
-                y3 = y2 * 3
-                run.log_graph(
-                    name="multiline",
-                    x=x,
-                    y={"y1": y1, "y2": y2, "y3": y3},
-                    x_label="x",
-                    y_label="y",
-                    graph_style="line",
-                )
+            ### multi line graph
+            x = np.arange(1, 1000, 0.5)
+            y1 = x * x
+            y2 = y1 * 1.1
+            y3 = y2 * 3
+            run.log_graph(
+                name="multiline",
+                x=x,
+                y={"y1": y1, "y2": y2, "y3": y3},
+                x_label="x",
+                y_label="y",
+                graph_style="line",
+            )
 
         """
         self.runcard.log_graph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, graph_style=graph_style)
