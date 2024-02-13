@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum, unique
+from typing import Any, Dict, List, Optional, Protocol
 
 
 @unique
@@ -32,3 +33,13 @@ class RegistryTableNames(str, Enum):
         if l_name == "audit":
             return RegistryTableNames.AUDIT
         raise NotImplementedError()
+
+
+class RunCardRegistry(Protocol):
+    def insert_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        ...
+
+    def get_metrics(
+        self, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
+    ) -> Optional[List[Dict[str, Any]]]:
+        ...

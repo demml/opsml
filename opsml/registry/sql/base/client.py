@@ -315,8 +315,11 @@ class ClientRunCardRegistry(ClientRegistry):
         )
 
     def get_metrics(
-        self, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
-    ) -> List[Dict[str, Any]]:
+        self,
+        run_uid: str,
+        name: Optional[str] = None,
+        metric_type: str = "metric",
+    ) -> Optional[List[Dict[str, Any]]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -332,12 +335,15 @@ class ClientRunCardRegistry(ClientRegistry):
         Returns:
             List of run metrics
         """
-        data = self._session.get_request(
-            route=api_routes.DOWNLOAD_METRICS,
-            params={"run_uid": run_uid, "name": name, "metric_type": metric_type},
-        )
+        params = {"run_uid": run_uid, "metric_type": metric_type}
 
-        return data["metrics"]
+        if name is not None:
+            params["name"] = name
+
+        data = self._session.get_request(route=api_routes.DOWNLOAD_METRICS, params=params)
+
+        metrics = data.get("metrics")
+        return cast(Optional[List[Dict[str, Any]]], metrics)
 
     @staticmethod
     def validate(registry_name: str) -> bool:
