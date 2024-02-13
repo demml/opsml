@@ -142,7 +142,10 @@ class StorageClientBase(StorageClientProtocol):
         self.client.rm(str(path), True)
 
     def exists(self, path: Path) -> bool:
-        return self.client.exists(path=str(path))
+        try:
+            return self.client.exists(path=str(path))
+        except FileNotFoundError:
+            return False
 
 
 class GCSFSStorageClient(StorageClientBase):

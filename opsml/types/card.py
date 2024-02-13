@@ -55,15 +55,9 @@ class RunGraph(BaseModel):
     x_label: str
     y_label: str
     x: List[Union[float, int]]
-    y: List[Union[float, int]]
-
-
-class RunMultiGraph(BaseModel):
-    name: str
-    x_label: str
-    y_label: str
-    x: List[Union[float, int]]
-    y: Dict[str, List[Union[float, int]]]
+    y: Union[Dict[str, List[Union[float, int]]], List[Union[float, int]]]
+    graph_type: str = "single"
+    graph_style: str = "line"
 
 
 class Artifact(BaseModel):
@@ -75,7 +69,6 @@ class Artifact(BaseModel):
 Metrics = Dict[str, List[Metric]]
 Params = Dict[str, List[Param]]
 ArtifactUris = Dict[str, Artifact]
-RunGraphs = Dict[str, Union[RunGraph, RunMultiGraph]]
 
 
 class Comment(BaseModel):

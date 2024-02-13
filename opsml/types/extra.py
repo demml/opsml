@@ -125,3 +125,17 @@ class Description(BaseModel):
                 logger.info(f"Could not load markdown file {idx_error}")
 
         return summary
+
+
+class GraphStyle(str, Enum):
+    LINE = "line"
+    SCATTER = "scatter"
+
+    @staticmethod
+    def from_str(name: str) -> "GraphStyle":
+        l_name = name.strip().lower()
+        if l_name == "line":
+            return GraphStyle.LINE
+        if l_name == "scatter":
+            return GraphStyle.SCATTER
+        raise ValueError(f"GraphStyle {name} not found")
