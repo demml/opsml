@@ -1,10 +1,10 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import datetime as dt
 import os
 import uuid
 from datetime import date
-from datetime import datetime as dt
 from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
@@ -163,7 +163,7 @@ for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
         RegistryTableNames.BASE.value,
         RegistryTableNames.METRICS.value,
-    ]:  # type: ignore[attr-defined]
+    ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
 

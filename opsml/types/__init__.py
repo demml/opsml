@@ -60,7 +60,7 @@ from opsml.types.model import (
     ValidModelInput,
     ValidSavedSample,
 )
-from opsml.types.sql import RegistryTableNames
+from opsml.types.sql import RegistryTableNames, RunCardRegistry
 from opsml.types.storage import (
     ApiStorageClientSettings,
     FilePath,
@@ -138,4 +138,5 @@ __all__ = [
     "StorageSettings",
     "StorageSystem",
     "RegistryTableNames",
+    "RunCardRegistry",
 ]

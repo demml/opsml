@@ -5,8 +5,9 @@
 # pylint: disable=invalid-name
 
 import uuid
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -15,8 +16,6 @@ from pydantic import model_validator
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import TypeChecker
-from opsml.registry.backend import _set_registry
-from opsml.registry.sql.base.client import ClientRunCardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import (
@@ -30,6 +29,7 @@ from opsml.types import (
     Params,
     RegistryTableNames,
     RegistryType,
+    RunCardRegistry,
     RunGraph,
     RunGraphs,
     RunMultiGraph,
@@ -37,8 +37,6 @@ from opsml.types import (
 )
 
 logger = ArtifactLogger.get_logger()
-
-GraphType = Union[List[Union[float, int]], NDArray[Any]]
 
 
 class RunCard(ArtifactCard):
@@ -134,9 +132,9 @@ class RunCard(ArtifactCard):
     def log_graph(
         self,
         name: str,
-        x: GraphType,
+        x: Union[List[Union[float, int]], NDArray[Any]],
         x_label: str,
-        y: GraphType,
+        y: Union[List[Union[float, int]], NDArray[Any]],
         y_label: str,
     ) -> None:
         """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
@@ -155,7 +153,7 @@ class RunCard(ArtifactCard):
 
         """
 
-        if isinstance(x, np.ndarray):
+        if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
             x = x.flatten().tolist()
             y = y.flatten().tolist()
             length = len(x)
@@ -174,13 +172,15 @@ class RunCard(ArtifactCard):
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
 
+        self._registry.insert_metrics([{"run_uid": self.uid, "metric_type": "graph", **graph.model_dump()}])
+
         self.graphs[graph.name] = graph
 
     def log_multiline_graph(
         self,
         name: str,
-        x: GraphType,
-        y: Dict[str, GraphType],
+        x: Union[List[Union[float, int]], NDArray[Any]],
+        y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]],
         x_label: str,
         y_label: str,
     ) -> None:
@@ -201,22 +201,24 @@ class RunCard(ArtifactCard):
 
         if isinstance(x, np.ndarray):
             x = x.flatten().tolist()
-            y = [y.flatten().tolist() for y in y]
+            y = {k: v.flatten().tolist() for k, v in y.items()}
 
         assert isinstance(x, list), "x must be a list"
-        assert isinstance(y, list), "y must be a list"
+        assert isinstance(y, dict), "y must be a dictionary"
         length = len(x)
-        for y_ in y:
+        for y_ in y.values():
             assert length == len(y_), "x and y must be the same length"
 
         # To increase render performance, anything >200 points will be downsampled by step
         if length > 200:
             step = round(length / 200)
             x = x[::step]
-            y = [y[::step] for y in y]
+            y = {k: v[::step] for k, v in y.items()}
 
         logger.info(f"Logging graph {name} to RunCard")
         graph = RunMultiGraph(name=name, x=x, x_label=x_label, y=y, y_label=y_label)
+
+        self._registry.insert_metrics([{"run_uid": self.uid, "metric_type": "graph", **graph.model_dump()}])
 
         self.graphs[graph.name] = graph
 
@@ -392,14 +394,37 @@ class RunCard(ArtifactCard):
         """
         _key = TypeChecker.replace_spaces(name)
         metric = self.metrics.get(_key)
-        if metric is not None:
-            if len(metric) > 1:
-                return metric
-            if len(metric) == 1:
-                return metric[0]
-            return metric
 
-        raise ValueError(f"Metric {metric} is not defined")
+        if metric is None:
+            # try to get metric from registry
+            _metric = self._registry.get_metrics(run_uid=self.uid, metric_type="metric", name=_key)
+
+            if _metric is not None:
+                metric = [Metric(**i) for i in _metric]
+
+            else:
+                raise ValueError(f"Metric {metric} was not defined")
+
+        if len(metric) > 1:
+            return metric
+        if len(metric) == 1:
+            return metric[0]
+        return metric
+
+    def load_metrics(self) -> None:
+        """Loads metrics from registry"""
+        metrics = self._registry.get_metrics(run_uid=self.uid, metric_type="metric")
+
+        if metrics is None:
+            logger.info("No metrics found for RunCard")
+            return None
+
+        for metric in metrics:
+            _metric = Metric(**metric)
+            if _metric.name not in self.metrics:
+                self.metrics[_metric.name] = [_metric]
+            else:
+                self.metrics[_metric.name].append(_metric)
 
     def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
@@ -467,9 +492,11 @@ class RunCard(ArtifactCard):
             end_path,
         )
 
-    @property
-    def _registry(self) -> ClientRunCardRegistry:
-        return _set_registry(RegistryType.RUN)
+    @cached_property
+    def _registry(self) -> RunCardRegistry:
+        from opsml.registry.backend import _set_registry
+
+        return cast(RunCardRegistry, _set_registry(RegistryType.RUN))
 
     @property
     def card_type(self) -> str:

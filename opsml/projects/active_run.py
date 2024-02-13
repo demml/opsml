@@ -315,8 +315,7 @@ class ActiveRun:
         self,
         name: str,
         x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Union[List[List[Union[float, int]]], NDArray[Any]],
-        group_labels: List[str],
+        y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]],
         x_label: str = "x",
         y_label: str = "y",
     ) -> None:
@@ -328,23 +327,14 @@ class ActiveRun:
             x:
                 List or numpy array of x values
             y:
-                List or lists or numpy of 2 dimensional array of y values
-            group_labels:
-                List of group names
+                Dictionary where keys are group names and values are lists or numpy arrays of y values
             x_label:
                 Label for x axis
             y_label:
                 Label for y axis
 
         """
-        self.runcard.log_multiline_graph(
-            name=name,
-            x=x,
-            y=y,
-            x_label=x_label,
-            y_label=y_label,
-            group_labels=group_labels,
-        )
+        self.runcard.log_multiline_graph(name=name, x=x, y=y, x_label=x_label, y_label=y_label)
 
     def create_or_update_runcard(self) -> None:
         """Creates or updates an active RunCard"""

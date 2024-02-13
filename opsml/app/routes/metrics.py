@@ -4,7 +4,7 @@
 
 # pylint: disable=protected-access
 
-from typing import Optional
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -33,8 +33,9 @@ def insert_metrics(request: Request, payload: MetricsModel) -> MetricUploadRespo
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
+    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metrics"])
     try:
-        run_reg.insert_metrics(payload.model_dump())
+        run_reg.insert_metrics(metrics)
         return MetricUploadResponse(uploaded=True)
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
@@ -44,7 +45,7 @@ def insert_metrics(request: Request, payload: MetricsModel) -> MetricUploadRespo
 @router.post("/metrics/download", response_model=MetricsModel, name="metric_download")
 def get_metrics(
     request: Request, run_uid: str, name: Optional[str] = None, metric_type: str = "metric"
-) -> MetricUploadResponse:
+) -> MetricsModel:
     """Get metrics from metric table
 
     Args:
@@ -65,7 +66,7 @@ def get_metrics(
 
     try:
         metrics = run_reg.get_metrics(run_uid, name, metric_type)
-        return MetricsModel.model_validate(**metrics)
+        return MetricsModel(metrics=metrics)
 
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")

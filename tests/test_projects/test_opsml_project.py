@@ -42,6 +42,7 @@ def test_opsml_read_only(
 
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
+        run.log_metric(key="m2", value=1.2)
         run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
         data_card = DataCard(
@@ -50,14 +51,17 @@ def test_opsml_read_only(
             repository="mlops",
             contact="mlops.com",
         )
+        nbr_metrics = len(run.metrics)
         run.register_card(card=data_card, version_type="major")
 
         # test saving run graph
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6])
         run.log_graph(name="graph2", x=np.ndarray((1, 300)), y=np.ndarray((1, 300)))
-        run.log_multiline_graph(name="graph1-multi", x=[1, 2, 3], y=[[4, 5, 6], [4, 5, 6]], group_labels=["a", "b"])
+        run.log_multiline_graph(name="graph1-multi", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
         run.log_multiline_graph(
-            name="graph1-multi2", x=np.ndarray((1, 300)), y=np.ndarray((2, 300)), group_labels=["a", "b"]
+            name="graph1-multi2",
+            x=np.ndarray((1, 300)),
+            y={"a": np.ndarray((1, 300)), "b": np.ndarray((1, 300))},
         )
 
         model_card = ModelCard(
@@ -87,10 +91,18 @@ def test_opsml_read_only(
     proj = OpsmlProject(info=info)
 
     runcard = proj.run_card
+
+    # reset metrics to empty dict
+    runcard.metrics = {}
+
+    # load metrics
+    runcard.load_metrics()
+    assert len(runcard.metrics) == nbr_metrics
+
     runcard.load_artifacts()
     assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
 
-    assert len(proj.metrics) == 1
+    assert len(proj.metrics) == 2
     assert proj.get_metric("m1").value == 1.1
     assert len(proj.parameters) == 1
     assert proj.get_parameter("m1").value == "apple"
