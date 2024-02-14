@@ -1352,7 +1352,7 @@ def populate_run(
             )
             run.register_card(modelcard)
 
-            run.log_metric("test_metric", 10)
+            run.log_metric("test_metric3", 10)
             run.log_parameter("test_param", "test")
             run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
 
