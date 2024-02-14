@@ -145,7 +145,7 @@ class ProjectSchema(Base):
 class MetricSchema(Base):
     __tablename__ = RegistryTableNames.METRICS.value
 
-    run_uid = Column("uid", String(64))
+    run_uid = Column("uid", String(64), primary_key=True)
     name = Column("name", String(128))
     value = Column("value", Float)
     step = Column("step", Integer)
