@@ -10,6 +10,7 @@ from typing import List, cast
 from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
+from sympy import Idx
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import RegistryTableNames
@@ -145,12 +146,13 @@ class ProjectSchema(Base):
 class MetricSchema(Base):
     __tablename__ = RegistryTableNames.METRICS.value
 
-    run_uid = Column("uid", String(64), primary_key=True)
+    run_uid = Column("uid", String(64))
     name = Column("name", String(128))
     value = Column("value", Float)
     step = Column("step", Integer)
     timestamp = Column("timestamp", BigInteger)
-    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()), primary_key=True)
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    idx = Column(Integer, primary_key=True)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
