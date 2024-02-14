@@ -17,7 +17,7 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-@router.post("/metrics/upload", response_model=MetricUploadResponse, name="metric_upload")
+@router.post("/metrics", response_model=MetricUploadResponse, name="metric_post")
 def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadResponse:
     """Inserts metrics into metric table
 
@@ -44,7 +44,7 @@ def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadRespon
         ) from error
 
 
-@router.get("/metrics/download", response_model=MetricsModel, name="metric_download")
+@router.get("/metrics", response_model=MetricsModel, name="metric_get")
 def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> MetricsModel:
     """Get metrics from metric table
 

@@ -311,7 +311,7 @@ class ClientRunCardRegistry(ClientRegistry):
         """
 
         self._session.post_request(
-            route=api_routes.UPLOAD_METRICS,
+            route=api_routes.METRICS,
             json={"metric": metric},
         )
 
@@ -334,7 +334,7 @@ class ClientRunCardRegistry(ClientRegistry):
         if name is not None:
             params["name"] = name
 
-        data = self._session.get_request(route=api_routes.DOWNLOAD_METRICS, params=params)
+        data = self._session.get_request(route=api_routes.METRICS, params=params)
 
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)

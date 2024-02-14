@@ -439,6 +439,7 @@ class RunCard(ArtifactCard):
 
         """
         _key = TypeChecker.replace_spaces(name)
+
         metric = self.metrics.get(_key)
 
         if metric is None:

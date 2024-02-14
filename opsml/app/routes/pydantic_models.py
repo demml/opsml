@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, model_validator
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment, Metrics
+from opsml.types import Comment
 
 
 class HealthCheckResult(BaseModel):
@@ -220,17 +220,6 @@ class MetricModel(BaseModel):
 
 class MetricsModel(BaseModel):
     metric: Optional[List[MetricModel]]
-
-
-class MetricResponse(BaseModel):
-    metrics: Metrics
-
-
-class MetricRequest(BaseModel):
-    name: Optional[str] = None
-    repository: Optional[str] = None
-    version: Optional[str] = None
-    uid: Optional[str] = None
 
 
 class CompareMetricRequest(BaseModel):
