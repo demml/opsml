@@ -67,7 +67,10 @@ def _dump_graph_artifact(graph: RunGraph, name: str, uri: Path) -> Tuple[Path, P
         return lpath, rpath
 
 
-def _parse_y_to_list(x_length: int, y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]]) -> _ParseReturn:
+def _parse_y_to_list(
+    x_length: int,
+    y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
+) -> _ParseReturn:
     """Helper method for parsing y to list when logging a graph
 
     Args:
@@ -82,7 +85,7 @@ def _parse_y_to_list(x_length: int, y: Dict[str, Union[List[Union[float, int]], 
     """
     # if y is dictionary
     if isinstance(y, dict):
-        _y = {}
+        _y: Dict[str, List[Union[float, int]]] = {}
         for k, v in y.items():
             if isinstance(v, np.ndarray):
                 v = v.flatten().tolist()
@@ -96,6 +99,7 @@ def _parse_y_to_list(x_length: int, y: Dict[str, Union[List[Union[float, int]], 
     if isinstance(y, np.ndarray):
         y = y.flatten().tolist()
         assert x_length == len(y), "x and y must be the same length"
+        assert isinstance(y, list), "y must be a list or dictionary"
         return y, "single"
 
     # if y is list
@@ -439,7 +443,8 @@ class RunCard(ArtifactCard):
 
         if metric is None:
             # try to get metric from registry
-            _metric = self._registry.get_metrics(run_uid=self.uid, metric_type="metric", name=_key)
+            assert self.uid is not None, "RunCard must be registered to get metric"
+            _metric = self._registry.get_metric(run_uid=self.uid, name=_key)
 
             if _metric is not None:
                 metric = [Metric(**i) for i in _metric]
@@ -475,11 +480,11 @@ class RunCard(ArtifactCard):
 
     def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
-        Gets a metric by name
+        Gets a parameter by name
 
         Args:
             name:
-                Name of param
+                Name of parameter
 
         Returns:
             List of dictionaries or dictionary containing value

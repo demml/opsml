@@ -73,7 +73,7 @@ def test_save_huggingface_modelcard_api_client(
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
-    loaded_card.load_model()
+    loaded_card.load_model(load_preprocessor=True)
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 

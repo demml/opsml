@@ -309,6 +309,7 @@ class ClientRunCardRegistry(ClientRegistry):
             metric:
                 List of metric(s) to insert
         """
+
         self._session.post_request(
             route=api_routes.UPLOAD_METRICS,
             json={"metric": metric},

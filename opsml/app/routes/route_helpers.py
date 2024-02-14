@@ -27,7 +27,6 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
-from opsml.types.card import RunGraph
 
 logger = ArtifactLogger.get_logger()
 
@@ -551,7 +550,7 @@ class ProjectRouteHelper(RouteHelper):
             runcard:
                 The run card.
         """
-        loaded_graphs = {}
+        loaded_graphs: Dict[str, Any] = {}
         graph_path = runcard.uri / SaveName.GRAPHS.value
         path_exists = client.storage_client.exists(graph_path)
 
@@ -567,7 +566,7 @@ class ProjectRouteHelper(RouteHelper):
                     rpath = graph_path / Path(path).name
                     lpath = Path(tmp_dir) / rpath.name
                     client.storage_client.get(rpath, lpath)
-                    graph: RunGraph = joblib.load(lpath)
+                    graph: Dict[str, Any] = joblib.load(lpath)
                     loaded_graphs[graph["name"]] = graph
 
         return loaded_graphs

@@ -198,7 +198,7 @@ def test_run_card(
     registry = api_registries.run
     model, data = linear_regression
 
-    run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"])
+    run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"], uid=uuid.uuid4().hex)
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
