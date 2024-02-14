@@ -23,7 +23,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
 
     proj = OpsmlProject(info=info)
     proj.run_id = run_id
-    runcard = proj.run_card
+    runcard = proj.runcard
     runcard.load_artifacts()
     assert proj.project_id == 1
 
@@ -91,7 +91,7 @@ def test_opsml_read_only(
     # NOTE: info contains the run_id created in the above run.
     proj = OpsmlProject(info=info)
 
-    runcard = proj.run_card
+    runcard = proj.runcard
 
     # reset metrics to empty dict
     runcard.metrics = {}
@@ -189,7 +189,7 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_parameter("m2").value == "banana"
     assert read_project.get_parameter("foo").value == "bar"
     assert read_project.get_parameter("bar").value == "foo"
-    runcard = read_project.run_card
+    runcard = read_project.runcard
 
     assert runcard.uid == info.run_id
     assert runcard.repository == info.repository

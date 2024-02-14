@@ -32,7 +32,7 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
         info.run_id = run.run_id
 
     proj = OpsmlProject(info=info)
-    runcard = proj.run_card
+    runcard = proj.runcard
     # reset metrics to empty dict
     runcard.metrics = {}
 
