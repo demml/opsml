@@ -39,7 +39,9 @@ def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadRespon
         return MetricUploadResponse(uploaded=True)
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
+        ) from error
 
 
 @router.get("/metrics/download", response_model=MetricsModel, name="metric_download")
@@ -66,4 +68,6 @@ def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> Me
 
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
+        ) from error
