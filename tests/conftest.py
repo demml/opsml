@@ -1264,7 +1264,8 @@ def populate_model_data_for_route(
         contact="mlops.com",
     )
 
-    runcard = RunCard(info=card_info)
+    runcard = RunCard(info=card_info, uid=uuid.uuid4().hex)
+    assert runcard.uid is not None
 
     runcard.log_metric(key="m1", value=1.1)
     runcard.log_metric(key="mape", value=2, step=1)

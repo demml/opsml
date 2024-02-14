@@ -57,12 +57,13 @@ def test_opsml_read_only(
         # test saving run graph
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6])
         run.log_graph(name="graph2", x=np.ndarray((1, 300)), y=np.ndarray((1, 300)))
-        run.log_multiline_graph(name="graph1-multi", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
-        run.log_multiline_graph(
-            name="graph1-multi2",
+        run.log_graph(name="multi1", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
+        run.log_graph(
+            name="multi2",
             x=np.ndarray((1, 300)),
             y={"a": np.ndarray((1, 300)), "b": np.ndarray((1, 300))},
         )
+        run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6], graph_style="scatter")
 
         model_card = ModelCard(
             interface=model,
