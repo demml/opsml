@@ -339,31 +339,6 @@ class ActiveRun:
         """
         self.runcard.log_graph(name=name, x=x, x_label=x_label, y=y, y_label=y_label, graph_style=graph_style)
 
-    def log_multiline_graph(
-        self,
-        name: str,
-        x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Dict[str, Union[List[Union[float, int]], NDArray[Any]]],
-        x_label: str = "x",
-        y_label: str = "y",
-    ) -> None:
-        """Logs a graph to the RunCard, which will be rendered in the UI as a line graph
-
-        Args:
-            name:
-                Name of graph
-            x:
-                List or numpy array of x values
-            y:
-                Dictionary where keys are group names and values are lists or numpy arrays of y values
-            x_label:
-                Label for x axis
-            y_label:
-                Label for y axis
-
-        """
-        self.runcard.log_multiline_graph(name=name, x=x, y=y, x_label=x_label, y_label=y_label)
-
     def create_or_update_runcard(self) -> None:
         """Creates or updates an active RunCard"""
 
