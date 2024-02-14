@@ -10,7 +10,6 @@ from typing import List, cast
 from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
-from sympy import Idx
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import RegistryTableNames
