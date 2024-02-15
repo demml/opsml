@@ -6,9 +6,9 @@
 
 from typing import Any, Dict, List, Optional, cast
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
-from opsml.app.routes.pydantic_models import MetricsModel, MetricUploadResponse
+from opsml.app.routes.pydantic_models import Metrics
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerRunCardRegistry
 
@@ -17,18 +17,18 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-@router.post("/metrics", response_model=MetricUploadResponse, name="metric_post")
-def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadResponse:
+@router.post("/metrics", name="metric_post")
+def insert_metric(request: Request, payload: Metrics) -> Response:
     """Inserts metrics into metric table
 
     Args:
         request:
             FastAPI request object
         payload:
-            MetricsUploadRequest
+            MetricsModel
 
     Returns:
-        `MetricUploadResponse`
+        200
     """
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
@@ -36,7 +36,7 @@ def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadRespon
     metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
     try:
         run_reg.insert_metric(metrics)
-        return MetricUploadResponse(uploaded=True)
+        return Response(status_code=status.HTTP_200_OK, content="Metrics inserted successfully")
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
         raise HTTPException(
@@ -44,8 +44,8 @@ def insert_metric(request: Request, payload: MetricsModel) -> MetricUploadRespon
         ) from error
 
 
-@router.get("/metrics", response_model=MetricsModel, name="metric_get")
-def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> MetricsModel:
+@router.get("/metrics", response_model=Metrics, name="metric_get")
+def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> Metrics:
     """Get metrics from metric table
 
     Args:
@@ -57,17 +57,17 @@ def get_metric(request: Request, run_uid: str, name: Optional[str] = None) -> Me
             Name of metric
 
     Returns:
-        `MetricUploadResponse`
+        `MetricsModel`
     """
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
     try:
         metrics = run_reg.get_metric(run_uid, name)
-        return MetricsModel(metric=metrics)
+        return Metrics(metric=metrics)
 
     except Exception as error:
-        logger.error(f"Failed to insert metrics: {error}")
+        logger.error(f"Failed to get metrics: {error}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
         ) from error

@@ -79,7 +79,7 @@ def _decimate_list(array: List[Union[float, int]]) -> List[Union[float, int]]:
     """
     length = len(array)
     if len(array) > 200_000:
-        step = round(length / 200)
+        step = round(length / 200_000)
         return array[::step]
 
     return array

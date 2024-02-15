@@ -206,11 +206,7 @@ class DeleteFileRequest(BaseModel):
     read_path: str
 
 
-class MetricUploadResponse(BaseModel):
-    uploaded: bool
-
-
-class MetricModel(BaseModel):
+class Metric(BaseModel):
     run_uid: str
     name: str
     value: Optional[float] = None
@@ -218,8 +214,8 @@ class MetricModel(BaseModel):
     timestamp: Optional[int] = None
 
 
-class MetricsModel(BaseModel):
-    metric: Optional[List[MetricModel]]
+class Metrics(BaseModel):
+    metric: Optional[List[Metric]]
 
 
 class CompareMetricRequest(BaseModel):
