@@ -100,27 +100,31 @@
   </div>
   {% endif %}
 
-  {% if graphs|length > 0 %}
+  
   <div class="card-body" id="Graphs" style="display:none">
     <h5><i class="fa-solid fa-floppy-disk" style="color:#04b78a"></i> <font color="#999">Graphs</font></h5>
-    <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
-      <colgroup>
-        <col span="1" style="width: 15%;">
-        <col span="1" style="width: 50%;">
-      </colgroup>
-  
-      <tbody>
-        <div id="GraphContainer">
-          {% for key in graphs.keys() %}
-          <figure class="highcharts-figure">
-              <div class="graph-child" id="graph_{{key}}"></div>
-          </figure>
-          {% endfor %}
-        </div>
-      </tbody>
-    </table>
+    {% if graphs|length > 0 %}
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+        <colgroup>
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 50%;">
+        </colgroup>
+    
+        <tbody>
+          <div id="GraphContainer">
+            {% for key in graphs.keys() %}
+            <figure class="highcharts-figure">
+                <div class="graph-child" id="graph_{{key}}"></div>
+            </figure>
+            {% endfor %}
+          </div>
+        </tbody>
+      </table>
+    {% else %}
+        <b>No graphs recorded during run</b>
+    {% endif %}
   </div>
-  {% endif %}
+ 
 
 {% block scripts %}
 <script src="https://code.highcharts.com/highcharts.js"></script>

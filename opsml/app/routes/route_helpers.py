@@ -401,6 +401,7 @@ class ModelRouteHelper(RouteHelper):
     def _get_runcard(self, registry: CardRegistry, modelcard: ModelCard) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
+            runcard.load_metrics()
             return runcard, runcard.project
 
         return None, None
