@@ -67,6 +67,24 @@ def _dump_graph_artifact(graph: RunGraph, name: str, uri: Path) -> Tuple[Path, P
         return lpath, rpath
 
 
+def _decimate_list(array: List[Union[float, int]]) -> List[Union[float, int]]:
+    """Decimates array to no more than 200,000 points
+
+    Args:
+        array:
+            List of floats or ints
+
+    Returns:
+        Decimated array
+    """
+    length = len(array)
+    if len(array) > 200_000:
+        step = round(length / 200)
+        return array[::step]
+
+    return array
+
+
 def _parse_y_to_list(
     x_length: int,
     y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
@@ -86,9 +104,16 @@ def _parse_y_to_list(
     # if y is dictionary
     if isinstance(y, dict):
         _y: Dict[str, List[Union[float, int]]] = {}
+
+        # common sense constraint
+        if len(y.keys()) > 50:
+            raise ValueError("Too many keys in dictionary. A maximum of 50 keys for y is allowed.")
+
         for k, v in y.items():
             if isinstance(v, np.ndarray):
                 v = v.flatten().tolist()
+                assert isinstance(v, list), "y must be a list or dictionary"
+                v = _decimate_list(v)
 
             assert x_length == len(v), "x and y must be the same length"
             _y[k] = v
@@ -98,12 +123,16 @@ def _parse_y_to_list(
     # if y is ndarray
     if isinstance(y, np.ndarray):
         y = y.flatten().tolist()
-        assert x_length == len(y), "x and y must be the same length"
         assert isinstance(y, list), "y must be a list or dictionary"
+
+        y = _decimate_list(y)
+        assert x_length == len(y), "x and y must be the same length"
+
         return y, "single"
 
     # if y is list
     assert isinstance(y, list), "y must be a list or dictionary"
+    y = _decimate_list(y)
     assert x_length == len(y), "x and y must be the same length"
     return y, "single"
 
@@ -249,6 +278,9 @@ class RunCard(ArtifactCard):
 
         if isinstance(x, np.ndarray):
             x = x.flatten().tolist()
+            assert isinstance(x, list), "x must be a list or dictionary"
+
+        x = _decimate_list(x)
 
         parsed_y, graph_type = _parse_y_to_list(len(x), y)
 

@@ -60,10 +60,16 @@ def test_opsml_read_only(
         run.log_graph(name="multi1", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
         run.log_graph(
             name="multi2",
-            x=np.ndarray((1, 300)),
-            y={"a": np.ndarray((1, 300)), "b": np.ndarray((1, 300))},
+            x=np.ndarray((1, 300_000)),
+            y={"a": np.ndarray((1, 300_000)), "b": np.ndarray((1, 300_000))},
         )
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6], graph_style="scatter")
+
+        # test invalid graph (> 50 keys for y)
+        with pytest.raises(ValueError):
+            y = {str(i): [10, 10, 10] for i in range(100)}
+            x = [10, 10, 10]
+            run.log_graph(name="multi3", x=x, y=y)
 
         model_card = ModelCard(
             interface=model,
