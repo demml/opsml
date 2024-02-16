@@ -50,6 +50,16 @@ class Param(BaseModel):
     value: Union[float, int, str]
 
 
+class RunGraph(BaseModel):
+    name: str
+    x_label: str
+    y_label: str
+    x: List[Union[float, int]]
+    y: Union[Dict[str, List[Union[float, int]]], List[Union[float, int]]]
+    graph_type: str = "single"
+    graph_style: str = "line"
+
+
 class Artifact(BaseModel):
     local_path: str
     remote_path: str

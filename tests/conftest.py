@@ -1264,7 +1264,8 @@ def populate_model_data_for_route(
         contact="mlops.com",
     )
 
-    runcard = RunCard(info=card_info)
+    runcard = RunCard(info=card_info, uid=uuid.uuid4().hex)
+    assert runcard.uid is not None
 
     runcard.log_metric(key="m1", value=1.1)
     runcard.log_metric(key="mape", value=2, step=1)
@@ -1351,7 +1352,7 @@ def populate_run(
             )
             run.register_card(modelcard)
 
-            run.log_metric("test_metric", 10)
+            run.log_metric("test_metric3", 10)
             run.log_parameter("test_param", "test")
             run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
 

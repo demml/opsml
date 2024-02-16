@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field, model_validator
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment, Metrics
+from opsml.types import Comment
+
+
+class Success(BaseModel):
+    complete: bool = True
 
 
 class HealthCheckResult(BaseModel):
@@ -206,15 +210,16 @@ class DeleteFileRequest(BaseModel):
     read_path: str
 
 
-class MetricRequest(BaseModel):
-    name: Optional[str] = None
-    repository: Optional[str] = None
-    version: Optional[str] = None
-    uid: Optional[str] = None
+class Metric(BaseModel):
+    run_uid: str
+    name: str
+    value: Optional[float] = None
+    step: Optional[int] = None
+    timestamp: Optional[int] = None
 
 
-class MetricResponse(BaseModel):
-    metrics: Metrics
+class Metrics(BaseModel):
+    metric: Optional[List[Metric]]
 
 
 class CompareMetricRequest(BaseModel):

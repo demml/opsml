@@ -387,7 +387,7 @@ class RunCardSaver(CardSaver):
     def _save_runcard(self) -> None:
         """Saves a runcard"""
 
-        dumped_run = self.card.model_dump()
+        dumped_run = self.card.model_dump(exclude={"metrics"})  # metrics are recorded to db
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value)
         joblib.dump(dumped_run, save_path)
 

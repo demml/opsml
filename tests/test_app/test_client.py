@@ -190,7 +190,7 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
     assert len(cards) == 1
 
 
-def test_run_card(
+def test_runcard(
     linear_regression: Tuple[SklearnModel, NumpyData],
     api_registries: CardRegistries,
     api_storage_client: client.StorageClient,
@@ -198,7 +198,7 @@ def test_run_card(
     registry = api_registries.run
     model, data = linear_regression
 
-    run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"])
+    run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"], uid=uuid.uuid4().hex)
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     assert run.get_metric("test_metric").value == 10
@@ -425,7 +425,10 @@ def test_metadata_download_and_registration(
 
     shutil.rmtree(config.opsml_registry_path, ignore_errors=True)
 
-    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": model_card.uid})
+    response = test_app.get(
+        url=f"/opsml/{ApiRoutes.METRICS}",
+        params={"run_uid": model_card.metadata.runcard_uid},
+    )
     assert response.status_code == 200
 
     response = test_app.get(url=f"opsml/files/download/ui?path={model_card.uri}/{SaveName.TRAINED_MODEL.value}")
@@ -459,20 +462,12 @@ def test_model_metrics(
     active."""
 
     modelcard, _, _ = populate_model_data_for_route
-    response = test_app.post(url=f"/opsml/{ApiRoutes.MODEL_METRICS}", json={"uid": modelcard.uid})
+    response = test_app.get(url=f"/opsml/{ApiRoutes.METRICS}", params={"run_uid": modelcard.metadata.runcard_uid})
 
-    metrics = response.json()
+    metrics = response.json()["metric"]
 
-    assert metrics["metrics"]["m1"][0]["value"] == 1.1
-
-    response = test_app.post(
-        url=f"/opsml/{ApiRoutes.MODEL_METRICS}",
-        json={
-            "name": modelcard.name,
-            "repository": modelcard.repository,
-        },
-    )
-    assert response.status_code == 200
+    assert metrics[0]["name"] == "m1"
+    assert metrics[0]["value"] == 1.1
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Skipping")

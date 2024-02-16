@@ -159,7 +159,7 @@ class OpsmlHuggingFaceWorkflow:
         modelcard: ModelCard = self.registries.model.load_card(name=self.info.name)
 
         # load onnx model
-        modelcard.load_onnx_model()
+        modelcard.load_onnx_model(load_preprocessor=True)
         inputs = dict(
             modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
         )
