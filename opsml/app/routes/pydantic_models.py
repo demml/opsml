@@ -12,6 +12,10 @@ from opsml.registry.semver import CardVersion, VersionType
 from opsml.types import Comment
 
 
+class Success(BaseModel):
+    complete: bool = True
+
+
 class HealthCheckResult(BaseModel):
     is_alive: bool
 
