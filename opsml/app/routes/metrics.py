@@ -6,9 +6,9 @@
 
 from typing import Any, Dict, List, Optional, cast
 
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.pydantic_models import Metrics
+from opsml.app.routes.pydantic_models import Metrics, Success
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerRunCardRegistry
 
@@ -17,8 +17,8 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-@router.post("/metrics", name="metric_post")
-def insert_metric(request: Request, payload: Metrics) -> Response:
+@router.post("/metrics", name="metric_post", response_model=Success)
+def insert_metric(request: Request, payload: Metrics) -> Success:
     """Inserts metrics into metric table
 
     Args:
@@ -36,7 +36,7 @@ def insert_metric(request: Request, payload: Metrics) -> Response:
     metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
     try:
         run_reg.insert_metric(metrics)
-        return Response(status_code=status.HTTP_200_OK, content="Metrics inserted successfully")
+        return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
         raise HTTPException(
