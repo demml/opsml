@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Unio
 from sqlalchemy import Integer
 from sqlalchemy import cast as sql_cast
 from sqlalchemy import func as sqa_func
-from sqlalchemy import select, text
+from sqlalchemy import insert, select, text
 from sqlalchemy.engine import Engine, Row
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import FromClause, Select
@@ -21,6 +21,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
     CardSQLTable,
+    MetricSchema,
     ProjectSchema,
     SQLTableGetter,
 )
@@ -292,7 +293,6 @@ class QueryEngine:
             List of dictionaries
         """
         record_list: List[Dict[str, Any]] = []
-
         for row in records:
             result_dict = row[0].__dict__
             result_dict.pop("_sa_instance_state")
@@ -470,10 +470,9 @@ class ProjectQueryEngine(QueryEngine):
         Returns:
             Project id or None
         """
-        query = (
-            select(ProjectSchema.project_id)
-            .filter(ProjectSchema.name == project_name)
-            .filter(ProjectSchema.repository == repository)
+        query = select(ProjectSchema.project_id).filter(
+            ProjectSchema.name == project_name,
+            ProjectSchema.repository == repository,
         )
         with self.session() as sess:
             project_id = sess.execute(query).first()
@@ -482,6 +481,46 @@ class ProjectQueryEngine(QueryEngine):
                 return cast(int, project_id[0])
 
         return self.get_max_project_id() + 1
+
+
+class RunQueryEngine(QueryEngine):
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        """Insert run metrics
+
+        Args:
+            metric:
+                List of run metric(s)
+        """
+        with self.session() as sess:
+            sess.execute(insert(MetricSchema), metric)
+            sess.commit()
+
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """Get run metrics. By default, all metrics are returned. If name is provided,
+        only metrics with that name are returned. Metric type can be either "metric" or "graph".
+        "metric" will return name, value, step records. "graph" will return graph (x, y) records.
+
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the metric
+
+        Returns:
+            List of run metrics
+        """
+
+        query = select(MetricSchema).filter(MetricSchema.run_uid == run_uid)
+
+        if name is not None:
+            query = query.filter(MetricSchema.name == name)
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+
+        if not results:
+            return None
+        return self._parse_records(results)
 
 
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
@@ -498,4 +537,6 @@ def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[Qu
     # this allows us to eventually expand into custom registry logic if we need to
     if registry_type == RegistryType.PROJECT:
         return ProjectQueryEngine(engine=db_engine)
+    if registry_type == RegistryType.RUN:
+        return RunQueryEngine(engine=db_engine)
     return QueryEngine(engine=db_engine)

@@ -61,8 +61,8 @@
     <div id = "result"> </div> 
  </p>
 
-
 {% endif %}
+
 
 {% endblock %}
 
@@ -71,11 +71,13 @@
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
 <script>
 
     Highcharts.setOptions({
         colors: ['#04b78a', "#5e0fb7", "#bdbdbd", "#009adb"],
     });
+    
 
     function build_bar_chart (metrics, selected_metrics) {
         var scores = [];
@@ -105,13 +107,17 @@
           
             xAxis: {
                 type: 'category',
-                categories: selected_metrics
+                categories: selected_metrics,
+                lineWidth: 1,
             },
             yAxis: {
               min: minyValue,
               title: {
                 text: 'Metric Value)'
-              }
+              },
+                lineWidth: 1,
+                tickLength: 10,
+                tickWidth: 1
             },
             legend: {
                 enabled: true
@@ -132,6 +138,16 @@
             
                 }
             ],
+            plotOptions: {
+                series: {
+                  states: {
+                    inactive: {
+                        opacity: 1
+                      }
+                    },
+                  lineWidth: 3,
+                }
+            },
         });
 
     }
@@ -155,7 +171,10 @@
 
             data.push({
                 name: selected_metrics[i],
-                data: points
+                data: points,
+                marker: {
+                    enabled: false,
+                  },
             });
         };
 
@@ -174,18 +193,32 @@
                 type: 'category',
                 title: {
                     text: 'Step'
-                  }
+                  },
+                  lineWidth: 1,
             },
             yAxis: {
               title: {
                 text: 'Value'
-              }
+              },
+                lineWidth: 1,
+                tickLength: 10,
+                tickWidth: 1
             },
             legend: {
                 enabled: true
             },
          
             series: data,
+            plotOptions: {
+                series: {
+                  states: {
+                    inactive: {
+                        opacity: 1
+                      }
+                    },
+                  lineWidth: 3,
+                }
+            },
         });
 
 
@@ -225,10 +258,8 @@
             build_line_chart(metrics , selected_metrics);
         };
 
+    };
 
-
-      
-     } 
       
 </script>
 {% endblock %}

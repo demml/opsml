@@ -1,6 +1,7 @@
 import os
 from typing import Tuple, cast
 
+import numpy as np
 import pytest
 
 from opsml.cards import AuditCard, CardInfo, DataCard, ModelCard
@@ -22,7 +23,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
 
     proj = OpsmlProject(info=info)
     proj.run_id = run_id
-    runcard = proj.run_card
+    runcard = proj.runcard
     runcard.load_artifacts()
     assert proj.project_id == 1
 
@@ -41,6 +42,7 @@ def test_opsml_read_only(
 
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
+        run.log_metric(key="m2", value=1.2)
         run.log_parameter(key="m1", value="apple")
         model, data = sklearn_pipeline
         data_card = DataCard(
@@ -49,7 +51,25 @@ def test_opsml_read_only(
             repository="mlops",
             contact="mlops.com",
         )
+        nbr_metrics = len(run.metrics)
         run.register_card(card=data_card, version_type="major")
+
+        # test saving run graph
+        run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6])
+        run.log_graph(name="graph2", x=np.ndarray((1, 300)), y=np.ndarray((1, 300)))
+        run.log_graph(name="multi1", x=[1, 2, 3], y={"a": [4, 5, 6], "b": [4, 5, 6]})
+        run.log_graph(
+            name="multi2",
+            x=np.ndarray((1, 300_000)),
+            y={"a": np.ndarray((1, 300_000)), "b": np.ndarray((1, 300_000))},
+        )
+        run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6], graph_style="scatter")
+
+        # test invalid graph (> 50 keys for y)
+        with pytest.raises(ValueError):
+            y = {str(i): [10, 10, 10] for i in range(100)}
+            x = [10, 10, 10]
+            run.log_graph(name="multi3", x=x, y=y)
 
         model_card = ModelCard(
             interface=model,
@@ -77,11 +97,19 @@ def test_opsml_read_only(
     # NOTE: info contains the run_id created in the above run.
     proj = OpsmlProject(info=info)
 
-    runcard = proj.run_card
+    runcard = proj.runcard
+
+    # reset metrics to empty dict
+    runcard.metrics = {}
+
+    # load metrics
+    runcard.load_metrics()
+    assert len(runcard.metrics) == nbr_metrics
+
     runcard.load_artifacts()
     assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
 
-    assert len(proj.metrics) == 1
+    assert len(proj.metrics) == 2
     assert proj.get_metric("m1").value == 1.1
     assert len(proj.parameters) == 1
     assert proj.get_parameter("m1").value == "apple"
@@ -167,7 +195,7 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_parameter("m2").value == "banana"
     assert read_project.get_parameter("foo").value == "bar"
     assert read_project.get_parameter("bar").value == "foo"
-    runcard = read_project.run_card
+    runcard = read_project.runcard
 
     assert runcard.uid == info.run_id
     assert runcard.repository == info.repository

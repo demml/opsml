@@ -72,7 +72,7 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
-    loaded_card.load_model()
+    loaded_card.load_model(load_preprocessor=True)
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 
@@ -135,7 +135,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
-    loaded_card.load_model()
+    loaded_card.load_model(load_preprocessor=True)
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 
@@ -652,7 +652,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     assert loaded_card.interface.model is None
 
     # attempt to load onnx model before loading model
-    loaded_card.load_onnx_model()
+    loaded_card.load_onnx_model(load_preprocessor=True)
     assert loaded_card.onnx_model is not None
     assert loaded_card.onnx_model.sess is not None
     assert isinstance(loaded_card.onnx_model.sess, Pipeline)
@@ -710,7 +710,7 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
     assert loaded_card.interface.feature_extractor is None
 
     # attempt to load onnx model before loading model
-    loaded_card.load_onnx_model()
+    loaded_card.load_onnx_model(load_preprocessor=True)
     assert loaded_card.onnx_model is not None
     assert loaded_card.onnx_model.sess is not None
     assert isinstance(loaded_card.onnx_model.sess, Pipeline)

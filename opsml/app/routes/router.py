@@ -10,6 +10,7 @@ from opsml.app.routes import (
     files,
     healthcheck,
     homepage,
+    metrics,
     models,
     projects,
     registry,
@@ -25,3 +26,4 @@ api_router.include_router(audit.router, tags=["audit"], prefix="/opsml")
 api_router.include_router(homepage.router, tags=["homepage"])
 api_router.include_router(registry.router, tags=["registry"], prefix="/opsml")
 api_router.include_router(projects.router, tags=["project"], prefix="/opsml")
+api_router.include_router(metrics.router, tags=["metrics"], prefix="/opsml")

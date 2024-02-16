@@ -15,12 +15,14 @@ from opsml.types.card import (
     PipelineCardArgs,
     RegistryType,
     RunCardArgs,
+    RunGraph,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
     ArtifactClass,
     CommonKwargs,
     Description,
+    GraphStyle,
     SaveName,
     Suffix,
     UriNames,
@@ -57,7 +59,7 @@ from opsml.types.model import (
     ValidModelInput,
     ValidSavedSample,
 )
-from opsml.types.sql import RegistryTableNames
+from opsml.types.sql import RegistryTableNames, RunCardRegistry
 from opsml.types.storage import (
     ApiStorageClientSettings,
     FilePath,
@@ -108,6 +110,7 @@ __all__ = [
     "DataSchema",
     "Feature",
     "Graph",
+    "RunGraph",
     "HuggingFaceModuleType",
     "HuggingFaceOnnxArgs",
     "ModelCardMetadata",
@@ -132,4 +135,6 @@ __all__ = [
     "StorageSettings",
     "StorageSystem",
     "RegistryTableNames",
+    "RunCardRegistry",
+    "GraphStyle",
 ]

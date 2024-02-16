@@ -21,7 +21,7 @@ def verify_token(request: Request) -> None:
         if prod_token != config.opsml_prod_token:
             logger.error("Attempt to write prod without token")
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Cannot perform write operation on prod resource without token",
             )
 

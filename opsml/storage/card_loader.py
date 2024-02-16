@@ -504,7 +504,7 @@ class ModelCardLoader(CardLoader):
             logger.info("Onnx Model already loaded")
             return None
 
-        load_preprocessor = kwargs.get("load_preprocessor", True)
+        load_preprocessor = kwargs.get("load_preprocessor", False)
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
@@ -523,7 +523,7 @@ class ModelCardLoader(CardLoader):
             logger.info("Model already loaded")
             return None
 
-        load_preprocessor = kwargs.get("load_preprocessor", True)
+        load_preprocessor = kwargs.get("load_preprocessor", False)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
@@ -620,7 +620,7 @@ class ModelCardLoader(CardLoader):
                 Kwargs to pass for downloading model
         """
 
-        load_preprocessor = kwargs.get("load_preprocessor", True)
+        load_preprocessor = kwargs.get("load_preprocessor", False)
         load_onnx = kwargs.get("load_onnx", False)
         lpath.mkdir(parents=True, exist_ok=True)
         rpath = self.card.uri

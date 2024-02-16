@@ -312,6 +312,7 @@ def test_runcard(
         repository="mlops",
         contact="mlops.com",
         datacard_uids=["test_uid"],
+        uid=uuid.uuid4().hex,
     )
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
@@ -334,6 +335,7 @@ def test_runcard(
     assert Path(loaded_card.artifact_uris.get("linear_reg").local_path).exists()
     os.remove(loaded_card.artifact_uris.get("linear_reg").local_path)
     assert loaded_card.uid == run.uid
+
     assert loaded_card.get_metric("test_metric").value == 10
     assert loaded_card.get_metric("test_metric2").value == 20
 

@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 
+import joblib
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from starlette.templating import _TemplateResponse
@@ -24,6 +25,7 @@ from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
+from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
@@ -399,6 +401,7 @@ class ModelRouteHelper(RouteHelper):
     def _get_runcard(self, registry: CardRegistry, modelcard: ModelCard) -> Tuple[Optional[RunCard], Optional[str]]:
         if modelcard.metadata.runcard_uid is not None:
             runcard: RunCard = registry.load_card(uid=modelcard.metadata.runcard_uid)  # type: ignore
+            runcard.load_metrics()
             return runcard, runcard.project
 
         return None, None
@@ -516,13 +519,16 @@ class ProjectRouteHelper(RouteHelper):
                 The run uid.
         """
         run_registry: CardRegistry = request.app.state.registries.run
-        runcard = run_registry.load_card(uid=run_uid).model_dump()
+        runcard: RunCard = run_registry.load_card(uid=run_uid)
+
+        # load metrics from sql db
+        runcard.load_metrics()
 
         return templates.TemplateResponse(
             "include/project/metric_page.html",
             {
                 "request": request,
-                "runcard": runcard,
+                "runcard": runcard.model_dump(),
             },
         )
 
@@ -537,6 +543,34 @@ class ProjectRouteHelper(RouteHelper):
         projects = project_registry.list_cards(limit=1000)
 
         return sorted(list(set(project["name"] for project in projects)))
+
+    def load_graphs(self, runcard: RunCard) -> Dict[str, Any]:
+        """Load graphs from runcard
+
+        Args:
+            runcard:
+                The run card.
+        """
+        loaded_graphs: Dict[str, Any] = {}
+        graph_path = runcard.uri / SaveName.GRAPHS.value
+        path_exists = client.storage_client.exists(graph_path)
+
+        # skip if path does not exist
+        if not path_exists:
+            return loaded_graphs
+
+        paths = client.storage_client.ls(graph_path)
+        logger.debug("Found {} graphs in {}", paths, graph_path)
+        if paths:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                for path in paths:
+                    rpath = graph_path / Path(path).name
+                    lpath = Path(tmp_dir) / rpath.name
+                    client.storage_client.get(rpath, lpath)
+                    graph: Dict[str, Any] = joblib.load(lpath)
+                    loaded_graphs[graph["name"]] = graph
+
+        return loaded_graphs
 
     def get_project_runs(self, project: str, run_registry: CardRegistry) -> List[Dict[str, Any]]:
         """Get runs for a project
@@ -594,7 +628,7 @@ class ProjectRouteHelper(RouteHelper):
         logger.debug("Found {} runs", len(project_runs))
 
         if run_uid is not None:
-            runcard = run_registry.load_card(uid=run_uid)
+            runcard: RunCard = run_registry.load_card(uid=run_uid)
         else:
             if len(project_runs) == 0:
                 return templates.TemplateResponse(
@@ -606,7 +640,11 @@ class ProjectRouteHelper(RouteHelper):
                         "project_runs": project_runs,
                     },
                 )
-            runcard = run_registry.load_card(uid=project_runs[0]["uid"])
+
+            runcard: RunCard = run_registry.load_card(uid=project_runs[0]["uid"])  # type: ignore[no-redef]
+
+        # load metrics from db
+        runcard.load_metrics()
 
         return templates.TemplateResponse(
             "include/project/projects.html",
@@ -616,5 +654,6 @@ class ProjectRouteHelper(RouteHelper):
                 "selected_project": selected_project,
                 "project_runs": project_runs,
                 "runcard": runcard,
+                "graphs": self.load_graphs(runcard),
             },
         )

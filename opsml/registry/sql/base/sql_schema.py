@@ -1,12 +1,13 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import datetime as dt
 import os
 import uuid
 from datetime import date
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
@@ -141,9 +142,27 @@ class ProjectSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class MetricSchema(Base):
+    __tablename__ = RegistryTableNames.METRICS.value
+
+    run_uid = Column("uid", String(64))
+    name = Column("name", String(128))
+    value = Column("value", Float)
+    step = Column("step", Integer)
+    timestamp = Column("timestamp", BigInteger)
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    idx = Column(Integer, primary_key=True)
+
+    def __repr__(self) -> str:
+        return f"<SqlTable: {self.__tablename__}>"
+
+
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
-    if schema.__tablename__ != RegistryTableNames.BASE.value:  # type: ignore[attr-defined]
+    if schema.__tablename__ not in [
+        RegistryTableNames.BASE.value,
+        RegistryTableNames.METRICS.value,
+    ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
 

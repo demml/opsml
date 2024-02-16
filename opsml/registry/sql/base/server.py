@@ -17,7 +17,11 @@ from opsml.registry.semver import (
     VersionType,
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
-from opsml.registry.sql.base.query_engine import ProjectQueryEngine, get_query_engine
+from opsml.registry.sql.base.query_engine import (
+    ProjectQueryEngine,
+    RunQueryEngine,
+    get_query_engine,
+)
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.sql_schema import SQLTableGetter
 from opsml.registry.sql.base.utils import log_card_change
@@ -320,6 +324,34 @@ class ServerRunCardRegistry(ServerRegistry):
     @property
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
+
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        """Get metric from run card
+
+        Args:
+            run_uid:
+                run card uid
+            name:
+                name
+
+        Returns:
+            metric value
+
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        return self.engine.get_metric(run_uid=run_uid, name=name)
+
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        """Insert metric into run card
+
+        Args:
+            metric:
+                list of metric(s)
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_metric(metric=metric)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

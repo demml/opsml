@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import Enum, unique
+from typing import Any, Dict, List, Optional, Protocol
 
 
 @unique
@@ -14,6 +15,7 @@ class RegistryTableNames(str, Enum):
     PROJECT = "OPSML_PROJECT_REGISTRY"
     AUDIT = "OPSML_AUDIT_REGISTRY"
     BASE = "OPSML_BASE_REGISTRY"
+    METRICS = "OPSML_RUN_METRICS"
 
     @staticmethod
     def from_str(name: str) -> "RegistryTableNames":
@@ -31,3 +33,11 @@ class RegistryTableNames(str, Enum):
         if l_name == "audit":
             return RegistryTableNames.AUDIT
         raise NotImplementedError()
+
+
+class RunCardRegistry(Protocol):
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        ...
+
+    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+        ...
