@@ -69,6 +69,8 @@ from opsml.types.storage import (
     StorageClientSettings,
     StorageSettings,
     StorageSystem,
+    BotoClient,
+    GCSClient,
 )
 
 __all__ = [
@@ -137,4 +139,6 @@ __all__ = [
     "RegistryTableNames",
     "RunCardRegistry",
     "GraphStyle",
+    "BotoClient",
+    "GCSClient",
 ]

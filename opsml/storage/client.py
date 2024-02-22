@@ -259,6 +259,11 @@ class LocalStorageClient(StorageClientBase):
 
         super().put(lpath, rpath)
 
+    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+        """Generates pre signed url for object"""
+        # use mounted path for local storage
+        return (Path("/artifacts") / path).as_posix()
+
 
 class ApiStorageClient(StorageClientBase):
     def __init__(self, settings: StorageSettings):
@@ -370,6 +375,7 @@ def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
         storage_uri=storage_uri,
         gcp_project=gcp_creds.project,
         credentials=gcp_creds.creds,
+        default_creds=gcp_creds.default_creds,
     )
 
 
