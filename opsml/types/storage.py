@@ -55,6 +55,26 @@ StorageSettings = Union[
 ]
 
 
+class BotoClient(Protocol):
+    def generate_presigned_url(self, operation_name: str, Params: dict, ExpiresIn: int) -> str:
+        ...
+
+
+class Blob(Protocol):
+    def generate_signed_url(self, version="v4", expiration: int = 600) -> str:
+        ...
+
+
+class Bucket(Protocol):
+    def blob(self, name: str) -> Blob:
+        ...
+
+
+class GCSClient(Protocol):
+    def bucket(self, name: str) -> Bucket:
+        return Bucket()
+
+
 class StorageClientProtocol(Protocol):
     def get(self, rpath: Path, lpath: Path) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
