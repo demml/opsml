@@ -5,12 +5,12 @@
 
 
 import io
-import re
 import warnings
 from pathlib import Path
 from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec.implementations.local import LocalFileSystem
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
 from opsml.storage.api import ApiClient, ApiRoutes, RequestType

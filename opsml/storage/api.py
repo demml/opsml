@@ -3,9 +3,8 @@
 # LICENSE file in the root directory of this source tree.
 import json as py_json
 import logging
-from pathlib import Path
 from enum import Enum
-from threading import local
+from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
 import httpx
