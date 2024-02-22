@@ -155,6 +155,14 @@ def test_opsml_read_only(
         db_registries.project.delete_card(data_card)
     ve.match("ProjectCardRegistry does not support delete_card")
 
+    metrics = runcard._registry.get_metric(run_uid=info.run_id, name=["m1", "m2"])
+    assert len(metrics) == 2
+
+    metrics = runcard._registry.get_metric(run_uid=info.run_id, name=["m1", "m2"], names_only=True)
+    assert len(metrics) == 2
+    for m in metrics:
+        assert m in ["m1", "m2"]
+
 
 def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     """Verify a run con be continued"""

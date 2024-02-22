@@ -14,7 +14,7 @@ from sqlalchemy import func as sqa_func
 from sqlalchemy import insert, select, text
 from sqlalchemy.engine import Engine, Row
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import FromClause, Select
+from sqlalchemy.sql import FromClause, Select, distinct, or_
 from sqlalchemy.sql.expression import ColumnElement
 
 from opsml.helpers.logging import ArtifactLogger
@@ -298,6 +298,9 @@ class QueryEngine:
             result_dict.pop("_sa_instance_state")
             record_list.append(result_dict)
 
+        print()
+        print(record_list)
+        print()
         return record_list
 
     def get_records_from_table(
@@ -495,7 +498,12 @@ class RunQueryEngine(QueryEngine):
             sess.execute(insert(MetricSchema), metric)
             sess.commit()
 
-    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(
+        self,
+        run_uid: str,
+        name: Optional[List[str]] = None,
+        names_only: bool = False,
+    ) -> Optional[List[Dict[str, Any]]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -505,21 +513,29 @@ class RunQueryEngine(QueryEngine):
                 Run uid
             name:
                 Name of the metric
+            names_only:
+                Return only the names of the metrics
 
         Returns:
             List of run metrics
         """
 
-        query = select(MetricSchema).filter(MetricSchema.run_uid == run_uid)
+        column_to_query = distinct(MetricSchema.name) if names_only else MetricSchema
+
+        query = select(column_to_query).filter(MetricSchema.run_uid == run_uid)
 
         if name is not None:
-            query = query.filter(MetricSchema.name == name)
+            filters = [MetricSchema.name == n for n in name]
+            query = query.filter(or_(*filters))
 
         with self.session() as sess:
             results = sess.execute(query).all()
-
         if not results:
             return None
+
+        if names_only:
+            return [row[0] for row in results]
+
         return self._parse_records(results)
 
 

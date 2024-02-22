@@ -219,7 +219,13 @@ class Metric(BaseModel):
 
 
 class Metrics(BaseModel):
-    metric: Optional[List[Metric]]
+    metric: Union[Optional[List[Metric]], Optional[List[str]]]
+
+
+class GetMetricRequest(BaseModel):
+    run_uid: str
+    name: Optional[List[str]] = None
+    names_only: bool = False
 
 
 class CompareMetricRequest(BaseModel):

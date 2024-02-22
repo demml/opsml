@@ -425,9 +425,9 @@ def test_metadata_download_and_registration(
 
     shutil.rmtree(config.opsml_registry_path, ignore_errors=True)
 
-    response = test_app.get(
+    response = test_app.post(
         url=f"/opsml/{ApiRoutes.METRICS}",
-        params={"run_uid": model_card.metadata.runcard_uid},
+        json={"run_uid": model_card.metadata.runcard_uid},
     )
     assert response.status_code == 200
 
@@ -462,7 +462,7 @@ def test_model_metrics(
     active."""
 
     modelcard, _, _ = populate_model_data_for_route
-    response = test_app.get(url=f"/opsml/{ApiRoutes.METRICS}", params={"run_uid": modelcard.metadata.runcard_uid})
+    response = test_app.post(url=f"/opsml/{ApiRoutes.METRICS}", json={"run_uid": modelcard.metadata.runcard_uid})
 
     metrics = response.json()["metric"]
 

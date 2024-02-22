@@ -325,22 +325,26 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(
+        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
+    ) -> Optional[List[Dict[str, Any]]]:
         """Get metric from run card
 
         Args:
             run_uid:
                 run card uid
             name:
-                name
+                List of names of metrics to retrieve
+            names_only:
+                if True, will return only names
 
         Returns:
-            metric value
+            metrics
 
         """
         assert isinstance(self.engine, RunQueryEngine)
 
-        return self.engine.get_metric(run_uid=run_uid, name=name)
+        return self.engine.get_metric(run_uid=run_uid, name=name, names_only=names_only)
 
     def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Insert metric into run card
