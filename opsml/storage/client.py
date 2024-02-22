@@ -22,6 +22,8 @@ from opsml.types import (
     StorageClientSettings,
     StorageSettings,
     StorageSystem,
+    BotoClient,
+    GCSClient,
 )
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
@@ -147,6 +149,10 @@ class StorageClientBase(StorageClientProtocol):
         except FileNotFoundError:
             return False
 
+    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+        """Generates pre signed url for object"""
+        return path.as_posix()
+
 
 class GCSFSStorageClient(StorageClientBase):
     def __init__(
@@ -156,7 +162,7 @@ class GCSFSStorageClient(StorageClientBase):
         import gcsfs
 
         assert isinstance(settings, GcsStorageClientSettings)
-        if settings.credentials is None:
+        if settings.default_creds is None:
             logger.info("Using default GCP credentials")
             client = gcsfs.GCSFileSystem()
         else:
