@@ -92,7 +92,7 @@ class ApiClient:
         return f"{base_url}/{path_prefix}"
 
     @retry(reraise=True, stop=stop_after_attempt(3))
-    def make_request(self, route: str, request_type: RequestType, **kwargs: Any) -> Dict[str, Any]:
+    def request(self, route: str, request_type: RequestType, **kwargs: Any) -> Dict[str, Any]:
         """Makes a request to the server
 
         Args:
