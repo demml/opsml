@@ -173,9 +173,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
 
 
 class RepositoriesResponse(BaseModel):
@@ -379,3 +377,15 @@ class AuditReport(BaseModel):
 
 class ProjectIdResponse(BaseModel):
     project_id: int
+
+
+# TODO: remove these once everyone is migrated to v2.2.0
+class MetricRequest(BaseModel):
+    name: Optional[str] = None
+    repository: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
+
+
+class MetricResponse(BaseModel):
+    metrics: Metrics
