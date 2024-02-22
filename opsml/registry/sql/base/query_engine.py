@@ -298,6 +298,9 @@ class QueryEngine:
             result_dict.pop("_sa_instance_state")
             record_list.append(result_dict)
 
+        print()
+        print(record_list)
+        print()
         return record_list
 
     def get_records_from_table(
@@ -519,9 +522,7 @@ class RunQueryEngine(QueryEngine):
 
         column_to_query = distinct(MetricSchema.name) if names_only else MetricSchema
 
-        query = select(column_to_query)
-
-        query.filter(MetricSchema.run_uid == run_uid)
+        query = select(column_to_query).filter(MetricSchema.run_uid == run_uid)
 
         if name is not None:
             filters = [MetricSchema.name == n for n in name]
@@ -534,6 +535,7 @@ class RunQueryEngine(QueryEngine):
 
         if names_only:
             return [row[0] for row in results]
+
         return self._parse_records(results)
 
 
