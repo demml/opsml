@@ -114,7 +114,7 @@ class ApiClient:
             return cast(Dict[str, Any], response.json())
 
         detail = response.json().get("detail")
-        raise ValueError(f"""Failed to to make server call for {request_type} request Url: {route}, {detail}""")
+        raise ValueError(f"""Failed to make server call for {request_type} request Url: {route}, {detail}""")
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(
@@ -137,7 +137,7 @@ class ApiClient:
 
         raise ValueError(
             f"""
-            Failed to to make server call for post request Url: {route}.
+            Failed to make server call for post request Url: {route}.
             {response_result.get("detail")}
             """
         )
@@ -165,7 +165,7 @@ class ApiClient:
         )
 
         raise ValueError(
-            f"""Failed to to make server call for post request Url: {ApiRoutes.DOWNLOAD_FILE}.
+            f"""Failed to make server call for post request Url: {ApiRoutes.DOWNLOAD_FILE}.
               {response_result.get("detail")}
             """
         )
