@@ -4,7 +4,7 @@
 
 
 from pathlib import Path
-from typing import Optional, cast, List, Dict, Any
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -15,9 +15,9 @@ from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
     CompareMetricResponse,
-    RegisterModelRequest,
     MetricRequest,
     MetricResponse,
+    RegisterModelRequest,
 )
 from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500

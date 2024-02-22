@@ -4,9 +4,9 @@ import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+
 import pytest
 from google.oauth2.service_account import Credentials
-from torch import NoneType
 
 from opsml.helpers import exceptions, gcp_utils, utils
 
@@ -147,10 +147,10 @@ def test_gcp_creds(gcp_cred_path: str):
     creds = gcp_utils.GcpCredsSetter(service_creds=base64_creds).get_creds()
 
     assert isinstance(creds.creds, Credentials)
-    
+
     with patch("google.auth.default", return_value=(None, None)):
         cred_setter = gcp_utils.GcpCredsSetter()
-        
+
         # ensure this is none
         cred_setter.service_base64_creds = None
         creds = cred_setter.get_creds()
