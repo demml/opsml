@@ -7,7 +7,7 @@
 import io
 import warnings
 from pathlib import Path
-from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
+from typing import BinaryIO, Iterator, List, Optional, Protocol, cast, Any
 
 from fsspec.implementations.local import LocalFileSystem
 
@@ -25,6 +25,8 @@ from opsml.types import (
     BotoClient,
     GCSClient,
 )
+from functools import cached_property
+import datetime
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")
@@ -175,6 +177,43 @@ class GCSFSStorageClient(StorageClientBase):
             settings=settings,
             client=client,
         )
+
+    @cached_property
+    def gcs_client(self) -> GCSClient:
+        from google.cloud import storage
+
+        return cast(GCSClient, storage.Client())
+
+    # cached_property is a decorator that caches the result of the function it decorates.
+
+    @cached_property
+    def get_id_credentials(self) -> Any:
+        assert isinstance(self.settings, GcsStorageClientSettings)
+
+        if self.settings.default_creds:
+            from google.auth import compute_engine
+            from google.auth.transport import requests
+
+            auth_request = requests.Request()
+            return compute_engine.IDTokenCredentials(auth_request, "")
+
+        return None
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+        """Generates pre signed url for S3 object"""
+
+        try:
+            bucket = self.gcs_client.bucket(config.storage_root)
+            blob = bucket.blob(str(path))
+
+            return blob.generate_signed_url(
+                expiration=datetime.timedelta(seconds=expiration),
+                credentials=self.get_id_credentials,
+                method="GET",
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL: {e}")
+            return None
 
 
 class S3StorageClient(StorageClientBase):
