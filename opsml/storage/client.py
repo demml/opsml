@@ -197,7 +197,7 @@ class GCSFSStorageClient(StorageClientBase):
             auth_request = requests.Request()
             return compute_engine.IDTokenCredentials(auth_request, "")
 
-        return None
+        return self.settings.credentials
 
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
@@ -205,7 +205,6 @@ class GCSFSStorageClient(StorageClientBase):
         try:
             bucket = self.gcs_client.bucket(config.storage_root)
             blob = bucket.blob(str(path))
-
             return blob.generate_signed_url(
                 expiration=datetime.timedelta(seconds=expiration),
                 credentials=self.get_id_credentials,
