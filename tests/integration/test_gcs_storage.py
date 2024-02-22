@@ -31,6 +31,10 @@ def test_gcs_storage_client(tmp_path: Path, gcs_storage_client: StorageClient, g
         rpath_nested = rpath.parent / "nested/really/deep/cats-2.jpg"
         gcs_storage_client.put(lpath, rpath_nested)
 
+        # generate_presigned_url
+        path = gcs_storage_client.generate_presigned_url(rpath, 1)
+        assert path is not None
+
         # ls
         assert len(gcs_storage_client.ls(gcs_test_bucket)) >= 1
         assert len(gcs_storage_client.ls(rpath_nested.parent)) >= 1
