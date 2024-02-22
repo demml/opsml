@@ -36,7 +36,7 @@ class ClientRegistry(SQLRegistryBase):
     @cached_property
     def table_name(self) -> str:
         """Returns the table name for this registry type"""
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.TABLE_NAME,
             request_type=RequestType.GET,
             params={"registry_type": self.registry_type.value},
@@ -56,7 +56,7 @@ class ClientRegistry(SQLRegistryBase):
     @property
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.REPOSITORY_CARDS,
             request_type=RequestType.GET,
             params={"registry_type": self.registry_type.value},
@@ -80,7 +80,7 @@ class ClientRegistry(SQLRegistryBase):
         if repository is not None:
             params["repository"] = repository
 
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.NAME_CARDS,
             request_type=RequestType.GET,
             params=params,
@@ -89,7 +89,7 @@ class ClientRegistry(SQLRegistryBase):
         return cast(List[str], data["names"])
 
     def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.CHECK_UID,
             request_type=RequestType.POST,
             json={"uid": uid, "registry_type": registry_type.value},
@@ -111,7 +111,7 @@ class ClientRegistry(SQLRegistryBase):
         else:
             version_to_send = None
 
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.VERSION,
             request_type=RequestType.POST,
             json={
@@ -165,7 +165,7 @@ class ClientRegistry(SQLRegistryBase):
         Returns:
             Dictionary of card records
         """
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.LIST_CARDS,
             request_type=RequestType.POST,
             json={
@@ -186,7 +186,7 @@ class ClientRegistry(SQLRegistryBase):
 
     @log_card_change
     def add_and_commit(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.CREATE_CARD,
             request_type=RequestType.POST,
             json={
@@ -201,7 +201,7 @@ class ClientRegistry(SQLRegistryBase):
 
     @log_card_change
     def update_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.UPDATE_CARD,
             request_type=RequestType.POST,
             json={
@@ -216,7 +216,7 @@ class ClientRegistry(SQLRegistryBase):
 
     @log_card_change
     def delete_card_record(self, card: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.DELETE_CARD,
             request_type=RequestType.POST,
             json={
@@ -322,7 +322,7 @@ class ClientRunCardRegistry(ClientRegistry):
                 List of metric(s) to insert
         """
 
-        self._session.make_request(
+        self._session.request(
             route=api_routes.METRICS,
             request_type=RequestType.PUT,
             json={"metric": metric},
@@ -357,7 +357,7 @@ class ClientRunCardRegistry(ClientRegistry):
         if names_only:
             body["names_only"] = names_only
 
-        data = self._session.make_request(route=api_routes.METRICS, request_type=RequestType.POST, json=body)
+        data = self._session.request(route=api_routes.METRICS, request_type=RequestType.POST, json=body)
 
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)
@@ -422,7 +422,7 @@ class ClientProjectCardRegistry(ClientRegistry):
             project id
         """
 
-        data = self._session.make_request(
+        data = self._session.request(
             route=api_routes.PROJECT_ID,
             request_type=RequestType.GET,
             params={
