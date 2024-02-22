@@ -3,10 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+import datetime
 import os
 from enum import Enum, unique
 from pathlib import Path
-from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, Union
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -56,12 +57,19 @@ StorageSettings = Union[
 
 
 class BotoClient(Protocol):
-    def generate_presigned_url(self, operation_name: str, Params: dict, ExpiresIn: int) -> str:
+    def generate_presigned_url(
+        self,
+        operation_name: str,
+        Params: Dict[str, Any],  # pylint: disable=invalid-name
+        ExpiresIn: int,  # pylint: disable=invalid-name
+    ) -> str:
         ...
 
 
 class Blob(Protocol):
-    def generate_signed_url(self, version="v4", expiration: int = 600) -> str:
+    def generate_signed_url(
+        self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
+    ) -> str:
         ...
 
 
@@ -72,7 +80,7 @@ class Bucket(Protocol):
 
 class GCSClient(Protocol):
     def bucket(self, name: str) -> Bucket:
-        return Bucket()
+        ...
 
 
 class StorageClientProtocol(Protocol):

@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -151,7 +151,7 @@ class StorageClientBase(StorageClientProtocol):
         except FileNotFoundError:
             return False
 
-    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for object"""
         return path.as_posix()
 
@@ -199,7 +199,7 @@ class GCSFSStorageClient(StorageClientBase):
 
         return None
 
-    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
 
         try:
@@ -211,8 +211,8 @@ class GCSFSStorageClient(StorageClientBase):
                 credentials=self.get_id_credentials,
                 method="GET",
             )
-        except Exception as e:
-            logger.error(f"Failed to generate presigned URL: {e}")
+        except Exception as error:
+            logger.error(f"Failed to generate presigned URL: {error}")
             return None
 
 
@@ -237,7 +237,7 @@ class S3StorageClient(StorageClientBase):
 
         return cast(BotoClient, boto3.client("s3"))
 
-    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
         try:
             return self.s3_client.generate_presigned_url(
@@ -245,8 +245,8 @@ class S3StorageClient(StorageClientBase):
                 Params={"Bucket": config.storage_root, "Key": str(path)},
                 ExpiresIn=expiration,
             )
-        except Exception as e:
-            logger.error(f"Failed to generate presigned URL: {e}")
+        except Exception as error:
+            logger.error(f"Failed to generate presigned URL: {error}")
             return None
 
 
@@ -259,7 +259,7 @@ class LocalStorageClient(StorageClientBase):
 
         super().put(lpath, rpath)
 
-    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for object"""
         # use mounted path for local storage
         return (Path("/artifacts") / path).as_posix()
