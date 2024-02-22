@@ -62,15 +62,15 @@ from opsml.types.model import (
 from opsml.types.sql import RegistryTableNames, RunCardRegistry
 from opsml.types.storage import (
     ApiStorageClientSettings,
+    BotoClient,
     FilePath,
+    GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
     StorageSystem,
-    BotoClient,
-    GCSClient,
 )
 
 __all__ = [

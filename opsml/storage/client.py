@@ -4,10 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import datetime
 import io
 import warnings
+from functools import cached_property
 from pathlib import Path
-from typing import BinaryIO, Iterator, List, Optional, Protocol, cast, Any
+from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec.implementations.local import LocalFileSystem
 
@@ -16,17 +18,15 @@ from opsml.settings.config import OpsmlConfig, config
 from opsml.storage.api import ApiClient, ApiRoutes, RequestType
 from opsml.types import (
     ApiStorageClientSettings,
+    BotoClient,
+    GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
     StorageSystem,
-    BotoClient,
-    GCSClient,
 )
-from functools import cached_property
-import datetime
 
 warnings.filterwarnings("ignore", message="Setuptools is replacing distutils.")
 warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer*")

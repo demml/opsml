@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from opsml.storage.client import StorageClient
+from opsml.storage.client import StorageClient, StorageClientBase
 
 pytestmark = [pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")]
 
@@ -151,3 +151,12 @@ def test_local_storage_client_trees(tmp_path: Path, local_storage_client: Storag
     #     test.txt
     local_storage_client.rm(tmp_path / "child")
     assert not local_storage_client.exists(tmp_path / "child")
+
+
+def test_local_storage_client_presigned_uri(local_storage_client: StorageClient):
+    path = local_storage_client.generate_presigned_url(Path("fake"), 1)
+    assert path == "/artifacts/fake"
+
+    base = StorageClientBase(settings=local_storage_client.settings)
+    path = base.generate_presigned_url(Path("fake"), 1)
+    assert path == "fake"
