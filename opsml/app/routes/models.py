@@ -224,8 +224,6 @@ def compare_metrics(
 
 
 # TODO: All code below is to be removed once teams have been migrated >= v2.2.0
-
-
 @router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")
 def post_model_metrics(
     request: Request,
