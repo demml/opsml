@@ -231,6 +231,24 @@ class S3StorageClient(StorageClientBase):
             client=client,
         )
 
+    @cached_property
+    def s3_client(self) -> BotoClient:
+        import boto3
+
+        return cast(BotoClient, boto3.client("s3"))
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> str:
+        """Generates pre signed url for S3 object"""
+        try:
+            return self.s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": config.storage_root, "Key": str(path)},
+                ExpiresIn=expiration,
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL: {e}")
+            return None
+
 
 class LocalStorageClient(StorageClientBase):
     def put(self, lpath: Path, rpath: Path) -> None:
