@@ -30,6 +30,7 @@ class GcsStorageClientSettings(StorageClientSettings):
     storage_system: StorageSystem = StorageSystem.GCS
     credentials: Optional[Any] = None
     gcp_project: Optional[str] = None
+    default_creds: bool = False
 
 
 class S3StorageClientSettings(StorageClientSettings):
