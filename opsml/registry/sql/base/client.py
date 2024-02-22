@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import json
 import textwrap
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
@@ -349,15 +350,15 @@ class ClientRunCardRegistry(ClientRegistry):
         Returns:
             List of run metrics
         """
-        params = {"run_uid": run_uid}
+        body = {"run_uid": run_uid}
 
         if name is not None:
-            params["name"] = name
+            body["name"] = name
 
         if names_only:
-            params["names_only"] = names_only
+            body["names_only"] = names_only
 
-        data = self._session.make_request(route=api_routes.METRICS, request_type=RequestType.GET, params=params)
+        data = self._session.make_request(route=api_routes.METRICS, request_type=RequestType.POST, json=body)
 
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)
