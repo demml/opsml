@@ -39,5 +39,10 @@ class RunCardRegistry(Protocol):
     def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         ...
 
-    def get_metric(self, run_uid: str, name: Optional[str] = None) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(
+        self,
+        run_uid: str,
+        name: Optional[List[str]] = None,
+        names_only: bool = False,
+    ) -> Optional[List[Dict[str, Any]]]:
         ...

@@ -496,6 +496,8 @@ class RunQueryEngine(QueryEngine):
                 Run uid
             name:
                 Name of the metric
+            names_only:
+                Return only the names of the metrics
 
         Returns:
             List of run metrics
