@@ -1,0 +1,279 @@
+
+<script>
+
+    function ready_page() {
+      $(document).ready(function() {
+        $('#MetadataRepositoriesSelect').select2();
+    
+        $("#MetadataRepositoriesSelect").on('select2:select', function(e){
+          window.location.href = e.params.data.id;
+        });
+      });
+    
+      ('.list-group-item').click(function() {
+              $('.list-group-item').removeClass('active');
+              $(this).addClass('active');
+              var version_uid = $(this).attr('id');
+            });
+          }
+    
+      $( "#metric-button" ).on( "click", function() {
+        $( "#Metrics" ).toggle();
+      } );
+      
+      $( "#param-button" ).on( "click", function() {
+        $( "#Params" ).toggle();
+      } );
+      
+      $( "#artifact-button" ).on( "click", function() {
+        $( "#Artifacts" ).toggle();
+      } );
+    
+    
+    
+    
+    function generate_project_html(run_uid, project) {
+      //
+      var path = "/opsml/projects/list/";
+      var div_id = "MetadataColumn";
+      var data = {run_uid: run_uid, project: project, project_only: true};
+      $.ajax({
+        url: path,
+        type: "GET",
+        dataType:"html",
+        data: data,
+        success: function(data) {
+            console.log("success",data);
+            document.getElementById(div_id).innerHTML = data;
+            ready_page();
+            
+            
+        },
+        error: function() {
+            console.log("error", data);
+            alert('error loading html...');
+            }
+      });
+    
+      
+    }
+    
+    
+    
+    //
+    //  function ready_page() {
+    //  
+    //    $('.list-group-item').click(function() {
+    //      $('.list-group-item').removeClass('active');
+    //      $(this).addClass('active');
+    //      var version_uid = $(this).attr('id');
+    //        // write javscript that will take the value of the active div on click and pass that value to another div
+    //    });
+    //
+    //    $(document).ready(function() {
+    //      $('#MetadataRepositoriesSelect').select2();
+    //    
+    //      $("#MetadataRepositoriesSelect").on('select2:select', function(e){
+    //        window.location.href = e.params.data.id;
+    //      });
+    //    });
+    //
+    //    $( "#metric-button" ).on( "click", function() {
+    //      $( "#Metrics" ).toggle();
+    //    } );
+    //    
+    //    $( "#param-button" ).on( "click", function() {
+    //      $( "#Params" ).toggle();
+    //    } );
+    //    
+    //    $( "#artifact-button" ).on( "click", function() {
+    //      $( "#Artifacts" ).toggle();
+    //    } );
+    //    
+    //    $( "#graph-button" ).on( "click", function() {
+    //      $( "#Graphs" ).toggle();
+    //    } );
+    //
+    //
+    //     // on button click show div and hide others
+    //  $( "#metadata-button" ).on( "click", function() {
+    //    $( "#CardBox" ).show();
+    //    $( "#TagBox" ).toggle();
+    //    $( "#ExtraBox" ).toggle();
+    //    $( "#PlotBox" ).hide();
+    //    $( "#GraphBox" ).hide();
+    //    $( "#GraphicsBox" ).hide();
+    //  } );
+    //
+    //  // on button click show div and hide others
+    //  $( "#metadata-button" ).on( "click", function() {
+    //    $( "#CardBox" ).show();
+    //    $( "#TagBox" ).show();
+    //    $( "#ExtraBox" ).show();
+    //    $( "#PlotBox" ).hide();
+    //    $( "#GraphBox" ).hide();
+    //    $( "#GraphicsBox" ).hide();
+    //  } );
+    //
+    //  // on button click show div and hide others
+    //  $( "#graphics-button" ).on( "click", function() {
+    //    $( "#CardBox" ).hide();
+    //    $( "#TagBox" ).hide();
+    //    $( "#ExtraBox" ).hide();
+    //    $( "#PlotBox" ).hide();
+    //    $( "#GraphBox" ).hide();
+    //    $( "#GraphicsBox" ).show();
+    //
+    //    var element = document.getElementById("Insert");
+    //    var loaded = (element.innerHTML != "missing");
+    //    
+    //    if (!loaded) {
+    //      document.getElementById("Insert").innerHTML = '<span class="loader"></span><B>Loading Graphics...<B>';
+    //      var uri_data = {{ runcard["artifact_uris"]|tojson }};
+    //      var path = "/opsml/runs/graphics";
+    //
+    //      $.ajax({
+    //        url: path,
+    //        type: "POST",
+    //        dataType:"html",
+    //        contentType: "application/json",
+    //        data: JSON.stringify(uri_data),
+    //        success: function(data) {
+    //            console.log("success",data);
+    //            document.getElementById("Insert").innerHTML = data;
+    //        },
+    //        error: function() {
+    //            console.log("error", data);
+    //            alert('error loading html...');
+    //            }
+    //      });
+    //    }
+    //
+    //    //if (element.innerHTML == "missing") {
+    //  //
+    //    //  element.innherHTML = "<span class="loader"></span><B>Loading Graphics...<B>";
+    //    //  var uri_data = {{ runcard["artifact_uris"]|tojson }};
+    //    //  var path = "/opsml/runs/graphics";
+    ////
+    ////
+    //    //  $.ajax({
+    //    //    url: path,
+    //    //    type: "POST",
+    //    //    dataType:"html",
+    //    //    contentType: "application/json",
+    //    //    data: JSON.stringify(uri_data),
+    //    //    success: function(data) {
+    //    //        console.log("success",data);
+    //    //        document.getElementById("Insert").innerHTML = data;
+    //    //    },
+    //    //    error: function() {
+    //    //        console.log("error", data);
+    //    //        alert('error loading html...');
+    //    //        }
+    //    //  });
+    ////
+    //    //}
+    //   
+    //  
+    //
+    //    });
+    //
+    //    
+    //  }
+    //
+    //
+    //
+    //
+    //
+    ////if (ix == 2) {
+    ////  var uri_data = {{ uri|tojson }};
+    ////  var path = "/opsml/projects/runs/graphs/";
+    ////
+    ////  var data = {run_uri: uri_data};
+    ////  $.ajax({
+    ////    url: path,
+    ////    type: "GET",
+    ////    dataType: 'json',
+    ////    data: data,
+    ////    success: function(json_data) {
+    ////        var html = json_data['html'];
+    ////        var graphs = json_data['graphs'];
+    ////        document.getElementById("GraphBox").innerHTML = html;
+    ////
+    ////        for (var i = 0; i < graphs.length; i++) {
+    ////          build_graph(graphs[i]);
+    ////        }
+    ////        alert
+    ////        ready_page();
+    ////        
+    ////    },
+    ////    error: function() {
+    ////        alert('error loading html...');
+    ////        }
+    ////  });
+    ////
+    ////};
+    ////$('#GraphBox').toggle( ix === 2 );
+    ////
+    ////if (ix == 3) {
+    ////  var uri_data = {{ runcard["artifact_uris"]|tojson }};
+    ////  var path = "/opsml/runs/graphics";
+    ////
+    ////  $.ajax({
+    ////    url: path,
+    ////    type: "POST",
+    ////    dataType:"html",
+    ////    contentType: "application/json",
+    ////    data: JSON.stringify(uri_data),
+    ////    success: function(data) {
+    ////        console.log("success",data);
+    ////        document.getElementById("Insert").innerHTML = data;
+    ////    },
+    ////    error: function() {
+    ////        console.log("error", data);
+    ////        alert('error loading html...');
+    ////        }
+    ////  });
+    ////}
+    ////
+    ////$('#GraphicsBox').toggle( ix === 3 );
+    ////
+    ////;
+    ////
+    //ready_page();
+    //
+    //function generate_project_html(run_uid, project) {
+    //
+    //var path = "/opsml/projects/list/";
+    //var div_id = "MetadataColumn";
+    //var data = {run_uid: run_uid, project: project, project_only: true};
+    //$.ajax({
+    //  url: path,
+    //  type: "GET",
+    //  dataType:"html",
+    //  data: data,
+    //  success: function(data) {
+    //      console.log("success",data);
+    //      document.getElementById(div_id).innerHTML = data;
+    //      ready_page();
+    //      alert('success loading html...');
+    //      
+    //  },
+    //  error: function() {
+    //      console.log("error", data);
+    //      alert('error loading html...');
+    //      }
+    //});
+    //}
+    //
+    //  
+    //
+    </script>
+    {% endblock %}
+    //
+    //
+    //
+    //
+    //
+    //
+    //
