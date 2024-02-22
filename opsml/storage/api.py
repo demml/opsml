@@ -4,6 +4,7 @@
 import json as py_json
 import logging
 from pathlib import Path
+from enum import Enum, unique
 from typing import Any, Dict, Optional, cast
 
 import httpx
@@ -13,6 +14,15 @@ from tenacity import retry, stop_after_attempt
 logging.getLogger("httpx").propagate = False
 
 PATH_PREFIX = "opsml"
+
+
+@unique
+class RequestType(str, Enum):
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    STREAM_POST = "STREAM_POST"
+    STREAM_GET = "STREAM_GET"
 
 
 class ApiRoutes:
@@ -87,6 +97,35 @@ class ApiClient:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
 
+    def make_request(self, route: str, request_type: RequestType, **kwargs: Any) -> Dict[str, Any]:
+        """Makes a request to the server
+
+        Args:
+            route:
+                Route to make request to
+            request_type:
+                Type of request to make
+            **kwargs:
+                Keyword arguments for request
+
+        Returns:
+            Response from server
+        """
+
+        url = f"{self._base_url}/{route}"
+        if request_type == RequestType.GET:
+            response = self.client.get(url=url, **kwargs)
+        elif request_type == RequestType.POST:
+            response = self.client.post(url=url, **kwargs)
+        elif request_type == RequestType.PUT:
+            response = self.client.put(url=url, **kwargs)
+
+        if response.status_code == 200:
+            return cast(Dict[str, Any], response.json())
+
+        detail = response.json().get("detail")
+        raise ValueError(f"""Failed to to make server call for {request_type} request Url: {route}, {detail}""")
+
     @retry(reraise=True, stop=stop_after_attempt(3))
     def post_request(
         self,
@@ -124,9 +163,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
-        with self.client.stream(
-            method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers
-        ) as response:
+        with self.client.stream(method="POST", url=f"{self._base_url}/{route}", files=files, headers=headers) as response:
             for data in response.iter_bytes(chunk_size=chunk_size):
                 result += data.decode("utf-8")
 
