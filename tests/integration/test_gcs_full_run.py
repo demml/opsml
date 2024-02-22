@@ -102,7 +102,7 @@ def test_gcs_full_run(
 
         # load modelcard
         _modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
-        _modelcard.load_model()
+        _modelcard.load_model(load_preprocessor=True)
         _modelcard.load_onnx_model()
 
         assert _modelcard.interface.model is not None
@@ -113,6 +113,7 @@ def test_gcs_full_run(
         # load runcard
         _runcard: RunCard = run_registry.load_card(uid=run.runcard.uid)
 
+        _runcard.load_metrics()
         assert _runcard.metrics["test_metric"][0].value == 10
 
         # delete cards

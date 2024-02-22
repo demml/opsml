@@ -35,6 +35,9 @@ def test_gcs_presigned_uri():
         "google.auth.compute_engine.IDTokenCredentials",
         return_value=None,
     ), patch(
+        "gcsfs.GCSFileSystem",
+        autospec=True,
+    ), patch(
         "google.cloud.storage.Client",
         return_value=MockGCSClient(),
     ):
@@ -49,7 +52,10 @@ def test_gcs_presigned_uri():
     with patch(
         "opsml.helpers.gcp_utils.GcpCredsSetter.get_creds",
         return_value=gcp_utils.GcpCreds(default_creds=True),
-    ), patch("google.auth.transport.requests.Request", return_value=None,), patch(
+    ), patch("gcsfs.GCSFileSystem", autospec=True,), patch(
+        "google.auth.transport.requests.Request",
+        return_value=None,
+    ), patch(
         "google.cloud.storage.Client",
         return_value=MockGCSClient(),
     ):

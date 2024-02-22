@@ -32,7 +32,9 @@ def test_gcs_storage_client(tmp_path: Path, gcs_storage_client: StorageClient, g
         gcs_storage_client.put(lpath, rpath_nested)
 
         # generate_presigned_url
-        path = gcs_storage_client.generate_presigned_url(rpath, 1)
+        # get bucket
+        blob_path = rpath.relative_to(gcs_test_bucket)
+        path = gcs_storage_client.generate_presigned_url(blob_path, 1)
         assert path is not None
 
         # ls
