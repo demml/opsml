@@ -477,7 +477,7 @@ class RunCard(ArtifactCard):
         if metric is None:
             # try to get metric from registry
             assert self.uid is not None, "RunCard must be registered to get metric"
-            _metric = self._registry.get_metric(run_uid=self.uid, name=_key)
+            _metric = self._registry.get_metric(run_uid=self.uid, name=[_key])
 
             if _metric is not None:
                 metric = [Metric(**i) for i in _metric]

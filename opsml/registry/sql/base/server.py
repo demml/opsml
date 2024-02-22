@@ -334,7 +334,9 @@ class ServerRunCardRegistry(ServerRegistry):
             run_uid:
                 run card uid
             name:
-                name
+                List of names of metrics to retrieve
+            names_only:
+                if True, will return only names
 
         Returns:
             metrics
