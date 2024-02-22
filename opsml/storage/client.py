@@ -13,7 +13,7 @@ from fsspec.implementations.local import LocalFileSystem
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
-from opsml.storage.api import ApiClient, ApiRoutes
+from opsml.storage.api import ApiClient, ApiRoutes, RequestType
 from opsml.types import (
     ApiStorageClientSettings,
     GcsStorageClientSettings,
@@ -235,8 +235,9 @@ class ApiStorageClient(StorageClientBase):
             )
 
     def find(self, path: Path) -> List[Path]:
-        response = self.api_client.get_request(
+        response = self.api_client.request(
             route=ApiRoutes.LIST_FILES,
+            request_type=RequestType.GET,
             params={"path": path.as_posix()},
         )
 
@@ -272,8 +273,9 @@ class ApiStorageClient(StorageClientBase):
         raise NotImplementedError
 
     def rm(self, path: Path) -> None:
-        response = self.api_client.get_request(
+        response = self.api_client.request(
             route=ApiRoutes.DELETE_FILE,
+            request_type=RequestType.GET,
             params={"path": path.as_posix()},
         )
 
@@ -287,8 +289,9 @@ class ApiStorageClient(StorageClientBase):
             path:
                 Path to file
         """
-        response = self.api_client.get_request(
+        response = self.api_client.request(
             route=ApiRoutes.FILE_EXISTS,
+            request_type=RequestType.GET,
             params={"path": path.as_posix()},
         )
 
