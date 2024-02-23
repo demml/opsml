@@ -4,7 +4,7 @@
 
 
 from pathlib import Path
-from typing import Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -15,11 +15,14 @@ from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
     CompareMetricResponse,
+    MetricRequest,
+    MetricResponse,
     RegisterModelRequest,
 )
 from opsml.app.routes.route_helpers import ModelRouteHelper
 from opsml.app.routes.utils import error_to_500
 from opsml.cards.model import ModelCard
+from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
@@ -218,3 +221,39 @@ def compare_metrics(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to compare model metrics. {error}",
         ) from error
+
+
+# TODO: All code below is to be removed once teams have been migrated >= v2.2.0
+@router.post("/models/metrics", response_model=MetricResponse, name="model_metrics")
+def post_model_metrics(
+    request: Request,
+    payload: MetricRequest = Body(...),
+) -> MetricResponse:
+    """Gets metrics associated with a ModelCard"""
+
+    # Get model runcard id
+    registries: CardRegistries = request.app.state.registries
+    cards: List[Dict[str, Any]] = registries.model.list_cards(
+        uid=payload.uid,
+        name=payload.name,
+        repository=payload.repository,
+        version=payload.version,
+    )
+
+    if len(cards) > 1:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="More than one card found",
+        )
+
+    card = cards[0]
+
+    if card.get("runcard_uid") is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Model is not associated with a run",
+        )
+
+    runcard = cast(RunCard, registries.run.load_card(uid=card.get("runcard_uid")))
+
+    return MetricResponse(metrics=runcard.metrics)

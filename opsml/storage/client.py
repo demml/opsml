@@ -1,13 +1,15 @@
-# pylint: disable=import-outside-toplevel
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
 
+import datetime
 import io
 import warnings
+from functools import cached_property
 from pathlib import Path
-from typing import BinaryIO, Iterator, List, Optional, Protocol, cast
+from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, cast
 
 from fsspec.implementations.local import LocalFileSystem
 
@@ -16,6 +18,8 @@ from opsml.settings.config import OpsmlConfig, config
 from opsml.storage.api import ApiClient, ApiRoutes, RequestType
 from opsml.types import (
     ApiStorageClientSettings,
+    BotoClient,
+    GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientProtocol,
@@ -147,6 +151,10 @@ class StorageClientBase(StorageClientProtocol):
         except FileNotFoundError:
             return False
 
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
+        """Generates pre signed url for object"""
+        return path.as_posix()
+
 
 class GCSFSStorageClient(StorageClientBase):
     def __init__(
@@ -156,7 +164,7 @@ class GCSFSStorageClient(StorageClientBase):
         import gcsfs
 
         assert isinstance(settings, GcsStorageClientSettings)
-        if settings.credentials is None:
+        if settings.default_creds is None:
             logger.info("Using default GCP credentials")
             client = gcsfs.GCSFileSystem()
         else:
@@ -169,6 +177,42 @@ class GCSFSStorageClient(StorageClientBase):
             settings=settings,
             client=client,
         )
+
+    @cached_property
+    def gcs_client(self) -> GCSClient:
+        from google.cloud import storage
+
+        return cast(GCSClient, storage.Client())
+
+    # cached_property is a decorator that caches the result of the function it decorates.
+
+    @cached_property
+    def get_id_credentials(self) -> Any:
+        assert isinstance(self.settings, GcsStorageClientSettings)
+
+        if self.settings.default_creds:
+            from google.auth import compute_engine
+            from google.auth.transport import requests
+
+            auth_request = requests.Request()
+            return compute_engine.IDTokenCredentials(auth_request, "")
+
+        return self.settings.credentials
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
+        """Generates pre signed url for S3 object"""
+
+        try:
+            bucket = self.gcs_client.bucket(config.storage_root)
+            blob = bucket.blob(str(path))
+            return blob.generate_signed_url(
+                expiration=datetime.timedelta(seconds=expiration),
+                credentials=self.get_id_credentials,
+                method="GET",
+            )
+        except Exception as error:
+            logger.error(f"Failed to generate presigned URL: {error}")
+            return None
 
 
 class S3StorageClient(StorageClientBase):
@@ -186,6 +230,24 @@ class S3StorageClient(StorageClientBase):
             client=client,
         )
 
+    @cached_property
+    def s3_client(self) -> BotoClient:
+        import boto3
+
+        return cast(BotoClient, boto3.client("s3"))
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
+        """Generates pre signed url for S3 object"""
+        try:
+            return self.s3_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": config.storage_root, "Key": str(path)},
+                ExpiresIn=expiration,
+            )
+        except Exception as error:
+            logger.error(f"Failed to generate presigned URL: {error}")
+            return None
+
 
 class LocalStorageClient(StorageClientBase):
     def put(self, lpath: Path, rpath: Path) -> None:
@@ -195,6 +257,11 @@ class LocalStorageClient(StorageClientBase):
             rpath.mkdir(parents=True, exist_ok=True)
 
         super().put(lpath, rpath)
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
+        """Generates pre signed url for object"""
+        # use mounted path for local storage
+        return (Path("/artifacts") / path).as_posix()
 
 
 class ApiStorageClient(StorageClientBase):
@@ -307,6 +374,7 @@ def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
         storage_uri=storage_uri,
         gcp_project=gcp_creds.project,
         credentials=gcp_creds.creds,
+        default_creds=gcp_creds.default_creds,
     )
 
 

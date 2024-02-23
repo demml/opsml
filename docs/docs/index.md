@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h4 align="center">Adding Quality Control to Machine Learning</h4>
+<h4 align="center">A Universal Artifact Registration System for Machine Learning</h4>
 ---
 
 [![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
@@ -18,11 +18,13 @@
 
 ## **What is it?**
 
-`OpsML` provides tooling that enables data science and engineering teams to better govern, track and manage their machine learning projects and artifacts.
+`OpsML` provides tooling that enables data science and engineering teams to better govern and manage their machine learning projects and artifacts by providing a standardized and universal registration system and repeatable patterns for tracking, versioning and storing ML artifacts.
+
 
 ## **Why?**
 
-After using various open-source and vendor tooling to manage different aspects of the machine learning project lifecycle, we found that we were still spending ample time stitching together different tooling in order to adequately govern, manage and deploy artifacts. Thus, we decided to create `OpsML` as a way to combine what we loved about existing tooling and add in the missing pieces in order to create a more consistent and standardized process for governing, managing and tracking machine learning artifacts.
+The core focus of `OpsML` is artifact registration, management and governance. After using various open-source and vendor tooling to manage different aspects of the machine learning project lifecycle, we found that we were still spending ample time gluing different tooling together in order to adequately govern, manage and deploy artifacts. Moreover, <b>machine learning currently lacks a universal standard for artifact registration and governance<b>, which makes managing machine learning projects and systems challenging. And given how expansive the machine learning tooling ecosystem is, and how each tool tends to have it's own way of saving, storing and tracking artifacts, we decided to build `OpsML` with the goal of providing a common framework.
+
 
 ## **Features**:
   - **Simple Design**: Standardized design that can easily be incorporated into existing projects.
@@ -41,7 +43,7 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
 
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="550" alt="opsml logo"/>
+  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="900" alt="opsml logo"/>
   <br>
 </h1>
 

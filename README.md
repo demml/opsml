@@ -4,7 +4,7 @@
   <br>
 </h1>
 
-<h2 align="center">Adding Quality Control to Machine Learning</h2>
+<h2 align="center">Universal Artifact Registration System for Machine Learning</h2>
 
 <h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 
@@ -20,7 +20,7 @@
 
 ## What is it?
 
-`OpsML` provides tooling that enables data science and engineering teams to better govern and manage their machine learning projects and artifacts.
+`OpsML` provides tooling that enables data science and engineering teams to better govern and manage their machine learning projects and artifacts by providing a standardized and universal registration system and repeatable patterns for tracking, versioning and storing ML artifacts.
 
 
 ## Features:
@@ -41,7 +41,7 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
 
 # Incorporate into Existing Workflows
 
-Add quality control to your ML projects with little effort! With `opsml`, data and models are represented as `cards` and stored in a `card registry`. This allows for easy versioning, tracking and storage of ML artifacts. 
+Given it's simple and modular design, `opsml` can be easily incorporated into existing workflows. 
 
 <h1 align="center">
   <br>

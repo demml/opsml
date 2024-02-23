@@ -3,10 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+import datetime
 import os
 from enum import Enum, unique
 from pathlib import Path
-from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, Union
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -30,6 +31,7 @@ class GcsStorageClientSettings(StorageClientSettings):
     storage_system: StorageSystem = StorageSystem.GCS
     credentials: Optional[Any] = None
     gcp_project: Optional[str] = None
+    default_creds: bool = False
 
 
 class S3StorageClientSettings(StorageClientSettings):
@@ -52,6 +54,33 @@ StorageSettings = Union[
     ApiStorageClientSettings,
     S3StorageClientSettings,
 ]
+
+
+class BotoClient(Protocol):
+    def generate_presigned_url(
+        self,
+        operation_name: str,
+        Params: Dict[str, Any],  # pylint: disable=invalid-name
+        ExpiresIn: int,  # pylint: disable=invalid-name
+    ) -> str:
+        ...
+
+
+class Blob(Protocol):
+    def generate_signed_url(
+        self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
+    ) -> str:
+        ...
+
+
+class Bucket(Protocol):
+    def blob(self, name: str) -> Blob:
+        ...
+
+
+class GCSClient(Protocol):
+    def bucket(self, name: str) -> Bucket:
+        ...
 
 
 class StorageClientProtocol(Protocol):
