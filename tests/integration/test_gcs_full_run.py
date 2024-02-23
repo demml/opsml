@@ -23,7 +23,6 @@ def test_gcs_full_run(
     model_and_data: Tuple[ModelInterface, PandasData],
 ):
     """Verifies the full cycle of model and data card persistence.
-
     Because a profile is saved, data must be PandasData.
     """
     # get data and model
@@ -101,6 +100,7 @@ def test_gcs_full_run(
         assert _datacard.interface.data_profile is not None
 
         # load modelcard
+
         _modelcard: ModelCard = model_registry.load_card(uid=modelcard.uid)
         _modelcard.load_model(load_preprocessor=True)
         _modelcard.load_onnx_model()
