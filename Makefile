@@ -111,3 +111,45 @@ publish:
 
 publish.docs:
 	cd docs && poetry run mkdocs gh-deploy --force
+
+generate.docs:
+	pip install pdoc
+	pdoc \
+	opsml/cards/base.py \
+	opsml/cards/audit.py \
+	opsml/cards/data.py \
+	opsml/cards/model.py \
+	opsml/cards/project.py \
+	opsml/cards/run.py \
+	opsml/data/splitter.py \
+	opsml/data/interfaces/_arrow.py \
+	opsml/data/interfaces/_base.py \
+	opsml/data/interfaces/_image.py \
+	opsml/data/interfaces/_numpy.py \
+	opsml/data/interfaces/_pandas.py \
+	opsml/data/interfaces/_polars.py \
+	opsml/data/interfaces/_sql.py \
+	opsml/data/interfaces/_text.py \
+	opsml/data/interfaces/_torch.py \
+	opsml/model/interfaces/base.py \
+	opsml/model/interfaces/catboost_.py \
+	opsml/model/interfaces/huggingface.py \
+	opsml/model/interfaces/lgbm.py \
+	opsml/model/interfaces/pytorch_lightning.py \
+	opsml/model/interfaces/pytorch.py \
+	opsml/model/interfaces/sklearn.py \
+	opsml/model/interfaces/tf.py \
+	opsml/model/interfaces/vowpal.py \
+	opsml/model/interfaces/xgb.py \
+	opsml/model/challenger.py \
+	opsml/model/loader.py \
+	opsml/profile/profile_data.py \
+	opsml/projects/active_run.py \
+	opsml/projects/project.py \
+	opsml/registry/registry.py \
+	opsml/registry/semver.py \
+	opsml/settings/config.py \
+	opsml/types/huggingface.py \
+	-o ./docs/docs/api --docformat google
+	pip uninstall pdoc -y
+
