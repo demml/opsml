@@ -74,6 +74,8 @@ nav:
       - How It Works: 'engineering/how-it-works.md'
   - Contributing:
       - Contributing: 'faq/contributing.md'
+  - API Documentation:
+      - Specs: 'api/index.html'
 
 markdown_extensions:
   - tables
