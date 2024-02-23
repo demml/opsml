@@ -3,6 +3,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from google.oauth2.service_account import Credentials
@@ -143,9 +144,17 @@ def test_gcp_creds(gcp_cred_path: str):
 
     json_creds = json.dumps(creds)
     base64_creds = base64.b64encode(json_creds.encode("utf-8")).decode("utf-8")
-    creds, project = gcp_utils.GcpCredsSetter(service_creds=base64_creds).get_base64_creds()
+    creds = gcp_utils.GcpCredsSetter(service_creds=base64_creds).get_creds()
 
-    assert isinstance(creds, Credentials)
+    assert isinstance(creds.creds, Credentials)
+
+    with patch("google.auth.default", return_value=(None, None)):
+        cred_setter = gcp_utils.GcpCredsSetter()
+
+        # ensure this is none
+        cred_setter.service_base64_creds = None
+        creds = cred_setter.get_creds()
+        assert creds.creds is None
 
 
 def test_import_exception():

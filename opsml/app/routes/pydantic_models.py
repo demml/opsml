@@ -379,3 +379,15 @@ class AuditReport(BaseModel):
 
 class ProjectIdResponse(BaseModel):
     project_id: int
+
+
+# TODO: remove these once everyone is migrated to v2.2.0
+class MetricRequest(BaseModel):
+    name: Optional[str] = None
+    repository: Optional[str] = None
+    version: Optional[str] = None
+    uid: Optional[str] = None
+
+
+class MetricResponse(BaseModel):
+    metrics: Metrics
