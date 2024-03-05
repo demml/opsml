@@ -23,12 +23,12 @@ from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
+from opsml.data.interfaces import DataInterface
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model import ModelInterface
 from opsml.registry import CardRegistry
 from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
-from opsml.model import ModelInterface
-from opsml.data.interfaces import DataInterface
 
 logger = ArtifactLogger.get_logger()
 
@@ -290,7 +290,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
