@@ -3,14 +3,15 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import json
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.files import download_dir, download_file
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
@@ -25,11 +26,9 @@ from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.challenger import ModelChallenger
-from opsml.model.interfaces.huggingface import HuggingFaceModel
-from opsml.model.interfaces.tf import TensorFlowModel
 from opsml.model.registrar import ModelRegistrar, RegistrationError, RegistrationRequest
 from opsml.registry.registry import CardRegistries, CardRegistry
-from opsml.types import CardInfo, ModelMetadata, SaveName
+from opsml.types import CardInfo, ModelMetadata, RegistryTableNames, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -91,26 +90,6 @@ async def model_versions_page(
     )
 
 
-@router.get("/models/download", name="download_model")
-def download_model(request: Request, uid: str, onnx: bool = False) -> StreamingResponse:
-    """Downloads model associated with a modelcard. Result will either be a single file
-    or a zipped file (if the model is a directory).
-    """
-
-    registry: CardRegistry = request.app.state.registries.model
-    card = cast(ModelCard, registry.load_card(uid=uid))
-    model_name = SaveName.TRAINED_MODEL.value if not onnx else SaveName.ONNX_MODEL.value
-    load_path = Path(card.uri / model_name).with_suffix(card.interface.model_suffix)
-
-    if isinstance(card.interface, HuggingFaceModel):
-        return download_dir(request, load_path)
-
-    if isinstance(card.interface, TensorFlowModel) and not onnx:
-        return download_dir(request, load_path)
-
-    return download_file(request, str(load_path))
-
-
 @router.post("/models/register", name="model_register")
 def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     """Registers a model to a known cloud storage location.
@@ -166,22 +145,27 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
     """
-
+    storage_root = request.app.state.storage_root
     registry: CardRegistry = request.app.state.registries.model
 
     try:
-        card = cast(
-            ModelCard,
-            registry.load_card(
-                uid=payload.uid,
-                name=payload.name,
-                repository=payload.repository,
-                version=payload.version,
-                ignore_release_candidates=payload.ignore_release_candidate,
-            ),
-        )
+        card = registry.list_cards(
+            name=payload.name,
+            repository=payload.repository,
+            version=payload.version,
+            uid=payload.uid,
+        )[0]
 
-        return card.model_metadata
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            lpath = Path(tmp_dir, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            card_uri = f"{storage_root}/{RegistryTableNames.MODEL.value}/{card['repository']}/{card['name']}/v{card['version']}"
+            rpath = Path(card_uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            request.app.state.storage_client.get(rpath, lpath)
+
+            with lpath.open(encoding="utf-8") as json_file:
+                metadata = json.load(json_file)
+
+            return ModelMetadata(**metadata)
 
     except Exception as exc:
         logger.error("Error loading model metadata: {}", exc)
@@ -200,6 +184,7 @@ def compare_metrics(
 
     try:
         # Get challenger
+        # change this with new ui launch (shouldnt load card)
         registries: CardRegistries = request.app.state.registries
         challenger_card = cast(ModelCard, registries.model.load_card(uid=payload.challenger_uid))
         model_challenger = ModelChallenger(challenger=challenger_card)
