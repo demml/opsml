@@ -15,7 +15,7 @@ class HuggingFaceModelNoModule(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return HuggingFaceModelNoModule.__name__
+        return "HuggingFaceModel"
 
 
 class LightGBMModelNoModule(ModelInterface):
@@ -72,7 +72,7 @@ class TensorFlowModelNoModule(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return TensorFlowModelNoModule.__name__
+        return "TensorFlowModel"
 
 
 class XGBoostModelNoModule(ModelInterface):
