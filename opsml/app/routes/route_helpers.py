@@ -28,6 +28,7 @@ from opsml.registry import CardRegistry
 from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
 from opsml.model import ModelInterface
+from opsml.data.interfaces import DataInterface
 
 logger = ArtifactLogger.get_logger()
 
@@ -346,7 +347,13 @@ class DataRouteHelper(RouteHelper):
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, limit=50)
 
-        datacard, version = self._check_version(registry, name, versions, version)
+        datacard, version = self._check_version(
+            registry,
+            name,
+            versions,
+            version,
+            **{"interface": DataInterface},  # generic data interface
+        )
         datacard = cast(DataCard, datacard)
 
         data_splits = self._check_splits(card=datacard)
@@ -466,7 +473,7 @@ class ModelRouteHelper(RouteHelper):
             name,
             versions,
             version,
-            **{"interface": ModelInterface},  # model should load generic
+            **{"interface": ModelInterface},  # model should load generic to avoid import errors
         )
 
         runcard, project_num = self._get_runcard(
