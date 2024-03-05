@@ -9,13 +9,11 @@ class HuggingFaceModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "HuggingFaceModel requires transformers to be installed. Please install transformers."
-        )
+        raise ModuleNotFoundError("HuggingFaceModel requires transformers to be installed. Please install transformers.")
 
     @staticmethod
     def name() -> str:
-        return "HuggingFaceModel"
+        return HuggingFaceModelNoModule.__name__
 
 
 class LightGBMModelNoModule(ModelInterface):
@@ -33,9 +31,7 @@ class LightningModelNoModule(ModelInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "LightningModel requires pytorch lightning to be installed. Please install lightning."
-        )
+        raise ModuleNotFoundError("LightningModel requires pytorch lightning to be installed. Please install lightning.")
 
     @staticmethod
     def name() -> str:
@@ -72,7 +68,7 @@ class TensorFlowModelNoModule(ModelInterface):
 
     @staticmethod
     def name() -> str:
-        return "TensorFlowModel"
+        return TensorFlowModelNoModule.__name__
 
 
 class XGBoostModelNoModule(ModelInterface):
