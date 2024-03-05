@@ -27,6 +27,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry import CardRegistry
 from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
+from opsml.model import ModelInterface
 
 logger = ArtifactLogger.get_logger()
 
@@ -42,6 +43,7 @@ class RouteHelper:
         name: str,
         versions: List[Dict[str, Any]],
         version: Optional[str] = None,
+        **kwargs: Any,
     ) -> Tuple[ArtifactCard, str]:
         """Load card from version
 
@@ -59,7 +61,7 @@ class RouteHelper:
             `ArtifactCard` and `str`
         """
         if version is None:
-            selected_card = registry.load_card(uid=versions[0]["uid"])
+            selected_card = registry.load_card(uid=versions[0]["uid"], **kwargs)
             version = selected_card.version
 
             return selected_card, str(version)
@@ -287,9 +289,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -461,7 +461,13 @@ class ModelRouteHelper(RouteHelper):
         """
 
         registry: CardRegistry = request.app.state.registries.model
-        modelcard, version = self._check_version(registry, name, versions, version)
+        modelcard, version = self._check_version(
+            registry,
+            name,
+            versions,
+            version,
+            **{"interface": ModelInterface},  # model should load generic
+        )
 
         runcard, project_num = self._get_runcard(
             registry=request.app.state.registries.run,
