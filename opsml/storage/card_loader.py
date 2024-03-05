@@ -215,6 +215,10 @@ class CardLoader:
                 # get interface type
                 interface_type: str = loaded_card["metadata"]["interface_type"]
                 interface = get_interface(self.registry_type, interface_type)
+
+                print()
+                print(loaded_card["interface"])
+                print()
                 loaded_interface = interface.model_validate(loaded_card["interface"])
 
             loaded_card["interface"] = loaded_interface
