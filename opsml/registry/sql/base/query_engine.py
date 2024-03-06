@@ -298,9 +298,6 @@ class QueryEngine:
             result_dict.pop("_sa_instance_state")
             record_list.append(result_dict)
 
-        print()
-        print(record_list)
-        print()
         return record_list
 
     def get_records_from_table(
