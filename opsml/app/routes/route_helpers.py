@@ -290,9 +290,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
