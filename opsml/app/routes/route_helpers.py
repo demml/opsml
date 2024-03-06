@@ -23,7 +23,9 @@ from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
+from opsml.data.interfaces import DataInterface
 from opsml.helpers.logging import ArtifactLogger
+from opsml.model import ModelInterface
 from opsml.registry import CardRegistry
 from opsml.storage import client
 from opsml.types import ModelMetadata, SaveName, Suffix
@@ -42,6 +44,7 @@ class RouteHelper:
         name: str,
         versions: List[Dict[str, Any]],
         version: Optional[str] = None,
+        **kwargs: Any,
     ) -> Tuple[ArtifactCard, str]:
         """Load card from version
 
@@ -59,7 +62,7 @@ class RouteHelper:
             `ArtifactCard` and `str`
         """
         if version is None:
-            selected_card = registry.load_card(uid=versions[0]["uid"])
+            selected_card = registry.load_card(uid=versions[0]["uid"], **kwargs)
             version = selected_card.version
 
             return selected_card, str(version)
@@ -346,7 +349,13 @@ class DataRouteHelper(RouteHelper):
         registry: CardRegistry = request.app.state.registries.data
         versions = registry.list_cards(name=name, limit=50)
 
-        datacard, version = self._check_version(registry, name, versions, version)
+        datacard, version = self._check_version(
+            registry,
+            name,
+            versions,
+            version,
+            **{"interface": DataInterface},  # generic data interface
+        )
         datacard = cast(DataCard, datacard)
 
         data_splits = self._check_splits(card=datacard)
@@ -461,7 +470,13 @@ class ModelRouteHelper(RouteHelper):
         """
 
         registry: CardRegistry = request.app.state.registries.model
-        modelcard, version = self._check_version(registry, name, versions, version)
+        modelcard, version = self._check_version(
+            registry,
+            name,
+            versions,
+            version,
+            **{"interface": ModelInterface},  # model should load generic to avoid import errors
+        )
 
         runcard, project_num = self._get_runcard(
             registry=request.app.state.registries.run,
