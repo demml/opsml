@@ -193,6 +193,8 @@ class ModelRegistrar:
 
         logger.info("ModelRegistrar: registering model: {}", model_request.model_dump())
         registry_path = self._copy_model_to_registry(model_request, swapped_uri, metadata)
-        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix())
+        logger.info(
+            "ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix()
+        )
 
         return registry_path
