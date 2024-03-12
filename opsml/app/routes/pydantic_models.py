@@ -157,6 +157,7 @@ class CompareCardRequest(BaseModel):
 
 class RegisterModelRequest(BaseModel):
     name: str = Field(..., description="Model name (does not include repository)")
+    repository: str = Field(..., description="Repository name")
     version: str = Field(
         ...,
         pattern="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",

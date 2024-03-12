@@ -116,9 +116,19 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
     # get model metadata
     metadata = post_model_metadata(
         request,
-        CardRequest(name=payload.name, version=payload.version, ignore_release_candidate=True),
+        CardRequest(
+            name=payload.name,
+            version=payload.version,
+            repository=payload.repository,
+            ignore_release_candidate=True,
+        ),
     )
-    model_request = RegistrationRequest(name=payload.name, version=payload.version, onnx=payload.onnx)
+    model_request = RegistrationRequest(
+        name=payload.name,
+        version=payload.version,
+        repository=payload.repository,
+        onnx=payload.onnx,
+    )
 
     try:
         registrar: ModelRegistrar = request.app.state.model_registrar
