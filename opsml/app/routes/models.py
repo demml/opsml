@@ -120,7 +120,7 @@ def post_model_register(request: Request, payload: RegisterModelRequest) -> str:
             name=payload.name,
             version=payload.version,
             repository=payload.repository,
-            ignore_release_candidate=True,
+            ignore_release_candidate=payload.ignore_release_candidate,
         ),
     )
     model_request = RegistrationRequest(
