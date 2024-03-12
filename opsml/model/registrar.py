@@ -28,6 +28,7 @@ class RegistrationError(Exception):
 class RegistrationRequest(BaseModel):
     name: str
     version: str
+    repository: str
     onnx: bool
 
 
@@ -52,7 +53,7 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> Path:
         """Returns hardcoded uri"""
-        return Path(f"{config.opsml_registry_path}/{request.name}/v{request.version}")
+        return Path(f"{config.opsml_registry_path}/{request.repository}/{request.name}/v{request.version}")
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -103,7 +104,7 @@ class ModelRegistrar:
 
         """
 
-        read_path = model_uri.parent
+        read_path = model_uri
         registry_path = self._registry_path(model_request)
 
         # delete existing model if it exists
@@ -113,7 +114,7 @@ class ModelRegistrar:
             assert not self.is_registered(model_request)
 
         # register the model
-        self.storage_client.copy(read_path, registry_path)
+        self.storage_client.copy(read_path, registry_path / read_path.name)
 
         # register model settings
         self.register_model_settings(metadata, registry_path, model_uri)
@@ -146,6 +147,7 @@ class ModelRegistrar:
                 "extra": {
                     "model_version": metadata.model_version,
                     "opsml_name": metadata.model_name.replace("-", "_"),
+                    "repository": metadata.model_repository.replace("-", "_"),
                 },
             },
         }
@@ -191,8 +193,6 @@ class ModelRegistrar:
 
         logger.info("ModelRegistrar: registering model: {}", model_request.model_dump())
         registry_path = self._copy_model_to_registry(model_request, swapped_uri, metadata)
-        logger.info(
-            "ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix()
-        )
+        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix())
 
         return registry_path
