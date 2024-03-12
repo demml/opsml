@@ -339,7 +339,7 @@ def test_metadata_download_and_registration(
     # the correct format.
     uri = response.json()
     assert (
-        re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
+        re.search(rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
         is not None
     )
 
@@ -360,7 +360,7 @@ def test_metadata_download_and_registration(
     )
     uri = response.json()
     assert (
-        re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
+        re.search(rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
         is not None
     )
 
@@ -376,7 +376,7 @@ def test_metadata_download_and_registration(
     )
 
     uri = response.json()
-    assert re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{minor}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{minor}$", uri, re.IGNORECASE) is not None
 
     # test register model - latest minor / patch given major only
     major = model_card.version[0 : model_card.version.index(".")]
@@ -389,7 +389,7 @@ def test_metadata_download_and_registration(
         },
     )
     uri = response.json()
-    assert re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{major}$", uri, re.IGNORECASE) is not None
+    assert re.search(rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{major}$", uri, re.IGNORECASE) is not None
 
     # test version fail - invalid name
     response = test_app.post(
