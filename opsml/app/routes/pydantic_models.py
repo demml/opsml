@@ -157,6 +157,7 @@ class CompareCardRequest(BaseModel):
 
 class RegisterModelRequest(BaseModel):
     name: str = Field(..., description="Model name (does not include repository)")
+    repository: str = Field(..., description="Repository name")
     version: str = Field(
         ...,
         pattern="^[0-9]+(.[0-9]+)?(.[0-9]+)?$",
@@ -176,6 +177,7 @@ class RegisterModelRequest(BaseModel):
     onnx: bool = Field(
         True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
     )
+    ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
 class RepositoriesResponse(BaseModel):

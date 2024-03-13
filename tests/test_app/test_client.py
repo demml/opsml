@@ -27,7 +27,7 @@ from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.api import ApiRoutes
-from opsml.types import SaveName
+from opsml.types import Metric, SaveName
 from opsml.types.extra import Suffix
 from tests.conftest import TODAY_YMD
 
@@ -201,8 +201,14 @@ def test_runcard(
     run = RunCard(name="run", contact="mlops.com", datacard_uids=["test_uid"], uid=uuid.uuid4().hex)
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
-    assert run.get_metric("test_metric").value == 10
-    assert run.get_metric("test_metric2").value == 20
+    metric1 = run.get_metric("test_metric")
+    assert isinstance(metric1, Metric)
+
+    metric2 = run.get_metric("test_metric2")
+    assert isinstance(metric2, Metric)
+
+    assert metric1.value == 10
+    assert metric2.value == 20
 
     # save artifacts
     run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
@@ -321,7 +327,11 @@ def test_metadata_download_and_registration(
     # test register model (onnx)
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={"name": model_card.name, "version": model_card.version},
+        json={
+            "name": model_card.name,
+            "repository": model_card.repository,
+            "version": model_card.version,
+        },
     )
     # NOTE: the *exact* model version sent must be returned in the URL.
     # Otherwise the hosting infrastructure will not know where to find the URL
@@ -329,7 +339,11 @@ def test_metadata_download_and_registration(
     # the correct format.
     uri = response.json()
     assert (
-        re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
+        re.search(
+            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$",
+            uri,
+            re.IGNORECASE,
+        )
         is not None
     )
 
@@ -343,13 +357,18 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
+            "repository": model_card.repository,
             "version": model_card.version,
             "onnx": "false",
         },
     )
     uri = response.json()
     assert (
-        re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{model_card.version}$", uri, re.IGNORECASE)
+        re.search(
+            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$",
+            uri,
+            re.IGNORECASE,
+        )
         is not None
     )
 
@@ -359,12 +378,18 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
+            "repository": model_card.repository,
             "version": minor,
         },
     )
 
     uri = response.json()
-    assert re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{minor}$", uri, re.IGNORECASE) is not None
+    assert (
+        re.search(
+            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{minor}$", uri, re.IGNORECASE
+        )
+        is not None
+    )
 
     # test register model - latest minor / patch given major only
     major = model_card.version[0 : model_card.version.index(".")]
@@ -372,17 +397,24 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": model_card.name,
+            "repository": model_card.repository,
             "version": major,
         },
     )
     uri = response.json()
-    assert re.search(rf"{config.opsml_registry_path}/{model_card.name}/v{major}$", uri, re.IGNORECASE) is not None
+    assert (
+        re.search(
+            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{major}$", uri, re.IGNORECASE
+        )
+        is not None
+    )
 
     # test version fail - invalid name
     response = test_app.post(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": "non-exist",
+            "repository": "non-exist",
             "version": model_card.version,
         },
     )
@@ -396,6 +428,7 @@ def test_metadata_download_and_registration(
         url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
         json={
             "name": "non-exist",
+            "repository": "non-exist",
             "version": "v1.0.0",  # version should *not* contain "v" - it must match the n.n.n pattern
         },
     )
@@ -416,6 +449,7 @@ def test_metadata_download_and_registration(
             url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
             json={
                 "name": model_card.name,
+                "repository": model_card.repository,
                 "version": model_card.version,
             },
         )
@@ -710,7 +744,7 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
 
 def test_error_wrapper() -> None:
     @error_to_500
-    async def fail(request):
+    async def fail(request):  # type: ignore
         raise ValueError("Fail")
 
     fail("fail")
