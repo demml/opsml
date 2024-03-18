@@ -37,5 +37,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
+      - run : export LOG_LEVEL=DEBUG
       - run : make setup.project
       - run : make test.integration
