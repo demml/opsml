@@ -182,7 +182,10 @@ class GCSFSStorageClient(StorageClientBase):
     def gcs_client(self) -> GCSClient:
         from google.cloud import storage
 
-        return cast(GCSClient, storage.Client())
+        return cast(
+            GCSClient,
+            storage.Client(credentials=self.settings.credentials),
+        )
 
     # cached_property is a decorator that caches the result of the function it decorates.
 
