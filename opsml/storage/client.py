@@ -191,8 +191,6 @@ class GCSFSStorageClient(StorageClientBase):
             ),
         )
 
-    # cached_property is a decorator that caches the result of the function it decorates.
-
     @cached_property
     def get_id_credentials(self) -> Any:
         assert isinstance(self.settings, GcsStorageClientSettings)
@@ -212,7 +210,7 @@ class GCSFSStorageClient(StorageClientBase):
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
 
-        logger.debug("GCP credentials: {}", self.settings.credentials)
+        logger.debug("GCP credentials: {}", self.settings.credentials)  # type: ignore
         try:
             bucket = self.gcs_client.bucket(config.storage_root)
             blob = bucket.blob(str(path))
