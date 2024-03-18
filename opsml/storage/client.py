@@ -220,8 +220,8 @@ class GCSFSStorageClient(StorageClientBase):
                 method="GET",
             )
         except Exception as error:
-            logger.error(f"Failed to generate presigned URL: {error}")
-            raise error
+            logger.error("Failed to generate presigned URL: {}", error)
+            return None
 
 
 class S3StorageClient(StorageClientBase):
