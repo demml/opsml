@@ -190,7 +190,10 @@ class GCSFSStorageClient(StorageClientBase):
     def get_id_credentials(self) -> Any:
         assert isinstance(self.settings, GcsStorageClientSettings)
 
+        logger.debug("GCP credentials: {}", self.settings.credentials)
+
         if self.settings.default_creds:
+            logger.debug("Default Creds: {}", self.settings.default_creds)
             from google.auth import compute_engine
             from google.auth.transport import requests
 
