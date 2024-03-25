@@ -53,7 +53,9 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> Path:
         """Returns hardcoded uri"""
-        return Path(f"{config.storage_root}/{config.opsml_registry_path}/{request.repository}/{request.name}/v{request.version}")
+        return Path(
+            f"{config.storage_root}/{config.opsml_registry_path}/{request.repository}/{request.name}/v{request.version}"
+        )
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -68,7 +70,7 @@ class ModelRegistrar:
         path = self._registry_path(request)
         try:
             files = self.storage_client.find(path)
-        except OSError as ex:
+        except OSError:
             return False
         return bool(files)
 
