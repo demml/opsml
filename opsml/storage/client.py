@@ -208,7 +208,6 @@ class GCSFSStorageClient(StorageClientBase):
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
 
-        logger.debug("GCP credentials: {}", self.settings.credentials)  # type: ignore
         try:
             bucket = self.gcs_client.bucket(config.storage_root)
             blob = bucket.blob(str(path))
