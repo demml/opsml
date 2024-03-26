@@ -182,15 +182,21 @@ class GCSFSStorageClient(StorageClientBase):
     def gcs_client(self) -> GCSClient:
         from google.cloud import storage
 
-        return cast(GCSClient, storage.Client())
+        assert isinstance(self.settings, GcsStorageClientSettings)
 
-    # cached_property is a decorator that caches the result of the function it decorates.
+        return cast(
+            GCSClient,
+            storage.Client(
+                credentials=self.settings.credentials,
+            ),
+        )
 
     @cached_property
     def get_id_credentials(self) -> Any:
         assert isinstance(self.settings, GcsStorageClientSettings)
 
         if self.settings.default_creds:
+            logger.debug("Default Creds: {}", self.settings.default_creds)
             from google.auth import compute_engine
             from google.auth.transport import requests
 
@@ -211,7 +217,7 @@ class GCSFSStorageClient(StorageClientBase):
                 method="GET",
             )
         except Exception as error:
-            logger.error(f"Failed to generate presigned URL: {error}")
+            logger.error("Failed to generate presigned URL: {}", error)
             return None
 
 
