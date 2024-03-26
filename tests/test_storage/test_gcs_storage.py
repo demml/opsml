@@ -6,7 +6,7 @@ from opsml.settings.config import OpsmlConfig
 from opsml.storage import client
 
 
-def test_gcs_presigned_uri():
+def test_gcs_presigned_uri() -> None:
     class MockBlob:
         def __init__(self, *args, **kwargs):
             pass
@@ -33,7 +33,7 @@ def test_gcs_presigned_uri():
         return_value=gcp_utils.GcpCreds(default_creds=True),
     ), patch("google.auth.transport.requests.Request", return_value=None,), patch(
         "google.auth.compute_engine.IDTokenCredentials",
-        return_value=None,
+        autospec=True,
     ), patch(
         "gcsfs.GCSFileSystem",
         autospec=True,
