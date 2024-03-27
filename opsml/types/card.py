@@ -84,7 +84,6 @@ class Comment(BaseModel):
 
 @dataclass
 class CardInfo:
-
     """
     Class that holds info related to an Artifact Card
 

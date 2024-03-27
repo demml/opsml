@@ -322,7 +322,6 @@ class OnnxAttr:
 
 
 class ModelMetadata(BaseModel):
-
     """Model metadata associated with all registered models
 
     Args:
@@ -386,19 +385,16 @@ class ModelMetadata(BaseModel):
 
 
 # Sklearn protocol stub
-class BaseEstimator(Protocol):
-    ...
+class BaseEstimator(Protocol): ...
 
 
 # Onnx protocol stubs
 class Graph:
     @property
-    def output(self) -> Any:
-        ...
+    def output(self) -> Any: ...
 
     @property
-    def input(self) -> Any:
-        ...
+    def input(self) -> Any: ...
 
 
 class ModelProto(Protocol):
@@ -509,13 +505,10 @@ class LightGBMBooster(ModelType):
 
 class ModelCard(Protocol):
     @property
-    def metadata(self) -> ModelCardMetadata:
-        ...
+    def metadata(self) -> ModelCardMetadata: ...
 
     @property
-    def model(self) -> Any:
-        ...
+    def model(self) -> Any: ...
 
     @property
-    def to_onnx(self) -> bool:
-        ...
+    def to_onnx(self) -> bool: ...

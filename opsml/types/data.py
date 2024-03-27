@@ -44,7 +44,6 @@ class AllowedDataType(str, Enum):
 
 
 class DataCardMetadata(BaseModel):
-
     """Create a DataCard metadata
 
     Args:

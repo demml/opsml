@@ -196,6 +196,7 @@ load-plugins = ["pylint_pydantic", "pylint.extensions.docparams"]
 [tool.pylint.messages_control]
 max-line-length = 130
 disable = [
+    "multiple-statements",
     "too-few-public-methods",
     "design",
     "duplicate-code",
