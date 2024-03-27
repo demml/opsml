@@ -9,7 +9,6 @@ from opsml.types import AllowedDataType, Feature, Suffix
 
 
 class ArrowData(DataInterface):
-
     """Arrow Table data interface
 
     Args:

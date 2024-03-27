@@ -55,9 +55,9 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[
-            Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
-        ] = None
+        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = (
+            None
+        )
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
