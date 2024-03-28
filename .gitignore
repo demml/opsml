@@ -1,4 +1,5 @@
 # opsml-artifacts
+mlruns/
 opsml/api/
 test_scripts*
 tmp.db
