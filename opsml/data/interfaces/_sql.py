@@ -3,7 +3,6 @@ from opsml.types import AllowedDataType
 
 
 class SqlData(DataInterface):
-
     """Arrow Table data interface
 
     Args:
