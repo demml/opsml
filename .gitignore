@@ -3,6 +3,7 @@ mlruns/
 opsml/api/
 test_scripts*
 tmp.db
+model_registry
 opsml_artifacts
 opsml/deploy/seldon/api_test.txt
 docs/site/
