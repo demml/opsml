@@ -167,10 +167,6 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
             uid=payload.uid,
         )[0]
 
-        print(card["version"])
-        print(card["name"])
-        print(card["repository"])
-
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
             card_uri = f"{storage_root}/{RegistryTableNames.MODEL.value}/{card['repository']}/{card['name']}/v{card['version']}"

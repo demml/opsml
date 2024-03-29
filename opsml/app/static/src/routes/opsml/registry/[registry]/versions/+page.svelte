@@ -34,6 +34,8 @@
   let metadata: ModelMetadata;
   $: metadata = data.metadata;
 
+  console.log(data.metadata);
+
   
 
   onMount(async () => {
@@ -72,9 +74,9 @@
     </h1>
     <div class="pt-2 flex flex-wrap flex-row ... items-center">
       <div>
-        <a href="/opsml/registry/{path}/versions?name={name}&repository={repository}&version={metadata.version}" class="badge w-16 bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
+        <a href="/opsml/registry/{path}/versions?name={name}&repository={repository}&version={metadata.model_version}" class="badge bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
           <Fa icon={faTag} color="#4b3978"/>
-          <span class="text-primary-500">{metadata.version}</span>
+          <span class="text-primary-500">{metadata.model_version}</span>
         </a>
       </div>
     </div>
