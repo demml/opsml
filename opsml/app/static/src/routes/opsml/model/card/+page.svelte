@@ -13,10 +13,11 @@
   import {languages} from "@codemirror/language-data"
   import { Compartment } from '@codemirror/state'
   import icon from '$lib/images/opsml-green.ico'
-  import sklearnLogo from '$lib/images/scikit-learn.svg'
+
   
   import { editorTheme } from '$lib/scripts/editor_theme'
   import { type ModelMetadata } from "$lib/scripts/types";
+  import CardBadge from "$lib/CardBadge.svelte";
 
 
   /** @type {import('./$types').PageData} */
@@ -81,17 +82,7 @@
         </a>
       </div>
 
-      {#if metadata.model_interface === 'SklearnModel'}
-      <div>
-        <a class="badge bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
-          <img alt="sklearn logo" class="h-5" src="{sklearnLogo}">
-          <span class="text-primary-500">{metadata.model_interface}</span>
-        </a>
-      </div>
-      {:else if metadata.model_interface === 'TensorflowModel'}
-
-
-      {/if}
+      <CardBadgeinterface={metadata.interface}/>
     </div>
   </div>
 
