@@ -186,8 +186,8 @@
     <div class="pt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       {#each registryPage.page as item}
         <PageCard 
-          name={item[0]}
-          repository={item[1]}
+          repository={item[0]}
+          name={item[1]}
           nbr_versions={item[2]}
           updated_at={item[3]}
           registry={registry}

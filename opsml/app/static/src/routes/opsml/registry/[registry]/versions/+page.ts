@@ -18,7 +18,6 @@ export async function load({ fetch, params, url }) {
     metaAttr["version"] = version;
   }
 
-  console.log(metaAttr);
   const res: ModelMetadata = await fetch("/opsml/models/metadata", {
     method: "POST",
     headers: {
@@ -27,13 +26,11 @@ export async function load({ fetch, params, url }) {
     body: JSON.stringify(metaAttr),
   }).then((res) => res.json());
 
-  console.log(res);
-
   return {
     registry: registry,
     repository: repository,
     name: name,
-    version: "1.0.0",
+    metadata: res,
     path: path,
   };
 }

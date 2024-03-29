@@ -13,6 +13,7 @@
   import { Compartment } from '@codemirror/state'
   import testDoc from '$lib/scripts/markdown_template.ts'
   import editorTheme from '$lib/scripts/editor_theme.ts'
+  import { type ModelMetadata } from "$lib/scripts/types";
 
 
   /** @type {import('./$types').PageData} */
@@ -27,11 +28,11 @@
   let repository: string;
   $: repository = data.repository;
 
-  let version: string;
-  $: version = data.version;
-
   let path: string;
   $: path = data.path;
+
+  let metadata: ModelMetadata;
+  $: metadata = data.metadata;
 
   
 
@@ -71,9 +72,9 @@
     </h1>
     <div class="pt-2 flex flex-wrap flex-row ... items-center">
       <div>
-        <a href="/opsml/registry/{path}/versions?name={name}&repository={repository}&version={version}" class="badge w-16 bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
+        <a href="/opsml/registry/{path}/versions?name={name}&repository={repository}&version={metadata.version}" class="badge w-16 bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
           <Fa icon={faTag} color="#4b3978"/>
-          <span class="text-primary-500">{version}</span>
+          <span class="text-primary-500">{metadata.version}</span>
         </a>
       </div>
     </div>
@@ -82,7 +83,7 @@
   <div class="ml-12 mt-6 overflow-hidden rounded-lg">
     <div class="flex flex-row flex-initial w-2/3 ... items-center">
 
-      <div class="card w-full border border-slate-200">
+      <div class="card w-full border border-slate-100">
         <header class="card-header h-6 mb-4 ">Editor</header>
         <section class="bg-slate-50 border border-slate-20">
           <div id="editor" class="w-full"></div>

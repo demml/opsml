@@ -155,7 +155,7 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
     """
-    print("hello")
+
     storage_root = request.app.state.storage_root
     registry: CardRegistry = request.app.state.registries.model
 
@@ -166,6 +166,10 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
             version=payload.version,
             uid=payload.uid,
         )[0]
+
+        print(card["version"])
+        print(card["name"])
+        print(card["repository"])
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
