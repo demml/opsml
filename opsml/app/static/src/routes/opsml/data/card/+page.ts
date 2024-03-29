@@ -1,4 +1,11 @@
-import { type metadataRequest, type ModelMetadata } from "$lib/scripts/types";
+import {
+  type metadataRequest,
+  type ModelMetadata,
+  type FileExists,
+  RegistryName,
+} from "$lib/scripts/types";
+
+const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
@@ -26,12 +33,19 @@ export async function load({ fetch, params, url }) {
     body: JSON.stringify(metaAttr),
   }).then((res) => res.json());
 
+  // check if markdown exists
+  let markdownPath = `${opsmlRoot}/${res.model_repository}/${res.model_name}/README.md`;
+  let markdown: FileExists = await fetch(
+    `/opsml/files/exists?path=${markdownPath}`
+  ).then((res) => res.json());
+
   return {
     registry: registry,
     repository: repository,
     name: name,
     metadata: res,
     path: path,
+    hasReadme: markdown.exists,
   };
 }
 

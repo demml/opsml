@@ -4,15 +4,17 @@
   import Fa from 'svelte-fa'
   import { faTag } from '@fortawesome/free-solid-svg-icons'
   import { onMount } from 'svelte';
-  import { basicSetup } from 'codemirror'
-  import {EditorView, keymap} from "@codemirror/view"
-  import { markdown } from '@codemirror/lang-markdown'
-  import { languages } from '@codemirror/language-data'
-  import {indentWithTab} from "@codemirror/commands"
-  import { markdownLanguage } from '@codemirror/lang-markdown'
+  import { keymap } from "@codemirror/view"
+
+
+  import { indentWithTab } from "@codemirror/commands"
+  import {basicSetup, EditorView} from "codemirror"
+  import {markdown} from "@codemirror/lang-markdown"
+  import {languages} from "@codemirror/language-data"
   import { Compartment } from '@codemirror/state'
+  
   import testDoc from '$lib/scripts/markdown_template.ts'
-  import editorTheme from '$lib/scripts/editor_theme.ts'
+  import { editorTheme } from '$lib/scripts/editor_theme'
   import { type ModelMetadata } from "$lib/scripts/types";
 
 
@@ -33,9 +35,6 @@
 
   let metadata: ModelMetadata;
   $: metadata = data.metadata;
-
-  console.log(data.metadata);
-
   
 
   onMount(async () => {
@@ -43,12 +42,11 @@
 
     let parent = document.getElementById("editor")
 		let editor = new EditorView({
-      doc: `# hello`,
+      doc: ``,
       extensions: [
         keymap.of([indentWithTab]),
         basicSetup,
         markdown({
-          base: markdownLanguage,
           codeLanguages: languages,
           addKeymap: true,
           extensions: []
@@ -67,14 +65,14 @@
   <div class="pl-12 sm:pl-20 pt-6 sm:pt-8 bg-slate-50 w-full">
     <h1 class="flex flex-row ... items-center text-lg">
       <div class="group flex flex-none items-center">
-        <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/registry/{path}?respository={repository}">{repository}</a>
+        <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{path}?repository={repository}">{repository}</a>
         <div class="mx-0.5 text-gray-800">/</div>
       </div>
       <div class="font-bold text-primary-500">{name}</div>
     </h1>
     <div class="pt-2 flex flex-wrap flex-row ... items-center">
       <div>
-        <a href="/opsml/registry/{path}/versions?name={name}&repository={repository}&version={metadata.model_version}" class="badge bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
+        <a href="/opsml/{path}/card?name={name}&repository={repository}&version={metadata.model_version}" class="badge bg-surface-100 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-primary-100">
           <Fa icon={faTag} color="#4b3978"/>
           <span class="text-primary-500">{metadata.model_version}</span>
         </a>

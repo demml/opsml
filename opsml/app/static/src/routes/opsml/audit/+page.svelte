@@ -107,6 +107,17 @@
     }
   }
 
+  onMount(async () => {
+    if (selectedRepo) {
+      registryPage = await getRegistryPage(registry, undefined, selectedRepo, searchTerm, 0);
+      registryStats = await getRegistryStats(registry, selectedRepo);
+      
+      paginationSettings.page = 0;
+      paginationSettings.size = registryStats.nbr_names;
+    } 
+    
+  });
+
 
 
 </script>

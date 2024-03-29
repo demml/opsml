@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
-  import { faFlag } from "@fortawesome/free-solid-svg-icons";
   import js from "jquery";
   import { LightSwitch } from "@skeletonlabs/skeleton";
   import logo from "$lib/images/opsml_word.png";
@@ -41,7 +40,7 @@
     <nav id="navbar">
       <ul class="flex items-center space-x-2 xl:space-x-3">
         {#each names as name}
-          {@const path = '/opsml/registry/' + name.toLowerCase()}
+          {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
           <li class="hidden md:block">
               <a class="group flex items-center text-white text-base md:text-lg active:font-bold" href={path} class:active={$page.url.pathname === path}>
                 {name}
@@ -69,7 +68,7 @@
                   <ul>
                     {#each names as name}
                       <li>
-                        <a href='/opsml/registry/{name.toLowerCase()}'>
+                        <a href='/opsml/{name.replace(/s$/, '').toLowerCase()}'>
                           <span class="flex-auto">{name}</span>
                         </a>
                       </li>

@@ -2,7 +2,7 @@ import { render } from "@testing-library/svelte";
 import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
-import ModelPage from "../routes/opsml/registry/[type=registry]/+page.svelte";
+import ModelPage from "../routes/opsml/models/+page.svelte";
 import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 import { server } from "./server";
 

@@ -1,34 +1,39 @@
 import { EditorView } from "@codemirror/view";
 
-const editorTheme = EditorView.theme({
+const base = "#2e3440",
+  background = "#ffffff";
+
+/// The editor theme styles for Basic Light.
+export const editorTheme = EditorView.theme({
   "&": {
-    fontSize: "11pt",
+    color: base,
+    backgroundColor: background,
     border: "none",
+    ontSize: "11pt",
   },
 
   "&.cm-editor.cm-focused": {
     outline: "none",
   },
 
-  ".cm-content": {
-    backgroundColor: "#fcfcfc",
-  },
   "&.cm-focused .cm-cursor": {
     borderLeftColor: "#4b3978",
   },
 
   ".cm-gutters": {
-    backgroundColor: "#fcfcfc",
+    backgroundColor: background,
     border: "none",
   },
 
   ".cm-activeLine": {
-    backgroundColor: "#e4e1eb",
+    backgroundColor: "transparent",
   },
 
   ".cm-activeLineGutter": {
-    backgroundColor: "#e4e1eb",
+    backgroundColor: "transparent",
+  },
+
+  ".cm-selectionMatch": {
+    backgroundColor: "transparent",
   },
 });
-
-export default editorTheme;
