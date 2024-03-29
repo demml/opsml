@@ -138,7 +138,6 @@ def _parse_y_to_list(
 
 
 class RunCard(ArtifactCard):
-
     """
     Create a RunCard from specified arguments.
 
