@@ -12,7 +12,13 @@ export function entries() {
 }
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params }) {
+export async function load({ fetch, params, url }) {
+  let repository: string | null = url.searchParams.get("repository");
+
+  if (repository === null) {
+    repository = undefined;
+  }
+
   let registry: string = params.registry.replace(/s+$/, "");
 
   // get the repositories
@@ -38,7 +44,7 @@ export async function load({ fetch, params }) {
       searchTerm: undefined,
       repos: repos.repositories,
       registry: registry,
-      selectedRepo: undefined,
+      selectedRepo: repository,
       registryStats: stats,
       registryPage: page,
     },
