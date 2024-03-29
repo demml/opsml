@@ -43,10 +43,16 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@codemirror/commands": "^6.3.3",
+		"@codemirror/lang-markdown": "^6.2.4",
+		"@codemirror/language-data": "^6.4.1",
+		"@codemirror/state": "^6.4.1",
+		"@codemirror/view": "^6.26.1",
 		"@fortawesome/free-brands-svg-icons": "^6.5.1",
 		"@fortawesome/free-regular-svg-icons": "^6.5.1",
 		"@fortawesome/free-solid-svg-icons": "^6.5.1",
 		"@popperjs/core": "^2.11.8",
+		"codemirror": "^6.0.1",
 		"jquery": "^3.7.1",
 		"svelte-fa": "^4.0.2",
 		"tailwind-merge": "^2.2.1"
