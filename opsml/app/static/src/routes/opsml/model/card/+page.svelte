@@ -45,6 +45,8 @@
     searchTerm = e.target.value;
   }
 
+  let tabSet: string = "card";
+
 
   
 
@@ -92,6 +94,16 @@
         </a>
       </div>
     </div>
+
+    <TabGroup 
+      border=""
+      active='border-b-2 border-primary-500'
+      >
+        <Tab bind:group={tabSet} name="card" value="card">Card</Tab>
+        <Tab bind:group={tabSet} name="files" value="card">Files</Tab>
+        <Tab bind:group={tabSet} name="metadata" value="card">Metadata</Tab>
+
+      </TabGroup>
   </div>
 
   
