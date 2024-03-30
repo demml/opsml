@@ -12,6 +12,7 @@
   import {markdown} from "@codemirror/lang-markdown"
   import {languages} from "@codemirror/language-data"
   import { Compartment } from '@codemirror/state'
+  import Search from "$lib/Search.svelte";
   import icon from '$lib/images/opsml-green.ico'
 
   
@@ -37,6 +38,12 @@
 
   let hasReadme: boolean;
   $: hasReadme = data.hasReadme;
+
+  let searchTerm: string | undefined = undefined;
+
+  let searchVersions = (e) => {
+    searchTerm = e.target.value;
+  }
 
 
   
@@ -73,6 +80,9 @@
         <div class="mx-0.5 text-gray-800">/</div>
       </div>
       <div class="font-bold text-primary-500">{name}</div>
+      <div class="ml-4 w-1/3">
+        <Search bind:searchTerm on:input={searchVersions} placeholder="Filter versions"/>
+      </div>
     </h1>
     <div class="pt-2 flex flex-wrap flex-row items-center gap-3">
       <div>
@@ -80,9 +90,6 @@
           <Fa class="h-7" icon={faTag} color="#4b3978"/>
           <span class="text-primary-500">{metadata.model_version}</span>
         </a>
-      </div>
-      <div>
-        <CardBadge artifactInterface={metadata.model_interface}/>
       </div>
     </div>
   </div>
