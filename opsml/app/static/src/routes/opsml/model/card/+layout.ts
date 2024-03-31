@@ -46,8 +46,3 @@ export async function load({ fetch, params, url }) {
     hasReadme: markdown.exists,
   };
 }
-
-/** @type {import('./$types').EntryGenerator} */
-export function entries() {
-  return [{ registry: "data" }, { registry: "models" }];
-}
