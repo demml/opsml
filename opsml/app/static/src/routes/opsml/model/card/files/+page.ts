@@ -2,6 +2,7 @@ import {
   type metadataRequest,
   type ModelMetadata,
   type FileExists,
+  type Files,
   RegistryName,
 } from "$lib/scripts/types";
 
@@ -14,16 +15,14 @@ export async function load({ fetch, params, url }) {
   let version = url.searchParams.get("version");
   let registry = "model";
 
-  console.log(name, repository, version, registry);
-
   // get file directory
   console.log(
     `/opsml/files/list/info?path=${opsmlRoot}/${repository}/${name}/v${version}`
   );
 
-  fetch(
+  let fileInfo: Files = fetch(
     `/opsml/files/list/info?path=${opsmlRoot}/${repository}/${name}/v${version}`
-  )
-    .then((res) => res.json())
-    .then((res) => console.log(res));
+  ).then((res) => res.json());
+
+  return { files: fileInfo };
 }

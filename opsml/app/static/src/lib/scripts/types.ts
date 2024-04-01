@@ -59,3 +59,21 @@ export enum RegistryName {
 export interface FileExists {
   exists: boolean;
 }
+
+export FileInfo {
+  name: string;
+  size: number;
+  type: string;
+  created: number;
+  islink: boolean;
+  mode: number;
+  uid: number;
+  gid: number;
+  mtime: number;
+  ino: number;
+  nlink: number;
+}
+
+export interface Files {
+  files: FileInfo[];
+}
