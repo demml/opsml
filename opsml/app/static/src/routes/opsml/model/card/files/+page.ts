@@ -19,10 +19,10 @@ export async function load({ fetch, params, url }) {
 
   let filePath = `${opsmlRoot}/${repository}/${name}/v${version}`;
 
+  let urlPath = `/opsml/files/list/info?path=${filePath}`;
+
   if (subdir) {
-    urlPath = `/opsml/files/list/info?path=${filePath}&subdir=${subdir}`;
-  } else {
-    urlPath = `/opsml/files/list/info?path=${filePath}`;
+    urlPath = `${urlPath}&subdir=${subdir}`;
   }
 
   console.log(urlPath);

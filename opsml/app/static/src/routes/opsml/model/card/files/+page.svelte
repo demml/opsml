@@ -22,12 +22,25 @@
   let name: string;
   $: name = data.name;
 
+  let registry: string;
+  $: registry = data.registry;
+
+  let repository: string;
+  $: repository = data.repository;
+
+  let version: string;
+  $: version = data.version;
+
   let basePath: string;
   $: basePath = data.basePath;
 
   function navigateToFolder(folderPath: string) {
     let subDir: sting = folderPath.replace(`${basePath}/`, '');
-    goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${metadata.model_version}&subdir=${subDir}`);
+    goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
+  }
+
+  function viewFile(filePath: string) {
+    goto(`/opsml/${registry}/card/file/view/?file_path=${filePath}}`);
   }
 
 
@@ -47,19 +60,18 @@
       <div class="bg-white border border-gray-200 px-3 py-2 min-w-96">
         <div class="grid h-6 grid-cols-12 gap-x-3">
           {#if file.type === 'file'}
-            <div class="flex flex-row col-span-8 md:col-span-4 items-center">
-              <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
-              <div class="flex truncate items-center text-black">{file.name}</div>
-            </div>
+
+            <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => navigateToFolder(file.uri)}>
+                <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
+                <div class="flex truncate items-center text-black">{file.name}</div>
+            </a>
 
           {:else}
-          <a on:click={() => navigateToFolder(file.uri)} class="cursor-pointer">
-            <div class="flex flex-row col-span-8 md:col-span-4 items-center">
-                <Fa class="h-5 mr-2" icon={faFolderOpen} color="#4b3978"/>
-                <div class="flex truncate items-center text-black">{file.name}</div>
-            
-            </div>
-          </a>
+
+            <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => navigateToFolder(file.uri)}>
+              <Fa class="h-5 mr-2" icon={faFolderOpen} color="#4b3978"/>
+              <div class="flex truncate items-center text-black">{file.name}</div>
+            </a>
 
           {/if}
           <div class="group col-span-4 flex items-center justify-self-end truncate text-right text-gray-500">{file.size} </div>
