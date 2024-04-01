@@ -5,7 +5,8 @@
   import { calculateTimeBetween } from "$lib/scripts/utils";  
 
   import Fa from 'svelte-fa'
-  import { faFile } from '@fortawesome/free-solid-svg-icons'
+  import { faFile, faFolderOpen } from '@fortawesome/free-solid-svg-icons'
+  import { goto } from '$app/navigation';
 
   /** @type {import('./$types').PageData} */
 	export let data;
@@ -20,6 +21,14 @@
 
   let name: string;
   $: name = data.name;
+
+  let basePath: string;
+  $: basePath = data.basePath;
+
+  function navigateToFolder(folderPath: string) {
+    let subDir: sting = folderPath.replace(`${basePath}/`, '');
+    goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${metadata.model_version}&subdir=${subDir}`);
+  }
 
 
 </script>
@@ -42,6 +51,16 @@
               <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
               <div class="flex truncate items-center text-black">{file.name}</div>
             </div>
+
+          {:else}
+          <a on:click={() => navigateToFolder(file.uri)} class="cursor-pointer">
+            <div class="flex flex-row col-span-8 md:col-span-4 items-center">
+                <Fa class="h-5 mr-2" icon={faFolderOpen} color="#4b3978"/>
+                <div class="flex truncate items-center text-black">{file.name}</div>
+            
+            </div>
+          </a>
+
           {/if}
           <div class="group col-span-4 flex items-center justify-self-end truncate text-right text-gray-500">{file.size} </div>
           <div class="col-span-4 hidden truncate items-center justify-self-end  text-gray-400 md:block">{calculateTimeBetween(file.mtime)} </div>

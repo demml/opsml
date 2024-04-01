@@ -6,7 +6,7 @@ import io
 import tempfile
 import zipfile as zp
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -219,7 +219,7 @@ def list_files(request: Request, path: str) -> ListFileResponse:
 
 
 @router.get("/files/list/info", name="list_files_info")
-def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
+def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -> ListFileInfoResponse:
     """Lists files
 
     Args:
@@ -231,7 +231,12 @@ def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
     Returns:
         `ListFileResponse`
     """
-    swapped_path = swap_opsml_root(request, Path(path))
+    storage_path = Path(path)
+
+    if subdir:
+        storage_path = storage_path / subdir
+
+    swapped_path = swap_opsml_root(request, storage_path)
     storage_client: StorageClientBase = request.app.state.storage_client
 
     files: List[Dict[str, Any]] = storage_client.ls(Path(swapped_path), True)
