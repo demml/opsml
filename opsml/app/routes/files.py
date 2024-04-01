@@ -6,7 +6,7 @@ import io
 import tempfile
 import zipfile as zp
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Any
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,11 +20,7 @@ from opsml.app.core.dependencies import (
     swap_opsml_root,
     verify_token,
 )
-from opsml.app.routes.pydantic_models import (
-    DeleteFileResponse,
-    FileExistsResponse,
-    ListFileResponse,
-)
+from opsml.app.routes.pydantic_models import DeleteFileResponse, FileExistsResponse, ListFileResponse, ListFileInfoResponse
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
@@ -213,10 +209,42 @@ def list_files(request: Request, path: str) -> ListFileResponse:
 
     swapped_path = swap_opsml_root(request, Path(path))
     storage_client: StorageClientBase = request.app.state.storage_client
+
     files = storage_client.find(Path(swapped_path))
 
     try:
         return ListFileResponse(files=[str(reverse_swap_opsml_root(request, Path(file_))) for file_ in files])
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.get("/files/list/info", name="list_files_info")
+def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
+    """Lists files
+
+    Args:
+        request:
+            request object
+        path:
+            path to read
+
+    Returns:
+        `ListFileResponse`
+    """
+    swapped_path = swap_opsml_root(request, Path(path))
+    storage_client: StorageClientBase = request.app.state.storage_client
+
+    files: List[Dict[str, Any]] = storage_client.ls(Path(swapped_path), True)
+
+    for file_ in files:
+        file_["name"] = str(reverse_swap_opsml_root(request, Path(file_["name"])))
+
+    try:
+        return ListFileInfoResponse(files=files)
 
     except Exception as error:
         raise HTTPException(
