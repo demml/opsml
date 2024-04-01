@@ -5,6 +5,7 @@ import {
   type Files,
   RegistryName,
 } from "$lib/scripts/types";
+import { calculateTimeBetween } from "$lib/scripts/utils";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
@@ -15,14 +16,15 @@ export async function load({ fetch, params, url }) {
   let version = url.searchParams.get("version");
   let registry = "model";
 
-  // get file directory
-  console.log(
-    `/opsml/files/list/info?path=${opsmlRoot}/${repository}/${name}/v${version}`
-  );
-
-  let fileInfo: Files = fetch(
+  let fileInfo: Files = await fetch(
     `/opsml/files/list/info?path=${opsmlRoot}/${repository}/${name}/v${version}`
   ).then((res) => res.json());
 
-  return { files: fileInfo };
+  return {
+    files: fileInfo,
+    name,
+    repository,
+    version,
+    modifiedAt: calculateTimeBetween(fileInfo.mtime * 1000),
+  };
 }

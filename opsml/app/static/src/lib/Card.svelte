@@ -24,7 +24,7 @@
     </svg>
     <span class="truncate text-black dark:text-white">
       <time datetime={ Date() } >
-        Updated { calculateTimeBetween(timestamp) }
+        Updated { calculateTimeBetween(timestamp / 1000) }
       </time>
     </span>
     <span class="px-1.5 text-black dark:text-white">- </span>

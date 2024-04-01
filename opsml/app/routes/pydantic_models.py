@@ -218,6 +218,7 @@ class FileInfo(BaseModel):
 
 class ListFileInfoResponse(BaseModel):
     files: List[FileInfo]
+    mtime: float
 
 
 class DeleteFileResponse(BaseModel):

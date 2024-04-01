@@ -23,7 +23,7 @@
     </svg>
     <span class="truncate text-black dark:text-white">
       <time datetime={ Date() } >
-        Last updated { calculateTimeBetween(updated_at) }
+        Last updated { calculateTimeBetween(updated_at / 1000) }
       </time>
     </span>
     <span class="px-1.5 text-black dark:text-white">- </span>

@@ -1,7 +1,7 @@
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
 
-  const epoch = timestamp / 1000;
+  const epoch = timestamp;
   const date1: Date = new Date(epoch);
 
   const hours = Math.abs(presentDate.getTime() - date1.getTime()) / 3600000;

@@ -240,11 +240,16 @@ def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
 
     files: List[Dict[str, Any]] = storage_client.ls(Path(swapped_path), True)
 
+    mtimes = []
     for file_ in files:
         file_["name"] = str(reverse_swap_opsml_root(request, Path(file_["name"])))
+        mtimes.append(file_["mtime"])
 
     try:
-        return ListFileInfoResponse(files=files)
+        return ListFileInfoResponse(
+            files=files,
+            mtime=max(mtimes),
+        )
 
     except Exception as error:
         raise HTTPException(

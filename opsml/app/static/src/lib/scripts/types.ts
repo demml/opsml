@@ -60,7 +60,7 @@ export interface FileExists {
   exists: boolean;
 }
 
-export FileInfo {
+export interface FileInfo {
   name: string;
   size: number;
   type: string;
@@ -76,4 +76,5 @@ export FileInfo {
 
 export interface Files {
   files: FileInfo[];
+  mtime: number;
 }
