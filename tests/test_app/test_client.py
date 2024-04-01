@@ -814,3 +814,4 @@ def test_register_vit(
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(""))
+

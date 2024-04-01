@@ -242,7 +242,9 @@ def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
 
     mtimes = []
     for file_ in files:
-        file_["name"] = str(reverse_swap_opsml_root(request, Path(file_["name"])))
+        uri = Path(file_["name"])
+        file_["uri"] = str(reverse_swap_opsml_root(request, uri))
+        file_["name"] = uri.name
         mtimes.append(file_["mtime"])
 
     try:
