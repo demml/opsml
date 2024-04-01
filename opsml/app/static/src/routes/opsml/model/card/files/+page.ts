@@ -25,6 +25,6 @@ export async function load({ fetch, params, url }) {
     name,
     repository,
     version,
-    modifiedAt: calculateTimeBetween(fileInfo.mtime * 1000),
+    modifiedAt: calculateTimeBetween(fileInfo.mtime),
   };
 }

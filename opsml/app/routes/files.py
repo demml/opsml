@@ -21,11 +21,7 @@ from opsml.app.core.dependencies import (
     verify_token,
 )
 from opsml.app.routes.pydantic_models import DeleteFileResponse, FileExistsResponse, ListFileResponse, ListFileInfoResponse
-from opsml.app.routes.utils import (
-    ExternalFileTarget,
-    MaxBodySizeException,
-    MaxBodySizeValidator,
-)
+from opsml.app.routes.utils import ExternalFileTarget, MaxBodySizeException, MaxBodySizeValidator, calculate_file_size
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
@@ -242,10 +238,14 @@ def list_files_info(request: Request, path: str) -> ListFileInfoResponse:
 
     mtimes = []
     for file_ in files:
+        # conversion of timestamp is done on client side to take timezone into account
+        mtime = file_["mtime"] * 1000
         uri = Path(file_["name"])
         file_["uri"] = str(reverse_swap_opsml_root(request, uri))
         file_["name"] = uri.name
-        mtimes.append(file_["mtime"])
+        file_["size"] = calculate_file_size(file_["size"])
+        file_["mtime"] = mtime
+        mtimes.append(mtime)
 
     try:
         return ListFileInfoResponse(

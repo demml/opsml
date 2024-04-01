@@ -203,8 +203,9 @@ class ListFileResponse(BaseModel):
 
 
 class FileInfo(BaseModel):
+    uri: str
     name: str
-    size: int
+    size: str
     type: str
     created: float
     islink: bool
