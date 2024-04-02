@@ -160,7 +160,7 @@ def cleanup() -> None:
 
 
 @pytest.fixture
-def gcp_cred_path():
+def gcp_cred_path() -> str:
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
 
 
@@ -171,7 +171,7 @@ def save_path() -> str:
 
 
 @pytest.fixture
-def mock_gcp_vars(gcp_cred_path):
+def mock_gcp_vars(gcp_cred_path) -> Dict[str, Any]:
     creds, _ = load_credentials_from_file(gcp_cred_path)
     mock_vars = {
         "gcp_project": "test",
@@ -185,7 +185,7 @@ def mock_gcp_vars(gcp_cred_path):
 
 
 @pytest.fixture
-def mock_gcp_creds(mock_gcp_vars):
+def mock_gcp_creds(mock_gcp_vars) -> Any:
     creds = GcpCreds(
         creds=mock_gcp_vars["gcp_creds"],
         project=mock_gcp_vars["gcp_project"],
@@ -267,7 +267,7 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
-    def callable_api():
+    def callable_api() -> TestClient:
         return test_client
 
     with patch("httpx.Client", callable_api):
@@ -314,7 +314,7 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
 
 
 @pytest.fixture
-def mock_aws_storage_response():
+def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
     class MockResponse:
         def __init__(self):
             self.status_code = 200

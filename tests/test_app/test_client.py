@@ -502,6 +502,29 @@ def test_model_metrics(
 
     assert metrics[0]["name"] == "m1"
     assert metrics[0]["value"] == 1.1
+    
+    
+def test_presign_url(
+    test_app: TestClient,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
+) -> None:
+    """ify that we can read artifacts / metrics / cards without making a run
+    active."""
+
+    modelcard, _, _ = populate_model_data_for_route
+    
+    
+    path = modelcard.uri / "card.joblib"
+    
+    # skipping presigned
+    response = test_app.get("/opsml/files/presign", params={"path": path.as_posix()})
+    assert response.status_code == 200
+    
+    
+    # presigned allowed
+    path = modelcard.uri / "model-metadata.json"
+    response = test_app.get("/opsml/files/presign", params={"path": path.as_posix()})
+    assert response.status_code == 200
 
 
 @pytest.mark.skipif(EXCLUDE, reason="Skipping")
