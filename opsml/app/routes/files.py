@@ -25,14 +25,13 @@ from opsml.app.routes.pydantic_models import (
     FileExistsResponse,
     ListFileResponse,
     ListFileInfoResponse,
-    FileInfo,
+    FileViewResponse,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
     MaxBodySizeValidator,
     calculate_file_size,
-    FileViewResponse,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
