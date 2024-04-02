@@ -301,7 +301,7 @@ def generate_presigned_uri(request: Request, path: str) -> FileInfo:
                 expiration=PRESIGN_DEFAULT_EXPIRATION,
             )
 
-        return file_info
+        return FileInfo(**file_info)
 
     except Exception as error:
         raise HTTPException(
