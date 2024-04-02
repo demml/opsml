@@ -20,17 +20,25 @@ from opsml.app.core.dependencies import (
     swap_opsml_root,
     verify_token,
 )
-from opsml.app.routes.pydantic_models import DeleteFileResponse, FileExistsResponse, ListFileResponse, ListFileInfoResponse
+from opsml.app.routes.pydantic_models import (
+    DeleteFileResponse,
+    FileExistsResponse,
+    ListFileResponse,
+    ListFileInfoResponse,
+    FileInfo,
+)
 from opsml.app.routes.utils import ExternalFileTarget, MaxBodySizeException, MaxBodySizeValidator, calculate_file_size
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
+from opsml.types import PresignableTypes
 
 logger = ArtifactLogger.get_logger()
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
+PRESIGN_DEFAULT_EXPIRATION = 60
 router = APIRouter()
 
 
@@ -239,7 +247,7 @@ def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -
     swapped_path = swap_opsml_root(request, storage_path)
     storage_client: StorageClientBase = request.app.state.storage_client
 
-    files: List[Dict[str, Any]] = storage_client.ls(Path(swapped_path), True)
+    files: List[Dict[str, Any]] = storage_client.ls(swapped_path, True)
 
     mtimes = []
     for file_ in files:
@@ -262,6 +270,43 @@ def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.get("/files/presign", name="presign_uri")
+def generate_presigned_uri(request: Request, path: str) -> FileInfo:
+    """Downloads a file
+
+    Args:
+        request:
+            request object
+        path:
+            path to file
+
+    Returns:
+        Streaming file response
+    """
+
+    swapped_path = swap_opsml_root(request, Path(path))
+    storage_client: StorageClientBase = request.app.state.storage_client
+
+    try:
+        file_info = storage_client.client.info(path=swapped_path)
+        file_info["size"] = calculate_file_size(file_info["size"])
+        file_info["name"] = swapped_path.name
+
+        if swapped_path.suffix in list(PresignableTypes):
+            file_info["uri"] = storage_client.generate_presigned_url(
+                path=swapped_path,
+                expiration=PRESIGN_DEFAULT_EXPIRATION,
+            )
+
+        return file_info
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error generation the presigned uri. {error}",
         ) from error
 
 

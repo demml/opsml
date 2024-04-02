@@ -20,8 +20,8 @@
     goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
   }
 
-  function viewFile(filePath: string) {
-    goto(`/opsml/${registry}/card/file/view/?file_path=${filePath}}`);
+  function viewFile(filePath: string, size: string, mtime: number) {
+    goto(`/opsml/files/view?path=${filePath}`);
   }
 
 </script>
@@ -33,7 +33,7 @@
     <div class="grid h-6 grid-cols-12 gap-x-3">
       {#if file.type === 'file'}
 
-        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => navigateToFolder(file.uri)}>
+        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => viewFile(file.uri, file.size, file.mtime)}>
             <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
             <div class="flex truncate items-center text-black">{file.name}</div>
         </a>

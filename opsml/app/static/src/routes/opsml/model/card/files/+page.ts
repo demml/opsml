@@ -18,14 +18,11 @@ export async function load({ fetch, params, url }) {
   let registry = "model";
 
   let filePath = `${opsmlRoot}/${repository}/${name}/v${version}`;
-
   let urlPath = `/opsml/files/list/info?path=${filePath}`;
 
   if (subdir) {
     urlPath = `${urlPath}&subdir=${subdir}`;
   }
-
-  console.log(urlPath);
 
   let fileInfo: Files = await fetch(urlPath).then((res) => res.json());
 
