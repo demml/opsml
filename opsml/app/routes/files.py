@@ -27,7 +27,13 @@ from opsml.app.routes.pydantic_models import (
     ListFileInfoResponse,
     FileInfo,
 )
-from opsml.app.routes.utils import ExternalFileTarget, MaxBodySizeException, MaxBodySizeValidator, calculate_file_size
+from opsml.app.routes.utils import (
+    ExternalFileTarget,
+    MaxBodySizeException,
+    MaxBodySizeValidator,
+    calculate_file_size,
+    FileViewResponse,
+)
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
@@ -37,6 +43,7 @@ logger = ArtifactLogger.get_logger()
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
+MAX_VIEWSIZE = 1024 * 1024 * 2  # = 2MB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 PRESIGN_DEFAULT_EXPIRATION = 60
 router = APIRouter()
@@ -273,8 +280,8 @@ def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -
         ) from error
 
 
-@router.get("/files/presign", name="presign_uri")
-def generate_presigned_uri(request: Request, path: str) -> FileInfo:
+@router.get("/files/view", name="presign_uri")
+def get_file_to_view(request: Request, path: str) -> FileViewResponse:
     """Downloads a file
 
     Args:
@@ -289,22 +296,33 @@ def generate_presigned_uri(request: Request, path: str) -> FileInfo:
 
     swapped_path = swap_opsml_root(request, Path(path))
     storage_client: StorageClientBase = request.app.state.storage_client
-
+    view_meta: Dict[str, str] = {}
     try:
         file_info = storage_client.client.info(path=swapped_path)
-        file_info["size"] = calculate_file_size(file_info["size"])
+        size = file_info["size"]
+        file_info["size"] = calculate_file_size(size)
         file_info["name"] = swapped_path.name
+        file_info["uri"] = path
 
         if swapped_path.suffix in list(PresignableTypes):
-            file_info["uri"] = storage_client.generate_presigned_url(
-                path=swapped_path,
-                expiration=PRESIGN_DEFAULT_EXPIRATION,
-            )
-            file_info["viewable"] = True
-        else:
-            file_info["uri"] = path
+            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py"]:
+                # download load file to string
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    lpath = Path(tmpdirname) / swapped_path.name
+                    storage_client.get(swapped_path, lpath)
 
-        return FileInfo(**file_info)
+                    with lpath.open("rb") as file_:
+                        view_meta["content"] = file_.read().decode("utf-8")
+                view_meta["type"] = "code"
+
+            else:
+                view_meta["type"] = "iframe"
+                file_info["uri"] = storage_client.generate_presigned_url(
+                    path=swapped_path,
+                    expiration=PRESIGN_DEFAULT_EXPIRATION,
+                )
+
+        return FileViewResponse(file_info=file_info, content=view_meta)
 
     except Exception as error:
         raise HTTPException(

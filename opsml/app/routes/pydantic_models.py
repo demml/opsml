@@ -218,6 +218,16 @@ class FileInfo(BaseModel):
     viewable: bool = False
 
 
+class ViewContent(BaseModel):
+    content: Optional[str] = None
+    view_type: Optional[str] = None
+
+
+class FileViewResponse(BaseModel):
+    file_info: FileInfo
+    content: ViewContent
+
+
 class ListFileInfoResponse(BaseModel):
     files: List[FileInfo]
     mtime: float
