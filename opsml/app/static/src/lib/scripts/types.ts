@@ -72,7 +72,8 @@ export interface FileInfo {
   mtime: number;
   ino: number;
   nlink: number;
-  presigned_url?: string | undefined;
+  uri: string;
+  viewable: boolean;
 }
 
 export interface Files {

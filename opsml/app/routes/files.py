@@ -300,6 +300,7 @@ def generate_presigned_uri(request: Request, path: str) -> FileInfo:
                 path=swapped_path,
                 expiration=PRESIGN_DEFAULT_EXPIRATION,
             )
+            file_info["viewable"] = True
         else:
             file_info["uri"] = path
 

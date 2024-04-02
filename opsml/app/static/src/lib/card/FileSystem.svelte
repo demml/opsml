@@ -20,8 +20,9 @@
     goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
   }
 
-  function viewFile(filePath: string, size: string, mtime: number) {
-    goto(`/opsml/files/view?path=${filePath}`);
+  function viewFile(filePath: string) {
+    let encodedPath:string = btoa(filePath);
+    goto(`/opsml/${registry}/card/files/view?name=${name}&repository=${repository}&version=${version}&path=${encodedPath}`);
   }
 
 </script>

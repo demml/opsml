@@ -215,6 +215,7 @@ class FileInfo(BaseModel):
     mtime: float
     ino: int
     nlink: int
+    viewable: bool = False
 
 
 class ListFileInfoResponse(BaseModel):
