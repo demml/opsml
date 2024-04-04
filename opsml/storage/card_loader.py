@@ -239,7 +239,7 @@ class CardLoader:
                 error,
             )
             try:
-                with self._load_object(SaveName.CARD.value, Suffix.JSON.value, rpath) as lpath:
+                with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
                     return cast(Dict[str, Any], joblib.load(lpath))
 
             except Exception as joblib_error:  # pylint: disable=broad-except
