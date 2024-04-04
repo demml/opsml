@@ -72,9 +72,20 @@ class ModelCard(ArtifactCard):
         except ValueError as exc:
             raise ValueError("Datacard uid is not a valid uuid") from exc
 
-    def load_model(self, **kwargs: Any) -> None:
-        """Loads model, preprocessor and sample data to interface"""
+    def load_model(self, load_preprocessor: bool = False, **kwargs: Any) -> None:
+        """Loads model, preprocessor and sample data to interface
 
+        Args:
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+
+        Returns:
+            None
+        """
+        # add load_preprocessor to kwargs
+        kwargs["load_preprocessor"] = load_preprocessor
+
+        # load modelcard loader
         from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_model(**kwargs)
