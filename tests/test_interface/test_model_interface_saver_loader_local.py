@@ -391,7 +391,7 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
     #
     loaded_card.load_model()
 
-    model.model.load_state_dict(loaded_card.interface.model)
+    model.model.load_state_dict(loaded_card.interface.model)  # type: ignore
     loaded_card.interface.model = model.model
 
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
@@ -408,7 +408,7 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel):
+def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
     model: TorchModel = pytorch_simple_tuple
 
     modelcard = ModelCard(
@@ -461,7 +461,7 @@ def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
+def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)
 
@@ -512,7 +512,7 @@ def test_save_torch_lightning_modelcard(lightning_regression: LightningModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
+def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> None:
     model: TensorFlowModel = tf_transformer_example
 
     modelcard = ModelCard(
@@ -562,7 +562,7 @@ def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel):
+def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel) -> None:
     model: TensorFlowModel = multi_input_tf_example
 
     modelcard = ModelCard(
@@ -612,7 +612,7 @@ def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlo
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel):
+def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     modelcard = ModelCard(
@@ -667,7 +667,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel):
+def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel) -> None:
     model, _ = huggingface_vit_pipeline
 
     modelcard = ModelCard(
@@ -745,7 +745,7 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
         assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
-def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
+def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
     model: CatBoostModel = catboost_regressor
 
     # remake catboost model with list
@@ -802,7 +802,7 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel):
+def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_bytes
 
     modelcard = ModelCard(
@@ -860,7 +860,7 @@ def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel):
+def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_file
 
     modelcard = ModelCard(
@@ -920,7 +920,7 @@ def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel):
 
 
 @pytest.mark.skipif(sys.version_info == (3, 11), reason="vowpal not support for py311")
-def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
+def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
     modelcard = ModelCard(

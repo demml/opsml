@@ -5,9 +5,10 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, cast, Any, List
+from typing import Any, Dict, List, Optional, cast
 
 import joblib
+import yaml
 from pydantic import BaseModel
 
 from opsml.cards.audit import AuditCard
@@ -25,14 +26,11 @@ from opsml.storage import client
 from opsml.types import (
     AllowedDataType,
     CardType,
-    ModelInterfaceTypes,
     ModelMetadata,
     SaveName,
     Suffix,
     UriNames,
 )
-import yaml
-
 from opsml.types.model import HuggingFaceOnnxArgs
 
 logger = ArtifactLogger.get_logger()
@@ -556,7 +554,9 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 
