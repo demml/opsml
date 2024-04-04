@@ -3,9 +3,10 @@
     "configurations": [
         {
             "name": "Python: Debug Tests",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            // https://code.visualstudio.com/docs/python/testing#_debug-tests
             "purpose": [
                 "debug-test"
             ],
@@ -15,7 +16,7 @@
         },
         {
             "name": "cli-model-download",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/opsml/scripts/api_cli.py",
             "console": "integratedTerminal",
@@ -34,7 +35,7 @@
         },
         {
             "name": "webserver",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "console": "integratedTerminal",
@@ -46,7 +47,7 @@
         },
         {
             "name": "example",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/example.py",
             "console": "integratedTerminal",

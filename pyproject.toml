@@ -70,7 +70,7 @@ zarr = ">2.12.0"
 psycopg2 = { version = "^2.9.6", optional = true }
 
 # optional dependencies for onnx
-onnx = { version = ">=1.14.0, <1.15.0", optional = true }
+onnx = { version = ">=1.16.0", optional = true }
 onnxruntime = { version = ">=1.13.0, <1.17.0", optional = true }
 
 # optional dependencies for sklearn onnx
@@ -78,7 +78,7 @@ skl2onnx = { version = "^1.14.1", optional = true }
 onnxmltools = { version = "^1.11.1", optional = true }
 
 # optional dependencies for tensorflow onnx
-tf2onnx = { version = ">=1.13.0, <1.15.0", optional = true }
+tf2onnx = { version = ">=1.16.1", optional = true }
 
 # optional dependencies for server
 alembic = { version = "^1.10.3", optional = true }
@@ -164,7 +164,7 @@ optional = true
 ruff = "^0.1.0"
 types-pymysql = "^1.0.19.1"
 types-requests = "^2.28.11.7"
-black = "22.3.0"
+black = ">=24.3.0"
 mypy = "^1"
 types-protobuf = "^4.21.0.3"
 pylint = "^2.17.5"
@@ -196,6 +196,7 @@ load-plugins = ["pylint_pydantic", "pylint.extensions.docparams"]
 [tool.pylint.messages_control]
 max-line-length = 130
 disable = [
+    "multiple-statements",
     "too-few-public-methods",
     "design",
     "duplicate-code",

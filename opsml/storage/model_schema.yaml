@@ -1,28 +1,25 @@
-default: 
-    task_type: True
-    model_type: True
-    data_type: True
-    modelcard_uid: True
-    preprocessor_name: True
-    metadata: True
-
-lightning:
-  onnx_args: True
-
-torch:
-  onnx_args: True
-  save_args: True
-
-vw:
-  arguments: True
-
-huggingface:
-  tokenizer_name: True
-  feature_extractor_name: True
-  is_pipeline: True
-  backend: True
-  onnx_args:
-    quantize: True
-    ort_type: True
-    provider: True
+keys:
+  - name
+  - repository
+  - version
+  - contact
+  - uid
+  - tags
+  - info
+  - datacard_uid
+  - to_onnx
+  - metadata
+  - interface
+  - backend
+  - preprocessor_name
+  - feature_extractor_name
+  - tokenizer_name
+  - task_type
+  - is_pipeline
+  - data_type
+  - model_type
+  - onnx_args
+  - modelcard_uid
+  - save_args
+  - arguments
   

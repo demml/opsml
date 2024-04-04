@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import onnx
 import onnxruntime as rt
-from onnx import ModelProto  # type: ignore[attr-defined]
+from onnx import ModelProto
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import OpsmlImportExceptions

@@ -9,7 +9,7 @@ import re
 import warnings
 from typing import Any, Dict, List, Optional, cast
 
-from onnx import ModelProto  # type: ignore[attr-defined]
+from onnx import ModelProto
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.onnx.base_converter import _ModelConverter
@@ -180,6 +180,11 @@ class _SklearnOnnxModel(_ModelConverter):
                     model=self.trained_model,
                     initial_types=initial_types,
                     options=self.options,
+                    target_opset={
+                        "": 19,
+                        "ai.onnx.ml": 3,
+                    },  # need to pin since skl2onnx is not in sync with latest onnx release
+                    # opset 19/3 is the latest supported by skl2onnx (onnx v 1.14.1)
                 ),
             )
         except NameError as name_error:

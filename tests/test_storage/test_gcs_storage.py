@@ -28,18 +28,27 @@ def test_gcs_presigned_uri() -> None:
         def bucket(self, *args, **kwargs):
             return MockBucket()
 
-    with patch(
-        "opsml.helpers.gcp_utils.GcpCredsSetter.get_creds",
-        return_value=gcp_utils.GcpCreds(default_creds=True),
-    ), patch("google.auth.transport.requests.Request", return_value=None,), patch(
-        "google.auth.compute_engine.IDTokenCredentials",
-        autospec=True,
-    ), patch(
-        "gcsfs.GCSFileSystem",
-        autospec=True,
-    ), patch(
-        "google.cloud.storage.Client",
-        return_value=MockGCSClient(),
+    with (
+        patch(
+            "opsml.helpers.gcp_utils.GcpCredsSetter.get_creds",
+            return_value=gcp_utils.GcpCreds(default_creds=True),
+        ),
+        patch(
+            "google.auth.transport.requests.Request",
+            return_value=None,
+        ),
+        patch(
+            "google.auth.compute_engine.IDTokenCredentials",
+            autospec=True,
+        ),
+        patch(
+            "gcsfs.GCSFileSystem",
+            autospec=True,
+        ),
+        patch(
+            "google.cloud.storage.Client",
+            return_value=MockGCSClient(),
+        ),
     ):
         cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="gs://fake")
         storage_client = client.get_storage_client(cfg)
@@ -49,15 +58,23 @@ def test_gcs_presigned_uri() -> None:
         assert signed_url == "https://fake.com"
 
     # this should result in an error (None)
-    with patch(
-        "opsml.helpers.gcp_utils.GcpCredsSetter.get_creds",
-        return_value=gcp_utils.GcpCreds(default_creds=True),
-    ), patch("gcsfs.GCSFileSystem", autospec=True,), patch(
-        "google.auth.transport.requests.Request",
-        return_value=None,
-    ), patch(
-        "google.cloud.storage.Client",
-        return_value=MockGCSClient(),
+    with (
+        patch(
+            "opsml.helpers.gcp_utils.GcpCredsSetter.get_creds",
+            return_value=gcp_utils.GcpCreds(default_creds=True),
+        ),
+        patch(
+            "gcsfs.GCSFileSystem",
+            autospec=True,
+        ),
+        patch(
+            "google.auth.transport.requests.Request",
+            return_value=None,
+        ),
+        patch(
+            "google.cloud.storage.Client",
+            return_value=MockGCSClient(),
+        ),
     ):
         cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="gs://fake")
         storage_client = client.get_storage_client(cfg)

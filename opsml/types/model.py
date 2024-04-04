@@ -322,7 +322,6 @@ class OnnxAttr:
 
 
 class ModelMetadata(BaseModel):
-
     """Model metadata associated with all registered models
 
     Args:

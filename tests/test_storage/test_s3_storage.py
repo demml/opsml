@@ -13,9 +13,12 @@ def test_s3_presigned_uri():
         def generate_presigned_url(self, *args, **kwargs):
             return "https://fake.com"
 
-    with patch("boto3.client", return_value=MockS3Client()), patch(
-        "s3fs.S3FileSystem",
-        autospec=True,
+    with (
+        patch("boto3.client", return_value=MockS3Client()),
+        patch(
+            "s3fs.S3FileSystem",
+            autospec=True,
+        ),
     ):
         cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="s3://fake")
         storage_client = client.get_storage_client(cfg)

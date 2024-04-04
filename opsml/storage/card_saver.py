@@ -5,11 +5,10 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, Union, cast, Any
+from typing import Dict, Optional, cast, Any, List
 
 import joblib
 from pydantic import BaseModel
-from pygments import highlight
 
 from opsml.cards.audit import AuditCard
 from opsml.cards.base import ArtifactCard
@@ -38,39 +37,41 @@ from opsml.types.model import HuggingFaceOnnxArgs
 
 logger = ArtifactLogger.get_logger()
 
-MODEL_SCHEMA = Path("./model_schema.yaml")
+
+# get root dir
+MODEL_SCHEMA = Path(__file__).parents[0] / "model_schema.yaml"
 
 
-class ModelInterfaceIncludeArgs:
+class ModelInterfaceSchema:
     """Helper class for defining include logic for saving modelcards"""
 
-    def __init__(self, interface_type: str):
-        self.interface_type = interface_type
-        # load model schema
+    @staticmethod
+    def get_schema() -> List[str]:
         with MODEL_SCHEMA.open("r") as file_:
             try:
-                self.model_schema: Dict[str, Dict[str, Any]] = yaml.safe_load(file_)
+                model_schema: Dict[str, List[str]] = yaml.safe_load(file_)
+                return model_schema["keys"]
             except yaml.YAMLError as error:
                 logger.error(error)
                 raise error
 
-    @property
-    def save_args(
-        self,
-    ) -> Dict[str, Any]:
-        if self.interface_type == ModelInterfaceTypes.TORCH.value:
-            return {**self.model_schema["default"], **self.model_schema["torch"]}
 
-        if self.interface_type == ModelInterfaceTypes.LIGHTNINGMODEL.value:
-            return {**self.model_schema["default"], **self.model_schema["lightning"]}
+def get_keys(dictionary: Dict[str, Any]) -> List[str]:
+    """Recursively get keys from a dictionary
 
-        if self.interface_type == ModelInterfaceTypes.HUGGINGFACE.value:
-            return {**self.model_schema["default"], **self.model_schema["huggingface"]}
+    Args:
+        dictionary:
+            Dictionary to extract keys from
 
-        if self.interface_type == ModelInterfaceTypes.VOWPALWABBIT.value:
-            return {**self.model_schema["default"], **self.model_schema["vw"]}
-
-        return self.model_schema["default"]
+    Returns:
+        List of keys from dictionary
+    """
+    keys = [key for key in dictionary]
+    for val in dictionary.values():
+        if isinstance(val, dict):
+            inner_keys = get_keys(val)
+            keys.extend(inner_keys)
+    return keys
 
 
 class CardUris(BaseModel):
@@ -388,15 +389,19 @@ class ModelCardSaver(CardSaver):
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
 
-        # get args
-        include_args = ModelInterfaceIncludeArgs(
-            interface_type=self.card.interface.name(),
-        ).save_args
+        dumped_model = self.card.model_dump(
+            exclude={
+                "interface": {"model", "preprocessor", "sample_data", "onnx_model", "feature_extractor", "tokenizer"},
+            }
+        )
+        if dumped_model["interface"].get("onnx_args") is not None:
+            if dumped_model["interface"]["onnx_args"].get("config") is not None:
+                dumped_model["interface"]["onnx_args"].pop("config")
 
-        dumped_model = self.card.model_dump(include=include_args)
+        keys = [*dumped_model.keys(), *dumped_model["interface"].keys()]
+        schema = ModelInterfaceSchema.get_schema()
 
-        print(dumped_model)
-
+        assert set(keys).issubset(schema), f"Keys: {keys} not subset of schema: {schema}"
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JSON.value)
 
         # save json
