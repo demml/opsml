@@ -1,7 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
@@ -174,7 +174,9 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
+    onnx: bool = Field(
+        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
+    )
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 

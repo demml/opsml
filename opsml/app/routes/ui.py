@@ -6,8 +6,9 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()

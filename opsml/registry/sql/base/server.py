@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 from opsml.cards import ArtifactCard, ModelCard
 from opsml.cards.project import ProjectCard

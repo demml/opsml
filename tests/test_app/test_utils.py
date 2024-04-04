@@ -1,4 +1,4 @@
-from opsml.app.routes.utils import get_registry_type_from_table, calculate_file_size
+from opsml.app.routes.utils import calculate_file_size, get_registry_type_from_table
 from opsml.types import RegistryType
 
 
@@ -8,6 +8,7 @@ def test_get_registry_type_from_table() -> None:
 
     registry_type = get_registry_type_from_table(table_name="OPSML_MODEL_REGISTRY")
     assert registry_type == RegistryType.MODEL.value
+
 
 def test_calculate_file_size() -> None:
     file_size = calculate_file_size(1024)

@@ -201,12 +201,15 @@ def mock_gcp_creds(mock_gcp_vars) -> Any:
 @pytest.fixture
 def local_storage_client() -> YieldFixture[client.LocalStorageClient]:
     cleanup()
-    yield cast(client.get_storage_client(
-        OpsmlConfig(
-            opsml_tracking_uri=LOCAL_TRACKING_URI,
-            opsml_storage_uri=LOCAL_STORAGE_URI,
-        )
-    ),client.LocalStorageClient)
+    yield cast(
+        client.get_storage_client(
+            OpsmlConfig(
+                opsml_tracking_uri=LOCAL_TRACKING_URI,
+                opsml_storage_uri=LOCAL_STORAGE_URI,
+            )
+        ),
+        client.LocalStorageClient,
+    )
 
     cleanup()
 
@@ -232,10 +235,10 @@ def test_app() -> YieldFixture[TestClient]:
 
     # check for site dirs (we need to mount the static files, it will fail if they don't exist)
     # This is expected as the site is only built during release
-    
+
     Path("static/site").mkdir(parents=True, exist_ok=True)
     Path("opsml/app/static/site/app").mkdir(parents=True, exist_ok=True)
-    
+
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
         yield tc

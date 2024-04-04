@@ -18,7 +18,16 @@ from opsml.types.card import (
     RunGraph,
 )
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
-from opsml.types.extra import ArtifactClass, CommonKwargs, Description, GraphStyle, SaveName, Suffix, UriNames, PresignableTypes
+from opsml.types.extra import (
+    ArtifactClass,
+    CommonKwargs,
+    Description,
+    GraphStyle,
+    PresignableTypes,
+    SaveName,
+    Suffix,
+    UriNames,
+)
 from opsml.types.huggingface import (
     GENERATION_TYPES,
     HuggingFaceORTModel,
