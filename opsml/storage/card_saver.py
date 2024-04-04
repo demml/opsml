@@ -5,10 +5,11 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, Optional, Union, cast
+from typing import Dict, Optional, Union, cast, Any
 
 import joblib
 from pydantic import BaseModel
+from pygments import highlight
 
 from opsml.cards.audit import AuditCard
 from opsml.cards.base import ArtifactCard
@@ -31,8 +32,13 @@ from opsml.types import (
     Suffix,
     UriNames,
 )
+import yaml
+
+from opsml.types.model import HuggingFaceOnnxArgs
 
 logger = ArtifactLogger.get_logger()
+
+MODEL_SCHEMA = Path("./model_schema.yaml")
 
 
 class ModelInterfaceIncludeArgs:
@@ -40,44 +46,31 @@ class ModelInterfaceIncludeArgs:
 
     def __init__(self, interface_type: str):
         self.interface_type = interface_type
+        # load model schema
+        with MODEL_SCHEMA.open("r") as file_:
+            try:
+                self.model_schema: Dict[str, Dict[str, Any]] = yaml.safe_load(file_)
+            except yaml.YAMLError as error:
+                logger.error(error)
+                raise error
 
-    def get_default_args(self) -> Dict[str, bool]:
-        return {
-            "task_type": True,
-            "model_type": True,
-            "data_type": True,
-            "modelcard_uid": True,
-            "preprocessor_name": True,
-            "onnx_args": True,
-            "metadata": True,
-        }
-
-    def get_vw_args(self) -> Dict[str, bool]:
-        return {"arguments": True}
-
-    def get_hf_args(self) -> Dict[str, Union[bool, Dict[str, bool]]]:
-        return {
-            "tokenizer_name": True,
-            "feature_extractor_name": True,
-            "is_pipeline": True,
-            "backend": True,
-            "onnx_args": {"quantize": True, "ort_type": True, "provider": True},
-        }
-
-    def get_save_args(
+    @property
+    def save_args(
         self,
-    ) -> Union[Dict[str, Union[bool, Dict[str, bool]]], Dict[str, bool],]:
-        args = self.get_default_args()
+    ) -> Dict[str, Any]:
+        if self.interface_type == ModelInterfaceTypes.TORCH.value:
+            return {**self.model_schema["default"], **self.model_schema["torch"]}
+
+        if self.interface_type == ModelInterfaceTypes.LIGHTNINGMODEL.value:
+            return {**self.model_schema["default"], **self.model_schema["lightning"]}
 
         if self.interface_type == ModelInterfaceTypes.HUGGINGFACE.value:
-            return {**args, **self.get_hf_args()}
+            return {**self.model_schema["default"], **self.model_schema["huggingface"]}
 
         if self.interface_type == ModelInterfaceTypes.VOWPALWABBIT.value:
-            return {**args, **self.get_vw_args()}
+            return {**self.model_schema["default"], **self.model_schema["vw"]}
 
-        print(args)
-
-        return args
+        return self.model_schema["default"]
 
 
 class CardUris(BaseModel):
@@ -303,16 +296,16 @@ class ModelCardSaver(CardSaver):
         self.card.interface.save_sample_data(save_path)
         self.card_uris.sample_data_uri = save_path
 
-    def _save_onnx_config(self) -> None:
-        """Saves onnx config to file system"""
+    def _save_onnx_config(self, onnx_args: HuggingFaceOnnxArgs) -> None:
+        """Saves onnx config to file system and update path params"""
 
-        assert isinstance(self.card.interface, HuggingFaceModel), "Expected HuggingFaceModel interface"
+        if onnx_args.config is not None:
+            save_path = (self.lpath / SaveName.ONNX_CONFIG.value).with_suffix(Suffix.JOBLIB.value)
+            joblib.dump(onnx_args.config, save_path)
+            self.card_uris.onnx_config_uri = save_path
 
-        if self.card.interface.onnx_args is not None:
-            if self.card.interface.onnx_args.config is not None:
-                save_path = (self.lpath / SaveName.ONNX_CONFIG.value).with_suffix(Suffix.JOBLIB.value)
-                joblib.dump(self.card.interface.onnx_args.config, save_path)
-                self.card_uris.onnx_config_uri = save_path
+        if onnx_args.quantize:
+            self.card_uris.quantized_model_uri = self.lpath / SaveName.QUANTIZED_MODEL.value
 
     def _save_onnx_model(self) -> None:
         """If to_onnx is True, converts and saves a model to onnx format"""
@@ -325,10 +318,8 @@ class ModelCardSaver(CardSaver):
             metadata = self.card.interface.save_onnx(save_path)
 
             if isinstance(self.card.interface, HuggingFaceModel):
-                self._save_onnx_config()
                 assert self.card.interface.onnx_args is not None, "onnx_args must be set for HuggingFaceModel"
-                if self.card.interface.onnx_args.quantize:
-                    self.card_uris.quantized_model_uri = self.lpath / SaveName.QUANTIZED_MODEL.value
+                self._save_onnx_config(self.card.interface.onnx_args)
 
                 # remove suffix for uris
                 save_path = save_path.with_suffix("")
@@ -397,14 +388,14 @@ class ModelCardSaver(CardSaver):
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
 
-        dumped_model = self.card.model_dump(
-            exclude={
-                "interface": {"model", "preprocessor", "sample_data", "onnx_model", "feature_extractor", "tokenizer"},
-            }
-        )
-        if dumped_model["interface"].get("onnx_args") is not None:
-            if dumped_model["interface"]["onnx_args"].get("config") is not None:
-                dumped_model["interface"]["onnx_args"].pop("config")
+        # get args
+        include_args = ModelInterfaceIncludeArgs(
+            interface_type=self.card.interface.name(),
+        ).save_args
+
+        dumped_model = self.card.model_dump(include=include_args)
+
+        print(dumped_model)
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JSON.value)
 
@@ -415,7 +406,7 @@ class ModelCardSaver(CardSaver):
     def save_artifacts(self) -> None:
         """Prepares and saves artifacts from a modelcard"""
         if self.card.interface is None:
-            raise ValueError("ModelCard must have a data interface to save artifacts")
+            raise ValueError("ModelCard must have a model interface to save artifacts")
 
         # set type needed for loading
         self.card.metadata.interface_type = self.card.interface.__class__.__name__
@@ -560,9 +551,7 @@ def save_card_artifacts(card: ArtifactCard) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
