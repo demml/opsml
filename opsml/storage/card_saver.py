@@ -5,7 +5,7 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Dict, List, Optional, cast
 
 import joblib
 import yaml
@@ -37,10 +37,10 @@ logger = ArtifactLogger.get_logger()
 
 
 # get root dir
-MODEL_SCHEMA = Path(__file__).parents[0] / "model_schema.yaml"
+MODEL_SCHEMA = Path(__file__).parents[0] / "schemas" / "modelcard.yaml"
 
 
-class ModelInterfaceSchema:
+class ModelCardSchema:
     """Helper class for defining include logic for saving modelcards"""
 
     @staticmethod
@@ -52,24 +52,6 @@ class ModelInterfaceSchema:
             except yaml.YAMLError as error:
                 logger.error(error)
                 raise error
-
-
-def get_keys(dictionary: Dict[str, Any]) -> List[str]:
-    """Recursively get keys from a dictionary
-
-    Args:
-        dictionary:
-            Dictionary to extract keys from
-
-    Returns:
-        List of keys from dictionary
-    """
-    keys = [key for key in dictionary]
-    for val in dictionary.values():
-        if isinstance(val, dict):
-            inner_keys = get_keys(val)
-            keys.extend(inner_keys)
-    return keys
 
 
 class CardUris(BaseModel):
@@ -397,7 +379,7 @@ class ModelCardSaver(CardSaver):
                 dumped_model["interface"]["onnx_args"].pop("config")
 
         keys = [*dumped_model.keys(), *dumped_model["interface"].keys()]
-        schema = ModelInterfaceSchema.get_schema()
+        schema = ModelCardSchema.get_schema()
 
         assert set(keys).issubset(schema), f"Keys: {keys} not subset of schema: {schema}"
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JSON.value)
