@@ -232,17 +232,17 @@ class CardLoader:
                 with lpath.open(encoding="utf-8") as lfile:
                     return cast(Dict[str, Any], json.load(lfile))
 
-        except Exception as error:  # pylint: disable=broad-except
-            logger.warning(
-                """Error loading card JSON version of card. Falling back to joblib. Newer versions
-                of OpsML use JSON to save cards. Older versions use joblib. Error: {}""",
-                error,
+        except IOError:  # pylint: disable=broad-except
+            warning = (
+                "Error loading card JSON version of card. Falling back to joblib. "
+                "Newer versions of OpsML use JSON to save cards. Older versions use joblib."
             )
+            logger.warning(warning)
             try:
                 with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
                     return cast(Dict[str, Any], joblib.load(lpath))
 
-            except Exception as joblib_error:  # pylint: disable=broad-except
+            except IOError as joblib_error:  # pylint: disable=broad-except
                 logger.error("Error loading card: {}", joblib_error)
                 raise joblib_error
 
