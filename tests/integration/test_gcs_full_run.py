@@ -66,7 +66,7 @@ def test_gcs_full_run(
             run.register_card(modelcard)
 
         # check run assets
-        assert api_storage_client.exists(Path(run.runcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+        assert api_storage_client.exists(Path(run.runcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
         # check data assets
         assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))

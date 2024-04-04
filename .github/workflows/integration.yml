@@ -18,9 +18,9 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_TEST_BUCKET }}
+      OPSML_BUCKET_GCS: ${{ secrets.OPSML_BUCKET_GCS }}
       GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
-      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}
+      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_BUCKET_GCS }}
     steps:
       - uses: actions/checkout@v4
         with:
