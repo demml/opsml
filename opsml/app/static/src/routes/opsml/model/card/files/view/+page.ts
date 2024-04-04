@@ -1,12 +1,14 @@
+import { type FileView } from "$lib/scripts/types";
+
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
   let filePath = atob(url.searchParams.get("path"));
 
   console.log(filePath);
 
-  let viewData = await fetch(`/opsml/files/presign?path=${filePath}`).then(
-    (res) => res.json()
-  );
+  let viewData: FileView = await fetch(
+    `/opsml/files/view?path=${filePath}`
+  ).then((res) => res.json());
 
   return viewData;
 }

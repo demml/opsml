@@ -73,7 +73,16 @@ export interface FileInfo {
   ino: number;
   nlink: number;
   uri: string;
-  viewable: boolean;
+}
+
+export interface ViewContent {
+  content: string | null;
+  view_type: string | null;
+}
+
+export interface FileView {
+  file_info: FileInfo;
+  content: ViewContent;
 }
 
 export interface Files {

@@ -301,6 +301,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
         size = file_info["size"]
         file_info["size"] = calculate_file_size(size)
         file_info["name"] = swapped_path.name
+        file_info["mtime"] = file_info["mtime"] * 1000
         file_info["uri"] = path
 
         if swapped_path.suffix in list(PresignableTypes):
@@ -312,10 +313,11 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
 
                     with lpath.open("rb") as file_:
                         view_meta["content"] = file_.read().decode("utf-8")
-                view_meta["type"] = "code"
+
+                view_meta["view_type"] = "code"
 
             else:
-                view_meta["type"] = "iframe"
+                view_meta["view_type"] = "iframe"
                 file_info["uri"] = storage_client.generate_presigned_url(
                     path=swapped_path,
                     expiration=PRESIGN_DEFAULT_EXPIRATION,

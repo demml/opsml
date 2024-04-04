@@ -1,10 +1,14 @@
 
 <script lang="ts">
-  import {type FileInfo } from "$lib/scripts/types";
+  import {type FileView } from "$lib/scripts/types";
+  import hljs from 'highlight.js/lib/core';
+  import json from 'highlight.js/lib/languages/json';
+  hljs.registerLanguage('json', json);
 
   export let name: string;
-  export let fileInfo : FileInfo;
-
+  export let modifiedAt: string;
+  export let viewType: string;
+  export let content: string | undefined;
 </script>
 
 
@@ -17,19 +21,9 @@
       </div>
     </div>
 
-    {#if fileInfo.viewable}
-      <!-- Add iframe for fileInfo uri -->
-      <iframe
-        src={fileInfo.uri}
-        class="w-full h-96"
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
-    {:else}
-      <div class="bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
-        <p class="mb-1">File is not viewable</p>
-      </div>
+    {#if viewType === "code" && content}
+      <div id="editor" class="h-96"></div>
     {/if}
 
   </div>
-  </div>
+</div>
