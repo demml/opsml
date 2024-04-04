@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from semver import VersionInfo
 
-from opsml.cards.base import ArtifactCard
+from opsml.cards import Card
 from opsml.helpers.exceptions import CardDeleteError, VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.records import SaveRecord, registry_name_record_map
@@ -57,7 +57,7 @@ class SQLRegistryBase:
     ) -> str:
         raise NotImplementedError
 
-    def _is_correct_card_type(self, card: ArtifactCard) -> bool:
+    def _is_correct_card_type(self, card: Card) -> bool:
         """Checks wether the current card is associated with the correct registry type"""
         return self.supported_card.lower() == card.__class__.__name__.lower()
 
@@ -83,7 +83,7 @@ class SQLRegistryBase:
     def validate(registry_name: str) -> bool:
         raise NotImplementedError
 
-    def _validate_card_type(self, card: ArtifactCard) -> None:
+    def _validate_card_type(self, card: Card) -> None:
         # check compatibility
         if not self._is_correct_card_type(card=card):
             raise ValueError(
@@ -139,7 +139,7 @@ class SQLRegistryBase:
 
     def _set_card_version(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: VersionType,
         pre_tag: str,
         build_tag: str,
@@ -205,7 +205,7 @@ class SQLRegistryBase:
 
         return None
 
-    def _set_card_uid(self, card: ArtifactCard) -> None:
+    def _set_card_uid(self, card: Card) -> None:
         """Sets a given card's uid
 
         Args:
@@ -217,7 +217,7 @@ class SQLRegistryBase:
 
     def register_card(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: VersionType = VersionType.MINOR,
         pre_tag: str = "rc",
         build_tag: str = "build",
@@ -246,7 +246,7 @@ class SQLRegistryBase:
 
         self.add_and_commit(card=record.model_dump())
 
-    def update_card(self, card: ArtifactCard) -> None:
+    def update_card(self, card: Card) -> None:
         """
         Updates a registry record.
 
@@ -292,7 +292,7 @@ class SQLRegistryBase:
 
         return sorted_records
 
-    def delete_card(self, card: ArtifactCard) -> None:
+    def delete_card(self, card: Card) -> None:
         """Delete a specific card"""
 
         try:

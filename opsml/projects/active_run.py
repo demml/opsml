@@ -9,14 +9,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from numpy.typing import NDArray
 
-from opsml.cards import (
-    ArtifactCard,
-    DataCard,
-    ModelCard,
-    PipelineCard,
-    ProjectCard,
-    RunCard,
-)
+from opsml.cards import Card, DataCard, ModelCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
@@ -32,7 +25,6 @@ from opsml.types import (
 )
 
 logger = ArtifactLogger.get_logger()
-Card = Union[ModelCard, DataCard, RunCard, ProjectCard, PipelineCard]
 
 
 # dataclass inheritance doesnt handle default vals well for <= py3.9
@@ -65,7 +57,7 @@ class CardHandler:
         registry.register_card(card=card, version_type=version_type)
 
     @staticmethod
-    def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> ArtifactCard:
+    def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> Card:
         """Loads an ArtifactCard"""
 
         registry: CardRegistry = getattr(registries, registry_name)
@@ -166,7 +158,7 @@ class ActiveRun:
         # add uid to RunCard
         self.runcard.add_card_uid(card_type=card.card_type, uid=str(card.uid))
 
-    def load_card(self, registry_name: str, info: CardInfo) -> ArtifactCard:
+    def load_card(self, registry_name: str, info: CardInfo) -> Card:
         """
         Loads an ArtifactCard.
 

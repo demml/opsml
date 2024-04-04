@@ -11,13 +11,15 @@ import joblib
 import yaml
 from pydantic import BaseModel
 
-from opsml.cards.audit import AuditCard
-from opsml.cards.base import ArtifactCard
-from opsml.cards.data import DataCard
-from opsml.cards.model import ModelCard
-from opsml.cards.pipeline import PipelineCard
-from opsml.cards.project import ProjectCard
-from opsml.cards.run import RunCard
+from opsml.cards import (
+    AuditCard,
+    Card,
+    DataCard,
+    ModelCard,
+    PipelineCard,
+    ProjectCard,
+    RunCard,
+)
 from opsml.data import DataInterface, Dataset
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
@@ -90,7 +92,7 @@ class CardUris(BaseModel):
 
 
 class CardSaver:
-    def __init__(self, card: ArtifactCard):
+    def __init__(self, card: Card):
         """
         Parent class for saving artifacts belonging to cards.
         ArtifactSaver controls pathing for all card objects
@@ -116,7 +118,7 @@ class CardSaver:
         return self.card_uris.rpath
 
     @cached_property
-    def card(self) -> ArtifactCard:
+    def card(self) -> Card:
         return self.card
 
     def save_artifacts(self) -> None:
@@ -524,7 +526,7 @@ class ProjectCardSaver(CardSaver):
         return CardType.PROJECTCARD.value in card_type
 
 
-def save_card_artifacts(card: ArtifactCard) -> None:
+def save_card_artifacts(card: Card) -> None:
     """Saves a given ArtifactCard's artifacts to a filesystem
 
     Args:

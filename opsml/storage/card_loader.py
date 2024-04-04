@@ -13,8 +13,8 @@ import joblib
 from pydantic import BaseModel
 
 from opsml.cards import (
-    ArtifactCard,
     AuditCard,
+    Card,
     DataCard,
     ModelCard,
     PipelineCard,
@@ -38,8 +38,6 @@ from opsml.types import (
     Suffix,
 )
 from opsml.types.model import ModelMetadata, OnnxModel
-
-Card = Union[DataCard, ModelCard, RunCard, PipelineCard, AuditCard, ProjectCard]
 
 logger = ArtifactLogger.get_logger()
 
@@ -131,7 +129,7 @@ class CardLoader:
     def __init__(
         self,
         registry_type: RegistryType,
-        card: Optional[ArtifactCard] = None,
+        card: Optional[Card] = None,
         card_args: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -152,7 +150,7 @@ class CardLoader:
         self.storage_client = client.storage_client
 
     @cached_property
-    def card(self) -> ArtifactCard:
+    def card(self) -> Card:
         assert self._card is not None
         return self._card
 
