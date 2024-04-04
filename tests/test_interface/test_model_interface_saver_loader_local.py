@@ -32,7 +32,7 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel):
+def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_torch_distilbert
 
     modelcard = ModelCard(
@@ -96,7 +96,7 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel):
+def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     modelcard = ModelCard(
@@ -156,7 +156,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
     )
 
 
-def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
+def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
     model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(
         interface=model,
@@ -207,7 +207,7 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel):
     loader.load_onnx_model()
 
 
-def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel):
+def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     model: LightGBMModel = lgb_booster_model
 
     modelcard = ModelCard(
@@ -256,7 +256,7 @@ def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel):
 
 def test_save_lgb_sklearn_modelcard(
     lgb_regressor_model: LightGBMModel,
-):
+) -> None:
     model: LightGBMModel = lgb_regressor_model
 
     modelcard = ModelCard(
@@ -306,7 +306,7 @@ def test_save_lgb_sklearn_modelcard(
 
 def test_save_xgb_booster_modelcard(
     xgb_booster_regressor_model: XGBoostModel,
-):
+) -> None:
     model: XGBoostModel = xgb_booster_regressor_model
 
     modelcard = ModelCard(
@@ -350,7 +350,7 @@ def test_save_xgb_booster_modelcard(
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_modelcard(pytorch_simple: TorchModel):
+def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
     model: TorchModel = pytorch_simple
 
     modelcard = ModelCard(
