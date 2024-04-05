@@ -104,7 +104,7 @@ class ModelCard(ArtifactCard):
             path:
                 Path to download model
             load_preprocessor:
-                    Whether to load preprocessor or not. Default is True
+                Whether to load preprocessor or not. Default is False
             load_onnx:
                 Whether to load onnx model or not. Default is False
             quantize:
@@ -121,8 +121,19 @@ class ModelCard(ArtifactCard):
 
         ModelCardLoader(self).download_model(**kwargs)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
-        """Loads onnx model to interface"""
+    def load_onnx_model(self, load_preprocessor: bool = False, **kwargs: Any) -> None:
+        """Loads onnx model to interface
+
+        Args:
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+
+        Returns:
+            None
+        """
+
+        # add load_preprocessor to kwargs
+        kwargs["load_preprocessor"] = load_preprocessor
 
         from opsml.storage.card_loader import ModelCardLoader
 
