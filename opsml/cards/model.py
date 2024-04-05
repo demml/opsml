@@ -79,8 +79,8 @@ class ModelCard(ArtifactCard):
             load_preprocessor:
                 Whether to load preprocessor or not. Default is False
 
-        Returns:
-            None
+            **kwargs:
+                additional kwargs to pass
         """
         # add load_preprocessor to kwargs
         kwargs["load_preprocessor"] = load_preprocessor
@@ -109,6 +109,9 @@ class ModelCard(ArtifactCard):
                 Whether to load onnx model or not. Default is False
             quantize:
                 Whether to quantize onnx model or not. Default is False
+
+            **kwargs:
+                additional kwargs to pass
         """
 
         from opsml.storage.card_loader import ModelCardLoader
@@ -128,8 +131,9 @@ class ModelCard(ArtifactCard):
             load_preprocessor:
                 Whether to load preprocessor or not. Default is False
 
-        Returns:
-            None
+            **kwargs:
+                Additional kwargs to pass
+
         """
 
         # add load_preprocessor to kwargs
