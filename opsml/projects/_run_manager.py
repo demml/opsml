@@ -16,7 +16,8 @@ from opsml.types import CommonKwargs
 logger = ArtifactLogger.get_logger()
 
 
-class ActiveRunException(Exception): ...
+class ActiveRunException(Exception):
+    ...
 
 
 class _RunManager:
