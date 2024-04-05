@@ -1,0 +1,54 @@
+The following is a small list of frequently used classes and methods in `OpsML`. Refer to specific documentation and/or api specs for detailed information.
+
+
+## All Cards
+
+### Registering a card
+
+```python
+
+from opsml import CardRegistries, ModelCard
+
+registries = CardRegistries()
+
+card = ModelCard(...)
+registries.model.register_card(card)
+
+# This also works
+
+from opsml import CardRegistry
+
+registry = CardRegistry("model")
+registry.register_card(card)
+```
+
+### Loading a card
+
+```python
+
+registry.load_card(name={name}, repository={repository}, version={version})
+
+# or 
+
+registry.load_card(uid={uid})
+
+# or
+
+from opsml import CardInfo
+info = CardInfo(name={name}, repository={repository}, version={version})
+registry.load_card(info=info)
+```
+
+## ModelCards
+
+### Loading a model
+
+```python
+
+modelcard = registry.load_card(name={name}, repository={repository}, version={version})
+modelcard.load_model()
+
+# access model
+modelcard.model
+```
+ 

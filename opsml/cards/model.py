@@ -90,26 +90,34 @@ class ModelCard(ArtifactCard):
 
         ModelCardLoader(self).load_model(**kwargs)
 
-    def download_model(self, path: Path, **kwargs: Any) -> None:
+    def download_model(
+        self,
+        path: Path,
+        load_preprocessor: bool = False,
+        load_onnx: bool = False,
+        quantize: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """Downloads model, preprocessor and metadata to path
 
         Args:
             path:
                 Path to download model
-
-            kwargs:
-                load_preprocessor:
+            load_preprocessor:
                     Whether to load preprocessor or not. Default is True
-                load_onnx:
-                    Whether to load onnx model or not. Default is False
-                quantize:
-                    Whether to quantize onnx model or not. Default is False
+            load_onnx:
+                Whether to load onnx model or not. Default is False
+            quantize:
+                Whether to quantize onnx model or not. Default is False
         """
 
         from opsml.storage.card_loader import ModelCardLoader
 
         # set path to download model
         kwargs["lpath"] = path
+        kwargs["load_preprocessor"] = load_preprocessor
+        kwargs["load_onnx"] = load_onnx
+        kwargs["quantize"] = quantize
 
         ModelCardLoader(self).download_model(**kwargs)
 
