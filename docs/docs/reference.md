@@ -51,4 +51,32 @@ modelcard.load_model()
 # access model
 modelcard.model
 ```
+
+### Loading an onnx model
+
+```python
+
+modelcard = registry.load_card(name={name}, repository={repository}, version={version})
+modelcard.load_onnx_model()
+
+# access model
+modelcard.onnx_model
+```
+
+### Downloading a model to file
+
+```python
+
+modelcard.download_model(path={path}, load_preprocessor=True)
+
+# load model from ModelLoader
+loader = ModelLoader(path={path})
+loader.load_model()
+loader.model
+
+# load onnx version from loader
+loader = ModelLoader(path={path})
+loader.load_onnx_model()
+loader.onnx_model
+```
  
