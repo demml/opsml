@@ -3,7 +3,7 @@ import os
 import tempfile
 import warnings
 from pathlib import Path
-from typing import Any, Generator, Tuple, TypeVar
+from typing import Generator, Tuple, TypeVar
 
 warnings.filterwarnings("ignore")
 
@@ -395,7 +395,7 @@ def pandas_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def sql_data()-> SqlData:
+def sql_data() -> SqlData:
     return SqlData(
         sql_logic={"test": "select * from test_table"},
         feature_descriptions={"test": "test_description"},
