@@ -82,13 +82,10 @@ class ModelCard(ArtifactCard):
             **kwargs:
                 additional kwargs to pass
         """
-        # add load_preprocessor to kwargs
-        kwargs["load_preprocessor"] = load_preprocessor
-
         # load modelcard loader
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_model(**kwargs)
+        ModelCardLoader(self).load_model(load_preprocessor, **kwargs)
 
     def download_model(
         self,
@@ -136,12 +133,9 @@ class ModelCard(ArtifactCard):
 
         """
 
-        # add load_preprocessor to kwargs
-        kwargs["load_preprocessor"] = load_preprocessor
-
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_onnx_model(**kwargs)
+        ModelCardLoader(self).load_onnx_model(load_preprocessor, **kwargs)
 
     def load_preprocessor(self, **kwargs: Any) -> None:
         """Loads onnx model to interface"""

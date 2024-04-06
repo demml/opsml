@@ -586,12 +586,11 @@ class ModelCardLoader(CardLoader):
 
         return ModelMetadata(**metadata)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
         if self.card.interface.onnx_model is not None:
             logger.info("Onnx Model already loaded")
             return None
 
-        load_preprocessor = kwargs.get("load_preprocessor", False)
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
@@ -603,14 +602,12 @@ class ModelCardLoader(CardLoader):
 
         return None
 
-    def load_model(self, **kwargs: Any) -> None:
+    def load_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
         """Load model, preprocessor and sample data"""
 
         if self.card.interface.model is not None:
             logger.info("Model already loaded")
             return None
-
-        load_preprocessor = kwargs.get("load_preprocessor", False)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
