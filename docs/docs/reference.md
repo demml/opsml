@@ -48,6 +48,9 @@ registry.load_card(info=info)
 modelcard = registry.load_card(name={name}, repository={repository}, version={version})
 modelcard.load_model()
 
+# with preprocessor
+modelcard.load_model(load_preprocessor=True)
+
 # access model
 modelcard.model
 ```
@@ -59,6 +62,9 @@ modelcard.model
 modelcard = registry.load_card(name={name}, repository={repository}, version={version})
 modelcard.load_onnx_model()
 
+# with preprocessor
+modelcard.load_onnx_model(load_preprocessor=True)
+
 # access model
 modelcard.onnx_model
 ```
@@ -68,6 +74,12 @@ modelcard.onnx_model
 ```python
 
 modelcard.download_model(path={path}, load_preprocessor=True)
+
+# download onnx model
+modelcard.download_model(path={path}, load_onnx=True)
+
+# download quantized onnx model (huggingface only)
+modelcard.download_model(path={path}, load_onnx=True, quantized=True)
 
 # load model from ModelLoader
 loader = ModelLoader(path={path})
