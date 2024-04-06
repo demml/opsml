@@ -308,7 +308,7 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
 
 
 @pytest.fixture
-def mock_aws_storage_response():
+def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
     class MockResponse:
         def __init__(self):
             self.status_code = 200
@@ -329,7 +329,7 @@ def mock_aws_storage_response():
 
 
 @pytest.fixture
-def mock_gcs_storage_response():
+def mock_gcs_storage_response() -> Generator[httpx.Client, None, None]:
     class MockResponse:
         def __init__(self):
             self.status_code = 200
@@ -353,11 +353,11 @@ def mock_gcs_storage_response():
 
 
 @pytest.fixture
-def numpy_data() -> np.ndarray[Any, np.float64]:
+def numpy_data() -> NumpyData:
     data = np.random.rand(10, 100)
     return NumpyData(
         data=data,
-        datasplits=[
+        data_splits=[
             DataSplit(label="train", indices=np.array([0, 1, 2])),
         ],
     )
@@ -395,7 +395,7 @@ def pandas_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def sql_data():
+def sql_data()-> SqlData:
     return SqlData(
         sql_logic={"test": "select * from test_table"},
         feature_descriptions={"test": "test_description"},
@@ -403,14 +403,14 @@ def sql_data():
 
 
 @pytest.fixture
-def sql_file():
+def sql_file() -> SqlData:
     return SqlData(
         sql_logic={"test": "test_sql.sql"},
     )
 
 
 @pytest.fixture
-def arrow_data():
+def arrow_data() -> ArrowData:
     n_legs = pa.array([2, 4, 5, 100])
     animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
     names = ["n_legs", "animals"]
@@ -419,7 +419,7 @@ def arrow_data():
 
 
 @pytest.fixture
-def polars_data():
+def polars_data() -> PolarsData:
     df = pl.DataFrame(
         {
             "foo": [1, 2, 3, 4, 5, 6],
@@ -441,7 +441,7 @@ def polars_data():
 
 
 @pytest.fixture
-def pandas_timestamp_df():
+def pandas_timestamp_df() -> PandasData:
     df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
     df["date"] = pd.to_datetime(df["date"])
     return PandasData(data=df)

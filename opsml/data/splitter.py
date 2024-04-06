@@ -21,6 +21,26 @@ class Data:
 
 
 class DataSplit(BaseModel):
+    """Creates a data split based on the provided logic.
+
+    Args:
+        label:
+            Label for the split
+        column_name:
+            Column name to split on
+        column_value:
+            Column value to split on. Can be a string, float, int, or timestamp.
+        inequality:
+            Inequality sign to split on
+        start:
+            Start index to split on
+        stop:
+            Stop index to split on
+        indices:
+            List of indices to split on
+
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     label: str
