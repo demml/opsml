@@ -4,15 +4,13 @@
   import { onMount } from 'svelte';
   import { keymap } from "@codemirror/view"
 
-
-  import { indentWithTab } from "@codemirror/commands"
-  import {basicSetup, EditorView} from "codemirror"
-  import { EditorState, Compartment } from "@codemirror/state"
-  import {markdown} from "@codemirror/lang-markdown"
-  import {languages} from "@codemirror/language-data"
-  import { json } from "@codemirror/lang-json";
   import { editorTheme } from '$lib/scripts/editor_theme'
   import { calculateTimeBetween } from "$lib/scripts/utils";
+
+  import hljs from 'highlight.js/lib/core';
+  import json from 'highlight.js/lib/languages/json';
+  hljs.registerLanguage('json', json);
+
   
   /** @type {import('./$types').PageData} */
     export let data;
@@ -28,24 +26,9 @@
     const themeConfig = new Compartment()
 
     let parent = document.getElementById("editor")
+    html = hljs.highlight('<h1>Hello World!</h1>', {language: 'json'}).value
+    parent.innerHTML = html
 
-    console.log(content.view_type);
-
-    let parsed = JSON.parse(content.content);
-
-    if (content.view_type === 'code') {
-      let editor = new EditorView({
-        doc: JSON.stringify(parsed),
-        extensions: [
-          basicSetup,
-          json(),
-          themeConfig.of([editorTheme]),
-          EditorState.readOnly.of(true),
-          EditorView.lineWrapping 
-        ],
-        parent: parent
-      })
-    }
   });
   
   

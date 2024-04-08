@@ -21,8 +21,7 @@
   }
 
   function viewFile(filePath: string) {
-    let encodedPath:string = btoa(filePath);
-    goto(`/opsml/${registry}/card/files/view?name=${name}&repository=${repository}&version=${version}&path=${encodedPath}`);
+    goto(`/opsml/${registry}/card/files/view?name=${name}&repository=${repository}&version=${version}&path=${btoa(filePath)}`);
   }
 
 </script>
@@ -34,7 +33,7 @@
     <div class="grid h-6 grid-cols-12 gap-x-3">
       {#if file.type === 'file'}
 
-        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => viewFile(file.uri, file.size, file.mtime)}>
+        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => viewFile(file.uri)}>
             <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
             <div class="flex truncate items-center text-black">{file.name}</div>
         </a>

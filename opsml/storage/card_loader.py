@@ -645,34 +645,3 @@ class ModelCardLoader(CardLoader):
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
-
-
-class OpsmlRefresher:
-    def __init__(self) -> None:
-        self._lock = threading.RLock()
-        self.refresh()
-        self._start()
-        self.models = {}
-
-    def get_model(self, model_name: str) -> lightgbm.Booster:
-        return self.models[model_name]
-
-
-@retry(wait=wait_exponential(multiplier=2**-5, max=2**5), stop=stop_after_delay(60 * 10))
-def download_from_opsml(self, model, model_name) -> None:
-    """
-    Downloads a file from opsml. Download is retried using exponential backoff over ~10 minutes if unsuccessful.
-    """
-    # opsml
-    model_registry = CardRegistries().model
-    card_info = CardInfo(name=model["opsml_model_name"], repository=Config.OPSML_MODEL_REPO)
-
-    card = cast(ModelCard, model_registry.load_card(info=card_info))
-    if Config.ENVIRONMENT in ["localhost", "development"]:
-        model_path = Path(model["opsml_seed_model_path"])
-        card.download_model(model_path, load_preprocessor=False)
-        self.models[model_name] = Model(model_path).model
-
-    else:
-        card.load_model(load_preprocessor=False)
-        self.models[model_name] = card.model

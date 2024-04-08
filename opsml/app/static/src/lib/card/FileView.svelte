@@ -1,9 +1,7 @@
 
 <script lang="ts">
   import {type FileView } from "$lib/scripts/types";
-  import hljs from 'highlight.js/lib/core';
-  import json from 'highlight.js/lib/languages/json';
-  hljs.registerLanguage('json', json);
+
 
   export let name: string;
   export let modifiedAt: string;
@@ -22,7 +20,9 @@
     </div>
 
     {#if viewType === "code" && content}
-      <div id="editor" class="h-96"></div>
+
+
+      <div id="viewer" class="h-96"></div>
     {/if}
 
   </div>
