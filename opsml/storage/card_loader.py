@@ -231,11 +231,11 @@ class CardLoader:
                     return cast(Dict[str, Any], json.load(lfile))
 
         except IOError:  # pylint: disable=broad-except
-            warning = (
+            error = (
                 "Error loading card JSON version of card. Falling back to joblib. "
                 "Newer versions of OpsML use JSON to save cards. Older versions use joblib."
             )
-            logger.warning(warning)
+            logger.error(error)
             try:
                 with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
                     return cast(Dict[str, Any], joblib.load(lpath))
