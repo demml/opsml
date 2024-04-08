@@ -9,7 +9,13 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    FieldSerializationInfo,
+    field_serializer,
+    field_validator,
+)
 
 from opsml.types import AllowedDataType
 
@@ -50,6 +56,7 @@ class DataSplit(BaseModel):
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
+    _column_type: str
 
     @field_validator("indices", mode="before")
     @classmethod
@@ -70,6 +77,46 @@ class DataSplit(BaseModel):
             value = value.strip()
 
         return value
+
+    @field_validator("column_value", mode="before")
+    @classmethod
+    def check_type(cls, value: str) -> Union[str, float, int, pd.Timestamp]:
+        """checks type for column value"""
+
+        # for loading
+        if isinstance(cls._column_type, str):
+            if cls._column_type == "timestamp":
+                return pd.Timestamp(value)
+            return value
+
+        # for validation
+        else:
+            if isinstance(value, pd.Timestamp):
+                cls._column_type = "timestamp"
+                return value
+            else:
+                cls._column_type = "builtin"
+                return value
+
+    @field_serializer("column_value")
+    def serialize_column_value(
+        self, column_value: Optional[Union[str, float, int, pd.Timestamp]], _info: FieldSerializationInfo
+    ) -> Optional[Union[str, float, int]]:
+        """Serializes pd.timestamp to str
+
+        Args:
+            column_value:
+                Column value to serialize
+            _info:
+                Additional information
+
+        Returns:
+            Union[str, float, int]: Serialized column value
+        """
+
+        if isinstance(column_value, pd.Timestamp):
+            return str(column_value)
+        return column_value
 
 
 class DataSplitterBase:

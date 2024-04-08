@@ -13,11 +13,11 @@ from opsml.registry import CardRegistries
 def test_datacard_create_data_profile_pandas(
     db_registries: CardRegistries,
     iris_data: PandasData,
-):
+) -> None:
     # create data card
     registry = db_registries.data
 
-    iris_data.data["date_"] = pd.Timestamp.today().strftime("%Y-%m-%d")
+    iris_data.data["date_"] = pd.Timestamp.today().strftime("%Y-%m-%d")  # type: ignore
     iris_data.create_data_profile()
 
     # should raise logging info if called again
@@ -41,7 +41,7 @@ def test_datacard_create_data_profile_pandas(
 def test_datacard_create_data_profile_polars(
     db_registries: CardRegistries,
     iris_data_polars: PolarsData,
-):
+) -> None:
     # create data card
     registry = db_registries.data
     data_card = DataCard(

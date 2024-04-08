@@ -313,7 +313,7 @@ def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
         def __init__(self):
             self.status_code = 200
 
-        def json(self):
+        def json(self) -> Dict[str, Any]:
             return {
                 "storage_type": "s3",
                 "storage_uri": "s3://test",
@@ -321,7 +321,7 @@ def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
             }
 
     class MockHTTPX(httpx.Client):
-        def get(self, url, **kwargs):
+        def get(self, url, **kwargs) -> Any:
             return MockResponse()
 
     with patch("httpx.Client", MockHTTPX) as mock_requests:
@@ -382,9 +382,50 @@ def pandas_data() -> pd.DataFrame:
         }
     )
 
+    # create timestamp column
+    df["timestamp"] = pd.Timestamp.today()
+
     data_split = [
         DataSplit(label="train", column_name="year", column_value=2020),
         DataSplit(label="test", column_name="year", column_value=2021),
+    ]
+    return PandasData(
+        data=df,
+        data_splits=data_split,
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
+        dependent_vars=[200, "test"],
+    )
+
+
+@pytest.fixture
+def pandas_data_timestamp() -> pd.DataFrame:
+    df = pd.DataFrame(
+        {
+            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100, 2, 4, 5, 100],
+            "animals": [
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+            ],
+        }
+    )
+
+    # create timestamp column
+    df["timestamp"] = pd.Timestamp.today()
+
+    data_split = [
+        DataSplit(
+            label="train",
+            column_name="timestamp",
+            column_value=pd.Timestamp("2020-01-01"),
+            inequality=">=",
+        ),
     ]
     return PandasData(
         data=df,
