@@ -3,7 +3,7 @@ import os
 import tempfile
 import warnings
 from pathlib import Path
-from typing import Generator, Tuple, TypeVar
+from typing import Any, Dict, Generator, Tuple, TypeVar, Union
 
 warnings.filterwarnings("ignore")
 
@@ -313,7 +313,7 @@ def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
         def __init__(self):
             self.status_code = 200
 
-        def json(self) -> Dict[str, Any]:
+        def json(self) -> Dict[str, Union[str, bool]]:
             return {
                 "storage_type": "s3",
                 "storage_uri": "s3://test",

@@ -13,7 +13,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     FieldSerializationInfo,
-    PrivateAttr,
     field_serializer,
     field_validator,
 )
@@ -45,6 +44,8 @@ class DataSplit(BaseModel):
             Stop index to split on
         indices:
             List of indices to split on
+        column_type
+            column_type of column_value. Automatically set
 
     """
 
@@ -57,7 +58,7 @@ class DataSplit(BaseModel):
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
-    _column_type: str = PrivateAttr(default="builtin")
+    column_type: str = "builtin"
 
     def __init__(self, **data: Dict[str, Any]) -> None:
         """Custom initialization logic to handle timestamp split types.
@@ -69,9 +70,9 @@ class DataSplit(BaseModel):
         super().__init__(**data)
 
         if isinstance(self.column_value, pd.Timestamp):
-            self._column_type = "timestamp"
+            self.column_type = "timestamp"
 
-        if self._column_type == "timestamp" and not isinstance(self.column_value, pd.Timestamp):
+        if self.column_type == "timestamp" and not isinstance(self.column_value, pd.Timestamp):
             self.column_value = pd.Timestamp(self.column_value)
 
     @field_validator("indices", mode="before")

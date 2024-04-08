@@ -845,7 +845,6 @@ def test_register_data_timestamp(
     registry.register_card(card=data_card)
 
     loaded = registry.load_card(uid=data_card.uid)
-    print(loaded.interface.data_splits[0]._column_type)
 
     splits = loaded.split_data()
 
