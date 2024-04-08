@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
@@ -13,6 +13,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     FieldSerializationInfo,
+    PrivateAttr,
     field_serializer,
     field_validator,
 )
@@ -56,7 +57,22 @@ class DataSplit(BaseModel):
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
-    _column_type: str = "builtin"
+    _column_type: str = PrivateAttr(default="builtin")
+
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        """Custom initialization logic to handle timestamp split types.
+        Custom JSON serialization logic coerces timestamp into string. Thus, column_value
+        needs to be coerced back into timestamp when loading datasplit from card
+        JSON file.
+
+        """
+        super().__init__(**data)
+
+        if isinstance(self.column_value, pd.Timestamp):
+            self._column_type = "timestamp"
+
+        if self._column_type == "timestamp" and not isinstance(self.column_value, pd.Timestamp):
+            self.column_value = pd.Timestamp(self.column_value)
 
     @field_validator("indices", mode="before")
     @classmethod
@@ -75,32 +91,6 @@ class DataSplit(BaseModel):
 
         if value is not None:
             value = value.strip()
-
-        return value
-
-    @field_validator("column_value", mode="before")
-    @classmethod
-    def check_value(cls, value: Union[str, float, int, pd.Timestamp]) -> Union[str, float, int, pd.Timestamp]:
-        """checks type for column value. If it is a timestamp, sets the column type to timestamp
-        Data splits with timestamps are serialized to string. When loading, the column type is checked and
-        if set to timestamp
-
-        Args:
-            value:
-                Value to check
-
-        Returns:
-            Union[str, float, int, pd.Timestamp]: Value
-        """
-
-        # used when instantiating the class
-        if isinstance(value, pd.Timestamp):
-            cls._column_type = "timestamp"
-            return value
-
-        # used when loading
-        if cls._column_type == "timestamp":
-            return pd.Timestamp(value)
 
         return value
 
