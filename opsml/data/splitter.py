@@ -106,15 +106,15 @@ class DataSplit(BaseModel):
 
     @field_serializer("column_value")
     def serialize_column_value(
-        self, column_value: Optional[Union[str, float, int, pd.Timestamp]], _info: FieldSerializationInfo
+        self,
+        column_value: Optional[Union[str, float, int, pd.Timestamp]],
+        _info: FieldSerializationInfo,
     ) -> Optional[Union[str, float, int]]:
-        """Serializes pd.timestamp to str
+        """Serializes pd.timestamp to str. This is used when saving the data split as a JSON file
 
         Args:
             column_value:
                 Column value to serialize
-            _info:
-                Additional information
 
         Returns:
             Union[str, float, int]: Serialized column value
