@@ -2038,13 +2038,13 @@ files = [
 
 [[package]]
 name = "joblib"
-version = "1.3.2"
+version = "1.4.0"
 description = "Lightweight pipelining with Python functions"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "joblib-1.3.2-py3-none-any.whl", hash = "sha256:ef4331c65f239985f3f2220ecc87db222f08fd22097a3dd5698f693875f8cbb9"},
-    {file = "joblib-1.3.2.tar.gz", hash = "sha256:92f865e621e17784e7955080b6d042489e3b8e294949cc44c6eac304f59772b1"},
+    {file = "joblib-1.4.0-py3-none-any.whl", hash = "sha256:42942470d4062537be4d54c83511186da1fc14ba354961a2114da91efa9a4ed7"},
+    {file = "joblib-1.4.0.tar.gz", hash = "sha256:1eb0dc091919cd384490de890cb5dfd538410a6d4b3b54eef09fb8c50b409b1c"},
 ]
 
 [[package]]
@@ -3360,24 +3360,24 @@ sympy = "*"
 
 [[package]]
 name = "opsml-cli"
-version = "0.4.3"
+version = "0.5.0"
 description = ""
 optional = false
-python-versions = ">=3.9, <3.13"
+python-versions = "<3.13,>=3.9"
 files = [
-    {file = "opsml_cli-0.4.3-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:76e31df2baf3e01ac7fdaeb8038e2f2a6e5729af576b9648a12bfbf815651fb4"},
-    {file = "opsml_cli-0.4.3-py3-none-macosx_11_0_arm64.whl", hash = "sha256:0d100ebcb6538924117b4652b5000e22018866371b38d93b220dfcfa69e38671"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5c38cc3ceaedf77dc1df12efffc0537ad90ca368394af2ce1d3e0c044a84ae6d"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:aea365a445cf9586f7ce6f0f296ab57d53c596725e686ea2996e886348c53462"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7c4ebcffa07e4e03dab2b3abdaf2aba8387164f03f45e258aa6b5027768cea9f"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:49ef68130a820ea4f9a1fd754fc0bc78d2801317659d314a7b9bf7d1aa39bc69"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:4b9533db731c2034672ce2e41981275db0a5a6c533b6b10f7c781fd46fd8c4be"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5dfb1bf3ed3e7cf589c766d0a0ffc15800f8f11fee41653ba2d2d308007f731f"},
-    {file = "opsml_cli-0.4.3-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:7723c4217add892101dd8a9ee4b7f3fef4833898557859b0920caeb7f554903b"},
-    {file = "opsml_cli-0.4.3-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:6878ec6ce7cf2704df3299212cc46331b9c8641e9ea5aeff845505eaf6435313"},
-    {file = "opsml_cli-0.4.3-py3-none-win32.whl", hash = "sha256:ee73839c2e2deb261862a9ac8770845aae999de0d94c044c741c7d08146f97e9"},
-    {file = "opsml_cli-0.4.3-py3-none-win_amd64.whl", hash = "sha256:053eb5f90cf56079a508fe5e6925cadca187d0f7a386189bf88a09a4dd1a1687"},
-    {file = "opsml_cli-0.4.3-py3-none-win_arm64.whl", hash = "sha256:5ec1ad8e3c450132c5fb2d0a80ec6822450c4f7e1bd63921deb9e0a068248256"},
+    {file = "opsml_cli-0.5.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:12b75da0e256300ec0cffd30aa14102f4f33d98a63882962bafb3cdb328a96d3"},
+    {file = "opsml_cli-0.5.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:2a11869a04f5a19de9793ada52ef528140ecd6e1f2dba3b818f0c8bf9d8b839d"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a5f23e3f5553f3b8e4a408b3c7c318932b16a196956a5b5d65e315241eaa69c"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4a2b0a5f720a9c0fadeabf69f4092555ab15f54be6b6a181198b0eae16c2caac"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:283b9f39ea6133600ce19be3d8227ec66f48c7d3afde1994c5f809e397fcea96"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6f46b380c10f2234f223b31498438c219bcef9ccfd57cf9e767a4c64ecd12915"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:54de6a119f9ce21c51cdefbe781a395305f409e0479bbc363592a379205488f9"},
+    {file = "opsml_cli-0.5.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee94cb09e742b303792d5ea757cb4ebe2c21ef8d35ef36e8a127c9d7a0671b78"},
+    {file = "opsml_cli-0.5.0-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:9a4b3ec244302d0fb53e487531b3724cb5bb61003ede72b8800dc84e366e5e3e"},
+    {file = "opsml_cli-0.5.0-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:d8d6072df116c2b270665abd05bddda75d43b85731fc7016038835576963d6df"},
+    {file = "opsml_cli-0.5.0-py3-none-win32.whl", hash = "sha256:ff4c55ce10e9a6618f1f58f21c297c141443d31beb645e9ef178c10f6502371f"},
+    {file = "opsml_cli-0.5.0-py3-none-win_amd64.whl", hash = "sha256:4542e61de6911cd163bf4a286403cd9d5023b67bd06153c555319cf3e24af676"},
+    {file = "opsml_cli-0.5.0-py3-none-win_arm64.whl", hash = "sha256:9870be3271bafd1cb95df658d398b30ae8a25212d1b623ff1aab2e1fa2b47de8"},
 ]
 
 [[package]]
@@ -6124,13 +6124,13 @@ test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
 name = "types-protobuf"
-version = "4.24.0.20240311"
+version = "4.24.0.20240408"
 description = "Typing stubs for protobuf"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types-protobuf-4.24.0.20240311.tar.gz", hash = "sha256:c80426f9fb9b21aee514691e96ab32a5cd694a82e2ac07964b352c3e7e0182bc"},
-    {file = "types_protobuf-4.24.0.20240311-py3-none-any.whl", hash = "sha256:8e039486df058141cb221ab99f88c5878c08cca4376db1d84f63279860aa09cd"},
+    {file = "types-protobuf-4.24.0.20240408.tar.gz", hash = "sha256:c03a44357b03c233c8c5864ce3e07dd9c766a00497d271496923f7ae3cb9e1de"},
+    {file = "types_protobuf-4.24.0.20240408-py3-none-any.whl", hash = "sha256:9b87cd279378693071247227f52e89738af7c8d6f06dbdd749b0cf473c4916ce"},
 ]
 
 [[package]]
@@ -6894,4 +6894,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "3cbb27036f3c36c011fe721989f0eba3e17e931b89b4901824359dbc16c2ab45"
+content-hash = "a06cf1440d29580d4ed2fa468131228016b12de81594fcf6b18aa47d06305ad0"
