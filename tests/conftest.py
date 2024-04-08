@@ -382,9 +382,6 @@ def pandas_data() -> pd.DataFrame:
         }
     )
 
-    # create timestamp column
-    df["timestamp"] = pd.Timestamp.today()
-
     data_split = [
         DataSplit(label="train", column_name="year", column_value=2020),
         DataSplit(label="test", column_name="year", column_value=2021),

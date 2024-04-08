@@ -56,7 +56,7 @@ class DataSplit(BaseModel):
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
-    _column_type: str
+    _column_type: str = "builtin"
 
     @field_validator("indices", mode="before")
     @classmethod
@@ -80,23 +80,29 @@ class DataSplit(BaseModel):
 
     @field_validator("column_value", mode="before")
     @classmethod
-    def check_type(cls, value: str) -> Union[str, float, int, pd.Timestamp]:
-        """checks type for column value"""
+    def check_value(cls, value: Union[str, float, int, pd.Timestamp]) -> Union[str, float, int, pd.Timestamp]:
+        """checks type for column value. If it is a timestamp, sets the column type to timestamp
+        Data splits with timestamps are serialized to string. When loading, the column type is checked and
+        if set to timestamp
 
-        # for loading
-        if isinstance(cls._column_type, str):
-            if cls._column_type == "timestamp":
-                return pd.Timestamp(value)
+        Args:
+            value:
+                Value to check
+
+        Returns:
+            Union[str, float, int, pd.Timestamp]: Value
+        """
+
+        # used when instantiating the class
+        if isinstance(value, pd.Timestamp):
+            cls._column_type = "timestamp"
             return value
 
-        # for validation
-        else:
-            if isinstance(value, pd.Timestamp):
-                cls._column_type = "timestamp"
-                return value
-            else:
-                cls._column_type = "builtin"
-                return value
+        # used when loading
+        if cls._column_type == "timestamp":
+            return pd.Timestamp(value)
+
+        return value
 
     @field_serializer("column_value")
     def serialize_column_value(
