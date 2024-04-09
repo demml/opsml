@@ -34,7 +34,9 @@
 
     <div class="min-w-96 overflow-scroll">
       
-      <Highlight language={json}  code={content}/>
+      <Highlight language={json}  code={content} let:highlighted>
+        <LineNumbers {highlighted} />
+      </Highlight>
 
     </div>
 
