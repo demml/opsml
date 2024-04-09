@@ -174,9 +174,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -218,6 +216,7 @@ class FileInfo(BaseModel):
     ino: int
     nlink: int
     viewable: bool = False
+    suffix: Optional[str] = None
 
 
 class ViewContent(BaseModel):

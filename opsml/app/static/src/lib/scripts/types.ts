@@ -35,8 +35,8 @@ export interface ModelMetadata {
   model_class: string;
   model_type: string;
   model_interface: string;
-  onnx_uri: string;
-  onnx_version: string;
+  onnx_uri?: string;
+  onnx_version?: string;
   model_uri: string;
   model_version: string;
   model_repository: string;
@@ -73,6 +73,7 @@ export interface FileInfo {
   ino: number;
   nlink: number;
   uri: string;
+  suffix: string | null;
 }
 
 export interface ViewContent {

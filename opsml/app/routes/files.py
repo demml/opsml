@@ -7,7 +7,7 @@ import tempfile
 import zipfile as zp
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
+import json
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -303,6 +303,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
         file_info["name"] = swapped_path.name
         file_info["mtime"] = file_info["mtime"] * 1000
         file_info["uri"] = path
+        file_info["suffix"] = swapped_path.suffix
 
         if swapped_path.suffix in list(PresignableTypes):
             if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py"]:
@@ -312,7 +313,10 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
                     storage_client.get(swapped_path, lpath)
 
                     with lpath.open("rb") as file_:
-                        view_meta["content"] = file_.read().decode("utf-8")
+                        file_ = file_.read().decode("utf-8")
+
+                        if swapped_path.suffix == ".json":
+                            view_meta["content"] = json.dumps(json.loads(file_), indent=4)
 
                 view_meta["view_type"] = "code"
 
@@ -328,7 +332,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"There was an error generation the presigned uri. {error}",
+            detail=f"There was an error generating the presigned uri. {error}",
         ) from error
 
 

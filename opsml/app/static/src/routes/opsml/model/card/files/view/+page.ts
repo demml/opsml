@@ -4,11 +4,11 @@ import { type FileView } from "$lib/scripts/types";
 export async function load({ fetch, params, url }) {
   let filePath = atob(url.searchParams.get("path"));
 
-  console.log(filePath);
-
   let viewData: FileView = await fetch(
     `/opsml/files/view?path=${filePath}`
   ).then((res) => res.json());
+
+  console.log(viewData);
 
   return viewData;
 }

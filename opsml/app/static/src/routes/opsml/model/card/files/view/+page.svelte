@@ -7,9 +7,6 @@
   import { editorTheme } from '$lib/scripts/editor_theme'
   import { calculateTimeBetween } from "$lib/scripts/utils";
 
-  import hljs from 'highlight.js/lib/core';
-  import json from 'highlight.js/lib/languages/json';
-  hljs.registerLanguage('json', json);
 
   
   /** @type {import('./$types').PageData} */
@@ -20,16 +17,6 @@
 
     let content: ViewContent;
     $: content = data.content;
-
-
-  onMount(async () => {
-    const themeConfig = new Compartment()
-
-    let parent = document.getElementById("editor")
-    html = hljs.highlight('<h1>Hello World!</h1>', {language: 'json'}).value
-    parent.innerHTML = html
-
-  });
   
   
   </script>
