@@ -306,7 +306,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
         file_info["suffix"] = swapped_path.suffix
 
         if swapped_path.suffix in list(PresignableTypes):
-            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py"]:
+            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py", ".md"]:
                 # download load file to string
                 with tempfile.TemporaryDirectory() as tmpdirname:
                     lpath = Path(tmpdirname) / swapped_path.name
@@ -317,6 +317,9 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
 
                         if swapped_path.suffix == ".json":
                             view_meta["content"] = json.dumps(json.loads(file_), indent=4)
+
+                        else:
+                            view_meta["content"] = file_
 
                 view_meta["view_type"] = "code"
 

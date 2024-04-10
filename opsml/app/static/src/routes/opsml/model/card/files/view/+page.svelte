@@ -1,31 +1,61 @@
-<script lang="ts">
-  import FileView from "$lib/card/FileView.svelte";
-  import { type ViewContent, type FileInfo } from "$lib/scripts/types";
-  import { onMount } from 'svelte';
-  import { keymap } from "@codemirror/view"
-
-  import { editorTheme } from '$lib/scripts/editor_theme'
-  import { calculateTimeBetween } from "$lib/scripts/utils";
+<h1>
+style
+</h1>
 
 
-  
-  /** @type {import('./$types').PageData} */
-    export let data;
-    
-    let fileInfo: FileInfo;
-    $: fileInfo = data.file_info;
+<style>
+  h1 { 
+    display: block;
+    font-size: 2em;
+    margin-top: 0.67em;
+    margin-bottom: 0.67em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+h2 {
+    display: block;
+    font-size: 1.5em;
+    margin-top: 0.83em;
+    margin-bottom: 0.83em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+h3 { 
+    display: block;
+    font-size: 1.17em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+h4 { 
+    display: block;
+    margin-top: 1.33em;
+    margin-bottom: 1.33em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+h5 { 
+    display: block;
+    font-size: .83em;
+    margin-top: 1.67em;
+    margin-bottom: 1.67em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
+h6 { 
+    display: block;
+    font-size: .67em;
+    margin-top: 2.33em;
+    margin-bottom: 2.33em;
+    margin-left: 0;
+    margin-right: 0;
+    font-weight: bold;
+}
 
-    let content: ViewContent;
-    $: content = data.content;
-  
-  
-  </script>
-
-
-<FileView
-  name={fileInfo.name}
-  modifiedAt={calculateTimeBetween(fileInfo.mtime)}
-  viewType={content.view_type}
-  content={content.content}
-/>
-  
+</style>

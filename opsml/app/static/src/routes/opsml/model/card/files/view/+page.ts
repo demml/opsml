@@ -8,7 +8,5 @@ export async function load({ fetch, params, url }) {
     `/opsml/files/view?path=${filePath}`
   ).then((res) => res.json());
 
-  console.log(viewData);
-
   return viewData;
 }

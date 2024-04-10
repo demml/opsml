@@ -73,7 +73,7 @@ export interface FileInfo {
   ino: number;
   nlink: number;
   uri: string;
-  suffix: string | null;
+  suffix: string;
 }
 
 export interface ViewContent {

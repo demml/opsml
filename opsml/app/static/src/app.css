@@ -3,27 +3,3 @@
 @tailwind utilities;
 
 
-@layer base {
-
-  @font-face {
-    font-family: Boing;
-    src: url("./fonts/custom/medium.otf") format("opentype");
-    font-style: normal;
-    font-weight: medium;
-    }
-  
-      
-  @font-face {
-    font-family: Boing;
-    src: url("./fonts/custom/bold.otf") format("opentype");
-    font-style: normal;
-    font-weight: bold;
-    }
-
-  @font-face {
-    font-family: Boing;
-    src: url("./fonts/custom/regular.otf") format("opentype");
-    font-style: normal;
-    font-weight: regular;
-    }
-}

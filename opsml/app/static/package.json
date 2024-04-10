@@ -57,6 +57,7 @@
 		"codemirror": "^6.0.1",
 		"highlight.js": "^11.9.0",
 		"jquery": "^3.7.1",
+		"marked": "^12.0.1",
 		"svelte-fa": "^4.0.2",
 		"tailwind-merge": "^2.2.1"
 	}

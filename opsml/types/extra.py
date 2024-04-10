@@ -153,3 +153,4 @@ class PresignableTypes(str, Enum):
     TIFF = ".tiff"
     GIF = ".gif"
     MP4 = ".mp4"
+    PY = ".py"
