@@ -68,7 +68,7 @@ test.unit:
 		--ignore tests/integration \
 		--cov \
 		--cov-fail-under=0 \
-		--cov-report html:coverage \
+		--cov-report xml:./coverage.xml \
 		--cov-report term \
 		--junitxml=./results.xml
 
