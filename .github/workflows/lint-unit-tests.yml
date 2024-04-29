@@ -121,11 +121,10 @@ jobs:
           make setup.project
           make test.unit
 
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: coverage
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }
 
   Unit-Test-Windows:
     needs: Lints
