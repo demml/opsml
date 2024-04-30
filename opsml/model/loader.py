@@ -6,10 +6,10 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from opsml.model import HuggingFaceModel, ModelInterface
-from opsml.types import ModelMetadata, OnnxModel, SaveName, Suffix
+from opsml.types import ModelMetadata, OnnxModel, SaveName, Suffix, HuggingFaceOnnxArgs
 
 
 class ModelLoader:
@@ -151,12 +151,12 @@ class ModelLoader:
         self.interface.onnx_model = OnnxModel(onnx_version=self.metadata.onnx_version)
         self.interface.load_onnx_model(load_path)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_quantized: bool = False, onnx_args: Optional[HuggingFaceOnnxArgs] = None) -> None:
         """Load onnx model from disk
 
-        Kwargs:
+        Args:
 
-            ------Note: These kwargs only apply to HuggingFace models------
+            ------Note: These args only apply to HuggingFace models------
 
             kwargs:
                 load_quantized:
@@ -167,8 +167,8 @@ class ModelLoader:
 
         """
         if isinstance(self.interface, HuggingFaceModel):
-            self.interface.onnx_args = kwargs.get("onnx_args", None)
-            self._load_huggingface_onnx_model(**kwargs)
+            self.interface.onnx_args = onnx_args
+            self._load_huggingface_onnx_model(load_quantized)
             return
 
         load_path = (self.path / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)

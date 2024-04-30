@@ -7,7 +7,7 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
-from opsml.cards.base import Card
+from opsml.cards import Card
 from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
