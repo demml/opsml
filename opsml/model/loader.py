@@ -158,12 +158,11 @@ class ModelLoader:
 
             ------Note: These args only apply to HuggingFace models------
 
-            kwargs:
-                load_quantized:
-                    If True, load quantized model
+            load_quantized:
+                If True, load quantized model
 
-                onnx_args:
-                    Additional onnx args needed to load the model
+            onnx_args:
+                Additional onnx args needed to load the model
 
         """
         if isinstance(self.interface, HuggingFaceModel):
