@@ -10,6 +10,7 @@ docs/site/
 expressions.txt
 test.png
 blob/
+opsml/app/static/site/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -20,15 +21,14 @@ __pycache__/
 
 # Distribution / packaging
 bin/
-build/
 develop-eggs/
 dist/
 eggs/
-lib/
 lib64/
 parts/
 sdist/
 var/
+build/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -122,6 +122,8 @@ notebooks/
 .test_local.py
 lightning_logs/
 node_modules/
+.svelte-kit
+/opsml/app/static/site
 
 # git
 **/*.orig

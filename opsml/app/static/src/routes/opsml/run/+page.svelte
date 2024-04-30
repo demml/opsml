@@ -123,8 +123,8 @@
 </script>
 
 
-<div class="flex">
-  <div class="hidden md:block flex-initial w-1/4 pl-16 bg-surface-100 dark:bg-surface-600 min-h-screen ...">
+<div class="flex min-h-screen">
+  <div class="hidden md:block flex-initial w-1/4 pl-16 bg-surface-100 dark:bg-surface-600">
     <div class="p-4">
       <TabGroup 
       border=""
@@ -174,7 +174,7 @@
       </div>
     </div>
   </div>
-  <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 min-h-screen pr-16 ...">
+  <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
     <div class="flex flex-row items-center text-lg font-bold">
       <h1>Artifacts</h1>
     </div>

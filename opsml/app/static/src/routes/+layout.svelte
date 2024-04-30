@@ -16,7 +16,7 @@
 
 <Toast />
 
-<div class="bg-cover bg-center layout overflow-auto min-h-fit" id="page">
+<div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
     <Navbar />
     <slot></slot>
 </div>

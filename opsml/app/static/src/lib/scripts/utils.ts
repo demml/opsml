@@ -1,0 +1,124 @@
+import {
+  type CardRequest,
+  type CardResponse,
+  type DataCardMetadata,
+  type RunCard,
+  type Metrics,
+  type MetricNames,
+  type Parameters,
+  type Graph,
+} from "$lib/scripts/types";
+
+export function calculateTimeBetween(timestamp: number): string {
+  const presentDate: Date = new Date();
+
+  const epoch = timestamp;
+  const date1: Date = new Date(epoch);
+
+  const hours = Math.abs(presentDate.getTime() - date1.getTime()) / 3600000;
+  if (hours > 24) {
+    const days = Math.round(hours / 24);
+    return `${days} days ago`;
+  }
+  return `${Math.round(hours)} hours ago`;
+}
+
+export async function listCards(request: CardRequest): Promise<CardResponse> {
+  // get card info
+  const cards: CardResponse = await fetch("/opsml/cards/list", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return cards;
+}
+
+export async function getDataCard(
+  request: CardRequest
+): Promise<DataCardMetadata> {
+  const dataCard: DataCardMetadata = await fetch("/opsml/data/card", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return dataCard;
+}
+
+export async function getRunCard(request: CardRequest): Promise<RunCard> {
+  const runCard: RunCard = await fetch("/opsml/run/card", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return runCard;
+}
+
+export async function getRunMetricNames(uid: string): Promise<MetricNames> {
+  const request = { run_uid: uid, names_only: true };
+
+  const names: MetricNames = await fetch("/opsml/metrics", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return names;
+}
+
+export async function getRunMetrics(
+  uid: string,
+  name?: string[]
+): Promise<Metrics> {
+  const request = { run_uid: uid };
+
+  if (name) {
+    request["name"] = [name];
+  }
+
+  const metrics: Metrics = await fetch("/opsml/metrics", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return metrics;
+}
+
+export async function getRunParameters(uid: string): Promise<Parameters> {
+  const request = { run_uid: uid };
+
+  const params: Parameters = await fetch("/opsml/parameters", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+
+  return params;
+}
+
+export async function getRunGraphs(
+  repository: string,
+  name: string,
+  version: string
+) {
+  const graphs = await fetch(
+    `/opsml/runs/graphs?repsoitory=${repository}&name=${name}&version=${version}`
+  ).then((res) => res.json());
+
+  return graphs;
+}
