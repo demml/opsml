@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
   <br>
 </h1>
 
@@ -9,8 +9,8 @@
 
 <h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
 
-[![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
-[![Examples](https://github.com/shipt/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/shipt/opsml/actions/workflows/examples.yml)
+[![Tests](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml)
+[![Examples](https://github.com/demml/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/examples.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
@@ -47,7 +47,7 @@ Given its simple and modular design, `opsml` can be easily incorporated into exi
 
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="800" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-chip.png?raw=true"  width="800" alt="opsml logo"/>
   <br>
 </h1>
 
@@ -270,7 +270,7 @@ If you'd like to contribute, be sure to check out our [contributing guide](./CON
 
 Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
 
-<a href="https://github.com/shipt/opsml/graphs/contributors">
+<a href="https://github.com/demml/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
 </a>
 

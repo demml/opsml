@@ -30,7 +30,7 @@ theme:
   logo: 'images/gear.png'
 
 repo_name: opsml
-repo_url: https://github.com/shipt/opsml
+repo_url: https://github.com/demml/opsml
 edit_uri: edit/main/docs/
 
 

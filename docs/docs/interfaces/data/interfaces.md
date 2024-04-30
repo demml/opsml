@@ -53,7 +53,7 @@ Information about the `PandasData` interface.
 | --- | --- |
 | **Data Type** | `pandas.DataFrame` |
 | **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html)  |
-| **Source** | [`PandasData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_pandas.py) |
+| **Source** | [`PandasData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_pandas.py) |
 
 ### Example
 
@@ -84,7 +84,7 @@ Information about the `PandasData` interface.
 | --- | --- |
 | **Data Type** | `polars.DataFrame` |
 | **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html)  |
-| **Source** | [`PolarsData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_polars.py) |
+| **Source** | [`PolarsData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_polars.py) |
 
 
 
@@ -117,7 +117,7 @@ Information about the `NumpyData` interface.
 | --- | --- |
 | **Data Type** | `np.ndarray` |
 | **Save Format** | [`Zarr`](https://zarr.readthedocs.io/en/stable/index.html)  |
-| **Source** | [`NumpyData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_numpy.py) |
+| **Source** | [`NumpyData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_numpy.py) |
 
 
 ### Example
@@ -146,7 +146,7 @@ Information about the `ArrowData` interface.
 | --- | --- |
 | **Data Type** | `pa.Table` |
 | **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html)  |
-| **Source** | [`ArrowData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_arrow.py) |
+| **Source** | [`ArrowData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_arrow.py) |
 
 ### Example
 
@@ -178,7 +178,7 @@ Information about the `TorchData` interface.
 | --- | --- |
 | **Data Type** | `torch.Tensor` |
 | **Save Format** | [`torch`](https://pytorch.org/tutorials/beginner/saving_loading_models.html)  |
-| **Source** | [`TorchData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_torch.py) |
+| **Source** | [`TorchData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_torch.py) |
 
 ### Example
 
@@ -207,7 +207,7 @@ SqlData is an interface for storing sql logic in the event that you prefer to no
 | --- | --- |
 | **Data Type** | `Dict[str, str]` |
 | **Save Format** | `sql file` |
-| **Source** | [`SqlData`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_sql.py) |
+| **Source** | [`SqlData`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_sql.py) |
 
 ### Example
 

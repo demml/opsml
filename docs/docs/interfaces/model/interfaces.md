@@ -37,8 +37,8 @@ Interface for saving an Sklearn model
 | --- | --- |
 | **Model Type** | `sklearn.base.BaseEstimator` |
 | **Save Format** | `joblib` |
-| **Source** | [`SklearnModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/sklearn.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py) |
+| **Source** | [`SklearnModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/sklearn.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/sklearn/basic.py) |
 
 
 
@@ -94,9 +94,9 @@ Interface for saving a LightGBM booster or sklearn flavor model
 | --- | --- |
 | **Model Type** | `Booster` or `LGBMModel` |
 | **Save Format** | `text` or `joblib` |
-| **Source** | [`LightGBMModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/lgbm.py) |
-| **Example 1** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py) |
-| **Example 2** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_sklearn.py) |
+| **Source** | [`LightGBMModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/lgbm.py) |
+| **Example 1** | [`Link`](https://github.com/demml/opsml/blob/main/examples/boosters/lightgbm_boost.py) |
+| **Example 2** | [`Link`](https://github.com/demml/opsml/blob/main/examples/boosters/lightgbm_sklearn.py) |
 
 
 ### Arguments
@@ -155,8 +155,8 @@ Interface for saving a XGBoost model. Only sklearn flavor is currently supported
 | --- | --- |
 | **Model Type** | `XGBModel` |
 | **Save Format** | `joblib` |
-| **Source** | [`XGBoostModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/xgb.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py) |
+| **Source** | [`XGBoostModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/xgb.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/boosters/xgboost_sklearn.py) |
 
 
 ### Arguments
@@ -207,8 +207,8 @@ Interface for saving a CatBoost model.
 | --- | --- |
 | **Model Type** | `CatBoost` |
 | **Save Format** | `cbm` |
-| **Source** | [`CatBoostModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/catboost_.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py) |
+| **Source** | [`CatBoostModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/catboost_.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/boosters/catboost_example.py) |
 
 
 ### Arguments
@@ -257,8 +257,8 @@ Interface for saving a PyTorch model.
 | --- | --- |
 | **Model Type** | `torch.nn.Module` |
 | **Save Format** | `torch` |
-| **Source** | [`TorchModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/pytorch.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py) |
+| **Source** | [`TorchModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/pytorch.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/torch/torch_example.py) |
 
 
 ### Arguments
@@ -332,8 +332,8 @@ Interface for saving a PyTorch Lightning model.
 | --- | --- |
 | **Model Type** | `Trainer` |
 | **Save Format** | `ckpt` |
-| **Source** | [`LightningModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/pytorch_lightning.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py) |
+| **Source** | [`LightningModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/pytorch_lightning.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/torch/torch_lightning_example.py) |
 
 
 ### Arguments
@@ -409,8 +409,8 @@ Interface for saving a tensorflow model.
 | --- | --- |
 | **Model Type** | `tf.keras.Model` |
 | **Save Format** | `tensorflow` |
-| **Source** | [`TensorFlowModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/tf.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py) |
+| **Source** | [`TensorFlowModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/tf.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/tensorflow/tf_example.py) |
 
 
 ### Arguments
@@ -471,8 +471,8 @@ Interface for saving a huggingface model.
 | --- | --- |
 | **Model Type** | `Union[Pipeline, PreTrainedModel, TFPreTrainedModel]` |
 | **Save Format** | `huggingface` |
-| **Source** | [`HuggingFaceModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/huggingface.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py) |
+| **Source** | [`HuggingFaceModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/huggingface.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/huggingface/hf_example.py) |
 
 
 ### Arguments
@@ -544,8 +544,8 @@ Interface for saving a Vowpal Wabbit model.
 | --- | --- |
 | **Model Type** | `Workspace` |
 | **Save Format** | `.model` |
-| **Source** | [`VowpalWabbitModel`](https://github.com/shipt/opsml/blob/main/opsml/model/interfaces/vowpal.py) |
-| **Example** | [`Link`](https://github.com/shipt/opsml/blob/main/examples/vowpal/vowpal_example.py) |
+| **Source** | [`VowpalWabbitModel`](https://github.com/demml/opsml/blob/main/opsml/model/interfaces/vowpal.py) |
+| **Example** | [`Link`](https://github.com/demml/opsml/blob/main/examples/vowpal/vowpal_example.py) |
 
 
 ### Arguments

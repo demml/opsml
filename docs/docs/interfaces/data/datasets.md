@@ -40,19 +40,19 @@ Datasets are saved via `pyarrow` reader and writers. This allows for efficient l
 
 ### Metadata
 
-The `metadata.jsonl` file is a `jsonl` file containing line separated json entries that can be written and loaded via the dataset's [`Metadata`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/base.py#L112) class. The `Metadata` class is a `pydantic` model that is used to validate the `metadata.jsonl` file. Each `metadata` subclass accepts a list of [`FileRecords`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/base.py#L58). For subclass-specific examples, please refer to the examples below.
+The `metadata.jsonl` file is a `jsonl` file containing line separated json entries that can be written and loaded via the dataset's [`Metadata`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/base.py#L112) class. The `Metadata` class is a `pydantic` model that is used to validate the `metadata.jsonl` file. Each `metadata` subclass accepts a list of [`FileRecords`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/base.py#L58). For subclass-specific examples, please refer to the examples below.
 
 
 
 ## ImageDataset
 
-[`ImageDataset`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_image.py#L24) is a subclass of `Dataset` that is used to load and save image data. It is similar to `HuggingFace` datasets, which was intentional in order to maintain some level of parity.
+[`ImageDataset`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_image.py#L24) is a subclass of `Dataset` that is used to load and save image data. It is similar to `HuggingFace` datasets, which was intentional in order to maintain some level of parity.
 
 |  |  |
 | --- | --- |
 | **Data Type** | `Directory of images` |
 | **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html) |
-| **Source** | [`ImageDataset`](https://github.com/shipt/opsml/blob/main/opsml/data/interfaces/_image.py) |
+| **Source** | [`ImageDataset`](https://github.com/demml/opsml/blob/main/opsml/data/interfaces/_image.py) |
 
 ---
 ### ImageMetadata
@@ -89,7 +89,7 @@ The `metadata.jsonl` file is a `jsonl` file containing line separated json entri
 : List of categories for the image
 
 `objects`
-: Bounding box specifications for objects in the image. See [`BBox`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/image.py#L17)
+: Bounding box specifications for objects in the image. See [`BBox`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/custom_data/image.py#L17)
 
 
 ::: opsml.ImageRecord
@@ -138,13 +138,13 @@ data_registry.register_card(card=datacard)
 
 ## TextDataset
 
-[`TextDataset`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_text.py#L23) is a subclass of `Dataset` that is used to load and save test data. It is similar to `HuggingFace` datasets, which was intentional in order to maintain some level of parity.
+[`TextDataset`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_text.py#L23) is a subclass of `Dataset` that is used to load and save test data. It is similar to `HuggingFace` datasets, which was intentional in order to maintain some level of parity.
 
 |  |  |
 | --- | --- |
 | **Data Type** | `Directory of text files` |
 | **Save Format** | [`parquet`](https://arrow.apache.org/docs/python/parquet.html) |
-| **Source** | [`TextDataset`](https://github.com/shipt/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_text.py#L23) |
+| **Source** | [`TextDataset`](https://github.com/demml/opsml/blob/3c84792ad81715c1a5ab66607d2398394f7492ba/opsml/data/interfaces/_text.py#L23) |
 
 ---
 ### TextMetadata
