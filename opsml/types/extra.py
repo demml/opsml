@@ -142,3 +142,20 @@ class GraphStyle(str, Enum):
         if l_name == "scatter":
             return GraphStyle.SCATTER
         raise ValueError(f"GraphStyle {name} not found")
+
+
+class PresignableTypes(str, Enum):
+    JPEG = ".jpeg"
+    JPG = ".jpg"
+    PNG = ".png"
+    PDF = ".pdf"
+    MD = ".md"
+    TEXT = ".txt"
+    CSV = ".csv"
+    JSON = ".json"
+    TIFF = ".tiff"
+    GIF = ".gif"
+    MP4 = ".mp4"
+    PY = ".py"
+    YML = ".yml"
+    YAML = ".yaml"

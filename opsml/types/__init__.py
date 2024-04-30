@@ -23,6 +23,7 @@ from opsml.types.extra import (
     CommonKwargs,
     Description,
     GraphStyle,
+    PresignableTypes,
     SaveName,
     Suffix,
     UriNames,
