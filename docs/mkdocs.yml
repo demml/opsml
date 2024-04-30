@@ -1,4 +1,5 @@
 site_name: OpsML
+site_url: https://demml.github.io/opsml/
 
 theme:
   name: material
