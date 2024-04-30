@@ -3,10 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import io
+import json
 import tempfile
 import zipfile as zp
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List, Optional
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -15,6 +16,7 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
+from opsml import CardRegistry
 from opsml.app.core.dependencies import (
     reverse_swap_opsml_root,
     swap_opsml_root,
@@ -23,22 +25,29 @@ from opsml.app.core.dependencies import (
 from opsml.app.routes.pydantic_models import (
     DeleteFileResponse,
     FileExistsResponse,
+    FileViewResponse,
+    ListFileInfoResponse,
     ListFileResponse,
+    ReadMeRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
     MaxBodySizeValidator,
+    calculate_file_size,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
+from opsml.types import PresignableTypes, RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
+MAX_VIEWSIZE = 1024 * 1024 * 2  # = 2MB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
+PRESIGN_DEFAULT_EXPIRATION = 60
 router = APIRouter()
 
 
@@ -213,6 +222,7 @@ def list_files(request: Request, path: str) -> ListFileResponse:
 
     swapped_path = swap_opsml_root(request, Path(path))
     storage_client: StorageClientBase = request.app.state.storage_client
+
     files = storage_client.find(Path(swapped_path))
 
     try:
@@ -222,6 +232,116 @@ def list_files(request: Request, path: str) -> ListFileResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.get("/files/list/info", name="list_files_info")
+def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -> ListFileInfoResponse:
+    """Lists files
+
+    Args:
+        request:
+            request object
+        path:
+            path to read
+
+    Returns:
+        `ListFileResponse`
+    """
+    storage_path = Path(path)
+
+    if subdir:
+        storage_path = storage_path / subdir
+
+    swapped_path = swap_opsml_root(request, storage_path)
+    storage_client: StorageClientBase = request.app.state.storage_client
+
+    files: List[Dict[str, Any]] = storage_client.ls(swapped_path, True)
+
+    mtimes = []
+    for file_ in files:
+        # conversion of timestamp is done on client side to take timezone into account
+        mtime = file_["mtime"] * 1000
+        uri = Path(file_["name"])
+        file_["uri"] = str(reverse_swap_opsml_root(request, uri))
+        file_["name"] = uri.name
+        file_["size"] = calculate_file_size(file_["size"])
+        file_["mtime"] = mtime
+        mtimes.append(mtime)
+
+    try:
+        return ListFileInfoResponse(
+            files=files,
+            mtime=max(mtimes),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.get("/files/view", name="presign_uri")
+def get_file_to_view(request: Request, path: str) -> FileViewResponse:
+    """Downloads a file
+
+    Args:
+        request:
+            request object
+        path:
+            path to file
+
+    Returns:
+        Streaming file response
+    """
+
+    swapped_path = swap_opsml_root(request, Path(path))
+    storage_client: StorageClientBase = request.app.state.storage_client
+    storage_root: str = request.app.state.storage_root
+    view_meta: Dict[str, str] = {}
+    try:
+        file_info = storage_client.client.info(path=swapped_path)
+        size = file_info["size"]
+        file_info["size"] = calculate_file_size(size)
+        file_info["name"] = swapped_path.name
+        file_info["mtime"] = file_info["mtime"] * 1000
+        file_info["uri"] = path
+        file_info["suffix"] = swapped_path.suffix
+
+        if swapped_path.suffix in list(PresignableTypes):
+            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py", ".md"]:
+                # download load file to string
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    lpath = Path(tmpdirname) / swapped_path.name
+                    storage_client.get(swapped_path, lpath)
+
+                    with lpath.open("rb") as file_:
+                        file_ = file_.read().decode("utf-8")
+
+                        if swapped_path.suffix == ".json":
+                            view_meta["content"] = json.dumps(json.loads(file_), indent=4)  # type: ignore
+
+                        else:
+                            view_meta["content"] = file_
+
+                view_meta["view_type"] = "code"
+
+            else:
+                view_meta["view_type"] = "iframe"
+
+                # get remote path relative to storage root
+                file_info["uri"] = storage_client.generate_presigned_url(
+                    path=swapped_path.relative_to(storage_root),
+                    expiration=PRESIGN_DEFAULT_EXPIRATION,
+                )
+
+        return FileViewResponse(file_info=file_info, content=view_meta)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error generating the presigned uri. {error}",
         ) from error
 
 
@@ -277,3 +397,46 @@ def delete_files(request: Request, path: str) -> DeleteFileResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error deleting files. {error}",
         ) from error
+
+
+@router.post("/files/readme", name="create_readme")
+async def create_readme(
+    request: Request,
+    payload: ReadMeRequest,
+) -> bool:
+    """UI route that creates a readme file"""
+
+    try:
+        # check name and repo exist before saving
+        storage_client: StorageClientBase = request.app.state.storage_client
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+
+        cards = registry.list_cards(name=payload.name, repository=payload.repository)
+
+        if not cards:
+            logger.warning("No cards found for name {} and repository {}", payload.name, payload.repository)
+            return False
+
+        # save payload.content to readme in temp file
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            lpath = Path(tmpdirname) / "README.md"
+            with lpath.open("w") as file_:
+                file_.write(payload.content)
+
+            rpath = (
+                Path(config.opsml_storage_uri)
+                / RegistryTableNames.from_str(payload.registry_type).value
+                / payload.repository
+                / payload.name
+                / lpath.name
+            )
+            # save to storage
+            storage_client.put(lpath, rpath)
+
+        logger.info("Readme file created for {} in {}", payload.name, rpath)
+
+        return True
+
+    except Exception as error:
+        logger.error("Error creating readme file {}", error)
+        return False

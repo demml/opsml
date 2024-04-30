@@ -1,10 +1,10 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
@@ -81,9 +81,9 @@ class ListCardRequest(BaseModel):
     tags: Optional[Dict[str, str]] = None
     ignore_release_candidates: bool = False
     project_id: Optional[str] = None
-    registry_type: Optional[str] = None
-    table_name: Optional[str] = None
+    registry_type: str
     query_terms: Optional[Dict[str, Any]] = None
+    page: Optional[int] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -174,14 +174,16 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
 class RepositoriesResponse(BaseModel):
     repositories: List[str] = []
+
+
+class RegistryQuery(BaseModel):
+    page: List[Tuple[Union[str, int], ...]]
 
 
 class TableNameResponse(BaseModel):
@@ -198,6 +200,38 @@ class ListFileRequest(BaseModel):
 
 class ListFileResponse(BaseModel):
     files: List[str]
+
+
+class FileInfo(BaseModel):
+    uri: str
+    name: str
+    size: str
+    type: str
+    created: float
+    islink: bool
+    mode: int
+    uid: int
+    gid: int
+    mtime: float
+    ino: int
+    nlink: int
+    viewable: bool = False
+    suffix: Optional[str] = None
+
+
+class ViewContent(BaseModel):
+    content: Optional[str] = None
+    view_type: Optional[str] = None
+
+
+class FileViewResponse(BaseModel):
+    file_info: FileInfo
+    content: ViewContent
+
+
+class ListFileInfoResponse(BaseModel):
+    files: List[FileInfo]
+    mtime: float
 
 
 class DeleteFileResponse(BaseModel):
@@ -221,13 +255,46 @@ class Metric(BaseModel):
 
 
 class Metrics(BaseModel):
-    metric: Union[Optional[List[Metric]], Optional[List[str]]]
+    metric: List[Optional[Union[Metric, str]]] = []
 
 
 class GetMetricRequest(BaseModel):
     run_uid: str
     name: Optional[List[str]] = None
     names_only: bool = False
+
+
+class Parameter(BaseModel):
+    run_uid: str
+    name: str
+    value: Union[float, int, str]
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def check_type(cls, value: str) -> Union[float, int, str]:
+        """All params are stored as strings in the database. This function coerces the value
+        to a float of int if possible when returning values
+        """
+
+        if isinstance(value, (int, float)):
+            return value
+
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
+
+class Parameters(BaseModel):
+    parameter: List[Optional[Parameter]] = []
+
+
+class GetParameterRequest(BaseModel):
+    run_uid: str
+    name: Optional[List[str]] = None
 
 
 class CompareMetricRequest(BaseModel):
@@ -241,6 +308,18 @@ class CompareMetricResponse(BaseModel):
     challenger_name: str
     challenger_version: str
     report: Dict[str, List[BattleReport]]
+
+
+class DataCardMetadata(BaseModel):
+    name: str
+    version: str
+    repository: str
+    contact: str
+    uid: str
+    interface_type: str
+    data_splits: Optional[str] = None
+    sql_logic: Dict[str, str] = {}
+    feature_map: Optional[str] = None
 
 
 def form_body(cls: Any) -> Any:
@@ -393,3 +472,10 @@ class MetricRequest(BaseModel):
 
 class MetricResponse(BaseModel):
     metrics: Metrics
+
+
+class ReadMeRequest(BaseModel):
+    name: str
+    repository: str
+    registry_type: str
+    content: str

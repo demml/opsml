@@ -155,6 +155,7 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
     """
+
     storage_root = request.app.state.storage_root
     registry: CardRegistry = request.app.state.registries.model
 
