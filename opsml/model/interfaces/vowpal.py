@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import ModelInterface
@@ -29,6 +29,8 @@ try:
         model: Optional[vw.Workspace] = None
         sample_data: Optional[str] = None
         arguments: str = ""
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:

@@ -122,6 +122,8 @@ class AuditCard(ArtifactCard):
             Whether the audit has been approved
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     audit: AuditSections = AuditSections()
     approved: bool = False
     comments: List[SerializeAsAny[Comment]] = []

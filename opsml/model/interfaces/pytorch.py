@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import joblib
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import (
@@ -62,6 +62,8 @@ try:
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:

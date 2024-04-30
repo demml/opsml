@@ -3,13 +3,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    FieldSerializationInfo,
+    field_serializer,
+    field_validator,
+)
 
 from opsml.types import AllowedDataType
 
@@ -21,6 +27,28 @@ class Data:
 
 
 class DataSplit(BaseModel):
+    """Creates a data split based on the provided logic.
+
+    Args:
+        label:
+            Label for the split
+        column_name:
+            Column name to split on
+        column_value:
+            Column value to split on. Can be a string, float, int, or timestamp.
+        inequality:
+            Inequality sign to split on
+        start:
+            Start index to split on
+        stop:
+            Stop index to split on
+        indices:
+            List of indices to split on
+        column_type
+            column_type of column_value. Automatically set
+
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     label: str
@@ -30,6 +58,22 @@ class DataSplit(BaseModel):
     start: Optional[int] = None
     stop: Optional[int] = None
     indices: Optional[List[int]] = None
+    column_type: str = "builtin"
+
+    def __init__(self, **data: Dict[str, Any]) -> None:
+        """Custom initialization logic to handle timestamp split types.
+        Custom JSON serialization logic coerces timestamp into string. Thus, column_value
+        needs to be coerced back into timestamp when loading datasplit from card
+        JSON file.
+
+        """
+        super().__init__(**data)
+
+        if isinstance(self.column_value, pd.Timestamp):
+            self.column_type = "timestamp"
+
+        if self.column_type == "timestamp" and not isinstance(self.column_value, pd.Timestamp):
+            self.column_value = pd.Timestamp(self.column_value)
 
     @field_validator("indices", mode="before")
     @classmethod
@@ -50,6 +94,26 @@ class DataSplit(BaseModel):
             value = value.strip()
 
         return value
+
+    @field_serializer("column_value")
+    def serialize_column_value(
+        self,
+        column_value: Optional[Union[str, float, int, pd.Timestamp]],
+        _info: FieldSerializationInfo,
+    ) -> Optional[Union[str, float, int]]:
+        """Serializes pd.timestamp to str. This is used when saving the data split as a JSON file
+
+        Args:
+            column_value:
+                Column value to serialize
+
+        Returns:
+            Union[str, float, int]: Serialized column value
+        """
+
+        if isinstance(column_value, pd.Timestamp):
+            return str(column_value)
+        return column_value
 
 
 class DataSplitterBase:

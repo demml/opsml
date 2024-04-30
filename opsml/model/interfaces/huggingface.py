@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
@@ -97,6 +97,8 @@ try:
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
         tokenizer_name: str = CommonKwargs.UNDEFINED.value
         feature_extractor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @classmethod
         def _get_sample_data(cls, sample_data: Any) -> Any:

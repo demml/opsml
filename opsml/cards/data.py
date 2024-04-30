@@ -13,7 +13,7 @@ from typing import (  # noqa # pylint: disable=unused-import
     Union,
 )
 
-from pydantic import SerializeAsAny
+from pydantic import ConfigDict, SerializeAsAny
 
 from opsml.cards.base import ArtifactCard
 from opsml.data import Dataset
@@ -58,6 +58,8 @@ class DataCard(ArtifactCard):
         DataCard
 
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     interface: SerializeAsAny[Union[DataInterface, Dataset]]
     metadata: DataCardMetadata = DataCardMetadata()

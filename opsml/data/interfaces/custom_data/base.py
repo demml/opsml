@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pyarrow as pa
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_serializer, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CommonKwargs, Description, Suffix
@@ -176,6 +176,10 @@ class Dataset(BaseModel):
     shard_size: str = "512MB"
     splits: Dict[Optional[str], Metadata] = {}
     description: Description = Description()
+
+    @field_serializer("data_dir", return_type=str)
+    def serialize_data_dir(self, data_dir: Path, _info: Any) -> str:
+        return data_dir.as_posix()
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value

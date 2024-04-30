@@ -512,3 +512,15 @@ class ModelCard(Protocol):
 
     @property
     def to_onnx(self) -> bool: ...
+
+
+class ModelInterfaceTypes(str, Enum):
+    CATBOOST = "CatBoostModel"
+    HUGGINGFACE = "HuggingFaceModel"
+    LIGHTGBM = "LightGBMModel"
+    LIGHTNINGMODEL = "LightningModel"
+    TORCH = "TorchModel"
+    SKLEARN = "SklearnModel"
+    TENSORFLOW = "TensorFlowModel"
+    VOWPALWABBIT = "VowpalWabbitModel"
+    XGBOOST = "XGBoostModel"

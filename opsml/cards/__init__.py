@@ -1,3 +1,5 @@
+from typing import Union
+
 from opsml.cards.audit import AuditCard
 from opsml.cards.base import ArtifactCard
 from opsml.cards.data import DataCard
@@ -7,6 +9,8 @@ from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
 from opsml.data.splitter import DataSplit
 from opsml.types import CardInfo, DataCardMetadata, Description, ModelCardMetadata
+
+Card = Union[ModelCard, DataCard, RunCard, AuditCard, ProjectCard, PipelineCard]
 
 __all__ = [
     "AuditCard",
@@ -21,4 +25,5 @@ __all__ = [
     "Description",
     "ModelCardMetadata",
     "DataSplit",
+    "Card",
 ]
