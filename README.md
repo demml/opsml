@@ -7,7 +7,7 @@
 
 <h2 align="center">Universal Artifact Registration System for Machine Learning</h2>
 
-<h1 align="center"><a href="https://thorrester.github.io/opsml-ghpages/">OpsML Documentation</h1>
+<h1 align="center"><a href="">OpsML Documentation</h1>
 
 [![Unit Tests](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml)
 [![Examples](https://github.com/demml/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/examples.yml)
@@ -166,7 +166,7 @@ registries.model.register_card(card=modelcard)
 
 Now that `opsml` is installed, you're ready to start using it!
 
-It's time to point you to the official [Documentation Website](https://thorrester.github.io/opsml-ghpages/) for more information on how to use `opsml`
+It's time to point you to the official [Documentation Website](https://demml.github.io/opsml-ghpages/) for more information on how to use `opsml`
 
 
 ## Advanced Installation Scenarios
