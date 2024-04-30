@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cards import ArtifactCard, Card
+from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import (
     AuditCardMetadata,
@@ -151,7 +151,7 @@ class AuditCard(ArtifactCard):
 
         return self.model_dump()
 
-    def add_card(self, card: Card) -> None:
+    def add_card(self, card: ArtifactCard) -> None:
         """
         Adds a card uid to the appropriate card uid list for tracking
 
