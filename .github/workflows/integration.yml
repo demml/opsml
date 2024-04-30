@@ -1,13 +1,12 @@
 name: Integration
 
 on:
-  workflow_run:
-    workflows: [Lint-Unit-Test]
-    types: [completed]
+  push:
+    branches:
+      - main
       
 jobs:
   Unit-Integration:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         python-version: ["3.11"]
@@ -18,14 +17,13 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_TEST_BUCKET }}
-      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
-      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_TEST_BUCKET }}
+      OPSML_GCS_TEST_BUCKET: ${{ secrets.OPSML_GCS_BUCKET }}
+      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GCS_ACCOUNT_BASE64 }}
+      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_BUCKET }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
        
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}

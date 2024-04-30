@@ -2,8 +2,7 @@
 name = "opsml"
 description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
-    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' },
-    { name = 'Damon Allison', email = 'damon@shipt.com' },
+    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' }
 ]
 readme = "README.md"
 license = 'MIT'
@@ -143,7 +142,7 @@ coverage = { extras = ["toml"], version = "^6.5.0" }
 torch = "^2.1.0"
 torchvision = "^0.16"
 #tabulate = "^0.9.0"
-lightgbm = "^3.3.3, <4.0.0"
+lightgbm = "^4"
 xgboost = "^1.7.1"
 transformers = "^4.27.3"
 tensorflow = { version = "^2.11.0", platform = "linux" }
