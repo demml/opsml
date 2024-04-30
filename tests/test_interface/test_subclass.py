@@ -10,7 +10,7 @@ from opsml.model import SklearnModel
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
-from opsml.types import RegistryType, SaveName
+from opsml.types import RegistryType, SaveName, Suffix
 
 
 def test_model_interface(
@@ -43,9 +43,11 @@ def test_model_interface(
     save_card_artifacts(modelcard)
 
     # check paths exist on server
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(".joblib"))
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(

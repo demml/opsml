@@ -22,7 +22,7 @@ from opsml.types.extra import Suffix
 def test_numpy_api_client(
     numpy_data: NumpyData,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     data: NumpyData = numpy_data
 
     datacard = DataCard(
@@ -38,7 +38,7 @@ def test_numpy_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(Suffix.ZARR.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -54,13 +54,15 @@ def test_numpy_api_client(
     assert isinstance(loaded_card, DataCard)
 
     loaded_card.load_data()
+    assert isinstance(loaded_card.interface, NumpyData)
     assert type(loaded_card.interface.data) == type(datacard.interface.data)
+    assert loaded_card.interface.data_splits == datacard.interface.data_splits
 
 
 def test_pandas_api_client(
     pandas_data: PandasData,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     data: PandasData = pandas_data
     data.create_data_profile()
 
@@ -79,7 +81,7 @@ def test_pandas_api_client(
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -104,7 +106,7 @@ def test_pandas_api_client(
 def test_polars_api_client(
     polars_data: PolarsData,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     data: PolarsData = polars_data
     data.create_data_profile()
 
@@ -123,7 +125,7 @@ def test_polars_api_client(
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -148,7 +150,7 @@ def test_polars_api_client(
 def test_arrow_api_client(
     arrow_data: ArrowData,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     data: ArrowData = arrow_data
 
     datacard = DataCard(
@@ -164,7 +166,7 @@ def test_arrow_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -186,7 +188,7 @@ def test_arrow_api_client(
 def test_image_data(
     create_image_dataset: Path,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
 
     data_dir = create_image_dataset
     image_data = ImageDataset(data_dir=data_dir)
@@ -204,7 +206,7 @@ def test_image_data(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -233,7 +235,7 @@ def test_image_data(
 def test_text_data(
     create_text_dataset: Path,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
 
     data_dir = create_text_dataset
     text_data = TextDataset(data_dir=data_dir)
@@ -251,7 +253,7 @@ def test_text_data(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
