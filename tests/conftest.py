@@ -3,7 +3,7 @@ import os
 import tempfile
 import warnings
 from pathlib import Path
-from typing import Any, Generator, Tuple, TypeVar
+from typing import Any, Dict, Generator, Tuple, TypeVar, Union
 
 warnings.filterwarnings("ignore")
 
@@ -160,7 +160,7 @@ def cleanup() -> None:
 
 
 @pytest.fixture
-def gcp_cred_path():
+def gcp_cred_path() -> str:
     return os.path.join(os.path.dirname(__file__), "assets/fake_gcp_creds.json")
 
 
@@ -171,7 +171,7 @@ def save_path() -> str:
 
 
 @pytest.fixture
-def mock_gcp_vars(gcp_cred_path):
+def mock_gcp_vars(gcp_cred_path) -> Any:
     creds, _ = load_credentials_from_file(gcp_cred_path)
     mock_vars = {
         "gcp_project": "test",
@@ -185,7 +185,7 @@ def mock_gcp_vars(gcp_cred_path):
 
 
 @pytest.fixture
-def mock_gcp_creds(mock_gcp_vars):
+def mock_gcp_creds(mock_gcp_vars) -> Any:
     creds = GcpCreds(
         creds=mock_gcp_vars["gcp_creds"],
         project=mock_gcp_vars["gcp_project"],
@@ -249,7 +249,7 @@ def test_app_login() -> YieldFixture[TestClient]:
 
 @pytest.fixture
 def gcs_test_bucket() -> Path:
-    return Path(os.environ["OPSML_GCS_TEST_BUCKET"])
+    return Path(os.environ["OPSML_BUCKET_GCS"])
 
 
 @pytest.fixture
@@ -308,12 +308,12 @@ def api_storage_client(api_registries: CardRegistries) -> client.StorageClient:
 
 
 @pytest.fixture
-def mock_aws_storage_response():
+def mock_aws_storage_response() -> Generator[httpx.Client, None, None]:
     class MockResponse:
         def __init__(self):
             self.status_code = 200
 
-        def json(self):
+        def json(self) -> Dict[str, Union[str, bool]]:
             return {
                 "storage_type": "s3",
                 "storage_uri": "s3://test",
@@ -321,7 +321,7 @@ def mock_aws_storage_response():
             }
 
     class MockHTTPX(httpx.Client):
-        def get(self, url, **kwargs):
+        def get(self, url, **kwargs) -> Any:
             return MockResponse()
 
     with patch("httpx.Client", MockHTTPX) as mock_requests:
@@ -329,7 +329,7 @@ def mock_aws_storage_response():
 
 
 @pytest.fixture
-def mock_gcs_storage_response():
+def mock_gcs_storage_response() -> Generator[httpx.Client, None, None]:
     class MockResponse:
         def __init__(self):
             self.status_code = 200
@@ -353,11 +353,11 @@ def mock_gcs_storage_response():
 
 
 @pytest.fixture
-def numpy_data() -> np.ndarray[Any, np.float64]:
+def numpy_data() -> NumpyData:
     data = np.random.rand(10, 100)
     return NumpyData(
         data=data,
-        datasplits=[
+        data_splits=[
             DataSplit(label="train", indices=np.array([0, 1, 2])),
         ],
     )
@@ -395,7 +395,45 @@ def pandas_data() -> pd.DataFrame:
 
 
 @pytest.fixture
-def sql_data():
+def pandas_data_timestamp() -> pd.DataFrame:
+    df = pd.DataFrame(
+        {
+            "year": [2020, 2022, 2019, 2020, 2020, 2022, 2019, 2021],
+            "n_legs": [2, 4, 5, 100, 2, 4, 5, 100],
+            "animals": [
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+                "Flamingo",
+                "Horse",
+                "Brittle stars",
+                "Centipede",
+            ],
+        }
+    )
+
+    # create timestamp column
+    df["timestamp"] = pd.Timestamp.today()
+
+    data_split = [
+        DataSplit(
+            label="train",
+            column_name="timestamp",
+            column_value=pd.Timestamp("2020-01-01"),
+            inequality=">=",
+        ),
+    ]
+    return PandasData(
+        data=df,
+        data_splits=data_split,
+        sql_logic={"test": "SELECT * FROM TEST_TABLE"},
+        dependent_vars=[200, "test"],
+    )
+
+
+@pytest.fixture
+def sql_data() -> SqlData:
     return SqlData(
         sql_logic={"test": "select * from test_table"},
         feature_descriptions={"test": "test_description"},
@@ -403,14 +441,14 @@ def sql_data():
 
 
 @pytest.fixture
-def sql_file():
+def sql_file() -> SqlData:
     return SqlData(
         sql_logic={"test": "test_sql.sql"},
     )
 
 
 @pytest.fixture
-def arrow_data():
+def arrow_data() -> ArrowData:
     n_legs = pa.array([2, 4, 5, 100])
     animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
     names = ["n_legs", "animals"]
@@ -419,7 +457,7 @@ def arrow_data():
 
 
 @pytest.fixture
-def polars_data():
+def polars_data() -> PolarsData:
     df = pl.DataFrame(
         {
             "foo": [1, 2, 3, 4, 5, 6],
@@ -441,7 +479,7 @@ def polars_data():
 
 
 @pytest.fixture
-def pandas_timestamp_df():
+def pandas_timestamp_df() -> PandasData:
     df = pd.DataFrame({"date": ["2014-10-23", "2016-09-08", "2016-10-08", "2020-10-08"]})
     df["date"] = pd.to_datetime(df["date"])
     return PandasData(data=df)

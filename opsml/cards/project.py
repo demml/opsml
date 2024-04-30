@@ -8,6 +8,8 @@
 #
 from typing import Any, Dict, List, Optional  # noqa # pylint: disable=unused-import
 
+from pydantic import ConfigDict
+
 from opsml.cards.base import ArtifactCard
 from opsml.types import CardType
 
@@ -17,6 +19,7 @@ class ProjectCard(ArtifactCard):
     Card containing project information
     """
 
+    model_config = ConfigDict(extra="forbid")
     project_id: int = 0  # placeholder
 
     def create_registry_record(self) -> Dict[str, Any]:

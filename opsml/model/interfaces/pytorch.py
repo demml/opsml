@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import joblib
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import (
@@ -62,6 +62,8 @@ try:
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:
@@ -166,13 +168,16 @@ try:
             """
             model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
 
+            # remove model_arch from kwargs. Will raise an error if passed to torch.load
+            kwargs.pop(CommonKwargs.MODEL_ARCH.value, None)
+
             if model_arch is not None:
-                model_arch.load_state_dict(torch.load(path))
+                model_arch.load_state_dict(torch.load(path, **kwargs))
                 model_arch.eval()
                 self.model = model_arch
 
             else:
-                self.model = torch.load(path)
+                self.model = torch.load(path, **kwargs)
 
         def save_onnx(self, path: Path) -> ModelReturn:
             """Saves an onnx model

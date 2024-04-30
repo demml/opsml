@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import joblib
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
@@ -46,6 +46,8 @@ try:
         sample_data: Optional[Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:

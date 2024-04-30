@@ -7,7 +7,7 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
-from opsml.cards.base import ArtifactCard
+from opsml.cards import Card
 from opsml.cards.project import ProjectCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
@@ -141,9 +141,9 @@ class OpsmlProject:
 
         self._run_mgr.end_run()
 
-    def load_card(self, registry_name: str, info: CardInfo) -> ArtifactCard:
+    def load_card(self, registry_name: str, info: CardInfo) -> Card:
         """
-        Loads an ArtifactCard.
+        Loads a Card.
 
         Args:
             registry_name:
@@ -155,7 +155,7 @@ class OpsmlProject:
                 be loaded.
 
         Returns
-            `ArtifactCard`
+            `Card`
         """
         card_type = CardType(registry_name.lower()).value
         return CardHandler.load_card(

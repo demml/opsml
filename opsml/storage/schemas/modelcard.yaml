@@ -1,0 +1,25 @@
+keys:
+  - name
+  - repository
+  - version
+  - contact
+  - uid
+  - tags
+  - info
+  - datacard_uid
+  - to_onnx
+  - metadata
+  - interface
+  - backend
+  - preprocessor_name
+  - feature_extractor_name
+  - tokenizer_name
+  - task_type
+  - is_pipeline
+  - data_type
+  - model_type
+  - onnx_args
+  - modelcard_uid
+  - save_args
+  - arguments
+  

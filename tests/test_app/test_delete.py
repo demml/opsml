@@ -22,7 +22,7 @@ def test_delete_data_model(
     data_registry = api_registries.data
     model_registry = api_registries.model
 
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(
         Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     )
@@ -42,7 +42,7 @@ def test_delete_data_model(
     assert api_storage_client.exists(
         Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
     )
-    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # delete model card
     model_registry.delete_card(card=modelcard)
@@ -59,14 +59,14 @@ def test_delete_data_model(
     assert not api_storage_client.exists(
         Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
     )
-    assert not api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert not api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # delete datacard
     data_registry.delete_card(card=datacard)
     cards = data_registry.list_cards(name=datacard.name, repository=datacard.repository)
     assert len(cards) == 0
 
-    assert not api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert not api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     assert not api_storage_client.exists(
         Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     )

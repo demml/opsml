@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
-from pydantic import field_validator, model_validator
+from pydantic import ConfigDict, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
@@ -97,6 +97,8 @@ try:
         onnx_args: Optional[HuggingFaceOnnxArgs] = None
         tokenizer_name: str = CommonKwargs.UNDEFINED.value
         feature_extractor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @classmethod
         def _get_sample_data(cls, sample_data: Any) -> Any:
@@ -423,15 +425,15 @@ try:
                 kwargs:
                     Additional kwargs to pass to transformers.load_pretrained
             """
-            custom_arch = kwargs.get("custom_architecture")
+            custom_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
             if custom_arch is not None:
                 assert isinstance(
                     custom_arch, (PreTrainedModel, TFPreTrainedModel)
                 ), "Custom architecture must be a huggingface model"
-                self.model = custom_arch.from_pretrained(path)
+                self.model = custom_arch.from_pretrained(path, **kwargs)
 
             else:
-                self.model = getattr(transformers, self.model_type).from_pretrained(path)
+                self.model = getattr(transformers, self.model_type).from_pretrained(path, **kwargs)
 
         def to_pipeline(self) -> None:
             """Converts model to pipeline"""
