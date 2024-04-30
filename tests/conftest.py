@@ -249,7 +249,7 @@ def test_app_login() -> YieldFixture[TestClient]:
 
 @pytest.fixture
 def gcs_test_bucket() -> Path:
-    return Path(os.environ["OPSML_BUCKET_GCS"])
+    return Path(os.environ["OPSML_GCS_BUCKET"])
 
 
 @pytest.fixture
