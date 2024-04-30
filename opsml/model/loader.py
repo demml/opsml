@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from opsml.model import HuggingFaceModel, ModelInterface
-from opsml.types import ModelMetadata, OnnxModel, SaveName, Suffix, HuggingFaceOnnxArgs
+from opsml.types import HuggingFaceOnnxArgs, ModelMetadata, OnnxModel, SaveName, Suffix
 
 
 class ModelLoader:
