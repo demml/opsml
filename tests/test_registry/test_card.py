@@ -1,6 +1,6 @@
 import pytest
 
-from opsml.cards import ArtifactCard
+from opsml.cards import Card
 from opsml.helpers.utils import validate_name_repository_pattern
 from opsml.types import CardInfo, Comment, RegistryType
 
@@ -8,7 +8,7 @@ card_info = CardInfo(name="test", repository="opsml", contact="opsml@email.com")
 
 
 def test_artifact_card_with_args() -> None:
-    card = ArtifactCard(
+    card = Card(
         name=card_info.name,
         repository=card_info.repository,
         contact=card_info.contact,
@@ -20,14 +20,14 @@ def test_artifact_card_with_args() -> None:
 
 
 def test_artifact_card_without_args() -> None:
-    card = ArtifactCard(info=card_info)
+    card = Card(info=card_info)
     assert card.name == card_info.name
     assert card.repository == card_info.repository
     assert card.contact == card_info.contact
 
 
 def test_artifact_card_with_both() -> None:
-    card = ArtifactCard(name="override_name", info=card_info)
+    card = Card(name="override_name", info=card_info)
 
     assert card.name == "override-name"  # string cleaning
     assert card.repository == card_info.repository
@@ -42,7 +42,7 @@ def test_artifact_card_name_repository_fail() -> None:
     )
 
     with pytest.raises(ValueError):
-        ArtifactCard(
+        Card(
             name=card_info.name,
             repository=card_info.repository,
             contact=card_info.contact,
@@ -76,17 +76,17 @@ def test_argument_fail() -> None:
     )
 
     with pytest.raises(ValueError):
-        ArtifactCard(
+        Card(
             repository=card_info.repository,
             contact=card_info.contact,
         )
 
     with pytest.raises(ValueError):
-        ArtifactCard(
+        Card(
             repository=card_info.repository,
         )
 
     with pytest.raises(ValueError):
-        ArtifactCard(
+        Card(
             info=card_info,
         )

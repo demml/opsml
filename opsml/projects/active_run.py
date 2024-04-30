@@ -51,21 +51,21 @@ class CardHandler:
         card: Card,
         version_type: Union[VersionType, str] = VersionType.MINOR,
     ) -> None:
-        """Registers and ArtifactCard"""
+        """Registers and Card"""
 
         registry: CardRegistry = getattr(registries, card.card_type)
         registry.register_card(card=card, version_type=version_type)
 
     @staticmethod
     def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> Card:
-        """Loads an ArtifactCard"""
+        """Loads a Card"""
 
         registry: CardRegistry = getattr(registries, registry_name)
         return registry.load_card(name=info.name, version=info.version, uid=info.uid)
 
     @staticmethod
     def update_card(registries: CardRegistries, card: Card) -> None:
-        """Updates an ArtifactCard"""
+        """Updates an Card"""
         registry: CardRegistry = getattr(registries, card.card_type)
         registry.update_card(card=card)
 
@@ -160,7 +160,7 @@ class ActiveRun:
 
     def load_card(self, registry_name: str, info: CardInfo) -> Card:
         """
-        Loads an ArtifactCard.
+        Loads a Card.
 
         Args:
             registry_name:
@@ -172,7 +172,7 @@ class ActiveRun:
                 be loaded.
 
         Returns
-            `ArtifactCard`
+            `Card`
         """
         card_type = CardType(registry_name.lower()).value
 

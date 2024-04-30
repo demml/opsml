@@ -113,11 +113,9 @@ class ModelCard(ArtifactCard):
                 Whether to load preprocessor or not. Default is False
             load_onnx:
                 Whether to load onnx model or not. Default is False
-            quantize:
-                Whether to quantize onnx model or not. Default is False
+            load_quantized:
+                Whether to load quantized model or not. Default is False
 
-            **kwargs:
-                additional kwargs to pass
         """
 
         from opsml.storage.card_loader import ModelCardLoader

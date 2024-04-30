@@ -140,9 +140,8 @@ class ModelLoader:
             if self.interface.is_pipeline:
                 self.interface.to_pipeline()
 
-    def _load_huggingface_onnx_model(self, **kwargs: Any) -> None:
+    def _load_huggingface_onnx_model(self, load_quantized: bool) -> None:
         assert isinstance(self.interface, HuggingFaceModel), "Expected HuggingFaceModel"
-        load_quantized = kwargs.get("load_quantized", False)
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
 
         if self.interface.is_pipeline:

@@ -10,6 +10,7 @@ from opsml.cards.run import RunCard
 from opsml.data.splitter import DataSplit
 from opsml.types import CardInfo, DataCardMetadata, Description, ModelCardMetadata
 
+# needed for proper type hinting of registry classes
 Card = Union[ModelCard, DataCard, RunCard, AuditCard, ProjectCard, PipelineCard]
 
 __all__ = [

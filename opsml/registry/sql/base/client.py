@@ -150,9 +150,9 @@ class ClientRegistry(SQLRegistryBase):
             version:
                 Version. If not specified, the most recent version will be used.
             uid:
-                Unique identifier for an ArtifactCard. If present, the uid takes precedence.
+                Unique identifier for an Card. If present, the uid takes precedence.
             tags:
-                Tags associated with a given ArtifactCard
+                Tags associated with a given Card
             max_date:
                 Max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01")
             limit:
