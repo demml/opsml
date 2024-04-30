@@ -102,7 +102,7 @@ def test_save_huggingface_modelcard_api_client(
         modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True)
         assert (path / SaveName.ONNX_MODEL.value).exists()
 
-        modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True, quantize=True)
+        modelcard.download_model(path=path, load_preprocessor=False, load_onnx=True, load_quantized=True)
         assert (path / SaveName.QUANTIZED_MODEL.value).exists()
 
 

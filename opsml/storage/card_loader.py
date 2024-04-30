@@ -501,7 +501,7 @@ class ModelCardLoader(CardLoader):
         self.card.interface.load_preprocessor(lpath)
         return
 
-    def _load_model(self, lpath: Path, rpath: Path) -> None:
+    def _load_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
         """Load model to interface
 
         Args:
@@ -512,7 +512,7 @@ class ModelCardLoader(CardLoader):
         """
 
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
-        self.card.interface.load_model(lpath)
+        self.card.interface.load_model(lpath, **kwargs)
 
         if isinstance(self.card.interface, HuggingFaceModel):
             if self.card.interface.is_pipeline:
@@ -603,7 +603,7 @@ class ModelCardLoader(CardLoader):
 
         return None
 
-    def load_model(self, load_preprocessor: bool) -> None:
+    def load_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
         """Load model, preprocessor and sample data"""
 
         if self.card.interface.model is not None:
@@ -617,7 +617,7 @@ class ModelCardLoader(CardLoader):
             if load_preprocessor:
                 self.load_preprocessor(lpath, rpath)
             self._load_sample_data(lpath, rpath)
-            self._load_model(lpath, rpath)
+            self._load_model(lpath, rpath, **kwargs)
 
         return None
 

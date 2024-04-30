@@ -55,9 +55,7 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = (
-            None
-        )
+        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
@@ -167,6 +165,9 @@ try:
                     Additional arguments to be passed to torch.load
             """
             model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
+
+            # remove model_arch from kwargs. Will raise an error if passed to torch.load
+            kwargs.pop(CommonKwargs.MODEL_ARCH.value, None)
 
             if model_arch is not None:
                 model_arch.load_state_dict(torch.load(path, **kwargs))
