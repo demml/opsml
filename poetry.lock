@@ -3367,24 +3367,24 @@ sympy = "*"
 
 [[package]]
 name = "opsml-cli"
-version = "0.4.3"
+version = "0.5.2"
 description = ""
 optional = false
-python-versions = ">=3.9, <3.13"
+python-versions = "<3.13,>=3.9"
 files = [
-    {file = "opsml_cli-0.4.3-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:76e31df2baf3e01ac7fdaeb8038e2f2a6e5729af576b9648a12bfbf815651fb4"},
-    {file = "opsml_cli-0.4.3-py3-none-macosx_11_0_arm64.whl", hash = "sha256:0d100ebcb6538924117b4652b5000e22018866371b38d93b220dfcfa69e38671"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5c38cc3ceaedf77dc1df12efffc0537ad90ca368394af2ce1d3e0c044a84ae6d"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:aea365a445cf9586f7ce6f0f296ab57d53c596725e686ea2996e886348c53462"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7c4ebcffa07e4e03dab2b3abdaf2aba8387164f03f45e258aa6b5027768cea9f"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:49ef68130a820ea4f9a1fd754fc0bc78d2801317659d314a7b9bf7d1aa39bc69"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:4b9533db731c2034672ce2e41981275db0a5a6c533b6b10f7c781fd46fd8c4be"},
-    {file = "opsml_cli-0.4.3-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5dfb1bf3ed3e7cf589c766d0a0ffc15800f8f11fee41653ba2d2d308007f731f"},
-    {file = "opsml_cli-0.4.3-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:7723c4217add892101dd8a9ee4b7f3fef4833898557859b0920caeb7f554903b"},
-    {file = "opsml_cli-0.4.3-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:6878ec6ce7cf2704df3299212cc46331b9c8641e9ea5aeff845505eaf6435313"},
-    {file = "opsml_cli-0.4.3-py3-none-win32.whl", hash = "sha256:ee73839c2e2deb261862a9ac8770845aae999de0d94c044c741c7d08146f97e9"},
-    {file = "opsml_cli-0.4.3-py3-none-win_amd64.whl", hash = "sha256:053eb5f90cf56079a508fe5e6925cadca187d0f7a386189bf88a09a4dd1a1687"},
-    {file = "opsml_cli-0.4.3-py3-none-win_arm64.whl", hash = "sha256:5ec1ad8e3c450132c5fb2d0a80ec6822450c4f7e1bd63921deb9e0a068248256"},
+    {file = "opsml_cli-0.5.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c6dd71827a928e4fe4c4e560f7aebc74e01250fd6763e4ec40f440be0f0f99ba"},
+    {file = "opsml_cli-0.5.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:29fbaf5406a4b18bd94e337e25f6a8f712fb46cab84409ac755d3a794f5c8517"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d5e159d1d6a32585818cd15b6b77d8028343d70c093b1f9ee9c9f2b9b5aa005b"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fbed0c1d4fb0bf7858391dcdaa013dc2d4f0f5ab02a514910f8837d390e0a02a"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5be718dfc95f9faf1dd777af5c3a5517159cd2140b92a555514765f39cdad962"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:5e881cc9a6b47fc0f5e81d82e5a3feff48b389c678d707b36dd3b2ffe00f6035"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:985263034cb2d8bae32c940f7ef77bdad9cfc78d273cbb70ca987a9d48eea7f3"},
+    {file = "opsml_cli-0.5.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:013b38d887d3687b3b6aea99844e971be8f75475b02f40686555008903f71af5"},
+    {file = "opsml_cli-0.5.2-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:df354b093f1218aed47fc5542fdbe4b8e69d71c1e5c12114fec4159897330de1"},
+    {file = "opsml_cli-0.5.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:c81dc0813ac9d7d13acc4ac1410b306603a03bddc17fc4ec58f2bf7fec454ae7"},
+    {file = "opsml_cli-0.5.2-py3-none-win32.whl", hash = "sha256:412be9aefdfcbf76b4048d3d632d22d22abe6d0c782df89977e6e3846fd2c8e3"},
+    {file = "opsml_cli-0.5.2-py3-none-win_amd64.whl", hash = "sha256:88614992601c7ea2b7ac99c5fc10e290d7e72801b40e123d2d4ee2159eec3d93"},
+    {file = "opsml_cli-0.5.2-py3-none-win_arm64.whl", hash = "sha256:99ad7207dc351d210139ac68453e672dba8c8ab2e189d8be54777097f2ac6745"},
 ]
 
 [[package]]
@@ -6861,4 +6861,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "08835d6a83a9b80fc39b7c2e4f7559570bdba859dab285e7cbb0bb26942cfdb4"
+content-hash = "3a0735b2ac40d0fcc56a6729412fa6eefa9c7df14a73b4c7ac4649f8e8d77d5c"

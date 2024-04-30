@@ -76,7 +76,7 @@ flowchart LR
 ### API Workflow
 
 1. Docker image is deployed to a server.
-2. During startup, the API logic leverages the `ModelLoader` class to load the model from the directory.
+2. During startup, the API logic leverages the `ModelLoader` class to load the model from a local directory.
 3. Model is now ready to be used by the API.
 
 ::: opsml.model.ModelLoader
