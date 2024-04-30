@@ -425,15 +425,15 @@ try:
                 kwargs:
                     Additional kwargs to pass to transformers.load_pretrained
             """
-            custom_arch = kwargs.get("custom_architecture")
+            custom_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
             if custom_arch is not None:
                 assert isinstance(
                     custom_arch, (PreTrainedModel, TFPreTrainedModel)
                 ), "Custom architecture must be a huggingface model"
-                self.model = custom_arch.from_pretrained(path)
+                self.model = custom_arch.from_pretrained(path, **kwargs)
 
             else:
-                self.model = getattr(transformers, self.model_type).from_pretrained(path)
+                self.model = getattr(transformers, self.model_type).from_pretrained(path, **kwargs)
 
         def to_pipeline(self) -> None:
             """Converts model to pipeline"""

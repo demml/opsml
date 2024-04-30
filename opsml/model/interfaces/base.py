@@ -110,7 +110,7 @@ class ModelInterface(BaseModel):
             kwargs:
                 Additional kwargs
         """
-        self.model = joblib.load(path)
+        self.model = joblib.load(path, **kwargs)
 
     def save_onnx(self, path: Path) -> ModelReturn:
         """Saves the onnx model

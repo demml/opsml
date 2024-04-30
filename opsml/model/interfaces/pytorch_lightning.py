@@ -123,7 +123,7 @@ try:
                     # load via torch
                     import torch
 
-                    self.model = torch.load(path)
+                    self.model = torch.load(path, **kwargs)
 
             except Exception as exc:
                 raise ValueError(f"Unable to load pytorch lightning model: {exc}") from exc

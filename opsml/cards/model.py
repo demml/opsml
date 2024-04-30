@@ -80,7 +80,17 @@ class ModelCard(ArtifactCard):
                 Whether to load preprocessor or not. Default is False
 
             **kwargs:
-                additional kwargs to pass
+                additional kwargs to pass depending on the model type
+
+                By default, all kwargs are passed to the framework specific loader
+                e.g. torch.load(path, **kwargs)
+
+                ### Opsml custom kwargs
+
+                - In some instances the model architecture will be required when loading a model state.
+                This is sometimes the case for torch, tensorflow and huggingface models.
+                - If you need to load the model into a custom architecture use the
+                `model_arch` kwarg (e.g. card.load_model(model_arch=my_custom_arch))
         """
         # load modelcard loader
         from opsml.storage.card_loader import ModelCardLoader
@@ -92,8 +102,7 @@ class ModelCard(ArtifactCard):
         path: Path,
         load_preprocessor: bool = False,
         load_onnx: bool = False,
-        quantize: bool = False,
-        **kwargs: Any,
+        load_quantized: bool = False,
     ) -> None:
         """Downloads model, preprocessor and metadata to path
 
@@ -113,39 +122,46 @@ class ModelCard(ArtifactCard):
 
         from opsml.storage.card_loader import ModelCardLoader
 
-        # set path to download model
-        kwargs["lpath"] = path
-        kwargs["load_preprocessor"] = load_preprocessor
-        kwargs["load_onnx"] = load_onnx
-        kwargs["quantize"] = quantize
+        ModelCardLoader(self).download_model(
+            lpath=path,
+            load_preprocessor=load_preprocessor,
+            load_onnx=load_onnx,
+            load_quantized=load_quantized,
+        )
 
-        ModelCardLoader(self).download_model(**kwargs)
-
-    def load_onnx_model(self, load_preprocessor: bool = False, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_preprocessor: bool = False, load_quantized: bool = False) -> None:
         """Loads onnx model to interface
 
         Args:
             load_preprocessor:
                 Whether to load preprocessor or not. Default is False
 
-            **kwargs:
-                Additional kwargs to pass
+            load_quantized:
+                Whether to load quantized model or not. Default is False
 
         """
 
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_onnx_model(load_preprocessor, **kwargs)
+        ModelCardLoader(self).load_onnx_model(load_preprocessor, load_quantized)
 
-    def load_preprocessor(self, **kwargs: Any) -> None:
-        """Loads onnx model to interface"""
+    def load_preprocessor(self, lpath: Optional[Path] = None, rpath: Optional[Path] = None) -> None:
+        """Loads onnx model to interface
+
+        Args:
+            lpath (optional):
+                Local path to load preprocessor from
+            rpath (optional):
+                Remote path to load preprocessor from
+
+        """
 
         if self.preprocessor is not None:
             return
 
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_preprocessor(**kwargs)
+        ModelCardLoader(self).load_preprocessor(lpath, rpath)
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record from the current ModelCard"""

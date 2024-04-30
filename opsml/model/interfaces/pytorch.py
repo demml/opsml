@@ -169,12 +169,12 @@ try:
             model_arch = kwargs.get(CommonKwargs.MODEL_ARCH.value)
 
             if model_arch is not None:
-                model_arch.load_state_dict(torch.load(path))
+                model_arch.load_state_dict(torch.load(path, **kwargs))
                 model_arch.eval()
                 self.model = model_arch
 
             else:
-                self.model = torch.load(path)
+                self.model = torch.load(path, **kwargs)
 
         def save_onnx(self, path: Path) -> ModelReturn:
             """Saves an onnx model

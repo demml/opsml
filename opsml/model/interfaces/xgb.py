@@ -123,7 +123,7 @@ try:
             """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
-                self.model = Booster(model_file=path)
+                self.model = Booster(model_file=path, **kwargs)
             else:
                 super().load_model(path)
 

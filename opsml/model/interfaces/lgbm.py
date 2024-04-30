@@ -107,7 +107,7 @@ try:
             """
 
             if self.model_type == TrainedModelType.LGBM_BOOSTER.value:
-                self.model = lgb.Booster(model_file=path)
+                self.model = lgb.Booster(model_file=path, **kwargs)
             else:
                 super().load_model(path)
 
