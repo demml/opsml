@@ -142,7 +142,7 @@ try:
             import catboost
 
             model = getattr(catboost, self.model_type, CatBoost)()
-            self.model = model.load_model(path.as_posix())
+            self.model = model.load_model(path.as_posix(), **kwargs)
 
         def _convert_to_onnx_inplace(self) -> None:
             """Convert to onnx model using temp dir"""

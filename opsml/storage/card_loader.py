@@ -470,7 +470,7 @@ class ModelCardLoader(CardLoader):
 
         return
 
-    def load_preprocessor(self, lpath: Path, rpath: Path) -> None:
+    def load_preprocessor(self, lpath: Optional[Path] = None, rpath: Optional[Path] = None) -> None:
         """Load Preprocessor for model interface
 
         Args:
@@ -481,6 +481,7 @@ class ModelCardLoader(CardLoader):
         """
 
         if isinstance(self.card.interface, HuggingFaceModel):
+            assert lpath is not None and rpath is not None
             self._load_huggingface_preprocessors(lpath, rpath)
             return
 
@@ -499,7 +500,7 @@ class ModelCardLoader(CardLoader):
         self.card.interface.load_preprocessor(lpath)
         return
 
-    def _load_model(self, lpath: Path, rpath: Path, **kwargs: str) -> None:
+    def _load_model(self, lpath: Path, rpath: Path) -> None:
         """Load model to interface
 
         Args:
@@ -510,13 +511,13 @@ class ModelCardLoader(CardLoader):
         """
 
         lpath = self.download(lpath, rpath, SaveName.TRAINED_MODEL.value, self.model_suffix)
-        self.card.interface.load_model(lpath, **kwargs)
+        self.card.interface.load_model(lpath)
 
         if isinstance(self.card.interface, HuggingFaceModel):
             if self.card.interface.is_pipeline:
                 self.card.interface.to_pipeline()
 
-    def _load_huggingface_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
+    def _load_huggingface_onnx_model(self, lpath: Path, rpath: Path, load_quantized: bool) -> None:
         """Load onnx model to interface
 
         Args:
@@ -526,7 +527,6 @@ class ModelCardLoader(CardLoader):
 
         # check for hf model and what type of onnx to load
         assert isinstance(self.card.interface, HuggingFaceModel), "Expected HuggingFaceModel"
-        load_quantized = kwargs.get("load_quantized", False)
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
 
         load_rpath = Path(rpath, save_name)
@@ -547,7 +547,7 @@ class ModelCardLoader(CardLoader):
 
         return
 
-    def _load_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
+    def _load_onnx_model(self, lpath: Path, rpath: Path, load_quantized: bool) -> None:
         """Load onnx model to interface
 
         Args:
@@ -560,7 +560,7 @@ class ModelCardLoader(CardLoader):
             return
 
         if isinstance(self.card.interface, HuggingFaceModel):
-            self._load_huggingface_onnx_model(lpath, rpath, **kwargs)
+            self._load_huggingface_onnx_model(lpath, rpath, load_quantized)
             return
 
         save_name = SaveName.ONNX_MODEL.value
@@ -586,7 +586,7 @@ class ModelCardLoader(CardLoader):
 
         return ModelMetadata(**metadata)
 
-    def load_onnx_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_preprocessor: bool = False, load_quantized: bool = False) -> None:
         if self.card.interface.onnx_model is not None:
             logger.info("Onnx Model already loaded")
             return None
@@ -598,11 +598,11 @@ class ModelCardLoader(CardLoader):
             if load_preprocessor:
                 self.load_preprocessor(lpath, rpath)
 
-            self._load_onnx_model(lpath, rpath, **kwargs)
+            self._load_onnx_model(lpath, rpath, load_quantized)
 
         return None
 
-    def load_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
+    def load_model(self, load_preprocessor: bool) -> None:
         """Load model, preprocessor and sample data"""
 
         if self.card.interface.model is not None:
@@ -616,7 +616,7 @@ class ModelCardLoader(CardLoader):
             if load_preprocessor:
                 self.load_preprocessor(lpath, rpath)
             self._load_sample_data(lpath, rpath)
-            self._load_model(lpath, rpath, **kwargs)
+            self._load_model(lpath, rpath)
 
         return None
 
@@ -649,7 +649,7 @@ class ModelCardLoader(CardLoader):
             _lpath.mkdir(parents=True, exist_ok=True)
         self.storage_client.get(rpath, _lpath)
 
-    def _download_onnx_model(self, metadata: ModelMetadata, lpath: Path, quantize: bool = False) -> None:
+    def _download_onnx_model(self, metadata: ModelMetadata, lpath: Path, load_quantized: bool) -> None:
         """Download onnx model
 
         Args:
@@ -661,7 +661,7 @@ class ModelCardLoader(CardLoader):
                 Whether to download quantized model
         """
 
-        if quantize:
+        if load_quantized:
             assert hasattr(
                 metadata, "quantized_model_uri"
             ), "Quantized model uri is not set in metadata. Was an onnx model quantized?"
@@ -694,7 +694,13 @@ class ModelCardLoader(CardLoader):
 
         self.storage_client.get(rpath, _lpath)
 
-    def download_model(self, lpath: Path, **kwargs: Any) -> None:
+    def download_model(
+        self,
+        lpath: Path,
+        load_preprocessor: bool = False,
+        load_onnx: bool = False,
+        load_quantized: bool = False,
+    ) -> None:
         """Download model and metadata
 
         Args:
@@ -704,8 +710,6 @@ class ModelCardLoader(CardLoader):
                 Kwargs to pass for downloading model
         """
 
-        load_preprocessor = kwargs.get("load_preprocessor", False)
-        load_onnx = kwargs.get("load_onnx", False)
         lpath.mkdir(parents=True, exist_ok=True)
         rpath = self.card.uri
 
@@ -717,7 +721,7 @@ class ModelCardLoader(CardLoader):
             self._download_preprocessor(metadata, lpath)
 
         if load_onnx:
-            self._download_onnx_model(metadata, lpath, kwargs.get("quantize", False))
+            self._download_onnx_model(metadata, lpath, load_quantized)
 
         else:
             # download model
