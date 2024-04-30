@@ -5,7 +5,7 @@
 import textwrap
 from typing import Any, Dict, List, Optional, Type, Union
 
-from opsml.cards import ArtifactCard, CardInfo
+from opsml.cards import Card, CardInfo
 from opsml.data import DataInterface
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import clean_string
@@ -131,7 +131,7 @@ class CardRegistry:
         info: Optional[CardInfo] = None,
         ignore_release_candidates: bool = False,
         interface: Optional[Union[Type[ModelInterface], Type[DataInterface]]] = None,
-    ) -> ArtifactCard:
+    ) -> Card:
         """Loads a specific card
 
         Args:
@@ -185,7 +185,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: Union[VersionType, str] = VersionType.MINOR,
         pre_tag: str = "rc",
         build_tag: str = "build",
@@ -226,7 +226,7 @@ class CardRegistry:
                 build_tag=build_tag,
             )
 
-    def update_card(self, card: ArtifactCard) -> None:
+    def update_card(self, card: Card) -> None:
         """
         Update an artifact card based on current registry
 
@@ -252,7 +252,7 @@ class CardRegistry:
         results = self._registry.list_cards(uid=uid)[0]
         return {col: results[col] for col in columns}
 
-    def delete_card(self, card: ArtifactCard) -> None:
+    def delete_card(self, card: Card) -> None:
         """
         Delete a specific Card
 

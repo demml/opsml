@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 import joblib
 import pandas as pd
 from numpy.typing import NDArray
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
@@ -45,6 +45,8 @@ try:
         sample_data: Optional[Union[pd.DataFrame, NDArray[Any], DMatrix]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:

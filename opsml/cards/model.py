@@ -51,6 +51,7 @@ class ModelCard(ArtifactCard):
         arbitrary_types_allowed=True,
         protected_namespaces=("protect_",),
         validate_assignment=True,
+        extra="forbid",
     )
 
     interface: SerializeAsAny[ModelInterface]
@@ -71,42 +72,70 @@ class ModelCard(ArtifactCard):
         except ValueError as exc:
             raise ValueError("Datacard uid is not a valid uuid") from exc
 
-    def load_model(self, **kwargs: Any) -> None:
-        """Loads model, preprocessor and sample data to interface"""
+    def load_model(self, load_preprocessor: bool = False, **kwargs: Any) -> None:
+        """Loads model, preprocessor and sample data to interface
 
+        Args:
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+
+            **kwargs:
+                additional kwargs to pass
+        """
+        # load modelcard loader
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_model(**kwargs)
+        ModelCardLoader(self).load_model(load_preprocessor, **kwargs)
 
-    def download_model(self, path: Path, **kwargs: Any) -> None:
+    def download_model(
+        self,
+        path: Path,
+        load_preprocessor: bool = False,
+        load_onnx: bool = False,
+        quantize: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """Downloads model, preprocessor and metadata to path
 
         Args:
             path:
                 Path to download model
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+            load_onnx:
+                Whether to load onnx model or not. Default is False
+            quantize:
+                Whether to quantize onnx model or not. Default is False
 
-            kwargs:
-                load_preprocessor:
-                    Whether to load preprocessor or not. Default is True
-                load_onnx:
-                    Whether to load onnx model or not. Default is False
-                quantize:
-                    Whether to quantize onnx model or not. Default is False
+            **kwargs:
+                additional kwargs to pass
         """
 
         from opsml.storage.card_loader import ModelCardLoader
 
         # set path to download model
         kwargs["lpath"] = path
+        kwargs["load_preprocessor"] = load_preprocessor
+        kwargs["load_onnx"] = load_onnx
+        kwargs["quantize"] = quantize
 
         ModelCardLoader(self).download_model(**kwargs)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
-        """Loads onnx model to interface"""
+    def load_onnx_model(self, load_preprocessor: bool = False, **kwargs: Any) -> None:
+        """Loads onnx model to interface
+
+        Args:
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+
+            **kwargs:
+                Additional kwargs to pass
+
+        """
 
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_onnx_model(**kwargs)
+        ModelCardLoader(self).load_onnx_model(load_preprocessor, **kwargs)
 
     def load_preprocessor(self, **kwargs: Any) -> None:
         """Loads onnx model to interface"""

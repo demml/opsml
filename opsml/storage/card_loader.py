@@ -8,14 +8,13 @@ from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional, Type, Union, cast
-from venv import logger
 
 import joblib
 from pydantic import BaseModel
 
 from opsml.cards import (
-    ArtifactCard,
     AuditCard,
+    Card,
     DataCard,
     ModelCard,
     PipelineCard,
@@ -24,22 +23,41 @@ from opsml.cards import (
 )
 from opsml.data.interfaces._base import DataInterface
 from opsml.data.interfaces.custom_data.base import Dataset
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import all_subclasses
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
 from opsml.storage import client
-from opsml.types import CardType, RegistryTableNames, RegistryType, SaveName, Suffix
+from opsml.types import (
+    AllowedDataType,
+    CardType,
+    RegistryTableNames,
+    RegistryType,
+    SaveName,
+    Suffix,
+)
 from opsml.types.model import ModelMetadata, OnnxModel
 
-table_name_card_map = {
-    RegistryType.DATA.value: DataCard,
-    RegistryType.MODEL.value: ModelCard,
-    RegistryType.RUN.value: RunCard,
-    RegistryType.PIPELINE.value: PipelineCard,
-    RegistryType.AUDIT.value: AuditCard,
-    RegistryType.PROJECT.value: ProjectCard,
-}
+logger = ArtifactLogger.get_logger()
+
+
+class CardMap:
+    @staticmethod
+    def get_card(card_type: str) -> Type[Card]:
+        if card_type == RegistryType.DATA.value:
+            return DataCard
+        if card_type == RegistryType.MODEL.value:
+            return ModelCard
+        if card_type == RegistryType.RUN.value:
+            return RunCard
+        if card_type == RegistryType.PIPELINE.value:
+            return PipelineCard
+        if card_type == RegistryType.AUDIT.value:
+            return AuditCard
+        if card_type == RegistryType.PROJECT.value:
+            return ProjectCard
+        raise ValueError(f"Card type {card_type} not found")
 
 
 class CardLoadArgs(BaseModel):
@@ -111,7 +129,7 @@ class CardLoader:
     def __init__(
         self,
         registry_type: RegistryType,
-        card: Optional[ArtifactCard] = None,
+        card: Optional[Card] = None,
         card_args: Optional[Dict[str, Any]] = None,
     ):
         """
@@ -132,7 +150,7 @@ class CardLoader:
         self.storage_client = client.storage_client
 
     @cached_property
-    def card(self) -> ArtifactCard:
+    def card(self) -> Card:
         assert self._card is not None
         return self._card
 
@@ -195,31 +213,77 @@ class CardLoader:
             rpath = rpath or self.card.uri
             yield self.download(lpath, rpath, object_path, suffix)
 
-    def load_card(self, interface: Optional[Union[Type[DataInterface], Type[ModelInterface]]] = None) -> ArtifactCard:
+    def _load_card_from_storage(self, rpath: Path) -> Dict[str, Any]:
+        """Attempts to load pydantic card from storage. Newer versions of OpsML use JSON to save cards.
+        Older versions use joblib. This method attempts to load from JSON first, then falls back to joblib.
+
+        Args:
+            rpath:
+                Remote path to load file
+
+        Returns:
+            Loaded card
+        """
+        try:
+            # load card from JSON
+            with self._load_object(SaveName.CARD.value, Suffix.JSON.value, rpath) as lpath:
+                with lpath.open(encoding="utf-8") as lfile:
+                    return cast(Dict[str, Any], json.load(lfile))
+
+        except IOError:  # pylint: disable=broad-except
+            error = (
+                "Error loading card JSON version of card. Falling back to joblib. "
+                "Newer versions of OpsML use JSON to save cards. Older versions use joblib."
+            )
+            logger.error(error)
+            try:
+                with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
+                    return cast(Dict[str, Any], joblib.load(lpath))
+
+            except IOError as joblib_error:  # pylint: disable=broad-except
+                logger.error("Error loading card: {}", joblib_error)
+                raise joblib_error
+
+    def _load_dataset(self, rpath: Path) -> Dict[str, Any]:
+        """Loads dataset from storage
+
+        Args:
+            interface:
+                Dataset interface
+            rpath:
+                Remote path to load file
+        """
+        with self._load_object(SaveName.DATASET.value, Suffix.JOBLIB.value, rpath) as lpath:
+            loaded_card: Dict[str, Any] = joblib.load(lpath)
+
+        return loaded_card
+
+    def load_card(self, interface: Optional[Union[Type[DataInterface], Type[ModelInterface]]] = None) -> Card:
         """Loads an ArtifactCard from card arguments
 
         Returns:
             Loaded ArtifactCard
         """
         rpath = self.get_rpath_from_args()
-
-        with self._load_object(SaveName.CARD.value, Suffix.JOBLIB.value, rpath) as lpath:
-            loaded_card: Dict[str, Any] = joblib.load(lpath)
+        loaded_card = self._load_card_from_storage(rpath)
 
         # load interface logic
         if self.registry_type in (RegistryType.MODEL, RegistryType.DATA):
+            interface_type: str = loaded_card["metadata"]["interface_type"]
+
+            if interface_type in [AllowedDataType.IMAGE.value, AllowedDataType.TEXT.value]:
+                loaded_card["interface"] = self._load_dataset(rpath)
+
             if interface is not None:
                 loaded_interface = interface.model_validate(loaded_card["interface"])
 
             else:
-                # get interface type
-                interface_type: str = loaded_card["metadata"]["interface_type"]
                 interface = get_interface(self.registry_type, interface_type)
                 loaded_interface = interface.model_validate(loaded_card["interface"])
 
             loaded_card["interface"] = loaded_interface
 
-        return cast(ArtifactCard, table_name_card_map[self.registry_type](**loaded_card))
+        return CardMap.get_card(self.registry_type)(**loaded_card)
 
     @staticmethod
     def validate(card_type: str) -> bool:
@@ -358,6 +422,26 @@ class ModelCardLoader(CardLoader):
 
         return self.card.interface.load_sample_data(lpath)
 
+    def _load_onnx_config(self, lpath: Path, rpath: Path) -> None:
+        """Load onnx config for huggingface models
+
+        Args:
+            lpath:
+                Local path to save file
+            rpath:
+                Remote path to load file
+        """
+
+        load_rpath = Path(self.card.uri, SaveName.ONNX_CONFIG.value).with_suffix(Suffix.JOBLIB.value)
+        if not self.storage_client.exists(load_rpath):
+            return
+
+        lpath = self.download(lpath, rpath, SaveName.ONNX_CONFIG.value, Suffix.JOBLIB.value)
+
+        self.card.interface.onnx_args.config = joblib.load(lpath)
+
+        return
+
     def _load_huggingface_preprocessors(self, lpath: Path, rpath: Path) -> None:
         """Loads huggingface tokenizer and feature extractors. Skips if already loaded or not found
 
@@ -458,6 +542,9 @@ class ModelCardLoader(CardLoader):
         self.card.interface.onnx_model = OnnxModel(onnx_version=self.card.metadata.data_schema.onnx_version)
         self.card.interface.load_onnx_model(load_path)
 
+        # load onnx config
+        self._load_onnx_config(lpath, rpath)
+
         return
 
     def _load_onnx_model(self, lpath: Path, rpath: Path, **kwargs: Any) -> None:
@@ -499,12 +586,11 @@ class ModelCardLoader(CardLoader):
 
         return ModelMetadata(**metadata)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
         if self.card.interface.onnx_model is not None:
             logger.info("Onnx Model already loaded")
             return None
 
-        load_preprocessor = kwargs.get("load_preprocessor", False)
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)
             rpath = self.card.uri
@@ -516,14 +602,12 @@ class ModelCardLoader(CardLoader):
 
         return None
 
-    def load_model(self, **kwargs: Any) -> None:
+    def load_model(self, load_preprocessor: bool, **kwargs: Any) -> None:
         """Load model, preprocessor and sample data"""
 
         if self.card.interface.model is not None:
             logger.info("Model already loaded")
             return None
-
-        load_preprocessor = kwargs.get("load_preprocessor", False)
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             lpath = Path(tmp_dir)

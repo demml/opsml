@@ -28,6 +28,7 @@ class AllowedDataType(str, Enum):
     POLARS = "polars.dataframe.frame.DataFrame"
     NUMPY = "numpy.ndarray"
     IMAGE = "ImageDataset"
+    TEXT = "TextDataset"
     DICT = "dict"
     SQL = "sql"
     PROFILE = "profile"
@@ -47,23 +48,23 @@ class DataCardMetadata(BaseModel):
     """Create a DataCard metadata
 
     Args:
+        interface_type:
+            Type of interface that contains data
+        data_type:
+            Type of data
         description:
             Description for your data
         feature_map:
             Map of features in data (inferred when converting to pyarrow table)
-        feature_descriptions:
-            Dictionary of features and their descriptions
         additional_info:
             Dictionary of additional info to associate with data
-            (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})
-        data_uri:
-            Location where converted pyarrow table is stored
+            (i.e. if data is tokenized dataset, metadata could be {"vocab_size": 200})ed
         runcard_uid:
             Id of RunCard that created the DataCard
         pipelinecard_uid:
             Associated PipelineCard
-        uris:
-            DataCardUris object containing all uris associated with DataCard
+        auditcard_uid:
+            Associated AuditCard
     """
 
     interface_type: str = ""

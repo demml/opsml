@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import pandas as pd
 
-from opsml.cards import ArtifactCard, ModelCard
+from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.exceptions import CardDeleteError
 from opsml.helpers.logging import ArtifactLogger
@@ -252,7 +252,7 @@ class ClientModelCardRegistry(ClientRegistry):
 
     def register_card(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: VersionType = VersionType.MINOR,
         pre_tag: str = "rc",
         build_tag: str = "build",
@@ -376,7 +376,7 @@ class ClientPipelineCardRegistry(ClientRegistry):
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.PIPELINE.value
 
-    def delete_card(self, card: ArtifactCard) -> None:
+    def delete_card(self, card: Card) -> None:
         raise ValueError("PipelineCardRegistry does not support delete_card")
 
 
@@ -391,7 +391,7 @@ class ClientProjectCardRegistry(ClientRegistry):
 
     def register_card(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: VersionType = VersionType.MINOR,
         pre_tag: str = "rc",
         build_tag: str = "build",
@@ -436,7 +436,7 @@ class ClientProjectCardRegistry(ClientRegistry):
         assert isinstance(project_id, int)
         return project_id
 
-    def delete_card(self, card: ArtifactCard) -> None:
+    def delete_card(self, card: Card) -> None:
         raise ValueError("ProjectCardRegistry does not support delete_card")
 
 

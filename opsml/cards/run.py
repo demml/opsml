@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import joblib
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
@@ -177,6 +177,8 @@ class RunCard(ArtifactCard):
             Current version (assigned if card has been registered)
 
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     datacard_uids: List[str] = []
     modelcard_uids: List[str] = []

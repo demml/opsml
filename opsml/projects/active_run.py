@@ -9,10 +9,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from numpy.typing import NDArray
 
-from opsml.cards.base import ArtifactCard
-from opsml.cards.data import DataCard
-from opsml.cards.model import ModelCard
-from opsml.cards.run import RunCard
+from opsml.cards import Card, DataCard, ModelCard, RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.registry import CardRegistries, CardRegistry
 from opsml.registry.semver import VersionType
@@ -51,7 +48,7 @@ class CardHandler:
     @staticmethod
     def register_card(
         registries: CardRegistries,
-        card: ArtifactCard,
+        card: Card,
         version_type: Union[VersionType, str] = VersionType.MINOR,
     ) -> None:
         """Registers and ArtifactCard"""
@@ -60,14 +57,14 @@ class CardHandler:
         registry.register_card(card=card, version_type=version_type)
 
     @staticmethod
-    def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> ArtifactCard:
+    def load_card(registries: CardRegistries, registry_name: str, info: CardInfo) -> Card:
         """Loads an ArtifactCard"""
 
         registry: CardRegistry = getattr(registries, registry_name)
         return registry.load_card(name=info.name, version=info.version, uid=info.uid)
 
     @staticmethod
-    def update_card(registries: CardRegistries, card: ArtifactCard) -> None:
+    def update_card(registries: CardRegistries, card: Card) -> None:
         """Updates an ArtifactCard"""
         registry: CardRegistry = getattr(registries, card.card_type)
         registry.update_card(card=card)
@@ -130,7 +127,7 @@ class ActiveRun:
 
     def register_card(
         self,
-        card: ArtifactCard,
+        card: Card,
         version_type: Union[VersionType, str] = VersionType.MINOR,
     ) -> None:
         """
@@ -161,7 +158,7 @@ class ActiveRun:
         # add uid to RunCard
         self.runcard.add_card_uid(card_type=card.card_type, uid=str(card.uid))
 
-    def load_card(self, registry_name: str, info: CardInfo) -> ArtifactCard:
+    def load_card(self, registry_name: str, info: CardInfo) -> Card:
         """
         Loads an ArtifactCard.
 

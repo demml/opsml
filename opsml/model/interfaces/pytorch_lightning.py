@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import (
@@ -40,6 +40,8 @@ try:
 
         model: Optional[Trainer] = None  # type: ignore[assignment]
         onnx_args: Optional[TorchOnnxArgs] = None
+
+        model_config = ConfigDict(extra="forbid")
 
         @property
         def model_class(self) -> str:
