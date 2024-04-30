@@ -2,8 +2,7 @@
 name = "opsml"
 description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
-    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' },
-    { name = 'Damon Allison', email = 'damon@shipt.com' },
+    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' }
 ]
 readme = "README.md"
 license = 'MIT'
