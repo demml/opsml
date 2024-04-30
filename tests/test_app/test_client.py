@@ -70,7 +70,7 @@ def test_register_data(
     registry.register_card(card=datacard)
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(".joblib"))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     _ = registry.list_cards(name=datacard.name, repository=datacard.repository, max_date=TODAY_YMD)
 
@@ -232,7 +232,7 @@ def test_register_model_data(
     data_registry = api_registries.data
     modelcard, datacard = populate_model_data_for_api
 
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(
         Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
     )
