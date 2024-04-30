@@ -99,7 +99,7 @@ class CardSaver:
 
         Args:
             card:
-                ArtifactCard with artifacts to save
+                Card with artifacts to save
             card_storage_info:
                 Extra info to use with artifact storage
         """
@@ -527,14 +527,14 @@ class ProjectCardSaver(CardSaver):
 
 
 def save_card_artifacts(card: Card) -> None:
-    """Saves a given ArtifactCard's artifacts to a filesystem
+    """Saves a given Card's artifacts to a filesystem
 
     Args:
         card:
-            ArtifactCard to save
+            Card to save
 
     Returns:
-        ArtifactCard with updated artifact uris
+        Card with updated artifact uris
 
     """
 

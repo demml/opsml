@@ -137,7 +137,7 @@ class CardLoader:
 
         Args:
             card:
-                ArtifactCard with artifacts to save
+                Card with artifacts to save
             card_args:
                 Card args to use to get remote path (injected during card loading)
             registry_type:
@@ -259,10 +259,10 @@ class CardLoader:
         return loaded_card
 
     def load_card(self, interface: Optional[Union[Type[DataInterface], Type[ModelInterface]]] = None) -> Card:
-        """Loads an ArtifactCard from card arguments
+        """Loads a Card from card arguments
 
         Returns:
-            Loaded ArtifactCard
+            Loaded Card
         """
         rpath = self.get_rpath_from_args()
         loaded_card = self._load_card_from_storage(rpath)
@@ -496,6 +496,7 @@ class ModelCardLoader(CardLoader):
         if not self.storage_client.exists(load_rpath):
             return
 
+        assert lpath is not None and rpath is not None
         lpath = self.download(lpath, rpath, SaveName.PREPROCESSOR.value, self.preprocessor_suffix)
         self.card.interface.load_preprocessor(lpath)
         return
@@ -706,8 +707,12 @@ class ModelCardLoader(CardLoader):
         Args:
             lpath:
                 Local path to save file
-            kwargs:
-                Kwargs to pass for downloading model
+            load_preprocessor:
+                Whether to load preprocessor or not. Default is False
+            load_onnx:
+                Whether to load onnx model or not. Default is False
+            load_quantized:
+                Whether to load quantized model or not. Default is False
         """
 
         lpath.mkdir(parents=True, exist_ok=True)

@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
 from rich.console import Console
 from rich.table import Table
 
-from opsml.cards.base import ArtifactCard
+from opsml.cards import ArtifactCard, Card
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import (
     AuditCardMetadata,
@@ -26,7 +26,7 @@ DIR_PATH = os.path.dirname(__file__)
 AUDIT_TEMPLATE_PATH = os.path.join(DIR_PATH, "templates/audit_card.yaml")
 
 
-# create new python class that inherits from ArtifactCard and is called AuditCard
+# create new python class that inherits from Card and is called AuditCard
 class Question(BaseModel):
     question: str
     purpose: str
@@ -151,7 +151,7 @@ class AuditCard(ArtifactCard):
 
         return self.model_dump()
 
-    def add_card(self, card: ArtifactCard) -> None:
+    def add_card(self, card: Card) -> None:
         """
         Adds a card uid to the appropriate card uid list for tracking
 

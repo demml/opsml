@@ -449,9 +449,9 @@ class RunCard(ArtifactCard):
 
         Args:
             card_type:
-                ArtifactCard class name
+                Card class name
             uid:
-                Uid of registered ArtifactCard
+                Uid of registered Card
         """
 
         if card_type == CardType.DATACARD:

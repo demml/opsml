@@ -21,7 +21,7 @@ logger = ArtifactLogger.get_logger()
 class CardRegistry:
     def __init__(self, registry_type: Union[RegistryType, str]):
         """
-        Interface for connecting to any of the ArtifactCard registries
+        Interface for connecting to any of the Card registries
 
         Args:
             registry_type:
@@ -156,7 +156,7 @@ class CardRegistry:
                 subclassed interfaces.
 
         Returns
-            ArtifactCard
+            Card
         """
 
         # find better way to do this later
