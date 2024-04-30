@@ -71,7 +71,7 @@ jobs:
         poetry-version: ["1.7.1"]
         os: [macos]
 
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}-12
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
@@ -121,11 +121,10 @@ jobs:
           make setup.project
           make test.unit
 
-      - name: Store coverage files
-        uses: actions/upload-artifact@v3
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
         with:
-          name: coverage
-          path: coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   Unit-Test-Windows:
     needs: Lints
