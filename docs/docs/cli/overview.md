@@ -1,6 +1,6 @@
 # Command Line Interface for Opsml Server
 
-Out of the box, `Opsml` comes pre-installed with a [`Opsml-Cli`](https://github.com/shipt/opsml-cli), which is a Rust-compiled binary that can be used as a CLI to interact with an `Opsml` server. CLI commands are listed below. 
+Out of the box, `Opsml` comes pre-installed with a [`Opsml-Cli`](https://github.com/demml/opsml-cli), which is a Rust-compiled binary that can be used as a CLI to interact with an `Opsml` server. CLI commands are listed below. 
 
 ## Listing Cards
 

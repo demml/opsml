@@ -1,14 +1,14 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-logo.png?raw=true"  width="400" height="400" alt="opsml logo"/>
   <br>
 </h1>
 
 <h4 align="center">A Universal Artifact Registration System for Machine Learning</h4>
 ---
 
-[![Tests](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/shipt/opsml/actions/workflows/lint-unit-tests.yml)
-[![Examples](https://github.com/shipt/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/shipt/opsml/actions/workflows/examples.yml)
+[![Tests](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml/badge.svg?branch=main)](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml)
+[![Examples](https://github.com/demml/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/examples.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
@@ -43,7 +43,7 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
 
 <h1 align="center">
   <br>
-  <img src="https://github.com/shipt/opsml/blob/main/images/opsml-chip.png?raw=true"  width="900" alt="opsml logo"/>
+  <img src="https://github.com/demml/opsml/blob/main/images/opsml-chip.png?raw=true"  width="900" alt="opsml logo"/>
   <br>
 </h1>
 
@@ -100,22 +100,22 @@ To get started using `OpsML`, check out the [installation](installation.md) and 
 
 | Name          |  Opsml Implementation      |    Example                                          |                                
 |-----------------|:-----------------------: |:--------------------------------------------------: |
-| Sklearn         | `SklearnModel`           | [link](https://github.com/shipt/opsml/blob/main/examples/sklearn/basic.py)                   |
-| LightGBM        | `LightGBMModel`          | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/lightgbm_boost.py)         |                                             
-| XGBoost         | `XGBoostModel`           | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/xgboost_sklearn.py)        |                                                       
-| CatBoost        | `CatBoostModel`          | [link](https://github.com/shipt/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                
-| Torch           | `TorchModel`             | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_example.py)             |                        
-| Torch Lightning | `LightningModel`         | [link](https://github.com/shipt/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
-| TensorFlow      | `TensorFlowModel`        | [link](https://github.com/shipt/opsml/blob/main/examples/tensorflow/tf_example.py)          | 
-| HuggingFace     | `HuggingFaceModel`       | [link](https://github.com/shipt/opsml/blob/main/examples/huggingface/hf_example.py)         |
-| VowpalWabbit    | `VowpalWabbitModel``     | [link](https://github.com/shipt/opsml/blob/main/examples/vowpal/vowpal_example.py)          |
+| Sklearn         | `SklearnModel`           | [link](https://github.com/demml/opsml/blob/main/examples/sklearn/basic.py)                   |
+| LightGBM        | `LightGBMModel`          | [link](https://github.com/demml/opsml/blob/main/examples/boosters/lightgbm_boost.py)         |                                             
+| XGBoost         | `XGBoostModel`           | [link](https://github.com/demml/opsml/blob/main/examples/boosters/xgboost_sklearn.py)        |                                                       
+| CatBoost        | `CatBoostModel`          | [link](https://github.com/demml/opsml/blob/main/examples/boosters/catboost_example.py)       |                                                                
+| Torch           | `TorchModel`             | [link](https://github.com/demml/opsml/blob/main/examples/torch/torch_example.py)             |                        
+| Torch Lightning | `LightningModel`         | [link](https://github.com/demml/opsml/blob/main/examples/torch/torch_lightning_example.py)   |                     
+| TensorFlow      | `TensorFlowModel`        | [link](https://github.com/demml/opsml/blob/main/examples/tensorflow/tf_example.py)          | 
+| HuggingFace     | `HuggingFaceModel`       | [link](https://github.com/demml/opsml/blob/main/examples/huggingface/hf_example.py)         |
+| VowpalWabbit    | `VowpalWabbitModel``     | [link](https://github.com/demml/opsml/blob/main/examples/vowpal/vowpal_example.py)          |
 
 ## Contributing
-If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/shipt/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
+If you'd like to contribute, be sure to check out our [contributing guide](https://github.com/demml/opsml/blob/main/CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
 
-Thanks goes to these phenomenal [projects and people](https://github.com/shipt/opsml/blob/main/ATTRIBUTIONS.md) and people for creating a great foundation to build from!
+Thanks goes to these phenomenal [projects and people](https://github.com/demml/opsml/blob/main/ATTRIBUTIONS.md) and people for creating a great foundation to build from!
 
-<a href="https://github.com/shipt/opsml/graphs/contributors">
+<a href="https://github.com/demml/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
 </a>
 

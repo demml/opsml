@@ -30,8 +30,8 @@ classifiers = [
 requires-python = '>=3.9, <3.12'
 
 [project.urls]
-Homepage = "https://github.com/shipt/opsml"
-Source = "https://github.com/shipt/opsml"
+Homepage = "https://github.com/demml/opsml"
+Source = "https://github.com/demml/opsml"
 
 
 [tool.poetry]
@@ -142,7 +142,7 @@ coverage = { extras = ["toml"], version = "^6.5.0" }
 torch = "^2.1.0"
 torchvision = "^0.16"
 #tabulate = "^0.9.0"
-lightgbm = "^4"
+lightgbm = "4"
 xgboost = "^1.7.1"
 transformers = "^4.27.3"
 tensorflow = { version = "^2.11.0", platform = "linux" }

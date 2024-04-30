@@ -69,11 +69,11 @@ poetry install --all-extras --with dev,dev-lints
 
 ## Submitting issues/bugs
 
-We use [GitHub issues](https://github.com/thorrester/opsml/issues) to track bugs and suggested enhancements. You can report a bug by opening a new issue [new issue](https://github.com/shipt/opsml/issues/new/choose) Before reporting a bug/issue, please check that it has not already been reported, and that it is not already fixed in the latest version. If you find a closed issue related to your current issue, please open a new issue and include a link to the original issue in the body of your new one. Please include as much information about your bug as possible.
+We use [GitHub issues](https://github.com/thorrester/opsml/issues) to track bugs and suggested enhancements. You can report a bug by opening a new issue [new issue](https://github.com/demml/opsml/issues/new/choose) Before reporting a bug/issue, please check that it has not already been reported, and that it is not already fixed in the latest version. If you find a closed issue related to your current issue, please open a new issue and include a link to the original issue in the body of your new one. Please include as much information about your bug as possible.
 
 ## Suggesting enhancements
 
-You can suggest an enhancement by opening a [new feature request](https://github.com/shipt/opsml/issues/new?labels=enhancement&template=feature_request.yml).
+You can suggest an enhancement by opening a [new feature request](https://github.com/demml/opsml/issues/new?labels=enhancement&template=feature_request.yml).
 Before creating an enhancement suggestion, please check that a similar issue does not already exist.
 
 Please describe the behavior you want and why, and provide examples of how `Opsml` would be used if your feature were added.
