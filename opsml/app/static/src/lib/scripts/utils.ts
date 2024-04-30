@@ -115,9 +115,9 @@ export async function getRunGraphs(
   repository: string,
   name: string,
   version: string
-) {
+): Promise<Map<string, Graph>> {
   const graphs = await fetch(
-    `/opsml/runs/graphs?repsoitory=${repository}&name=${name}&version=${version}`
+    `/opsml/runs/graphs?repository=${repository}&name=${name}&version=${version}`
   ).then((res) => res.json());
 
   return graphs;

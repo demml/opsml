@@ -175,7 +175,7 @@
       <div class="flex flex-col w-full md:w-6/12 mt-5">
 
         {#if metricNames.length > 0}
-          <div class="pl-4">
+          <div class="pl-4 pr-4">
             <Datatable 
               data={metrics}
               forMetric={true}
@@ -184,7 +184,7 @@
         {/if}
 
         {#if parameters.length > 0}
-          <div class="pl-4">
+          <div class="pl-4 pr-4">
             <Datatable 
               data={parameters}
               forMetric={false}
@@ -197,7 +197,7 @@
 
     {:else}
       <div class="flex flex-col w-full md:w-5/12 mt-5">
-        <div class="pl-4">
+        <div class="pl-4 pr-4">
           <div class="text-lg font-bold mt-6">No metrics or parameters found</div>
         </div>
       </div>

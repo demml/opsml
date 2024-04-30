@@ -9,6 +9,7 @@ import joblib
 from pathlib import Path
 from typing import Dict, Any
 from opsml import RunCard, CardRegistry
+from opsml.storage import client
 import tempfile
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -56,8 +57,7 @@ async def get_graph_plots(request: Request, repository: str, name: str, version:
     storage_root = request.app.state.storage_root
 
     loaded_graphs: Dict[str, Any] = {}
-    uri = Path(f"{storage_root}/{RegistryTableNames.RUN.value}/{repository}/{name}/{version}")
-
+    uri = Path(f"{storage_root}/{RegistryTableNames.RUN.value}/{repository}/{name}/v{version}")
     graph_path = uri / SaveName.GRAPHS.value
 
     path_exists = storage_client.exists(graph_path)
