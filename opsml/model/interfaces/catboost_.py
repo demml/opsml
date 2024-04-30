@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 import joblib
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
@@ -57,6 +57,8 @@ try:
         sample_data: Optional[Union[List[Any], NDArray[Any]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
+
+        model_config = ConfigDict(extra="forbid")
 
         @classmethod
         def _get_sample_data(cls, sample_data: NDArray[Any]) -> Union[List[Any], NDArray[Any]]:
@@ -140,7 +142,7 @@ try:
             import catboost
 
             model = getattr(catboost, self.model_type, CatBoost)()
-            self.model = model.load_model(path.as_posix())
+            self.model = model.load_model(path.as_posix(), **kwargs)
 
         def _convert_to_onnx_inplace(self) -> None:
             """Convert to onnx model using temp dir"""

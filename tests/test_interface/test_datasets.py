@@ -67,7 +67,8 @@ def test_image_dataset(create_image_dataset: Path):
     save_card_artifacts(datacard)
 
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.DATASET.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     storage_client.rm(Path(OPSML_STORAGE_URI))
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
 
@@ -89,7 +90,8 @@ def test_image_dataset_multiproc(create_image_dataset: Path):
     save_card_artifacts(datacard)
 
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.DATASET.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     storage_client.rm(Path(OPSML_STORAGE_URI))
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
 
@@ -113,7 +115,7 @@ def test_image_split_dataset(create_split_image_dataset: Path):
     save_card_artifacts(datacard)
 
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(
@@ -196,7 +198,7 @@ def test_text_dataset(create_text_dataset: Path):
     save_card_artifacts(datacard)
 
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
     storage_client.rm(Path(OPSML_STORAGE_URI))
     assert not storage_client.exists(Path(OPSML_STORAGE_URI))
 
@@ -220,7 +222,7 @@ def test_text_split_dataset(create_split_text_dataset: Path):
     save_card_artifacts(datacard)
 
     assert storage_client.exists(Path(datacard.uri, SaveName.DATA.value))
-    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JOBLIB.value))
+    assert storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
     loader = CardLoader(

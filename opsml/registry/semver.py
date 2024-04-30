@@ -448,7 +448,7 @@ def get_version_to_search(version: str) -> str:
     """Parses a current version based on SemVer characters.
 
     Args:
-        version (str): ArtifactCard version
+        version (str): Card version
 
     Returns:
         Version (str) to search based on presence of SemVer characters

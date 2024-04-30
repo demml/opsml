@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Tuple
 
 import joblib
+import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
@@ -501,6 +502,7 @@ def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries
 
     data_registry = db_registries.data
     data: PandasData = pandas_data
+    data.dependent_vars = [200, "test"]
 
     # remove attr
     data.data = None
@@ -514,7 +516,6 @@ def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries
             repository=repository,
             contact=contact,
             metadata=DataCardMetadata(additional_info={"input_metadata": 20}),
-            dependent_vars=[200, "test"],
         )
         data_registry.register_card(card=datacard)
 
@@ -826,3 +827,26 @@ def test_sql_version_logic() -> None:
         DialectHelper.get_dialect_logic(select_query, DataSchema, "fail")
 
     assert ve.match("Unsupported dialect: fail")
+
+
+def test_register_data_timestamp(
+    db_registries: CardRegistries,
+    pandas_data_timestamp: PandasData,
+) -> None:
+    # create data card
+    registry = db_registries.data
+
+    data_card = DataCard(
+        interface=pandas_data_timestamp,
+        name="test_df",
+        repository="mlops",
+        contact="mlops.com",
+    )
+    registry.register_card(card=data_card)
+
+    loaded = registry.load_card(uid=data_card.uid)
+
+    splits = loaded.split_data()
+
+    assert isinstance(loaded.interface.data_splits[0].column_value, pd.Timestamp)
+    assert splits["train"].X.shape[0] == 8

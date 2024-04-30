@@ -40,6 +40,7 @@ nav:
   - Overview: 'index.md'
   - Installation: 'installation.md'
   - Quickstart: 'quickstart.md'
+  - Reference: 'reference.md'
   - Interfaces:
     - 'interfaces/overview.md'
     - Data Interface:

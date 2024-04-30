@@ -26,7 +26,7 @@ DIR_PATH = os.path.dirname(__file__)
 AUDIT_TEMPLATE_PATH = os.path.join(DIR_PATH, "templates/audit_card.yaml")
 
 
-# create new python class that inherits from ArtifactCard and is called AuditCard
+# create new python class that inherits from Card and is called AuditCard
 class Question(BaseModel):
     question: str
     purpose: str
@@ -121,6 +121,8 @@ class AuditCard(ArtifactCard):
         approved:
             Whether the audit has been approved
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     audit: AuditSections = AuditSections()
     approved: bool = False

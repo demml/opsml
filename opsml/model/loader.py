@@ -6,10 +6,10 @@
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from opsml.model import HuggingFaceModel, ModelInterface
-from opsml.types import ModelMetadata, OnnxModel, SaveName, Suffix
+from opsml.types import HuggingFaceOnnxArgs, ModelMetadata, OnnxModel, SaveName, Suffix
 
 
 class ModelLoader:
@@ -140,9 +140,8 @@ class ModelLoader:
             if self.interface.is_pipeline:
                 self.interface.to_pipeline()
 
-    def _load_huggingface_onnx_model(self, **kwargs: Any) -> None:
+    def _load_huggingface_onnx_model(self, load_quantized: bool) -> None:
         assert isinstance(self.interface, HuggingFaceModel), "Expected HuggingFaceModel"
-        load_quantized = kwargs.get("load_quantized", False)
         save_name = SaveName.QUANTIZED_MODEL.value if load_quantized else SaveName.ONNX_MODEL.value
 
         if self.interface.is_pipeline:
@@ -152,24 +151,23 @@ class ModelLoader:
         self.interface.onnx_model = OnnxModel(onnx_version=self.metadata.onnx_version)
         self.interface.load_onnx_model(load_path)
 
-    def load_onnx_model(self, **kwargs: Any) -> None:
+    def load_onnx_model(self, load_quantized: bool = False, onnx_args: Optional[HuggingFaceOnnxArgs] = None) -> None:
         """Load onnx model from disk
 
-        Kwargs:
+        Args:
 
-            ------Note: These kwargs only apply to HuggingFace models------
+            ------Note: These args only apply to HuggingFace models------
 
-            kwargs:
-                load_quantized:
-                    If True, load quantized model
+            load_quantized:
+                If True, load quantized model
 
-                onnx_args:
-                    Additional onnx args needed to load the model
+            onnx_args:
+                Additional onnx args needed to load the model
 
         """
         if isinstance(self.interface, HuggingFaceModel):
-            self.interface.onnx_args = kwargs.get("onnx_args", None)
-            self._load_huggingface_onnx_model(**kwargs)
+            self.interface.onnx_args = onnx_args
+            self._load_huggingface_onnx_model(load_quantized)
             return
 
         load_path = (self.path / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value)
