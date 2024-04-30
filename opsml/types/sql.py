@@ -16,6 +16,7 @@ class RegistryTableNames(str, Enum):
     AUDIT = "OPSML_AUDIT_REGISTRY"
     BASE = "OPSML_BASE_REGISTRY"
     METRICS = "OPSML_RUN_METRICS"
+    PARAMETERS = "OPSML_RUN_PARAMETERS"
 
     @staticmethod
     def from_str(name: str) -> "RegistryTableNames":
@@ -32,15 +33,31 @@ class RegistryTableNames(str, Enum):
             return RegistryTableNames.PROJECT
         if l_name == "audit":
             return RegistryTableNames.AUDIT
+        if l_name == "metric":
+            return RegistryTableNames.METRICS
+        if l_name == "parameter":
+            return RegistryTableNames.PARAMETERS
         raise NotImplementedError()
 
 
 class RunCardRegistry(Protocol):
-    def insert_metric(self, metric: List[Dict[str, Any]]) -> None: ...
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        ...
+
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        ...
 
     def get_metric(
         self,
         run_uid: str,
         name: Optional[List[str]] = None,
         names_only: bool = False,
-    ) -> Optional[List[Dict[str, Any]]]: ...
+    ) -> List[Dict[str, Any]]:
+        ...
+
+    def get_parameter(
+        self,
+        run_uid: str,
+        name: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        ...

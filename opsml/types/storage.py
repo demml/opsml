@@ -62,28 +62,32 @@ class BotoClient(Protocol):
         operation_name: str,
         Params: Dict[str, Any],  # pylint: disable=invalid-name
         ExpiresIn: int,  # pylint: disable=invalid-name
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Blob(Protocol):
     def generate_signed_url(
         self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Bucket(Protocol):
-    def blob(self, name: str) -> Blob: ...
+    def blob(self, name: str) -> Blob:
+        ...
 
 
 class GCSClient(Protocol):
-    def bucket(self, name: str) -> Bucket: ...
+    def bucket(self, name: str) -> Bucket:
+        ...
 
 
 class StorageClientProtocol(Protocol):
     def get(self, rpath: Path, lpath: Path) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-    def ls(self, path: Path) -> List[Path]:  # pylint:  disable=invalid-name
+    def ls(self, path: Path, detail: bool) -> Union[List[Path], List[Dict[str, Any]]]:  # pylint: disable=invalid-name
         """Lists files in directory (not recursive)"""
 
     def find(self, path: Path) -> List[Path]:

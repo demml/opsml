@@ -362,6 +362,40 @@ class ClientRunCardRegistry(ClientRegistry):
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)
 
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Inserts parameters into the run registry
+        Args:
+            metric:
+                List of parameters to insert
+        """
+
+        self._session.request(
+            route=api_routes.PARAMETERS,
+            request_type=RequestType.PUT,
+            json={"parameter": parameter},
+        )
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Optional[Dict[str, Any]]]:
+        """Get run parameters. By default, all parameters are returned. If name is provided,
+        only parameters with that name are returned.
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the parameter
+        Returns:
+            List of run parameter
+        """
+        body = {"run_uid": run_uid}
+
+        if name is not None:
+            body["name"] = name
+
+        data = self._session.request(route=api_routes.PARAMETERS, request_type=RequestType.POST, json=body)
+
+        param = data.get("parameter")
+        return cast(List[Optional[Dict[str, Any]]], param)
+
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value

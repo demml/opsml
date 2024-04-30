@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
@@ -63,6 +63,47 @@ class ServerRegistry(SQLRegistryBase):
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
+
+    def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
+        """Query stats from Card Database
+        Args:
+            repository:
+                Repository to filter by
+            name:
+                Card name to filter by
+        Returns:
+            Dictionary of stats
+        """
+        return self.engine.query_stats(table=self._table, search_term=search_term)
+
+    def query_page(
+        self,
+        sort_by: str,
+        page: int,
+        repository: Optional[str] = None,
+        search_term: Optional[str] = None,
+    ) -> List[Tuple[Union[str, int], ...]]:
+        """Query page from Card Database
+        Args:
+            sort_by:
+                Field to sort by
+            repository:
+                Repository to filter by
+            name:
+                Card name to filter by
+        Returns:
+            List of tuples
+        """
+        return cast(
+            List[Tuple[Union[str, int], ...]],
+            self.engine.query_page(
+                table=self._table,
+                repository=repository,
+                search_term=search_term,
+                sort_by=sort_by,
+                page=page,
+            ),
+        )
 
     def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
         """Returns a list of unique card names
@@ -215,6 +256,9 @@ class ServerRegistry(SQLRegistryBase):
         if cleaned_name is not None:
             records = self._sort_by_version(records=records)
 
+        if self._table.__tablename__ == RegistryTableNames.RUN.value:
+            records = self._sort_by_timestamp(records=records)
+
         if version is not None:
             if ignore_release_candidates:
                 records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
@@ -325,9 +369,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
@@ -360,6 +402,30 @@ class ServerRunCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Get metric from run card
+        Args:
+            run_uid:
+                run card uid
+            name:
+                List of names of parameters to retrieve
+        Returns:
+            metrics
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        return self.engine.get_parameter(run_uid=run_uid, name=name)
+
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Insert parameter into run card
+        Args:
+            metric:
+                list of parameter(s)
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_parameter(parameter=parameter)
 
 
 class ServerPipelineCardRegistry(ServerRegistry):
