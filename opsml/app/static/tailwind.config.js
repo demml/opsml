@@ -19,7 +19,11 @@ const config = {
   darkMode: "class",
 
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        darkpurple: "#4b3978",
+      },
+    },
   },
   plugins: [
     forms,
