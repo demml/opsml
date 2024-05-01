@@ -2,7 +2,7 @@
 
     import { type ModelMetadata , type Card, type DataCardMetadata } from "$lib/scripts/types";
     import Fa from 'svelte-fa'
-    import { faTag, faIdCard, faFolderOpen, faBrain, faFile, faLink } from '@fortawesome/free-solid-svg-icons'
+    import { faTag, faSquareCheck, faFileContract, faCircleInfo, faCheck } from '@fortawesome/free-solid-svg-icons'
     import icon from '$lib/images/opsml-green.ico'
     import { goto } from '$app/navigation';
     import atomOneLight from "svelte-highlight/styles/atom-one-light";
@@ -28,7 +28,7 @@
     async function createReadme() {
       let baseURL: string = `/opsml/data/card/readme`;
   
-       goto(`${baseURL}?name=${card.name}&repository=${card.repository}&status=edit`);
+       goto(`${baseURL}?name=${card.name}&repository=${card.repository}&version=${metadata.version}&status=edit`);
      
   
     }
@@ -41,7 +41,7 @@
 
   
   <div class="flex flex-wrap bg-white min-h-screen">
-    <div class="w-full md:w-3/5 border-r border-grey-100 pl-4 md:pl-20">
+    <div class="w-full md:w-3/5 mt-4 ml-4 pl-2 md:ml-12 shadow-md">
       {#if !hasReadme}
         <div class="mt-5 mr-5 py-24 bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
           <p class="mb-1">No card README found</p>
@@ -69,122 +69,94 @@
         </div>
       {/if}
     </div>
-    <div class="flex flex-col w-full md:w-1/3 mt-5">
-      <div class="pl-4">
-        <header class="mb-2 text-lg font-bold">Metadata</header>
-  
-        <!-- UID -->
-        <div class="flex flex-row gap-1 items-center">
-          <div class="w-8">
-            <Fa class="h-12" icon={faIdCard} color="#04cd9b"/>
+    <div class="flex flex-col w-full md:w-1/3">
+      <div class="p-4">
+        <div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2">
+      
+          <div class="flex flex-row mb-2 items-center pt-2 border-b-2 border-gray-400">
+            <Fa icon={faCircleInfo} color="#04cd9b"/>
+            <header class="pl-2 text-darkpurple text-lg font-bold">Metadata</header>
           </div>
-          <div class="w-32 font-semibold text-gray-500">ID:</div>
-          <div class="w-48 ">
-            <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-              {card.uid}
+  
+          <div class="flex flex-col space-y-1">
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+              <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">ID</div> 
+              <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                {card.uid}
+              </div>
             </div>
-          </div>
-        </div>
   
-        <!-- name -->
-        <div class="flex flex-row gap-1 items-center">
-          <div class="w-8">
-            <Fa class="h-12" icon={faIdCard} color="#04cd9b"/>
-          </div>
-          <div class="w-32 font-semibold text-gray-500">Name:</div>
-          <div class="w-48 ">
-            <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-              {card.name}
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+              <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">Name</div> 
+              <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                {card.name}
+              </div>
             </div>
-          </div>
-        </div>
   
-        <!-- version -->
-        <div class="flex flex-row gap-1 items-center">
-          <div class="w-8">
-            <Fa class="h-12" icon={faIdCard} color="#04cd9b"/>
-          </div>
-          <div class="w-32 font-semibold text-gray-500">Version:</div>
-          <div class="w-48 ">
-            <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-              {card.version}
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+              <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">Repository</div> 
+              <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                {card.repository}
+              </div>
             </div>
-          </div>
-        </div>
   
-        <!-- repository -->
-        <div class="flex flex-row gap-1 items-center">
-          <div class="w-8">
-            <Fa class="h-12" icon={faFolderOpen} color="#04cd9b"/>
-          </div>
-          <div class="w-32 font-semibold text-gray-500">Respository:</div>
-  
-          <div class="w-48 ">
-            <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-              {card.repository}
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+              <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">Version</div> 
+              <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                {card.version}
+              </div>
             </div>
-          </div>
-        </div>
   
-        <!-- data interface -->
-        <div class="flex flex-row gap-1 items-center">
-          <div class="w-8">
-            <Fa class="h-12" icon={faBrain} color="#04cd9b"/>
-          </div>
-          <div class="w-32 font-semibold text-gray-500">Data Interface:</div>
-          <div class="w-48 ">
-            <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-              {metadata.interface_type}
-            </div>
-          </div>
-        </div>
-  
-        <!-- Runcard -->
-        {#if card.runcard_uid !== null}
-          <div class="flex flex-row gap-1 items-center">
-            <div class="w-8">
-              <Fa class="h-12" icon={faLink} color="#04cd9b"/>
-            </div>
-            <div class="w-32 font-semibold text-gray-500">RunCard:</div>
-            <div class="w-48 ">
-              <div>
-                <a href="/opsml/run/card?uid={card.runcard_uid}" class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-                Link
-                </a>
+            <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+              <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">Data Interface</div> 
+              <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                {metadata.interface_type}
               </div>
             </div>
           </div>
-        {/if}
-      </div>
   
-      <!-- tags -->
-      {#if Object.keys(card.tags).length > 0}
-      <div class="border-t mt-1">
   
-        <div class="pl-4">
-          <div class="flex flex-row gap-1 items-center">
-            <div class="w-8">
-              <Fa class="h-12" icon={faTag} color="#04cd9b"/>
+          {#if card.runcard_uid !== null}
+            <div class="flex flex-row items-center mb-2 pt-2 border-b-2 border-gray-400">
+              <Fa icon={faFileContract} color="#04cd9b"/>
+              <header class="pl-2 text-darkpurple text-lg font-bold">Cards</header>
             </div>
-            <header class="my-1 text-gray-500 text-lg font-bold">Tags</header>
-          </div>
   
-            {#each Object.keys(card.tags) as key}
-              <div class="flex flex-row gap-1 items-center">
-                <div class="w-32 font-semibold text-gray-500">{key}</div>
-                <div class="w-48 ">
-                  <div class="badge h-6 border text-primary-500 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-                    {card.tags[key]}
-                  </div>
+            <div class="flex flex-col space-y-1">
+              <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+                <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">RunCard</div> 
+                <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+                  <a href="/opsml/run/card?uid={card.runcard_uid}" class="text-darkpurple">
+                    Link
+                  </a>
                 </div>
               </div>
-            {/each}
+            </div>
+          {/if}
+          
+  
+           <!-- tags -->
+        {#if Object.keys(card.tags).length > 0}
+        
+        <div class="flex flex-row items-center pt-2 border-b-2 border-gray-400">
+          <Fa icon={faTag} color="#04cd9b"/>
+          <header class="pl-2 text-darkpurple text-lg font-bold">Tags</header>
         </div>
+  
+        <div class="flex flex-col space-y-1">
+
+          {#each Object.keys(card.tags) as key}
+            <div class="inline-flex items-center overflow-hidden text-sm w-fit">
+              <div class="px-2 text-darkpurple italic">{key}:</div> 
+              <div class="flex px-1.5 text-gray-800">
+                {card.tags[key]}
+              </div>
+            </div>
+          {/each}
+        </div>
+        {/if}
       </div>
-      {/if}
-  
-  
     </div>
-    
+  </div>
   </div>
 

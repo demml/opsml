@@ -12,6 +12,7 @@
   import Markdown from "$lib/card/Markdown.svelte";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+  import { goto } from '$app/navigation';
 
 
   /** @type {import('./$types').PageData} */
@@ -25,6 +26,7 @@
   let registry: string = data.registry;
   let repository: string = data.repository;
   let name: string = data.name;
+  let version: string = data.version;
 
 
   const themeConfig = new Compartment()
@@ -108,6 +110,9 @@
       message: message,
     };
     toastStore.trigger(t);
+
+    goto(`/opsml/${registry}/card?name=${name}&repository=${repository}&version=${version}`);
+
 
 
   }

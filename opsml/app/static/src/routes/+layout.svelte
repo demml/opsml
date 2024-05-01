@@ -3,7 +3,7 @@
   import "github-markdown-css/github-markdown-light.css";
   import Navbar from "$lib/Navbar.svelte";
   import favicon from "$lib/images/opsml-green.ico";
-  import { initializeStores, Toast } from '@skeletonlabs/skeleton';
+  import { initializeStores, Toast, Modal } from '@skeletonlabs/skeleton';
 
   initializeStores();
   
@@ -15,6 +15,7 @@
 </svelte:head>
 
 <Toast />
+<Modal />
 
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
     <Navbar />

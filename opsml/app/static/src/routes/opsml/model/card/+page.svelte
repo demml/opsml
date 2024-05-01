@@ -2,7 +2,7 @@
 
   import { type ModelMetadata , type Card } from "$lib/scripts/types";
   import Fa from 'svelte-fa'
-  import { faTag, faIdCard, faFolderOpen, faBrain, faFile, faLink, faSquareCheck, faFileContract, faCircleInfo, faCheck } from '@fortawesome/free-solid-svg-icons'
+  import { faTag, faSquareCheck, faFileContract, faCircleInfo, faCheck } from '@fortawesome/free-solid-svg-icons'
   import icon from '$lib/images/opsml-green.ico'
   import { goto } from '$app/navigation';
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
@@ -10,6 +10,23 @@
   import { clipboard } from '@skeletonlabs/skeleton';
   import Highlight, { LineNumbers } from "svelte-highlight";
   import json from "svelte-highlight/languages/json";
+
+  import { getModalStore } from '@skeletonlabs/skeleton';
+			
+  const modalStore = getModalStore();
+
+  const modal: ModalSettings = {
+	type: 'prompt',
+	// Data
+	title: 'Enter Name',
+	body: 'Provide your first name in the field below.',
+	// Populates the input value and attributes
+	value: 'Skeleton',
+	valueAttr: { type: 'text', minlength: 3, maxlength: 10, required: true },
+	// Returns the updated response value
+	response: (r: string) => console.log('response:', r),
+  };
+  
 
 
 	/** @type {import('./$types').LayoutData} */
@@ -38,13 +55,17 @@
 
   }
 
-  console.log(data.metadata);
+
+  async function showModal() {
+    modalStore.trigger(modal);
+  }
 
 </script>
 
 <svelte:head>
   {@html atomOneLight}
 </svelte:head>
+<button type="button" class="btn variant-filled" on:click={() => showModal()}>Modal</button>
 
 <div class="flex flex-wrap bg-white min-h-screen mb-8">
   <div class="w-full md:w-3/5 mt-4 ml-4 pl-2 md:ml-12 shadow-md">
