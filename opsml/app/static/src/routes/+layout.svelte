@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import "../app.css";
   import "github-markdown-css/github-markdown-light.css";
   import Navbar from "$lib/Navbar.svelte";
@@ -7,7 +7,6 @@
 
   initializeStores();
   
-
 </script>
 
 <svelte:head>

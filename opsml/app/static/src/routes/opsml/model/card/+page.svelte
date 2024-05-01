@@ -12,23 +12,11 @@
   import json from "svelte-highlight/languages/json";
 
   import { getModalStore } from '@skeletonlabs/skeleton';
+  import CodeModal from '$lib/components/CodeModal.svelte';
+  import type { ModalComponent, ModalSettings } from '@skeletonlabs/skeleton';
 			
   const modalStore = getModalStore();
-
-  const modal: ModalSettings = {
-	type: 'prompt',
-	// Data
-	title: 'Enter Name',
-	body: 'Provide your first name in the field below.',
-	// Populates the input value and attributes
-	value: 'Skeleton',
-	valueAttr: { type: 'text', minlength: 3, maxlength: 10, required: true },
-	// Returns the updated response value
-	response: (r: string) => console.log('response:', r),
-  };
   
-
-
 	/** @type {import('./$types').LayoutData} */
 	export let data;
 
@@ -52,11 +40,24 @@
 
      goto(`${baseURL}?name=${metadata.model_name}&repository=${metadata.model_repository}&version=${metadata.model_version}&status=edit`);
    
-
   }
 
-
+  
   async function showModal() {
+
+    const modalComponent: ModalComponent = {
+      ref: CodeModal,
+      props: { 
+        uid: card.uid,
+        registry: "model"
+      },
+    };
+
+    const modal: ModalSettings = {
+    type: 'component',
+    component: modalComponent,
+    };
+    
     modalStore.trigger(modal);
   }
 
