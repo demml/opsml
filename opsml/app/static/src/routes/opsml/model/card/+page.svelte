@@ -39,33 +39,39 @@
 </svelte:head>
 
 <div class="flex flex-wrap bg-white min-h-screen">
-  <div class="w-full md:w-3/5 border-r border-grey-100 pl-4 md:pl-20">
-    {#if !hasReadme}
-      <div class="mt-5 mr-5 py-24 bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
-        <p class="mb-1">No card README found</p>
-        <p class="mb-1 text-sm text-gray-500">Click button below to create a README!</p>
-        <p class="mb-6 text-sm text-gray-500">Note: README applies to all versions of a given model and repository </p>
-        <button type="button" class="btn variant-filled" on:click={() => createReadme()}>
-          <img class="h-5" alt="The project logo" src={icon} />
-          <span>Create</span>
-        </button>
+  <div class="w-full md:w-3/5 border-r border-grey-100 pl-4 pr-4 md:pl-12">
+    <div class="rounded border-2 border-gray-200 p-4">
+      <header class="mb-2 text-lg font-bold">Description</header>
+      <div class="text-gray-500">
+        {metadata.model_description}
       </div>
-      {:else}
-      <div class="mt-2 mr-5">
-        <div class="flex rounded-t-lg px-3 min-w-96 justify-end ">
-          <div>
-            <button type="button" class="btn btn-sm bg-primary-500 text-white" on:click={() => { createReadme() }}>
-              <span>Edit Readme</span>
-            </button>
-          </div>
+      {#if !hasReadme}
+        <div class="mt-5 mx-5 py-24 bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
+          <p class="mb-1">No card README found</p>
+          <p class="mb-1 text-sm text-gray-500">Click button below to create a README!</p>
+          <p class="mb-6 text-sm text-gray-500">Note: README applies to all versions of a given model and repository </p>
+          <button type="button" class="btn variant-filled" on:click={() => createReadme()}>
+            <img class="h-5" alt="The project logo" src={icon} />
+            <span>Create</span>
+          </button>
         </div>
-        <Markdown 
-            source={readme}
-            globalPadding='5px'
-            globalPaddingMobile='0px'  
-        />
-      </div>
-    {/if}
+        {:else}
+        <div class="mt-2 mr-5">
+          <div class="flex rounded-t-lg px-3 min-w-96 justify-end ">
+            <div>
+              <button type="button" class="btn btn-sm bg-primary-500 text-white" on:click={() => { createReadme() }}>
+                <span>Edit Readme</span>
+              </button>
+            </div>
+          </div>
+          <Markdown 
+              source={readme}
+              globalPadding='5px'
+              globalPaddingMobile='0px'  
+          />
+        </div>
+      {/if}
+    </div>
   </div>
   <div class="flex flex-col w-full md:w-1/3 mt-5">
     <div class="pl-4">
