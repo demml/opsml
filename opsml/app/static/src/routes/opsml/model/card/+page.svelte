@@ -66,7 +66,6 @@
 <svelte:head>
   {@html atomOneLight}
 </svelte:head>
-<button type="button" class="btn variant-filled" on:click={() => showModal()}>Modal</button>
 
 <div class="flex flex-wrap bg-white min-h-screen mb-8">
   <div class="w-full md:w-3/5 mt-4 ml-4 pl-2 md:ml-12 shadow-md">
@@ -101,10 +100,18 @@
     <div class="p-4">
       <div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2">
     
-        <div class="flex flex-row mb-2 items-center pt-2 border-b-2 border-gray-400">
-          <Fa icon={faCircleInfo} color="#04cd9b"/>
-          <header class="pl-2 text-darkpurple text-lg font-bold">Metadata</header>
-        </div>
+          
+          <div class="flex flex-row justify-between mb-2 items-center border-b-2 border-gray-400">
+         
+            <div class="flex flex-row items-center pt-2">
+              <Fa icon={faCircleInfo} color="#04cd9b"/>
+              <header class="pl-2 text-darkpurple text-lg font-bold">Metadata</header>
+            </div>
+            <div>
+              <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end" on:click={() => showModal()}>Use this model</button>
+            </div>
+  
+          </div>
 
         <div class="flex flex-col space-y-1">
           <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
