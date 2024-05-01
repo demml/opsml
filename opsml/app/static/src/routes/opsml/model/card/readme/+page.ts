@@ -6,6 +6,7 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 export async function load({ fetch, params, url }) {
   const name: string = url.searchParams.get("name")!;
   const repository: string = url.searchParams.get("repository")!;
+  const version: string = url.searchParams.get("version")!;
   let status: string = url.searchParams.get("status")!;
 
   status = "edit";
@@ -14,14 +15,14 @@ export async function load({ fetch, params, url }) {
   const markdownPath = `${opsmlRoot}/${repository}/${name}/README.md`;
 
   const markdown: FileExists = await fetch(
-    `/opsml/files/exists?path=${markdownPath}`,
+    `/opsml/files/exists?path=${markdownPath}`
   ).then((res) => res.json());
 
   let content: string = "";
   if (markdown.exists) {
     // fetch markdown
     const viewData = await fetch(`/opsml/files/view?path=${markdownPath}`).then(
-      (res) => res.json(),
+      (res) => res.json()
     );
 
     content = viewData.content.content;
@@ -67,6 +68,7 @@ Provide a brief description of the bias, risk, and limitations of the model.
     name,
     repository,
     registry: "model",
+    version,
     content,
   };
 }
