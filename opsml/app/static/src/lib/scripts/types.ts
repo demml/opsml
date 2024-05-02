@@ -127,6 +127,8 @@ export interface ModelMetadata {
   feature_extractor_uri?: string;
   feature_extractor_name?: string;
   uid: string;
+  task_type?: string;
+  onnx_args?: Map<string, string | boolean>;
 }
 
 export interface DataSplit {
