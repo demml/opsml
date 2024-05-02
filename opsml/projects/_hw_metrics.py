@@ -64,13 +64,9 @@ class BaseMetricsLogger(abc.ABC):
         self.last_log_attempt = 0.0
         self.subsequent_failures_counter = 0
 
-        logger.debug(
-            "Metrics data logger created: {} with interval: {}",
-            self.get_name(),
-            initial_interval,
-        )
+        logger.debug("Metrics data logger created: {} with interval: {}", self.name, initial_interval)
 
-    def log_metric_data(self) -> None:
+    def log_metric_data(self) -> bool:
         """Attempts to log metric data"""
         try:
             metrics = self.get_metrics()
@@ -85,14 +81,11 @@ class BaseMetricsLogger(abc.ABC):
 
         self.last_log_attempt = time.time()
 
-    def should_log_data(self) -> bool:
-        if self.failed() or not self.available():
-            return False
-
         # check interval
         next_run = self.last_log_attempt + self.interval  # seconds
         now = time.time()
         result = next_run <= now
+
         return result
 
     def failed(self) -> bool:
@@ -102,8 +95,8 @@ class BaseMetricsLogger(abc.ABC):
     def get_metrics(self) -> Any:
         pass
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def name(self) -> str:
         pass
 
@@ -137,7 +130,6 @@ class CPUMetricsLogger(BaseMetricsLogger):
         initial_interval: float,
         include_cpu_per_core: bool,
         include_compute_metrics: bool,
-        **kwargs: Any,
     ):
         """Instantiates a new CPU metrics data logger.
 
@@ -151,7 +143,7 @@ class CPUMetricsLogger(BaseMetricsLogger):
             **kwargs:
                 Additional arguments to pass to the base class.
         """
-        super().__init__(initial_interval, **kwargs)
+        super().__init__(initial_interval)
         self.include_compute_metrics = include_compute_metrics
         self.include_cpu_per_core = include_cpu_per_core
 
@@ -220,11 +212,18 @@ class CPUMetricsLogger(BaseMetricsLogger):
 
 
 ## Memory
+class MemoryMetricsLogger(BaseMetricsLogger):
+    def __init__(self, initial_interval: float, include_swap_memory: bool):
+        """Record memory metrics.
 
-
-class MemoryMetricsDataLogger(BaseMetricsLogger):
-    def __init__(self, include_swap_memory: bool):
+        Args:
+            include_swap_memory (bool):
+                Whether to include swap memory metrics.
+            initial_interval (float):
+                The initial interval in seconds between logging attempts.
+        """
         self.include_swap_memory = include_swap_memory
+        super().__init__(initial_interval)
 
     def get_metrics(self) -> MemoryMetrics:
         """Get memory metrics.
@@ -264,14 +263,20 @@ class MemoryMetricsDataLogger(BaseMetricsLogger):
 class NetworkRates(BaseModel):
     """Network rates data model."""
 
-    bytes_recv_rate: float
-    bytes_sent_rate: float
+    bytes_recv: float
+    bytes_sent: float
 
 
 class NetworkMetricsLogger(BaseMetricsLogger):
     """Network rates probe for record received and sent bytes rates."""
 
-    def __init__(self) -> None:
+    def __init__(self, initial_interval: float) -> None:
+        """Instantiates a new network rates probe.
+
+        Args:
+            initial_interval (float):
+                The initial interval in seconds between logging attempts.
+        """
         self.last_tick = 0.0
         self.last_bytes_recv = 0
         self.last_bytes_sent = 0
@@ -282,6 +287,8 @@ class NetworkMetricsLogger(BaseMetricsLogger):
             bytes_sent=_current_counters.bytes_sent,
             bytes_recv=_current_counters.bytes_recv,
         )
+
+        super().__init__(initial_interval)
 
     def counters(self) -> psutil._common.snetio:
         return psutil.net_io_counters()
@@ -297,8 +304,8 @@ class NetworkMetricsLogger(BaseMetricsLogger):
         self._save_current_state(time_now=now, bytes_sent=counters.bytes_sent, bytes_recv=counters.bytes_recv)
 
         return NetworkRates(
-            bytes_recv_rate=bytes_recv_rate,
-            bytes_sent_rate=bytes_sent_rate,
+            bytes_recv=bytes_recv_rate,
+            bytes_sent=bytes_sent_rate,
         )
 
     def _save_current_state(self, time_now: float, bytes_sent: int, bytes_recv: int) -> None:
