@@ -39,6 +39,19 @@ class MemoryMetrics(BaseModel):
     sys_swap_percent: Optional[float] = None
 
 
+class NetworkRates(BaseModel):
+    """Network rates data model."""
+
+    bytes_recv: float
+    bytes_sent: float
+
+
+class HardwareMetrics(BaseModel):
+    cpu: CPUMetrics
+    memory: MemoryMetrics
+    network: NetworkRates
+
+
 class BaseMetricsLogger(abc.ABC):
     """The base class for all system metrics data loggers. It implements common scheduling and error handling."""
 
@@ -260,13 +273,6 @@ class MemoryMetricsLogger(BaseMetricsLogger):
 ## Network usage
 
 
-class NetworkRates(BaseModel):
-    """Network rates data model."""
-
-    bytes_recv: float
-    bytes_sent: float
-
-
 class NetworkMetricsLogger(BaseMetricsLogger):
     """Network rates probe for record received and sent bytes rates."""
 
@@ -319,3 +325,19 @@ class NetworkMetricsLogger(BaseMetricsLogger):
     @property
     def name(self) -> str:
         return "[sys.network]"
+
+
+class HardwareMetricsLogger:
+    def __init__(self, interval: float = 15):
+        self.cpu_logger = CPUMetricsLogger(interval, True, True)
+        self.memory_logger = MemoryMetricsLogger(interval, False)
+        self.network_logger = NetworkMetricsLogger(interval)
+
+    def get_metrics(self) -> None:
+        metrics = HardwareMetrics(
+            cpu=self.cpu_logger.get_metrics(),
+            memory=self.memory_logger.get_metrics(),
+            network=self.network_logger.get_metrics(),
+        )
+
+        logger.info("Hardware metrics: {}", metrics.model_dump())
