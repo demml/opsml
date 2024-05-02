@@ -25,6 +25,8 @@ def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
         hw_logger.get_metrics()
         time.sleep(interval)
 
+    logger.info("Hardware logger stopped")
+
     return False
 
 
@@ -128,10 +130,11 @@ class _RunManager:
             raise ValueError("No ActiveRun has been set")
 
     def _log_hardware_metrics(self, interval: int) -> None:
-        self._verify_active()
+        assert self.active_run is not None, "active_run should not be None"
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            executor.map(run_hardware_logger, [interval], [self.active_run])
+        # run hardware logger in background thread
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        executor.submit(run_hardware_logger, interval, self.active_run)
 
     def start_run(
         self,
