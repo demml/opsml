@@ -5,18 +5,31 @@
 
 import uuid
 from typing import Dict, Optional, Union, cast
-
+import concurrent
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo, Tags
+from opsml.projects.types import ProjectInfo, Tags, _DEFAULT_INTERVAL
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
+from opsml.projects._hw_metrics import HardwareMetricsLogger
+import time
 
 logger = ArtifactLogger.get_logger()
 
 
-class ActiveRunException(Exception): ...
+def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
+    hw_logger = HardwareMetricsLogger(interval=interval)
+
+    while run.active:
+        hw_logger.get_metrics()
+        time.sleep(interval)
+
+    return False
+
+
+class ActiveRunException(Exception):
+    ...
 
 
 class _RunManager:
@@ -114,13 +127,28 @@ class _RunManager:
         if self.active_run is None:
             raise ValueError("No ActiveRun has been set")
 
-    def start_run(self, run_name: Optional[str] = None) -> ActiveRun:
+    def _log_hardware_metrics(self, interval: int) -> None:
+        self._verify_active()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            executor.map(run_hardware_logger, [interval], [self.active_run])
+
+    def start_run(
+        self,
+        run_name: Optional[str] = None,
+        log_hardware: bool = False,
+        hardware_interval: int = _DEFAULT_INTERVAL,
+    ) -> ActiveRun:
         """
         Starts a project run
 
         Args:
             run_name:
                 Optional run name
+            log_hardware:
+                Log hardware metrics
+            hardware_interval:
+                Interval to log hardware metrics
         """
 
         if self.active_run is not None:
@@ -138,6 +166,9 @@ class _RunManager:
         # storage path for artifact storage to use.
         active_run.create_or_update_runcard()
         self.active_run = active_run
+
+        if log_hardware:
+            self._log_hardware_metrics(hardware_interval)
 
         return self.active_run
 

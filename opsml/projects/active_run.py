@@ -4,9 +4,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import concurrent.futures
-import logging
-import time
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
@@ -27,8 +24,6 @@ from opsml.types import (
     Params,
     SaveName,
 )
-
-from opsml.hardwaremetrics.hardwaremetrics import MemoryMetricsDataLogger, NetworkMetricsDataLogger, CPUMetricsDataLogger
 
 logger = ArtifactLogger.get_logger()
 
@@ -351,28 +346,6 @@ class ActiveRun:
             CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
             CardHandler.register_card(registries=self._info.registries, card=self.runcard)
-
-    def log_hardware_metrics(self):
-        self._verify_active()
-        
-        while self._active == True:
-
-            format = "%(asctime)s: %(message)s"
-            logging.basicConfig(format=format, level=logging.INFO,
-                                datefmt="%H:%M:%S")
-
-            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-                executor.map(print(MemoryMetricsDataLogger.get_metrics(include_swap_memory=False)))
-                executor.map(print(NetworkMetricsDataLogger(initial_interval=10).get_metrics()))
-                executor.map(print(CPUMetricsDataLogger(initial_interval=10, include_compute_metrics=True, include_cpu_per_core=True).get_metrics()))
-            
-            time.sleep(15)
-
-            ### Include output option here
-        
-        # while True, write into file?? when done output/upload file 
-
-        ## Stream continuously
 
     @property
     def run_data(self) -> Any:
