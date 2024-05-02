@@ -13,7 +13,7 @@ from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._run_manager import ActiveRunException, _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
-from opsml.projects.types import ProjectInfo, _DEFAULT_INTERVAL
+from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.registry.sql.base.client import ClientProjectCardRegistry
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
