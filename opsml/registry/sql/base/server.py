@@ -167,6 +167,7 @@ class ServerRegistry(SQLRegistryBase):
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -210,11 +211,19 @@ class ServerRegistry(SQLRegistryBase):
             tags=tags,
             limit=limit,
             query_terms=query_terms,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
-        if cleaned_name is not None:
-            records = self._sort_by_version(records=records)
+        # may not need
+        # if cleaned_name is not None:
+        # records = self._sort_by_version(records=records)
 
+<<<<<<< Updated upstream
+=======
+        # if self._table.__tablename__ == RegistryTableNames.RUN.value:
+        # records = self._sort_by_timestamp(records=records)
+
+>>>>>>> Stashed changes
         if version is not None:
             if ignore_release_candidates:
                 records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
