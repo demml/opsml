@@ -84,6 +84,11 @@ class ListCardRequest(BaseModel):
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
     query_terms: Optional[Dict[str, Any]] = None
+<<<<<<< Updated upstream
+=======
+    page: Optional[int] = None
+    sort_by_timestamp: bool = False
+>>>>>>> Stashed changes
 
     @model_validator(mode="before")
     @classmethod

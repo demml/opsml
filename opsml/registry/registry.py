@@ -41,9 +41,7 @@ class CardRegistry:
             data_registry.list_cards()
         """
 
-        _registry_type = (
-            registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
-        )
+        _registry_type = registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
 
         self._registry = _set_registry(_registry_type)
         self.table_name = self._registry.table_name
@@ -64,6 +62,7 @@ class CardRegistry:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         """Retrieves records from registry
 
@@ -117,6 +116,7 @@ class CardRegistry:
             limit=limit,
             tags=tags,
             ignore_release_candidates=ignore_release_candidates,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
         return card_list

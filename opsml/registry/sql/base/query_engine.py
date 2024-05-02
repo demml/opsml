@@ -215,6 +215,7 @@ class QueryEngine:
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> Select[Any]:
         """
         Creates a sql query based on table, uid, name, repository and version
@@ -274,7 +275,10 @@ class QueryEngine:
         if bool(filters):
             query = query.filter(*filters)
 
-        query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
+        if not sort_by_timestamp:
+            query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
+        else:
+            query = query.order_by(table.timestamp.desc())  # type: ignore
 
         if limit is not None:
             query = query.limit(limit)
@@ -311,6 +315,7 @@ class QueryEngine:
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
             table=table,
@@ -322,6 +327,7 @@ class QueryEngine:
             tags=tags,
             limit=limit,
             query_terms=query_terms,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
         with self.session() as sess:
