@@ -15,6 +15,8 @@ from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 
+_UTILIZATION_MEASURE_INTERVAL = 0.3
+
 
 class CPUMetrics(BaseModel):
     """CPU metrics data model."""
@@ -191,10 +193,10 @@ class CPUMetricsLogger(BaseMetricsLogger):
             process.cpu_percent()
 
         # We need to sleep here in order to get CPU utilization from psutil
-        UTILIZATION_MEASURE_INTERVAL = 0.3
-        time.sleep(UTILIZATION_MEASURE_INTERVAL)
 
-        result: float = sum([process.cpu_percent() for process in processes_family if process.is_running()])
+        time.sleep(_UTILIZATION_MEASURE_INTERVAL)
+
+        result: float = sum(process.cpu_percent() for process in processes_family if process.is_running())
 
         return result
 
@@ -219,7 +221,7 @@ class CPUMetricsLogger(BaseMetricsLogger):
                 result["compute_utilized"] = self.process_tree()
 
             if self.include_cpu_per_core:
-                result["cpu_percent_per_core"] = [percent for percent in percents]
+                result["cpu_percent_per_core"] = list(percents)
 
         return result
 
