@@ -8,12 +8,35 @@ import abc
 import os
 import psutil
 
-from typing import List, Dict, Any
-from collections import namedtuple
+from typing import List, Dict, Any, Optional
 
 from opsml.helpers.logging import ArtifactLogger
+from pydantic import BaseModel
 
 logger = ArtifactLogger.get_logger()
+
+
+class CPUMetrics(BaseModel):
+    """CPU metrics data model."""
+
+    cpu_percent_avg: float
+    cpu_percent_per_core: Optional[List[float]] = None
+    compute_overall: Optional[float] = None
+    compute_utilized: Optional[float] = None
+    load_avg: float
+
+
+class MemoryMetrics(BaseModel):
+    """Memory metrics data model."""
+
+    sys_ram_total: int
+    sys_ram_used: int
+    sys_ram_available: int
+    sys_ram_percent_used: float
+    sys_swap_total: Optional[int] = None
+    sys_swap_used: Optional[int] = None
+    sys_swap_free: Optional[int] = None
+    sys_swap_percent: Optional[float] = None
 
 
 class BaseMetricsLogger(abc.ABC):
@@ -76,15 +99,12 @@ class BaseMetricsLogger(abc.ABC):
         return self.subsequent_failures_counter >= self.max_failed_attempts
 
     @abc.abstractmethod
-    def get_metrics(self) -> Dict[str, float]:
+    def get_metrics(self) -> Any:
         pass
 
     @abc.abstractmethod
-    def get_name(self) -> str:
-        pass
-
-    @abc.abstractmethod
-    def available(self) -> bool:
+    @property
+    def name(self) -> str:
         pass
 
 
@@ -107,30 +127,6 @@ def _not_empty(metrics: Dict[str, float]) -> bool:
 ## Classes for hardware metrics
 
 ## CPU metrics
-
-
-def family() -> List[int]:
-    main_process = psutil.Process(os.getpid())
-    children = main_process.children(recursive=True)
-
-    return [main_process.pid] + [child.pid for child in children]
-
-
-def process_tree() -> float:
-    """Process pids"""
-
-    processes_family = [psutil.Process(pid=pid) for pid in family() if psutil.pid_exists(pid)]
-
-    for process in processes_family:
-        process.cpu_percent()
-
-    # We need to sleep here in order to get CPU utilization from psutil
-    UTILIZATION_MEASURE_INTERVAL = 0.3
-    time.sleep(UTILIZATION_MEASURE_INTERVAL)
-
-    result: float = sum([process.cpu_percent() for process in processes_family if process.is_running()])
-
-    return result
 
 
 class CPUMetricsLogger(BaseMetricsLogger):
@@ -159,7 +155,7 @@ class CPUMetricsLogger(BaseMetricsLogger):
         self.include_compute_metrics = include_compute_metrics
         self.include_cpu_per_core = include_cpu_per_core
 
-    def get_metrics(self) -> Dict[str, float]:
+    def get_metrics(self) -> CPUMetrics:
         """Get CPU metrics.
 
         Returns:
@@ -167,21 +163,34 @@ class CPUMetricsLogger(BaseMetricsLogger):
         """
 
         cpu_metrics = self._cpu_percent_metrics()
-        loadavg_metrics = self._loadavg_metrics()
+        cpu_metrics["load_avg"] = psutil.getloadavg()[0]
 
-        metrics = {**cpu_metrics, **loadavg_metrics}
+        return CPUMetrics(**cpu_metrics)
 
-        return metrics
+    @property
+    def name(self) -> str:
+        return "[sys.cpu]"
 
-    def get_name(self) -> str:
-        return "[sys.ram,sys.cpu,sys.load]"
+    def family(self) -> List[int]:
+        main_process = psutil.Process(os.getpid())
+        children = main_process.children(recursive=True)
 
-    def available(self) -> bool:
-        return psutil is not None
+        return [main_process.pid] + [child.pid for child in children]
 
-    def _loadavg_metrics(self) -> Dict[str, float]:
-        result: Dict[str, float] = {}
-        result["sys.load.avg"] = psutil.getloadavg()[0]
+    def process_tree(self) -> float:
+        """Process pids"""
+
+        processes_family = [psutil.Process(pid=pid) for pid in self.family() if psutil.pid_exists(pid)]
+
+        for process in processes_family:
+            process.cpu_percent()
+
+        # We need to sleep here in order to get CPU utilization from psutil
+        UTILIZATION_MEASURE_INTERVAL = 0.3
+        time.sleep(UTILIZATION_MEASURE_INTERVAL)
+
+        result: float = sum([process.cpu_percent() for process in processes_family if process.is_running()])
+
         return result
 
     def _cpu_percent_metrics(self) -> Dict[str, float]:
@@ -198,15 +207,14 @@ class CPUMetricsLogger(BaseMetricsLogger):
         result = {}
         if len(percents) > 0:
             avg_percent = sum(percents) / len(percents)
-            result["sys.cpu.percent.avg"] = avg_percent
+            result["cpu_percent_avg"] = avg_percent
 
             if self.include_compute_metrics:
-                result["sys.compute.overall"] = round(avg_percent, 1)
-                result["sys.compute.utilized"] = process_tree()
+                result["compute_overall"] = round(avg_percent, 1)
+                result["compute_utilized"] = self.process_tree()
 
             if self.include_cpu_per_core:
-                for i, percent in enumerate(percents):
-                    result["sys.cpu.percent.%02d" % (i + 1)] = percent
+                result["cpu_percent_per_core"] = [percent for percent in percents]
 
         return result
 
@@ -218,7 +226,7 @@ class MemoryMetricsDataLogger(BaseMetricsLogger):
     def __init__(self, include_swap_memory: bool):
         self.include_swap_memory = include_swap_memory
 
-    def get_metrics(self) -> Dict[str, float]:
+    def get_metrics(self) -> MemoryMetrics:
         """Get memory metrics.
 
         Returns:
@@ -226,55 +234,61 @@ class MemoryMetricsDataLogger(BaseMetricsLogger):
         """
         return self._ram_metrics()
 
-    def _ram_metrics(self) -> Dict[str, float]:
+    def _ram_metrics(self) -> MemoryMetrics:
         virtual_memory = psutil.virtual_memory()
 
-        result = {
-            "sys.ram.total": virtual_memory.total,
-            "sys.ram.used": virtual_memory.total - virtual_memory.available,
-            "sys.ram.available": virtual_memory.available,
-            "sys.ram.percent.used": virtual_memory.percent,
-        }
+        metrics = MemoryMetrics(
+            sys_ram_total=virtual_memory.total,
+            sys_ram_used=virtual_memory.total - virtual_memory.available,
+            sys_ram_available=virtual_memory.available,
+            sys_ram_percent_used=virtual_memory.percent,
+        )
 
         if self.include_swap_memory:
             swap_memory = psutil.swap_memory()
-            swap_result = {
-                "sys.swap.total": swap_memory.total,
-                "sys.swap.used": swap_memory.used,
-                "sys.swap.free": swap_memory.free,
-                "sys.swap.percent": (swap_memory.total - swap_memory.free) / swap_memory.total * 100,
-            }
+            metrics.sys_swap_total = swap_memory.total
+            metrics.sys_swap_used = swap_memory.used
+            metrics.sys_swap_free = swap_memory.free
+            metrics.sys_swap_percent = (swap_memory.total - swap_memory.free) / swap_memory.total * 100
 
-            # combine the two dictionaries
-            result = {**result, **swap_result}
+        return metrics
 
-        return result
+    @property
+    def name(self) -> str:
+        return "[sys.ram]"
 
 
 ## Network usage
 
-NetworkRatesResult = namedtuple("NetworkRatesResult", ["bytes_sent_rate", "bytes_recv_rate"])
+
+class NetworkRates(BaseModel):
+    """Network rates data model."""
+
+    bytes_recv_rate: float
+    bytes_sent_rate: float
 
 
-class NetworkRatesProbe(object):
-    def __init__(self):
+class NetworkMetricsLogger(BaseMetricsLogger):
+    """Network rates probe for record received and sent bytes rates."""
+
+    def __init__(self) -> None:
         self.last_tick = 0.0
         self.last_bytes_recv = 0
         self.last_bytes_sent = 0
 
-    def current_rate(self):
-        if psutil is None:
-            return None
+        _current_counters = self.counters()
+        self._save_current_state(
+            time_now=time.time(),
+            bytes_sent=_current_counters.bytes_sent,
+            bytes_recv=_current_counters.bytes_recv,
+        )
 
-        counters = psutil.net_io_counters()
+    def counters(self) -> psutil._common.snetio:
+        return psutil.net_io_counters()
+
+    def current_rate(self) -> NetworkRates:
+        counters = self.counters()
         now = time.time()
-        if self.last_tick == 0.0:
-            self._save_current_state(
-                time_now=now,
-                bytes_sent=counters.bytes_sent,
-                bytes_recv=counters.bytes_recv,
-            )
-            return None
 
         elapsed = now - self.last_tick
         bytes_sent_rate = (counters.bytes_sent - self.last_bytes_sent) / elapsed
@@ -282,52 +296,19 @@ class NetworkRatesProbe(object):
 
         self._save_current_state(time_now=now, bytes_sent=counters.bytes_sent, bytes_recv=counters.bytes_recv)
 
-        return NetworkRatesResult(bytes_recv_rate=int(bytes_recv_rate), bytes_sent_rate=int(bytes_sent_rate))
+        return NetworkRates(
+            bytes_recv_rate=bytes_recv_rate,
+            bytes_sent_rate=bytes_sent_rate,
+        )
 
-    def _save_current_state(self, time_now: float, bytes_sent: int, bytes_recv: int):
+    def _save_current_state(self, time_now: float, bytes_sent: int, bytes_recv: int) -> None:
         self.last_tick = time_now
-        self.last_bytes_recv = bytes_recv
         self.last_bytes_sent = bytes_sent
+        self.last_bytes_recv = bytes_recv
 
+    def get_metrics(self) -> NetworkRates:
+        return self.current_rate()
 
-class NetworkMetricsDataLogger(BaseMetricsDataLogger):
-    def __init__(
-        self,
-        initial_interval: float,
-    ):
-        super().__init__(initial_interval)
-        self.network_rates_probe = NetworkRatesProbe()
-
-    def get_metrics(self):
-        result = self.network_rates_probe.current_rate()
-        if result is None:
-            return {}
-        metrics = {
-            "sys.network.send_bps": result.bytes_sent_rate,
-            "sys.network.receive_bps": result.bytes_recv_rate,
-        }
-        return metrics
-
-    def get_name(self) -> str:
+    @property
+    def name(self) -> str:
         return "[sys.network]"
-
-    def available(self) -> bool:
-        return psutil is not None
-
-
-# metrics = MemoryMetricsDataLogger.get_metrics(include_swap_memory=False)
-# n_metrics = NetworkMetricsDataLogger(initial_interval=10).get_metrics()
-# cpu_metrics = CPUMetricsDataLogger(initial_interval=3, include_compute_metrics=True, include_cpu_per_core=True).get_metrics()
-
-# def get_hwmetrics():
-#     while ActiveRun.active() == True:
-
-#         format = "%(asctime)s: %(message)s"
-#         logging.basicConfig(format=format, level=logging.INFO,
-#                             datefmt="%H:%M:%S")
-
-#         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-#             executor.map(print(MemoryMetricsDataLogger.get_metrics(include_swap_memory=False)))
-#             executor.map(print(NetworkMetricsDataLogger(initial_interval=10).get_metrics()))
-#             executor.map(print(CPUMetricsDataLogger(initial_interval=10, include_compute_metrics=True, include_cpu_per_core=True).get_metrics()))
-#         time.sleep(15)
