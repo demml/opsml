@@ -32,6 +32,7 @@ class DataRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
+    interface_type: str = CommonKwargs.UNDEFINED.value
 
     @model_validator(mode="before")
     @classmethod
@@ -53,6 +54,8 @@ class ModelRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
+    interface_type: str = CommonKwargs.UNDEFINED.value
+    task_type: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
@@ -65,7 +68,7 @@ class ModelRegistryRecord(SaveRecord):
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
         values["auditcard_uid"] = metadata["auditcard_uid"]
-        values["datacard_uid"] = values.get("datacard_uid") or CommonKwargs.UNDEFINED.value
+        values["datacard_uid"] = values.get("datacard_uid", CommonKwargs.UNDEFINED.value)
 
         return values
 
