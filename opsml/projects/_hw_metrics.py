@@ -157,12 +157,17 @@ class CPUMetricsLogger(BaseMetricsLogger):
         """
         super().__init__(initial_interval, **kwargs)
         self.include_compute_metrics = include_compute_metrics
-        self._include_cpu_per_core = include_cpu_per_core
+        self.include_cpu_per_core = include_cpu_per_core
 
     def get_metrics(self) -> Dict[str, float]:
-        cpu_metrics = _cpu_percent_metrics(self.include_compute_metrics, self._include_cpu_per_core)
-        # ram_metrics = _ram_metrics()
-        loadavg_metrics = _loadavg_metrics()
+        """Get CPU metrics.
+
+        Returns:
+            dict: A dictionary with CPU metrics.
+        """
+
+        cpu_metrics = self._cpu_percent_metrics()
+        loadavg_metrics = self._loadavg_metrics()
 
         metrics = {**cpu_metrics, **loadavg_metrics}
 
@@ -174,77 +179,76 @@ class CPUMetricsLogger(BaseMetricsLogger):
     def available(self) -> bool:
         return psutil is not None
 
+    def _loadavg_metrics(self) -> Dict[str, float]:
+        result: Dict[str, float] = {}
+        result["sys.load.avg"] = psutil.getloadavg()[0]
+        return result
 
-def _cpu_percent_metrics(include_compute: bool, include_per_core: bool) -> Dict[str, float]:
-    """Gets CPU utilization metrics.
+    def _cpu_percent_metrics(self) -> Dict[str, float]:
+        """Gets CPU utilization metrics.
 
-    Args:
-        include_compute (bool):
-            Whether to include compute metrics.
-        include_per_core (bool):
-            Whether to include CPU utilization per core.
-    """
-    percents = psutil.cpu_percent(interval=None, percpu=True)
+        Args:
+            include_compute (bool):
+                Whether to include compute metrics.
+            include_per_core (bool):
+                Whether to include CPU utilization per core.
+        """
+        percents = psutil.cpu_percent(interval=None, percpu=True)
 
-    result = {}
-    if len(percents) > 0:
-        avg_percent = sum(percents) / len(percents)
-        result["sys.cpu.percent.avg"] = avg_percent
+        result = {}
+        if len(percents) > 0:
+            avg_percent = sum(percents) / len(percents)
+            result["sys.cpu.percent.avg"] = avg_percent
 
-        if include_compute:
-            result["sys.compute.overall"] = round(avg_percent, 1)
-            result["sys.compute.utilized"] = process_tree()
+            if self.include_compute_metrics:
+                result["sys.compute.overall"] = round(avg_percent, 1)
+                result["sys.compute.utilized"] = process_tree()
 
-        if include_per_core:
-            for i, percent in enumerate(percents):
-                result["sys.cpu.percent.%02d" % (i + 1)] = percent
+            if self.include_cpu_per_core:
+                for i, percent in enumerate(percents):
+                    result["sys.cpu.percent.%02d" % (i + 1)] = percent
 
-    return result
-
-
-def _loadavg_metrics() -> Dict[str, float]:
-    return {"sys.load.avg", psutil.getloadavg()[0]}
+        return result
 
 
 ## Memory
 
-## Potentially use asyncio class asyncio.TaskGroup to handle all hardware metric calls and send them to db once all are finished
 
-
-class MemoryMetricsDataLogger(BaseMetricsDataLogger):
-    def __init__(
-        self,
-        include_swap_memory: bool,
-    ):
+class MemoryMetricsDataLogger(BaseMetricsLogger):
+    def __init__(self, include_swap_memory: bool):
         self.include_swap_memory = include_swap_memory
 
-    def get_metrics(include_swap_memory=False):
-        ram_metrics, swap_result = _ram_metrics()
+    def get_metrics(self) -> Dict[str, float]:
+        """Get memory metrics.
 
-        if include_swap_memory == True:
-            return ram_metrics, swap_result
-        return ram_metrics
+        Returns:
+            dict: A dictionary with memory metrics.
+        """
+        return self._ram_metrics()
 
+    def _ram_metrics(self) -> Dict[str, float]:
+        virtual_memory = psutil.virtual_memory()
 
-def _ram_metrics():
-    virtual_memory = psutil.virtual_memory()
-    swap_memory = psutil.swap_memory()
+        result = {
+            "sys.ram.total": virtual_memory.total,
+            "sys.ram.used": virtual_memory.total - virtual_memory.available,
+            "sys.ram.available": virtual_memory.available,
+            "sys.ram.percent.used": virtual_memory.percent,
+        }
 
-    result = {
-        "sys.ram.total": virtual_memory.total,
-        "sys.ram.used": virtual_memory.total - virtual_memory.available,
-        "sys.ram.available": virtual_memory.available,
-        "sys.ram.percent.used": virtual_memory.percent,
-    }
+        if self.include_swap_memory:
+            swap_memory = psutil.swap_memory()
+            swap_result = {
+                "sys.swap.total": swap_memory.total,
+                "sys.swap.used": swap_memory.used,
+                "sys.swap.free": swap_memory.free,
+                "sys.swap.percent": (swap_memory.total - swap_memory.free) / swap_memory.total * 100,
+            }
 
-    swap_result = {
-        "sys.swap.total": swap_memory.total,
-        "sys.swap.used": swap_memory.used,
-        "sys.swap.free": swap_memory.free,
-        "sys.swap.percent": (swap_memory.total - swap_memory.free) / swap_memory.total * 100,
-    }
+            # combine the two dictionaries
+            result = {**result, **swap_result}
 
-    return result, swap_result
+        return result
 
 
 ## Network usage
