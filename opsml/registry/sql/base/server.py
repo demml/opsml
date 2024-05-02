@@ -218,12 +218,6 @@ class ServerRegistry(SQLRegistryBase):
         # if cleaned_name is not None:
         # records = self._sort_by_version(records=records)
 
-<<<<<<< Updated upstream
-=======
-        # if self._table.__tablename__ == RegistryTableNames.RUN.value:
-        # records = self._sort_by_timestamp(records=records)
-
->>>>>>> Stashed changes
         if version is not None:
             if ignore_release_candidates:
                 records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
