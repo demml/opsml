@@ -321,6 +321,7 @@ def test_opsml_project_id_creation(db_registries: CardRegistries) -> None:
         pass
     assert project.project_id == 1
 
+
 def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""

@@ -3,17 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import concurrent
+import time
 import uuid
 from typing import Dict, Optional, Union, cast
-import concurrent
+
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
+from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo, Tags, _DEFAULT_INTERVAL
+from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
-from opsml.projects._hw_metrics import HardwareMetricsLogger
-import time
 
 logger = ArtifactLogger.get_logger()
 
@@ -30,8 +31,7 @@ def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
     return False
 
 
-class ActiveRunException(Exception):
-    ...
+class ActiveRunException(Exception): ...
 
 
 class _RunManager:

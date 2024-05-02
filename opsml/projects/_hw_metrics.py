@@ -3,15 +3,15 @@
 # LICENSE file in the root directory of this source tree.
 
 
-import time
 import abc
 import os
-import psutil
+import time
+from typing import Any, Dict, List, Optional
 
-from typing import List, Dict, Any, Optional
+import psutil
+from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
-from pydantic import BaseModel
 
 logger = ArtifactLogger.get_logger()
 
@@ -79,27 +79,27 @@ class BaseMetricsLogger(abc.ABC):
 
         logger.debug("Metrics data logger created: {} with interval: {}", self.name, initial_interval)
 
-    def log_metric_data(self) -> bool:
-        """Attempts to log metric data"""
-        try:
-            metrics = self.get_metrics()
-            if _not_empty(metrics) > 0:
-                self.callback(metrics)
-
-            # reset failures counter to avoid accumulation of not subsequent failures
-            self.subsequent_failures_counter = 0
-        except Exception as e:
-            logger.error("Failed to log system metrics: {}. Error: {}", self.get_name(), e)
-            self.subsequent_failures_counter += 1
-
-        self.last_log_attempt = time.time()
-
-        # check interval
-        next_run = self.last_log_attempt + self.interval  # seconds
-        now = time.time()
-        result = next_run <= now
-
-        return result
+    # def log_metric_data(self) -> bool:
+    #    """Attempts to log metric data"""
+    #    try:
+    #        metrics = self.get_metrics()
+    #        if _not_empty(metrics) > 0:
+    #            self.callback(metrics)
+    #
+    #        # reset failures counter to avoid accumulation of not subsequent failures
+    #        self.subsequent_failures_counter = 0
+    #    except Exception as e:  # pylint: disable=broad-except
+    #        logger.error("Failed to log system metrics: {}. Error: {}", self.get_name(), e)
+    #        self.subsequent_failures_counter += 1
+    #
+    #    self.last_log_attempt = time.time()
+    #
+    #    # check interval
+    #    next_run = self.last_log_attempt + self.interval  # seconds
+    #    now = time.time()
+    #    result = next_run <= now
+    #
+    #    return result
 
     def failed(self) -> bool:
         return self.subsequent_failures_counter >= self.max_failed_attempts
