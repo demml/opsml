@@ -273,8 +273,6 @@ class MemoryMetricsLogger(BaseMetricsLogger):
 
 
 ## Network usage
-
-
 class NetworkMetricsLogger(BaseMetricsLogger):
     """Network rates probe for record received and sent bytes rates."""
 
