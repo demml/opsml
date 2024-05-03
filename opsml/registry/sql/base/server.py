@@ -3,8 +3,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast, Union
 import bcrypt
+import jwt
+from datetime import datetime, timedelta, timezone
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -33,6 +35,9 @@ from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class ServerRegistry(SQLRegistryBase):
@@ -499,6 +504,22 @@ class ServerAuthRegistry(ServerRegistry):
 
         # checking password
         return matched
+
+    def create_access_token(self, user: User) -> str:
+        """Creates a temporary access token for user"""
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        data = {
+            "sub": user.username,
+            "scopes": user.scopes.model_dump(),
+            "exp": expire,
+        }
+        encoded_jwt: str = jwt.encode(
+            data,
+            config.opsml_jwt_secret,
+            algorithm=ALGORITHM,
+        )
+        return encoded_jwt
 
     @property
     def registry_type(self) -> RegistryType:
