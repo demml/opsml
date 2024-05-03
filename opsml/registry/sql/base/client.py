@@ -162,6 +162,8 @@ class ClientRegistry(SQLRegistryBase):
                 If True, release candidates will be ignored
             query_terms:
                 Dictionary of query terms to filter by
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
         Returns:
             Dictionary of card records

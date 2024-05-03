@@ -1,9 +1,9 @@
 import os
 import sys
+import time
 import uuid
 from pathlib import Path
 from typing import Tuple
-import time
 
 import joblib
 import pandas as pd
@@ -95,7 +95,7 @@ def test_register_data(
 
     cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="1.0.0")
     assert bool(cards)
-    
+
     cards = registry.list_cards(name=data_card.name, sort_by_timestamp=True)
     assert bool(cards)
 
@@ -866,11 +866,11 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
         contact="mlops.com",
         version="1.0.0",
     )
-    
+
     registry.register_card(card=data_card)
-    
+
     time.sleep(2)
-    
+
     data_card = DataCard(
         interface=sql_data,
         name="test2",
@@ -878,15 +878,11 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
         contact="mlops.com",
         version="1.0.0",
     )
-    
+
     registry.register_card(card=data_card)
-    
+
     ### test sort by timestamp
     cards = registry.list_cards(sort_by_timestamp=True)
     print(cards)
     assert cards[0]["name"] == "test2"
     assert cards[1]["name"] == "test1"
-    
-    
-    
-    
