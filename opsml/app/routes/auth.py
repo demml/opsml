@@ -13,8 +13,7 @@ logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
@@ -35,11 +34,7 @@ class TokenData(BaseModel):
 if config.opsml_auth:
     router = APIRouter()
 
-    @router.post("/token", response_model=Token)
-    async def login_for_access_token(request: Request, username: str, password: str):
-        pass
-
-    @app.post("/token")
+    @router.post("/token")
     async def login_for_access_token(
         request: Request,
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -52,6 +47,8 @@ if config.opsml_auth:
             # reroute to login/register page
             pass
 
+        assert user is not None
+
         # check if password is correct
         authenicated = db.authenticate_user(user, form_data.password)
 
@@ -62,9 +59,10 @@ if config.opsml_auth:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
-        return Token(access_token=access_token, token_type="bearer")
+        return Token(
+            access_token=db.create_access_token(user),
+            token_type="bearer",
+        )
 
 # def get_password_hash(password):
 # return pwd_context.hash(password)
