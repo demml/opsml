@@ -21,7 +21,7 @@ _UTILIZATION_MEASURE_INTERVAL = 0.3
 class CPUMetrics(BaseModel):
     """CPU metrics data model."""
 
-    cpu_percent_avg: float
+    cpu_percent_avg: float = 0.0
     cpu_percent_per_core: Optional[List[float]] = None
     compute_overall: Optional[float] = None
     compute_utilized: Optional[float] = None
@@ -31,10 +31,10 @@ class CPUMetrics(BaseModel):
 class MemoryMetrics(BaseModel):
     """Memory metrics data model."""
 
-    sys_ram_total: int
-    sys_ram_used: int
-    sys_ram_available: int
-    sys_ram_percent_used: float
+    sys_ram_total: int = 0
+    sys_ram_used: int = 0
+    sys_ram_available: int = 0
+    sys_ram_percent_used: float = 0.0
     sys_swap_total: Optional[int] = None
     sys_swap_used: Optional[int] = None
     sys_swap_free: Optional[int] = None
@@ -44,8 +44,8 @@ class MemoryMetrics(BaseModel):
 class NetworkRates(BaseModel):
     """Network rates data model."""
 
-    bytes_recv: float
-    bytes_sent: float
+    bytes_recv: float = 0.0
+    bytes_sent: float = 0.0
 
 
 class HardwareMetrics(BaseModel):
@@ -306,10 +306,21 @@ class NetworkMetricsLogger(BaseMetricsLogger):
         now = time.time()
 
         elapsed = now - self.last_tick
-        bytes_sent_rate = (counters.bytes_sent - self.last_bytes_sent) / elapsed
-        bytes_recv_rate = (counters.bytes_recv - self.last_bytes_recv) / elapsed
 
-        self._save_current_state(time_now=now, bytes_sent=counters.bytes_sent, bytes_recv=counters.bytes_recv)
+        if elapsed == 0:
+            logger.warning("Elapsed time is zero, setting it to 1")
+            bytes_sent_rate = 0
+            bytes_recv_rate = 0
+
+        else:
+            bytes_sent_rate = (counters.bytes_sent - self.last_bytes_sent) / elapsed
+            bytes_recv_rate = (counters.bytes_recv - self.last_bytes_recv) / elapsed
+
+        self._save_current_state(
+            time_now=now,
+            bytes_sent=bytes_sent_rate,
+            bytes_recv=bytes_recv_rate,
+        )
 
         return NetworkRates(
             bytes_recv=bytes_recv_rate,
