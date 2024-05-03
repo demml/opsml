@@ -18,6 +18,8 @@ from opsml.app.routes import (
 from opsml.settings.config import config
 
 api_router = APIRouter(responses={404: {"description": "Not found"}})
+
+
 api_router.include_router(healthcheck.router, tags=["health"], prefix="/opsml")
 api_router.include_router(cards.router, tags=["cards"], prefix="/opsml")
 api_router.include_router(models.router, tags=["model"], prefix="/opsml")

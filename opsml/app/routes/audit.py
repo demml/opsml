@@ -14,6 +14,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
+from opsml.app.routes.auth import security_dep
 from opsml.app.routes.pydantic_models import (
     AuditFormRequest,
     AuditReport,
@@ -38,10 +39,8 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 AUDIT_FILE = "audit_file.csv"
 
-templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
 audit_route_helper = AuditRouteHelper()
-router = APIRouter()
+router = APIRouter(dependencies=security_dep)
 
 
 @router.get("/audit/", response_class=HTMLResponse)

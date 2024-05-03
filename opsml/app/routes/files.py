@@ -20,6 +20,7 @@ from opsml.app.core.dependencies import (
     swap_opsml_root,
     verify_token,
 )
+from opsml.app.routes.auth import security_dep
 from opsml.app.routes.pydantic_models import (
     DeleteFileResponse,
     FileExistsResponse,
@@ -39,7 +40,8 @@ logger = ArtifactLogger.get_logger()
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
-router = APIRouter()
+
+router = APIRouter(dependencies=security_dep)
 
 
 @router.post("/files/upload", name="upload", dependencies=[Depends(verify_token)])
