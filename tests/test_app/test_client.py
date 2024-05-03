@@ -78,6 +78,8 @@ def test_register_data(
 
     _ = registry.list_cards()
 
+    _ = registry.list_cards(sort_by_timestamp=True)
+
     # Verify repositories / names
     repositories = registry._registry.unique_repositories
     assert "mlops" in repositories

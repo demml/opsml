@@ -84,6 +84,7 @@ class ListCardRequest(BaseModel):
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
     query_terms: Optional[Dict[str, Any]] = None
+    sort_by_timestamp: bool = False
 
     @model_validator(mode="before")
     @classmethod

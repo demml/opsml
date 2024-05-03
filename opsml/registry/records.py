@@ -4,7 +4,7 @@
 import time
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from opsml.types import CardVersion, CommonKwargs, RegistryType
 
@@ -28,7 +28,7 @@ class SaveRecord(BaseModel):
 
 class DataRegistryRecord(SaveRecord):
     data_type: Optional[str] = None
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
@@ -49,7 +49,7 @@ class ModelRegistryRecord(SaveRecord):
     datacard_uid: str
     sample_data_type: str
     model_type: str
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
@@ -77,7 +77,7 @@ class RunRegistryRecord(SaveRecord):
     project: Optional[str] = None
     artifact_uris: Optional[Dict[str, Dict[str, str]]] = None
     tags: Dict[str, Union[str, int]]
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
 
 
 class PipelineRegistryRecord(SaveRecord):
@@ -85,7 +85,7 @@ class PipelineRegistryRecord(SaveRecord):
     datacard_uids: List[str]
     modelcard_uids: List[str]
     runcard_uids: List[str]
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
 
 
 class ProjectRegistryRecord(BaseModel):
@@ -94,7 +94,7 @@ class ProjectRegistryRecord(BaseModel):
     repository: str
     project_id: int
     version: Optional[str] = None
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
 
 
 class AuditRegistryRecord(SaveRecord):
@@ -102,7 +102,7 @@ class AuditRegistryRecord(SaveRecord):
     datacards: List[CardVersion]
     modelcards: List[CardVersion]
     runcards: List[CardVersion]
-    timestamp: int = get_timestamp()
+    timestamp: int = Field(default_factory=get_timestamp)
 
     @model_validator(mode="before")
     @classmethod
