@@ -3,17 +3,32 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import concurrent
+import time
 import uuid
 from typing import Dict, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
+from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
-from opsml.projects.types import ProjectInfo, Tags
+from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
+
+
+def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
+    hw_logger = HardwareMetricsLogger(interval=interval)
+
+    while run.active:
+        hw_logger.get_metrics()
+        time.sleep(interval)
+
+    logger.info("Hardware logger stopped")
+
+    return False
 
 
 class ActiveRunException(Exception): ...
@@ -114,13 +129,29 @@ class _RunManager:
         if self.active_run is None:
             raise ValueError("No ActiveRun has been set")
 
-    def start_run(self, run_name: Optional[str] = None) -> ActiveRun:
+    def _log_hardware_metrics(self, interval: int) -> None:
+        assert self.active_run is not None, "active_run should not be None"
+
+        # run hardware logger in background thread
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        executor.submit(run_hardware_logger, interval, self.active_run)
+
+    def start_run(
+        self,
+        run_name: Optional[str] = None,
+        log_hardware: bool = False,
+        hardware_interval: int = _DEFAULT_INTERVAL,
+    ) -> ActiveRun:
         """
         Starts a project run
 
         Args:
             run_name:
                 Optional run name
+            log_hardware:
+                Log hardware metrics
+            hardware_interval:
+                Interval to log hardware metrics
         """
 
         if self.active_run is not None:
@@ -138,6 +169,9 @@ class _RunManager:
         # storage path for artifact storage to use.
         active_run.create_or_update_runcard()
         self.active_run = active_run
+
+        if log_hardware:
+            self._log_hardware_metrics(hardware_interval)
 
         return self.active_run
 
