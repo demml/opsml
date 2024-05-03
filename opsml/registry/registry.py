@@ -64,6 +64,7 @@ class CardRegistry:
         max_date: Optional[str] = None,
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         """Retrieves records from registry
 
@@ -87,6 +88,8 @@ class CardRegistry:
                 CardInfo object. If present, the info object takes precedence
             ignore_release_candidates:
                 If True, ignores release candidates
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
         Returns:
             pandas dataframe of records or list of dictionaries
@@ -117,6 +120,7 @@ class CardRegistry:
             limit=limit,
             tags=tags,
             ignore_release_candidates=ignore_release_candidates,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
         return card_list

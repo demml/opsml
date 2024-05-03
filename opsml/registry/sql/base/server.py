@@ -167,6 +167,7 @@ class ServerRegistry(SQLRegistryBase):
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -191,6 +192,8 @@ class ServerRegistry(SQLRegistryBase):
                 If True, will ignore release candidates when searching for versions
             query_terms:
                 Dictionary of query terms to filter by
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
 
         Returns:
@@ -210,10 +213,12 @@ class ServerRegistry(SQLRegistryBase):
             tags=tags,
             limit=limit,
             query_terms=query_terms,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
-        if cleaned_name is not None:
-            records = self._sort_by_version(records=records)
+        # may not need
+        # if cleaned_name is not None:
+        # records = self._sort_by_version(records=records)
 
         if version is not None:
             if ignore_release_candidates:
