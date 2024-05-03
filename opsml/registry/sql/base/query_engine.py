@@ -26,7 +26,8 @@ from opsml.registry.sql.base.sql_schema import (
     ProjectSchema,
     SQLTableGetter,
 )
-from opsml.types import RegistryType, User
+from opsml.types import RegistryType
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
@@ -562,7 +563,7 @@ class AuthQueryEngine(QueryEngine):
         if not result:
             return None
 
-        return User(**result[0])
+        return User(**result[0].__dict__)
 
     def add_user(self, user: User) -> None:
         """Add user
