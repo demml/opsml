@@ -31,6 +31,7 @@ class OpsmlConfig(BaseSettings):
 
     # Secret for JWT token
     opsml_jwt_secret: str = secrets.token_hex(32)
+    opsml_jwt_algorithm: str = "HS256"
 
     # API client username / password
     opsml_username: Optional[str] = None

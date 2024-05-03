@@ -3,10 +3,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast, Union
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+
 import bcrypt
 import jwt
-from datetime import datetime, timedelta, timezone
+
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -20,9 +22,9 @@ from opsml.registry.semver import (
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
+    AuthQueryEngine,
     ProjectQueryEngine,
     RunQueryEngine,
-    AuthQueryEngine,
     get_query_engine,
 )
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
@@ -36,7 +38,6 @@ from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
-ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
@@ -514,11 +515,7 @@ class ServerAuthRegistry(ServerRegistry):
             "scopes": user.scopes.model_dump(),
             "exp": expire,
         }
-        encoded_jwt: str = jwt.encode(
-            data,
-            config.opsml_jwt_secret,
-            algorithm=ALGORITHM,
-        )
+        encoded_jwt: str = jwt.encode(data, config.opsml_jwt_secret, config.opsml_jwt_algorithm)
         return encoded_jwt
 
     @property

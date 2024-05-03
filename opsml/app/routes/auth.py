@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, status
+from typing import Annotated
+
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-import bcrypt
+
 from opsml.helpers.logging import ArtifactLogger
-from opsml.settings.config import config
-from opsml.types import RegistryType
-from typing import Annotated, Union
 from opsml.registry.sql.base.server import ServerAuthRegistry
-from datetime import datetime, timedelta, timezone
+from opsml.settings.config import config
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
@@ -23,27 +24,68 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    username: str
 
-
-# def verify_password(plain_password, hashed_password):
-# return pwd_context.verify(plain_password, hashed_password)
 
 # only set auth routes if auth is enabled
 
 if config.opsml_auth:
     router = APIRouter()
 
+    async def get_current_user(
+        request: Request,
+        token: Annotated[str, Depends(oauth2_scheme)],
+    ) -> User:
+        db: ServerAuthRegistry = request.app.state.auth_db
+
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        try:
+            payload = jwt.decode(
+                token,
+                config.opsml_jwt_secret,
+                algorithms=[config.opsml_jwt_algorithm],
+            )
+            username: str = payload.get("sub")
+            if username is None:
+                raise credentials_exception
+            token_data = TokenData(username=username)
+
+        except jwt.exceptions.ExpiredSignatureError:
+            # pass to login
+            raise credentials_exception
+
+        except jwt.exceptions.DecodeError:
+            raise credentials_exception
+
+        user = db.get_user(token_data.username)
+        if user is None:
+            raise credentials_exception
+        return user
+
+    async def get_current_active_user(
+        current_user: Annotated[User, Depends(get_current_user)],
+    ) -> User:
+        if not current_user.is_active:
+            raise HTTPException(status_code=400, detail="Inactive user")
+        return current_user
+
     @router.post("/token")
     async def login_for_access_token(
         request: Request,
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     ) -> Token:
-        db: ServerAuthRegistry = request.app.state.auth_db
+        logger.info("Logging in user: {}", form_data.username)
 
+        db: ServerAuthRegistry = request.app.state.auth_db
         user = db.get_user(form_data.username)
 
         if user is None:
+            logger.info("User does not exist: {}", form_data.username)
             # reroute to login/register page
             pass
 
@@ -59,19 +101,8 @@ if config.opsml_auth:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        logger.info("User authenticated: {}", form_data.username)
         return Token(
             access_token=db.create_access_token(user),
             token_type="bearer",
         )
-
-# def get_password_hash(password):
-# return pwd_context.hash(password)
-
-
-# def authenticate_user(fake_db, username: str, password: str):
-#    user = get_user(fake_db, username)
-#    if not user:
-#        return False
-#    if not verify_password(password, user.hashed_password):
-#        return False
-#    return user
