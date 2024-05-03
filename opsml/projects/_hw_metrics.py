@@ -263,7 +263,11 @@ class MemoryMetricsLogger(BaseMetricsLogger):
             metrics.sys_swap_total = swap_memory.total
             metrics.sys_swap_used = swap_memory.used
             metrics.sys_swap_free = swap_memory.free
-            metrics.sys_swap_percent = (swap_memory.total - swap_memory.free) / swap_memory.total * 100
+
+            if swap_memory.total > 0:
+                metrics.sys_swap_percent = (swap_memory.total - swap_memory.free) / swap_memory.total * 100
+            else:
+                metrics.sys_swap_percent = 0
 
         return metrics
 
