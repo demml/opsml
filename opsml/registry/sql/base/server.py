@@ -501,10 +501,22 @@ class ServerAuthRegistry(ServerRegistry):
 
         # encoding user password
         userBytes = password.encode("utf-8")
-        matched: bool = bcrypt.checkpw(userBytes, user.hashed_password)
+        assert isinstance(user.hashed_password, str)
+        matched: bool = bcrypt.checkpw(userBytes, user.hashed_password.encode("utf-8"))
 
         # checking password
         return matched
+
+    def deactivate_user(self, username: str) -> None:
+        """Deactivates user
+
+        Args:
+            username:
+                username
+
+        """
+
+        self.db.deactivate_user(username=username)
 
     def create_access_token(self, user: User) -> str:
         """Creates a temporary access token for user"""

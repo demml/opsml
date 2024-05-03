@@ -9,14 +9,13 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from opsml.app.routes.auth import security_dep
+
 # Constants
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-
-templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
-router = APIRouter()
+router = APIRouter(dependencies=security_dep)
 
 
 @router.get("/opsml")

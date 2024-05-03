@@ -3,10 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 from fastapi import APIRouter, HTTPException
 
+from opsml.app.routes.auth import security_dep
 from opsml.app.routes.pydantic_models import DebugResponse, HealthCheckResult
 from opsml.settings.config import config
 
-router = APIRouter()
+router = APIRouter(dependencies=security_dep)
 
 
 @router.get("/healthcheck", response_model=HealthCheckResult, name="healthcheck")

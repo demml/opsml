@@ -4,13 +4,14 @@
 
 from fastapi import APIRouter, HTTPException, Request, status
 
+from opsml.app.routes.auth import security_dep
 from opsml.app.routes.pydantic_models import TableNameResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
-router = APIRouter()
+router = APIRouter(dependencies=security_dep)
 
 
 @router.get("/registry/table", response_model=TableNameResponse, name="table_name")

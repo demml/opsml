@@ -7,12 +7,11 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from opsml.app.core.event_handlers import lifespan
-from opsml.app.core.login import get_current_username
 from opsml.app.core.middleware import rollbar_middleware
 from opsml.app.routes.router import api_router
 from opsml.helpers.logging import ArtifactLogger
@@ -34,7 +33,8 @@ class OpsmlApp:
         """Sets the login dependency for an app if specified"""
 
         if self.login:
-            return [Depends(get_current_username)]
+            return None
+
         return None
 
     def build_app(self) -> None:
