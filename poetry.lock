@@ -6918,4 +6918,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "77dcf828a5fb6c14492d18ce8164c39a6e75f25485b17bfea04e32e6213a38b7"
+content-hash = "fc366b7a647a518f8e675ea246fad0da1b947b942c47f1499353deb7a661dc40"

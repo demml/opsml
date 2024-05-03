@@ -26,15 +26,18 @@ class OpsmlConfig(BaseSettings):
     download_chunk_size: int = 31457280  # 30MB
     upload_chunk_size: int = 31457280  # 30MB
 
-    # API client username / password
-    opsml_username: Optional[str] = None
-    opsml_password: Optional[str] = None
-
     # The current RUN_ID to load when creating a new project
     opsml_run_id: Optional[str] = None
 
     # Secret for JWT token
     opsml_jwt_secret: str = secrets.token_hex(32)
+
+    # API client username / password
+    opsml_username: Optional[str] = None
+    opsml_password: Optional[str] = None
+
+    # Auth
+    opsml_auth: bool = False
 
     @field_validator("opsml_storage_uri", mode="before")
     @classmethod

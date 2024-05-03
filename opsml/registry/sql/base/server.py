@@ -4,7 +4,7 @@
 
 import textwrap
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
-
+import bcrypt
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -20,6 +20,7 @@ from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
     ProjectQueryEngine,
     RunQueryEngine,
+    AuthQueryEngine,
     get_query_engine,
 )
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
@@ -29,6 +30,7 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
@@ -444,3 +446,64 @@ class ServerAuditCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUDIT.value
+
+
+class ServerAuthRegistry(ServerRegistry):
+    @property
+    def db(self) -> AuthQueryEngine:
+        assert isinstance(self.engine, AuthQueryEngine)
+        return self.engine
+
+    def get_user(self, username: str) -> Optional[User]:
+        """Get user from auth db
+
+        Args:
+            username:
+                username
+
+        Returns:
+            user
+
+        """
+
+        return self.db.get_user(username=username)
+
+    def add_user(self, user: User) -> None:
+        """Add user to auth db
+
+        Args:
+            user:
+                user
+
+        """
+
+        self.db.add_user(user=user)
+
+    def authenticate_user(self, user: User, password: str) -> bool:
+        """Authenticates user password
+
+        Args:
+            username:
+                username
+            password:
+                password
+
+        Returns:
+            user
+
+        """
+
+        # encoding user password
+        userBytes = password.encode("utf-8")
+        matched: bool = bcrypt.checkpw(userBytes, user.hashed_password)
+
+        # checking password
+        return matched
+
+    @property
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUTH
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        return registry_name.lower() == RegistryType.AUTH.value

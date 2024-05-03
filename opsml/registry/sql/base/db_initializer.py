@@ -94,5 +94,7 @@ class DBInitializer:
         self.update_tables()
 
         # check if admin username and pass exist in auth db
-        if config.opsml_username and config.opsml_password:
+        if config.opsml_auth:
+            assert config.opsml_username is not None, "Admin username must be set when using auth"
+            assert config.opsml_password is not None, "Admin password must be set when using auth"
             self.check_admin_user(config.opsml_username)
