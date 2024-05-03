@@ -192,6 +192,8 @@ class ServerRegistry(SQLRegistryBase):
                 If True, will ignore release candidates when searching for versions
             query_terms:
                 Dictionary of query terms to filter by
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
 
         Returns:
