@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import re
+import secrets
 from pathlib import Path
 from typing import Optional
 
@@ -32,10 +33,13 @@ class OpsmlConfig(BaseSettings):
     # The current RUN_ID to load when creating a new project
     opsml_run_id: Optional[str] = None
 
+    # Secret for JWT token
+    opsml_jwt_secret: str = secrets.token_hex(32)
+
     @field_validator("opsml_storage_uri", mode="before")
     @classmethod
     def set_opsml_storage_uri(cls, opsml_storage_uri: str) -> str:
-        """Opsml uses storage cients that follow fsspec guidelines. LocalFileSytem only deals
+        """Opsml uses storage cients that follow fsspec guidelines. LocalFileSystem only deals
         in absolutes, so we need to convert relative paths to absolute paths.
         """
         if opsml_storage_uri.startswith("gs://") or opsml_storage_uri.startswith("s3://"):

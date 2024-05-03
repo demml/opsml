@@ -20,12 +20,13 @@ from sqlalchemy.sql.expression import ColumnElement
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
+    AuthSchema,
     CardSQLTable,
     MetricSchema,
     ProjectSchema,
     SQLTableGetter,
 )
-from opsml.types import RegistryType
+from opsml.types import RegistryType, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -540,6 +541,67 @@ class RunQueryEngine(QueryEngine):
             return [row[0] for row in results]
 
         return self._parse_records(results)
+
+
+class AuthQueryEngine(QueryEngine):
+    def get_user(self, username: str) -> Optional[User]:
+        """Get user by username
+
+        Args:
+            username:
+                Username
+
+        Returns:
+            User record
+        """
+
+        query = select(AuthSchema).filter(AuthSchema.username == username)
+        with self.session() as sess:
+            result = sess.execute(query).first()
+
+        if not result:
+            return None
+
+        return User(**result[0])
+
+    def add_user(self, user: User) -> None:
+        """Add user
+
+        Args:
+            user:
+                User record
+        """
+        with self.session() as sess:
+            sess.execute(insert(AuthSchema), user.model_dump())
+            sess.commit()
+
+    def update_user(self, user: Dict[str, Any]) -> None:
+        """Update user
+
+        Args:
+            user:
+                User record
+        """
+        username = cast(str, user.get("username"))
+
+        with self.session() as sess:
+            query = sess.query(SQLTableGetter.get_table(table_name="auth")).filter(ProjectSchema.name == username)
+            query.update(user)
+            sess.commit()
+
+    def delete_user(self, user: Dict[str, Any]) -> None:
+        """Delete user
+
+        Args:
+            user:
+                User record
+        """
+        username = cast(str, user.get("username"))
+
+        with self.session() as sess:
+            query = sess.query(SQLTableGetter.get_table(table_name="auth")).filter(ProjectSchema.name == username)
+            query.delete()
+            sess.commit()
 
 
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
