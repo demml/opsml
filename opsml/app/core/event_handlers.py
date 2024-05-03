@@ -10,8 +10,8 @@ from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.registrar import ModelRegistrar
-from opsml.registry.registry import CardRegistries
 from opsml.registry.backend import _set_registry
+from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import RegistryType

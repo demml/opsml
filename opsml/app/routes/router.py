@@ -15,6 +15,7 @@ from opsml.app.routes import (
     projects,
     registry,
 )
+from opsml.settings.config import config
 
 api_router = APIRouter(responses={404: {"description": "Not found"}})
 api_router.include_router(healthcheck.router, tags=["health"], prefix="/opsml")
@@ -27,3 +28,9 @@ api_router.include_router(homepage.router, tags=["homepage"])
 api_router.include_router(registry.router, tags=["registry"], prefix="/opsml")
 api_router.include_router(projects.router, tags=["project"], prefix="/opsml")
 api_router.include_router(metrics.router, tags=["metrics"], prefix="/opsml")
+
+# add in auth
+if config.opsml_auth:
+    from opsml.app.routes import auth
+
+    api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
