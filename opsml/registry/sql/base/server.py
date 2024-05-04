@@ -507,16 +507,16 @@ class ServerAuthRegistry(ServerRegistry):
         # checking password
         return matched
 
-    def deactivate_user(self, username: str) -> None:
-        """Deactivates user
+    def update_user(self, user: User) -> bool:
+        """Update user
 
         Args:
-            username:
-                username
+            user:
+                user
 
         """
 
-        self.db.deactivate_user(username=username)
+        return self.db.update_user(user=user)
 
     def create_access_token(self, user: User) -> str:
         """Creates a temporary access token for user"""
