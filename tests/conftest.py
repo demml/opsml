@@ -261,8 +261,6 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
         cfg = OpsmlConfig(
             opsml_tracking_uri="http://testserver",
             opsml_storage_uri=OPSML_STORAGE_URI,
-            opsml_username="admin",
-            opsml_password="admin",
         )
 
         # Cards rely on global storage state - so set it to API
