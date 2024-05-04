@@ -38,7 +38,7 @@ from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class ServerRegistry(SQLRegistryBase):

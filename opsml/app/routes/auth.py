@@ -143,7 +143,7 @@ def get_user(
     return user
 
 
-@router.post("/auth/user", response_model=User)
+@router.post("/auth/user", response_model=UserCreated)
 def create_user(
     request: Request,
     user: User,
@@ -165,13 +165,15 @@ def create_user(
     # test getting user
     user = db.get_user(user.username)
 
+    print(user)
+
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Failed to create user")
 
     return UserCreated(created=True)
 
 
-@router.put("/auth/user", response_model=User)
+@router.put("/auth/user", response_model=UserUpdated)
 def update_user(
     request: Request,
     user: User,
