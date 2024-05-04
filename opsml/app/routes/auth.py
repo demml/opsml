@@ -196,15 +196,15 @@ def update_user(
 @router.delete("/auth/user", response_model=UserDeleted)
 def delete_user(
     request: Request,
-    username: str,
+    user: User,
     current_user: Annotated[User, Depends(get_current_active_user)],
-) -> UserUpdated:
+) -> UserDeleted:
     """Delete user"""
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     db: ServerAuthRegistry = request.app.state.auth_db
-    deleted = db.delete_user(username)
+    deleted = db.delete_user(user)
 
     return UserDeleted(deleted=deleted)
 
