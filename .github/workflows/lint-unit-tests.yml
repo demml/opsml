@@ -101,6 +101,9 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
+      OPSML_AUTH: True
+      OPSML_USERNAME: admin
+      OPSML_PASSWORD: admin
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -119,7 +122,7 @@ jobs:
           rm -rf /opt/hostedtoolcache/node
           sudo apt clean
           make setup.project
-          make test.unit
+          make test.coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
