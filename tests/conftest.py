@@ -223,14 +223,12 @@ def mock_gcsfs() -> YieldFixture[Dict[str, MagicMock]]:
         yield mocked_gcsfs
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_app() -> YieldFixture[TestClient]:
     cleanup()
-
     from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp()
-
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
@@ -254,6 +252,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
     def callable_api() -> TestClient:
         return test_client
 
+    # for some reason
     with patch("httpx.Client", callable_api):
         # Set the global configuration to mock API "client" mode
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
