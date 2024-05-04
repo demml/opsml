@@ -1,12 +1,13 @@
+from pathlib import Path
+from typing import Tuple
+
 import numpy as np
 import pytest
 from starlette.testclient import TestClient
-from typing import Tuple
-from pathlib import Path
 
+from opsml import AuditCard, CardInfo, DataCard, ModelCard, PandasData, SklearnModel
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry.registry import CardRegistries
-from opsml import ModelCard, DataCard, SklearnModel, PandasData, AuditCard, CardInfo
 
 # test_app already performs a few tests with opsml project in client model
 # Adding additional tests here to avoid further cluttering test_app
@@ -75,7 +76,6 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
     with project.run() as run:
         pass
     assert project.project_id == 1
-
 
 
 def test_opsml_read_only_login(
@@ -155,7 +155,6 @@ def test_opsml_read_only_login(
     assert len(runcard.metrics) == nbr_metrics
 
     runcard.load_artifacts()
-   
 
     assert len(proj.metrics) == 2
     assert proj.get_metric("m1").value == 1.1
