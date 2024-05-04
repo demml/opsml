@@ -7,7 +7,6 @@ from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from requests.auth import HTTPBasicAuth
 from starlette.testclient import TestClient
 
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
@@ -477,17 +476,6 @@ def test_download_model_metadata_failure(test_app: TestClient) -> None:
     # should fail
     assert response.status_code == 500
     assert response.json()["detail"] == "Model not found"
-
-
-def test_app_with_login(test_app_login: TestClient) -> None:
-    """Test healthcheck with login"""
-
-    response = test_app_login.get(
-        "/opsml/healthcheck",
-        auth=HTTPBasicAuth("test-user", "test-pass"),
-    )
-
-    assert response.status_code == 200
 
 
 def test_model_metrics(

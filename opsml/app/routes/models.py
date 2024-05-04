@@ -12,7 +12,7 @@ from fastapi import APIRouter, Body, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.auth import security_dep
+from opsml.app.routes.auth import AppSec
 from opsml.app.routes.pydantic_models import (
     CardRequest,
     CompareMetricRequest,
@@ -38,7 +38,7 @@ TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 model_route_helper = ModelRouteHelper()
-router = APIRouter(dependencies=security_dep)
+router = APIRouter(dependencies=AppSec.dependencies())
 
 
 @router.get("/models/list/", response_class=HTMLResponse)
