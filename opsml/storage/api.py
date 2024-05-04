@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt
+from opsml.settings.config import config
 
 # httpx outputs a lot of logs
 logging.getLogger("httpx").propagate = False
@@ -46,6 +47,7 @@ class ApiRoutes:
     LIST_FILES = "files/list"
     UPLOAD_FILE = "files/upload"
     FILE_EXISTS = "files/exists"
+    TOKEN = "auth/token"
 
 
 api_routes = ApiRoutes()
@@ -70,26 +72,37 @@ class ApiClient:
                 Prefix for opsml server path
 
         """
+        self._requires_auth = False
         self.client = httpx.Client()
+        self._base_url = self._get_base_url(base_url=base_url, path_prefix=path_prefix)
 
         if token is not None:
             self.client.headers = httpx.Headers({"X-Prod-Token": token})
+            self.client.headers["X-Prod-Token"] = token
 
-        if username is not None and password is not None:
-            self.client.auth = httpx.BasicAuth(username=username, password=password)
+        if config.opsml_username is not None and config.opsml_password is not None:
+            self._requires_auth = True
+            self.form_data = {"username": config.opsml_username, "password": config.opsml_password}
+            self.refresh_token()
 
         self.client.timeout = _TIMEOUT_CONFIG
-
-        self._base_url = self._get_base_url(base_url=base_url, path_prefix=path_prefix)
-
-    @property
-    def base_url(self) -> str:
-        """Base url for api client"""
-        return self._base_url
 
     def _get_base_url(self, base_url: str, path_prefix: str) -> str:
         """Gets the base url to use with all requests"""
         return f"{base_url}/{path_prefix}"
+
+    def refresh_token(self) -> None:
+        """Refreshes the token"""
+
+        if self._requires_auth:
+            response = self.client.post(url=f"{self._base_url}/{ApiRoutes.TOKEN}", data=self.form_data)
+            res = response.json()
+
+            # check if token is in response
+            if "access_token" not in res:
+                raise ValueError(f"Failed to get access token: {res.get('detail')}")
+
+            self.client.headers["Authorization"] = f"Bearer {res['access_token']}"
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def request(self, route: str, request_type: RequestType, **kwargs: Any) -> Dict[str, Any]:
@@ -125,6 +138,7 @@ class ApiClient:
         chunk_size: Optional[int] = None,
     ) -> Dict[str, Any]:
         result = ""
+
         url = f"{self._base_url}/{route}"
         with self.client.stream(method="POST", url=url, files=files, headers=headers) as response:
             for data in response.iter_bytes(chunk_size=chunk_size):

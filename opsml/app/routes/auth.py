@@ -27,8 +27,6 @@ class TokenData(BaseModel):
     username: str
 
 
-# only set auth routes if auth is enabled
-
 router = APIRouter()
 
 
@@ -56,8 +54,11 @@ async def get_current_user(
         token_data = TokenData(username=username)
 
     except jwt.exceptions.ExpiredSignatureError:
-        # pass to login
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="token_expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     except jwt.exceptions.DecodeError:
         raise credentials_exception
@@ -83,13 +84,21 @@ async def login_for_access_token(
 ) -> Token:
     logger.info("Logging in user: {}", form_data.username)
 
+    # quick exit if auth is disabled
+    if not config.opsml_auth:
+        return Token(access_token="", token_type="bearer")
+
     db: ServerAuthRegistry = request.app.state.auth_db
     user = db.get_user(form_data.username)
 
     if user is None:
         logger.info("User does not exist: {}", form_data.username)
-        # reroute to login/register page
-        pass
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     assert user is not None
 
@@ -104,10 +113,7 @@ async def login_for_access_token(
         )
 
     logger.info("User authenticated: {}", form_data.username)
-    return Token(
-        access_token=db.create_access_token(user),
-        token_type="bearer",
-    )
+    return Token(access_token=db.create_access_token(user), token_type="bearer")
 
 
 security_dep: Optional[Sequence[Any]] = [Depends(get_current_active_user)] if config.opsml_auth else None

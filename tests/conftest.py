@@ -22,8 +22,6 @@ os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = OPSML_TRACKING_URI
 os.environ["OPSML_STORAGE_URI"] = OPSML_STORAGE_URI
-os.environ["OPSML_USERNAME"] = "test-user"
-os.environ["OPSML_PASSWORD"] = "test-pass"
 
 import datetime
 import shutil
@@ -212,7 +210,7 @@ def local_storage_client() -> YieldFixture[client.LocalStorageClient]:
 
 
 @pytest.fixture
-def mock_gcsfs():
+def mock_gcsfs() -> YieldFixture[Dict[str, MagicMock]]:
     with patch.multiple(
         "gcsfs.GCSFileSystem",
         get=MagicMock(return_value="test"),
@@ -240,11 +238,19 @@ def test_app() -> YieldFixture[TestClient]:
 def test_app_login() -> YieldFixture[TestClient]:
     cleanup()
     from opsml.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp(login=True)
+    
+    config.opsml_auth = True
+    config.opsml_username = "admin"
+    config.opsml_password = "admin"
+    
+    opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
+    
+    config.opsml_auth = False
+    config.opsml_username = None
+    config.opsml_password = None
 
 
 @pytest.fixture
@@ -261,6 +267,7 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
+    
     def callable_api():
         return test_client
 
@@ -282,6 +289,12 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Yie
     yield mock_registries(monkeypatch, test_app)
     client.storage_client = previous_client
 
+@pytest.fixture
+def api_registries_login(monkeypatch: pytest.MonkeyPatch, test_app_login: TestClient) -> YieldFixture[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    previous_client = client.storage_client
+    yield mock_registries(monkeypatch, test_app_login)
+    client.storage_client = previous_client
 
 @pytest.fixture
 def db_registries() -> YieldFixture[CardRegistries]:

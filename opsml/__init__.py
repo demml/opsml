@@ -1,4 +1,4 @@
-from opsml.cards import DataCard, ModelCard, PipelineCard, ProjectCard, RunCard
+from opsml.cards import DataCard, ModelCard, PipelineCard, ProjectCard, RunCard, AuditCard
 from opsml.data import (
     ArrowData,
     DataInterface,
