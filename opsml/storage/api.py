@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt
+
 from opsml.settings.config import config
 
 # httpx outputs a lot of logs

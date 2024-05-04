@@ -333,4 +333,3 @@ def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
         run = cast(ActiveRun, run)
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
-
