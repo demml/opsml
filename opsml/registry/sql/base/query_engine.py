@@ -581,6 +581,22 @@ class AuthQueryEngine(QueryEngine):
 
         return updated
 
+    def delete_user(self, user: User) -> bool:
+        """Delete user
+
+        Args:
+            username:
+                Username
+        """
+        deleted = False
+        with self.session() as sess:
+            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query.delete()
+            sess.commit()
+            deleted = True
+
+        return deleted
+
 
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
     """Get query engine based on registry type
