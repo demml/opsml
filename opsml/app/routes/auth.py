@@ -35,6 +35,10 @@ class UserUpdated(BaseModel):
     updated: bool = False
 
 
+class UserDeleted(BaseModel):
+    deleted: bool = False
+
+
 router = APIRouter()
 
 
@@ -187,6 +191,22 @@ def update_user(
     updated = db.update_user(user)
 
     return UserUpdated(updated=updated)
+
+
+@router.delete("/auth/user", response_model=UserDeleted)
+def delete_user(
+    request: Request,
+    username: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> UserUpdated:
+    """Delete user"""
+    if not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+    db: ServerAuthRegistry = request.app.state.auth_db
+    deleted = db.delete_user(username)
+
+    return UserDeleted(deleted=deleted)
 
 
 security_dep: Optional[Sequence[Any]] = [Depends(get_current_active_user)] if config.opsml_auth else None

@@ -518,6 +518,17 @@ class ServerAuthRegistry(ServerRegistry):
 
         return self.db.update_user(user=user)
 
+    def delete_user(self, user: User) -> bool:
+        """Delete user
+
+        Args:
+            username:
+                username
+
+        """
+
+        return self.db.delete_user(user)
+
     def create_access_token(self, user: User) -> str:
         """Creates a temporary access token for user"""
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
