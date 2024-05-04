@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import Any, List, Optional
 
 import uvicorn
 from fastapi import FastAPI
@@ -24,18 +23,9 @@ STATIC_PATH = (Path(__file__).parent / "static").absolute()
 
 
 class OpsmlApp:
-    def __init__(self, port: int = 8888, login: bool = False):
+    def __init__(self, port: int = 8888):
         self.port = port
-        self.login = login
-        self.app = FastAPI(title=config.app_name, dependencies=self.get_login(), lifespan=lifespan)
-
-    def get_login(self) -> Optional[List[Any]]:
-        """Sets the login dependency for an app if specified"""
-
-        if self.login:
-            return None
-
-        return None
+        self.app = FastAPI(title=config.app_name, lifespan=lifespan)
 
     def build_app(self) -> None:
         self.app.include_router(api_router)
@@ -55,8 +45,8 @@ class OpsmlApp:
         return self.app
 
 
-def run_app(login: bool = False) -> FastAPI:
-    return OpsmlApp(login=login).get_app()
+def run_app() -> FastAPI:
+    return OpsmlApp().get_app()
 
 
 if __name__ == "__main__":
