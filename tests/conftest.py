@@ -251,7 +251,7 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
 
-    def callable_api():
+    def callable_api() -> TestClient:
         return test_client
 
     with patch("httpx.Client", callable_api):
@@ -261,6 +261,8 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
         cfg = OpsmlConfig(
             opsml_tracking_uri="http://testserver",
             opsml_storage_uri=OPSML_STORAGE_URI,
+            opsml_username="admin",
+            opsml_password="admin",
         )
 
         # Cards rely on global storage state - so set it to API
