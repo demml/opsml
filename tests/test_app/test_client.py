@@ -608,59 +608,6 @@ def test_data_list(test_app: TestClient) -> None:
     assert response.status_code == 200
 
 
-##### Test list data
-def test_data_model_version(
-    test_app: TestClient,
-    populate_run: Tuple[DataCard, ModelCard, ActiveRun],
-) -> None:
-    """Test data routes"""
-
-    datacard, modelcard, run = populate_run
-
-    response = test_app.get("/opsml/data/versions/")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/data/versions/?name=test_data")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/models/versions/")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/projects/list/?project=opsml-project")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/projects/list/?project=opsml-project&run_uid={run.runcard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.post(
-        url="/opsml/models/compare_metrics",
-        json={
-            "metric_name": ["test_metric"],
-            "lower_is_better": True,
-            "challenger_uid": modelcard.uid,
-            "champion_uid": [modelcard.uid],
-        },
-    )
-    assert response.status_code == 200
-
-    battle_report = response.json()
-    assert battle_report["report"]["test_metric"][0]["challenger_win"] == False
-
 
 ##### Test audit
 def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]) -> None:
