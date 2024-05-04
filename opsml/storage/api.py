@@ -61,6 +61,7 @@ class ApiClient:
         base_url: str,
         username: Optional[str],
         password: Optional[str],
+        use_auth: bool,
         token: Optional[str],
         path_prefix: str = PATH_PREFIX,
     ):
@@ -74,6 +75,7 @@ class ApiClient:
 
         """
         self._requires_auth = False
+        self._auth_token = None
         self.client = httpx.Client()
         self._base_url = self._get_base_url(base_url=base_url, path_prefix=path_prefix)
 
@@ -81,9 +83,13 @@ class ApiClient:
             self.client.headers = httpx.Headers({"X-Prod-Token": token})
             self.client.headers["X-Prod-Token"] = token
 
-        if config.opsml_username is not None and config.opsml_password is not None:
+        if use_auth:
+            assert (
+                username is not None and password is not None
+            ), "Username and password must be provided when using authentication"
             self._requires_auth = True
             self.form_data = {"username": config.opsml_username, "password": config.opsml_password}
+            self.refresh_token()
 
         self.client.timeout = _TIMEOUT_CONFIG
 
@@ -102,7 +108,8 @@ class ApiClient:
             if "access_token" not in res:
                 raise ValueError(f"Failed to get access token: {res.get('detail')}")
 
-            self.client.headers["Authorization"] = f"Bearer {res['access_token']}"
+            self._auth_token = res["access_token"]
+            self.client.headers["Authorization"] = f"Bearer {self._auth_token}"
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def request(self, route: str, request_type: RequestType, **kwargs: Any) -> Dict[str, Any]:
@@ -119,6 +126,7 @@ class ApiClient:
         Returns:
             Response from server
         """
+        # self.refresh_token()
 
         url = f"{self._base_url}/{route}"
         response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
@@ -127,6 +135,7 @@ class ApiClient:
             return cast(Dict[str, Any], response.json())
 
         detail = response.json().get("detail")
+        self.refresh_token()
         raise ValueError(f"""Failed to make server call for {request_type} request Url: {route}, {detail}""")
 
     @retry(reraise=True, stop=stop_after_attempt(3))
@@ -139,6 +148,7 @@ class ApiClient:
     ) -> Dict[str, Any]:
         result = ""
 
+        # self.refresh_token()
         url = f"{self._base_url}/{route}"
         with self.client.stream(method="POST", url=url, files=files, headers=headers) as response:
             for data in response.iter_bytes(chunk_size=chunk_size):
@@ -149,6 +159,7 @@ class ApiClient:
         if response.status_code == 200:
             return response_result
 
+        self.refresh_token()
         raise ValueError(
             f"""
             Failed to make server call for post request Url: {route}.
@@ -178,6 +189,7 @@ class ApiClient:
             py_json.loads(data.decode("utf-8")),  # pylint: disable=undefined-loop-variable
         )
 
+        self.refresh_token()
         raise ValueError(
             f"""Failed to make server call for post request Url: {ApiRoutes.DOWNLOAD_FILE}.
               {response_result.get("detail")}
