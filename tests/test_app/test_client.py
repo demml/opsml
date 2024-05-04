@@ -21,7 +21,6 @@ from opsml.cards import (
 )
 from opsml.data import NumpyData, PandasData, TorchData
 from opsml.model import HuggingFaceModel, SklearnModel
-from opsml.projects.active_run import ActiveRun
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
@@ -606,7 +605,6 @@ def test_data_list(test_app: TestClient) -> None:
     """Test settings"""
     response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
-
 
 
 ##### Test audit

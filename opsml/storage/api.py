@@ -84,7 +84,6 @@ class ApiClient:
         if config.opsml_username is not None and config.opsml_password is not None:
             self._requires_auth = True
             self.form_data = {"username": config.opsml_username, "password": config.opsml_password}
-            self.refresh_token()
 
         self.client.timeout = _TIMEOUT_CONFIG
 
