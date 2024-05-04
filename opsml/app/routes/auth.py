@@ -27,6 +27,14 @@ class TokenData(BaseModel):
     username: str
 
 
+class UserCreated(BaseModel):
+    created: bool = False
+
+
+class UserUpdated(BaseModel):
+    updated: bool = False
+
+
 router = APIRouter()
 
 
@@ -114,6 +122,69 @@ async def login_for_access_token(
 
     logger.info("User authenticated: {}", form_data.username)
     return Token(access_token=db.create_access_token(user), token_type="bearer")
+
+
+@router.get("/auth/user", response_model=User)
+def get_user(
+    request: Request,
+    username: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
+    """Retrieves user by username"""
+    if not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+    db: ServerAuthRegistry = request.app.state.auth_db
+    user = db.get_user(username)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return user
+
+
+@router.post("/auth/user", response_model=User)
+def create_user(
+    request: Request,
+    user: User,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> UserCreated:
+    """Create new user"""
+    if not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+    db: ServerAuthRegistry = request.app.state.auth_db
+
+    # check user not exists
+    if db.get_user(user.username) is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+
+    # add user
+    db.add_user(user)
+
+    # test getting user
+    user = db.get_user(user.username)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Failed to create user")
+
+    return UserCreated(created=True)
+
+
+@router.put("/auth/user", response_model=User)
+def update_user(
+    request: Request,
+    user: User,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> UserUpdated:
+    """Update user"""
+    if not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+
+    db: ServerAuthRegistry = request.app.state.auth_db
+    updated = db.update_user(user)
+
+    return UserUpdated(updated=updated)
 
 
 security_dep: Optional[Sequence[Any]] = [Depends(get_current_active_user)] if config.opsml_auth else None
