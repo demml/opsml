@@ -237,11 +237,13 @@ def test_app() -> YieldFixture[TestClient]:
 @pytest.fixture(scope="module")
 def test_app_login() -> YieldFixture[TestClient]:
     cleanup()
-    from opsml.app.main import OpsmlApp
 
+    # set up auth
     config.opsml_auth = True
     config.opsml_username = "admin"
     config.opsml_password = "admin"
+
+    from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
@@ -275,7 +277,10 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
         # Set the global configuration to mock API "client" mode
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
-        cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=OPSML_STORAGE_URI)
+        cfg = OpsmlConfig(
+            opsml_tracking_uri="http://testserver",
+            opsml_storage_uri=OPSML_STORAGE_URI,
+        )
 
         # Cards rely on global storage state - so set it to API
         client.storage_client = client.get_storage_client(cfg)

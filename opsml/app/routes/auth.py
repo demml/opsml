@@ -46,7 +46,7 @@ async def get_current_user(
     request: Request,
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> User:
-    db: ServerAuthRegistry = request.app.state.auth_db
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,17 +65,17 @@ async def get_current_user(
             raise credentials_exception
         token_data = TokenData(username=username)
 
-    except jwt.exceptions.ExpiredSignatureError:
+    except jwt.exceptions.ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="token_expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from exc
 
-    except jwt.exceptions.DecodeError:
-        raise credentials_exception
+    except jwt.exceptions.DecodeError as exc:
+        raise credentials_exception from exc
 
-    user = db.get_user(token_data.username)
+    user = auth_db.get_user(token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -100,8 +100,8 @@ async def login_for_access_token(
     if not config.opsml_auth:
         return Token(access_token="", token_type="bearer")
 
-    db: ServerAuthRegistry = request.app.state.auth_db
-    user = db.get_user(form_data.username)
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+    user = auth_db.get_user(form_data.username)
 
     if user is None:
         logger.info("User does not exist: {}", form_data.username)
@@ -115,7 +115,7 @@ async def login_for_access_token(
     assert user is not None
 
     # check if password is correct
-    authenicated = db.authenticate_user(user, form_data.password)
+    authenicated = auth_db.authenticate_user(user, form_data.password)
 
     if not authenicated:
         raise HTTPException(
@@ -125,7 +125,7 @@ async def login_for_access_token(
         )
 
     logger.info("User authenticated: {}", form_data.username)
-    return Token(access_token=db.create_access_token(user), token_type="bearer")
+    return Token(access_token=auth_db.create_access_token(user), token_type="bearer")
 
 
 @router.get("/auth/user", response_model=User)
@@ -138,8 +138,8 @@ def get_user(
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    db: ServerAuthRegistry = request.app.state.auth_db
-    user = db.get_user(username)
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+    user = auth_db.get_user(username)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -157,19 +157,17 @@ def create_user(
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    db: ServerAuthRegistry = request.app.state.auth_db
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
 
     # check user not exists
-    if db.get_user(user.username) is not None:
+    if auth_db.get_user(user.username) is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
 
     # add user
-    db.add_user(user)
+    auth_db.add_user(user)
 
     # test getting user
-    user = db.get_user(user.username)
-
-    print(user)
+    user = auth_db.get_user(user.username)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Failed to create user")
@@ -187,8 +185,8 @@ def update_user(
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    db: ServerAuthRegistry = request.app.state.auth_db
-    updated = db.update_user(user)
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+    updated = auth_db.update_user(user)
 
     return UserUpdated(updated=updated)
 
@@ -196,17 +194,24 @@ def update_user(
 @router.delete("/auth/user", response_model=UserDeleted)
 def delete_user(
     request: Request,
-    user: User,
+    username: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> UserDeleted:
     """Delete user"""
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
-    db: ServerAuthRegistry = request.app.state.auth_db
-    deleted = db.delete_user(user)
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+    user = auth_db.get_user(username)
 
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    deleted = auth_db.delete_user(user)
     return UserDeleted(deleted=deleted)
 
 
-security_dep: Optional[Sequence[Any]] = [Depends(get_current_active_user)] if config.opsml_auth else None
+class AppSec:
+    @staticmethod
+    def dependencies() -> Optional[Sequence[Any]]:
+        return [Depends(get_current_active_user)] if config.opsml_auth else None

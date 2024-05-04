@@ -456,7 +456,7 @@ class ServerAuditCardRegistry(ServerRegistry):
 
 class ServerAuthRegistry(ServerRegistry):
     @property
-    def db(self) -> AuthQueryEngine:
+    def auth_db(self) -> AuthQueryEngine:
         assert isinstance(self.engine, AuthQueryEngine)
         return self.engine
 
@@ -472,7 +472,7 @@ class ServerAuthRegistry(ServerRegistry):
 
         """
 
-        return self.db.get_user(username=username)
+        return self.auth_db.get_user(username=username)
 
     def add_user(self, user: User) -> None:
         """Add user to auth db
@@ -483,14 +483,14 @@ class ServerAuthRegistry(ServerRegistry):
 
         """
 
-        self.db.add_user(user=user)
+        self.auth_db.add_user(user=user)
 
     def authenticate_user(self, user: User, password: str) -> bool:
         """Authenticates user password
 
         Args:
-            username:
-                username
+            user:
+                User object
             password:
                 password
 
@@ -500,9 +500,9 @@ class ServerAuthRegistry(ServerRegistry):
         """
 
         # encoding user password
-        userBytes = password.encode("utf-8")
+        user_bytes = password.encode("utf-8")
         assert isinstance(user.hashed_password, str)
-        matched: bool = bcrypt.checkpw(userBytes, user.hashed_password.encode("utf-8"))
+        matched: bool = bcrypt.checkpw(user_bytes, user.hashed_password.encode("utf-8"))
 
         # checking password
         return matched
@@ -516,18 +516,18 @@ class ServerAuthRegistry(ServerRegistry):
 
         """
 
-        return self.db.update_user(user=user)
+        return self.auth_db.update_user(user=user)
 
     def delete_user(self, user: User) -> bool:
         """Delete user
 
         Args:
-            username:
-                username
+            user:
+                user
 
         """
 
-        return self.db.delete_user(user)
+        return self.auth_db.delete_user(user)
 
     def create_access_token(self, user: User) -> str:
         """Creates a temporary access token for user"""

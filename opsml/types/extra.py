@@ -162,7 +162,7 @@ class User(BaseModel):
     hashed_password: Optional[str] = None
     email: Optional[str] = None
     full_name: Optional[str] = None
-    is_active: bool = False
+    is_active: bool = True
     scopes: UserScope = UserScope()
 
     @model_validator(mode="before")

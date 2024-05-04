@@ -7,7 +7,7 @@ from typing import Optional, Union
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
 from opsml.app.core.dependencies import verify_token
-from opsml.app.routes.auth import security_dep
+from opsml.app.routes.auth import AppSec
 from opsml.app.routes.pydantic_models import (
     AddCardRequest,
     AddCardResponse,
@@ -31,7 +31,7 @@ from opsml.registry import CardRegistry
 logger = ArtifactLogger.get_logger()
 
 
-router = APIRouter(dependencies=security_dep)
+router = APIRouter(dependencies=AppSec.dependencies())
 
 
 @router.post("/cards/uid", response_model=UidExistsResponse, name="check_uid")

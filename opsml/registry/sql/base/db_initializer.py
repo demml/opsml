@@ -54,20 +54,20 @@ class DBInitializer:
         # credit to mlflow for this implementation
         db_url = str(self.engine.url)
 
-        config = self.get_alembic_config(db_url=db_url)
+        alembic_config = self.get_alembic_config(db_url=db_url)
         with self.engine.begin() as connection:
-            config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
-            command.upgrade(config, "heads")
+            alembic_config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
+            command.upgrade(alembic_config, "heads")
 
     def get_alembic_config(self, db_url: str) -> Config:
         alembic_dir = os.path.join(DIR_PATH, "migration")
         db_url = db_url.replace("%", "%%")
-        config = Config(os.path.join(alembic_dir, "alembic.ini"))
-        config.set_main_option("sqlalchemy.url", db_url)
-        config.set_main_option("script_location", f"{alembic_dir}/alembic")
-        config.attributes["configure_logger"] = False  # pylint: disable=unsupported-assignment-operation
+        alembic_config = Config(os.path.join(alembic_dir, "alembic.ini"))
+        alembic_config.set_main_option("sqlalchemy.url", db_url)
+        alembic_config.set_main_option("script_location", f"{alembic_dir}/alembic")
+        alembic_config.attributes["configure_logger"] = False  # pylint: disable=unsupported-assignment-operation
 
-        return config
+        return alembic_config
 
     def check_admin_user(self, username: str) -> None:
         """Check if admin user exists in auth db"""
