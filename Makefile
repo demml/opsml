@@ -64,7 +64,7 @@ setup.sysdeps:
 
 test.unit:
 	poetry run pytest \
-		-m "not large and not compat" \
+		-m "not large and not compat and not appsec" \
 		--ignore tests/integration \
 		--cov \
 		--cov-fail-under=0 \

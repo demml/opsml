@@ -9,7 +9,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-
 # Constants
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
