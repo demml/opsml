@@ -62,8 +62,8 @@ class OpsmlApp:
         return self.app
 
 
-def run_app(port: int = 8888, config: Optional[OpsmlConfig] = None) -> FastAPI:
-    return OpsmlApp(port, config).get_app()
+def run_app(port: int = 8888, app_config: Optional[OpsmlConfig] = None) -> FastAPI:
+    return OpsmlApp(port, app_config).get_app()
 
 
 if __name__ == "__main__":
