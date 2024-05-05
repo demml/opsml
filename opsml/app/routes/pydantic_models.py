@@ -26,6 +26,10 @@ class ListRepositoryNameInfo(BaseModel):
     names: Optional[List[str]] = None
 
 
+class HasAuthResponse(BaseModel):
+    has_auth: bool = False
+
+
 class DebugResponse(BaseModel):
     url: str
     storage: str
@@ -84,6 +88,7 @@ class ListCardRequest(BaseModel):
     registry_type: Optional[str] = None
     table_name: Optional[str] = None
     query_terms: Optional[Dict[str, Any]] = None
+    sort_by_timestamp: bool = False
 
     @model_validator(mode="before")
     @classmethod

@@ -160,6 +160,21 @@ class MetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+# only used if using auth
+class AuthSchema(Base):
+    __tablename__ = RegistryTableNames.AUTH.value
+
+    username = Column("username", String(64), primary_key=True)
+    full_name = Column("full_name", String(64))
+    email = Column("email", String(64))
+    hashed_password = Column("hashed_password", String(64))
+    scopes = Column("scopes", JSON)
+    is_active = Column("is_active", Boolean)
+
+    def __repr__(self) -> str:
+        return f"<SqlTable: {self.__tablename__}>"
+
+
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
