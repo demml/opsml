@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Optional, Union, Dict
+from typing import Dict, Optional, Union
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -15,6 +15,7 @@ from opsml.app.routes.pydantic_models import (
     ListCardRequest,
     ListCardResponse,
     NamesResponse,
+    RegistryQuery,
     RepositoriesResponse,
     UidExistsRequest,
     UidExistsResponse,
@@ -22,7 +23,6 @@ from opsml.app.routes.pydantic_models import (
     UpdateCardResponse,
     VersionRequest,
     VersionResponse,
-    RegistryQuery,
 )
 from opsml.app.routes.utils import get_registry_type_from_table
 from opsml.helpers.logging import ArtifactLogger
@@ -79,7 +79,7 @@ def card_repositories(
     return RepositoriesResponse(repositories=repositories)
 
 
-@router.get("/card/registry/stats", name="registry_stats")
+@router.get("/cards/registry/stats", name="registry_stats")
 def query_registry_stats(
     request: Request,
     registry_type: str,
@@ -237,6 +237,9 @@ def list_cards(
             query_terms=payload.query_terms,
             sort_by_timestamp=payload.sort_by_timestamp,
         )
+
+        if payload.page:
+            cards = cards[payload.page * 30 : payload.page + 30]
 
         return ListCardResponse(cards=cards)
 
