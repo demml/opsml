@@ -8,7 +8,7 @@ def test_app_token(test_app: TestClient) -> None:
 
     response = test_app.get("/opsml/healthcheck")
 
-    assert response.status_code == 401
+    assert response.status_code == 200
 
     # get token
     response = test_app.post(

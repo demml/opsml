@@ -11,7 +11,6 @@ ignore:
   - "examples"
   - "docs"
   - "images"
-  - "opsml/app/routes/auth.py"
 
 coverage:
   range: "70...100"
