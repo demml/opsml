@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Optional, Sequence
+from typing import Annotated
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -209,9 +209,3 @@ def delete_user(
 
     deleted = auth_db.delete_user(user)
     return UserDeleted(deleted=deleted)
-
-
-class AppSec:
-    @staticmethod
-    def dependencies() -> Optional[Sequence[Any]]:
-        return [Depends(get_current_active_user)] if config.opsml_auth else None

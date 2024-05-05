@@ -8,14 +8,13 @@ from typing import Any, Dict, List, cast
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.auth import AppSec
 from opsml.app.routes.pydantic_models import GetMetricRequest, Metrics, Success
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerRunCardRegistry
 
 logger = ArtifactLogger.get_logger()
 
-router = APIRouter(dependencies=AppSec.dependencies())
+router = APIRouter()
 
 
 @router.put("/metrics", name="metric_put", response_model=Success)
@@ -40,9 +39,7 @@ def insert_metric(request: Request, payload: Metrics) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
 
 
 # GET would be used, but we are using POST to allow for a request body so that we can pass in a list of metrics to retrieve
@@ -67,6 +64,4 @@ def get_metric(request: Request, payload: GetMetricRequest) -> Metrics:
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error

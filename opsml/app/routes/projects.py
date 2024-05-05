@@ -11,7 +11,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.auth import AppSec
 from opsml.app.routes.pydantic_models import ProjectIdResponse
 from opsml.app.routes.route_helpers import ProjectRouteHelper
 from opsml.app.routes.utils import error_to_500
@@ -24,7 +23,7 @@ logger = ArtifactLogger.get_logger()
 TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-router = APIRouter(dependencies=AppSec.dependencies())
+router = APIRouter()
 project_route_helper = ProjectRouteHelper()
 
 

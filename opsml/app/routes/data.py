@@ -9,7 +9,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.auth import AppSec
 from opsml.app.routes.files import download_artifacts_ui, download_file
 from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.app.routes.utils import error_to_500
@@ -26,7 +25,7 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 data_route_helper = DataRouteHelper()
-router = APIRouter(dependencies=AppSec.dependencies())
+router = APIRouter()
 
 
 @router.get("/data/list/", response_class=HTMLResponse)
