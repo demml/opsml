@@ -166,7 +166,7 @@ class ModelCard(ArtifactCard):
 
         exclude_vars = {"interface": {"model", "preprocessor", "sample_data", "onnx_model"}}
         dumped_model = self.model_dump(exclude=exclude_vars)
-        dumped_model["interface_type"] = self.interface.name
+        dumped_model["interface_type"] = self.interface.name()
         dumped_model["task_type"] = self.interface.task_type
 
         return dumped_model

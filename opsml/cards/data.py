@@ -113,7 +113,7 @@ class DataCard(ArtifactCard):
         """
         exclude_attr = {"data"}
         dumped_model = self.model_dump(exclude=exclude_attr)
-        dumped_model["interface_type"] = self.interface.name
+        dumped_model["interface_type"] = self.interface.name()
         return dumped_model
 
     def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:

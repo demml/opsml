@@ -62,13 +62,14 @@ class ModelRegistryRecord(SaveRecord):
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        print(values["datacard_uid"])
         metadata: Dict[str, Any] = values["metadata"]
         values["sample_data_type"] = metadata["data_schema"]["data_type"]
         values["model_type"] = values["interface"]["model_type"]
         values["runcard_uid"] = metadata["runcard_uid"]
         values["pipelinecard_uid"] = metadata["pipelinecard_uid"]
         values["auditcard_uid"] = metadata["auditcard_uid"]
-        values["datacard_uid"] = values.get("datacard_uid", CommonKwargs.UNDEFINED.value)
+        values["datacard_uid"] = values.get("datacard_uid") or CommonKwargs.UNDEFINED.value
 
         return values
 
