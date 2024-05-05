@@ -43,6 +43,7 @@ class ApiStorageClientSettings(StorageClientSettings):
 
     storage_system: StorageSystem = StorageSystem.API
     opsml_tracking_uri: str
+    opsml_auth: bool = False
     opsml_username: Optional[str]
     opsml_password: Optional[str]
     opsml_prod_token: Optional[str]

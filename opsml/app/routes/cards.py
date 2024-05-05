@@ -29,6 +29,7 @@ from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
+
 router = APIRouter()
 
 
@@ -165,6 +166,7 @@ def list_cards(
             tags=payload.tags,
             ignore_release_candidates=payload.ignore_release_candidates,
             query_terms=payload.query_terms,
+            sort_by_timestamp=payload.sort_by_timestamp,
         )
 
         return ListCardResponse(cards=cards)

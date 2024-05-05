@@ -281,6 +281,7 @@ class ApiStorageClient(StorageClientBase):
             base_url=settings.opsml_tracking_uri,
             username=settings.opsml_username,
             password=settings.opsml_password,
+            use_auth=settings.opsml_auth,
             token=settings.opsml_prod_token,
         )
 
@@ -392,6 +393,7 @@ def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
                 opsml_tracking_uri=cfg.opsml_tracking_uri,
                 opsml_username=cfg.opsml_username,
                 opsml_password=cfg.opsml_password,
+                opsml_auth=cfg.opsml_auth,
                 opsml_prod_token=cfg.opsml_prod_token,
             )
         )
