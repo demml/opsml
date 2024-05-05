@@ -20,12 +20,14 @@ from sqlalchemy.sql.expression import ColumnElement
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
+    AuthSchema,
     CardSQLTable,
     MetricSchema,
     ProjectSchema,
     SQLTableGetter,
 )
 from opsml.types import RegistryType
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
@@ -542,6 +544,74 @@ class RunQueryEngine(QueryEngine):
         return self._parse_records(results)
 
 
+class AuthQueryEngine(QueryEngine):
+    def get_user(self, username: str) -> Optional[User]:
+        """Get user by username
+
+        Args:
+            username:
+                Username
+
+        Returns:
+            User record
+        """
+
+        query = select(AuthSchema).filter(AuthSchema.username == username)
+        with self.session() as sess:
+            result = sess.execute(query).first()
+
+        if not result:
+            return None
+
+        return User(**result[0].__dict__)
+
+    def add_user(self, user: User) -> None:
+        """Add user
+
+        Args:
+            user:
+                User record
+        """
+        dumped_model = user.model_dump(exclude={"password"})
+        with self.session() as sess:
+            sess.execute(insert(AuthSchema), dumped_model)
+            sess.commit()
+
+    def update_user(self, user: User) -> bool:
+        """Update user
+
+        Args:
+            user:
+                User record
+        """
+
+        updated = False
+        dumped_model = user.model_dump(exclude={"password"})
+        with self.session() as sess:
+            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query.update(dumped_model)  # type: ignore
+            sess.commit()
+            updated = True
+
+        return updated
+
+    def delete_user(self, user: User) -> bool:
+        """Delete user
+
+        Args:
+            user:
+                User record
+        """
+        deleted = False
+        with self.session() as sess:
+            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query.delete()
+            sess.commit()
+            deleted = True
+
+        return deleted
+
+
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
     """Get query engine based on registry type
 
@@ -558,4 +628,6 @@ def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[Qu
         return ProjectQueryEngine(engine=db_engine)
     if registry_type == RegistryType.RUN:
         return RunQueryEngine(engine=db_engine)
+    if registry_type == RegistryType.AUTH:
+        return AuthQueryEngine(engine=db_engine)
     return QueryEngine(engine=db_engine)

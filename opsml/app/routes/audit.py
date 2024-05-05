@@ -38,8 +38,6 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 AUDIT_FILE = "audit_file.csv"
 
-templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
 audit_route_helper = AuditRouteHelper()
 router = APIRouter()
 

@@ -39,6 +39,7 @@ logger = ArtifactLogger.get_logger()
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
+
 router = APIRouter()
 
 
