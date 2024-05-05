@@ -26,6 +26,10 @@ class ListRepositoryNameInfo(BaseModel):
     names: Optional[List[str]] = None
 
 
+class HasAuthResponse(BaseModel):
+    has_auth: bool = False
+
+
 class DebugResponse(BaseModel):
     url: str
     storage: str

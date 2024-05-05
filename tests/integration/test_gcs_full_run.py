@@ -21,7 +21,7 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
 def test_gcs_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
-):
+) -> None:
     """Verifies the full cycle of model and data card persistence.
     Because a profile is saved, data must be PandasData.
     """

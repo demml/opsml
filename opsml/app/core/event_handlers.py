@@ -10,9 +10,11 @@ from fastapi import FastAPI, Response
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.registrar import ModelRegistrar
+from opsml.registry.backend import _set_registry
 from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
 from opsml.storage import client
+from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 
@@ -38,6 +40,9 @@ def _init_registries(app: FastAPI) -> None:
     app.state.storage_client = client.storage_client
     app.state.model_registrar = ModelRegistrar(client.storage_client)
     app.state.storage_root = config.storage_root
+
+    if config.opsml_auth:
+        app.state.auth_db = _set_registry(RegistryType.AUTH)
 
 
 def _shutdown_registries(app: FastAPI) -> None:
