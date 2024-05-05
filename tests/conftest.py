@@ -224,15 +224,17 @@ def mock_gcsfs() -> YieldFixture[Dict[str, MagicMock]]:
 
 
 @pytest.fixture
-def test_app() -> YieldFixture[TestClient]:
+def test_app() -> Any:
     cleanup()
     from opsml.app.main import OpsmlApp
+    return OpsmlApp().get_app()
 
-    opsml_app = OpsmlApp()
-    with TestClient(opsml_app.get_app()) as tc:
-        yield tc
+
+@pytest.fixture
+def test_client(test_app:Any) -> Any:
+    yield TestClient(test_app)
     cleanup()
-
+    
 
 @pytest.fixture
 def gcs_test_bucket() -> Path:
@@ -247,13 +249,10 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
     return storage_client
 
 
-def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
-
-    def callable_api() -> TestClient:
-        return test_client
-
+def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient, auth:bool = False) -> CardRegistries:
+    
     # for some reason
-    with patch("httpx.Client", callable_api):
+    with patch("httpx.Client", test_client):
         # Set the global configuration to mock API "client" mode
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
@@ -262,6 +261,7 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
             opsml_storage_uri=OPSML_STORAGE_URI,
             opsml_username="admin",
             opsml_password="admin",
+            opsml_auth=auth,
         )
 
         # Cards rely on global storage state - so set it to API
@@ -270,10 +270,39 @@ def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) ->
 
 
 @pytest.fixture
-def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> YieldFixture[CardRegistries]:
+def api_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> YieldFixture[CardRegistries]:
     """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
     previous_client = client.storage_client
-    yield mock_registries(monkeypatch, test_app)
+    yield mock_registries(monkeypatch, test_client)
+    client.storage_client = previous_client
+    
+    
+    
+@pytest.fixture
+def test_app_login() -> Any:
+    cleanup()
+    from opsml.app.main import OpsmlApp
+
+    config = OpsmlConfig(
+        opsml_username="admin",
+        opsml_password="admin",
+        opsml_auth=True,
+    )
+        
+    return OpsmlApp(app_config=config).get_app()
+
+
+@pytest.fixture
+def test_client_login(test_app_login:Any) -> Any:
+    yield TestClient(test_app_login)
+    cleanup()
+    
+
+@pytest.fixture
+def api_registries_login(monkeypatch: pytest.MonkeyPatch, test_client_login: TestClient) -> YieldFixture[CardRegistries]:
+    """Returns CardRegistries configured with an API client (to simulate "client" mode)."""
+    previous_client = client.storage_client
+    yield mock_registries(monkeypatch, test_client_login, True)
     client.storage_client = previous_client
 
 
