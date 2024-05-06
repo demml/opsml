@@ -71,3 +71,24 @@ def test_card_routes(
         },
     )
     assert response.status_code == 500
+
+
+def test_ui_datacard_route(
+    test_app: TestClient,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
+) -> None:
+
+    modelcard, datacard, _ = populate_model_data_for_route
+
+    # force error
+    response = test_app.post(
+        url="/opsml/data/card",
+        json={
+            "name": datacard.name,
+            "repository": datacard.repository,
+            "version": datacard.version,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == datacard.name

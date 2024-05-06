@@ -1234,7 +1234,10 @@ def linear_regression_polars(regression_data_polars: pl.DataFrame) -> Tuple[Skle
 def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     X, y = regression_data
     reg = linear_model.LinearRegression().fit(X, y)
-    return SklearnModel(model=reg, sample_data=X), NumpyData(data=X)
+    return SklearnModel(model=reg, sample_data=X), NumpyData(
+        data=X,
+        data_splits=[DataSplit(label="train", indices=[0,1,2])],
+    )
 
 
 @pytest.fixture
