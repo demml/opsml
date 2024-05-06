@@ -6,7 +6,7 @@ import io
 import tempfile
 import zipfile as zp
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Any, Optional
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,15 +20,12 @@ from opsml.app.core.dependencies import (
     swap_opsml_root,
     verify_token,
 )
-from opsml.app.routes.pydantic_models import (
-    DeleteFileResponse,
-    FileExistsResponse,
-    ListFileResponse,
-)
+from opsml.app.routes.pydantic_models import DeleteFileResponse, FileExistsResponse, ListFileResponse, ListFileInfoResponse
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
     MaxBodySizeValidator,
+    calculate_file_size,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
@@ -277,4 +274,49 @@ def delete_files(request: Request, path: str) -> DeleteFileResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error deleting files. {error}",
+        ) from error
+
+
+@router.get("/files/list/info", name="list_files_info")
+def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -> ListFileInfoResponse:
+    """Lists files
+    Args:
+        request:
+            request object
+        path:
+            path to read
+    Returns:
+        `ListFileResponse`
+    """
+    storage_path = Path(path)
+
+    if subdir:
+        storage_path = storage_path / subdir
+
+    swapped_path = swap_opsml_root(request, storage_path)
+    storage_client: StorageClientBase = request.app.state.storage_client
+
+    files: List[Dict[str, Any]] = storage_client.ls(swapped_path, True)
+
+    mtimes = []
+    for file_ in files:
+        # conversion of timestamp is done on client side to take timezone into account
+        mtime = file_["mtime"] * 1000
+        uri = Path(file_["name"])
+        file_["uri"] = str(reverse_swap_opsml_root(request, uri))
+        file_["name"] = uri.name
+        file_["size"] = calculate_file_size(file_["size"])
+        file_["mtime"] = mtime
+        mtimes.append(mtime)
+
+    try:
+        return ListFileInfoResponse(
+            files=files,
+            mtime=max(mtimes),
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error listing files. {error}",
         ) from error

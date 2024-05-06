@@ -92,3 +92,21 @@ def test_ui_datacard_route(
 
     assert response.status_code == 200
     assert response.json()["name"] == datacard.name
+    
+def test_ui_list_files(
+    test_app: TestClient,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
+) -> None:
+
+    modelcard, datacard, _ = populate_model_data_for_route
+
+    # force error
+    response = test_app.get(
+        url="/opsml/files/list/info",
+        params={
+            "path": datacard.uri,
+        },
+    )
+ 
+    assert response.status_code == 200
+    assert response.json()["files"][0]["name"] == "data.zarr"
