@@ -1,4 +1,5 @@
 # mypy: disable-error-code="call-overload"
+# pylint: disable=not-callable
 
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
@@ -444,10 +445,8 @@ class QueryEngine:
         Args:
             table:
                 Registry table to query
-            repository:
-                Repository name
-            name:
-                Name of the card
+            search_term:
+                Search term
         """
 
         query = select(
@@ -491,10 +490,12 @@ class QueryEngine:
         Args:
             sort_by:
                 Field to sort by
-            name:
-                Name of the card
+            page:
+                Page number
+            search_term:
+                Search term
             repository:
-                Repository of the card
+                Repository name
             table:
                 Registry table to query
         Returns:
