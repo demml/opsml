@@ -3,10 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import io
+import json
 import tempfile
 import zipfile as zp
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -20,7 +21,13 @@ from opsml.app.core.dependencies import (
     swap_opsml_root,
     verify_token,
 )
-from opsml.app.routes.pydantic_models import DeleteFileResponse, FileExistsResponse, ListFileResponse, ListFileInfoResponse
+from opsml.app.routes.pydantic_models import (
+    DeleteFileResponse,
+    FileExistsResponse,
+    FileViewResponse,
+    ListFileInfoResponse,
+    ListFileResponse,
+)
 from opsml.app.routes.utils import (
     ExternalFileTarget,
     MaxBodySizeException,
@@ -30,13 +37,15 @@ from opsml.app.routes.utils import (
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
+from opsml.types.extra import PresignableTypes
 
 logger = ArtifactLogger.get_logger()
 
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024 * 50  # = 50GB
+MAX_VIEWSIZE = 1024 * 1024 * 2  # = 2MB
 MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
-
+PRESIGN_DEFAULT_EXPIRATION = 60
 router = APIRouter()
 
 
@@ -319,4 +328,65 @@ def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error listing files. {error}",
+        ) from error
+
+
+@router.get("/files/view", name="presign_uri")
+def get_file_to_view(request: Request, path: str) -> FileViewResponse:
+    """Downloads a file
+    Args:
+        request:
+            request object
+        path:
+            path to file
+    Returns:
+        Streaming file response
+    """
+
+    swapped_path = swap_opsml_root(request, Path(path))
+    storage_client: StorageClientBase = request.app.state.storage_client
+    storage_root: str = request.app.state.storage_root
+    view_meta: Dict[str, str] = {}
+    try:
+        file_info = storage_client.client.info(path=swapped_path)
+        size = file_info["size"]
+        file_info["size"] = calculate_file_size(size)
+        file_info["name"] = swapped_path.name
+        file_info["mtime"] = file_info["mtime"] * 1000
+        file_info["uri"] = path
+        file_info["suffix"] = swapped_path.suffix
+
+        if swapped_path.suffix in list(PresignableTypes):
+            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py", ".md"]:
+                # download load file to string
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    lpath = Path(tmpdirname) / swapped_path.name
+                    storage_client.get(swapped_path, lpath)
+
+                    with lpath.open("rb") as file_:
+                        file_ = file_.read().decode("utf-8")
+
+                        if swapped_path.suffix == ".json":
+                            view_meta["content"] = json.dumps(json.loads(file_), indent=4)  # type: ignore
+
+                        else:
+                            view_meta["content"] = file_
+
+                view_meta["view_type"] = "code"
+
+            else:
+                view_meta["view_type"] = "iframe"
+
+                # get remote path relative to storage root
+                file_info["uri"] = storage_client.generate_presigned_url(
+                    path=swapped_path.relative_to(storage_root),
+                    expiration=PRESIGN_DEFAULT_EXPIRATION,
+                )
+
+        return FileViewResponse(file_info=file_info, content=view_meta)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"There was an error generating the presigned uri. {error}",
         ) from error

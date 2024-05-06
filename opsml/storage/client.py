@@ -9,7 +9,7 @@ import io
 import warnings
 from functools import cached_property
 from pathlib import Path
-from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, cast, Union, Dict
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union, cast
 
 from fsspec.implementations.local import LocalFileSystem
 
@@ -58,7 +58,9 @@ class _FileSystemProtocol(Protocol):
     def get(self, lpath: str, rpath: str, recursive: bool) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-    def ls(self, path: str, detail: bool = False) -> Union[List[str], List[Dict[str, Any]]]:  # pylint: disable=invalid-name
+    def ls(
+        self, path: str, detail: bool = False
+    ) -> Union[List[str], List[Dict[str, Any]]]:  # pylint: disable=invalid-name
         pass
 
     def find(self, path: str) -> List[str]:

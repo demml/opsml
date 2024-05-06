@@ -92,7 +92,8 @@ def test_ui_datacard_route(
 
     assert response.status_code == 200
     assert response.json()["name"] == datacard.name
-    
+
+
 def test_ui_list_files(
     test_app: TestClient,
     populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
@@ -100,13 +101,45 @@ def test_ui_list_files(
 
     modelcard, datacard, _ = populate_model_data_for_route
 
-    # force error
+    # test info
     response = test_app.get(
         url="/opsml/files/list/info",
         params={
             "path": datacard.uri,
         },
     )
- 
+
     assert response.status_code == 200
     assert response.json()["files"][0]["name"] == "data.zarr"
+
+    # test modelcard
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/model-metadata.json",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["file_info"]["name"] == "model-metadata.json"
+
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/trained-model.joblib",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["file_info"]["name"] == "trained-model.joblib"
+
+    # force error
+    # test modelcard
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/blah.json",
+        },
+    )
+
+    assert response.status_code == 500

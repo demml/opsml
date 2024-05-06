@@ -1236,7 +1236,7 @@ def linear_regression(regression_data) -> Tuple[SklearnModel, NumpyData]:
     reg = linear_model.LinearRegression().fit(X, y)
     return SklearnModel(model=reg, sample_data=X), NumpyData(
         data=X,
-        data_splits=[DataSplit(label="train", indices=[0,1,2])],
+        data_splits=[DataSplit(label="train", indices=[0, 1, 2])],
     )
 
 
