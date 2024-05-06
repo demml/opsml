@@ -31,5 +31,21 @@ def test_card_routes(
         },
     )
 
-    print(response.json())
-    a
+    res = response.json()
+    assert response.status_code == 200
+
+    assert res == {"nbr_names": 1, "nbr_versions": 1, "nbr_repos": 1}
+
+    response = test_app.get(
+        url="/opsml/cards/registry/query/page",
+        params={
+            "registry_type": "model",
+            "search_term": modelcard.name,
+            "repository": modelcard.repository,
+        },
+    )
+
+    res = response.json()
+    assert response.status_code == 200
+
+    assert len(res["page"]) == 1
