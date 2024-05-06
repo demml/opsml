@@ -27,6 +27,7 @@ from opsml.app.routes.pydantic_models import (
     FileViewResponse,
     ListFileInfoResponse,
     ListFileResponse,
+    ReadMeRequest,
 )
 from opsml.app.routes.utils import (
     ExternalFileTarget,
@@ -34,10 +35,12 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
     calculate_file_size,
 )
+from opsml import CardRegistry
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
 from opsml.types.extra import PresignableTypes
+from opsml.types import RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -390,3 +393,46 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"There was an error generating the presigned uri. {error}",
         ) from error
+
+
+@router.post("/files/readme", name="create_readme")
+async def create_readme(
+    request: Request,
+    payload: ReadMeRequest,
+) -> bool:
+    """UI route that creates a readme file"""
+
+    try:
+        # check name and repo exist before saving
+        storage_client: StorageClientBase = request.app.state.storage_client
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
+
+        cards = registry.list_cards(name=payload.name, repository=payload.repository)
+
+        if not cards:
+            logger.warning("No cards found for name {} and repository {}", payload.name, payload.repository)
+            return False
+
+        # save payload.content to readme in temp file
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            lpath = Path(tmpdirname) / "README.md"
+            with lpath.open("w") as file_:
+                file_.write(payload.content)
+
+            rpath = (
+                Path(config.opsml_storage_uri)
+                / RegistryTableNames.from_str(payload.registry_type).value
+                / payload.repository
+                / payload.name
+                / lpath.name
+            )
+            # save to storage
+            storage_client.put(lpath, rpath)
+
+        logger.info("Readme file created for {} in {}", payload.name, rpath)
+
+        return True
+
+    except Exception as error:
+        logger.error("Error creating readme file {}", error)
+        return False
