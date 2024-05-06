@@ -143,7 +143,7 @@ def test_ui_list_files(
     )
 
     assert response.status_code == 500
-    
+
     # test readme
     response = test_app.post(
         url="/opsml/files/readme",
@@ -156,7 +156,6 @@ def test_ui_list_files(
     )
 
     assert response.status_code == 200
-    
 
     response = test_app.post(
         url="/opsml/files/readme",
@@ -170,7 +169,7 @@ def test_ui_list_files(
 
     assert response.status_code == 200
     assert response.json() == False
-    
+
     # error
     response = test_app.post(
         url="/opsml/files/readme",
@@ -184,5 +183,3 @@ def test_ui_list_files(
 
     assert response.status_code == 200
     assert response.json() == False
-    
-    

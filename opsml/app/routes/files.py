@@ -16,6 +16,7 @@ from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
 
+from opsml import CardRegistry
 from opsml.app.core.dependencies import (
     reverse_swap_opsml_root,
     swap_opsml_root,
@@ -35,12 +36,11 @@ from opsml.app.routes.utils import (
     MaxBodySizeValidator,
     calculate_file_size,
 )
-from opsml import CardRegistry
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import config
 from opsml.storage.client import StorageClientBase
-from opsml.types.extra import PresignableTypes
 from opsml.types import RegistryTableNames
+from opsml.types.extra import PresignableTypes
 
 logger = ArtifactLogger.get_logger()
 
@@ -297,6 +297,8 @@ def list_files_info(request: Request, path: str, subdir: Optional[str] = None) -
             request object
         path:
             path to read
+        subdir:
+            subdirectory to read
     Returns:
         `ListFileResponse`
     """
@@ -433,6 +435,6 @@ async def create_readme(
 
         return True
 
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         logger.error("Error creating readme file {}", error)
         return False
