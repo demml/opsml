@@ -3,7 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import textwrap
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
+
+import bcrypt
+import jwt
 
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
@@ -18,6 +22,7 @@ from opsml.registry.semver import (
 )
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
+    AuthQueryEngine,
     ProjectQueryEngine,
     RunQueryEngine,
     get_query_engine,
@@ -29,8 +34,11 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class ServerRegistry(SQLRegistryBase):
@@ -67,10 +75,9 @@ class ServerRegistry(SQLRegistryBase):
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
         Args:
-            repository:
-                Repository to filter by
-            name:
-                Card name to filter by
+            search_term:
+                Search term to filter by
+
         Returns:
             Dictionary of stats
         """
@@ -84,15 +91,24 @@ class ServerRegistry(SQLRegistryBase):
         search_term: Optional[str] = None,
     ) -> List[Tuple[Union[str, int], ...]]:
         """Query page from Card Database
-        Args:
-            sort_by:
-                Field to sort by
-            repository:
-                Repository to filter by
-            name:
-                Card name to filter by
-        Returns:
-            List of tuples
+                Args:
+                    sort_by:
+                        Field to sort by
+        <<<<<<< HEAD
+                    repository:
+                        Repository to filter by
+                    name:
+                        Card name to filter by
+        =======
+                    page:
+                        Page number
+                    repository:
+                        Repository to filter by
+                    search_term:
+                        Search term to filter by
+        >>>>>>> main
+                Returns:
+                    List of tuples
         """
         return cast(
             List[Tuple[Union[str, int], ...]],
@@ -208,6 +224,7 @@ class ServerRegistry(SQLRegistryBase):
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves records from registry
@@ -232,6 +249,8 @@ class ServerRegistry(SQLRegistryBase):
                 If True, will ignore release candidates when searching for versions
             query_terms:
                 Dictionary of query terms to filter by
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
 
         Returns:
@@ -251,10 +270,12 @@ class ServerRegistry(SQLRegistryBase):
             tags=tags,
             limit=limit,
             query_terms=query_terms,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
-        if cleaned_name is not None:
-            records = self._sort_by_version(records=records)
+        # may not need
+        # if cleaned_name is not None:
+        # records = self._sort_by_version(records=records)
 
         if self._table.__tablename__ == RegistryTableNames.RUN.value:
             records = self._sort_by_timestamp(records=records)
@@ -505,3 +526,99 @@ class ServerAuditCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUDIT.value
+
+
+class ServerAuthRegistry(ServerRegistry):
+    @property
+    def auth_db(self) -> AuthQueryEngine:
+        assert isinstance(self.engine, AuthQueryEngine)
+        return self.engine
+
+    def get_user(self, username: str) -> Optional[User]:
+        """Get user from auth db
+
+        Args:
+            username:
+                username
+
+        Returns:
+            user
+
+        """
+
+        return self.auth_db.get_user(username=username)
+
+    def add_user(self, user: User) -> None:
+        """Add user to auth db
+
+        Args:
+            user:
+                user
+
+        """
+
+        self.auth_db.add_user(user=user)
+
+    def authenticate_user(self, user: User, password: str) -> bool:
+        """Authenticates user password
+
+        Args:
+            user:
+                User object
+            password:
+                password
+
+        Returns:
+            user
+
+        """
+
+        # encoding user password
+        user_bytes = password.encode("utf-8")
+        assert isinstance(user.hashed_password, str)
+        matched: bool = bcrypt.checkpw(user_bytes, user.hashed_password.encode("utf-8"))
+
+        # checking password
+        return matched
+
+    def update_user(self, user: User) -> bool:
+        """Update user
+
+        Args:
+            user:
+                user
+
+        """
+
+        return self.auth_db.update_user(user=user)
+
+    def delete_user(self, user: User) -> bool:
+        """Delete user
+
+        Args:
+            user:
+                user
+
+        """
+
+        return self.auth_db.delete_user(user)
+
+    def create_access_token(self, user: User) -> str:
+        """Creates a temporary access token for user"""
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        data = {
+            "sub": user.username,
+            "scopes": user.scopes.model_dump(),
+            "exp": expire,
+        }
+        encoded_jwt: str = jwt.encode(data, config.opsml_jwt_secret, config.opsml_jwt_algorithm)
+        return encoded_jwt
+
+    @property
+    def registry_type(self) -> RegistryType:
+        return RegistryType.AUTH
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        return registry_name.lower() == RegistryType.AUTH.value

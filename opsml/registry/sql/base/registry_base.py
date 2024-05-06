@@ -286,6 +286,7 @@ class SQLRegistryBase:
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         raise NotImplementedError
 

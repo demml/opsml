@@ -2,9 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from enum import Enum, unique
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, field_validator
+import bcrypt
+from pydantic import BaseModel, field_validator, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
@@ -159,3 +160,48 @@ class PresignableTypes(str, Enum):
     PY = ".py"
     YML = ".yml"
     YAML = ".yaml"
+
+
+class UserScope(BaseModel):
+    read: bool = True
+    write: bool = False
+    delete: bool = False
+    admin: bool = False
+
+    @property
+    def is_admin(self) -> bool:
+        return self.admin
+
+
+class User(BaseModel):
+    username: str
+    password: Optional[str] = None
+    hashed_password: Optional[str] = None
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    is_active: bool = True
+    scopes: UserScope = UserScope()
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_password(cls, user_args: Dict[str, Any]) -> Dict[str, Any]:
+        password = user_args.get("password")
+        hashed_password = user_args.get("hashed_password")
+
+        # check if password or hashed_password is provided
+        if not password and not hashed_password:
+            raise ValueError("Password or hashed_password must be provided")
+
+        # use already hashed password. no need to hash
+        if hashed_password:
+            return user_args
+
+        # hash password if not hashed (for user creation)
+        if password and not hashed_password:
+            # hash password
+            pass_bytes = password.encode("utf-8")
+            hashed = bcrypt.hashpw(pass_bytes, bcrypt.gensalt())
+
+            user_args["hashed_password"] = hashed
+
+        return user_args

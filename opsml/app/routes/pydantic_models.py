@@ -26,6 +26,10 @@ class ListRepositoryNameInfo(BaseModel):
     names: Optional[List[str]] = None
 
 
+class HasAuthResponse(BaseModel):
+    has_auth: bool = False
+
+
 class DebugResponse(BaseModel):
     url: str
     storage: str
@@ -71,6 +75,10 @@ class PutFileRequest(BaseModel):
     write_path: str
 
 
+class RegistryQuery(BaseModel):
+    page: List[Tuple[Union[str, int], ...]]
+
+
 class ListCardRequest(BaseModel):
     name: Optional[str] = None
     repository: Optional[str] = None
@@ -83,6 +91,7 @@ class ListCardRequest(BaseModel):
     project_id: Optional[str] = None
     registry_type: str
     query_terms: Optional[Dict[str, Any]] = None
+    sort_by_timestamp: bool = False
     page: Optional[int] = None
 
     @model_validator(mode="before")

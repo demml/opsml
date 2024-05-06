@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.types import RegistryTableNames
+from opsml.types import CommonKwargs, RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -56,6 +56,7 @@ class DataMixin:
     runcard_uid = Column("runcard_uid", String(64))
     pipelinecard_uid = Column("pipelinecard_uid", String(64))
     auditcard_uid = Column("auditcard_uid", String(64))
+    interface_type = Column("interface_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
 
 
 class DataSchema(Base, BaseMixin, DataMixin):
@@ -73,6 +74,8 @@ class ModelMixin:
     runcard_uid = Column("runcard_uid", String(64))
     pipelinecard_uid = Column("pipelinecard_uid", String(64))
     auditcard_uid = Column("auditcard_uid", String(64))
+    interface_type = Column("interface_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
+    task_type = Column("task_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
@@ -165,6 +168,18 @@ class ParameterSchema(Base):
     value = Column("value", String(128))
     date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
     idx = Column(Integer, primary_key=True)
+
+
+# only used if using auth
+class AuthSchema(Base):
+    __tablename__ = RegistryTableNames.AUTH.value
+
+    username = Column("username", String(64), primary_key=True)
+    full_name = Column("full_name", String(64))
+    email = Column("email", String(64))
+    hashed_password = Column("hashed_password", String(64))
+    scopes = Column("scopes", JSON)
+    is_active = Column("is_active", Boolean)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"

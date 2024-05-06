@@ -138,6 +138,7 @@ class ClientRegistry(SQLRegistryBase):
         limit: Optional[int] = None,
         ignore_release_candidates: bool = False,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> pd.DataFrame:
         """
         Retrieves records from registry
@@ -161,6 +162,8 @@ class ClientRegistry(SQLRegistryBase):
                 If True, release candidates will be ignored
             query_terms:
                 Dictionary of query terms to filter by
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
 
         Returns:
             Dictionary of card records
@@ -179,6 +182,7 @@ class ClientRegistry(SQLRegistryBase):
                 "registry_type": self.registry_type.value,
                 "ignore_release_candidates": ignore_release_candidates,
                 "query_terms": query_terms,
+                "sort_by_timestamp": sort_by_timestamp,
             },
         )
 

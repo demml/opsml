@@ -30,6 +30,7 @@ from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
+
 router = APIRouter()
 
 
@@ -78,6 +79,39 @@ def card_repositories(
     return RepositoriesResponse(repositories=repositories)
 
 
+@router.get("/cards/registry/stats", name="registry_stats")
+def query_registry_stats(
+    request: Request,
+    registry_type: str,
+    search_term: Optional[str] = None,
+) -> Dict[str, int]:
+    """Get card information from a registry
+
+    Args:
+        request:
+            FastAPI request object
+        registry_type:
+            Type of registry
+        search_term:
+            search term to filter by. This term can be a repository or a name
+
+    Returns:
+        `dict`
+    """
+
+    try:
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+        stats: Dict[str, int] = registry._registry.query_stats(search_term)
+
+        return stats
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to query registry. {error}",
+        ) from error
+
+
 @router.get("/cards/names", response_model=NamesResponse, name="names")
 def card_names(
     request: Request,
@@ -104,39 +138,6 @@ def card_names(
     return NamesResponse(names=names)
 
 
-@router.get("/card/registry/stats", name="registry_stats")
-def query_registry_stats(
-    request: Request,
-    registry_type: str,
-    search_term: Optional[str] = None,
-) -> Dict[str, int]:
-    """Get card information from a registry
-
-    Args:
-        request:
-            FastAPI request object
-        registry_type:
-            Type of registry
-        search_term:
-            search term to filter by. This term can be a repository or a name
-
-    Returns:
-        `dict`
-    """
-
-    try:
-        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
-        stats = registry._registry.query_stats(search_term)
-
-        return stats
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to query registry. {error}",
-        ) from error
-
-
 @router.get("/cards/registry/query/page", response_model=RegistryQuery, name="registry_page")
 def query_registry_page(
     request: Request,
@@ -153,8 +154,14 @@ def query_registry_page(
             FastAPI request object
         registry_type:
             Type of registry
-        uid:
-            uid of the card
+        sort_by:
+            Field to sort by
+        repository:
+            repository to filter by
+        search_term:
+            search term to filter by. This term can be a repository or a name
+        page:
+            page number
 
     Returns:
         `dict`
@@ -229,6 +236,7 @@ def list_cards(
             tags=payload.tags,
             ignore_release_candidates=payload.ignore_release_candidates,
             query_terms=payload.query_terms,
+            sort_by_timestamp=payload.sort_by_timestamp,
         )
 
         if payload.page:
