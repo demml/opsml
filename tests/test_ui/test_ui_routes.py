@@ -33,8 +33,19 @@ def test_card_routes(
 
     res = response.json()
     assert response.status_code == 200
-
     assert res == {"nbr_names": 1, "nbr_versions": 1, "nbr_repos": 1}
+
+    # force error
+    response = test_app.get(
+        url="/opsml/cards/registry/stats",
+        params={
+            "registry_type": "error",
+            "search_term": modelcard.repository,
+        },
+    )
+
+    res = response.json()
+    assert response.status_code == 500
 
     response = test_app.get(
         url="/opsml/cards/registry/query/page",
@@ -49,3 +60,14 @@ def test_card_routes(
     assert response.status_code == 200
 
     assert len(res["page"]) == 1
+
+    # force error
+    response = test_app.get(
+        url="/opsml/cards/registry/query/page",
+        params={
+            "registry_type": "error",
+            "search_term": modelcard.name,
+            "repository": modelcard.repository,
+        },
+    )
+    assert response.status_code == 500

@@ -101,7 +101,7 @@ def query_registry_stats(
 
     try:
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
-        stats = registry._registry.query_stats(search_term)
+        stats: Dict[str, int] = registry._registry.query_stats(search_term)
 
         return stats
 
@@ -154,8 +154,14 @@ def query_registry_page(
             FastAPI request object
         registry_type:
             Type of registry
-        uid:
-            uid of the card
+        sort_by:
+            Field to sort by
+        repository:
+            repository to filter by
+        search_term:
+            search term to filter by. This term can be a repository or a name
+        page:
+            page number
 
     Returns:
         `dict`

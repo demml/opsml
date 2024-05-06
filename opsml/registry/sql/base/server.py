@@ -75,10 +75,9 @@ class ServerRegistry(SQLRegistryBase):
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
         Args:
-            repository:
-                Repository to filter by
-            name:
-                Card name to filter by
+            search_term:
+                Search term to filter by
+
         Returns:
             Dictionary of stats
         """
@@ -95,10 +94,12 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             sort_by:
                 Field to sort by
+            page:
+                Page number
             repository:
                 Repository to filter by
-            name:
-                Card name to filter by
+            search_term:
+                Search term to filter by
         Returns:
             List of tuples
         """
