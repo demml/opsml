@@ -2,7 +2,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -15,6 +15,7 @@ from opsml.app.routes.pydantic_models import (
     ListCardRequest,
     ListCardResponse,
     NamesResponse,
+    RegistryQuery,
     RepositoriesResponse,
     UidExistsRequest,
     UidExistsResponse,
@@ -78,6 +79,39 @@ def card_repositories(
     return RepositoriesResponse(repositories=repositories)
 
 
+@router.get("/cards/registry/stats", name="registry_stats")
+def query_registry_stats(
+    request: Request,
+    registry_type: str,
+    search_term: Optional[str] = None,
+) -> Dict[str, int]:
+    """Get card information from a registry
+
+    Args:
+        request:
+            FastAPI request object
+        registry_type:
+            Type of registry
+        search_term:
+            search term to filter by. This term can be a repository or a name
+
+    Returns:
+        `dict`
+    """
+
+    try:
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+        stats: Dict[str, int] = registry._registry.query_stats(search_term)
+
+        return stats
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to query registry. {error}",
+        ) from error
+
+
 @router.get("/cards/names", response_model=NamesResponse, name="names")
 def card_names(
     request: Request,
@@ -102,6 +136,47 @@ def card_names(
     names = registry._registry.get_unique_card_names(repository=repository)
 
     return NamesResponse(names=names)
+
+
+@router.get("/cards/registry/query/page", response_model=RegistryQuery, name="registry_page")
+def query_registry_page(
+    request: Request,
+    registry_type: str,
+    sort_by: str = "updated_at",
+    repository: Optional[str] = None,
+    search_term: Optional[str] = None,
+    page: int = 0,
+) -> RegistryQuery:
+    """Get card information from a registry
+
+    Args:
+        request:
+            FastAPI request object
+        registry_type:
+            Type of registry
+        sort_by:
+            Field to sort by
+        repository:
+            repository to filter by
+        search_term:
+            search term to filter by. This term can be a repository or a name
+        page:
+            page number
+
+    Returns:
+        `dict`
+    """
+
+    try:
+        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+        page = registry._registry.query_page(sort_by, page, repository, search_term)
+        return RegistryQuery(page=page)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to query registry. {error}",
+        ) from error
 
 
 @router.post(
@@ -168,6 +243,9 @@ def list_cards(
             query_terms=payload.query_terms,
             sort_by_timestamp=payload.sort_by_timestamp,
         )
+
+        if payload.page:
+            cards = cards[payload.page * 30 : payload.page + 30]
 
         return ListCardResponse(cards=cards)
 
