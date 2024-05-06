@@ -86,7 +86,7 @@ class StorageClientProtocol(Protocol):
 
     def ls(  # pylint:  disable=invalid-name
         self, path: Path, detail: bool = False
-    ) -> Union[List[str], List[Dict[str, Any]]]:
+    ) -> Union[List[Path], List[Dict[str, Any]]]:
         """Lists files in directory (not recursive)"""
 
     def find(self, path: Path) -> List[Path]:
