@@ -1,4 +1,5 @@
 # mypy: disable-error-code="call-overload"
+# pylint: disable=not-callable
 
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
@@ -434,6 +435,108 @@ class QueryEngine:
 
         with self.session() as sess:
             return sess.scalars(query).all()
+
+    def query_stats(
+        self,
+        table: CardSQLTable,
+        search_term: Optional[str],
+    ) -> Dict[str, int]:
+        """Query stats for a card registry
+        Args:
+            table:
+                Registry table to query
+            search_term:
+                Search term
+        """
+
+        query = select(
+            sqa_func.count(distinct(table.name)).label("nbr_names"),  # type: ignore
+            sqa_func.count(table.version).label("nbr_versions"),  # type: ignore
+            sqa_func.count(distinct(table.repository)).label("nbr_repos"),  # type: ignore
+        )
+
+        if search_term:
+            query = query.filter(
+                or_(
+                    table.name.like(f"%{search_term}%"),  # type: ignore
+                    table.repository.like(f"%{search_term}%"),  # type: ignore
+                ),
+            )
+
+        with self.session() as sess:
+            results = sess.execute(query).first()
+
+        if not results:
+            return {
+                "nbr_names": 0,
+                "nbr_versions": 0,
+                "nbr_repos": 0,
+            }
+        return {
+            "nbr_names": results[0],
+            "nbr_versions": results[1],
+            "nbr_repos": results[2],
+        }
+
+    def query_page(
+        self,
+        sort_by: str,
+        page: int,
+        search_term: Optional[str],
+        repository: Optional[str],
+        table: CardSQLTable,
+    ) -> Sequence[Row[Any]]:
+        """Returns a page result from card registry
+        Args:
+            sort_by:
+                Field to sort by
+            page:
+                Page number
+            search_term:
+                Search term
+            repository:
+                Repository name
+            table:
+                Registry table to query
+        Returns:
+            Tuple of card summary
+        """
+
+        subquery = select(
+            table.repository,
+            table.name,
+            sqa_func.count(distinct(table.version)).label("versions"),  # type:ignore
+            sqa_func.max(table.timestamp).label("updated_at"),
+            sqa_func.min(table.timestamp).label("created_at"),
+        ).group_by(table.repository, table.name)
+
+        if repository is not None:
+            subquery = subquery.filter(table.repository == repository)
+
+        if search_term:
+            subquery = subquery.filter(
+                or_(
+                    table.name.like(f"%{search_term}%"),  # type: ignore
+                    table.repository.like(f"%{search_term}%"),  # type: ignore
+                ),
+            )
+        subquery = subquery.subquery()
+
+        subquery2 = select(subquery, (sqa_func.row_number().over(order_by=sort_by)).label("row_number")).subquery()
+
+        lower_bound = page * 30
+        upper_bound = lower_bound + 30
+
+        query = (
+            select(subquery2)
+            .filter(subquery2.c.row_number.between(lower_bound, upper_bound))
+            .order_by(text("updated_at desc"))
+        )
+
+        with self.session() as sess:
+            records = sess.execute(query).all()
+
+        return records
 
     def delete_card_record(
         self,

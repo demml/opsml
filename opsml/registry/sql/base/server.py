@@ -4,7 +4,7 @@
 
 import textwrap
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import bcrypt
 import jwt
@@ -71,6 +71,48 @@ class ServerRegistry(SQLRegistryBase):
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
+
+    def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
+        """Query stats from Card Database
+        Args:
+            search_term:
+                Search term to filter by
+
+        Returns:
+            Dictionary of stats
+        """
+        return self.engine.query_stats(table=self._table, search_term=search_term)
+
+    def query_page(
+        self,
+        sort_by: str,
+        page: int,
+        repository: Optional[str] = None,
+        search_term: Optional[str] = None,
+    ) -> List[Tuple[Union[str, int], ...]]:
+        """Query page from Card Database
+        Args:
+            sort_by:
+                Field to sort by
+            page:
+                Page number
+            repository:
+                Repository to filter by
+            search_term:
+                Search term to filter by
+        Returns:
+            List of tuples
+        """
+        return cast(
+            List[Tuple[Union[str, int], ...]],
+            self.engine.query_page(
+                table=self._table,
+                repository=repository,
+                search_term=search_term,
+                sort_by=sort_by,
+                page=page,
+            ),
+        )
 
     def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
         """Returns a list of unique card names

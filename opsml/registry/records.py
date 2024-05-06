@@ -32,6 +32,7 @@ class DataRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
+    interface_type: str = CommonKwargs.UNDEFINED.value
 
     @model_validator(mode="before")
     @classmethod
@@ -53,12 +54,15 @@ class ModelRegistryRecord(SaveRecord):
     runcard_uid: Optional[str] = None
     pipelinecard_uid: Optional[str] = None
     auditcard_uid: Optional[str] = None
+    interface_type: str = CommonKwargs.UNDEFINED.value
+    task_type: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(protected_namespaces=("protect_",))
 
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        print(values["datacard_uid"])
         metadata: Dict[str, Any] = values["metadata"]
         values["sample_data_type"] = metadata["data_schema"]["data_type"]
         values["model_type"] = values["interface"]["model_type"]

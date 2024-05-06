@@ -344,6 +344,15 @@ class ModelCardSaver(CardSaver):
 
         # add huggingface specific uris
         if isinstance(self.card.interface, HuggingFaceModel):
+            metadata.task_type = self.card.interface.task_type
+
+            if self.card.interface.onnx_args is not None:
+                metadata.onnx_args = {
+                    "quantize": self.card.interface.onnx_args.quantize,
+                    "ort_type": self.card.interface.onnx_args.ort_type,
+                    "provider": self.card.interface.onnx_args.provider,
+                }
+
             if self.card_uris.quantized_model_uri is not None:
                 metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
 
