@@ -273,6 +273,3 @@ Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for cre
 <a href="https://github.com/demml/opsml/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=shipt/opsml" />
 </a>
-
-
-
