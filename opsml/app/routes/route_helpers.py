@@ -290,9 +290,7 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(
-        self, request: Request, load_profile: bool, datacard: DataCard
-    ) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:
@@ -575,11 +573,12 @@ class ProjectRouteHelper(RouteHelper):
             return loaded_graphs
 
         paths = client.storage_client.ls(graph_path)
+        paths = cast(List[Path], paths)
         logger.debug("Found {} graphs in {}", paths, graph_path)
         if paths:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 for path in paths:
-                    rpath = graph_path / Path(path).name
+                    rpath = graph_path / path.name
                     lpath = Path(tmp_dir) / rpath.name
                     client.storage_client.get(rpath, lpath)
                     graph: Dict[str, Any] = joblib.load(lpath)
