@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel,broad-exception-caught
+# # pylint: disable=import-outside-toplevel,broad-exception-caught
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -9,7 +9,7 @@ import io
 import warnings
 from functools import cached_property
 from pathlib import Path
-from typing import Any, BinaryIO, Iterator, List, Optional, Protocol, cast
+from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union, cast
 
 from fsspec.implementations.local import LocalFileSystem
 
@@ -58,8 +58,10 @@ class _FileSystemProtocol(Protocol):
     def get(self, lpath: str, rpath: str, recursive: bool) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-    def ls(self, path: str) -> List[str]:  # pylint:  disable=invalid-name
-        """Lists files"""
+    def ls(  # pylint: disable=invalid-name
+        self, path: str, detail: bool = False
+    ) -> Union[List[str], List[Dict[str, Any]]]:
+        pass
 
     def find(self, path: str) -> List[str]:
         """Recursively list all files excluding directories"""
@@ -112,8 +114,15 @@ class StorageClientBase(StorageClientProtocol):
 
         self.client.get(rpath=abs_rpath, lpath=abs_lpath, recursive=recursive)
 
-    def ls(self, path: Path) -> List[Path]:
-        return [Path(p) for p in self.client.ls(str(path))]
+    def ls(self, path: Path, detail: bool = False) -> Union[List[Path], List[Dict[str, Any]]]:
+        files = self.client.ls(str(path), detail=detail)
+
+        if detail:
+            files = cast(List[Dict[str, Any]], files)
+            return files
+
+        files = cast(List[str], files)
+        return [Path(f) for f in files]
 
     def find(self, path: Path) -> List[Path]:
         return [Path(p) for p in self.client.find(str(path))]
