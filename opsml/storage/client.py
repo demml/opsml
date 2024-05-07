@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel,broad-exception-caught
+# # pylint: disable=import-outside-toplevel,broad-exception-caught
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -58,8 +58,10 @@ class _FileSystemProtocol(Protocol):
     def get(self, lpath: str, rpath: str, recursive: bool) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-    def ls(self, path: str, detail: bool = False) -> Union[List[str], List[Dict[str, Any]]]:  # pylint:  disable=invalid-name
-        """Lists files"""
+    def ls(  # pylint: disable=invalid-name
+        self, path: str, detail: bool = False
+    ) -> Union[List[str], List[Dict[str, Any]]]:
+        pass
 
     def find(self, path: str) -> List[str]:
         """Recursively list all files excluding directories"""
