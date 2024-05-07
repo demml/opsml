@@ -351,3 +351,21 @@ def write_records_to_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "filename=audit_file.csv"},
     )
+
+
+def calculate_file_size(size: int) -> str:
+    """Calculates file size in human readable format
+    Args:
+        size:
+            File size in bytes
+    Returns:
+        Human readable file size
+    """
+    if size < 1024:
+        return f"{size} B"
+    if size < 1024**2:
+        return f"{size / 1024:.2f} KB"
+    if size < 1024**3:
+        return f"{size / 1024 ** 2:.2f} MB"
+
+    return f"{size / 1024 ** 3:.2f} GB"
