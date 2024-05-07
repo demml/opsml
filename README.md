@@ -5,9 +5,9 @@
 </h1>
 
 
-<h2 align="center">Universal Artifact Registration System for Machine Learning</h2>
+<h2 align="center">Universal Machine Learning Artifact Registration Platform</h2>
 
-<h1 align="center"><a href="">OpsML Documentation</h1>
+<h1 align="center"><a href="https://demml.github.io/opsml/">OpsML Documentation</h1>
 
 [![Unit Tests](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/lint-unit-tests.yml)
 [![Examples](https://github.com/demml/opsml/actions/workflows/examples.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/examples.yml)
