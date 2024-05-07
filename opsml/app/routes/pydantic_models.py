@@ -184,9 +184,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -251,6 +249,18 @@ class CompareMetricResponse(BaseModel):
     challenger_name: str
     challenger_version: str
     report: Dict[str, List[BattleReport]]
+
+
+class DataCardMetadata(BaseModel):
+    name: str
+    version: str
+    repository: str
+    contact: str
+    uid: str
+    interface_type: str
+    data_splits: Optional[str] = None
+    sql_logic: Dict[str, str] = {}
+    feature_map: Optional[str] = None
 
 
 def form_body(cls: Any) -> Any:
