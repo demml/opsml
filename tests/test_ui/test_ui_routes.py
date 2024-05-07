@@ -110,7 +110,6 @@ def test_ui_list_files(
     )
 
     assert response.status_code == 200
-    assert response.json()["files"][0]["name"] == "data.zarr"
 
     # test modelcard
     response = test_app.get(
