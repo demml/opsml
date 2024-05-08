@@ -70,7 +70,8 @@ test.unit:
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
 		--cov-report term \
-		--junitxml=./results.xml
+		--junitxml=./results.xml \
+		--full-trace
 
 test.coverage:
 	poetry run pytest \
@@ -80,7 +81,8 @@ test.coverage:
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \
 		--cov-report term \
-		--junitxml=./results.xml
+		--junitxml=./results.xml \
+		--full-trace
 
 test.integration:
 	poetry run pytest tests/integration \

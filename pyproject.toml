@@ -159,6 +159,7 @@ pytest-rerunfailures = "^13.0"
 catboost = "^1.2.2"
 accelerate = "^0.26.1"
 vowpalwabbit = { version = "^9.9.0", python = "<3.11" }
+Werkzeug= {version = "3.0.2"}
 
 
 [tool.poetry.group.dev-lints]
