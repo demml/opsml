@@ -14,7 +14,7 @@ def launch_uvicorn_app(login: bool = False, port: int = 8888) -> None:
 
     from opsml.app.main import OpsmlApp  # pylint: disable=import-outside-toplevel
 
-    model_api = OpsmlApp(port=port, login=login)
+    model_api = OpsmlApp(port=port)
     model_api.build_app()
     model_api.run()
 

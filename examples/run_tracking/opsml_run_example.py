@@ -21,9 +21,9 @@ card_info = CardInfo(name="linear-reg", repository="opsml", contact="user@email.
 project = OpsmlProject(info=info)
 
 
-def run_project():
+def run_project() -> None:
     # create run
-    with project.run() as run:
+    with project.run(log_hardware=True) as run:
         # create fake data
         X, y = create_fake_data(n_samples=1000, task_type="regression")
         X["target"] = y

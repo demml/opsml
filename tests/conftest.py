@@ -22,8 +22,6 @@ os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = OPSML_TRACKING_URI
 os.environ["OPSML_STORAGE_URI"] = OPSML_STORAGE_URI
-os.environ["OPSML_USERNAME"] = "test-user"
-os.environ["OPSML_PASSWORD"] = "test-pass"
 
 import datetime
 import shutil
@@ -212,7 +210,7 @@ def local_storage_client() -> YieldFixture[client.LocalStorageClient]:
 
 
 @pytest.fixture
-def mock_gcsfs():
+def mock_gcsfs() -> YieldFixture[Dict[str, MagicMock]]:
     with patch.multiple(
         "gcsfs.GCSFileSystem",
         get=MagicMock(return_value="test"),
@@ -225,31 +223,29 @@ def mock_gcsfs():
         yield mocked_gcsfs
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_app() -> YieldFixture[TestClient]:
     cleanup()
     from opsml.app.main import OpsmlApp
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
-        yield tc
-    cleanup()
 
+        # set header if needed
+        response = tc.post(
+            "/opsml/auth/token",
+            data={"username": "admin", "password": "admin"},
+        )
+        token = response.json()["access_token"]
+        tc.headers.update({"Authorization": f"Bearer {token}"})
 
-@pytest.fixture(scope="module")
-def test_app_login() -> YieldFixture[TestClient]:
-    cleanup()
-    from opsml.app.main import OpsmlApp
-
-    opsml_app = OpsmlApp(login=True)
-    with TestClient(opsml_app.get_app()) as tc:
         yield tc
     cleanup()
 
 
 @pytest.fixture
 def gcs_test_bucket() -> Path:
-    return Path(os.environ["OPSML_BUCKET_GCS"])
+    return Path(os.environ["OPSML_GCS_BUCKET"])
 
 
 @pytest.fixture
@@ -261,14 +257,21 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
-    def callable_api():
+
+    def callable_api() -> TestClient:
         return test_client
 
+    # for some reason
     with patch("httpx.Client", callable_api):
         # Set the global configuration to mock API "client" mode
         monkeypatch.setattr(config, "opsml_tracking_uri", "http://testserver")
 
-        cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri=OPSML_STORAGE_URI)
+        cfg = OpsmlConfig(
+            opsml_tracking_uri="http://testserver",
+            opsml_storage_uri=OPSML_STORAGE_URI,
+            opsml_username="admin",
+            opsml_password="admin",
+        )
 
         # Cards rely on global storage state - so set it to API
         client.storage_client = client.get_storage_client(cfg)

@@ -13,7 +13,7 @@ from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.projects._run_manager import ActiveRunException, _RunManager
 from opsml.projects.active_run import ActiveRun, CardHandler
-from opsml.projects.types import ProjectInfo
+from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo
 from opsml.registry import CardRegistries
 from opsml.registry.sql.base.client import ClientProjectCardRegistry
 from opsml.types import CardInfo, CardType, Metric, Metrics, Param, Params
@@ -118,17 +118,30 @@ class OpsmlProject:
         return self._run_mgr._project_info.name  # pylint: disable=protected-access
 
     @contextmanager
-    def run(self, run_name: Optional[str] = None) -> Iterator[ActiveRun]:
+    def run(
+        self,
+        run_name: Optional[str] = None,
+        log_hardware: bool = False,
+        hardware_interval: int = _DEFAULT_INTERVAL,
+    ) -> Iterator[ActiveRun]:
         """
         Starts a new run for the project
 
         Args:
             run_name:
                 Optional run name
+            log_hardware:
+                Whether to log hardware metrics
+            hardware_interval:
+                Interval to log hardware metrics. Default is 30 seconds.
         """
 
         try:
-            yield self._run_mgr.start_run(run_name=run_name)  # self._run_mgr.active_run
+            yield self._run_mgr.start_run(
+                run_name=run_name,
+                log_hardware=log_hardware,
+                hardware_interval=hardware_interval,
+            )
 
         except ActiveRunException as error:
             logger.error("Run already active. Ending run.")

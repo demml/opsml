@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field, field_validator
 from opsml.settings.config import config
 from opsml.types.extra import CommonKwargs
 
+_DEFAULT_INTERVAL = 30
+
 
 class Tags(str, Enum):
     NAME = "name"

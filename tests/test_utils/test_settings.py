@@ -15,7 +15,7 @@ def test_default_local_settings() -> None:
 
 
 def test_default_http_settings(mock_gcs_storage_response, mock_gcp_creds) -> None:
-    cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri="gs://google")
+    cfg = OpsmlConfig(opsml_tracking_uri="http://testserver", opsml_storage_uri="gs://google", opsml_auth=False)
     assert isinstance(get_storage_client(cfg=cfg), ApiStorageClient)
 
 

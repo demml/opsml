@@ -1,4 +1,5 @@
 # mypy: disable-error-code="call-overload"
+# pylint: disable=not-callable
 
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
@@ -20,12 +21,14 @@ from sqlalchemy.sql.expression import ColumnElement
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
+    AuthSchema,
     CardSQLTable,
     MetricSchema,
     ProjectSchema,
     SQLTableGetter,
 )
 from opsml.types import RegistryType
+from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
 
@@ -215,6 +218,7 @@ class QueryEngine:
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> Select[Any]:
         """
         Creates a sql query based on table, uid, name, repository and version
@@ -274,7 +278,10 @@ class QueryEngine:
         if bool(filters):
             query = query.filter(*filters)
 
-        query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
+        if not sort_by_timestamp:
+            query = query.order_by(text("major desc"), text("minor desc"), text("patch desc"))
+        else:
+            query = query.order_by(table.timestamp.desc())  # type: ignore
 
         if limit is not None:
             query = query.limit(limit)
@@ -311,6 +318,7 @@ class QueryEngine:
         tags: Optional[Dict[str, str]] = None,
         limit: Optional[int] = None,
         query_terms: Optional[Dict[str, Any]] = None,
+        sort_by_timestamp: bool = False,
     ) -> List[Dict[str, Any]]:
         query = self._records_from_table_query(
             table=table,
@@ -322,6 +330,7 @@ class QueryEngine:
             tags=tags,
             limit=limit,
             query_terms=query_terms,
+            sort_by_timestamp=sort_by_timestamp,
         )
 
         with self.session() as sess:
@@ -426,6 +435,108 @@ class QueryEngine:
 
         with self.session() as sess:
             return sess.scalars(query).all()
+
+    def query_stats(
+        self,
+        table: CardSQLTable,
+        search_term: Optional[str],
+    ) -> Dict[str, int]:
+        """Query stats for a card registry
+        Args:
+            table:
+                Registry table to query
+            search_term:
+                Search term
+        """
+
+        query = select(
+            sqa_func.count(distinct(table.name)).label("nbr_names"),  # type: ignore
+            sqa_func.count(table.version).label("nbr_versions"),  # type: ignore
+            sqa_func.count(distinct(table.repository)).label("nbr_repos"),  # type: ignore
+        )
+
+        if search_term:
+            query = query.filter(
+                or_(
+                    table.name.like(f"%{search_term}%"),  # type: ignore
+                    table.repository.like(f"%{search_term}%"),  # type: ignore
+                ),
+            )
+
+        with self.session() as sess:
+            results = sess.execute(query).first()
+
+        if not results:
+            return {
+                "nbr_names": 0,
+                "nbr_versions": 0,
+                "nbr_repos": 0,
+            }
+        return {
+            "nbr_names": results[0],
+            "nbr_versions": results[1],
+            "nbr_repos": results[2],
+        }
+
+    def query_page(
+        self,
+        sort_by: str,
+        page: int,
+        search_term: Optional[str],
+        repository: Optional[str],
+        table: CardSQLTable,
+    ) -> Sequence[Row[Any]]:
+        """Returns a page result from card registry
+        Args:
+            sort_by:
+                Field to sort by
+            page:
+                Page number
+            search_term:
+                Search term
+            repository:
+                Repository name
+            table:
+                Registry table to query
+        Returns:
+            Tuple of card summary
+        """
+
+        subquery = select(
+            table.repository,
+            table.name,
+            sqa_func.count(distinct(table.version)).label("versions"),  # type:ignore
+            sqa_func.max(table.timestamp).label("updated_at"),
+            sqa_func.min(table.timestamp).label("created_at"),
+        ).group_by(table.repository, table.name)
+
+        if repository is not None:
+            subquery = subquery.filter(table.repository == repository)
+
+        if search_term:
+            subquery = subquery.filter(
+                or_(
+                    table.name.like(f"%{search_term}%"),  # type: ignore
+                    table.repository.like(f"%{search_term}%"),  # type: ignore
+                ),
+            )
+        subquery = subquery.subquery()
+
+        subquery2 = select(subquery, (sqa_func.row_number().over(order_by=sort_by)).label("row_number")).subquery()
+
+        lower_bound = page * 30
+        upper_bound = lower_bound + 30
+
+        query = (
+            select(subquery2)
+            .filter(subquery2.c.row_number.between(lower_bound, upper_bound))
+            .order_by(text("updated_at desc"))
+        )
+
+        with self.session() as sess:
+            records = sess.execute(query).all()
+
+        return records
 
     def delete_card_record(
         self,
@@ -536,6 +647,74 @@ class RunQueryEngine(QueryEngine):
         return self._parse_records(results)
 
 
+class AuthQueryEngine(QueryEngine):
+    def get_user(self, username: str) -> Optional[User]:
+        """Get user by username
+
+        Args:
+            username:
+                Username
+
+        Returns:
+            User record
+        """
+
+        query = select(AuthSchema).filter(AuthSchema.username == username)
+        with self.session() as sess:
+            result = sess.execute(query).first()
+
+        if not result:
+            return None
+
+        return User(**result[0].__dict__)
+
+    def add_user(self, user: User) -> None:
+        """Add user
+
+        Args:
+            user:
+                User record
+        """
+        dumped_model = user.model_dump(exclude={"password"})
+        with self.session() as sess:
+            sess.execute(insert(AuthSchema), dumped_model)
+            sess.commit()
+
+    def update_user(self, user: User) -> bool:
+        """Update user
+
+        Args:
+            user:
+                User record
+        """
+
+        updated = False
+        dumped_model = user.model_dump(exclude={"password"})
+        with self.session() as sess:
+            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query.update(dumped_model)  # type: ignore
+            sess.commit()
+            updated = True
+
+        return updated
+
+    def delete_user(self, user: User) -> bool:
+        """Delete user
+
+        Args:
+            user:
+                User record
+        """
+        deleted = False
+        with self.session() as sess:
+            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query.delete()
+            sess.commit()
+            deleted = True
+
+        return deleted
+
+
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
     """Get query engine based on registry type
 
@@ -552,4 +731,6 @@ def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[Qu
         return ProjectQueryEngine(engine=db_engine)
     if registry_type == RegistryType.RUN:
         return RunQueryEngine(engine=db_engine)
+    if registry_type == RegistryType.AUTH:
+        return AuthQueryEngine(engine=db_engine)
     return QueryEngine(engine=db_engine)

@@ -33,7 +33,7 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 def test_save_huggingface_modelcard_api_client(
     huggingface_torch_distilbert: HuggingFaceModel,
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     model: HuggingFaceModel = huggingface_torch_distilbert
 
     modelcard = ModelCard(

@@ -43,6 +43,7 @@ class ApiStorageClientSettings(StorageClientSettings):
 
     storage_system: StorageSystem = StorageSystem.API
     opsml_tracking_uri: str
+    opsml_auth: bool = False
     opsml_username: Optional[str]
     opsml_password: Optional[str]
     opsml_prod_token: Optional[str]
@@ -83,7 +84,9 @@ class StorageClientProtocol(Protocol):
     def get(self, rpath: Path, lpath: Path) -> None:
         """Copies file(s) from remote path (rpath) to local path (lpath)"""
 
-    def ls(self, path: Path) -> List[Path]:  # pylint:  disable=invalid-name
+    def ls(  # pylint:  disable=invalid-name
+        self, path: Path, detail: bool = False
+    ) -> Union[List[Path], List[Dict[str, Any]]]:
         """Lists files in directory (not recursive)"""
 
     def find(self, path: Path) -> List[Path]:

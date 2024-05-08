@@ -16,6 +16,7 @@ class RegistryTableNames(str, Enum):
     AUDIT = "OPSML_AUDIT_REGISTRY"
     BASE = "OPSML_BASE_REGISTRY"
     METRICS = "OPSML_RUN_METRICS"
+    AUTH = "OPSML_AUTH_REGISTRY"
 
     @staticmethod
     def from_str(name: str) -> "RegistryTableNames":

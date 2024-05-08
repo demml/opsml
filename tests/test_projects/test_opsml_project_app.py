@@ -32,7 +32,7 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
         with pytest.raises(ValueError):
             y = {str(i): [10, 10, 10] for i in range(100)}
             x = [10, 10, 10]
-            run.log_graph(name="multi3", x=x, y=y)
+            run.log_graph(name="multi3", x=x, y=y)  # type: ignore
 
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6], graph_style="scatter")
         nbr_metrics = len(run.metrics)
@@ -50,12 +50,14 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
     assert project.project_id == 1
 
     metrics = runcard._registry.get_metric(run_uid=info.run_id, name=["m1", "m2"])
+    assert metrics is not None
     assert len(metrics) == 2
 
     metrics = runcard._registry.get_metric(run_uid=info.run_id, name=["m1", "m2"], names_only=True)
+    assert metrics is not None
     assert len(metrics) == 2
     for m in metrics:
-        assert m in ["m1", "m2"]
+        assert m in ["m1", "m2"]  # type: ignore
 
     # create another project
     info = ProjectInfo(name="project2", repository="test", contact="user@test.com")

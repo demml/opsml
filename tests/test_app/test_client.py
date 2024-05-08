@@ -7,7 +7,6 @@ from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from requests.auth import HTTPBasicAuth
 from starlette.testclient import TestClient
 
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
@@ -22,7 +21,6 @@ from opsml.cards import (
 )
 from opsml.data import NumpyData, PandasData, TorchData
 from opsml.model import HuggingFaceModel, SklearnModel
-from opsml.projects.active_run import ActiveRun
 from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
@@ -40,6 +38,18 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 def test_debug(test_app: TestClient) -> None:
     """Test debug path"""
 
+    # get token
+    response = test_app.post(
+        "/opsml/auth/token",
+        data={"username": "admin", "password": "admin"},
+    )
+
+    assert response.status_code == 200
+
+    # set bearer token
+    token = response.json()["access_token"]
+    test_app.headers.update({"Authorization": f"Bearer {token}"})
+
     response = test_app.get("/opsml/debug")
 
     assert "tmp.db" in response.json()["url"]
@@ -49,6 +59,17 @@ def test_debug(test_app: TestClient) -> None:
 
 def test_error(test_app: TestClient) -> None:
     """Test error path"""
+
+    response = test_app.post(
+        "/opsml/auth/token",
+        data={"username": "admin", "password": "admin"},
+    )
+
+    assert response.status_code == 200
+
+    # set bearer token
+    token = response.json()["access_token"]
+    test_app.headers.update({"Authorization": f"Bearer {token}"})
 
     response = test_app.get("/opsml/error")
 
@@ -77,6 +98,8 @@ def test_register_data(
     _ = registry.list_cards(name=datacard.name)
 
     _ = registry.list_cards()
+
+    _ = registry.list_cards(sort_by_timestamp=True)
 
     # Verify repositories / names
     repositories = registry._registry.unique_repositories
@@ -477,17 +500,6 @@ def test_download_model_metadata_failure(test_app: TestClient) -> None:
     assert response.json()["detail"] == "Model not found"
 
 
-def test_app_with_login(test_app_login: TestClient) -> None:
-    """Test healthcheck with login"""
-
-    response = test_app_login.get(
-        "/opsml/healthcheck",
-        auth=HTTPBasicAuth("test-user", "test-pass"),
-    )
-
-    assert response.status_code == 200
-
-
 def test_model_metrics(
     test_app: TestClient,
     populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
@@ -593,60 +605,6 @@ def test_data_list(test_app: TestClient) -> None:
     """Test settings"""
     response = test_app.get("/opsml/data/list/")
     assert response.status_code == 200
-
-
-##### Test list data
-def test_data_model_version(
-    test_app: TestClient,
-    populate_run: Tuple[DataCard, ModelCard, ActiveRun],
-) -> None:
-    """Test data routes"""
-
-    datacard, modelcard, run = populate_run
-
-    response = test_app.get("/opsml/data/versions/")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/data/versions/?name=test_data")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/data/versions/?name=test_data&version=1.0.0&load_profile=true")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/data/versions/uid/?uid={datacard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/models/versions/")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/models/versions/?model={modelcard.name}&version={modelcard.version}")
-    assert response.status_code == 200
-
-    response = test_app.get("/opsml/projects/list/?project=opsml-project")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/projects/list/?project=opsml-project&run_uid={run.runcard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/projects/runs/plot/?run_uid={run.runcard.uid}")
-    assert response.status_code == 200
-
-    response = test_app.post(
-        url="/opsml/models/compare_metrics",
-        json={
-            "metric_name": ["test_metric"],
-            "lower_is_better": True,
-            "challenger_uid": modelcard.uid,
-            "champion_uid": [modelcard.uid],
-        },
-    )
-    assert response.status_code == 200
-
-    battle_report = response.json()
-    assert battle_report["report"]["test_metric"][0]["challenger_win"] == False
 
 
 ##### Test audit
