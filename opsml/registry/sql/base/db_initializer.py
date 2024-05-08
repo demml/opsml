@@ -50,17 +50,12 @@ class DBInitializer:
 
         # credit to mlflow for this implementation
         db_url = str(self.engine.url)
-        from sqlalchemy.orm import close_all_sessions
 
-        close_all_sessions()
         config = self.get_alembic_config(db_url=db_url)
-        try:
-            with self.engine.begin() as connection:
-                config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
-                command.upgrade(config, "heads")
-        except Exception as exc:
-            print(exc)
-            raise exc
+
+        with self.engine.begin() as connection:
+            config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
+            command.upgrade(config, "heads")
 
     def get_alembic_config(self, db_url: str) -> Config:
         alembic_dir = os.path.join(DIR_PATH, "migration")
