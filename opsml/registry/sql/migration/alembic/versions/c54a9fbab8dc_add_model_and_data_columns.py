@@ -13,9 +13,6 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.sql_schema import RegistryTableNames
 from opsml.types import CommonKwargs
 
-
-from opsml.helpers.logging import ArtifactLogger
-
 logger = ArtifactLogger.get_logger()
 # revision identifiers, used by Alembic.
 revision = "c54a9fbab8dc"
@@ -86,4 +83,3 @@ def downgrade() -> None:
     except Exception as e:
         logger.error("Error dropping columns: {}", e)
         raise e
-

@@ -71,3 +71,114 @@ def test_card_routes(
         },
     )
     assert response.status_code == 500
+
+
+def test_ui_datacard_route(
+    test_app: TestClient,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
+) -> None:
+
+    modelcard, datacard, _ = populate_model_data_for_route
+
+    # force error
+    response = test_app.post(
+        url="/opsml/data/card",
+        json={
+            "name": datacard.name,
+            "repository": datacard.repository,
+            "version": datacard.version,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == datacard.name
+
+
+def test_ui_list_files(
+    test_app: TestClient,
+    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
+) -> None:
+
+    modelcard, datacard, _ = populate_model_data_for_route
+
+    # test info
+    response = test_app.get(
+        url="/opsml/files/list/info",
+        params={
+            "path": datacard.uri.as_posix(),
+        },
+    )
+
+    assert response.status_code == 200
+
+    # test modelcard
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/model-metadata.json",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["file_info"]["name"] == "model-metadata.json"
+
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/trained-model.joblib",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["file_info"]["name"] == "trained-model.joblib"
+
+    # force error
+    # test modelcard
+    response = test_app.get(
+        url="/opsml/files/view",
+        params={
+            "path": f"{modelcard.uri}/blah.json",
+        },
+    )
+
+    assert response.status_code == 500
+
+    # test readme
+    response = test_app.post(
+        url="/opsml/files/readme",
+        json={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "registry_type": "model",
+            "content": "readme",
+        },
+    )
+
+    assert response.status_code == 200
+
+    response = test_app.post(
+        url="/opsml/files/readme",
+        json={
+            "name": modelcard.name,
+            "repository": "error",
+            "registry_type": "model",
+            "content": "readme",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == False
+
+    # error
+    response = test_app.post(
+        url="/opsml/files/readme",
+        json={
+            "name": modelcard.name,
+            "repository": modelcard.repository,
+            "registry_type": "error",
+            "content": "readme",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == False
