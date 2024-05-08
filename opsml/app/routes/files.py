@@ -223,6 +223,7 @@ def list_files(request: Request, path: str) -> ListFileResponse:
 
     swapped_path = swap_opsml_root(request, Path(path))
     storage_client: StorageClientBase = request.app.state.storage_client
+
     files = storage_client.find(Path(swapped_path))
 
     try:

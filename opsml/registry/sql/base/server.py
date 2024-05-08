@@ -91,17 +91,24 @@ class ServerRegistry(SQLRegistryBase):
         search_term: Optional[str] = None,
     ) -> List[Tuple[Union[str, int], ...]]:
         """Query page from Card Database
-        Args:
-            sort_by:
-                Field to sort by
-            page:
-                Page number
-            repository:
-                Repository to filter by
-            search_term:
-                Search term to filter by
-        Returns:
-            List of tuples
+                Args:
+                    sort_by:
+                        Field to sort by
+        <<<<<<< HEAD
+                    repository:
+                        Repository to filter by
+                    name:
+                        Card name to filter by
+        =======
+                    page:
+                        Page number
+                    repository:
+                        Repository to filter by
+                    search_term:
+                        Search term to filter by
+        >>>>>>> main
+                Returns:
+                    List of tuples
         """
         return cast(
             List[Tuple[Union[str, int], ...]],
@@ -270,6 +277,9 @@ class ServerRegistry(SQLRegistryBase):
         # if cleaned_name is not None:
         # records = self._sort_by_version(records=records)
 
+        if self._table.__tablename__ == RegistryTableNames.RUN.value:
+            records = self._sort_by_timestamp(records=records)
+
         if version is not None:
             if ignore_release_candidates:
                 records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
@@ -380,9 +390,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> Optional[List[Dict[str, Any]]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
@@ -415,6 +423,30 @@ class ServerRunCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Get metric from run card
+        Args:
+            run_uid:
+                run card uid
+            name:
+                List of names of parameters to retrieve
+        Returns:
+            metrics
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        return self.engine.get_parameter(run_uid=run_uid, name=name)
+
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Insert parameter into run card
+        Args:
+            metric:
+                list of parameter(s)
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_parameter(parameter=parameter)
 
 
 class ServerPipelineCardRegistry(ServerRegistry):

@@ -26,6 +26,7 @@ from opsml.registry.sql.base.sql_schema import (
     MetricSchema,
     ProjectSchema,
     SQLTableGetter,
+    ParameterSchema,
 )
 from opsml.types import RegistryType
 from opsml.types.extra import User
@@ -60,11 +61,7 @@ class DialectHelper:
     @staticmethod
     def get_dialect_logic(query: Select[Any], table: CardSQLTable, dialect: str) -> Select[Any]:
         helper = next(
-            (
-                dialect_helper
-                for dialect_helper in DialectHelper.__subclasses__()
-                if dialect_helper.validate_dialect(dialect)
-            ),
+            (dialect_helper for dialect_helper in DialectHelper.__subclasses__() if dialect_helper.validate_dialect(dialect)),
             None,
         )
 
@@ -79,24 +76,18 @@ class DialectHelper:
 class SqliteHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
-            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label(
-                "major"
-            ),
+            sql_cast(sqa_func.substr(self.table.version, 0, sqa_func.instr(self.table.version, ".")), Integer).label("major"),
             sql_cast(
                 sqa_func.substr(
                     sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
                     1,
-                    sqa_func.instr(
-                        sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), "."
-                    )
-                    - 1,
+                    sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") - 1,
                 ),
                 Integer,
             ).label("minor"),
             sqa_func.substr(
                 sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1),
-                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".")
-                + 1,
+                sqa_func.instr(sqa_func.substr(self.table.version, sqa_func.instr(self.table.version, ".") + 1), ".") + 1,
             ).label("patch"),
         )
 
@@ -125,9 +116,9 @@ class MySQLHelper(DialectHelper):
     def get_version_split_logic(self) -> Select[Any]:
         return self.query.add_columns(
             sql_cast(sqa_func.substring_index(self.table.version, ".", 1), Integer).label("major"),
-            sql_cast(
-                sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer
-            ).label("minor"),
+            sql_cast(sqa_func.substring_index(sqa_func.substring_index(self.table.version, ".", 2), ".", -1), Integer).label(
+                "minor"
+            ),
             sql_cast(
                 sqa_func.regexp_replace(sqa_func.substring_index(self.table.version, ".", -1), "[^0-9]+", ""),
                 Integer,
@@ -350,9 +341,7 @@ class QueryEngine:
             time stamp as integer related to `max_date`
         """
         converted_date = datetime.datetime.strptime(max_date, YEAR_MONTH_DATE)
-        max_date_: datetime.datetime = converted_date.replace(
-            hour=23, minute=59, second=59
-        )  # provide max values for a date
+        max_date_: datetime.datetime = converted_date.replace(hour=23, minute=59, second=59)  # provide max values for a date
 
         # opsml timestamp records are stored as BigInts
         return int(round(max_date_.timestamp() * 1_000_000))
@@ -426,9 +415,7 @@ class QueryEngine:
 
         if repository is not None:
             query = (
-                query.filter(table.repository == repository)
-                .distinct()
-                .order_by(table.name.asc())  # type:ignore[union-attr]
+                query.filter(table.repository == repository).distinct().order_by(table.name.asc())  # type:ignore[union-attr]
             )  #
         else:
             query = query.distinct()
@@ -528,9 +515,7 @@ class QueryEngine:
         upper_bound = lower_bound + 30
 
         query = (
-            select(subquery2)
-            .filter(subquery2.c.row_number.between(lower_bound, upper_bound))
-            .order_by(text("updated_at desc"))
+            select(subquery2).filter(subquery2.c.row_number.between(lower_bound, upper_bound)).order_by(text("updated_at desc"))
         )
 
         with self.session() as sess:
@@ -611,7 +596,7 @@ class RunQueryEngine(QueryEngine):
         run_uid: str,
         name: Optional[List[str]] = None,
         names_only: bool = False,
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -639,10 +624,45 @@ class RunQueryEngine(QueryEngine):
         with self.session() as sess:
             results = sess.execute(query).all()
         if not results:
-            return None
+            return []
 
         if names_only:
             return [row[0] for row in results]
+
+        return self._parse_records(results)
+
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Insert run parameter
+        Args:
+            parameter:
+                List of run parameter(s)
+        """
+        with self.session() as sess:
+            sess.execute(insert(ParameterSchema), parameter)
+            sess.commit()
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Get run parameters. By default, all parameters are returned. If name is provided,
+        only parameters with that name are returned.
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the parameter
+        Returns:
+            List of run metrics
+        """
+
+        query = select(ParameterSchema).filter(ParameterSchema.run_uid == run_uid)
+        if name is not None:
+            filters = [ParameterSchema.name == n for n in name]
+            query = query.filter(or_(*filters))
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+
+        if not results:
+            return []
 
         return self._parse_records(results)
 

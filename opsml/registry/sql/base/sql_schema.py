@@ -160,6 +160,16 @@ class MetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class ParameterSchema(Base):
+    __tablename__ = RegistryTableNames.PARAMETERS.value
+
+    run_uid = Column("uid", String(64))
+    name = Column("name", String(128))
+    value = Column("value", String(128))
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    idx = Column(Integer, primary_key=True)
+
+
 # only used if using auth
 class AuthSchema(Base):
     __tablename__ = RegistryTableNames.AUTH.value
