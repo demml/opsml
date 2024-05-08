@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import uuid
 from pathlib import Path
 from typing import Tuple
@@ -93,6 +94,9 @@ def test_register_data(
     assert bool(cards)
 
     cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="1.0.0")
+    assert bool(cards)
+
+    cards = registry.list_cards(name=data_card.name, sort_by_timestamp=True)
     assert bool(cards)
 
     data_card = DataCard(
@@ -850,3 +854,35 @@ def test_register_data_timestamp(
 
     assert isinstance(loaded.interface.data_splits[0].column_value, pd.Timestamp)
     assert splits["train"].X.shape[0] == 8
+
+
+def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> None:
+    # create data card
+    registry = db_registries.data
+    data_card = DataCard(
+        interface=sql_data,
+        name="test1",
+        repository="mlops",
+        contact="mlops.com",
+        version="1.0.0",
+    )
+
+    registry.register_card(card=data_card)
+
+    time.sleep(2)
+
+    data_card = DataCard(
+        interface=sql_data,
+        name="test2",
+        repository="mlops",
+        contact="mlops.com",
+        version="1.0.0",
+    )
+
+    registry.register_card(card=data_card)
+
+    ### test sort by timestamp
+    cards = registry.list_cards(sort_by_timestamp=True)
+    print(cards)
+    assert cards[0]["name"] == "test2"
+    assert cards[1]["name"] == "test1"
