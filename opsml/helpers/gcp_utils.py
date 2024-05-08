@@ -17,16 +17,19 @@ from google.auth.compute_engine.credentials import (
 )
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
+from google.oauth2.credentials import Credentials as Oauth2Creds
 from pydantic import BaseModel, ConfigDict
 
 from opsml.helpers.logging import ArtifactLogger
 
 logger = ArtifactLogger.get_logger()
 
+GcpCredentials = Union[Credentials, compute_engine.IDTokenCredentials, ComputeEngineCredentials, Oauth2Creds]
+
 
 class GcpCreds(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    creds: Optional[Union[Credentials, compute_engine.IDTokenCredentials, ComputeEngineCredentials]] = None
+    creds: Optional[GcpCredentials] = None
     project: Optional[str] = None
     default_creds: bool = False
 
