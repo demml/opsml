@@ -1,7 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
@@ -75,6 +75,10 @@ class PutFileRequest(BaseModel):
     write_path: str
 
 
+class RegistryQuery(BaseModel):
+    page: List[Tuple[Union[str, int], ...]]
+
+
 class ListCardRequest(BaseModel):
     name: Optional[str] = None
     repository: Optional[str] = None
@@ -89,6 +93,7 @@ class ListCardRequest(BaseModel):
     table_name: Optional[str] = None
     query_terms: Optional[Dict[str, Any]] = None
     sort_by_timestamp: bool = False
+    page: Optional[int] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -179,9 +184,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 

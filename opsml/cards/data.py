@@ -112,7 +112,9 @@ class DataCard(ArtifactCard):
             Registry metadata
         """
         exclude_attr = {"data"}
-        return self.model_dump(exclude=exclude_attr)
+        dumped_model = self.model_dump(exclude=exclude_attr)
+        dumped_model["interface_type"] = self.interface.name()
+        return dumped_model
 
     def add_info(self, info: Dict[str, Union[float, int, str]]) -> None:
         """
@@ -135,9 +137,7 @@ class DataCard(ArtifactCard):
                 Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
 
         """
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data profile can only be created for a DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data profile can only be created for a DataInterface subclasses"
         self.interface.create_data_profile(sample_perc, str(self.name))
 
     def split_data(self) -> Dict[str, Data]:
@@ -158,9 +158,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

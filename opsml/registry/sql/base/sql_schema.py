@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.types import RegistryTableNames
+from opsml.types import CommonKwargs, RegistryTableNames
 
 logger = ArtifactLogger.get_logger()
 
@@ -56,6 +56,7 @@ class DataMixin:
     runcard_uid = Column("runcard_uid", String(64))
     pipelinecard_uid = Column("pipelinecard_uid", String(64))
     auditcard_uid = Column("auditcard_uid", String(64))
+    interface_type = Column("interface_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
 
 
 class DataSchema(Base, BaseMixin, DataMixin):
@@ -73,6 +74,8 @@ class ModelMixin:
     runcard_uid = Column("runcard_uid", String(64))
     pipelinecard_uid = Column("pipelinecard_uid", String(64))
     auditcard_uid = Column("auditcard_uid", String(64))
+    interface_type = Column("interface_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
+    task_type = Column("task_type", String(64), nullable=False, default=CommonKwargs.UNDEFINED.value)
 
 
 class ModelSchema(Base, BaseMixin, ModelMixin):
