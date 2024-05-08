@@ -4,7 +4,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 try:
     from alembic import command
@@ -17,7 +17,10 @@ except ModuleNotFoundError as err:
     startup_import_error_message(err)
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.registry.sql.base.query_engine import AuthQueryEngine
 from opsml.registry.sql.base.sql_schema import Base
+from opsml.settings.config import config
+from opsml.types.extra import User, UserScope
 
 # too much logging going on with alembic
 logging.getLogger("alembic").propagate = False
@@ -52,7 +55,6 @@ class DBInitializer:
         db_url = str(self.engine.url)
 
         config = self.get_alembic_config(db_url=db_url)
-
         with self.engine.begin() as connection:
             config.attributes["connection"] = connection  # pylint: disable=unsupported-assignment-operation
             command.upgrade(config, "heads")
@@ -67,9 +69,32 @@ class DBInitializer:
 
         return config
 
+    def check_admin_user(self, username: str) -> None:
+        """Check if admin user exists in auth db"""
+
+        auth_engine = AuthQueryEngine(engine=self.engine)
+        user: Optional[User] = auth_engine.get_user(username)
+
+        if user is None:
+            logger.info("Admin user does not exist. Creating...")
+            auth_engine.add_user(
+                User(
+                    username=config.opsml_username,
+                    password=config.opsml_password,
+                    is_active=True,
+                    scopes=UserScope(admin=True),
+                )
+            )
+
     def initialize(self) -> None:
         """Create tables if they don't exist and update"""
 
         if not self.registry_tables_exist():
             self.create_tables()
         self.update_tables()
+
+        # check if admin username and pass exist in auth db
+        if config.opsml_auth:
+            assert config.opsml_username is not None, "Admin username must be set when using auth"
+            assert config.opsml_password is not None, "Admin password must be set when using auth"
+            self.check_admin_user(config.opsml_username)

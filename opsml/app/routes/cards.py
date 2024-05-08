@@ -29,6 +29,7 @@ from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
+
 router = APIRouter()
 
 
