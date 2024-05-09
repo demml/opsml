@@ -91,7 +91,7 @@ class DBInitializer:
 
         if not self.registry_tables_exist():
             self.create_tables()
-        # self.update_tables()
+        self.update_tables()
 
         # check if admin username and pass exist in auth db
         if config.opsml_auth:
