@@ -22,7 +22,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    logger.info("Alembic revision: Adding types to model and data registries - {}", revision)
+    logger.info("Alembic revision: Adding interface columns to model and data registries - {}", revision)
     try:
         bind = op.get_context().bind
         insp = sa.inspect(bind)
