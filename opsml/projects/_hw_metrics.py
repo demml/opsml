@@ -355,4 +355,5 @@ class HardwareMetricsLogger:
             network=self.network_logger.get_metrics(),
         )
 
-        logger.info("Hardware metrics: {}", metrics.model_dump())
+        #logger.info("Hardware metrics: {}", metrics.model_dump())
+        return metrics.model_dump()
