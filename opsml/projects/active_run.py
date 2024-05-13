@@ -25,6 +25,10 @@ from opsml.types import (
     SaveName,
 )
 
+from time import sleep
+from queue import Queue
+
+
 logger = ArtifactLogger.get_logger()
 
 
@@ -83,6 +87,7 @@ class ActiveRun:
         self._info = run_info
         self._active = True  # should be active upon instantiation
         self.runcard = run_info.runcard
+        self._queue = None
 
     @property
     def run_id(self) -> str:
@@ -346,6 +351,11 @@ class ActiveRun:
             CardHandler.update_card(registries=self._info.registries, card=self.runcard)
         else:
             CardHandler.register_card(registries=self._info.registries, card=self.runcard)
+    
+    @property
+    def queue(self) -> None:
+        self._verify_active
+        return self._queue
 
     @property
     def run_data(self) -> Any:

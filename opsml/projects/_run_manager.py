@@ -16,20 +16,39 @@ from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
 
+from queue import Queue
+
 logger = ArtifactLogger.get_logger()
 
 
 def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
     hw_logger = HardwareMetricsLogger(interval=interval)
 
-    while run.active:
-        hw_logger.get_metrics()
+    while run.active: # producer function for hw output
+        metrics = hw_logger.get_metrics()
+        # add to the queue
+        run.queue.put(metrics, block=False)
+        logger.info("Metrics in queue: {}", metrics)
         time.sleep(interval)
-
+    # all done
+    run.queue.put(None)
     logger.info("Hardware logger stopped")
 
     return False
 
+def return_hw_metrics(interval: int, run: "ActiveRun"):
+
+    while run.active: # consumer function for hw output
+        # get a unit of work
+        metrics_unit = run.queue.get()
+        # check for stop
+        if metrics_unit is None:
+            continue
+        # report
+        logger.info("Got metrics: {}", metrics_unit)
+        time.sleep(interval + 0.5)
+    
+    return metrics_unit
 
 class ActiveRunException(Exception): ...
 
@@ -133,8 +152,9 @@ class _RunManager:
         assert self.active_run is not None, "active_run should not be None"
 
         # run hardware logger in background thread
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         executor.submit(run_hardware_logger, interval, self.active_run)
+        executor.submit(return_hw_metrics, interval, self.active_run)
 
     def start_run(
         self,
@@ -171,6 +191,8 @@ class _RunManager:
         self.active_run = active_run
 
         if log_hardware:
+            _queue = Queue()
+            self.active_run._queue = _queue
             self._log_hardware_metrics(hardware_interval)
 
         return self.active_run
