@@ -2335,7 +2335,12 @@ def deeplabv3_resnet50():
     from PIL import Image
     from torchvision import transforms
 
-    model = torch.hub.load("pytorch/vision:v0.8.0", "deeplabv3_resnet50", pretrained=True)
+    model = torch.hub.load(
+        "pytorch/vision:v0.8.0",
+        "deeplabv3_resnet50",
+        pretrained=True,
+        skip_validation=True,
+    )
     model.eval()
 
     input_image = Image.open("tests/assets/deeplab.jpg")

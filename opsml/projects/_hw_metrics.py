@@ -348,11 +348,11 @@ class HardwareMetricsLogger:
         self.memory_logger = MemoryMetricsLogger(interval, False)
         self.network_logger = NetworkMetricsLogger(interval)
 
-    def get_metrics(self) -> None:
+    def get_metrics(self) -> HardwareMetrics:
         metrics = HardwareMetrics(
             cpu=self.cpu_logger.get_metrics(),
             memory=self.memory_logger.get_metrics(),
             network=self.network_logger.get_metrics(),
         )
 
-        logger.info("Hardware metrics: {}", metrics.model_dump())
+        return metrics
