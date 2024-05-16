@@ -10,47 +10,57 @@ from typing import Dict, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._hw_metrics import HardwareMetricsLogger
+from opsml.projects._hw_metrics import HardwareMetricsLogger, HardwareMetrics
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
 
-from queue import Queue
+from queue import Queue, Empty
 
 logger = ArtifactLogger.get_logger()
 
 
-def run_hardware_logger(interval: int, run: "ActiveRun") -> bool:
+def put_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics]) -> bool:
     hw_logger = HardwareMetricsLogger(interval=interval)
 
-    while run.active: # producer function for hw output
+    while run.active:  # producer function for hw output
         metrics = hw_logger.get_metrics()
+
         # add to the queue
-        run.queue.put(metrics, block=False)
+        queue.put(metrics, block=False)
         logger.info("Metrics in queue: {}", metrics)
         time.sleep(interval)
-    # all done
-    run.queue.put(None)
+
     logger.info("Hardware logger stopped")
 
     return False
 
-def return_hw_metrics(interval: int, run: "ActiveRun"):
 
-    while run.active: # consumer function for hw output
-        # get a unit of work
-        metrics_unit = run.queue.get()
-        # check for stop
-        if metrics_unit is None:
+def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics]) -> None:
+    """Pull hardware metrics from the queue and log them.
+
+    Args:
+        interval:
+            Interval to log hardware metrics
+        run:
+            ActiveRun
+    """
+    while run.active:  # consumer function for hw output
+        try:
+            metrics_unit = queue.get(timeout=1)
+        except Empty:
             continue
-        # report
-        logger.info("Got metrics: {}", metrics_unit)
-        time.sleep(interval + 0.5)
-    
-    return metrics_unit
 
-class ActiveRunException(Exception): ...
+        # report
+        logger.info("Got metrics: {}", metrics_unit.model_dump())
+        time.sleep(interval + 0.5)
+
+    return None
+
+
+class ActiveRunException(Exception):
+    ...
 
 
 class _RunManager:
@@ -79,6 +89,16 @@ class _RunManager:
         else:
             self.run_id = None
             self._run_exists = False
+
+        self._thread_executor = None
+
+    @property
+    def thread_executor(self) -> Optional[concurrent.futures.ThreadPoolExecutor]:
+        return self._thread_executor
+
+    @thread_executor.setter
+    def thread_executor(self, value: concurrent.futures.ThreadPoolExecutor) -> None:
+        self._thread_executor = value
 
     @property
     def project_id(self) -> int:
@@ -152,9 +172,11 @@ class _RunManager:
         assert self.active_run is not None, "active_run should not be None"
 
         # run hardware logger in background thread
+        queue: Queue[HardwareMetrics] = Queue()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        executor.submit(run_hardware_logger, interval, self.active_run)
-        executor.submit(return_hw_metrics, interval, self.active_run)
+        executor.submit(put_hw_metrics, interval, self.active_run, queue)
+        executor.submit(get_hw_metrics, interval, self.active_run, queue)
+        self.thread_executor = executor
 
     def start_run(
         self,
@@ -191,8 +213,6 @@ class _RunManager:
         self.active_run = active_run
 
         if log_hardware:
-            _queue = Queue()
-            self.active_run._queue = _queue
             self._log_hardware_metrics(hardware_interval)
 
         return self.active_run
@@ -215,3 +235,8 @@ class _RunManager:
         self.active_run = None
         self.run_id = None
         self._run_exists = False
+
+        # check if thread executor is still running
+        if self.thread_executor is not None:
+            self.thread_executor.shutdown(wait=True, cancel_futures=True)
+            self._thread_executor = None
