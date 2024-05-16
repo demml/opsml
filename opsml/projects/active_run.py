@@ -25,7 +25,6 @@ from opsml.types import (
     SaveName,
 )
 
-
 logger = ArtifactLogger.get_logger()
 
 
