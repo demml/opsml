@@ -6,17 +6,16 @@
 import concurrent
 import time
 import uuid
+from queue import Empty, Queue
 from typing import Dict, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._hw_metrics import HardwareMetricsLogger, HardwareMetrics
+from opsml.projects._hw_metrics import HardwareMetrics, HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs
-
-from queue import Queue, Empty
 
 logger = ArtifactLogger.get_logger()
 
@@ -45,22 +44,22 @@ def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
             Interval to log hardware metrics
         run:
             ActiveRun
+        queue:
+            Queue[HardwareMetrics]
     """
     while run.active:  # consumer function for hw output
         try:
             metrics_unit = queue.get(timeout=1)
-        except Empty:
-            continue
+            # report
+            logger.info("Got metrics: {}", metrics_unit.model_dump())
 
-        # report
-        logger.info("Got metrics: {}", metrics_unit.model_dump())
+        except Empty:
+            pass
+
         time.sleep(interval + 0.5)
 
-    return None
 
-
-class ActiveRunException(Exception):
-    ...
+class ActiveRunException(Exception): ...
 
 
 class _RunManager:
