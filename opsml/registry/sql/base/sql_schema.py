@@ -175,11 +175,23 @@ class AuthSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class HardwareMetricSchema(Base):
+    __tablename__ = RegistryTableNames.HARDWARE_METRICS.value
+
+    run_uid = Column("run_uid", String(64))
+    timestamp = Column("timestamp", Float)
+    metrics = Column("metrics", JSON)
+
+    def __repr__(self) -> str:
+        return f"<SqlTable: {self.__tablename__}>"
+
+
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
         RegistryTableNames.BASE.value,
         RegistryTableNames.METRICS.value,
+        RegistryTableNames.HARDWARE_METRICS.value,
     ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
