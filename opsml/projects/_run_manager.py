@@ -6,6 +6,7 @@
 import concurrent
 import time
 import uuid
+from datetime import datetime, timezone
 from queue import Empty, Queue
 from typing import Dict, Optional, Union, cast
 
@@ -50,8 +51,16 @@ def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
     while run.active:  # consumer function for hw output
         try:
             metrics_unit = queue.get(timeout=1)
-            # report
-            logger.info("Got metrics: {}", metrics_unit.model_dump())
+
+            metric = [
+                {
+                    "metrics": metrics_unit.model_dump(),
+                    "timestamp": datetime.now(timezone.utc).timestamp(),
+                    "run_id": run.run_id,
+                }
+            ]
+
+            run.runcard._registry.insert_hw_metric(metric)
 
         except Empty:
             pass

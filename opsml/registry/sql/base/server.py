@@ -412,6 +412,17 @@ class ServerRunCardRegistry(ServerRegistry):
 
         self.engine.insert_metric(metric=metric)
 
+    def insert_hw_metric(self, metric: List[Dict[str, Any]]) -> None:
+        """Insert hardware metric into run card
+
+        Args:
+            metric:
+                hardware metric
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_hw_metric(metric=metric)
+
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
