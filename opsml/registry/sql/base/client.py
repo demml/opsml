@@ -332,6 +332,20 @@ class ClientRunCardRegistry(ClientRegistry):
             json={"metric": metric},
         )
 
+    def insert_hw_metric(self, metric: List[Dict[str, Any]]) -> None:
+        """Inserts metrics into the run registry
+
+        Args:
+            metric:
+                List of hw metric(s) to insert
+        """
+
+        self._session.request(
+            route=api_routes.HW_METRICS,
+            request_type=RequestType.PUT,
+            json={"metric": metric},
+        )
+
     def get_metric(
         self,
         run_uid: str,
@@ -362,6 +376,38 @@ class ClientRunCardRegistry(ClientRegistry):
             body["names_only"] = names_only
 
         data = self._session.request(route=api_routes.METRICS, request_type=RequestType.POST, json=body)
+
+        metric = data.get("metric")
+        return cast(Optional[List[Dict[str, Any]]], metric)
+
+    def get_hw_metric(
+        self,
+        run_uid: str,
+        name: Optional[List[str]] = None,
+        names_only: bool = False,
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Get hw metrics.
+
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the metric
+            names_only:
+                Return only the names of the metrics
+
+        Returns:
+            List of run metrics
+        """
+        body = {"run_uid": run_uid}
+
+        if name is not None:
+            body["name"] = name
+
+        if names_only:
+            body["names_only"] = names_only
+
+        data = self._session.request(route=api_routes.HW_METRICS, request_type=RequestType.POST, json=body)
 
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)

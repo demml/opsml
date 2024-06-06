@@ -265,12 +265,18 @@ class Metric(BaseModel):
 class Metrics(BaseModel):
     metric: Union[Optional[List[Metric]], Optional[List[str]]]
 
+class HardwareMetrics(BaseModel):
+    metric: List[HardwareMetric]
 
 class GetMetricRequest(BaseModel):
     run_uid: str
     name: Optional[List[str]] = None
     names_only: bool = False
 
+class GetHWMetricRequest(BaseModel):
+    run_uid: str
+    name: Optional[List[str]] = None
+    names_only: bool = False
 
 class CompareMetricRequest(BaseModel):
     metric_name: List[str]
