@@ -49,6 +49,7 @@ class ApiRoutes:
     UPLOAD_FILE = "files/upload"
     FILE_EXISTS = "files/exists"
     TOKEN = "auth/token"
+    HW_METRICS = "metrics/hardware"
 
 
 api_routes = ApiRoutes()
