@@ -512,6 +512,15 @@ class RunCard(ArtifactCard):
                 self.metrics[_metric.name].append(_metric)
         return None
 
+    def get_hardware_metrics(self) -> Optional[List[Dict[str, Any]]]:
+        """Returns hardware metrics recorded during run.
+
+        Returns:
+            List of dictionaries containing hardware metrics
+        """
+        assert self.uid is not None, "RunCard must be registered to get hardware metrics"
+        return self._registry.get_hw_metric(run_uid=self.uid)
+
     def get_parameter(self, name: str) -> Union[List[Param], Param]:
         """
         Gets a parameter by name

@@ -591,7 +591,7 @@ class RunQueryEngine(QueryEngine):
             sess.execute(insert(MetricSchema), metric)
             sess.commit()
 
-    def insert_hw_metric(self, metric: List[Dict[str, Any]]) -> None:
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
         """Insert run metrics
 
         Args:
@@ -599,7 +599,7 @@ class RunQueryEngine(QueryEngine):
                 List of run metric(s)
         """
         with self.session() as sess:
-            sess.execute(insert(HardwareMetricSchema), metric)
+            sess.execute(insert(HardwareMetricSchema), metrics)
             sess.commit()
 
     def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:

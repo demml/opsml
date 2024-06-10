@@ -265,14 +265,18 @@ class Metrics(BaseModel):
     metric: Union[Optional[List[Metric]], Optional[List[str]]]
 
 
-class HardwareMetric(BaseModel):
+class HardwareMetricRecord(BaseModel):
     run_uid: str
     created_at: datetime.datetime
     metrics: HardwareMetrics
 
 
-class HardwareMetricResponse(BaseModel):
-    metrics: List[HardwareMetric]
+class HardwareMetricscPut(BaseModel):
+    metrics: List[HardwareMetricRecord]
+
+
+class HardwareMetricsResponse(BaseModel):
+    metrics: List[HardwareMetricRecord]
 
 
 class GetMetricRequest(BaseModel):
