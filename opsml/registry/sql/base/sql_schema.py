@@ -4,10 +4,11 @@
 import datetime as dt
 import os
 import uuid
-from datetime import date
+from datetime import date, timezone
+import datetime
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, DateTime, func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
@@ -179,7 +180,7 @@ class HardwareMetricSchema(Base):
     __tablename__ = RegistryTableNames.HARDWARE_METRICS.value
 
     run_uid = Column("run_uid", String(64))
-    timestamp = Column("timestamp", Float)
+    timestamp = Column("timestamp", DateTime(True), default=lambda: datetime.datetime.now(tz=timezone.utc))
     metrics = Column("metrics", JSON)
 
     def __repr__(self) -> str:

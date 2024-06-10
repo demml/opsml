@@ -5,11 +5,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field, model_validator
+import datetime
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment
+from opsml.types import Comment, HardwareMetrics
 
 
 class Success(BaseModel):
@@ -184,9 +185,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -265,18 +264,22 @@ class Metric(BaseModel):
 class Metrics(BaseModel):
     metric: Union[Optional[List[Metric]], Optional[List[str]]]
 
-class HardwareMetrics(BaseModel):
-    metric: List[HardwareMetric]
+
+class HardwareMetric(BaseModel):
+    run_uid: str
+    timestamp: datetime.datetime
+    metrics: HardwareMetrics
+
+
+class HardwareMetricResponse(BaseModel):
+    metrics: List[HardwareMetric]
+
 
 class GetMetricRequest(BaseModel):
     run_uid: str
     name: Optional[List[str]] = None
     names_only: bool = False
 
-class GetHWMetricRequest(BaseModel):
-    run_uid: str
-    name: Optional[List[str]] = None
-    names_only: bool = False
 
 class CompareMetricRequest(BaseModel):
     metric_name: List[str]
