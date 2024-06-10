@@ -267,7 +267,7 @@ class Metrics(BaseModel):
 
 class HardwareMetric(BaseModel):
     run_uid: str
-    timestamp: datetime.datetime
+    created_at: datetime.datetime
     metrics: HardwareMetrics
 
 
