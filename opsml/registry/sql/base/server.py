@@ -400,10 +400,8 @@ class ServerRunCardRegistry(ServerRegistry):
         assert isinstance(self.engine, RunQueryEngine)
 
         return self.engine.get_metric(run_uid=run_uid, name=name, names_only=names_only)
-    
-    def get_hw_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> Optional[List[Dict[str, Any]]]:
+
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
         """Get hw metric
 
         Args:
@@ -420,8 +418,8 @@ class ServerRunCardRegistry(ServerRegistry):
         """
         assert isinstance(self.engine, RunQueryEngine)
 
-        return self.engine.get_hw_metric(run_uid=run_uid, name=name, names_only=names_only)
-    
+        return self.engine.get_hw_metric(run_uid=run_uid)
+
     def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Insert metric into run card
 

@@ -73,6 +73,7 @@ from opsml.types.storage import (
     StorageSettings,
     StorageSystem,
 )
+from opsml.types.metrics import HardwareMetrics, NetworkRates, MemoryMetrics, CPUMetrics
 
 __all__ = [
     "NON_PIPELINE_CARDS",
@@ -143,4 +144,8 @@ __all__ = [
     "GraphStyle",
     "BotoClient",
     "GCSClient",
+    "HardwareMetrics",
+    "NetworkRates",
+    "MemoryMetrics",
+    "CPUMetrics",
 ]

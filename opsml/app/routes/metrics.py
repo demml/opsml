@@ -8,7 +8,13 @@ from typing import Any, Dict, List, cast
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.pydantic_models import GetMetricRequest, Metrics, Success, HardwareMetrics, GetHWMetricRequest
+from opsml.app.routes.pydantic_models import (
+    GetMetricRequest,
+    Metrics,
+    Success,
+    HardwareMetric,
+    HardwareMetricResponse,
+)
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerRunCardRegistry
 
@@ -39,12 +45,13 @@ def insert_metric(request: Request, payload: Metrics) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
+
 
 @router.put("/metrics/hardware", name="hw_metric_put", response_model=Success)
-def insert_hw_metric(request: Request, payload: HardwareMetrics) -> Success: ## should match hardware metrics schema run_id, timestamp, JSON dict... pydantic_models
+def insert_hw_metric(
+    request: Request, payload: HardwareMetric
+) -> Success:  ## should match hardware metrics schema run_id, timestamp, JSON dict... pydantic_models
     """Inserts metrics into metric table
 
     Args:
@@ -59,15 +66,13 @@ def insert_hw_metric(request: Request, payload: HardwareMetrics) -> Success: ## 
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
-    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
+    metrics = cast(List[Dict[str, Any]], payload.model_dump())
     try:
         run_reg.insert_hw_metric(metrics)
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
 
 
 # GET would be used, but we are using POST to allow for a request body so that we can pass in a list of metrics to retrieve
@@ -92,12 +97,11 @@ def get_metric(request: Request, payload: GetMetricRequest) -> Metrics:
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
-        ) from error
-        
-@router.post("/metrics/hardware", response_model=HardwareMetrics, name="hw_metric_get")
-def get_hw_metric(request: Request, payload: GetHWMetricRequest) -> HardwareMetrics:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error
+
+
+@router.get("/metrics/hardware", response_model=HardwareMetricResponse, name="hw_metric_get")
+def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricResponse:
     """Get metrics from hw metric table
 
     Args:
@@ -112,11 +116,9 @@ def get_hw_metric(request: Request, payload: GetHWMetricRequest) -> HardwareMetr
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
     try:
-        metrics = run_reg.get_hw_metric(payload.run_uid, payload.name, payload.names_only)
-        return HardwareMetrics(metric=metrics)
+        metrics = run_reg.get_hw_metric(run_uid=run_uid)
+        return HardwareMetricResponse(metrics=metrics)
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error

@@ -55,7 +55,7 @@ def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
             metric = [
                 {
                     "metrics": metrics_unit.model_dump(),
-                    "timestamp": datetime.now(timezone.utc).timestamp(),
+                    "timestamp": datetime.now(timezone.utc),
                     "run_id": run.run_id,
                 }
             ]
@@ -68,7 +68,8 @@ def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
         time.sleep(interval + 0.5)
 
 
-class ActiveRunException(Exception): ...
+class ActiveRunException(Exception):
+    ...
 
 
 class _RunManager:
