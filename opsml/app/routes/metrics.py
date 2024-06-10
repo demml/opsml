@@ -12,8 +12,8 @@ from opsml.app.routes.pydantic_models import (
     GetMetricRequest,
     Metrics,
     Success,
-    HardwareMetric,
-    HardwareMetricResponse,
+    HardwareMetricsResponse,
+    HardwareMetricscPut,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerRunCardRegistry
@@ -49,8 +49,8 @@ def insert_metric(request: Request, payload: Metrics) -> Success:
 
 
 @router.put("/metrics/hardware", name="hw_metric_put", response_model=Success)
-def insert_hw_metric(
-    request: Request, payload: Dict[str, List[HardwareMetric]]
+def insert_hw_metrics(
+    request: Request, payload: HardwareMetricscPut
 ) -> Success:  ## should match hardware metrics schema run_id, timestamp, JSON dict... pydantic_models
     """Inserts metrics into metric table
 
@@ -66,9 +66,8 @@ def insert_hw_metric(
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
-    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
     try:
-        run_reg.insert_hw_metric(metrics)
+        run_reg.insert_hw_metrics(payload.model_dump()["metrics"])
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
@@ -100,8 +99,8 @@ def get_metric(request: Request, payload: GetMetricRequest) -> Metrics:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error
 
 
-@router.get("/metrics/hardware", response_model=HardwareMetricResponse, name="hw_metric_get")
-def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricResponse:
+@router.get("/metrics/hardware", response_model=HardwareMetricsResponse, name="hw_metric_get")
+def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricsResponse:
     """Get metrics from hw metric table
 
     Args:
@@ -117,7 +116,7 @@ def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricResponse:
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
     try:
         metrics = run_reg.get_hw_metric(run_uid=run_uid)
-        return HardwareMetricResponse(metrics=metrics)
+        return HardwareMetricsResponse(metrics=metrics)
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")

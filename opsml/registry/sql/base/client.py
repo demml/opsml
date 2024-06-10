@@ -332,7 +332,7 @@ class ClientRunCardRegistry(ClientRegistry):
             json={"metric": metric},
         )
 
-    def insert_hw_metric(self, metric: List[Dict[str, Any]]) -> None:
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
         """Inserts metrics into the run registry
 
         Args:
@@ -343,42 +343,18 @@ class ClientRunCardRegistry(ClientRegistry):
         self._session.request(
             route=api_routes.HW_METRICS,
             request_type=RequestType.PUT,
-            json={"metric": metric},
+            json={"metrics": metrics},
         )
 
-    def get_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
-        """Get run metrics. By default, all metrics are returned. If name is provided,
-        only metrics with that name are returned. Metric type can be either "metric" or "graph".
-        "metric" will return name, value, step records. "graph" will return graph (x, y) records.
-
-        Args:
-            run_uid:
-                Run uid
-            name:
-                Name of the metric
-            names_only:
-                Return only the names of the metrics
-
-        Returns:
-            List of run metrics
-        """
-
-        data = self._session.request(
-            route=api_routes.METRICS,
-            request_type=RequestType.GET,
-            params={"run_uid": run_uid},
-        )
-
-        metric = data.get("metrics")
-        return cast(Optional[List[Dict[str, Any]]], metric)
-
-    def get_hw_metric(
+    def get_metric(
         self,
         run_uid: str,
         name: Optional[List[str]] = None,
         names_only: bool = False,
     ) -> Optional[List[Dict[str, Any]]]:
-        """Get hw metrics.
+        """Get run metrics. By default, all metrics are returned. If name is provided,
+        only metrics with that name are returned. Metric type can be either "metric" or "graph".
+        "metric" will return name, value, step records. "graph" will return graph (x, y) records.
 
         Args:
             run_uid:
@@ -399,9 +375,29 @@ class ClientRunCardRegistry(ClientRegistry):
         if names_only:
             body["names_only"] = names_only
 
-        data = self._session.request(route=api_routes.HW_METRICS, request_type=RequestType.POST, json=body)
+        data = self._session.request(route=api_routes.METRICS, request_type=RequestType.POST, json=body)
 
         metric = data.get("metric")
+        return cast(Optional[List[Dict[str, Any]]], metric)
+
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
+        """Gets run hardware metrics
+
+        Args:
+            run_uid:
+                Run uid
+
+        Returns:
+            List of run metrics
+        """
+
+        data = self._session.request(
+            route=api_routes.HW_METRICS,
+            request_type=RequestType.GET,
+            params={"run_uid": run_uid},
+        )
+
+        metric = data.get("metrics")
         return cast(Optional[List[Dict[str, Any]]], metric)
 
     @staticmethod

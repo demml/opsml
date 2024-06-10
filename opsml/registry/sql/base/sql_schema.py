@@ -180,9 +180,10 @@ class AuthSchema(Base):
 class HardwareMetricSchema(Base):
     __tablename__ = RegistryTableNames.HARDWARE_METRICS.value
 
-    run_uid = Column("run_uid", String(64))
+    run_uid = Column("run_uid", String(64), nullable=False)
     created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
     metrics = Column("metrics", JSON)
+    idx = Column(Integer, primary_key=True)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
