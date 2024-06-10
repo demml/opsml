@@ -154,7 +154,7 @@ class MetricSchema(Base):
     value = Column("value", Float)
     step = Column("step", Integer)
     timestamp = Column("timestamp", BigInteger)
-    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now(tz=timezone.utc)))
     idx = Column(Integer, primary_key=True)
 
     def __repr__(self) -> str:
@@ -171,6 +171,7 @@ class AuthSchema(Base):
     hashed_password = Column("hashed_password", String(64))
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)
+    created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
@@ -180,7 +181,7 @@ class HardwareMetricSchema(Base):
     __tablename__ = RegistryTableNames.HARDWARE_METRICS.value
 
     run_uid = Column("run_uid", String(64))
-    timestamp = Column("timestamp", DateTime(True), default=lambda: datetime.datetime.now(tz=timezone.utc))
+    created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
     metrics = Column("metrics", JSON)
 
     def __repr__(self) -> str:

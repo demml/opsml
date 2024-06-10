@@ -108,7 +108,7 @@ def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricResponse:
         request:
             FastAPI request object
         payload:
-            GetMetricRequest
+            HardwareMetricResponse
 
     Returns:
         `MetricsModel`
