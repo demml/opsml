@@ -50,7 +50,7 @@ def insert_metric(request: Request, payload: Metrics) -> Success:
 
 @router.put("/metrics/hardware", name="hw_metric_put", response_model=Success)
 def insert_hw_metric(
-    request: Request, payload: HardwareMetric
+    request: Request, payload: Dict[str, List[HardwareMetric]]
 ) -> Success:  ## should match hardware metrics schema run_id, timestamp, JSON dict... pydantic_models
     """Inserts metrics into metric table
 
@@ -66,7 +66,7 @@ def insert_hw_metric(
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
 
-    metrics = cast(List[Dict[str, Any]], payload.model_dump())
+    metrics = cast(List[Dict[str, Any]], payload.model_dump()["metric"])
     try:
         run_reg.insert_hw_metric(metrics)
         return Success()
