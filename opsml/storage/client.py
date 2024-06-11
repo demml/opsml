@@ -209,8 +209,8 @@ class GCSFSStorageClient(StorageClientBase):
             from google.auth import compute_engine
             from google.auth.transport import requests
 
-            auth_request = requests.Request()
-            return compute_engine.IDTokenCredentials(auth_request, "")
+            auth_request = requests.Request()  # type: ignore
+            return compute_engine.IDTokenCredentials(auth_request, "")  # type: ignore
 
         return self.settings.credentials
 

@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import pytest
 from starlette.testclient import TestClient
@@ -74,3 +76,20 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
     with project.run() as run:
         pass
     assert project.project_id == 1
+
+
+def test_opsml_project_hardware_metric(test_app: TestClient, api_registries: CardRegistries) -> None:
+    """verify that we can read artifacts / metrics / cards without making a run
+    active."""
+    info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
+
+    with project.run(log_hardware=True, hardware_interval=10) as run:
+        # Create metrics / params / cards
+        run.log_metric(key="m1", value=1.1)
+        run.log_parameter(key="m1", value="apple")
+        time.sleep(5)
+
+    metrics = run.runcard.get_hardware_metrics()
+    assert len(metrics) == 1
+    assert metrics[0]["run_uid"] == run.run_id

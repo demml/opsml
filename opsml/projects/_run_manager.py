@@ -6,12 +6,13 @@
 import concurrent
 import time
 import uuid
+from datetime import datetime
 from queue import Empty, Queue
-from typing import Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._hw_metrics import HardwareMetrics, HardwareMetricsLogger
+from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
@@ -20,15 +21,21 @@ from opsml.types import CommonKwargs
 logger = ArtifactLogger.get_logger()
 
 
-def put_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics]) -> bool:
+def put_hw_metrics(
+    interval: int,
+    run: "ActiveRun",
+    queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
+) -> bool:
     hw_logger = HardwareMetricsLogger(interval=interval)
 
     while run.active:  # producer function for hw output
-        metrics = hw_logger.get_metrics()
+        metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
+            "metrics": hw_logger.get_metrics().model_dump(),
+            "run_uid": run.run_id,
+        }
 
         # add to the queue
         queue.put(metrics, block=False)
-        logger.info("Metrics in queue: {}", metrics)
         time.sleep(interval)
 
     logger.info("Hardware logger stopped")
@@ -36,7 +43,11 @@ def put_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
     return False
 
 
-def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics]) -> None:
+def get_hw_metrics(
+    interval: int,
+    run: "ActiveRun",
+    queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
+) -> None:
     """Pull hardware metrics from the queue and log them.
 
     Args:
@@ -49,14 +60,13 @@ def get_hw_metrics(interval: int, run: "ActiveRun", queue: Queue[HardwareMetrics
     """
     while run.active:  # consumer function for hw output
         try:
-            metrics_unit = queue.get(timeout=1)
-            # report
-            logger.info("Got metrics: {}", metrics_unit.model_dump())
+            metrics = queue.get(timeout=1)
+            run.runcard._registry.insert_hw_metrics([metrics])
 
         except Empty:
             pass
 
-        time.sleep(interval + 0.5)
+        time.sleep(interval / 2)
 
 
 class ActiveRunException(Exception): ...
@@ -171,10 +181,10 @@ class _RunManager:
         assert self.active_run is not None, "active_run should not be None"
 
         # run hardware logger in background thread
-        queue: Queue[HardwareMetrics] = Queue()
+        queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        executor.submit(put_hw_metrics, interval, self.active_run, queue)
         executor.submit(get_hw_metrics, interval, self.active_run, queue)
+        executor.submit(put_hw_metrics, interval, self.active_run, queue)
         self.thread_executor = executor
 
     def start_run(
@@ -237,5 +247,5 @@ class _RunManager:
 
         # check if thread executor is still running
         if self.thread_executor is not None:
-            self.thread_executor.shutdown(wait=True, cancel_futures=True)
+            self.thread_executor.shutdown(wait=False, cancel_futures=True)
             self._thread_executor = None

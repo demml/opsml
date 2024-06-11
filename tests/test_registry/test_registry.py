@@ -883,6 +883,5 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
 
     ### test sort by timestamp
     cards = registry.list_cards(sort_by_timestamp=True)
-    print(cards)
     assert cards[0]["name"] == "test2"
     assert cards[1]["name"] == "test1"
