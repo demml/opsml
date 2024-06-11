@@ -4,7 +4,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_serializer
 import datetime
 
 from opsml.cards.audit import AuditSections
@@ -269,6 +269,11 @@ class HardwareMetricRecord(BaseModel):
     run_uid: str
     created_at: datetime.datetime
     metrics: HardwareMetrics
+
+    # serialize datetime
+    @field_serializer("created_at")
+    def serialize_created_at(self, value: datetime.datetime) -> str:
+        return value.isoformat()
 
 
 class HardwareMetricscPut(BaseModel):
