@@ -1821,7 +1821,7 @@ def bagging_regression(regression_data):
 @pytest.fixture(scope="module")
 def bayesian_ridge_regression(regression_data):
     X, y = regression_data
-    reg = linear_model.BayesianRidge(n_iter=10).fit(X, y)
+    reg = linear_model.BayesianRidge(max_iter=10).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
