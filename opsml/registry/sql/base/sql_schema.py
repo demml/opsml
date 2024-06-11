@@ -5,10 +5,17 @@ import datetime as dt
 import os
 import uuid
 from datetime import date, timezone
-import datetime
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, DateTime, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    String,
+)
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 

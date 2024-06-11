@@ -32,6 +32,7 @@ from opsml.types.huggingface import (
     HuggingFaceORTModel,
     HuggingFaceTask,
 )
+from opsml.types.metrics import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
 from opsml.types.model import (
     AVAILABLE_MODEL_TYPES,
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -73,7 +74,6 @@ from opsml.types.storage import (
     StorageSettings,
     StorageSystem,
 )
-from opsml.types.metrics import HardwareMetrics, NetworkRates, MemoryMetrics, CPUMetrics
 
 __all__ = [
     "NON_PIPELINE_CARDS",

@@ -1,10 +1,11 @@
+import time
+
 import numpy as np
 import pytest
 from starlette.testclient import TestClient
 
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry.registry import CardRegistries
-import time
 
 # test_app already performs a few tests with opsml project in client model
 # Adding additional tests here to avoid further cluttering test_app
@@ -88,9 +89,7 @@ def test_opsml_project_hardware_metric(test_app: TestClient, api_registries: Car
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
         time.sleep(5)
-    
+
     metrics = run.runcard.get_hardware_metrics()
     assert len(metrics) == 1
     assert metrics[0]["run_uid"] == run.run_id
-        
-        

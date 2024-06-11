@@ -6,13 +6,13 @@
 import concurrent
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from queue import Empty, Queue
-from typing import Dict, Optional, Union, cast, Any
+from typing import Any, Dict, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.projects._hw_metrics import HardwareMetricsLogger, _valid_interval
+from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
@@ -69,8 +69,7 @@ def get_hw_metrics(
         time.sleep(interval / 2)
 
 
-class ActiveRunException(Exception):
-    ...
+class ActiveRunException(Exception): ...
 
 
 class _RunManager:
