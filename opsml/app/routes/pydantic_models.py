@@ -267,13 +267,15 @@ class Metrics(BaseModel):
 
 class HardwareMetricRecord(BaseModel):
     run_uid: str
-    created_at: datetime.datetime
+    created_at: Optional[datetime.datetime] = None
     metrics: HardwareMetrics
 
     # serialize datetime
     @field_serializer("created_at")
-    def serialize_created_at(self, value: datetime.datetime) -> str:
-        return value.isoformat()
+    def serialize_created_at(self, value: Optional[datetime.datetime] = None) -> Optional[str]:
+        if value is not None:
+            return value.isoformat()
+        return value
 
 
 class HardwareMetricscPut(BaseModel):

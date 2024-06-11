@@ -617,7 +617,6 @@ class RunQueryEngine(QueryEngine):
 
         with self.session() as sess:
             results = sess.execute(query).all()
-
         if not results:
             return None
 
