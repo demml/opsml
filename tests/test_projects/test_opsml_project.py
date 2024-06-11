@@ -1,4 +1,5 @@
 import os
+import time
 from typing import Tuple, cast
 
 import numpy as np
@@ -11,7 +12,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects._run_manager import ActiveRunException
 from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
-import time
+
 
 def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     """Tests logging and retrieving artifacts"""
@@ -333,7 +334,7 @@ def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
         time.sleep(5)
-        
+
     metrics = run.runcard.get_hardware_metrics()
     assert len(metrics) == 1
     assert metrics[0]["run_uid"] == run.run_id

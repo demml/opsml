@@ -10,8 +10,8 @@ from typing import Any, Dict, List
 
 import psutil
 
-from opsml.types import HardwareMetrics, MemoryMetrics, NetworkRates, CPUMetrics
 from opsml.helpers.logging import ArtifactLogger
+from opsml.types import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
 
 logger = ArtifactLogger.get_logger()
 
