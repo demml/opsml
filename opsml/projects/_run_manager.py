@@ -31,7 +31,6 @@ def put_hw_metrics(
     while run.active:  # producer function for hw output
         metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
             "metrics": hw_logger.get_metrics().model_dump(),
-            "created_at": datetime.now(timezone.utc).isoformat(),
             "run_uid": run.run_id,
         }
 
@@ -67,7 +66,7 @@ def get_hw_metrics(
         except Empty:
             pass
 
-        time.sleep(interval + 0.5)
+        time.sleep(interval / 2)
 
 
 class ActiveRunException(Exception):
@@ -185,8 +184,8 @@ class _RunManager:
         # run hardware logger in background thread
         queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        executor.submit(put_hw_metrics, interval, self.active_run, queue)
         executor.submit(get_hw_metrics, interval, self.active_run, queue)
+        executor.submit(put_hw_metrics, interval, self.active_run, queue)
         self.thread_executor = executor
 
     def start_run(
@@ -249,5 +248,5 @@ class _RunManager:
 
         # check if thread executor is still running
         if self.thread_executor is not None:
-            self.thread_executor.shutdown(wait=True, cancel_futures=True)
+            self.thread_executor.shutdown(wait=False, cancel_futures=True)
             self._thread_executor = None
