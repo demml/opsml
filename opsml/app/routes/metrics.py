@@ -112,17 +112,17 @@ def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricsResponse:
     Args:
         request:
             FastAPI request object
-        payload:
-            HardwareMetricResponse
+        run_uid:
+            Run UID
 
     Returns:
-        `MetricsModel`
+        `HardwareMetricsResponse`
     """
 
     run_reg: ServerRunCardRegistry = request.app.state.registries.run._registry
     try:
         metrics = run_reg.get_hw_metric(run_uid=run_uid)
-        return HardwareMetricsResponse(metrics=metrics)
+        return HardwareMetricsResponse(metrics=[] if metrics is None else metrics)
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")

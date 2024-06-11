@@ -611,7 +611,7 @@ class RunQueryEngine(QueryEngine):
         """Insert run metrics
 
         Args:
-            metric:a
+            metrics:
                 List of run metric(s)
         """
         with self.session() as sess:

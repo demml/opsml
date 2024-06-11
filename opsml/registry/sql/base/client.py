@@ -336,7 +336,7 @@ class ClientRunCardRegistry(ClientRegistry):
         """Inserts metrics into the run registry
 
         Args:
-            metric:
+            metrics:
                 List of hw metric(s) to insert
         """
 
