@@ -49,6 +49,7 @@ class ApiRoutes:
     UPLOAD_FILE = "files/upload"
     FILE_EXISTS = "files/exists"
     TOKEN = "auth/token"
+    HW_METRICS = "metrics/hardware"
 
 
 api_routes = ApiRoutes()
@@ -126,17 +127,20 @@ class ApiClient:
         Returns:
             Response from server
         """
-        # self.refresh_token()
+        try:
+            url = f"{self._base_url}/{route}"
+            response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
 
-        url = f"{self._base_url}/{route}"
-        response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
+            if response.status_code == 200:
+                return cast(Dict[str, Any], response.json())
 
-        if response.status_code == 200:
-            return cast(Dict[str, Any], response.json())
+            detail = response.json().get("detail")
+            self.refresh_token()
 
-        detail = response.json().get("detail")
-        self.refresh_token()
-        raise ValueError(f"""Failed to make server call for {request_type} request Url: {route}, {detail}""")
+            raise ValueError(f"""Failed to make server call for {request_type} request Url: {route}, {detail}""")
+
+        except Exception as exc:
+            raise exc
 
     @retry(reraise=True, stop=stop_after_attempt(3))
     def stream_post_request(

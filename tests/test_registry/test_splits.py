@@ -218,8 +218,6 @@ def test_data_splits_polars_column_value(polars_data: PolarsData) -> None:
     polars_data.data_splits = data_splits
     data_splits = polars_data.split_data()
 
-    print(polars_data.data_splits)
-
     assert data_splits["train"].X.shape[0] == 4
     assert data_splits["train"].y.shape[0] == 4
     assert data_splits["test"].X.shape[0] == 2

@@ -23,6 +23,7 @@ from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
     AuthSchema,
     CardSQLTable,
+    HardwareMetricSchema,
     MetricSchema,
     ProjectSchema,
     SQLTableGetter,
@@ -605,6 +606,37 @@ class RunQueryEngine(QueryEngine):
         with self.session() as sess:
             sess.execute(insert(MetricSchema), metric)
             sess.commit()
+
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        """Insert run metrics
+
+        Args:
+            metrics:
+                List of run metric(s)
+        """
+        with self.session() as sess:
+            sess.execute(insert(HardwareMetricSchema), metrics)
+            sess.commit()
+
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
+        """Get hardware metrics associated with a run.
+
+        Args:
+            run_uid:
+                Run uid
+
+        Returns:
+            List of hardware metrics
+        """
+
+        query = select(HardwareMetricSchema).filter(HardwareMetricSchema.run_uid == run_uid)
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+        if not results:
+            return None
+
+        return self._parse_records(results)
 
     def get_metric(
         self,
