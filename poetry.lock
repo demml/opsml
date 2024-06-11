@@ -5267,19 +5267,19 @@ files = [
 
 [[package]]
 name = "skl2onnx"
-version = "1.17.0"
+version = "1.16.0"
 description = "Convert scikit-learn models to ONNX"
 optional = true
 python-versions = "*"
 files = [
-    {file = "skl2onnx-1.17.0-py2.py3-none-any.whl", hash = "sha256:27942fc2743efe9dff56380001da4685812d0f5b1b0b9c1a032e80d059d6779a"},
-    {file = "skl2onnx-1.17.0.tar.gz", hash = "sha256:7127dc84e470f489f68094ccfff9a5a815b609f700d43e708e6f658a33b06403"},
+    {file = "skl2onnx-1.16.0-py2.py3-none-any.whl", hash = "sha256:7de548580c625bfa5893fe79c9dd3213c3720b12e1ff8e3fd28967da0698242d"},
+    {file = "skl2onnx-1.16.0.tar.gz", hash = "sha256:3370b3d4065ce2dc5933878c3273f4aea41f945cc6514543b13ad2d57f369ce5"},
 ]
 
 [package.dependencies]
 onnx = ">=1.2.1"
 onnxconverter-common = ">=1.7.0"
-scikit-learn = ">=1.1"
+scikit-learn = ">=0.19"
 
 [[package]]
 name = "smart-open"
@@ -6916,4 +6916,4 @@ torch-onnx = ["onnx", "onnxruntime"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "24e44a41f29b9ea0595486c65332aea921dfcebafec74b9baf8820daff4f61b2"
+content-hash = "91289cdbc18f13e99917e427a73f8045f7bd22071eabc3dc3a4a42c13509afa9"
