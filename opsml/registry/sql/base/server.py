@@ -407,10 +407,6 @@ class ServerRunCardRegistry(ServerRegistry):
         Args:
             run_uid:
                 run card uid
-            name:
-                List of names of metrics to retrieve
-            names_only:
-                if True, will return only names
 
         Returns:
             metrics
@@ -435,8 +431,8 @@ class ServerRunCardRegistry(ServerRegistry):
         """Insert hardware metric into run card
 
         Args:
-            metric:
-                hardware metric
+            metrics:
+                hardware metrics
         """
         assert isinstance(self.engine, RunQueryEngine)
 

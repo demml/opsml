@@ -285,7 +285,7 @@ class HardwareMetricscPut(BaseModel):
 
 
 class HardwareMetricsResponse(BaseModel):
-    metrics: List[HardwareMetricRecord]
+    metrics: List[HardwareMetricRecord] = []
 
 
 class GetMetricRequest(BaseModel):
