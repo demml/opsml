@@ -73,11 +73,11 @@ PyJWT = { version = "2.8.0", optional = true }
 psycopg2 = { version = "^2.9.6", optional = true }
 
 # optional dependencies for onnx
-onnx = { version = ">=1.16.0", optional = true }
-onnxruntime = { version = ">=1.13.0, <1.17.0", optional = true }
+onnx = { version = "~1.16.0", optional = true }
+onnxruntime = { version = "~1.16.0", optional = true }
 
 # optional dependencies for sklearn onnx
-skl2onnx = { version = "^1.14.1", optional = true }
+skl2onnx = { version = "^1.16.0", optional = true }
 onnxmltools = { version = "^1.11.1", optional = true }
 
 # optional dependencies for tensorflow onnx
