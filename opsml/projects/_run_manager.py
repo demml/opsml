@@ -31,7 +31,7 @@ def put_hw_metrics(
     while run.active:  # producer function for hw output
         metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
             "metrics": hw_logger.get_metrics().model_dump(),
-            "created_at": datetime.now(timezone.utc),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "run_uid": run.run_id,
         }
 

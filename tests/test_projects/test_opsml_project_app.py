@@ -87,9 +87,10 @@ def test_opsml_project_hardware_metric(test_app: TestClient, api_registries: Car
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
-    A  
-    #metrics = run.runcard.get_hardware_metrics()
-    #assert len(metrics) == 1
-    #assert metrics[0]["run_uid"] == run.run_id
+        time.sleep(20)
+    
+    metrics = run.runcard.get_hardware_metrics()
+    assert len(metrics) == 1
+    assert metrics[0]["run_uid"] == run.run_id
         
         
