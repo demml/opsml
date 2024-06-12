@@ -1,6 +1,6 @@
 # RunCard
 
-`RunCards` are use to store metrics and artifacts related to `DataCards` and `ModelCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
+`RunCards` are used to store metrics and artifacts related to `DataCards` and `ModelCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
 
 ### Creating A Run
 Runs are unique context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
@@ -79,8 +79,16 @@ with project.run() as run:
     run.log_artifact_from_file("artifact", "artifact.txt")
 ```
 
-
 You can now log into the `Opsml` server and see your recent run and associated metadata
+
+### Logging Hardware
+
+`Runs` can also log hardware information by simply changing 1 input argument.
+
+- Instead of  `with project.run() as run:` use `with project.run(log_hardware=True) as run:` and now hardware information will be logged. For information on what hardware information is logged, see the documentation below.
+  
+- If you want to change the hardware logging time interval, simply change the `hardware_interval` in the `run` method `with project.run(log_hardware=True, hardware_interval=10) as run:`. Note: the `hardware_interval` is in seconds and the lowest value is 10 seconds. Default is 30 seconds.
+
 
 ::: opsml.RunCard
     options:
@@ -101,4 +109,29 @@ You can now log into the `Opsml` server and see your recent run and associated m
         show_root_heading: true
         show_source: true
         heading_level: 3
+
+::: opsml.types.metrics.HardwareMetrics
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
+
+::: opsml.types.metrics.CPUMetrics
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
+
+::: opsml.types.metrics.MemoryMetrics
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
+
+::: opsml.types.metrics.NetworkRates
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
+
 
