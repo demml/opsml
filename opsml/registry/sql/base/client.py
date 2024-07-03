@@ -332,6 +332,20 @@ class ClientRunCardRegistry(ClientRegistry):
             json={"metric": metric},
         )
 
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        """Inserts metrics into the run registry
+
+        Args:
+            metrics:
+                List of hw metric(s) to insert
+        """
+
+        self._session.request(
+            route=api_routes.HW_METRICS,
+            request_type=RequestType.PUT,
+            json={"metrics": metrics},
+        )
+
     def get_metric(
         self,
         run_uid: str,
@@ -399,6 +413,26 @@ class ClientRunCardRegistry(ClientRegistry):
 
         param = data.get("parameter")
         return cast(List[Optional[Dict[str, Any]]], param)
+
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
+        """Gets run hardware metrics
+
+        Args:
+            run_uid:
+                Run uid
+
+        Returns:
+            List of run metrics
+        """
+
+        data = self._session.request(
+            route=api_routes.HW_METRICS,
+            request_type=RequestType.GET,
+            params={"run_uid": run_uid},
+        )
+
+        metric = data.get("metrics")
+        return cast(Optional[List[Dict[str, Any]]], metric)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

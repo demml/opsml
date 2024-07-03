@@ -1,15 +1,16 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, model_validator, field_validator
+from pydantic import BaseModel, Field, field_serializer, model_validator
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment
+from opsml.types import Comment, HardwareMetrics
 
 
 class Success(BaseModel):
@@ -265,6 +266,27 @@ class Metric(BaseModel):
 
 class Metrics(BaseModel):
     metric: List[Optional[Union[Metric, str]]] = []
+
+
+class HardwareMetricRecord(BaseModel):
+    run_uid: str
+    created_at: Optional[datetime.datetime] = None
+    metrics: HardwareMetrics
+
+    # serialize datetime
+    @field_serializer("created_at")
+    def serialize_created_at(self, value: Optional[datetime.datetime] = None) -> Optional[str]:
+        if value is not None:
+            return value.isoformat()
+        return value
+
+
+class HardwareMetricscPut(BaseModel):
+    metrics: List[HardwareMetricRecord]
+
+
+class HardwareMetricsResponse(BaseModel):
+    metrics: List[HardwareMetricRecord] = []
 
 
 class GetMetricRequest(BaseModel):

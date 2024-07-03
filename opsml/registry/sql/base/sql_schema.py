@@ -4,10 +4,10 @@
 import datetime as dt
 import os
 import uuid
-from datetime import date
+from datetime import date, timezone
 from typing import List, cast
 
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
@@ -153,7 +153,7 @@ class MetricSchema(Base):
     value = Column("value", Float)
     step = Column("step", Integer)
     timestamp = Column("timestamp", BigInteger)
-    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now(tz=timezone.utc)))
     idx = Column(Integer, primary_key=True)
 
     def __repr__(self) -> str:
@@ -180,6 +180,19 @@ class AuthSchema(Base):
     hashed_password = Column("hashed_password", String(64))
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)
+    created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
+
+    def __repr__(self) -> str:
+        return f"<SqlTable: {self.__tablename__}>"
+
+
+class HardwareMetricSchema(Base):
+    __tablename__ = RegistryTableNames.HARDWARE_METRICS.value
+
+    run_uid = Column("run_uid", String(64), nullable=False)
+    created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
+    metrics = Column("metrics", JSON)
+    idx = Column(Integer, primary_key=True)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
@@ -190,6 +203,7 @@ for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
         RegistryTableNames.BASE.value,
         RegistryTableNames.METRICS.value,
+        RegistryTableNames.HARDWARE_METRICS.value,
     ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 

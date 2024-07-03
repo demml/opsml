@@ -1,12 +1,10 @@
-"""Add interface types
+"""update tables
 
-Revision ID: 6e3a1f978946
+Revision ID: c54a9fbab8dc
 Revises: 
-Create Date: 2024-05-02 10:44:58.659238
+Create Date: 2023-04-11 23:07:56.160420
 
 """
-
-from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
@@ -16,17 +14,15 @@ from opsml.registry.sql.base.sql_schema import RegistryTableNames
 from opsml.types import CommonKwargs
 
 logger = ArtifactLogger.get_logger()
-
-
 # revision identifiers, used by Alembic.
-revision: str = "6e3a1f978946"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision = "c54a9fbab8dc"
+down_revision = None
+branch_labels = None
+depends_on = None
 
 
 def upgrade() -> None:
-    logger.info("Alembic revision: Adding types to model and data registries - {}", revision)
+    logger.info("Alembic revision: Adding interface columns to model and data registries - {}", revision)
     try:
         bind = op.get_context().bind
         insp = sa.inspect(bind)

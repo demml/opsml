@@ -62,7 +62,6 @@ class ModelRegistryRecord(SaveRecord):
     @model_validator(mode="before")
     @classmethod
     def set_metadata(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        print(values["datacard_uid"])
         metadata: Dict[str, Any] = values["metadata"]
         values["sample_data_type"] = metadata["data_schema"]["data_type"]
         values["model_type"] = values["interface"]["model_type"]

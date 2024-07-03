@@ -409,6 +409,21 @@ class ServerRunCardRegistry(ServerRegistry):
 
         return self.engine.get_metric(run_uid=run_uid, name=name, names_only=names_only)
 
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
+        """Get hw metric
+
+        Args:
+            run_uid:
+                run card uid
+
+        Returns:
+            metrics
+
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        return self.engine.get_hw_metric(run_uid=run_uid)
+
     def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
         """Insert metric into run card
 
@@ -419,6 +434,17 @@ class ServerRunCardRegistry(ServerRegistry):
         assert isinstance(self.engine, RunQueryEngine)
 
         self.engine.insert_metric(metric=metric)
+
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        """Insert hardware metric into run card
+
+        Args:
+            metrics:
+                hardware metrics
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_hw_metrics(metrics=metrics)
 
     @staticmethod
     def validate(registry_name: str) -> bool:

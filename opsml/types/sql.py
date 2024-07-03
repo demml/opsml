@@ -17,6 +17,7 @@ class RegistryTableNames(str, Enum):
     BASE = "OPSML_BASE_REGISTRY"
     METRICS = "OPSML_RUN_METRICS"
     PARAMETERS = "OPSML_RUN_PARAMETERS"
+    HARDWARE_METRICS = "OPSML_RUN_HARDWARE_METRICS"
     AUTH = "OPSML_AUTH_REGISTRY"
 
     @staticmethod
@@ -46,6 +47,12 @@ class RunCardRegistry(Protocol):
         ...
 
     def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        ...
+
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        ...
+
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
         ...
 
     def get_metric(
