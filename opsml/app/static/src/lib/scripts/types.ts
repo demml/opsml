@@ -42,6 +42,10 @@ export interface Metrics {
   metric: Metric[];
 }
 
+export interface RunMetrics {
+  [key: string]: Metric[];
+}
+
 export interface MetricNames {
   metric;
 }

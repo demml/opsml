@@ -233,19 +233,22 @@ function buildMultiXyChart(graph: Graph) {
   });
 }
 
-function buildBarChart(name, metrics) {
+function buildBarChart(graph: Graph) {
+  const { name } = graph;
+  const y: Map<string, number[]> = graph.y as Map<string, number[]>;
+  const metricNames = [...y.keys()];
+  const chartName = name;
+
   Highcharts.setOptions({
     colors: ["#04b78a", "#5e0fb7", "#bdbdbd", "#009adb"],
   });
 
   const scores: number[] = [];
-  const metricNames = Object.keys(metrics);
 
-  // iterate over metricsNames
-  for (let i = 0; i < metricNames.length; i += 1) {
-    const { y } = metrics[metricNames[i]];
-    scores.push(y[y.length - 1]);
-  }
+  metricNames.forEach((metricName) => {
+    const data = y.get(metricName) as number[];
+    scores.push(data[data.length - 1]);
+  });
 
   // get min and max values for y axis across all metrics
   // if min is greater than 0 set to 0
@@ -255,11 +258,13 @@ function buildBarChart(name, metrics) {
   Highcharts.chart({
     chart: {
       type: "column",
-      plotBackgroundColor: undefined,
-      plotBorderWidth: undefined,
-      plotShadow: false,
-      height: `${(9 / 16) * 90}%`,
-      renderTo: "MetricChart",
+      borderColor: "#390772",
+      borderWidth: 2,
+      shadow: true,
+      renderTo: chartName,
+      zooming: {
+        type: "xy",
+      },
     },
     title: {
       text: `Metrics for ${name}`,

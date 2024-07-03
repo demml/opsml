@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric } from "$lib/scripts/types";
+    import { type ModelMetadata , type Card, type RunCard, type Parameter, type RunMetrics, type Metric } from "$lib/scripts/types";
     import Fa from 'svelte-fa'
     import { faTag, faIdCard, faFolderOpen, faBrain, faFile, faLink } from '@fortawesome/free-solid-svg-icons'
     import icon from '$lib/images/opsml-green.ico'
@@ -26,7 +26,7 @@
     let metadata: RunCard;
     $: metadata = data.metadata;
 
-    let metrics: Metric[];
+    let metrics: RunMetrics;
     $: metrics = data.metrics;
 
     let metricNames: string[];
@@ -34,6 +34,9 @@
 
     let parameters: Parameter[];
     $: parameters = data.parameters;
+
+    let tableMetrics: Metric[];
+    $: tableMetrics = data.tableMetrics;
   
   
   </script>
@@ -170,14 +173,14 @@
       {/if}
     </div>
 
-    {#if metricNames.length > 0 || parameters.length > 0}
+    {#if tableMetrics.length > 0 || parameters.length > 0}
 
       <div class="flex flex-col w-full md:w-6/12 mt-5">
 
         {#if metricNames.length > 0}
           <div class="pl-4 pr-4">
             <Datatable 
-              data={metrics}
+              data={tableMetrics}
               forMetric={true}
             />
           </div>

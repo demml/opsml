@@ -1,10 +1,11 @@
 <script lang="ts">
 
-  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric } from "$lib/scripts/types";
+  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric, type RunMetrics, type Graph } from "$lib/scripts/types";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
   import { faCheck } from '@fortawesome/free-solid-svg-icons'
+  import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
 
     /** @type {import('./$types').LayoutData} */
     export let data;
@@ -15,7 +16,7 @@
     let metadata: RunCard;
     $: metadata = data.metadata;
 
-    let metrics: Metric[];
+    let metrics: RunMetrics;
     $: metrics = data.metrics;
 
     let metricNames: string[];
@@ -33,8 +34,11 @@
     let selectedMetrics: string[];
     $: selectedMetrics = [];
 
-    let chartOptions: { [key: string]: string };
-    $: chartOptions = {};
+    let plots: string[];
+    $: plots = [];
+
+    let combined: boolean = true;
+    $: combined = true;
 
     const searchMetrics = () => {	
 		return filteredMetrics = metricNames.filter(item => {
@@ -56,8 +60,32 @@
 
   async function plot() {
 
-    // print selected metrics
-    console.log(selectedMetrics);
+    // iterate over selected metrics
+    if (combined) {
+      
+      const y: Map<string, number[]> = new Map<string, number[]>();
+      for (let metric of selectedMetrics) {
+
+        // get metric from metrics
+        let metricData = metrics[metric];
+        y.set(metricData[0].name, [metricData[metricData.length - 1].value]);
+    }
+    let graph: Graph = {
+          name: "combined",
+          x_label: "Group",
+          y_label: "Value",
+          x: [0],
+          y,
+          graph_type: "bar",
+          graph_style: "combined",
+        }
+
+    
+    buildBarChart(graph);
+    console.log(plots);
+    plots.push("combined");
+
+    }
     
   }
 
@@ -118,4 +146,24 @@
     <div>
     </div>
   </div>
+  
+    <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
+
+      <div class="flex flex-row flex-wrap gap-2">
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Combined</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Separate</button>
+      </div>
+
+      {#if combined}
+      <div class="pt-4 grid grid-cols-1 gap-4">
+        <figure class="highcharts-figure w-128">
+            
+              <div id='combined'></div>
+            
+        </figure>
+      </div>
+      {/if}
+    </div>
+  
+
 </div>

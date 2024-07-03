@@ -7,6 +7,7 @@ import {
   type Metrics,
   type Metric,
   type Parameters,
+  type RunMetrics,
   RegistryName,
 } from "$lib/scripts/types";
 
@@ -56,15 +57,34 @@ export async function load({ fetch, params, url }) {
   // get runcard metrics
   const metricNames = await getRunMetricNames(runCard.uid);
 
-  const metrics: Metric[] = [];
+  // dictionary to store metrics
+  const metrics: RunMetrics = {};
+
   if (metricNames.metric.length > 0) {
     // get first step for each metric
-    // create loop for metricNames.metric
+    let metricData: Metrics = await getRunMetrics(
+      runCard.uid,
+      metricNames.metric
+    );
 
-    for (const metric of metricNames.metric) {
-      const metricData: Metrics = await getRunMetrics(runCard.uid, metric);
-      metrics.push(metricData.metric[metricData.metric.length - 1]);
+    // create loop for metricNames.metric
+    for (let metric of metricData.metric) {
+      // check if metric.name is in metrics
+      if (metrics[metric.name] === undefined) {
+        metrics[metric.name] = [];
+      }
+
+      // push metric
+      metrics[metric.name].push(metric);
     }
+  }
+  // List of metrics for table
+  const tableMetrics: Metric[] = [];
+
+  // get last entry for each metric in metrics
+  for (let metric in metrics) {
+    let lastEntry = metrics[metric][metrics[metric].length - 1];
+    tableMetrics.push(lastEntry);
   }
 
   // get parameters
@@ -79,6 +99,7 @@ export async function load({ fetch, params, url }) {
     tabSet: tab,
     metricNames: metricNames.metric,
     metrics,
+    tableMetrics,
     parameters: parameters.parameter,
   };
 }

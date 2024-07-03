@@ -7,6 +7,7 @@ import {
   type MetricNames,
   type Parameters,
   type Graph,
+  type RunMetrics,
 } from "$lib/scripts/types";
 
 export function calculateTimeBetween(timestamp: number): string {
@@ -83,7 +84,7 @@ export async function getRunMetrics(
   const request = { run_uid: uid };
 
   if (name) {
-    request["name"] = [name];
+    request["name"] = name;
   }
 
   const metrics: Metrics = await fetch("/opsml/metrics", {
