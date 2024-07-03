@@ -9,6 +9,9 @@
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended"
     ],
+    "globals": {
+        "vi": true
+    },
     "parserOptions": {
         "ecmaVersion": "latest",
         "parser": "@typescript-eslint/parser"

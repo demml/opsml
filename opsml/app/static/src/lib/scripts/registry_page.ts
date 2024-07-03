@@ -10,7 +10,7 @@ import { type registryStats, type registryPage } from "$lib/scripts/types";
 //   registryQuery - the general stats for the registry
 async function getRegistryStats(
   registry: string,
-  searchTerm: string | undefined,
+  searchTerm: string | undefined
 ): Promise<registryStats> {
   const params = new URLSearchParams();
   params.append("registry_type", registry);
@@ -18,7 +18,7 @@ async function getRegistryStats(
     params.append("search_term", searchTerm);
   }
 
-  const page_resp = await fetch(`/opsml/card/registry/stats?${params}`);
+  const page_resp = await fetch(`/opsml/cards/registry/stats?${params}`);
 
   const response: registryStats = await page_resp.json();
   return response;
@@ -40,7 +40,7 @@ async function getRegistryPage(
   sort_by: string | undefined,
   repository: string | undefined,
   search_term: string | undefined,
-  page: number | undefined,
+  page: number | undefined
 ): Promise<registryPage> {
   // build request
   const params = new URLSearchParams();

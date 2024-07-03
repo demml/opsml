@@ -5,7 +5,7 @@ import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, field_serializer, model_validator
+from pydantic import BaseModel, Field, field_serializer, model_validator, field_validator
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
@@ -190,10 +190,6 @@ class RegisterModelRequest(BaseModel):
 
 class RepositoriesResponse(BaseModel):
     repositories: List[str] = []
-
-
-class RegistryQuery(BaseModel):
-    page: List[Tuple[Union[str, int], ...]]
 
 
 class TableNameResponse(BaseModel):

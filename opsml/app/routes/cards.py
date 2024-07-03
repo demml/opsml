@@ -103,6 +103,8 @@ def query_registry_stats(
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         stats: Dict[str, int] = registry._registry.query_stats(search_term)
 
+        logger.info("Querying registry stats: {}", stats)
+
         return stats
 
     except Exception as error:

@@ -44,7 +44,7 @@ class OpsmlApp:
             deps = None
 
         api_router = build_router(dependencies=deps)
-        api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
+        # api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
         self.app.include_router(api_router)
         self.app.mount("/site", StaticFiles(directory=BUILD_PATH), name="site")

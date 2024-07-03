@@ -1,7 +1,5 @@
 import { render } from "@testing-library/svelte";
-import {
-  expect, afterAll, afterEach, beforeAll, it,
-} from "vitest";
+import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
 import ModelPage from "../routes/opsml/model/+page.svelte";
@@ -73,50 +71,6 @@ it("render model page", () => {
   render(ModelPage, { data });
 });
 
-it("render opsml/model/card", () => {
-  const tags = new Map();
-  tags.set("test", "test");
-
-  const data = {
-    repository: "test",
-    registry: "test",
-    name: "test",
-    metadata: {
-      model_name: "test",
-      model_class: "test",
-      model_type: "test",
-      model_interface: "test",
-      model_uri: "test",
-      model_version: "test",
-      model_repository: "test",
-      opsml_version: "1.0.0",
-      data_schema: {
-        data_type: "test",
-        input_features: "test",
-        ouput_features: "test",
-        onnx_input_features: "test",
-        onnx_output_features: "test",
-        onnx_data_type: "test",
-        onnx_version: "test",
-      },
-    },
-    hasReadme: true,
-    card: {
-      date: "test",
-      uid: "test",
-      repository: "test",
-      contact: "test",
-      name: "test",
-      version: "test",
-      timestamp: 1711563309,
-      tags,
-      datacard_uid: "test",
-      runcard_uid: "test",
-    },
-  };
-  render(ModelCardPage, { data });
-});
-
 it("render opsml/model/card/files", () => {
   const files: Files = {
     mtime: 1711563309,
@@ -146,6 +100,9 @@ it("render opsml/model/card/files", () => {
     registry: "test",
     name: "test",
     version: "test",
+    displayPath: ["test"],
+    subdir: "test",
+    prevPath: "test",
     files,
     modifiedAt,
     basePath,

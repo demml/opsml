@@ -258,7 +258,7 @@ class ActiveRun:
         self._verify_active()
         self.runcard.log_metrics(metrics=metrics, step=step)
 
-    def log_parameter(self, key: str, value: str) -> None:
+    def log_parameter(self, key: str, value: Union[int, float, str]) -> None:
         """
         Logs a parameter to project run
 
