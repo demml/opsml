@@ -40,6 +40,9 @@
     let combined: boolean = true;
     $: combined = true;
 
+    let separate: boolean = false;
+    $: separate = false;
+
     const searchMetrics = () => {	
 		return filteredMetrics = metricNames.filter(item => {
 			let itemName = item.toLowerCase();
@@ -58,10 +61,30 @@
 
   }
 
+
   async function plot() {
 
-    // iterate over selected metrics
+    // check if selectedMetrics is empty
+    if (selectedMetrics.length == 0) {
+      alert("Please select metrics to plot");
+      // clear plots
+      // get div element
+      let div = document.getElementById('combined') as HTMLElement;
+      // clear div
+      div.innerHTML = "";
+
+      return;
+    }
+
     if (combined) {
+
+      let div2 = document.getElementById('separated_plots') as HTMLElement;
+      // remove hidden from class
+      div2.classList.add('hidden');
+
+      let div = document.getElementById('combined') as HTMLElement;
+      // make class hidden
+      div.classList.remove('hidden');
       
       const y: Map<string, number[]> = new Map<string, number[]>();
       for (let metric of selectedMetrics) {
@@ -82,31 +105,69 @@
 
     
     buildBarChart(graph);
-    console.log(plots);
-    plots.push("combined");
+    return
 
     }
+
+    if (separate) {
+
+      let div = document.getElementById('combined') as HTMLElement;
+      // make class hidden
+      div.classList.add('hidden');
+
+      let div2 = document.getElementById('separated_plots') as HTMLElement;
+      // remove hidden from class
+      div2.classList.remove('hidden');
+     
+      for (let metric of selectedMetrics) {
+        let metricData = metrics[metric];
+        let graph: Graph = {
+          name: metric,
+          x_label: "Group",
+          y_label: "Value",
+          x: [0],
+          y: new Map([[metricData[0].name, [metricData[metricData.length - 1].value]]]),
+          graph_type: "bar",
+          graph_style: "separate",
+        }
+
+        console.log(graph);
+        buildBarChart(graph);
+      }
+    }
     
+  }
+
+  async function combine_plots() {
+    combined = true;
+    separate = false;
+    plot();
+  }
+
+  async function separate_plots() {
+    combined = false;
+    separate = true;
+    plot();
   }
 
 </script>
 
 <div class="flex min-h-screen">
   <div class="hidden md:block flex-initial w-1/4 pl-16 bg-surface-100 dark:bg-surface-600">
-    <div class="p-4">
+    
 
-      <div class="flex justify-between">
+      <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
        
         <TabGroup border="" active='border-b-2 border-primary-500'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
-        <button type="button" class="m-4 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Plot Metrics</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Plot Metrics</button>
 
       </div>  
-      <div class="pt-4">
+      <div class="pt-2 pr-2">
         <Search bind:searchTerm on:input={searchMetrics} />
       </div>
-      <div class="flex flex-wrap pt-4 gap-1">
+      <div class="flex flex-wrap pt-4 pr-2 gap-1">
 
         {#if searchTerm && filteredMetrics.length == 0}
           <p class="text-gray-400">No metrics found</p>
@@ -142,28 +203,34 @@
         {/if}
 
       </div>
+ 
     </div>
-    <div>
-    </div>
-  </div>
   
     <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
       <div class="flex flex-row flex-wrap gap-2">
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Combined</button>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Separate</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => combine_plots()}>Combined</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => separate_plots()}>Separate</button>
       </div>
 
-      {#if combined}
-      <div class="pt-4 grid grid-cols-1 gap-4">
-        <figure class="highcharts-figure w-128">
-            
+
+      <div id="combined" class="pt-4 grid grid-cols-1 gap-4">
+          <figure class="highcharts-figure w-128">
               <div id='combined'></div>
-            
+          </figure>
+      </div>
+
+
+      <div id="separated_plots" class="hidden pt-4 grid grid-cols-3 gap-4">
+        <figure class="highcharts-figure">
+          {#each selectedMetrics as metric}
+            <div class="col-span-3 md:col-span-1">
+              <div id='{metric}'></div>
+            </div>
+          {/each}
         </figure>
       </div>
-      {/if}
-    </div>
-  
 
+
+    </div>
 </div>
