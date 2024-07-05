@@ -90,6 +90,11 @@ export async function load({ fetch, params, url }) {
   // get parameters
   const parameters: Parameters = await getRunParameters(runCard.uid);
 
+  let searchableMetrics = metricNames.metric;
+
+  // add "select all" to searchableMetrics
+  searchableMetrics.unshift("select all");
+
   return {
     registry,
     repository: selectedCard.repository,
@@ -101,5 +106,6 @@ export async function load({ fetch, params, url }) {
     metrics,
     tableMetrics,
     parameters: parameters.parameter,
+    searchableMetrics,
   };
 }

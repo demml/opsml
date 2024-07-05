@@ -197,7 +197,7 @@ export interface Graph {
   name: string;
   x_label: string;
   y_label: string;
-  x: number[];
+  x: number[] | Map<string, number[]>;
   y: number[] | Map<string, number[]>;
   graph_type: string;
   graph_style: string;

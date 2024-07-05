@@ -7,6 +7,7 @@ import addAccessibility from "highcharts/modules/accessibility";
 import addSeriesLabel from "highcharts/modules/series-label";
 
 import { type Graph } from "$lib/scripts/types";
+import { type Metric } from "$lib/scripts/types";
 
 addExporting(Highcharts);
 addExportData(Highcharts);
@@ -233,7 +234,7 @@ function buildMultiXyChart(graph: Graph) {
   });
 }
 
-function buildBarChart(graph: Graph) {
+function buildBarChart(graph: Graph, height: string | undefined) {
   const { name } = graph;
   const y: Map<string, number[]> = graph.y as Map<string, number[]>;
   const metricNames = [...y.keys()];
@@ -258,17 +259,19 @@ function buildBarChart(graph: Graph) {
   Highcharts.chart({
     chart: {
       type: "column",
-      borderColor: "#390772",
-      borderWidth: 2,
-      shadow: true,
       renderTo: chartName,
+      height: height,
+      backgroundColor: "transparent",
       zooming: {
         type: "xy",
       },
     },
     title: {
-      text: `Metrics for ${name}`,
+      text: name,
       align: "left",
+    },
+    credits: {
+      enabled: false,
     },
 
     xAxis: {
@@ -279,7 +282,7 @@ function buildBarChart(graph: Graph) {
     yAxis: {
       min: minyValue,
       title: {
-        text: "Metric Value)",
+        text: "Value",
       },
       lineWidth: 1,
       tickLength: 10,
@@ -290,8 +293,10 @@ function buildBarChart(graph: Graph) {
     },
     plotOptions: {
       series: {
+        shadow: false,
         borderWidth: 1,
         borderColor: "black",
+        animation: false,
         states: {
           inactive: {
             opacity: 1,
@@ -302,11 +307,10 @@ function buildBarChart(graph: Graph) {
     },
     series: [
       {
-        name: "Metrics",
+        showInLegend: false,
         colorByPoint: true,
         data: scores,
         colors: ["#04b78a", "#5e0fb7", "#bdbdbd", "#009adb"],
-        pointPadding: 0,
         type: "column",
       },
     ],
@@ -321,22 +325,28 @@ interface GraphMetric {
   };
 }
 
-function buildLineChart(name, metrics) {
+function buildLineChart(graph: Graph, height: string | undefined) {
+  const chartName = graph.name;
+
+  const y: Map<string, number[]> = graph.y as Map<string, number[]>;
+  const x: Map<string, number[]> = graph.x as Map<string, number[]>;
+  const metricNames = [...y.keys()];
+
   Highcharts.setOptions({
     colors: ["#04b78a", "#5e0fb7", "#bdbdbd", "#009adb"],
   });
 
-  const metricNames = Object.keys(metrics);
-
   const data: GraphMetric[] = [];
   // iterate over metricsNames
+
   for (let i = 0; i < metricNames.length; i += 1) {
     const points: number[][] = [];
-    const { y } = metrics[metricNames[i]];
-    const { x } = metrics[metricNames[i]];
 
-    for (let j = 0; j < x.length; j += 1) {
-      points.push([x[j] || 1, y[j]]);
+    const y_data = y.get(metricNames[i]) as number[];
+    const x_data = x.get(metricNames[i]) as number[];
+
+    for (let j = 0; j < y_data.length; j += 1) {
+      points.push([x_data[j] || 1, y_data[j]]);
     }
 
     data.push({
@@ -345,20 +355,25 @@ function buildLineChart(name, metrics) {
       marker: {
         enabled: false,
       },
+      showInLegend: false,
     });
   }
 
   Highcharts.chart({
     chart: {
       type: "line",
-      height: `${(9 / 16) * 90}%`,
-      renderTo: "MetricChart",
+      renderTo: chartName,
+      height: height,
+      backgroundColor: "transparent",
       zooming: {
         type: "x",
       },
     },
+    credits: {
+      enabled: false,
+    },
     title: {
-      text: `Metrics for ${name}`,
+      text: chartName,
       align: "left",
     },
 
@@ -384,6 +399,7 @@ function buildLineChart(name, metrics) {
     series: data as Highcharts.SeriesOptionsType[],
     plotOptions: {
       series: {
+        animation: false,
         states: {
           inactive: {
             opacity: 1,
@@ -395,4 +411,49 @@ function buildLineChart(name, metrics) {
   });
 }
 
-export { buildXyChart, buildMultiXyChart, buildBarChart, buildLineChart };
+function render_single_chart(
+  metrics: Metric[],
+  type: string,
+  height: string | undefined
+) {
+  // get metric name from first in list
+  const metricName: string = metrics[0].name;
+
+  // create x and y maps for metricName
+  const y: Map<string, number[]> = new Map();
+  const x: Map<string, number[]> = new Map();
+
+  y.set(metricName, []);
+  x.set(metricName, []);
+
+  for (let metric of metrics) {
+    const metricName = metric.name;
+    y.get(metricName).push(metric.value);
+    x.get(metricName).push(metric.step);
+  }
+
+  const graph: Graph = {
+    name: metricName,
+    x_label: "Step",
+    y_label: "Value",
+    x,
+    y,
+    graph_style: type,
+  };
+
+  if (type === "bar") {
+    buildBarChart(graph, height);
+  } else if (type === "line") {
+    buildLineChart(graph, height);
+  }
+
+  metricPlotSettings.set(metric, graph);
+}
+
+export {
+  buildXyChart,
+  buildMultiXyChart,
+  buildBarChart,
+  buildLineChart,
+  render_single_chart,
+};

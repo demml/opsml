@@ -4,47 +4,56 @@
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
-  import { faCheck } from '@fortawesome/free-solid-svg-icons'
+  import { faCheck, faChartBar, faChartLine } from '@fortawesome/free-solid-svg-icons'
   import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
 
-    /** @type {import('./$types').LayoutData} */
-    export let data;
 
-    let card: Card;
-    $: card = data.card;
+  /** @type {import('./$types').LayoutData} */
+  export let data;
 
-    let metadata: RunCard;
-    $: metadata = data.metadata;
+  let card: Card;
+  $: card = data.card;
 
-    let metrics: RunMetrics;
-    $: metrics = data.metrics;
+  let metadata: RunCard;
+  $: metadata = data.metadata;
 
-    let metricNames: string[];
-    $: metricNames = data.metricNames;
+  let metrics: RunMetrics;
+  $: metrics = data.metrics;
 
-    let parameters: Parameter[];
-    $: parameters = data.parameters;
+  let metricNames: string[];
+  $: metricNames = data.metricNames;
 
-    let searchTerm: string | undefined;
-    $: searchTerm = undefined;
+  let parameters: Parameter[];
+  $: parameters = data.parameters;
 
-    let filteredMetrics: string[] = [];
-    let tabSet: string = "metrics";
+  let searchTerm: string | undefined;
+  $: searchTerm = undefined;
 
-    let selectedMetrics: string[];
-    $: selectedMetrics = [];
+  let filteredMetrics: string[] = [];
+  let tabSet: string = "metrics";
 
-    let plots: string[];
-    $: plots = [];
+  let selectedMetrics: string[];
+  $: selectedMetrics = [];
 
-    let combined: boolean = true;
-    $: combined = true;
+  let metricsToPlot: string[];
+  $: metricsToPlot = [];
 
-    let separate: boolean = false;
-    $: separate = false;
+  let metricPlotSettings: Map<string, Graph>;
+  $: metricPlotSettings = new Map<string, Graph>();
 
-    const searchMetrics = () => {	
-		return filteredMetrics = metricNames.filter(item => {
+  let combined: boolean = false;
+  $: combined = false;
+
+  let separated: boolean = false;
+  $: separated = false;
+
+  let searchableMetrics: string[];
+  $: searchableMetrics = data.searchableMetrics;
+
+
+  const searchMetrics = () => {	
+
+		return filteredMetrics = searchableMetrics.filter(item => {
 			let itemName = item.toLowerCase();
 			return itemName.includes(searchTerm!.toLowerCase())
 		})
@@ -52,7 +61,24 @@
 
   async function setActiveMetrics( name: string) {
 
+    if (name == 'select all') {
+      if (selectedMetrics.length > 0) {
+        selectedMetrics = [];
+        combined = false;
+        separated = false;
+        
+      } else {
+        selectedMetrics = metricNames;
+      }
+      return;
+    }
+
     if (selectedMetrics.includes(name)) {
+      //check if select all is in selectedMetrics
+      if (selectedMetrics.includes('select all')) {
+        selectedMetrics = selectedMetrics.filter((item) => item !== 'select all');
+      }
+      
       selectedMetrics = selectedMetrics.filter((item) => item !== name);
     } else {
       selectedMetrics = [...selectedMetrics, name];
@@ -61,8 +87,54 @@
 
   }
 
+  function render_single_chart(
+    metrics: Metric[],
+    type: string,
+    style: string,
+    height: string | undefined
+  ) {
+    // get metric name from first in list
+    const metricName: string = metrics[0].name;
+
+    // create x and y maps for metricName
+    const y: Map<string, number[]> = new Map();
+    const x: Map<string, number[]> = new Map();
+
+    y.set(metricName, []);
+    x.set(metricName, []);
+
+    for (let metric of metrics) {
+      const metricName = metric.name;
+      y.get(metricName)!.push(metric.value);
+      x.get(metricName)!.push(metric.step || 0);
+    }
+
+    let graph: Graph = {
+      name: metricName,
+      x_label: "Step",
+      y_label: "Value",
+      x,
+      y,
+      graph_style: style,
+      graph_type: type,
+    };
+
+    if (type === "bar") {
+      buildBarChart(graph, height);
+    } else if (type === "line") {
+      buildLineChart(graph, height);
+    }
+
+    metricPlotSettings.set(metricName, graph);
+  }
+
 
   async function plot() {
+
+    // check combined and separated booleans
+    if (!combined && !separated) {
+      combined = true;
+    }
 
     // check if selectedMetrics is empty
     if (selectedMetrics.length == 0) {
@@ -72,14 +144,23 @@
       let div = document.getElementById('combined') as HTMLElement;
       // clear div
       div.innerHTML = "";
+      metricsToPlot = [];
 
       return;
     }
 
+    // update metricsToPlot
+    metricsToPlot = selectedMetrics.slice();
+    // remove "select all" from selectedMetricsCopy
+    metricsToPlot = metricsToPlot.filter((item) => item !== 'select all');
+
+    
+
+
     if (combined) {
 
       const y: Map<string, number[]> = new Map<string, number[]>();
-      for (let metric of selectedMetrics) {
+      for (let metric of metricsToPlot) {
 
         // get metric from metrics
         let metricData = metrics[metric];
@@ -96,11 +177,24 @@
           }
 
       
-      buildBarChart(graph);
+      buildBarChart(graph,  (9 / 16 * 100) + '%');
       return;
 
     } else {
-      for (let metric of selectedMetrics) {
+      for (let metric of metricsToPlot) {
+
+        if (metricPlotSettings.has(metric)) {
+          // get graphType
+          let graphType = metricPlotSettings.get(metric)!.graph_type;
+
+          if (graphType == "line") {
+            buildLineChart(metricPlotSettings.get(metric)!, undefined);
+          } else {
+            buildBarChart(metricPlotSettings.get(metric)!, undefined);
+          }
+        } else {
+          // get metric from metrics
+
         let metricData = metrics[metric];
         let graph: Graph = {
           name: metric,
@@ -110,25 +204,35 @@
           y: new Map([[metricData[0].name, [metricData[metricData.length - 1].value]]]),
           graph_type: "bar",
           graph_style: "separate",
-        }
+          }
 
-        console.log(graph);
-        buildBarChart(graph);
+        buildBarChart(graph, undefined);
+        metricPlotSettings.set(metric, graph);
+        }
       }
       return;
-
     }
-    
+
   }
 
   async function combine_plots() {
     combined = true;
-    plot();
+    separated = false;
+    try {
+      plot();
+    } catch (error) {
+      combined = false;
+    }
   }
 
   async function separate_plots() {
     combined = false;
-    plot();
+    separated = true;
+    try {
+      plot();
+    } catch (error) {
+      separated = false;
+    }
   }
 
 </script>
@@ -142,7 +246,7 @@
         <TabGroup border="" active='border-b-2 border-primary-500'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Plot Metrics</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Show</button>
 
       </div>  
       <div class="pt-2 pr-2">
@@ -173,7 +277,7 @@
             <button
               class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
-              on:keypress
+             
             >
               {#if selectedMetrics.includes(metric)}<span><Fa icon={faCheck} /></span>{/if}
               <span>{metric}</span>
@@ -200,6 +304,24 @@
               <div id='combined'></div>
           </figure>
       </div>
+
+      <div id="separate" class="{separated ? '' : 'hidden'} pt-4">
+          <figure class="highcharts-figure w-128">
+            <div class="flex flex-wrap gap-4">
+              {#each metricNames as metric}
+                  <div class="{metricsToPlot.includes(metric) ? '' : 'hidden'} w-3/4 md:w-1/4 grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+                    <div id={metric}></div>
+                    <div class="flex flex-row flex-wrap">
+                      <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metrics[metric], "bar", "separated", undefined)}><Fa icon={faChartBar} /></button>
+                      <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metrics[metric], "line", "separated", undefined)}><Fa icon={faChartLine} /></button>
+                    </div>
+
+                  </div>
+              {/each}
+            </div>
+          </figure>
+      </div>
+      
 
 
     

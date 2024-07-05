@@ -12,8 +12,6 @@ export async function load({ fetch, params, url }) {
     version
   );
 
-  console.log(graphs);
-
   return {
     graphs,
   };
