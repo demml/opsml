@@ -202,15 +202,7 @@
       </div>
 
 
-      <div id="separated_plots" class="{combined ? 'hidden' : ''} pt-4 grid grid-cols-3 gap-4">
-        <figure class="highcharts-figure">
-          {#each selectedMetrics as metric}
-            <div class="col-span-3 md:col-span-1">
-              <div id='{metric}'></div>
-            </div>
-          {/each}
-        </figure>
-      </div>
+    
 
 
     </div>
