@@ -78,14 +78,6 @@
 
     if (combined) {
 
-      let div2 = document.getElementById('separated_plots') as HTMLElement;
-      // remove hidden from class
-      div2.classList.add('hidden');
-
-      let div = document.getElementById('combined') as HTMLElement;
-      // make class hidden
-      div.classList.remove('hidden');
-      
       const y: Map<string, number[]> = new Map<string, number[]>();
       for (let metric of selectedMetrics) {
 
@@ -93,32 +85,21 @@
         let metricData = metrics[metric];
         y.set(metricData[0].name, [metricData[metricData.length - 1].value]);
     }
-    let graph: Graph = {
-          name: "combined",
-          x_label: "Group",
-          y_label: "Value",
-          x: [0],
-          y,
-          graph_type: "bar",
-          graph_style: "combined",
-        }
+      let graph: Graph = {
+            name: "combined",
+            x_label: "Group",
+            y_label: "Value",
+            x: [0],
+            y,
+            graph_type: "bar",
+            graph_style: "combined",
+          }
 
-    
-    buildBarChart(graph);
-    return
+      
+      buildBarChart(graph);
+      return;
 
-    }
-
-    if (separate) {
-
-      let div = document.getElementById('combined') as HTMLElement;
-      // make class hidden
-      div.classList.add('hidden');
-
-      let div2 = document.getElementById('separated_plots') as HTMLElement;
-      // remove hidden from class
-      div2.classList.remove('hidden');
-     
+    } else {
       for (let metric of selectedMetrics) {
         let metricData = metrics[metric];
         let graph: Graph = {
@@ -134,19 +115,19 @@
         console.log(graph);
         buildBarChart(graph);
       }
+      return;
+
     }
     
   }
 
   async function combine_plots() {
     combined = true;
-    separate = false;
     plot();
   }
 
   async function separate_plots() {
     combined = false;
-    separate = true;
     plot();
   }
 
@@ -214,14 +195,14 @@
       </div>
 
 
-      <div id="combined" class="pt-4 grid grid-cols-1 gap-4">
+      <div id="combined" class="{combined ? '' : 'hidden'} pt-4 grid grid-cols-1 gap-4">
           <figure class="highcharts-figure w-128">
               <div id='combined'></div>
           </figure>
       </div>
 
 
-      <div id="separated_plots" class="hidden pt-4 grid grid-cols-3 gap-4">
+      <div id="separated_plots" class="{combined ? 'hidden' : ''} pt-4 grid grid-cols-3 gap-4">
         <figure class="highcharts-figure">
           {#each selectedMetrics as metric}
             <div class="col-span-3 md:col-span-1">
