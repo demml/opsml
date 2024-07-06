@@ -116,6 +116,13 @@
             </div>
           </Tab>
 
+          <Tab bind:group={tabSet} name="compare" value="compare" on:click={() => showTabContent("compare")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-5 mr-2" icon={faBolt} color="#4b3978"/>
+              <div class="font-semibold">Compare</div>
+            </div>
+          </Tab>
+
           <Tab bind:group={tabSet} name="graphs" value="graphs" on:click={() => showTabContent("graphs")}>
             <div class="flex flex-row  items-center">
               <Fa class="h-5 mr-2" icon={faCodeBranch} color="#4b3978"/>
