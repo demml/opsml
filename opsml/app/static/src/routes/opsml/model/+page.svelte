@@ -178,7 +178,7 @@
       <h1>Artifacts</h1>
     </div>
     
-    <div class="flex flex-row text-md">
+    <div class="flex flex-row">
       <div>
         <span class="badge variant-filled">{registryStats.nbr_names} artifacts</span>
       </div>
