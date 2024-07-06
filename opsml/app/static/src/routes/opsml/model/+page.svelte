@@ -127,7 +127,7 @@
     <div class="p-4">
       <TabGroup 
       border=""
-      active='border-b-2 border-primary-500'
+      active='border-b-2 border-primary-500 text-lg'
       >
         <Tab bind:group={tabSet} name="repos" value="repos">Repositories</Tab>
 
@@ -144,7 +144,7 @@
           {#each filteredRepos as repo}
            
             <button
-              class="chip hover:bg-primary-300 {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-md {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >
@@ -158,7 +158,7 @@
           {#each repos as repo}
 
             <button
-              class="chip hover:bg-primary-300 {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-md {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >
@@ -174,11 +174,11 @@
     </div>
   </div>
   <div class="flex-1 w-64 p-4 bg-white dark:bg-surface-900 pr-16 ...">
-    <div class="flex flex-row items-center text-lg font-bold">
+    <div class="flex flex-row items-center text-xl font-bold">
       <h1>Artifacts</h1>
     </div>
     
-    <div class="flex flex-row">
+    <div class="flex flex-row text-md">
       <div>
         <span class="badge variant-filled">{registryStats.nbr_names} artifacts</span>
       </div>
