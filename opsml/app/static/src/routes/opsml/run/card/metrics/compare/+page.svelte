@@ -18,6 +18,7 @@
   let filteredMetrics: string[] = [];
   let tabSet: string = "metrics";
   let plotSet: string = "bar";
+  let compareSet: string = "compare";
 
   let metricNames: string[];
   $: metricNames = data.metricNames;
@@ -294,63 +295,69 @@
 <div class="flex min-h-screen">
   <div class="hidden md:block flex-initial w-1/5 pl-12 bg-surface-100 dark:bg-surface-600">
     
-
-      <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
-       
-        <TabGroup border="" active='border-b-2 border-primary-500'>
-          <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
-        </TabGroup>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Show</button>
-
-      </div>  
-      <div class="pt-2 pr-2">
-        <Search bind:searchTerm on:input={searchMetrics} />
-      </div>
-      <div class="flex flex-wrap pt-4 pr-2 gap-1">
-
-        {#if searchTerm && filteredMetrics.length == 0}
-          <p class="text-gray-400">No metrics found</p>
-
-        {:else if filteredMetrics.length > 0}
-          {#each filteredMetrics as metric}
-            
-            <button
-              class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
-              on:click={() => { setActiveMetrics(metric); }}
-              on:keypress
-            >
-              {#if selectedMetrics.includes(metric)}<span><Fa icon={faCheck} /></span>{/if}
-              <span>{metric}</span>
-            </button>
-
-          {/each}
-
-        {:else}
-          {#each metricNames as metric}
-
-            <button
-              class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
-              on:click={() => { setActiveMetrics(metric); }}
-             
-            >
-              {#if selectedMetrics.includes(metric)}<span><Fa icon={faCheck} /></span>{/if}
-              <span>{metric}</span>
-            </button>
+      <div class="flex flex-col">
+        <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
         
-          {/each}
+          <TabGroup border="" active='border-b-2 border-primary-500'>
+            <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
+          </TabGroup>
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Show</button>
 
-        {/if}
+        </div>  
+        <div class="pt-2 pr-2">
+          <Search bind:searchTerm on:input={searchMetrics} />
+        </div>
+        <div class="flex flex-wrap pt-4 pr-2 gap-1">
 
+          {#if searchTerm && filteredMetrics.length == 0}
+            <p class="text-gray-400">No metrics found</p>
+
+          {:else if filteredMetrics.length > 0}
+            {#each filteredMetrics as metric}
+              
+              <button
+                class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                on:click={() => { setActiveMetrics(metric); }}
+                on:keypress
+              >
+                {#if selectedMetrics.includes(metric)}<span><Fa icon={faCheck} /></span>{/if}
+                <span>{metric}</span>
+              </button>
+
+            {/each}
+
+          {:else}
+            {#each metricNames as metric}
+
+              <button
+                class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                on:click={() => { setActiveMetrics(metric); }}
+              
+              >
+                {#if selectedMetrics.includes(metric)}<span><Fa icon={faCheck} /></span>{/if}
+                <span>{metric}</span>
+              </button>
+          
+            {/each}
+
+          {/if}
+
+        </div>
+
+        <div class="flex flex-row flex-wrap gap-2 p-2 justify-between ">
+        
+          <TabGroup border="" active='border-b-2 border-secondary-500'>
+            <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
+            <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
+          </TabGroup>
+        </div> 
+  
       </div>
 
-      <div class="flex flex-row flex-wrap gap-2 p-2 justify-between ">
-       
-        <TabGroup border="" active='border-b-2 border-secondary-500'>
-          <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
-          <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
-        </TabGroup>
-      </div> 
- 
+      <TabGroup border="" active='border-b-2 border-primary-500'>
+        <Tab bind:group={tabSet} name="repos" value="metrics">Compare</Tab>
+      </TabGroup>
+
     </div>
   
     <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
