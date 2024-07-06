@@ -123,7 +123,7 @@
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/4 pl-16 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-6 bg-surface-100 dark:bg-surface-600">
     <div class="p-4">
       <TabGroup 
       border=""
@@ -144,7 +144,7 @@
           {#each filteredRepos as repo}
            
             <button
-              class="chip hover:bg-primary-300 text-md {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-base {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >
@@ -158,7 +158,7 @@
           {#each repos as repo}
 
             <button
-              class="chip hover:bg-primary-300 text-md {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-base {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >
