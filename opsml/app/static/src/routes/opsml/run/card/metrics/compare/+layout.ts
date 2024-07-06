@@ -6,16 +6,16 @@ import {
   type CardResponse,
   type CompareMetricPage,
   CardRegistries,
+  type RunCard,
 } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
 
 export const ssr = false;
 
-/** @type {import('./$types').LayoutData} */
-export let data;
-
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ parent, url }) {
+  const data = await parent();
+
   const name: string = url.searchParams.get("name")!;
   const repository: string = url.searchParams.get("repository")!;
   const version: string = url.searchParams.get("version")!;
@@ -33,7 +33,7 @@ export async function load({ fetch, params, url }) {
     name: name,
     repository: repository,
     version: version,
-    card: data.card,
+    card: data.metadata,
     metricNames: data.metricNames,
     metrics: data.metrics,
     searchableMetrics: data.searchableMetrics,

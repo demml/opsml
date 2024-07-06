@@ -217,6 +217,6 @@ export interface CompareMetricPage {
   version: string;
   card: RunCard;
   metricNames: string[];
-  metrics: Metrics;
+  metrics: RunMetrics;
   searchableMetrics: string[];
 }

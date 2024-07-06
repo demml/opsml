@@ -42,13 +42,13 @@
         {#each names as name}
           {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
           <li class="hidden md:block">
-              <a class="group flex items-center text-white text-base md:text-lg active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
+              <a class="group flex items-center text-white text-base text-xl md:text-2xl active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
                 {name}
               </a>
           </li>
         {/each}
         <li class="hidden md:block">
-          <a class="group flex items-center text-white text-base md:text-lg active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
+          <a class="group flex items-center text-white text-base text-xl md:text-2xl active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
             Docs
           </a>
         </li>

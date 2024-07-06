@@ -59,6 +59,8 @@
 
       goto(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${card.version}`);
 
+    } else if (value === 'compare') {
+      goto(`${baseURL}/metrics/${value}?name=${name}&repository=${repository}&version=${card.version}`);
     }
     else {
       goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`);
