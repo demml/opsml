@@ -1,6 +1,7 @@
 <script lang="ts">
 
-  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric, type RunMetrics, type Graph } from "$lib/scripts/types";
+  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric, type RunMetrics, type Graph, CardRegistries, type CardRequest, type CardResponse, type CompareMetricPage } from "$lib/scripts/types";
+  import { listCards } from "$lib/scripts/utils";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
@@ -9,22 +10,7 @@
 
 
   /** @type {import('./$types').LayoutData} */
-  export let data;
-
-  let card: Card;
-  $: card = data.card;
-
-  let metadata: RunCard;
-  $: metadata = data.metadata;
-
-  let metrics: RunMetrics;
-  $: metrics = data.metrics;
-
-  let metricNames: string[];
-  $: metricNames = data.metricNames;
-
-  let parameters: Parameter[];
-  $: parameters = data.parameters;
+  export let data: CompareMetricPage;
 
   let searchTerm: string | undefined;
   $: searchTerm = undefined;
@@ -32,6 +18,9 @@
   let filteredMetrics: string[] = [];
   let tabSet: string = "metrics";
   let plotSet: string = "bar";
+
+  let metricNames: string[];
+  $: metricNames = data.metricNames;
 
   let selectedMetrics: string[];
   $: selectedMetrics = [];
@@ -50,6 +39,9 @@
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
+
+  let metrics: RunMetrics;
+  $: metrics = data.metrics;
 
 
   const searchMetrics = () => {	

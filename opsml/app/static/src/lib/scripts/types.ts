@@ -202,3 +202,21 @@ export interface Graph {
   graph_type: string;
   graph_style: string;
 }
+
+export enum CardRegistries {
+  Run = "run",
+  Data = "data",
+  Model = "model",
+  Service = "service",
+}
+
+export interface CompareMetricPage {
+  cards: Card[];
+  name: string;
+  repository: string;
+  version: string;
+  card: RunCard;
+  metricNames: string[];
+  metrics: Metrics;
+  searchableMetrics: string[];
+}
