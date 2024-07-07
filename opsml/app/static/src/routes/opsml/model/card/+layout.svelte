@@ -65,7 +65,7 @@
 <div class="flex flex-1 flex-col">
 
   <div class="pl-4 md:pl-20 pt-6 sm:pt-8 bg-slate-50 w-full border-b">
-    <h1 class="flex flex-row flex-wrap items-center text-lg">
+    <h1 class="flex flex-row flex-wrap items-center text-xl">
       <div class="group flex flex-none items-center">
         <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
         <div class="mx-0.5 text-gray-800">/</div>
@@ -79,7 +79,7 @@
       </div>
     </h1>
 
-    <div class="pt-2 ">
+    <div class="pt-2 text-lg">
       <TabGroup 
         border=""
         active='border-b-2 border-primary-500'

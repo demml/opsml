@@ -300,15 +300,22 @@
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/5 pl-12 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-12 bg-surface-100 dark:bg-surface-600">
     
 
       <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
        
-        <TabGroup border="" active='border-b-2 border-primary-500'>
+        <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Show</button>
+
+        <div class="flex flex-row flex-wrap gap-2 justify-between text-lg">
+       
+          <TabGroup border="" active='border-b-2 border-secondary-500'>
+            <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
+            <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
+          </TabGroup>
+        </div> 
 
       </div>  
       <div class="pt-2 pr-2">
@@ -323,7 +330,7 @@
           {#each filteredMetrics as metric}
             
             <button
-              class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
               on:keypress
             >
@@ -337,7 +344,7 @@
           {#each metricNames as metric}
 
             <button
-              class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
              
             >
@@ -351,25 +358,18 @@
 
       </div>
 
-      <div class="flex flex-row flex-wrap gap-2 p-2 justify-between ">
-       
-        <TabGroup border="" active='border-b-2 border-secondary-500'>
-          <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
-          <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
-        </TabGroup>
-      </div> 
  
     </div>
   
     <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
       <div class="flex flex-row flex-wrap gap-2">
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => combine_plots()}>Combined</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => combine_plots()}>Combine</button>
         <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => separate_plots()}>Separate</button>
       </div>
 
 
-      <div id="combined charts" class="{combined ? '' : 'hidden'} pt-4">
+      <div id="combined charts" class="{(combined && selectedMetrics.length > 0)  ? '' : 'hidden'} pt-4">
           <figure class="highcharts-figure w-128">
             <div class="flex flex-wrap gap-4">
               <div class="{combined ? '' : 'hidden'} w-3/4 max-w-screen-xl grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
@@ -379,7 +379,7 @@
           </figure>
       </div>
 
-      <div id="separate" class="{separated ? '' : 'hidden'} pt-4">
+      <div id="separate" class="{(separated && selectedMetrics.length > 0) ? '' : 'hidden'} pt-4">
           <figure class="highcharts-figure w-128">
             <div class="flex flex-wrap gap-4">
               {#each metricNames as metric}

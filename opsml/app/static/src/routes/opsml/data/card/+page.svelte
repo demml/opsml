@@ -44,9 +44,9 @@
     <div class="w-full md:w-3/5 mt-4 ml-4 pl-2 md:ml-12 shadow-md">
       {#if !hasReadme}
         <div class="mt-5 mr-5 py-24 bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
-          <p class="mb-1">No card README found</p>
-          <p class="mb-1 text-sm text-gray-500">Click button below to create a README!</p>
-          <p class="mb-6 text-sm text-gray-500">Note: README applies to all versions of a given data artifact and repository </p>
+          <p class="mb-1 text-lg">No card README found</p>
+          <p class="mb-1 text-gray-500">Click button below to create a README!</p>
+          <p class="mb-6 text-gray-500">Note: README applies to all versions of a given data artifact and repository </p>
           <button type="button" class="btn variant-filled" on:click={() => createReadme()}>
             <img class="h-5" alt="The project logo" src={icon} />
             <span>Create</span>

@@ -51,9 +51,9 @@
 
 
 
-<div class="flex items-center justify-center pt-8 text-sm">
+<div class="flex items-center justify-center pt-8">
 
-  <div class="justify-center w-1/2">
+  <div class="justify-center w-2/3">
 
     <div class="flex">
       {#each displayPath as path, index}

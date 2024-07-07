@@ -51,7 +51,7 @@
 
 
 
-<div class="flex items-center justify-center pt-8 text-md">
+<div class="flex items-center justify-center pt-8">
 
   <div class="justify-center w-2/3">
 
