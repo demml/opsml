@@ -7,6 +7,8 @@
   import Fa from 'svelte-fa'
   import { faCheck, faChartBar, faChartLine } from '@fortawesome/free-solid-svg-icons'
   import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
+  import { keys } from "highcharts";
+
 
 
   /** @type {import('./$types').LayoutData} */
@@ -32,17 +34,45 @@
   let metricPlotSettings: Map<string, Graph>;
   $: metricPlotSettings = new Map<string, Graph>();
 
-  let combined: boolean = false;
-  $: combined = false;
+  let plot: boolean = false;
+  $: plot = false;
 
-  let separated: boolean = false;
-  $: separated = false;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
 
   let metrics: RunMetrics;
   $: metrics = data.metrics;
+
+  let cards: Map<string, Card>;
+  $: cards = data.cards;
+
+  let cardsToCompare: string[];
+  $: cardsToCompare = [];
+
+  async function setComparedCards( cardName: string) {
+
+    if (cardName == 'select_all') {
+      if (cardsToCompare.length > 0) {
+        cardsToCompare = [];
+      } else {
+        cardsToCompare = [...cards.keys()];
+      }
+      return;
+    }
+   
+    if (cardsToCompare.includes(cardName)) {
+
+      if (cardsToCompare.includes('select_all')) {
+        cardsToCompare = cardsToCompare.filter((item) => item !== 'select_all');
+      }
+      cardsToCompare = cardsToCompare.filter((item) => item !== cardName);
+    } else {
+      cardsToCompare = [...cardsToCompare, cardName];
+    }
+
+    console.log(cardsToCompare);
+  }
 
 
   const searchMetrics = () => {	
@@ -58,8 +88,7 @@
     if (name == 'select all') {
       if (selectedMetrics.length > 0) {
         selectedMetrics = [];
-        combined = false;
-        separated = false;
+        plot = false;
         
       } else {
         selectedMetrics = metricNames;
@@ -123,11 +152,11 @@
   }
 
 
-  async function plot() {
+  async function plot_metrics() {
 
     // check combined and separated booleans
-    if (!combined && !separated) {
-      combined = true;
+    if (!plot) {
+      plot = true;
     }
 
     // check if selectedMetrics is empty
@@ -135,13 +164,23 @@
       alert("Please select metrics to plot");
       // clear plots
       // get div element
-      let div = document.getElementById('combined') as HTMLElement;
+      let div = document.getElementById('compare_metrics') as HTMLElement;
       // clear div
       div.innerHTML = "";
       metricsToPlot = [];
 
       return;
     }
+    // get select metric for all cards in cardsToCompare
+
+    if (cardsToCompare.length == 0)
+      {
+        alert("Please select cards to compare");
+
+        return;
+      }
+
+  
 
     // update metricsToPlot
     metricsToPlot = selectedMetrics.slice();
@@ -149,7 +188,7 @@
     metricsToPlot = metricsToPlot.filter((item) => item !== 'select all');
 
 
-    if (combined) {
+    if (plot) {
 
       const y: Map<string, number[]> = new Map<string, number[]>();
       const x: Map<string, number[]> = new Map<string, number[]>();
@@ -270,38 +309,26 @@
      }
     }
 
-  async function combine_plots() {
-    combined = true;
-    separated = false;
-    try {
-      plot();
-    } catch (error) {
-      combined = false;
-    }
-  }
-
-  async function separate_plots() {
-    combined = false;
-    separated = true;
-    try {
-      plot();
-    } catch (error) {
-      separated = false;
-    }
-  }
 
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/5 pl-12 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
     
       <div class="flex flex-col">
-        <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
+        <div class="flex flex-row flex-wrap gap-2 py-4 justify-between ">
         
-          <TabGroup border="" active='border-b-2 border-primary-500'>
+          <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
             <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
           </TabGroup>
-          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot()}>Show</button>
+
+          <div class="flex flex-row flex-wrap gap-2 justify-between text-lg">
+       
+            <TabGroup border="" active='border-b-2 border-secondary-500'>
+              <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
+              <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
+            </TabGroup>
+          </div> 
 
         </div>  
         <div class="pt-2 pr-2">
@@ -316,7 +343,7 @@
             {#each filteredMetrics as metric}
               
               <button
-                class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
                 on:click={() => { setActiveMetrics(metric); }}
                 on:keypress
               >
@@ -330,7 +357,7 @@
             {#each metricNames as metric}
 
               <button
-                class="chip hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
                 on:click={() => { setActiveMetrics(metric); }}
               
               >
@@ -343,54 +370,81 @@
           {/if}
 
         </div>
-
-        <div class="flex flex-row flex-wrap gap-2 p-2 justify-between ">
-        
-          <TabGroup border="" active='border-b-2 border-secondary-500'>
-            <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
-            <div><Tab bind:group={plotSet} name="set2" value="line">Line</Tab></div>
-          </TabGroup>
-        </div> 
   
       </div>
 
-      <TabGroup border="" active='border-b-2 border-primary-500'>
-        <Tab bind:group={tabSet} name="repos" value="metrics">Compare</Tab>
-      </TabGroup>
+      <div class="pt-2">
+        <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
+          <Tab bind:group={tabSet} name="repos" value="metrics">Compare Previous Runs</Tab>
+        </TabGroup>
+      </div>
+
+      
+      <div class="flex flex-col pt-2">
+        <div class="inline-flex items-center overflow-hidden text-sm w-fit my-1">
+          <div>
+            <label class="flex items-center p-1 ">
+            <input 
+                class="checkbox" 
+                type="checkbox" 
+                on:click={() => { setComparedCards("select_all"); }}
+                
+              />
+            </label>
+          </div>
+
+
+        <div class="px-2 text-darkpurple bg-primary-50 italic">select all</div> 
+        </div>
+        {#each [...cards.values()] as card}
+          <div class="inline-flex items-center overflow-hidden rounded-lg border border-dashed border-darkpurple text-sm w-fit my-1">
+            <div>
+              <label class="flex items-center p-1 ">
+                
+                {#if cardsToCompare.includes(card.name)}
+                <input 
+                  class="checkbox" 
+                  type="checkbox" 
+                  checked
+                  on:click={() => { setComparedCards(card.name); }}
+                
+                />
+                {:else}
+                <input 
+                  class="checkbox" 
+                  type="checkbox" 
+                  on:click={() => { setComparedCards(card.name); }}
+                
+                />
+                {/if}
+              
+              </label>
+            </div>
+            <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">{card.name}</div> 
+            <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+              {card.date}
+            </div>
+          </div>
+
+        {/each}
+       
+      </div>
 
     </div>
   
     <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
       <div class="flex flex-row flex-wrap gap-2">
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => combine_plots()}>Combined</button>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => separate_plots()}>Separate</button>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => plot_metrics()}>Plot</button>
       </div>
 
 
-      <div id="combined charts" class="{combined ? '' : 'hidden'} pt-4">
+      <div id="compare charts" class="{(plot && selectedMetrics.length > 0) ? '' : 'hidden'} pt-4">
           <figure class="highcharts-figure w-128">
             <div class="flex flex-wrap gap-4">
-              <div class="{combined ? '' : 'hidden'} w-3/4 max-w-screen-xl grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
-                <div id='combined'></div>
+              <div class="{plot ? '' : 'hidden'} w-3/4 max-w-screen-xl grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+                <div id='compare_metrics'></div>
               </div>
-            </div>
-          </figure>
-      </div>
-
-      <div id="separate" class="{separated ? '' : 'hidden'} pt-4">
-          <figure class="highcharts-figure w-128">
-            <div class="flex flex-wrap gap-4">
-              {#each metricNames as metric}
-                  <div class="{metricsToPlot.includes(metric) ? '' : 'hidden'} w-3/4 md:w-1/4 grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
-                    <div id={metric}></div>
-                    <div class="flex flex-row flex-wrap">
-                      <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metrics[metric], "bar", "separated", undefined)}><Fa icon={faChartBar} /></button>
-                      <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metrics[metric], "line", "separated", undefined)}><Fa icon={faChartLine} /></button>
-                    </div>
-
-                  </div>
-              {/each}
             </div>
           </figure>
       </div>

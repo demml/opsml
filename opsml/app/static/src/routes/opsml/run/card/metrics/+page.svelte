@@ -300,10 +300,10 @@
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/4 pl-12 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
     
 
-      <div class="flex flex-row flex-wrap gap-2 p-4 justify-between ">
+      <div class="flex flex-row flex-wrap gap-2 p-4 justify-between">
        
         <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>

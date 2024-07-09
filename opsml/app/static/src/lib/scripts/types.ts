@@ -23,11 +23,12 @@ export interface metadataRequest {
 
 export interface CardRequest {
   repository: string;
-  name: string;
+  name?: string;
   version?: string;
   registry_type: string;
   uid?: string;
   page?: number;
+  limit?: number;
 }
 
 export interface Metric {
@@ -211,7 +212,7 @@ export enum CardRegistries {
 }
 
 export interface CompareMetricPage {
-  cards: Card[];
+  cards: Map<string, Card>;
   name: string;
   repository: string;
   version: string;

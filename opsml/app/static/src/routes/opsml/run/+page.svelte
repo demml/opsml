@@ -124,7 +124,7 @@
 
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/4 pl-16 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-6 bg-surface-100 dark:bg-surface-600">
     <div class="p-4">
       <TabGroup 
       border=""
