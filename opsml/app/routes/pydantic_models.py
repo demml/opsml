@@ -185,9 +185,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -274,10 +272,10 @@ class HardwareMetricRecord(BaseModel):
 
     # serialize datetime
     @field_serializer("created_at")
-    def serialize_created_at(self, value: Optional[datetime.datetime] = None) -> Optional[str]:
-        if value is not None:
-            return value.isoformat()
-        return value
+    def serialize_created_at(self, created_at: Optional[datetime.datetime] = None) -> Optional[str]:  # type: ignore
+        if created_at is not None:
+            return created_at.isoformat()
+        return created_at
 
 
 class HardwareMetricscPut(BaseModel):
