@@ -54,7 +54,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run : |
+
+      - name: Build and tests
+        run : |
             rm -rf /opt/hostedtoolcache/CodeQL
             rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
             rm -rf /opt/hostedtoolcache/Ruby

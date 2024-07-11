@@ -386,7 +386,7 @@ class RunCard(ArtifactCard):
         """
 
         for key, value in metrics.items():
-            self.log_metric(key, value, step)
+            self.log_metric(key=key, value=value, step=step)
 
     def log_artifact_from_file(
         self,
