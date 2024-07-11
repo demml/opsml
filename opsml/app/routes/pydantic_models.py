@@ -284,7 +284,7 @@ class HardwareMetricRecord(BaseModel):
         self,
         created_at: Optional[datetime.datetime],
         _info: FieldSerializationInfo,
-    ) -> Optional[str]:  # type: ignore
+    ) -> Optional[str]:
         if created_at is not None:
             return created_at.isoformat()
         return created_at
