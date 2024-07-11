@@ -95,7 +95,7 @@ class DataSplit(BaseModel):
 
         return value
 
-    @field_serializer("column_value")
+    @field_serializer("column_value", mode="plain")
     def serialize_column_value(
         self,
         column_value: Optional[Union[str, float, int, pd.Timestamp]],
