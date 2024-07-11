@@ -36,7 +36,7 @@ Source = "https://github.com/demml/opsml"
 
 [tool.poetry]
 name = "opsml"
-version = "2.3.1"
+version = "2.3.0"
 readme = "README.md"
 description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
