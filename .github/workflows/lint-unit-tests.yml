@@ -44,7 +44,7 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      TF_USE_LEGACY_KERAS: 1
+      
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -78,7 +78,7 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      TF_USE_LEGACY_KERAS: 1
+      
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -107,7 +107,7 @@ jobs:
       OPSML_AUTH: True
       OPSML_USERNAME: admin
       OPSML_PASSWORD: admin
-      TF_USE_LEGACY_KERAS: 1
+      
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -161,7 +161,6 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      TF_USE_LEGACY_KERAS: 1
 
     strategy:
       matrix:
@@ -206,7 +205,6 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
-      TF_USE_LEGACY_KERAS: 1
 
     strategy:
       matrix:

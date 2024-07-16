@@ -144,12 +144,13 @@ pytest = "^7.1.2"
 pytest-lazy-fixture = "^0.6.3"
 pytest-cov = "^3.0.0"
 coverage = { extras = ["toml"], version = "^6.5.0" }
+keras = { version = "<3.0.0" }
 torch = "^2.1.0"
 torchvision = "^0.16"
 lightgbm = "4"
 xgboost = "^1.7.1"
 transformers = "^4.27.3"
-tensorflow = { version = "2.16.2"}
+tensorflow = { version = "2.15.0"}
 lightning = "^2.1.2"
 optimum = "^1.16.1"
 pytest-rerunfailures = "^13.0"
