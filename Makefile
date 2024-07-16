@@ -42,8 +42,6 @@ setup.uninstall:
 
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
-# tensorflow deps are horrendous at the moment
-	poetry run pip install tf-keras 
 
 setup.python:
 	@echo "Active Python version: $$(python --version)"
