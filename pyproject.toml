@@ -149,7 +149,7 @@ torchvision = "^0.16"
 lightgbm = "4"
 xgboost = "^1.7.1"
 transformers = "^4.27.3"
-tensorflow = { version = "2.16.1"}
+tensorflow = { version = "2.15.0"}
 lightning = "^2.1.2"
 optimum = "^1.16.1"
 pytest-rerunfailures = "^13.0"
