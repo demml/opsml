@@ -7,7 +7,6 @@ from typing import Any, Dict, Generator, Tuple, TypeVar, Union
 
 warnings.filterwarnings("ignore")
 
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
 LOCAL_DB_FILE_PATH = "tmp.db"
 LOCAL_TRACKING_URI = f"sqlite:///{LOCAL_DB_FILE_PATH}"
 LOCAL_STORAGE_URI = f"{os.getcwd()}/mlruns"
