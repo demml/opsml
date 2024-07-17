@@ -43,6 +43,7 @@ setup.uninstall:
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
 
+
 setup.python:
 	@echo "Active Python version: $$(python --version)"
 	@echo "Base Interpreter path: $$(python -c 'import sys; print(sys.executable)')"
