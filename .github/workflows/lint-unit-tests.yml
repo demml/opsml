@@ -137,7 +137,7 @@ jobs:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.10","3.12"]
         poetry-version: ["1.7.1"]
         os: [windows]
 
