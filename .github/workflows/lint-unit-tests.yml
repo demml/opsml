@@ -36,7 +36,7 @@ jobs:
     needs: Lints
     strategy:
       matrix:
-        python-version: ["3.9", "3.11"]
+        python-version: ["3.9", "3.11","3.12"]
         poetry-version: ["1.7.1"]
         os: [ubuntu]
 
