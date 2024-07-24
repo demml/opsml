@@ -67,6 +67,10 @@ setup.uninstall:
 setup.project:
 	poetry install --all-extras --with dev,dev-lints
 
+.PHONY: setup.rosetta
+setup.rosetta:
+	poetry install --all-extras --with dev,dev-lints
+	poetry run pip install polars-lts-cpu 
 
 .PHONY: setup.python
 setup.python:
