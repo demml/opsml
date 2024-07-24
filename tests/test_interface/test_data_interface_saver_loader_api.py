@@ -19,6 +19,7 @@ from opsml.types import RegistryType, SaveName
 from opsml.types.extra import Suffix
 
 
+
 def test_numpy_api_client(
     numpy_data: NumpyData,
     api_storage_client: client.StorageClientBase,
@@ -79,8 +80,7 @@ def test_pandas_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
@@ -123,8 +123,7 @@ def test_polars_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
@@ -223,13 +222,14 @@ def test_image_data(
 
     ## swap write path so we can test loading
     write_dir_path = uuid.uuid4().hex
-    loaded_card.interface.data_dir = data_dir.parent / write_dir_path
+    loaded_interface = cast(ImageDataset, loaded_card.interface)
+    loaded_interface.data_dir = data_dir.parent / write_dir_path
     loaded_card.load_data()
 
-    assert loaded_card.interface.data_dir.exists()
+    assert loaded_interface.data_dir.exists()
 
-    shutil.rmtree(loaded_card.interface.data_dir, ignore_errors=True)
-    assert not loaded_card.interface.data_dir.exists()
+    shutil.rmtree(loaded_interface.data_dir, ignore_errors=True)
+    assert not loaded_interface.data_dir.exists()
 
 
 def test_text_data(
@@ -270,10 +270,11 @@ def test_text_data(
 
     ## swap write path so we can test loading
     write_dir_path = uuid.uuid4().hex
-    loaded_card.interface.data_dir = data_dir.parent / write_dir_path
+    loaded_interface = cast(TextDataset, loaded_card.interface)
+    loaded_interface.data_dir = data_dir.parent / write_dir_path
     loaded_card.load_data()
 
-    assert loaded_card.interface.data_dir.exists()
+    assert loaded_interface.data_dir.exists()
 
-    shutil.rmtree(loaded_card.interface.data_dir, ignore_errors=True)
-    assert not loaded_card.interface.data_dir.exists()
+    shutil.rmtree(loaded_interface.data_dir, ignore_errors=True)
+    assert not loaded_interface.data_dir.exists()

@@ -9,7 +9,6 @@ from typing import (  # noqa # pylint: disable=unused-import
     Any,
     Dict,
     List,
-    Optional,
     Union,
 )
 
@@ -21,11 +20,6 @@ from opsml.data.interfaces._base import DataInterface
 from opsml.data.splitter import Data, DataSplit
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
-
-try:
-    from ydata_profiling import ProfileReport
-except ModuleNotFoundError:
-    ProfileReport = Any
 
 logger = ArtifactLogger.get_logger()
 
@@ -128,20 +122,6 @@ class DataCard(ArtifactCard):
 
         self.metadata.additional_info = {**info, **self.metadata.additional_info}
 
-    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
-        """Creates a data profile report
-
-        Args:
-            sample_perc:
-                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
-
-        """
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data profile can only be created for a DataInterface subclasses"
-        self.interface.create_data_profile(sample_perc, str(self.name))
-
     def split_data(self) -> Dict[str, Data]:
         """Splits data interface according to data split logic"""
 
@@ -160,9 +140,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

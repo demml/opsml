@@ -72,9 +72,8 @@ def test_gcs_full_run(
         assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
         assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
         assert api_storage_client.exists(
-            Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
+            Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value)
         )
-        assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
 
         # check model assets
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))

@@ -354,12 +354,12 @@ class DataCardLoader(CardLoader):
             return
 
         # check exists
-        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
+        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value)
         if not self.storage_client.exists(rpath):
             return
 
         # load data profile
-        with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
+        with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JSON.value) as lpath:
             self.card.interface.load_data_profile(lpath)
 
         return

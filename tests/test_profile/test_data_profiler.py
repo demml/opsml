@@ -1,13 +1,11 @@
-import numpy as np
-import pandas as pd
-import pytest
-from sklearn.model_selection import train_test_split
-from ydata_profiling import ProfileReport
 
-from opsml.cards import DataCard, DataSplit
+import pandas as pd
+
+from opsml.cards import DataCard
 from opsml.data import NumpyData, PandasData, PolarsData
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistries
+from scouter import DataProfile
 
 
 def test_datacard_create_data_profile_pandas(
@@ -32,10 +30,10 @@ def test_datacard_create_data_profile_pandas(
 
     registry.register_card(data_card)
 
-    data_card: DataCard = registry.load_card(uid=data_card.uid)
-    data_card.load_data_profile()
+    load_data_card: DataCard = registry.load_card(uid=data_card.uid)
+    load_data_card.load_data_profile()
 
-    assert data_card.data_profile is not None
+    assert load_data_card.data_profile is not None
 
 
 def test_datacard_create_data_profile_polars(
@@ -54,26 +52,24 @@ def test_datacard_create_data_profile_polars(
     # test non-sample path
     iris_data_polars.create_data_profile()
 
-    # test sampling path
-    iris_data_polars.create_data_profile(sample_perc=0.5)
 
     # should raise logging info if called again
     iris_data_polars.create_data_profile()
 
     registry.register_card(data_card)
 
-    data_card: DataCard = registry.load_card(uid=data_card.uid)
-    data_card.load_data_profile()
+    load_data_card: DataCard = registry.load_card(uid=data_card.uid)
+    load_data_card.load_data_profile()
 
     assert data_card.data_profile is not None
-    assert isinstance(data_card.data_profile, ProfileReport)
+    assert isinstance(data_card.data_profile, DataProfile)
 
 
 def test_feed_data_profile(
     db_registries: CardRegistries,
     iris_data: PandasData,
-):
-    profile = ProfileReport(iris_data.data, title="Profiling Report")
+) -> None:
+    profile = DataProfiler().create_profile_report(data=iris_data.data)
     iris_data.data_profile = profile
 
     data_card = DataCard(
@@ -92,42 +88,12 @@ def test_feed_data_profile(
     )
 
     iris_data.data_profile = None
-    iris_data.create_data_profile(sample_perc=0.50)
+    iris_data.create_data_profile()
     assert data_card.data_profile is not None
 
 
-def test_compare_data_profile(
-    db_registries: CardRegistries,
-    iris_data: PandasData,
-):
-    # Split indices
-    indices = np.arange(iris_data.data.shape[0])
-    # usual train-val split
-    train_idx, test_idx = train_test_split(indices, test_size=0.2, train_size=None)
-
-    iris_data.data_splits = [
-        DataSplit(label="train", indices=train_idx),
-        DataSplit(label="test", indices=test_idx),
-    ]
-
-    data_card = DataCard(
-        interface=iris_data,
-        name="test_df",
-        repository="mlops",
-        contact="mlops.com",
-    )
-
-    splits = data_card.split_data()
-
-    train_profile = DataProfiler.create_profile_report(splits["train"].X, name="train")
-    test_profile = DataProfiler.create_profile_report(splits["test"].X, name="test")
-
-    comparison = DataProfiler.compare_reports([train_profile, test_profile])
-
-    assert isinstance(comparison, ProfileReport)
 
 
-def test_datacard_numpy_profile_fail(numpy_data: NumpyData):
+def test_datacard_numpy_profile_fail(numpy_data: NumpyData) -> None:
 
-    with pytest.raises(ValueError):
-        numpy_data.create_data_profile()
+    numpy_data.create_data_profile()

@@ -190,6 +190,23 @@ class Dataset(BaseModel):
     ) -> str:
         return data_dir.as_posix()
 
+    @property
+    def data(self) -> Path:
+        """Returns data_dir. This was implemented to make mypy happy when
+        accessing the 'data' attribute in the DataCard class"""
+        return self.data_dir
+
+    @property
+    def data_splits(self) -> Dict[Optional[str], Metadata]:
+        """Returns data splits"""
+        return self.splits
+
+    @property
+    def data_profile(self) -> None:
+        """Returns data profile"""
+        logger.info("Data profile not implemented for ImageDataset")
+        return None
+
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value
 

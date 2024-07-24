@@ -182,8 +182,7 @@ class DataCardSaver(CardSaver):
         save_path = self.lpath / SaveName.DATA_PROFILE.value
 
         # save html and joblib version
-        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.HTML.value))
-        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.JOBLIB.value))
+        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.JSON.value))
 
     def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
@@ -547,9 +546,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

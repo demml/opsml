@@ -90,7 +90,7 @@ def test_register_data(
     datacard.create_data_profile()
     registry.register_card(card=datacard)
 
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     _ = registry.list_cards(name=datacard.name, repository=datacard.repository, max_date=TODAY_YMD)
