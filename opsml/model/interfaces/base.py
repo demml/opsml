@@ -6,11 +6,12 @@ from uuid import UUID
 import joblib
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-
+from opsml.data import DataInterface
 from opsml.helpers.utils import get_class_name
-from opsml.types import CommonKwargs, ModelReturn, OnnxModel
-from opsml.types.extra import Suffix
+from opsml.types import CommonKwargs, ModelReturn, OnnxModel, Feature, Suffix, AllowedDataType
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:
@@ -27,6 +28,36 @@ def get_model_args(model: Any) -> Tuple[Any, str, List[str]]:
     model_bases = [str(base) for base in model.__class__.__bases__]
 
     return model, model_module, model_bases
+
+
+def get_data_interface(data: Any, data_type: str) -> Optional[DataInterface]:
+    """Attempts to infer the data interface based on the sample data provided"""
+    if isinstance(data, pd.DataFrame):
+        from opsml.data.interfaces import PandasData
+
+        return PandasData(data=data)
+
+    if isinstance(data, np.ndarray):
+        from opsml.data.interfaces import NumpyData
+
+        return NumpyData(data=data)
+
+    if isinstance(data, pa.Table):
+        from opsml.data.interfaces import ArrowData
+
+        return ArrowData(data=data)
+
+    if isinstance(data, pl.DataFrame):
+        from opsml.data.interfaces import PolarsData
+
+        return PolarsData(data=data)
+
+    if data_type == AllowedDataType.TORCH_TENSOR.value:
+        from opsml.data.interfaces import TorchData
+
+        return TorchData(data=data)
+
+    return None
 
 
 @dataclass
@@ -52,6 +83,8 @@ class ModelInterface(BaseModel):
     model_type: str = CommonKwargs.UNDEFINED.value
     data_type: str = CommonKwargs.UNDEFINED.value
     modelcard_uid: str = ""
+    feature_map: Dict[str, Feature] = {}
+    sample_data_interface_type: str = CommonKwargs.UNDEFINED.value
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -73,7 +106,13 @@ class ModelInterface(BaseModel):
 
         sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
         model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+
+        if isinstance(sample_data, DataInterface):
+            model_args[CommonKwargs.DATA_TYPE.value] = sample_data.data_type
+            model_args[CommonKwargs.SAMPLE_DATA_INTERFACE_TYPE.value] = sample_data.name()
+
+        else:
+            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
 
         return model_args
 
@@ -166,11 +205,23 @@ class ModelInterface(BaseModel):
     def save_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.
 
+        Attempts to save data based on the type of data provided with the following order:
+
+        1. If sample data is an interface, save data using the interface
+        2. Attempt to determine the data type and save using the appropriate interface
+        3. Save using joblib
+
         Args:
             path:
                 Pathlib object
         """
-        joblib.dump(self.sample_data, path)
+        # (1)
+        if isinstance(self.sample_data, DataInterface):
+            self.sample_data.save_data(path)
+            self.feature_map = self.sample_data.feature_map
+
+        else:
+            joblib.dump(self.sample_data, path)
 
     def load_sample_data(self, path: Path) -> None:
         """Serialized and save sample data to path.
@@ -180,7 +231,12 @@ class ModelInterface(BaseModel):
                 Pathlib object
         """
 
-        self.sample_data = joblib.load(path)
+        if isinstance(self.sample_data, DataInterface):
+            self.sample_data.load_data(path)
+            self.feature_map = self.sample_data.feature_map
+
+        else:
+            self.sample_data = joblib.load(path)
 
     @classmethod
     def _get_sample_data(cls, sample_data: Any) -> Any:
@@ -191,6 +247,21 @@ class ModelInterface(BaseModel):
             Sample data with only one record
         """
 
+        # check for data interface
+        if isinstance(sample_data, DataInterface):
+            assert sample_data.data is not None, "No data detected in interface"
+            sample_data.data = sample_data.data[0:1]  #
+
+            return sample_data
+
+        # check if sample data can be converted to an interface
+        interface: Optional[DataInterface] = get_data_interface(sample_data, get_class_name(sample_data))
+        if interface is not None:
+            assert interface.data is not None, "No data detected in interface"
+            interface.data = interface.data[0:1]
+            return interface
+
+        # check for other types
         if isinstance(sample_data, list):
             return [data[0:1] for data in sample_data]
 
@@ -206,23 +277,30 @@ class ModelInterface(BaseModel):
         assert self.model is not None, "Model is not defined"
         assert self.sample_data is not None, "Sample data must be provided"
 
-        if isinstance(self.sample_data, (pd.DataFrame, np.ndarray)):
-            prediction = self.model.predict(self.sample_data)
-
-        elif isinstance(self.sample_data, dict):
-            try:
-                prediction = self.model.predict(**self.sample_data)
-            except Exception as _:  # pylint: disable=broad-except
-                prediction = self.model.predict(self.sample_data)
-
-        elif isinstance(self.sample_data, (list, tuple)):
-            try:
-                prediction = self.model.predict(*self.sample_data)
-            except Exception as _:  # pylint: disable=broad-except
-                prediction = self.model.predict(self.sample_data)
+        # extract data
+        if isinstance(self.sample_data, DataInterface):
+            data = cast(Any, self.sample_data.data)
 
         else:
-            prediction = self.model.predict(self.sample_data)
+            data = self.sample_data
+
+        if isinstance(data, (pd.DataFrame, np.ndarray)):
+            prediction = self.model.predict(data)
+
+        elif isinstance(data, dict):
+            try:
+                prediction = self.model.predict(**data)
+            except Exception as _:  # pylint: disable=broad-except
+                prediction = self.model.predict(data)
+
+        elif isinstance(data, (list, tuple)):
+            try:
+                prediction = self.model.predict(*data)
+            except Exception as _:  # pylint: disable=broad-except
+                prediction = self.model.predict(data)
+
+        else:
+            prediction = self.model.predict(data)
 
         prediction_type = get_class_name(prediction)
 
