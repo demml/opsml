@@ -7,11 +7,14 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
+from opsml.data.interfaces import DataInterface, NumpyData
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
     SamplePrediction,
+    _set_data_args,
+    get_data_interface,
     get_model_args,
     get_processor_name,
 )
@@ -61,7 +64,7 @@ try:
         model_config = ConfigDict(extra="forbid")
 
         @classmethod
-        def _get_sample_data(cls, sample_data: NDArray[Any]) -> Union[List[Any], NDArray[Any]]:
+        def _get_sample_data(cls, sample_data: NDArray[Any]) -> Union[List[Any], DataInterface]:
             """Check sample data and returns one record to be used
             during type inference and sample prediction.
 
@@ -72,18 +75,34 @@ try:
             if isinstance(sample_data, list):
                 return sample_data
 
-            if isinstance(sample_data, np.ndarray):
-                if len(sample_data.shape) == 1:
-                    return sample_data.reshape(1, -1)
-                return sample_data[0:1]
+            if isinstance(sample_data, (np.ndarray, NumpyData)):
+                if isinstance(sample_data, np.ndarray):
+                    # change to interface
+                    sample_data: Optional[DataInterface] = get_data_interface(  # type: ignore
+                        sample_data,
+                        get_class_name(sample_data),
+                    )
+                    assert isinstance(
+                        sample_data, NumpyData
+                    ), "Sample data should be a numpy array if using an interface"
+
+                # validate data
+                assert isinstance(sample_data.data, np.ndarray), "Data should be a numpy array if using an interface"
+
+                if len(sample_data.data.shape) == 1:
+                    sample_data.data = sample_data.data.reshape(1, -1)
+
+                else:
+                    sample_data.data = sample_data.data[0:1]
+
+                return sample_data
 
             raise ValueError("Sample data should be a list or numpy array")
 
         def get_sample_prediction(self) -> SamplePrediction:
             assert self.model is not None, "Model is not defined"
-            assert self.sample_data is not None, "Sample data must be provided"
 
-            prediction = self.model.predict(self.sample_data)
+            prediction = self.model.predict(self._prediction_data)
 
             prediction_type = get_class_name(prediction)
 
@@ -112,8 +131,7 @@ try:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )

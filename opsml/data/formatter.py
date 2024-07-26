@@ -338,10 +338,10 @@ class PolarsSchemaValidator(SchemaValidator):
                 _check_cols.append(schema_type.cast(data=col, feature=self.schema[col]))
 
             return self.data.with_columns(_check_cols)
-        except Exception as e:
-            logger.warning(f"Failed to validate schema: {e}. Returning original data")
-            raise e
-            return self.data
+        except Exception as error:
+            logger.warning(f"Failed to validate schema: {error}. Returning original data")
+            raise error
+            # return self.data
 
     @staticmethod
     def generate_feature_map(data: pl.DataFrame) -> Dict[str, Feature]:

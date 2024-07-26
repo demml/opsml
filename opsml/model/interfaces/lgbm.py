@@ -6,9 +6,9 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
-from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
+    _set_data_args,
     get_model_args,
     get_processor_name,
 )
@@ -72,8 +72,7 @@ try:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )

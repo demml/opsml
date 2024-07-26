@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
@@ -6,12 +7,20 @@ from uuid import UUID
 import joblib
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import polars as pl
+import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
 from opsml.data import DataInterface
 from opsml.helpers.utils import get_class_name
-from opsml.types import CommonKwargs, ModelReturn, OnnxModel, Feature, Suffix, AllowedDataType
+from opsml.types import (
+    AllowedDataType,
+    CommonKwargs,
+    Feature,
+    ModelReturn,
+    OnnxModel,
+    Suffix,
+)
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:
@@ -60,6 +69,27 @@ def get_data_interface(data: Any, data_type: str) -> Optional[DataInterface]:
     return None
 
 
+def _set_data_args(data: Any, model_args: Dict[str, Any]) -> Dict[str, Any]:
+    """Helper for setting data args
+
+    Args:
+        data:
+            Sample data
+        model_args:
+            Pydantic ModelInterface args
+    """
+    if isinstance(data, DataInterface):
+        model_args[CommonKwargs.DATA_TYPE.value] = data.data_type
+        model_args[CommonKwargs.SAMPLE_DATA_INTERFACE_TYPE.value] = data.name()
+
+    else:
+        model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(data)
+
+    model_args[CommonKwargs.SAMPLE_DATA.value] = data
+
+    return model_args
+
+
 @dataclass
 class SamplePrediction:
     """Dataclass that holds sample prediction information
@@ -105,16 +135,8 @@ class ModelInterface(BaseModel):
             return model_args
 
         sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-        model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
 
-        if isinstance(sample_data, DataInterface):
-            model_args[CommonKwargs.DATA_TYPE.value] = sample_data.data_type
-            model_args[CommonKwargs.SAMPLE_DATA_INTERFACE_TYPE.value] = sample_data.name()
-
-        else:
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
-
-        return model_args
+        return _set_data_args(sample_data, model_args)
 
     @field_validator("modelcard_uid", mode="before")
     @classmethod
@@ -208,8 +230,7 @@ class ModelInterface(BaseModel):
         Attempts to save data based on the type of data provided with the following order:
 
         1. If sample data is an interface, save data using the interface
-        2. Attempt to determine the data type and save using the appropriate interface
-        3. Save using joblib
+        2. Save using joblib
 
         Args:
             path:
@@ -275,32 +296,24 @@ class ModelInterface(BaseModel):
 
     def get_sample_prediction(self) -> SamplePrediction:
         assert self.model is not None, "Model is not defined"
-        assert self.sample_data is not None, "Sample data must be provided"
 
-        # extract data
-        if isinstance(self.sample_data, DataInterface):
-            data = cast(Any, self.sample_data.data)
+        if isinstance(self._prediction_data, (pd.DataFrame, np.ndarray)):
+            prediction = self.model.predict(self._prediction_data)
+
+        elif isinstance(self._prediction_data, dict):
+            try:
+                prediction = self.model.predict(**self._prediction_data)
+            except Exception as _:  # pylint: disable=broad-except
+                prediction = self.model.predict(self._prediction_data)
+
+        elif isinstance(self._prediction_data, (list, tuple)):
+            try:
+                prediction = self.model.predict(*self._prediction_data)
+            except Exception as _:  # pylint: disable=broad-except
+                prediction = self.model.predict(self._prediction_data)
 
         else:
-            data = self.sample_data
-
-        if isinstance(data, (pd.DataFrame, np.ndarray)):
-            prediction = self.model.predict(data)
-
-        elif isinstance(data, dict):
-            try:
-                prediction = self.model.predict(**data)
-            except Exception as _:  # pylint: disable=broad-except
-                prediction = self.model.predict(data)
-
-        elif isinstance(data, (list, tuple)):
-            try:
-                prediction = self.model.predict(*data)
-            except Exception as _:  # pylint: disable=broad-except
-                prediction = self.model.predict(data)
-
-        else:
-            prediction = self.model.predict(data)
+            prediction = self.model.predict(self._prediction_data)
 
         prediction_type = get_class_name(prediction)
 
@@ -318,6 +331,14 @@ class ModelInterface(BaseModel):
     def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value
+
+    @cached_property
+    def _prediction_data(self) -> Any:
+        """Returns data used for prediction"""
+        if isinstance(self.sample_data, DataInterface):
+            return cast(Any, self.sample_data.data)
+
+        return self.sample_data
 
     @staticmethod
     def name() -> str:

@@ -4,11 +4,13 @@ from typing import Any, Dict, Optional, Union, cast
 
 from pydantic import ConfigDict, field_validator, model_validator
 
+from opsml.data.interfaces import DataInterface
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
     SamplePrediction,
+    _set_data_args,
     get_processor_name,
 )
 from opsml.types import (
@@ -109,6 +111,12 @@ try:
                 Sample data with only one record
             """
 
+            if isinstance(sample_data, DataInterface):
+                assert sample_data.data is not None, "No data detected in interface"
+                sample_data.data = sample_data.data[0:1]  #
+
+                return sample_data
+
             if isinstance(sample_data, list):
                 return [data[0:1] for data in sample_data]
 
@@ -180,10 +188,7 @@ try:
                 )
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-
-            # set args
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
 
             return model_args
 
@@ -201,39 +206,35 @@ try:
 
         def _generate_predictions(self) -> Any:
             """Use model in generate mode if generate task"""
-
-            assert self.sample_data is not None, "Sample data must be provided"
             assert self.model is not None, "Model must be provided"
 
             try:  # try generation first , then functional
-                if isinstance(self.sample_data, (BatchEncoding, dict)):
-                    return self.model.generate(**self.sample_data)
+                if isinstance(self._prediction_data, (BatchEncoding, dict)):
+                    return self.model.generate(**self._prediction_data)
 
-                return self.model.generate(self.sample_data)
+                return self.model.generate(self._prediction_data)
 
             except Exception as _:  # pylint: disable=broad-except
                 return self._functional_predictions()
 
         def _functional_predictions(self) -> Any:
             """Use model in functional mode if functional task"""
-
-            assert self.sample_data is not None, "Sample data must be provided"
             assert self.model is not None, "Model must be provided"
 
-            if isinstance(self.sample_data, (BatchEncoding, dict)):
-                return self.model(**self.sample_data)
+            if isinstance(self._prediction_data, (BatchEncoding, dict)):
+                return self.model(**self._prediction_data)
 
-            return self.model(self.sample_data)
+            return self.model(self._prediction_data)
 
         def _get_pipeline_prediction(self) -> Any:
             """Use model in pipeline mode if pipeline task"""
             assert isinstance(self.model, Pipeline), "Model must be a pipeline"
 
-            if isinstance(self.sample_data, dict):
-                prediction = self.model(**self.sample_data)
+            if isinstance(self._prediction_data, dict):
+                prediction = self.model(**self._prediction_data)
 
             else:
-                prediction = self.model(self.sample_data)
+                prediction = self.model(self._prediction_data)
 
             if isinstance(prediction, dict):
                 return prediction
