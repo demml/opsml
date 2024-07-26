@@ -6,12 +6,7 @@ import joblib
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.model.interfaces.base import (
-    ModelInterface,
-    SamplePrediction,
-    get_model_args,
-    get_processor_name,
-)
+from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_model_args, get_processor_name, _set_data_args
 from opsml.types import (
     CommonKwargs,
     ModelReturn,
@@ -24,6 +19,7 @@ from opsml.types import (
 
 try:
     import torch
+    from opsml.data.interfaces import TorchData
 
     ValidData = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
 
@@ -55,9 +51,7 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = (
-            None
-        )
+        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None
@@ -77,8 +71,10 @@ try:
             Returns:
                 Sample data with only one record
             """
+
             if isinstance(sample_data, torch.Tensor):
-                return sample_data[0:1]
+                sample_data = TorchData(data=sample_data[0:1])
+                return sample_data
 
             if isinstance(sample_data, list):
                 return [data[0:1] for data in sample_data]
@@ -109,8 +105,7 @@ try:
                     model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
 
             sample_data = cls._get_sample_data(model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
@@ -119,25 +114,24 @@ try:
 
         def get_sample_prediction(self) -> SamplePrediction:
             assert self.model is not None, "Model is not defined"
-            assert self.sample_data is not None, "Sample data must be provided"
 
             # test dict input
-            if isinstance(self.sample_data, dict):
+            if isinstance(self._prediction_data, dict):
                 try:
-                    prediction = self.model(**self.sample_data)
+                    prediction = self.model(**self._prediction_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = self.model(self.sample_data)
+                    prediction = self.model(self._prediction_data)
 
             # test list and tuple inputs
-            elif isinstance(self.sample_data, (list, tuple)):
+            elif isinstance(self._prediction_data, (list, tuple)):
                 try:
-                    prediction = self.model(*self.sample_data)
+                    prediction = self.model(*self._prediction_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = self.model(self.sample_data)
+                    prediction = self.model(self._prediction_data)
 
             # all others
             else:
-                prediction = self.model(self.sample_data)
+                prediction = self.model(self._prediction_data)
 
             prediction_type = get_class_name(prediction)
 
