@@ -1,11 +1,10 @@
-
 import pandas as pd
+from scouter import DataProfile
 
 from opsml.cards import DataCard
 from opsml.data import NumpyData, PandasData, PolarsData
 from opsml.profile.profile_data import DataProfiler
 from opsml.registry import CardRegistries
-from scouter import DataProfile
 
 
 def test_datacard_create_data_profile_pandas(
@@ -52,7 +51,6 @@ def test_datacard_create_data_profile_polars(
     # test non-sample path
     iris_data_polars.create_data_profile()
 
-
     # should raise logging info if called again
     iris_data_polars.create_data_profile()
 
@@ -90,8 +88,6 @@ def test_feed_data_profile(
     iris_data.data_profile = None
     iris_data.create_data_profile()
     assert data_card.data_profile is not None
-
-
 
 
 def test_datacard_numpy_profile_fail(numpy_data: NumpyData) -> None:

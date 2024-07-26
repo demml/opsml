@@ -19,7 +19,6 @@ from opsml.types import RegistryType, SaveName
 from opsml.types.extra import Suffix
 
 
-
 def test_numpy_api_client(
     numpy_data: NumpyData,
     api_storage_client: client.StorageClientBase,

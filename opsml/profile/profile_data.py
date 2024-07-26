@@ -3,11 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 import polars as pl
-from scouter import Profiler, DataProfile
+from scouter import DataProfile, Profiler
 
 
 class DataProfiler:

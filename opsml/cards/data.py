@@ -5,12 +5,7 @@
 # IMPORTANT: We need `Optional` imported here in order for Pydantic to be able to
 # deserialize DataCard.
 #
-from typing import (  # noqa # pylint: disable=unused-import
-    Any,
-    Dict,
-    List,
-    Union,
-)
+from typing import Any, Dict, List, Union  # noqa # pylint: disable=unused-import
 
 from pydantic import ConfigDict, SerializeAsAny
 
@@ -140,7 +135,9 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

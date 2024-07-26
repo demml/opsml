@@ -2,17 +2,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import joblib
-import pandas as pd
-import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
-import json
+from scouter import DataProfile
+
 from opsml.data.splitter import Data, DataSplit, DataSplitter
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
-from opsml.types import CommonKwargs, Feature, Suffix
-
-from scouter import DataProfile
 from opsml.profile.profile_data import DataProfiler
+from opsml.types import CommonKwargs, Feature, Suffix
 
 logger = ArtifactLogger.get_logger()
 
