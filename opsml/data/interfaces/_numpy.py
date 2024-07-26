@@ -4,8 +4,9 @@ from typing import Any, Optional
 import numpy as np
 import zarr
 
+from opsml.data.formatter import generate_feature_schema
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix
+from opsml.types import AllowedDataType, Suffix
 
 
 class NumpyData(DataInterface):
@@ -37,12 +38,7 @@ class NumpyData(DataInterface):
 
         zarr.save(path, self.data)
 
-        self.feature_map = {
-            "features": Feature(
-                feature_type=str(self.data.dtype),
-                shape=self.data.shape,
-            )
-        }
+        self.feature_map = generate_feature_schema(self.data, self.data_type)
 
     def load_data(self, path: Path) -> None:
         """Load numpy array from zarr file"""

@@ -5,9 +5,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml.data.formatter import check_data_schema
+from opsml.data.formatter import check_data_schema, generate_feature_schema
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix
+from opsml.types import AllowedDataType, Suffix
 
 
 class PandasData(DataInterface):
@@ -37,13 +37,7 @@ class PandasData(DataInterface):
 
         assert self.data is not None, "No data detected in interface"
         arrow_table = pa.Table.from_pandas(self.data, preserve_index=False)
-        self.feature_map = {
-            key: Feature(
-                feature_type=str(value),
-                shape=(1,),
-            )
-            for key, value in self.data.dtypes.to_dict().items()
-        }
+        self.feature_map = generate_feature_schema(self.data, self.data_type)
         pq.write_table(arrow_table, path)
 
     def load_data(self, path: Path) -> None:

@@ -1,4 +1,3 @@
-import pandas as pd
 from scouter import DataProfile
 
 from opsml.cards import DataCard
@@ -14,7 +13,6 @@ def test_datacard_create_data_profile_pandas(
     # create data card
     registry = db_registries.data
 
-    iris_data.data["date_"] = pd.Timestamp.today().strftime("%Y-%m-%d")  # type: ignore
     iris_data.create_data_profile()
 
     # should raise logging info if called again
