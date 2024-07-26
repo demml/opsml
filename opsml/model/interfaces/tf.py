@@ -42,7 +42,7 @@ try:
             TensorFlowModel
         """
 
-        model: Optional[tf.keras.Model] = None
+        model: Optional[tf.keras.Model] = None  # pylint: disable=no-member
         sample_data: Optional[Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
@@ -89,7 +89,10 @@ try:
 
             model, module, bases = get_model_args(model)
 
-            assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
+            assert isinstance(
+                model,
+                tf.keras.Model,  # pylint: disable=no-member
+            ), "Model must be a tensorflow keras model"
 
             if "keras" in module:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -127,7 +130,7 @@ try:
                 kwargs:
                     Additional arguments to be passed to load_model
             """
-            self.model = tf.keras.models.load_model(path, **kwargs)
+            self.model = tf.keras.models.load_model(path, **kwargs)  # pylint: disable=no-member
 
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib

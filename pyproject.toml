@@ -143,8 +143,8 @@ torch = "^2.1.0"
 torchvision = "^0.16"
 lightgbm = "4"
 xgboost = "^1.7.1"
-tensorflow = { version = ">=2.16.0, <2.17.0", platform = "linux" }
-tf-keras = { version = "2.16.0", platform = "linux" }
+tensorflow = { version = ">=2.16.0, <2.17.0" }
+tf-keras = { version = "2.16.0" }
 transformers = ">=4.27.3, <4.42.0"
 lightning = "^2.1.2"
 optimum = "^1.16.1"

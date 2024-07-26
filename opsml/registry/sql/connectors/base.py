@@ -7,8 +7,8 @@ from enum import Enum
 from functools import cached_property
 from typing import Any, Dict
 
-import sqlalchemy  # type: ignore
-from sqlalchemy.engine.url import make_url  # type: ignore
+import sqlalchemy
+from sqlalchemy.engine.url import make_url
 
 from opsml.helpers.logging import ArtifactLogger
 

@@ -205,7 +205,6 @@ class Dataset(BaseModel):
     def data_profile(self) -> None:
         """Returns data profile"""
         logger.info("Data profile not implemented for ImageDataset")
-        return None
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value

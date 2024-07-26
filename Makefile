@@ -65,6 +65,7 @@ setup.uninstall:
 
 .PHONY: setup.project
 setup.project:
+	poetry config --local installer.no-binary streaming-form-data
 	poetry install --all-extras --with dev,dev-lints
 
 .PHONY: setup.rosetta

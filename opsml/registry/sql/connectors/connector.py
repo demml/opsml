@@ -61,7 +61,7 @@ class DefaultConnector:
 
         return connector_type
 
-    def get_connector(self) -> SQLConnection:
+    def get_connector(self) -> BaseSQLConnection:
         """Gets the sql connector to use when running opsml locally (without api proxy)"""
 
         cached_conn = _ENGINE_CACHE.get(self.tracking_uri)
