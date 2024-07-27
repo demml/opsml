@@ -22,4 +22,6 @@ keys:
   - modelcard_uid
   - save_args
   - arguments
+  - sample_data_interface_type
+  - feature_map
   

@@ -6,7 +6,13 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
-from opsml.model.interfaces.base import ModelInterface, get_model_args, get_processor_name, _set_data_args
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    _set_data_args,
+    get_model_args,
+    get_processor_name,
+)
+from opsml.data.interfaces import DataInterface
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 try:
@@ -37,7 +43,7 @@ try:
         """
 
         model: Optional[BaseEstimator] = None
-        sample_data: Optional[Union[pd.DataFrame, NDArray[Any]]] = None
+        sample_data: Optional[Union[pd.DataFrame, NDArray[Any], DataInterface]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 

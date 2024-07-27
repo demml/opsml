@@ -6,7 +6,14 @@ import joblib
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
-from opsml.model.interfaces.base import ModelInterface, SamplePrediction, get_model_args, get_processor_name, _set_data_args
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    SamplePrediction,
+    _set_data_args,
+    get_model_args,
+    get_processor_name,
+)
+from opsml.data.interfaces import DataInterface
 from opsml.types import (
     CommonKwargs,
     ModelReturn,
@@ -19,6 +26,7 @@ from opsml.types import (
 
 try:
     import torch
+
     from opsml.data.interfaces import TorchData
 
     ValidData = Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]
@@ -51,7 +59,15 @@ try:
         """
 
         model: Optional[torch.nn.Module] = None
-        sample_data: Optional[Union[torch.Tensor, Dict[str, torch.Tensor], List[torch.Tensor], Tuple[torch.Tensor]]] = None
+        sample_data: Optional[
+            Union[
+                torch.Tensor,
+                Dict[str, torch.Tensor],
+                List[torch.Tensor],
+                Tuple[torch.Tensor],
+                DataInterface,
+            ]
+        ] = None
         onnx_args: Optional[TorchOnnxArgs] = None
         save_args: TorchSaveArgs = TorchSaveArgs()
         preprocessor: Optional[Any] = None

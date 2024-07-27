@@ -12,6 +12,7 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
+from opsml.data.interfaces import DataInterface
 from opsml.types import CommonKwargs, TrainedModelType
 from opsml.types.extra import Suffix
 
@@ -46,7 +47,7 @@ try:
         """
 
         model: Optional[Union[Booster, LGBMModel]] = None
-        sample_data: Optional[Union[pd.DataFrame, NDArray[Any]]] = None
+        sample_data: Optional[Union[pd.DataFrame, NDArray[Any], DataInterface]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 

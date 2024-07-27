@@ -7,9 +7,13 @@ from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import get_class_name
 from opsml.model import ModelInterface
-from opsml.model.interfaces.base import get_model_args, get_processor_name
+from opsml.model.interfaces.base import (
+    _set_data_args,
+    get_model_args,
+    get_processor_name,
+)
+from opsml.data.interfaces import DataInterface
 from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 
 logger = ArtifactLogger.get_logger()
@@ -42,7 +46,14 @@ try:
         """
 
         model: Optional[Union[Booster, XGBModel]] = None
-        sample_data: Optional[Union[pd.DataFrame, NDArray[Any], DMatrix]] = None
+        sample_data: Optional[
+            Union[
+                pd.DataFrame,
+                NDArray[Any],
+                DMatrix,
+                DataInterface,
+            ]
+        ] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
@@ -55,7 +66,7 @@ try:
             return TrainedModelType.SKLEARN_ESTIMATOR.value
 
         @classmethod
-        def _get_sample_data(cls, sample_data: Any) -> Union[pd.DataFrame, NDArray[Any], DMatrix]:
+        def _get_sample_data(cls, sample_data: Any) -> Any:
             """Check sample data and returns one record to be used
             during type inference and ONNX conversion/validation.
 
@@ -88,8 +99,7 @@ try:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
@@ -173,7 +183,7 @@ try:
                 self.sample_data.save_binary(path)
 
             else:
-                joblib.dump(self.sample_data, path)
+                super().save_sample_data(path)
 
         def load_sample_data(self, path: Path) -> None:
             """Serialized and save sample data to path.
@@ -185,7 +195,7 @@ try:
             if self.model_class == TrainedModelType.XGB_BOOSTER.value:
                 self.sample_data = DMatrix(path)
             else:
-                self.sample_data = joblib.load(path)
+                super().load_sample_data(path)
 
         @property
         def model_suffix(self) -> str:

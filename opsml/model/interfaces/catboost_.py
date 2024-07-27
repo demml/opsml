@@ -57,7 +57,7 @@ try:
         """
 
         model: Optional[CatBoost] = None
-        sample_data: Optional[Union[List[Any], NDArray[Any]]] = None
+        sample_data: Optional[Union[List[Any], NDArray[Any], DataInterface]] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
@@ -82,9 +82,7 @@ try:
                         sample_data,
                         get_class_name(sample_data),
                     )
-                    assert isinstance(
-                        sample_data, NumpyData
-                    ), "Sample data should be a numpy array if using an interface"
+                    assert isinstance(sample_data, NumpyData), "Sample data should be a numpy array if using an interface"
 
                 # validate data
                 assert isinstance(sample_data.data, np.ndarray), "Data should be a numpy array if using an interface"

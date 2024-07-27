@@ -11,14 +11,12 @@ from opsml.model import (
     TensorFlowModel,
     TorchModel,
 )
-
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
-
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+import lightning as L
+from opsml.data.interfaces import TorchData
+from tests.conftest import EXCLUDE
 
 
-def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
+def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData])-> None:
     model, _ = linear_regression
     assert model.model_type == "LinearRegression"
 
@@ -27,33 +25,31 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_tf_interface(tf_transformer_example: TensorFlowModel):
+def test_tf_interface(tf_transformer_example: TensorFlowModel)-> None:
     assert tf_transformer_example.model_type == "Functional"
     prediction = tf_transformer_example.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
 
 
 @pytest.mark.flaky(reruns=2, reruns_delay=5)
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_torch_interface(deeplabv3_resnet50: TorchModel):
+def test_torch_interface(deeplabv3_resnet50: TorchModel) -> None:
     assert deeplabv3_resnet50.model_type == "DeepLabV3"
     prediction = deeplabv3_resnet50.get_sample_prediction()
     assert prediction.prediction_type == "collections.OrderedDict"
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_lightning_interface(lightning_regression: LightningModel):
+def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.LightningModule])-> None:
 
     light_model, model = lightning_regression
+    assert isinstance(light_model.sample_data, TorchData)
     assert light_model.model_type == "MyModel"
     prediction = light_model.get_sample_prediction()
     assert prediction.prediction_type == "torch.Tensor"
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
+def test_hf_model_interface(huggingface_bart: HuggingFaceModel)-> None:
 
     assert huggingface_bart.model_type == "BartModel"
     assert huggingface_bart.model_class == "transformers"
@@ -65,7 +61,7 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel):
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel):
+def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel)-> None:
     model = huggingface_text_classification_pipeline
     assert model.model_class == "transformers"
     assert model.task_type == "text-classification"

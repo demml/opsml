@@ -5,10 +5,17 @@ import joblib
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
+
 from opsml.data.interfaces import NumpyData
-from opsml.helpers.utils import get_class_name
-from opsml.model.interfaces.base import ModelInterface, get_model_args, get_processor_name, _set_data_args
+from opsml.model.interfaces.base import (
+    ModelInterface,
+    _set_data_args,
+    get_model_args,
+    get_processor_name,
+)
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
+from opsml.data.interfaces import DataInterface
+
 
 try:
     import tensorflow as tf
@@ -39,7 +46,15 @@ try:
         """
 
         model: Optional[tf.keras.Model] = None  # pylint: disable=no-member
-        sample_data: Optional[Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]] = None
+        sample_data: Optional[
+            Union[
+                ArrayType,
+                Dict[str, ArrayType],
+                List[ArrayType],
+                Tuple[ArrayType],
+                DataInterface,
+            ]
+        ] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 

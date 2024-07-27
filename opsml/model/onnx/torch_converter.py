@@ -49,20 +49,21 @@ class _PyTorchOnnxModel:
 
     def _get_additional_model_args(self) -> TorchOnnxArgs:
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
+        prediction_data = self.interface._prediction_data
 
         if self.interface.onnx_args is None:
-            assert self.interface.sample_data is not None, "Sample data must be provided"
-            return _PytorchArgBuilder(input_data=self.interface.sample_data).get_args()
+            assert prediction_data is not None, "Sample data must be provided"
+            return _PytorchArgBuilder(input_data=prediction_data).get_args()
         return self.interface.onnx_args
 
     def _coerce_data_for_onnx(self) -> Union[torch.Tensor, Tuple[torch.Tensor, ...]]:
-        assert self.interface.sample_data is not None, "Sample data must not be None"
+        assert self.interface._prediction_data is not None, "Sample data must not be None"
 
-        if isinstance(self.interface.sample_data, dict):
-            return tuple(self.interface.sample_data.values())
-        if isinstance(self.interface.sample_data, torch.Tensor):
-            return self.interface.sample_data
-        return tuple(self.interface.sample_data)
+        if isinstance(self.interface._prediction_data, dict):
+            return tuple(self.interface._prediction_data.values())
+        if isinstance(self.interface._prediction_data, torch.Tensor):
+            return self.interface._prediction_data
+        return tuple(self.interface._prediction_data)
 
     def _load_onnx_model(self, path: Path) -> rt.InferenceSession:
         return rt.InferenceSession(
@@ -105,8 +106,8 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
         """Passes or creates TorchOnnxArgs needed for Onnx model conversion"""
 
         if self.interface.onnx_args is None:
-            assert self.interface.sample_data is not None, "No sample data provided"
-            return _PytorchArgBuilder(input_data=cast(ValidData, self.interface.sample_data)).get_args()
+            assert self.interface._prediction_data is not None, "No sample data provided"
+            return _PytorchArgBuilder(input_data=cast(ValidData, self.interface._prediction_data)).get_args()
         return self.interface.onnx_args
 
     def _load_onnx_model(self, path: Path) -> rt.InferenceSession:
@@ -127,7 +128,7 @@ class _PyTorchLightningOnnxModel(_PyTorchOnnxModel):
 
         self.interface.model.model.to_onnx(
             path.as_posix(),
-            self.interface.sample_data,
+            self.interface._prediction_data,
             **onnx_args.model_dump(exclude={"options"}),
         )
 
