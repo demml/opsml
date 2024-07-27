@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
-from opsml.data.interfaces import NumpyData
+from opsml.data.interfaces import DataInterface, NumpyData
 from opsml.model.interfaces.base import (
     ModelInterface,
     _set_data_args,
@@ -14,8 +14,6 @@ from opsml.model.interfaces.base import (
     get_processor_name,
 )
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
-from opsml.data.interfaces import DataInterface
-
 
 try:
     import tensorflow as tf

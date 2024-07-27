@@ -236,6 +236,7 @@ class ModelInterface(BaseModel):
             path:
                 Pathlib object
         """
+
         # (1)
         if isinstance(self.sample_data, DataInterface):
             self.sample_data.save_data(path)

@@ -1,9 +1,10 @@
-import sys
 from typing import Tuple
 
+import lightning as L
 import pytest
 
 from opsml.data import NumpyData
+from opsml.data.interfaces import TorchData
 from opsml.model import (
     HuggingFaceModel,
     LightningModel,
@@ -11,12 +12,10 @@ from opsml.model import (
     TensorFlowModel,
     TorchModel,
 )
-import lightning as L
-from opsml.data.interfaces import TorchData
 from tests.conftest import EXCLUDE
 
 
-def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData])-> None:
+def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData]) -> None:
     model, _ = linear_regression
     assert model.model_type == "LinearRegression"
 
@@ -25,7 +24,7 @@ def test_sklearn_interface(linear_regression: Tuple[SklearnModel, NumpyData])-> 
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_tf_interface(tf_transformer_example: TensorFlowModel)-> None:
+def test_tf_interface(tf_transformer_example: TensorFlowModel) -> None:
     assert tf_transformer_example.model_type == "Functional"
     prediction = tf_transformer_example.get_sample_prediction()
     assert prediction.prediction_type == "numpy.ndarray"
@@ -39,7 +38,7 @@ def test_torch_interface(deeplabv3_resnet50: TorchModel) -> None:
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
-def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.LightningModule])-> None:
+def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.LightningModule]) -> None:
 
     light_model, model = lightning_regression
     assert isinstance(light_model.sample_data, TorchData)
@@ -49,7 +48,7 @@ def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.Light
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
-def test_hf_model_interface(huggingface_bart: HuggingFaceModel)-> None:
+def test_hf_model_interface(huggingface_bart: HuggingFaceModel) -> None:
 
     assert huggingface_bart.model_type == "BartModel"
     assert huggingface_bart.model_class == "transformers"
@@ -61,7 +60,7 @@ def test_hf_model_interface(huggingface_bart: HuggingFaceModel)-> None:
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel)-> None:
+def test_hf_pipeline_interface(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model = huggingface_text_classification_pipeline
     assert model.model_class == "transformers"
     assert model.task_type == "text-classification"

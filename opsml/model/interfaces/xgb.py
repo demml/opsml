@@ -6,6 +6,7 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
+from opsml.data.interfaces import DataInterface
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model import ModelInterface
 from opsml.model.interfaces.base import (
@@ -13,7 +14,6 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.data.interfaces import DataInterface
 from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 
 logger = ArtifactLogger.get_logger()

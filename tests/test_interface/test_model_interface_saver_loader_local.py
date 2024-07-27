@@ -10,6 +10,7 @@ import pytest
 from transformers import Pipeline
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
+from opsml.data.interfaces import PandasData, TorchData
 from opsml.model import (
     CatBoostModel,
     HuggingFaceModel,
@@ -22,13 +23,13 @@ from opsml.model import (
     VowpalWabbitModel,
     XGBoostModel,
 )
-from opsml.data.interfaces import PandasData, TorchData
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName, Suffix
 from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
 
 IS_311 = sys.version_info >= (3, 11)
+
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
@@ -205,10 +206,9 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
     loader.load_preprocessor()
     loader.load_model()
     loader.load_onnx_model()
-    
- 
 
-#@pytest.mark.skipif(EXCLUDE, reason="skipping")
+
+# @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     model: LightGBMModel = lgb_booster_model
 
@@ -254,6 +254,7 @@ def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
 
 def test_save_lgb_sklearn_modelcard(
     lgb_regressor_model: LightGBMModel,
@@ -408,6 +409,7 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
     loader.load_model()
     loader.load_onnx_model()
 
+
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
     model: TorchModel = pytorch_simple_tuple
@@ -534,7 +536,7 @@ def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> N
 
     # check paths exist on server
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
+    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix).exists()
     assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value).exists()
     assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
 
@@ -746,7 +748,7 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
         assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
-#@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+# @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
     model: CatBoostModel = catboost_regressor
 

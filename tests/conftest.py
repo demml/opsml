@@ -2,12 +2,12 @@
 
 import logging
 import os
+import platform
+import sys
 import tempfile
 import warnings
 from pathlib import Path
 from typing import Any, Dict, Generator, Tuple, TypeVar, Union
-import sys 
-import platform
 
 warnings.filterwarnings("ignore")
 
@@ -140,6 +140,7 @@ DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
 WINDOWS_EXCLUDE = sys.platform == "win32"
 
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+
 
 def cleanup() -> None:
     """Removes temp files"""
@@ -1552,7 +1553,7 @@ def huggingface_torch_distilbert() -> YieldFixture[HuggingFaceModel]:
     tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
     model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased")
     inputs = tokenizer(["Hello, my dog is cute", "Hello, my dog is cute"], return_tensors="pt")
- 
+
     model = HuggingFaceModel(
         model=model,
         tokenizer=tokenizer,
@@ -2392,7 +2393,7 @@ def pytorch_lightning_model() -> LightningModel:
 
 @pytest.fixture(scope="module")
 def lightning_regression() -> Generator[LightningModel, L.LightningModule, None]:
-    class SimpleDataset(Dataset): # type: ignore
+    class SimpleDataset(Dataset):  # type: ignore
         def __init__(self) -> None:
             X = np.arange(10000)
             y = X * 2

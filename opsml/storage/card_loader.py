@@ -29,7 +29,15 @@ from opsml.model.interfaces.base import ModelInterface
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.settings.config import config
 from opsml.storage import client
-from opsml.types import AllowedDataType, CardType, RegistryTableNames, RegistryType, SaveName, Suffix, CommonKwargs
+from opsml.types import (
+    AllowedDataType,
+    CardType,
+    CommonKwargs,
+    RegistryTableNames,
+    RegistryType,
+    SaveName,
+    Suffix,
+)
 from opsml.types.model import ModelMetadata, OnnxModel
 
 logger = ArtifactLogger.get_logger()

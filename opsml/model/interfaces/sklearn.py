@@ -6,13 +6,13 @@ import pandas as pd
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
+from opsml.data.interfaces import DataInterface
 from opsml.model.interfaces.base import (
     ModelInterface,
     _set_data_args,
     get_model_args,
     get_processor_name,
 )
-from opsml.data.interfaces import DataInterface
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 try:

@@ -1,3 +1,5 @@
+# type: ignore
+
 import sys
 import tempfile
 import uuid
@@ -7,6 +9,7 @@ from typing import cast
 import pytest
 
 from opsml.cards import Description, ModelCard, ModelCardMetadata
+from opsml.data.interfaces import NumpyData, PandasData, TorchData
 from opsml.model import (
     CatBoostModel,
     HuggingFaceModel,
@@ -21,15 +24,11 @@ from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.types import CommonKwargs, RegistryType, SaveName, Suffix
+from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
 
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
 IS_311 = sys.version_info >= (3, 11)
 
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
-
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_huggingface_modelcard_api_client(
     huggingface_torch_distilbert: HuggingFaceModel,
     api_storage_client: client.StorageClientBase,
@@ -106,6 +105,7 @@ def test_save_huggingface_modelcard_api_client(
         assert (path / SaveName.QUANTIZED_MODEL.value).exists()
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_sklearn_modelcard_api_client(
     random_forest_classifier: SklearnModel,
     api_storage_client: client.StorageClientBase,
@@ -131,7 +131,7 @@ def test_save_sklearn_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -155,6 +155,7 @@ def test_save_sklearn_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+    assert isinstance(loaded_card.sample_data, PandasData)
 
 
 def test_save_lgb_booster_modelcard_api_client(
@@ -183,7 +184,7 @@ def test_save_lgb_booster_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.TEXT.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -207,6 +208,7 @@ def test_save_lgb_booster_modelcard_api_client(
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+    assert isinstance(loaded_card.sample_data, PandasData)
 
 
 def test_save_lgb_sklearn_modelcard_api_client(
@@ -235,7 +237,7 @@ def test_save_lgb_sklearn_modelcard_api_client(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -256,6 +258,8 @@ def test_save_lgb_sklearn_modelcard_api_client(
     #
     loaded_card.load_model()
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert isinstance(loaded_card.sample_data, PandasData)
+
     #
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
@@ -272,7 +276,7 @@ def test_save_lgb_sklearn_modelcard_api_client(
         assert (path / SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value).exists()
 
 
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_torch_modelcard_api_client(
     pytorch_simple: TorchModel,
     api_storage_client: client.StorageClientBase,
@@ -330,7 +334,7 @@ def test_save_torch_modelcard_api_client(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_torch_lightning_modelcard_api_client(
     lightning_regression: LightningModel,
     api_storage_client: client.StorageClientBase,
@@ -357,7 +361,7 @@ def test_save_torch_lightning_modelcard_api_client(
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CKPT.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -379,6 +383,7 @@ def test_save_torch_lightning_modelcard_api_client(
     loaded_card.load_model(**{CommonKwargs.MODEL_ARCH.value: model_arch})
 
     assert type(loaded_card.interface.model) == type(modelcard.interface.model.model)
+    assert isinstance(loaded_card.sample_data, TorchData)
 
     #
     loaded_card.load_onnx_model()
@@ -412,7 +417,7 @@ def test_save_tensorflow_modelcard_api_client(
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -523,7 +528,7 @@ def test_save_catboost_modelcard(
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -543,6 +548,7 @@ def test_save_catboost_modelcard(
 
     loaded_card.load_model()
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert isinstance(loaded_card.sample_data, NumpyData)
 
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None

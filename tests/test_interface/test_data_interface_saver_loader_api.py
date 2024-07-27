@@ -3,6 +3,9 @@ import uuid
 from pathlib import Path
 from typing import cast
 
+import polars as pl
+from sklearn.preprocessing import LabelEncoder
+
 from opsml.cards import DataCard
 from opsml.data import (
     ArrowData,
@@ -64,6 +67,11 @@ def test_pandas_api_client(
     api_storage_client: client.StorageClientBase,
 ) -> None:
     data: PandasData = pandas_data
+    assert data.data is not None
+
+    encoder = LabelEncoder()
+    data.data["animals"] = encoder.fit_transform(data.data["animals"])
+
     data.create_data_profile()
 
     datacard = DataCard(
@@ -107,6 +115,12 @@ def test_polars_api_client(
     api_storage_client: client.StorageClientBase,
 ) -> None:
     data: PolarsData = polars_data
+    assert data.data is not None
+
+    encoder = LabelEncoder()
+    transformed = encoder.fit_transform(data.data["bar"].to_pandas())
+    data.data = data.data.with_columns([pl.Series(transformed).alias("bar")])
+
     data.create_data_profile()
 
     datacard = DataCard(

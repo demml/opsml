@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 import joblib
 from pydantic import ConfigDict, model_validator
 
+from opsml.data.interfaces import DataInterface
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import (
     ModelInterface,
@@ -13,7 +14,6 @@ from opsml.model.interfaces.base import (
     get_model_args,
     get_processor_name,
 )
-from opsml.data.interfaces import DataInterface
 from opsml.types import (
     CommonKwargs,
     ModelReturn,

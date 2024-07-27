@@ -1,11 +1,12 @@
 import uuid
 from pathlib import Path
-from typing import Tuple, cast
+from typing import Any, Tuple, cast
 
 from numpy.typing import NDArray
 from sklearn import tree
 
 from opsml.cards import ModelCard
+from opsml.data.interfaces import NumpyData
 from opsml.model import SklearnModel
 from opsml.storage import client
 from opsml.storage.card_loader import CardLoader
@@ -14,9 +15,9 @@ from opsml.types import RegistryType, SaveName, Suffix
 
 
 def test_model_interface(
-    regression_data: Tuple[NDArray, NDArray],
+    regression_data: Tuple[NDArray[Any], NDArray[Any]],
     api_storage_client: client.StorageClientBase,
-):
+) -> None:
     class SubclassModel(SklearnModel):
         @property
         def model_class(self) -> str:
@@ -45,7 +46,7 @@ def test_model_interface(
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
@@ -64,5 +65,6 @@ def test_model_interface(
 
     loaded_card.load_model()
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
+    assert isinstance(loaded_card.sample_data, NumpyData)
 
     assert loaded_card.interface.model_class == modelcard.interface.model_class
