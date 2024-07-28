@@ -68,11 +68,6 @@ setup.project:
 	poetry config --local installer.no-binary streaming-form-data
 	poetry install --all-extras --with dev,dev-lints
 
-.PHONY: setup.rosetta
-setup.rosetta:
-	poetry install --all-extras --with dev,dev-lints
-	poetry run pip install polars-lts-cpu 
-
 .PHONY: setup.python
 setup.python:
 	@echo "Active Python version: $$(python --version)"

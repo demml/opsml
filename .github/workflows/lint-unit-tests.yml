@@ -89,7 +89,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run : make setup.project
+      - run :
+            |
+          poetry run pip install psycopg2-binary
+          make setup.project
 
       - name: Unit Tests
         run : make test.unit
