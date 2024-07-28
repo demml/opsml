@@ -402,9 +402,10 @@ class ModelCardLoader(CardLoader):
         return ""
 
     def _load_data_interface(self) -> str:
+        interface_type = self.card.interface.sample_data_interface_type
         # load sample data interface if it exists
-        if self.card.interface.sample_data_interface_type != CommonKwargs.UNDEFINED.value:
-            interface: DataInterface = get_interface(RegistryType.DATA, self.card.interface.sample_data_interface_type)()  # type: ignore
+        if interface_type != CommonKwargs.UNDEFINED.value:
+            interface: DataInterface = get_interface(RegistryType.DATA, interface_type)()  # type: ignore
             interface.feature_map = self.card.interface.feature_map
             self.card.interface.sample_data = interface
 

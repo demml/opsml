@@ -1,4 +1,4 @@
-import sys
+# type: ignore
 import warnings
 
 import pytest
@@ -12,11 +12,7 @@ from opsml.model import (
     TorchModel,
 )
 from tests import conftest
-
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
-
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
 
 
 # this is done to filter all the convergence and user warnings during testing
@@ -123,7 +119,6 @@ def test_sklearn_models(interface: ModelInterface):
 
 
 @pytest.mark.flaky(reruns=2, reruns_delay=2)
-@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -137,7 +132,6 @@ def test_model_pytorch_predict(interface: TorchModel):
 
 
 @pytest.mark.flaky(reruns=2, reruns_delay=2)
-@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [
@@ -165,7 +159,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
 
 
 @pytest.mark.flaky(reruns=2)
-@pytest.mark.skipif(EXCLUDE, reason="Not supported")
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [

@@ -1,4 +1,4 @@
-# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
+# pylint: disable=[import-outside-toplevel,import-error,no-name-in-module, protected-access]
 
 """Code for generating Onnx Models"""
 # Copyright (c) Shipt, Inc.

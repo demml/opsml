@@ -5,9 +5,16 @@
 # IMPORTANT: We need `Optional` imported here in order for Pydantic to be able to
 # deserialize DataCard.
 #
-from typing import Any, Dict, List, Union  # noqa # pylint: disable=unused-import
+from typing import (  # noqa # pylint: disable=unused-import
+    Any,
+    Dict,
+    List,
+    Optional,
+    Union,
+)
 
 from pydantic import ConfigDict, SerializeAsAny
+from scouter import DataProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.data import Dataset
@@ -84,6 +91,16 @@ class DataCard(ArtifactCard):
         from opsml.storage.card_loader import DataCardLoader
 
         DataCardLoader(self).load_data(**kwargs)
+
+    def create_data_profile(self, bin_size: int = 20, features: Optional[List[str]] = None) -> Optional[DataProfile]:
+        """
+        Create data profile for the current data card
+        """
+        if isinstance(self.interface, DataInterface):
+            return self.interface.create_data_profile(bin_size=bin_size, features=features)
+
+        logger.warning("Data profile is only supported for DataInterface subclasses. You have a Dataset subclass.")
+        return None
 
     def load_data_profile(self) -> None:
         """

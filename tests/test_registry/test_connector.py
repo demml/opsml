@@ -3,7 +3,7 @@ import pytest  # type: ignore
 from opsml.registry.sql.connectors.base import BaseSQLConnection
 
 
-def test_base_sql_connection():
+def test_base_sql_connection() -> None:
     USER = "fake-user"
     PASSWORD = "fakepass"
     DB_NAME = "fake-db"

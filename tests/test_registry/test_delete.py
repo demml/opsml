@@ -1,3 +1,4 @@
+# type: ignore
 import sys
 from pathlib import Path
 from typing import Tuple
@@ -48,7 +49,11 @@ def test_delete_data_model(
     assert len(cards) == 1
 
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
+    assert (
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value)
+        .with_suffix(modelcard.interface.sample_data.data_suffix)
+        .exists()
+    )
     assert Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
     assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
 
@@ -58,7 +63,11 @@ def test_delete_data_model(
     assert len(cards) == 0
 
     assert not Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value).exists()
-    assert not Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
+    assert (
+        not Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value)
+        .with_suffix(modelcard.interface.sample_data.data_suffix)
+        .exists()
+    )
     assert not Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
     assert not Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
 
@@ -132,7 +141,7 @@ def test_delete_data_model_api(
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(modelcard.interface.sample_data.data_suffix)
     )
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -146,7 +155,7 @@ def test_delete_data_model_api(
         Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.JOBLIB.value)
     )
     assert not api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(modelcard.interface.sample_data.data_suffix)
     )
     assert not api_storage_client.exists(
         Path(modelcard.uri, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)

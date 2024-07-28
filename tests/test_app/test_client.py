@@ -7,6 +7,7 @@ from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
@@ -79,6 +80,12 @@ def test_error(test_app: TestClient) -> None:
 def test_register_data(
     api_registries: CardRegistries, api_storage_client: client.StorageClient, pandas_data: PandasData
 ) -> None:
+    assert pandas_data.data is not None
+
+    # encode data
+    encoder = LabelEncoder()
+    pandas_data.data["animals"] = encoder.fit_transform(pandas_data.data["animals"])
+
     # create data card
     registry = api_registries.data
     datacard = DataCard(
@@ -87,6 +94,7 @@ def test_register_data(
         repository="mlops",
         contact="mlops.com",
     )
+
     datacard.create_data_profile()
     registry.register_card(card=datacard)
 
