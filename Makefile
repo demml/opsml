@@ -68,6 +68,12 @@ setup.project:
 	poetry config --local installer.no-binary streaming-form-data
 	poetry install --all-extras --with dev,dev-lints
 
+.PHONY: setup.project.github_macos
+setup.project:
+	poetry config --local installer.no-binary streaming-form-data
+	poetry install --all-extras --with dev,dev-lints
+	poetry run pip install tensorflow-macos
+
 .PHONY: setup.rosetta
 setup.rosetta:
 	poetry install --all-extras --with dev,dev-lints
