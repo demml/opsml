@@ -113,6 +113,8 @@ class OpsmlLightGBMSklearnWorkflow:
         # fit
         # Only using the first 5 numerical features for convenience
         reg.fit(data["train"].X.to_numpy()[:, 0:5], data["train"].y.to_numpy())
+
+        # Fitting lightgbm on numpy data
         numpy_data = data["train"].X.to_numpy()[:, 0:5].astype(np.float64)
 
         # create model interface
