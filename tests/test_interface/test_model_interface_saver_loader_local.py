@@ -748,7 +748,6 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
         assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
-# @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
     model: CatBoostModel = catboost_regressor
 

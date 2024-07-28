@@ -74,7 +74,7 @@ jobs:
         poetry-version: ["1.7.1"]
         os: [macos]
 
-    runs-on: ${{ matrix.os }}-12
+    runs-on: ${{ matrix.os }}-latest
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG

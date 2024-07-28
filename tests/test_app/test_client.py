@@ -1,6 +1,5 @@
 import re
 import shutil
-import sys
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Tuple, cast
@@ -28,12 +27,7 @@ from opsml.storage import client
 from opsml.storage.api import ApiRoutes
 from opsml.types import Metric, SaveName
 from opsml.types.extra import Suffix
-from tests.conftest import TODAY_YMD
-
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
-
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+from tests.conftest import EXCLUDE, TODAY_YMD
 
 
 def test_debug(test_app: TestClient) -> None:
