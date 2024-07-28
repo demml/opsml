@@ -1,3 +1,5 @@
+# type: ignore
+
 import uuid
 from pathlib import Path
 from typing import Any, Tuple, cast
