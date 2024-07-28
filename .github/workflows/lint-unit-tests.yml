@@ -89,7 +89,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run : make setup.project.github_macos
+      - run : make setup.project_macos
 
       - name: Unit Tests
         run : make test.unit
