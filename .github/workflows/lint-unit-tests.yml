@@ -67,7 +67,7 @@ jobs:
           make test.unit
 
   Unit-Test-MacOS:
-    #needs: Lints
+    needs: Lints
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
