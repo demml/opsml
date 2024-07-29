@@ -555,7 +555,7 @@ def test_save_catboost_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(IS_311, reason="vowpal not support for py311")
+@pytest.mark.skipif(bool(IS_311 or Exclude), reason="vowpal not support for py311")
 def test_save_vowpal_modelcard(
     vowpal_wabbit_cb: VowpalWabbitModel,
     api_storage_client: client.StorageClientBase,

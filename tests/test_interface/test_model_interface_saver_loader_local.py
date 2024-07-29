@@ -924,7 +924,7 @@ def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> Non
     loader.load_onnx_model()
 
 
-@pytest.mark.skipif(sys.version_info == (3, 11), reason="vowpal not support for py311")
+@pytest.mark.skipif(bool(IS_311 or Exclude),  reason="vowpal not support for py311")
 def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
@@ -966,7 +966,7 @@ def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
 
 
-@pytest.mark.skipif(IS_311, reason="vowpal not support for py311")
+@pytest.mark.skipif(bool(IS_311 or Exclude), reason="vowpal not support for py311")
 def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
