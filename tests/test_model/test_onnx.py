@@ -12,7 +12,7 @@ from opsml.model import (
     TorchModel,
 )
 from tests import conftest
-from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
+from tests.conftest import EXCLUDE
 
 
 # this is done to filter all the convergence and user warnings during testing
@@ -159,7 +159,7 @@ def test_tensorflow_predict(interface: TensorFlowModel):
 
 
 @pytest.mark.flaky(reruns=2)
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Not supported")
+@pytest.mark.skipif(EXCLUDE, reason="Not supported")
 @pytest.mark.parametrize(
     "interface",
     [

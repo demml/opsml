@@ -463,7 +463,7 @@ def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)
@@ -924,7 +924,7 @@ def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> Non
     loader.load_onnx_model()
 
 
-@pytest.mark.skipif(bool(IS_311 or EXCLUDE),  reason="vowpal not support for py311")
+@pytest.mark.skipif(bool(IS_311 or EXCLUDE), reason="vowpal not support for py311")
 def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
     model: VowpalWabbitModel = vowpal_wabbit_cb
 

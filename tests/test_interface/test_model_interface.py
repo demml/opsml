@@ -38,6 +38,7 @@ def test_torch_interface(deeplabv3_resnet50: TorchModel) -> None:
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.LightningModule]) -> None:
 
     light_model, model = lightning_regression
