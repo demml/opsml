@@ -334,7 +334,7 @@ def test_save_torch_modelcard_api_client(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-@pytest.mark.skipif(EXCLUDE, reason="skipping")
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_torch_lightning_modelcard_api_client(
     lightning_regression: LightningModel,
     api_storage_client: client.StorageClientBase,
