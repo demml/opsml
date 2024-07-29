@@ -1,3 +1,5 @@
+# type: ignore
+
 import os
 import sys
 import time
@@ -666,6 +668,7 @@ def test_pandas_dtypes(db_registries: CardRegistries, pandas_data: PandasData) -
 def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsData) -> None:
     registry = db_registries.data
     data = iris_data_polars.data
+    assert data is not None
 
     new_data = data.with_columns(
         [
@@ -674,6 +677,7 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
         ]
     )
     new_data = new_data.with_columns(pl.col("test_cat").cast(pl.Categorical))
+
     orig_schema = new_data.schema
 
     iris_data_polars.data = new_data

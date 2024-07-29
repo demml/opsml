@@ -59,6 +59,7 @@ class CommonKwargs(str, Enum):
     TEXT = "text"
     VOWPAL_ARGS = "arguments"
     BASE_VERSION = "0.0.0"
+    SAMPLE_DATA_INTERFACE_TYPE = "sample_data_interface_type"
 
 
 @unique

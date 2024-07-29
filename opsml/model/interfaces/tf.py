@@ -6,9 +6,10 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import ConfigDict, model_validator
 
-from opsml.helpers.utils import get_class_name
+from opsml.data.interfaces import DataInterface, NumpyData
 from opsml.model.interfaces.base import (
     ModelInterface,
+    _set_data_args,
     get_model_args,
     get_processor_name,
 )
@@ -42,8 +43,16 @@ try:
             TensorFlowModel
         """
 
-        model: Optional[tf.keras.Model] = None
-        sample_data: Optional[Union[ArrayType, Dict[str, ArrayType], List[ArrayType], Tuple[ArrayType]]] = None
+        model: Optional[tf.keras.Model] = None  # pylint: disable=no-member
+        sample_data: Optional[
+            Union[
+                ArrayType,
+                Dict[str, ArrayType],
+                List[ArrayType],
+                Tuple[ArrayType],
+                DataInterface,
+            ]
+        ] = None
         preprocessor: Optional[Any] = None
         preprocessor_name: str = CommonKwargs.UNDEFINED.value
 
@@ -62,7 +71,10 @@ try:
                 Sample data with only one record
             """
 
-            if isinstance(sample_data, (np.ndarray, tf.Tensor)):
+            if isinstance(sample_data, np.ndarray):
+                return NumpyData(data=sample_data[0:1])
+
+            if isinstance(sample_data, tf.Tensor):
                 return sample_data[0:1]
 
             if isinstance(sample_data, list):
@@ -89,7 +101,10 @@ try:
 
             model, module, bases = get_model_args(model)
 
-            assert isinstance(model, tf.keras.Model), "Model must be a tensorflow keras model"
+            assert isinstance(
+                model,
+                tf.keras.Model,  # pylint: disable=no-member
+            ), "Model must be a tensorflow keras model"
 
             if "keras" in module:
                 model_args[CommonKwargs.MODEL_TYPE.value] = model.__class__.__name__
@@ -100,8 +115,7 @@ try:
                         model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
@@ -127,7 +141,7 @@ try:
                 kwargs:
                     Additional arguments to be passed to load_model
             """
-            self.model = tf.keras.models.load_model(path, **kwargs)
+            self.model = tf.keras.models.load_model(path, **kwargs)  # pylint: disable=no-member
 
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib

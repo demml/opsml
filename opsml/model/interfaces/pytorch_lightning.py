@@ -6,6 +6,7 @@ from pydantic import ConfigDict, model_validator
 from opsml.helpers.utils import OpsmlImportExceptions, get_class_name
 from opsml.model.interfaces.base import (
     SamplePrediction,
+    _set_data_args,
     get_model_args,
     get_processor_name,
 )
@@ -65,8 +66,7 @@ try:
                     model_args[CommonKwargs.MODEL_TYPE.value] = "subclass"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.PREPROCESSOR_NAME.value] = get_processor_name(
                 model_args.get(CommonKwargs.PREPROCESSOR.value),
             )
@@ -75,28 +75,27 @@ try:
 
         def get_sample_prediction(self) -> SamplePrediction:
             assert self.model is not None, "Trainer is not defined"
-            assert self.sample_data is not None, "Sample data must be provided"
 
             trainer_model = self.model.model
             assert trainer_model is not None, "No model provided to trainer"
 
             # test dict input
-            if isinstance(self.sample_data, dict):
+            if isinstance(self._prediction_data, dict):
                 try:
-                    prediction = trainer_model(**self.sample_data)
+                    prediction = trainer_model(**self._prediction_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = trainer_model(self.sample_data)
+                    prediction = trainer_model(self._prediction_data)
 
             # test list and tuple inputs
-            elif isinstance(self.sample_data, (list, tuple)):
+            elif isinstance(self._prediction_data, (list, tuple)):
                 try:
-                    prediction = trainer_model(*self.sample_data)
+                    prediction = trainer_model(*self._prediction_data)
                 except Exception as _:  # pylint: disable=broad-except
-                    prediction = trainer_model(self.sample_data)
+                    prediction = trainer_model(self._prediction_data)
 
             # all others
             else:
-                prediction = trainer_model(self.sample_data)
+                prediction = trainer_model(self._prediction_data)
 
             prediction_type = get_class_name(prediction)
 

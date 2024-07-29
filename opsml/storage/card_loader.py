@@ -32,6 +32,7 @@ from opsml.storage import client
 from opsml.types import (
     AllowedDataType,
     CardType,
+    CommonKwargs,
     RegistryTableNames,
     RegistryType,
     SaveName,
@@ -354,12 +355,12 @@ class DataCardLoader(CardLoader):
             return
 
         # check exists
-        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value)
+        rpath = Path(self.card.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value)
         if not self.storage_client.exists(rpath):
             return
 
         # load data profile
-        with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JOBLIB.value) as lpath:
+        with self._load_object(SaveName.DATA_PROFILE.value, Suffix.JSON.value) as lpath:
             self.card.interface.load_data_profile(lpath)
 
         return
@@ -400,8 +401,21 @@ class ModelCardLoader(CardLoader):
             return Suffix.ONNX.value
         return ""
 
+    def _load_data_interface(self) -> str:
+        interface_type = self.card.interface.sample_data_interface_type
+        # load sample data interface if it exists
+        if interface_type != CommonKwargs.UNDEFINED.value:
+            interface: DataInterface = get_interface(RegistryType.DATA, interface_type)()  # type: ignore
+            interface.feature_map = self.card.interface.feature_map
+            self.card.interface.sample_data = interface
+
+            return interface.data_suffix
+
+        return self.card.interface.data_suffix
+
     def _load_sample_data(self, lpath: Path, rpath: Path) -> None:
-        """Load sample data for model interface. Sample data is always saved via joblib
+        """Load sample data for model interface. Sample data is is either saved in
+        a DataInterface or joblib
 
         Args:
             lpath:
@@ -413,11 +427,13 @@ class ModelCardLoader(CardLoader):
             logger.info("Sample data already loaded")
             return None
 
-        load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(self.card.interface.data_suffix)
+        data_suffix = self._load_data_interface()
+
+        load_rpath = Path(self.card.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(data_suffix)
         if not self.storage_client.exists(load_rpath):
             return None
 
-        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, self.card.interface.data_suffix)
+        lpath = self.download(lpath, rpath, SaveName.SAMPLE_MODEL_DATA.value, data_suffix)
 
         return self.card.interface.load_sample_data(lpath)
 

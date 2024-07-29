@@ -82,8 +82,6 @@ card_info = CardInfo(name="linnerrud", repository="opsml", contact="user@email.c
 interface2 = PandasData(data=data)
 interface2.create_data_profile()
 
-comparison = DataProfiler.compare_reports(reports=[data_card.data_profile, data_card2.data_profile])
-comparison.to_file("comparison_report.html")
 ```
 
 ### Docs

@@ -3,8 +3,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import ConfigDict, model_validator
 
-from opsml.helpers.utils import get_class_name
-from opsml.model.interfaces.base import ModelInterface
+from opsml.model.interfaces.base import ModelInterface, _set_data_args
 from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 
 try:
@@ -59,8 +58,7 @@ try:
             assert model is not None, "Model must not be None"
 
             sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
-            model_args[CommonKwargs.SAMPLE_DATA.value] = sample_data
-            model_args[CommonKwargs.DATA_TYPE.value] = get_class_name(sample_data)
+            model_args = _set_data_args(sample_data, model_args)
             model_args[CommonKwargs.VOWPAL_ARGS.value] = model.get_arguments()
 
             return model_args

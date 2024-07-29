@@ -3,7 +3,7 @@ import pytest
 from opsml.data import SqlData
 
 
-def test_sql_interface():
+def test_sql_interface() -> None:
     interface = SqlData(
         sql_logic={"query": "SELECT * FROM table"},
         feature_descriptions={"a": "b"},
@@ -33,7 +33,7 @@ def test_sql_interface():
         )
 
 
-def test_backup_interfaces():
+def test_backup_interfaces() -> None:
     from opsml.data.interfaces.backups import ImageDatasetNoModule, TorchDataNoModule
     from opsml.model.interfaces.backups import (
         HuggingFaceModelNoModule,

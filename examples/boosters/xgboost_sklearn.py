@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# type: ignore
 
 import numpy as np
 import xgboost as xgb
@@ -108,12 +109,15 @@ class OpsmlXGBoostPipelineWorkflow:
 
         reg = xgb.XGBRegressor(n_estimators=3, max_depth=3)
 
-        # fit
+        # fit with array
+        train_data = data["train"].X.to_numpy()[:, 0:5].astype(np.float64)
+        y_train = data["train"].y.to_numpy()
+
         # Only using the first 5 numerical features for convenience
-        reg.fit(data["train"].X.to_numpy()[:, 0:5], data["train"].y.to_numpy())
+        reg.fit(train_data, y_train)
 
         # create model interface
-        interface = XGBoostModel(model=reg, sample_data=data["train"].X.to_numpy()[:, 0:5])
+        interface = XGBoostModel(model=reg, sample_data=train_data)
 
         # create modelcard
         modelcard = ModelCard(

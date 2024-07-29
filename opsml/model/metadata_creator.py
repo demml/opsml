@@ -47,7 +47,7 @@ class _TrainedModelMetadataCreator(_ModelMetadataCreator):
         try:
             model_data = get_model_data(
                 data_type=self.interface.data_type,
-                input_data=self.interface.sample_data,
+                input_data=self.interface._prediction_data,  # pylint: disable=protected-access
             )
 
             return model_data.feature_dict

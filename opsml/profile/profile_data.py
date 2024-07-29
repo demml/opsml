@@ -3,100 +3,48 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
-from typing import Any, List, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 import polars as pl
-
-DIR_PATH = os.path.dirname(__file__)
-ProfileReport = Any
+from scouter import DataProfile, Profiler
 
 
 class DataProfiler:
     @staticmethod
     def create_profile_report(
         data: Union[pd.DataFrame, pl.DataFrame],
-        name: str,
-        sample_perc: float = 1,
-    ) -> ProfileReport:
+        bin_size: int = 20,
+        features: Optional[List[str]] = None,
+    ) -> DataProfile:
         """
-        Creates a `ydata-profiling` report
+        Creates a `scouter` data profile report
 
         Args:
             data:
-                Pandas dataframe
-            sample_perc:
-                Percentage to use for sampling
-            name:
-                Name of the report
+                data to profile
+            bin_size:
+                number of bins for histograms. Default is 20
+            features:
+                Optional list of features to profile
 
         Returns:
-            `ProfileReport`
+            `DataProfile`
         """
-        from ydata_profiling import ProfileReport
+        profiler = Profiler()
 
-        kwargs = {"title": f"Profile report for {name}"}
-
-        if isinstance(data, pl.DataFrame):
-            if sample_perc < 1:
-                return ProfileReport(
-                    df=data.sample(fraction=sample_perc, with_replacement=False, shuffle=True).to_pandas(),
-                    config_file=os.path.join(DIR_PATH, "profile_config.yml"),
-                    lazy=False,
-                    **kwargs,
-                )
-
-            return ProfileReport(
-                df=data.to_pandas(),
-                config_file=os.path.join(DIR_PATH, "profile_config.yml"),
-                lazy=False,
-                **kwargs,
-            )
-
-        if sample_perc < 1:
-            return ProfileReport(
-                df=data.sample(frac=sample_perc, replace=False),
-                config_file=os.path.join(DIR_PATH, "profile_config.yml"),
-                lazy=False,
-                **kwargs,
-            )
-
-        return ProfileReport(
-            df=data,
-            config_file=os.path.join(DIR_PATH, "profile_config.yml"),
-            lazy=False,
-            **kwargs,
-        )
+        return profiler.create_data_profile(data=data, features=features, bin_size=bin_size)
 
     @staticmethod
-    def load_profile(data: bytes) -> ProfileReport:
+    def load_profile(data: str) -> DataProfile:
         """Loads a `ProfileReport` from data bytes
 
         Args:
             data:
-                `ProfileReport` in bytes
+                `DataProfile` as json string
 
         Returns:
-            `ProfileReport`
+            `DataProfile`
         """
-        from ydata_profiling import ProfileReport
 
-        profile = ProfileReport()
-        profile.loads(data)
-        return profile
-
-    @staticmethod
-    def compare_reports(reports: List[ProfileReport]) -> ProfileReport:
-        """Compares ProfileReports
-
-        Args:
-            reports:
-                List of `ProfileReport`
-
-        Returns:
-            `ProfileReport`
-        """
-        from ydata_profiling import compare
-
-        return compare(reports=reports)
+        return DataProfile.load_from_json(data)

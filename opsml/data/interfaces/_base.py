@@ -2,21 +2,16 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import joblib
-import pandas as pd
-import polars as pl
 from pydantic import BaseModel, ConfigDict, field_validator
+from scouter import DataProfile
 
 from opsml.data.splitter import Data, DataSplit, DataSplitter
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import FileUtils
+from opsml.profile.profile_data import DataProfiler
 from opsml.types import CommonKwargs, Feature, Suffix
 
 logger = ArtifactLogger.get_logger()
-
-try:
-    from ydata_profiling import ProfileReport
-except ModuleNotFoundError:
-    ProfileReport = Any
 
 
 class DataInterface(BaseModel):
@@ -44,7 +39,7 @@ class DataInterface(BaseModel):
     data: Optional[Any] = None
     data_splits: List[DataSplit] = []
     dependent_vars: List[Union[int, str]] = []
-    data_profile: Optional[ProfileReport] = None
+    data_profile: Optional[DataProfile] = None
     feature_map: Dict[str, Feature] = {}
     feature_descriptions: Dict[str, str] = {}
     sql_logic: Dict[str, str] = {}
@@ -109,11 +104,9 @@ class DataInterface(BaseModel):
 
     @field_validator("data_profile", mode="before")
     @classmethod
-    def _check_profile(cls, profile: Optional[ProfileReport]) -> Optional[ProfileReport]:
+    def _check_profile(cls, profile: Optional[DataProfile]) -> Optional[DataProfile]:
         if profile is not None:
-            from ydata_profiling import ProfileReport as ydata_profile
-
-            assert isinstance(profile, ydata_profile)
+            assert isinstance(profile, DataProfile)
         return profile
 
     def save_data(self, path: Path) -> None:
@@ -150,53 +143,38 @@ class DataInterface(BaseModel):
             path:
                 Pathlib object
         """
-        self.data_profile = ProfileReport().loads(
-            joblib.load(path),
-        )
+
+        profile = DataProfile.load_from_json(path.read_text(encoding="utf-8"))
+        self.data_profile = profile
 
     def save_data_profile(self, path: Path) -> None:
-        """Saves data profile to path. Data profiles are saved as joblib
-        joblib
+        """Saves data profile to path. Data profiles are saved as json object.
 
         Args:
             path:
-                Pathlib object
+                Pathlib path
         """
         assert self.data_profile is not None, "No data profile detected in interface"
+        self.data_profile.save_to_json(path)
 
-        if path.suffix == Suffix.HTML.value:
-            profile_artifact = self.data_profile.to_html()
-            path.write_text(profile_artifact, encoding="utf-8")
-        else:
-            profile_artifact = self.data_profile.dumps()
-            joblib.dump(profile_artifact, path)
-
-    def create_data_profile(self, sample_perc: float = 1, name: str = "data_profile") -> ProfileReport:
+    def create_data_profile(self, bin_size: int = 20, features: Optional[List[str]] = None) -> DataProfile:
         """Creates a data profile report
 
         Args:
-            sample_perc:
-                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
-            name:
-                Name of data profile
+            bin_size:
+                number of bins for histograms. Default is 20
+            features:
+                Optional list of features to profile
 
         """
-        from opsml.profile.profile_data import DataProfiler
+        profiler = DataProfiler()
 
-        if isinstance(self.data, (pl.DataFrame, pd.DataFrame)):
-            if self.data_profile is None:
-                self.data_profile = DataProfiler.create_profile_report(
-                    data=self.data,
-                    name=name,
-                    sample_perc=min(sample_perc, 1),  # max of 1
-                )
-                return self.data_profile
-
-            logger.info("Data profile already exists")
+        if self.data_profile is None:
+            self.data_profile = profiler.create_profile_report(self.data, bin_size, features)
             return self.data_profile
 
-        raise ValueError("A pandas dataframe type is required to create a data profile")
+        logger.info("Data profile already exists")
+        return self.data_profile
 
     def split_data(self) -> Dict[str, Data]:
         """
