@@ -95,11 +95,10 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@master
 
       - name: Install Boost
-        run: brew install boost
+        run: brew install postgresql libomp
 
       - name: Setup Project
         run : |
-          poetry run pip install psycopg2-binary
           make setup.project
 
       - name: Unit Tests
