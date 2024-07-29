@@ -67,7 +67,7 @@ jobs:
             make test.unit
 
   Unit-Test-MacOS:
-    needs: Lints
+    #needs: Lints
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
@@ -89,8 +89,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - run :
-            |
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Boost
+        run: brew install boost
+
+      - name: Setup Project
+        run : |
           poetry run pip install psycopg2-binary
           make setup.project
 
