@@ -95,7 +95,10 @@ jobs:
         uses: Homebrew/actions/setup-homebrew@master
 
       - name: Install Boost
-        run: brew install postgresql libomp
+        run: |
+            brew install postgresql libomp Boost
+            export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+            export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
 
       - name: Setup Project
         run : |
