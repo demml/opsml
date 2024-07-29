@@ -96,7 +96,7 @@ jobs:
 
       - name: Install Boost
         run: |
-            brew install postgresql libomp Boost
+            brew install postgresql libomp boost vowpal-wabbit
             export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
             export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
 
