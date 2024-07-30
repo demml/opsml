@@ -40,8 +40,8 @@ class S3StorageClientSettings(StorageClientSettings):
     storage_system: StorageSystem = StorageSystem.S3
 
 
-class AzureStorageClient(StorageClientSettings):
-    credentials: Optional[Any] = None
+class AzureStorageClientSettings(StorageClientSettings):
+    credentials: Any
     storage_system: StorageSystem = StorageSystem.AZURE
 
 

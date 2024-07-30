@@ -22,7 +22,7 @@ from opsml.types import (
     GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
-    AzureStorageClient,
+    AzureStorageClientSettings,
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
@@ -272,6 +272,31 @@ class S3StorageClient(StorageClientBase):
             return None
 
 
+class AzureStorageClient(StorageClientBase):
+    def __init__(
+        self,
+        settings: StorageSettings,
+    ) -> None:
+        import adlfs
+        from opsml.helpers.azure_utils import AzureCreds
+
+        assert isinstance(settings, AzureStorageClientSettings)
+        assert isinstance(settings.credentials, AzureCreds)
+
+        client = adlfs.AzureBlobFileSystem(
+            account_name=settings.credentials.account_name,
+            anon=False,
+            tenant_id=settings.credentials.tenant_id,
+            client_id=settings.credentials.client_id,
+            client_secret=settings.credentials.client_secret,
+        )
+
+        super().__init__(
+            settings=settings,
+            client=client,
+        )
+
+
 class LocalStorageClient(StorageClientBase):
     def put(self, lpath: Path, rpath: Path) -> None:
         if rpath.suffix:
@@ -417,6 +442,21 @@ def _get_s3_settings(storage_uri: str) -> S3StorageClientSettings:
     )
 
 
+def _get_azure_settings(storage_uri: str) -> AzureStorageClientSettings:
+    """Checks for Azure environment variables and returns the settings.
+    If not found, returns the default settings and attempts to connect to the
+    Azure file system using system defaults.
+    """
+    from opsml.helpers.azure_utils import AzureCreds
+
+    azure_creds = AzureCreds()
+
+    return AzureStorageClientSettings(
+        storage_uri=storage_uri,
+        credentials=azure_creds,
+    )
+
+
 def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
     if not cfg.is_tracking_local:
         return ApiStorageClient(
@@ -434,7 +474,7 @@ def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
     if cfg.storage_system == StorageSystem.S3:
         return S3StorageClient(_get_s3_settings(storage_uri=cfg.opsml_storage_uri))
     if cfg.storage_system == StorageSystem.AZURE:
-        return AzureStorageClient(storage_uri=cfg.opsml_storage_uri)
+        return AzureStorageClient(_get_azure_settings(storage_uri=cfg.opsml_storage_uri))
     return LocalStorageClient(StorageClientSettings(storage_uri=cfg.opsml_storage_uri))
 
 
