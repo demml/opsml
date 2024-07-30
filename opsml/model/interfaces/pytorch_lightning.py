@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -14,7 +15,7 @@ from opsml.model.interfaces.pytorch import TorchModel
 from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
-    from lightning import LightningModule, Trainer
+    from lightning import LightningModule, Trainer, __version__
 
     class LightningModel(TorchModel):
         """Model interface for Pytorch Lightning models.
@@ -113,9 +114,7 @@ try:
             try:
                 if model_arch is not None:
                     # attempt to load checkpoint into model
-                    assert issubclass(
-                        model_arch, LightningModule
-                    ), "Model architecture must be a subclass of LightningModule"
+                    assert issubclass(model_arch, LightningModule), "Model architecture must be a subclass of LightningModule"
                     self.model = model_arch.load_from_checkpoint(checkpoint_path=path, **kwargs)
 
                 else:
@@ -148,6 +147,24 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.CKPT.value
+
+        @property
+        def model_library(self) -> str:
+            return "pytorch-lightning"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return __version__
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("lightning")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

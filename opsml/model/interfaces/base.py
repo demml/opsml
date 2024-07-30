@@ -12,6 +12,7 @@ import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from opsml.data import DataInterface
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.types import (
     AllowedDataType,
@@ -21,6 +22,8 @@ from opsml.types import (
     OnnxModel,
     Suffix,
 )
+
+logger = ArtifactLogger.get_logger()
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:
@@ -340,6 +343,16 @@ class ModelInterface(BaseModel):
             return cast(Any, self.sample_data.data)
 
         return self.sample_data
+
+    @property
+    def model_library(self) -> str:
+        logger.error("Model library is not implemented")
+        raise NotImplementedError("Model library  is not implemented")
+
+    @property
+    def version(self) -> str:
+        logger.error("Version is not implemented")
+        raise NotImplementedError("Version is not implemented")
 
     @staticmethod
     def name() -> str:

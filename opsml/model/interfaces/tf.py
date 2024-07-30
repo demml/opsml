@@ -1,5 +1,6 @@
+from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import joblib
 import numpy as np
@@ -171,6 +172,24 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
+
+        @property
+        def model_library(self) -> str:
+            return "tensorflow"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return cast(str, tf.__version__)
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("tensorflow")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

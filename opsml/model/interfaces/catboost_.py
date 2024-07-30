@@ -1,4 +1,5 @@
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -30,6 +31,7 @@ from opsml.types import (
 logger = ArtifactLogger.get_logger()
 
 try:
+    import catboost
     from catboost import CatBoost
 
     class CatBoostModel(ModelInterface):
@@ -82,9 +84,7 @@ try:
                         sample_data,
                         get_class_name(sample_data),
                     )
-                    assert isinstance(
-                        sample_data, NumpyData
-                    ), "Sample data should be a numpy array if using an interface"
+                    assert isinstance(sample_data, NumpyData), "Sample data should be a numpy array if using an interface"
 
                 # validate data
                 assert isinstance(sample_data.data, np.ndarray), "Data should be a numpy array if using an interface"
@@ -240,6 +240,26 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.CATBOOST.value
+
+        @property
+        def version(self) -> str:
+            """Returns version of model"""
+
+            # attempt library first
+            try:
+                return cast(str, catboost.__version__)
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("catboost")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
+
+        @property
+        def model_library(self) -> str:
+            return "catboost"
 
         @staticmethod
         def name() -> str:

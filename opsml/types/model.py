@@ -29,6 +29,7 @@ logger = ArtifactLogger.get_logger()
 ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
 ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
 
+
 try:
     import onnxruntime as rt
 
@@ -377,6 +378,8 @@ class ModelMetadata(BaseModel):
     model_repository: str
     sample_data_uri: str
     opsml_version: str = __version__
+    model_library: str
+    model_library_version: str
     data_schema: DataSchema
 
     model_config = ConfigDict(
@@ -386,16 +389,19 @@ class ModelMetadata(BaseModel):
 
 
 # Sklearn protocol stub
-class BaseEstimator(Protocol): ...
+class BaseEstimator(Protocol):
+    ...
 
 
 # Onnx protocol stubs
 class Graph:
     @property
-    def output(self) -> Any: ...
+    def output(self) -> Any:
+        ...
 
     @property
-    def input(self) -> Any: ...
+    def input(self) -> Any:
+        ...
 
 
 class ModelProto(Protocol):
@@ -506,13 +512,16 @@ class LightGBMBooster(ModelType):
 
 class ModelCard(Protocol):
     @property
-    def metadata(self) -> ModelCardMetadata: ...
+    def metadata(self) -> ModelCardMetadata:
+        ...
 
     @property
-    def model(self) -> Any: ...
+    def model(self) -> Any:
+        ...
 
     @property
-    def to_onnx(self) -> bool: ...
+    def to_onnx(self) -> bool:
+        ...
 
 
 class ModelInterfaceTypes(str, Enum):

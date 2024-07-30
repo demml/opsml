@@ -1,5 +1,6 @@
+from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from pydantic import ConfigDict, model_validator
 
@@ -123,6 +124,24 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for model storage"""
             return Suffix.MODEL.value
+
+        @property
+        def model_library(self) -> str:
+            return "vowpalwabbit"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return cast(str, vw.__version__)
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("vowpalwabbit")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

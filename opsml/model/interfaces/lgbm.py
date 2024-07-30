@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -141,6 +142,24 @@ try:
         def preprocessor_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.JOBLIB.value
+
+        @property
+        def model_library(self) -> str:
+            return "lightgbm"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return lgb.__version__
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("lightgbm")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

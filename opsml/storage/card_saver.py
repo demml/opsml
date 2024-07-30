@@ -39,7 +39,10 @@ logger = ArtifactLogger.get_logger()
 
 
 # get root dir
-MODEL_SCHEMA = Path(__file__).parents[0] / "schemas" / "modelcard.yaml"
+_MODEL_SCHEMA = Path(__file__).parents[0] / "schemas" / "modelcard.yaml"
+
+# get root dir
+_POETRY_TEMPLATE = Path(__file__).parents[0] / "templates" / "pyproject_template.toml"
 
 
 class ModelCardSchema:
@@ -47,7 +50,7 @@ class ModelCardSchema:
 
     @staticmethod
     def get_schema() -> List[str]:
-        with MODEL_SCHEMA.open("r") as file_:
+        with _MODEL_SCHEMA.open("r") as file_:
             try:
                 model_schema: Dict[str, List[str]] = yaml.safe_load(file_)
                 return model_schema["keys"]
@@ -339,6 +342,8 @@ class ModelCardSaver(CardSaver):
             model_repository=self.card.repository,
             data_schema=self.card.metadata.data_schema,
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
+            model_library=self.card.interface.model_library,
+            model_library_version=self.card.interface.version,
         )
 
         # add extra uris
@@ -380,6 +385,8 @@ class ModelCardSaver(CardSaver):
         # save model metadata to json
         save_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
         save_path.write_text(model_metadata.model_dump_json(), "utf-8")
+
+        return None
 
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""
@@ -551,9 +558,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 

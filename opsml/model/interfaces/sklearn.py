@@ -1,5 +1,6 @@
+from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import joblib
 import pandas as pd
@@ -16,6 +17,7 @@ from opsml.model.interfaces.base import (
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 try:
+    from sklearn import __version__
     from sklearn.base import BaseEstimator
 
     class SklearnModel(ModelInterface):
@@ -102,6 +104,24 @@ try:
         def preprocessor_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.JOBLIB.value
+
+        @property
+        def model_library(self) -> str:
+            return "scikit-learn"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return cast(str, __version__)
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("sklearn")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

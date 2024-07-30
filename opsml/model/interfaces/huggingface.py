@@ -1,4 +1,5 @@
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
@@ -490,6 +491,24 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
+
+        @property
+        def version(self) -> str:
+            # attempt libray firslt
+            try:
+                return cast(str, transformers.__version__)
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("transformers")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
+
+        @property
+        def model_library(self) -> str:
+            return "transformers"
 
         @staticmethod
         def name() -> str:

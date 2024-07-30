@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -19,7 +20,7 @@ from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 logger = ArtifactLogger.get_logger()
 
 try:
-    from xgboost import Booster, DMatrix, XGBModel
+    from xgboost import Booster, DMatrix, XGBModel, __version__
 
     class XGBoostModel(ModelInterface):
         """Model interface for XGBoost model class. Currently, only Sklearn flavor of XGBoost
@@ -215,6 +216,24 @@ try:
             if self.model_class == TrainedModelType.XGB_BOOSTER.value:
                 return Suffix.DMATRIX.value
             return Suffix.JOBLIB.value
+
+        @property
+        def model_library(self) -> str:
+            return "xgboost"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return __version__
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("xgboost")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:

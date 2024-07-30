@@ -1,4 +1,5 @@
 import tempfile
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -265,6 +266,24 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.PT.value
+
+        @property
+        def model_library(self) -> str:
+            return "torch"
+
+        @property
+        def version(self) -> str:
+            # attempt library first
+            try:
+                return torch.__version__
+            except Exception:
+                pass
+
+            # attempt metadata
+            try:
+                return version("torch")
+            except Exception:
+                return CommonKwargs.UNDEFINED.value
 
         @staticmethod
         def name() -> str:
