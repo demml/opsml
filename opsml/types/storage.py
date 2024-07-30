@@ -61,7 +61,7 @@ StorageSettings = Union[
     GcsStorageClientSettings,
     ApiStorageClientSettings,
     S3StorageClientSettings,
-    AzureStorageClient,
+    AzureStorageClientSettings,
 ]
 
 
