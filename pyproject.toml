@@ -97,14 +97,17 @@ streaming-form-data = { version = ">=1.11.0, <1.16.0", optional = true }
 sqlalchemy = { extras = ["mypy"], version = "^2", optional = true }
 
 # optional dependencies for gcp
-gcsfs = { version = "^2023.5.0", optional = true }
+gcsfs = { version = "^2024.2.0", optional = true }
 
 # optional dependencies for cloud-sql
 pymysql = { version = "^1.0.2", optional = true }
 
 # optional dependencies for aws
-s3fs = { version = "^2023.5.0", optional = true }
+s3fs = { version = "^2024.2.0", optional = true }
 boto3 = { version = "^1.28", optional = true }
+
+# optional dependencies for azure
+adlfs = { version = "^2024.2.0", optional = true }
 
 [tool.poetry.extras]
 server = [
@@ -124,6 +127,7 @@ gcp_mysql = ["pymysql", "gcsfs"]
 gcp_postgres = ["psycopg2", "gcsfs"]
 s3 = ["s3fs", "boto3"]
 gcs = ["gcsfs"]
+azure = ["adlfs"]
 postgres = ["psycopg2"]
 mysql = ["pymysql"]
 tf_onnx = ["onnx", "onnxruntime", "tf2onnx"]

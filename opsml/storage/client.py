@@ -22,6 +22,7 @@ from opsml.types import (
     GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
+    AzureStorageClient,
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
@@ -236,9 +237,16 @@ class S3StorageClient(StorageClientBase):
         settings: StorageSettings,
     ):
         import s3fs
+        from opsml.helpers.aws_utils import AwsCredsSetter
 
         assert isinstance(settings, S3StorageClientSettings)
-        client = s3fs.S3FileSystem()
+        assert isinstance(settings.credentials, AwsCredsSetter)
+
+        client = s3fs.S3FileSystem(
+            key=settings.credentials.access_key,
+            secret=settings.credentials.secret_key,
+            token=settings.credentials.session_token,
+        )
 
         super().__init__(
             settings=settings,
@@ -394,6 +402,21 @@ def _get_gcs_settings(storage_uri: str) -> GcsStorageClientSettings:
     )
 
 
+def _get_s3_settings(storage_uri: str) -> S3StorageClientSettings:
+    """Checks for S3 environment variables and returns the settings.
+    If not found, returns the default settings and attempts to connect to the
+    s3 file system using system defaults.
+    """
+    from opsml.helpers.aws_utils import AwsCredsSetter
+
+    credentials = AwsCredsSetter()
+
+    return S3StorageClientSettings(
+        storage_uri=storage_uri,
+        credentials=credentials,
+    )
+
+
 def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
     if not cfg.is_tracking_local:
         return ApiStorageClient(
@@ -409,7 +432,9 @@ def get_storage_client(cfg: OpsmlConfig) -> StorageClientBase:
     if cfg.storage_system == StorageSystem.GCS:
         return GCSFSStorageClient(_get_gcs_settings(storage_uri=cfg.opsml_storage_uri))
     if cfg.storage_system == StorageSystem.S3:
-        return S3StorageClient(S3StorageClientSettings(storage_uri=cfg.opsml_storage_uri))
+        return S3StorageClient(_get_s3_settings(storage_uri=cfg.opsml_storage_uri))
+    if cfg.storage_system == StorageSystem.AZURE:
+        return AzureStorageClient(storage_uri=cfg.opsml_storage_uri)
     return LocalStorageClient(StorageClientSettings(storage_uri=cfg.opsml_storage_uri))
 
 

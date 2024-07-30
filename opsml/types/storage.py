@@ -18,6 +18,7 @@ FilePath = Union[List[str], str]
 class StorageSystem(Enum):
     GCS = "gcs"
     S3 = "s3"
+    AZURE = "azure"
     LOCAL = "local"
     API = "api"
 
@@ -35,7 +36,13 @@ class GcsStorageClientSettings(StorageClientSettings):
 
 
 class S3StorageClientSettings(StorageClientSettings):
+    credentials: Any
     storage_system: StorageSystem = StorageSystem.S3
+
+
+class AzureStorageClient(StorageClientSettings):
+    credentials: Optional[Any] = None
+    storage_system: StorageSystem = StorageSystem.AZURE
 
 
 class ApiStorageClientSettings(StorageClientSettings):
@@ -54,6 +61,7 @@ StorageSettings = Union[
     GcsStorageClientSettings,
     ApiStorageClientSettings,
     S3StorageClientSettings,
+    AzureStorageClient,
 ]
 
 
@@ -63,21 +71,25 @@ class BotoClient(Protocol):
         operation_name: str,
         Params: Dict[str, Any],  # pylint: disable=invalid-name
         ExpiresIn: int,  # pylint: disable=invalid-name
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Blob(Protocol):
     def generate_signed_url(
         self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Bucket(Protocol):
-    def blob(self, name: str) -> Blob: ...
+    def blob(self, name: str) -> Blob:
+        ...
 
 
 class GCSClient(Protocol):
-    def bucket(self, name: str) -> Bucket: ...
+    def bucket(self, name: str) -> Bucket:
+        ...
 
 
 class StorageClientProtocol(Protocol):

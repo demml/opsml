@@ -69,6 +69,8 @@ class OpsmlConfig(BaseSettings):
                 return StorageSystem.GCS
             if self.opsml_storage_uri.startswith("s3://"):
                 return StorageSystem.S3
+            if self.opsml_storage_uri.startswith("az://"):
+                return StorageSystem.AZURE
             return StorageSystem.LOCAL
         return StorageSystem.API
 
@@ -81,6 +83,8 @@ class OpsmlConfig(BaseSettings):
                 return re.sub("^gs://", "", storage_uri_lower)
             if storage_uri_lower.startswith("s3://"):
                 return re.sub("^s3://", "", storage_uri_lower)
+            if storage_uri_lower.startswith("az://"):
+                return re.sub("^az://", "", storage_uri_lower)
             return storage_uri_lower
         return self.opsml_proxy_root
 
