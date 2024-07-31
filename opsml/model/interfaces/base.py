@@ -12,6 +12,7 @@ import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from opsml.data import DataInterface
+from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import get_class_name
 from opsml.types import (
     AllowedDataType,
@@ -21,6 +22,8 @@ from opsml.types import (
     OnnxModel,
     Suffix,
 )
+
+logger = ArtifactLogger.get_logger()
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:
@@ -196,7 +199,12 @@ class ModelInterface(BaseModel):
             self.onnx_model.sess_to_path(path.with_suffix(Suffix.ONNX.value))
 
         assert self.onnx_model is not None, "No onnx model detected in interface"
-        metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+
+        metadata = _get_onnx_metadata(
+            self,
+            cast(rt.InferenceSession, self.onnx_model.sess),
+            self.onnx_model.data_schema,
+        )
 
         return metadata
 
@@ -208,7 +216,11 @@ class ModelInterface(BaseModel):
             return None
 
         metadata = _OnnxModelConverter(self).convert_model()
+
         self.onnx_model = metadata.onnx_model
+
+        assert self.onnx_model is not None, "No onnx model detected in interface"
+        self.onnx_model.data_schema = metadata.data_schema
 
         return None
 
@@ -340,6 +352,11 @@ class ModelInterface(BaseModel):
             return cast(Any, self.sample_data.data)
 
         return self.sample_data
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        logger.error("Dependencies is not implemented")
+        raise NotImplementedError("Dependencies is not implemented")
 
     @staticmethod
     def name() -> str:

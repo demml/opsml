@@ -19,7 +19,7 @@ from opsml.types import CommonKwargs, ModelReturn, Suffix, TrainedModelType
 logger = ArtifactLogger.get_logger()
 
 try:
-    from xgboost import Booster, DMatrix, XGBModel
+    from xgboost import Booster, DMatrix, XGBModel, __version__
 
     class XGBoostModel(ModelInterface):
         """Model interface for XGBoost model class. Currently, only Sklearn flavor of XGBoost
@@ -215,6 +215,18 @@ try:
             if self.model_class == TrainedModelType.XGB_BOOSTER.value:
                 return Suffix.DMATRIX.value
             return Suffix.JOBLIB.value
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["xgboost"] = __version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

@@ -14,7 +14,7 @@ from opsml.model.interfaces.pytorch import TorchModel
 from opsml.types import CommonKwargs, Suffix, TorchOnnxArgs, TrainedModelType
 
 try:
-    from lightning import LightningModule, Trainer
+    from lightning import LightningModule, Trainer, __version__
 
     class LightningModel(TorchModel):
         """Model interface for Pytorch Lightning models.
@@ -148,6 +148,18 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.CKPT.value
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["pytorch-lightning"] = __version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

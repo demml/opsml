@@ -1,4 +1,5 @@
 import tempfile
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -30,6 +31,7 @@ from opsml.types import (
 logger = ArtifactLogger.get_logger()
 
 try:
+    import catboost
     from catboost import CatBoost
 
     class CatBoostModel(ModelInterface):
@@ -157,7 +159,6 @@ try:
                 kwargs:
                     Additional kwargs
             """
-            import catboost
 
             model = getattr(catboost, self.model_type, CatBoost)()
             self.model = model.load_model(path.as_posix(), **kwargs)
@@ -210,7 +211,11 @@ try:
             assert self.onnx_model is not None, "No onnx model detected in interface"
 
             # no need to save onnx to bytes since its done during onnx conversion
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+            return _get_onnx_metadata(
+                self,
+                cast(rt.InferenceSession, self.onnx_model.sess),
+                self.onnx_model.data_schema,
+            )
 
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib
@@ -240,6 +245,34 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.CATBOOST.value
+
+        @property
+        def version(self) -> str:
+            """Returns version of model"""
+
+            # attempt library first
+            try:
+                return cast(str, catboost.__version__)
+            except AttributeError:
+                pass
+
+            # attempt metadata
+            try:
+                return version("catboost")
+            except PackageNotFoundError:
+                return CommonKwargs.UNDEFINED.value
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["catboost"] = catboost.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

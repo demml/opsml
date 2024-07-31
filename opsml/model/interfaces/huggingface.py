@@ -402,12 +402,20 @@ try:
             if self.is_pipeline:
                 if not model_saved:
                     self.onnx_model.sess.model.save_pretrained(path.with_suffix(""))
-                return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model.model))
+                return _get_onnx_metadata(
+                    self,
+                    cast(rt.InferenceSession, self.onnx_model.sess),
+                    self.onnx_model.data_schema,
+                )
 
             if not model_saved:
                 self.onnx_model.sess.save_pretrained(path.with_suffix(""))
 
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess.model))
+            return _get_onnx_metadata(
+                self,
+                cast(rt.InferenceSession, self.onnx_model.sess),
+                self.onnx_model.data_schema,
+            )
 
         # ------------ Model Interface Load Methods ------------#
 
@@ -490,6 +498,18 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return ""
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["transformers"] = transformers.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

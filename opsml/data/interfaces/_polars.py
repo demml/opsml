@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import polars as pl
 import pyarrow as pa
@@ -59,6 +59,18 @@ class PolarsData(DataInterface):
         assert isinstance(data, pl.DataFrame), "Data is not a Polars DataFrame"
 
         self.data = data
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        dependencies = {}
+
+        try:
+            dependencies["polars"] = pl.__version__
+
+        except AttributeError:
+            pass
+
+        return dependencies
 
     @property
     def data_type(self) -> str:

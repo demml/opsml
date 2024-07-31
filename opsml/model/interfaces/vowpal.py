@@ -124,6 +124,18 @@ try:
             """Returns suffix for model storage"""
             return Suffix.MODEL.value
 
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["vowpalwabbit"] = vw.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
+
         @staticmethod
         def name() -> str:
             return VowpalWabbitModel.__name__

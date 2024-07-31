@@ -29,6 +29,7 @@ logger = ArtifactLogger.get_logger()
 ValidModelInput = Union[pd.DataFrame, np.ndarray, Dict[str, Any], pl.DataFrame, str]  # type: ignore
 ValidSavedSample = Union[pa.Table, np.ndarray, Dict[str, np.ndarray]]  # type: ignore
 
+
 try:
     import onnxruntime as rt
 
@@ -127,6 +128,7 @@ class DataSchema(BaseModel):
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
     sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(default=None, description="Onnx model session")  # type: ignore
+    data_schema: Optional[DataSchema] = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -377,6 +379,7 @@ class ModelMetadata(BaseModel):
     model_repository: str
     sample_data_uri: str
     opsml_version: str = __version__
+    requirements: Dict[str, str] = Field(default_factory=dict)
     data_schema: DataSchema
 
     model_config = ConfigDict(

@@ -142,6 +142,18 @@ try:
             """Returns suffix for storage"""
             return Suffix.JOBLIB.value
 
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["lightgbm"] = lgb.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
+
         @staticmethod
         def name() -> str:
             return LightGBMModel.__name__

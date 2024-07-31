@@ -172,6 +172,18 @@ try:
             """Returns suffix for storage"""
             return ""
 
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["tensorflow"] = tf.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
+
         @staticmethod
         def name() -> str:
             return TensorFlowModel.__name__

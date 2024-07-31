@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 import zarr
@@ -36,8 +36,6 @@ class NumpyData(DataInterface):
 
         assert self.data is not None, "No data detected in interface"
 
-        print(type(self.data))
-
         zarr.save(path, self.data)
 
         self.feature_map = generate_feature_schema(self.data, self.data_type)
@@ -50,6 +48,18 @@ class NumpyData(DataInterface):
     @property
     def data_type(self) -> str:
         return AllowedDataType.NUMPY.value
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        dependencies = {}
+
+        try:
+            dependencies["numpy"] = np.__version__
+
+        except AttributeError:
+            pass
+
+        return dependencies
 
     @property
     def data_suffix(self) -> str:

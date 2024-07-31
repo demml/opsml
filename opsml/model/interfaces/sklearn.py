@@ -16,6 +16,7 @@ from opsml.model.interfaces.base import (
 from opsml.types import CommonKwargs, Suffix, TrainedModelType
 
 try:
+    from sklearn import __version__
     from sklearn.base import BaseEstimator
 
     class SklearnModel(ModelInterface):
@@ -102,6 +103,18 @@ try:
         def preprocessor_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.JOBLIB.value
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["scikit-learn"] = __version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

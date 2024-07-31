@@ -212,7 +212,11 @@ try:
 
             # no need to save onnx to bytes since its done during onnx conversion
             assert self.onnx_model is not None, "No onnx model detected in interface"
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+            return _get_onnx_metadata(
+                self,
+                cast(rt.InferenceSession, self.onnx_model.sess),
+                self.onnx_model.data_schema,
+            )
 
         def _convert_to_onnx_inplace(self) -> None:
             """Convert to onnx model using temp dir"""
@@ -265,6 +269,18 @@ try:
         def model_suffix(self) -> str:
             """Returns suffix for storage"""
             return Suffix.PT.value
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["torch"] = torch.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

@@ -25,21 +25,17 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.storage import client
-from opsml.types import (
-    AllowedDataType,
-    CardType,
-    ModelMetadata,
-    SaveName,
-    Suffix,
-    UriNames,
-)
+from opsml.types import CardType, ModelMetadata, SaveName, Suffix, UriNames
 from opsml.types.model import HuggingFaceOnnxArgs
 
 logger = ArtifactLogger.get_logger()
 
 
 # get root dir
-MODEL_SCHEMA = Path(__file__).parents[0] / "schemas" / "modelcard.yaml"
+_MODEL_SCHEMA = Path(__file__).parents[0] / "schemas" / "modelcard.yaml"
+
+# get root dir
+_POETRY_TEMPLATE = Path(__file__).parents[0] / "templates" / "pyproject_template.toml"
 
 
 class ModelCardSchema:
@@ -47,7 +43,7 @@ class ModelCardSchema:
 
     @staticmethod
     def get_schema() -> List[str]:
-        with MODEL_SCHEMA.open("r") as file_:
+        with _MODEL_SCHEMA.open("r") as file_:
             try:
                 model_schema: Dict[str, List[str]] = yaml.safe_load(file_)
                 return model_schema["keys"]
@@ -193,9 +189,13 @@ class DataCardSaver(CardSaver):
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JSON.value)
 
-        if self.card.interface.name() in [AllowedDataType.IMAGE.value, AllowedDataType.TEXT.value]:
+        if isinstance(self.card.interface, Dataset):
             # remove text and image dataset interface
             dumped_datacard["interface"] = None
+
+        else:
+            assert isinstance(self.card.interface, DataInterface), "Expected DataInterface"
+            dumped_datacard["interface"]["dependencies"] = self.card.interface.dependencies
 
         # save json
         with save_path.open("w", encoding="utf-8") as file_:
@@ -339,6 +339,7 @@ class ModelCardSaver(CardSaver):
             model_repository=self.card.repository,
             data_schema=self.card.metadata.data_schema,
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
+            dependencies=self.card.interface.dependencies,
         )
 
         # add extra uris
