@@ -1,5 +1,4 @@
 import tempfile
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -272,22 +271,16 @@ try:
             return Suffix.PT.value
 
         @property
-        def model_library(self) -> str:
-            return "torch"
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
 
-        @property
-        def version(self) -> str:
-            # attempt library first
             try:
-                return torch.__version__
-            except Exception:
+                dependencies["torch"] = torch.__version__
+
+            except AttributeError:
                 pass
 
-            # attempt metadata
-            try:
-                return version("torch")
-            except Exception:
-                return CommonKwargs.UNDEFINED.value
+            return dependencies
 
         @staticmethod
         def name() -> str:

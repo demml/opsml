@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, cast
+from typing import Dict, Optional, cast
 
 import pandas as pd
 import pyarrow as pa
@@ -52,6 +52,18 @@ class PandasData(DataInterface):
         )
 
         self.data = cast(pd.DataFrame, data)
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        dependencies = {}
+
+        try:
+            dependencies["pandas"] = pd.__version__
+
+        except AttributeError:
+            pass
+
+        return dependencies
 
     @property
     def data_type(self) -> str:

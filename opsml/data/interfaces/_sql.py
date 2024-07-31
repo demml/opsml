@@ -1,5 +1,7 @@
+from typing import Dict
+
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType
+from opsml.types import AllowedDataType, CommonKwargs
 
 
 class SqlData(DataInterface):
@@ -12,6 +14,10 @@ class SqlData(DataInterface):
         feature_descriptions:
             Dictionary or feature descriptions
     """
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        return {"sql": CommonKwargs.UNDEFINED.value}
 
     @property
     def data_type(self) -> str:

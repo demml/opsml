@@ -1,5 +1,5 @@
 import tempfile
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
@@ -159,7 +159,6 @@ try:
                 kwargs:
                     Additional kwargs
             """
-            import catboost
 
             model = getattr(catboost, self.model_type, CatBoost)()
             self.model = model.load_model(path.as_posix(), **kwargs)
@@ -254,18 +253,26 @@ try:
             # attempt library first
             try:
                 return cast(str, catboost.__version__)
-            except Exception:
+            except AttributeError:
                 pass
 
             # attempt metadata
             try:
                 return version("catboost")
-            except Exception:
+            except PackageNotFoundError:
                 return CommonKwargs.UNDEFINED.value
 
         @property
-        def model_library(self) -> str:
-            return "catboost"
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["catboost"] = catboost.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @staticmethod
         def name() -> str:

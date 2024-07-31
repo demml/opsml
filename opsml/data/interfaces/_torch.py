@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from opsml.data.interfaces._base import DataInterface
 from opsml.types import AllowedDataType, Feature, Suffix
@@ -40,6 +40,18 @@ try:
         def load_data(self, path: Path) -> None:
             """Load torch tensors or torch datasets"""
             self.data = torch.load(path)
+
+        @property
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
+            try:
+                dependencies["torch"] = torch.__version__
+
+            except AttributeError:
+                pass
+
+            return dependencies
 
         @property
         def data_type(self) -> str:

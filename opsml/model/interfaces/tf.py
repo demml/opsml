@@ -1,6 +1,5 @@
-from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
 import numpy as np
@@ -174,22 +173,16 @@ try:
             return ""
 
         @property
-        def model_library(self) -> str:
-            return "tensorflow"
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
 
-        @property
-        def version(self) -> str:
-            # attempt library first
             try:
-                return cast(str, tf.__version__)
-            except Exception:
+                dependencies["tensorflow"] = tf.__version__
+
+            except AttributeError:
                 pass
 
-            # attempt metadata
-            try:
-                return version("tensorflow")
-            except Exception:
-                return CommonKwargs.UNDEFINED.value
+            return dependencies
 
         @staticmethod
         def name() -> str:

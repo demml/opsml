@@ -229,6 +229,11 @@ class DataInterface(BaseModel):
         raise ValueError("No data splits provided")
 
     @property
+    def dependencies(self) -> Dict[str, str]:
+        logger.error("Dependencies is not implemented")
+        raise NotImplementedError("Dependencies is not implemented")
+
+    @property
     def data_suffix(self) -> str:
         """Returns suffix for storage"""
         return Suffix.JOBLIB.value

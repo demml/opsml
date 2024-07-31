@@ -354,14 +354,9 @@ class ModelInterface(BaseModel):
         return self.sample_data
 
     @property
-    def model_library(self) -> str:
-        logger.error("Model library is not implemented")
-        raise NotImplementedError("Model library  is not implemented")
-
-    @property
-    def version(self) -> str:
-        logger.error("Version is not implemented")
-        raise NotImplementedError("Version is not implemented")
+    def dependencies(self) -> Dict[str, str]:
+        logger.error("Dependencies is not implemented")
+        raise NotImplementedError("Dependencies is not implemented")
 
     @staticmethod
     def name() -> str:

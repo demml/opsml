@@ -1,6 +1,5 @@
-from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Optional, Union
 
 import joblib
 import pandas as pd
@@ -106,22 +105,16 @@ try:
             return Suffix.JOBLIB.value
 
         @property
-        def model_library(self) -> str:
-            return "scikit-learn"
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
 
-        @property
-        def version(self) -> str:
-            # attempt library first
             try:
-                return cast(str, __version__)
-            except Exception:
+                dependencies["scikit-learn"] = __version__
+
+            except AttributeError:
                 pass
 
-            # attempt metadata
-            try:
-                return version("sklearn")
-            except Exception:
-                return CommonKwargs.UNDEFINED.value
+            return dependencies
 
         @staticmethod
         def name() -> str:

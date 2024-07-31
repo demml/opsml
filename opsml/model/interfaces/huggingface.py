@@ -1,5 +1,4 @@
 import tempfile
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional, Union, cast
 
@@ -501,22 +500,16 @@ try:
             return ""
 
         @property
-        def version(self) -> str:
-            # attempt libray firslt
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
+
             try:
-                return cast(str, transformers.__version__)
-            except Exception:
+                dependencies["transformers"] = transformers.__version__
+
+            except AttributeError:
                 pass
 
-            # attempt metadata
-            try:
-                return version("transformers")
-            except Exception:
-                return CommonKwargs.UNDEFINED.value
-
-        @property
-        def model_library(self) -> str:
-            return "transformers"
+            return dependencies
 
         @staticmethod
         def name() -> str:

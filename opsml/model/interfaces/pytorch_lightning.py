@@ -1,4 +1,3 @@
-from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -151,22 +150,16 @@ try:
             return Suffix.CKPT.value
 
         @property
-        def model_library(self) -> str:
-            return "pytorch-lightning"
+        def dependencies(self) -> Dict[str, str]:
+            dependencies = {}
 
-        @property
-        def version(self) -> str:
-            # attempt library first
             try:
-                return __version__
-            except Exception:
+                dependencies["pytorch-lightning"] = __version__
+
+            except AttributeError:
                 pass
 
-            # attempt metadata
-            try:
-                return version("lightning")
-            except Exception:
-                return CommonKwargs.UNDEFINED.value
+            return dependencies
 
         @staticmethod
         def name() -> str:

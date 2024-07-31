@@ -25,14 +25,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.huggingface import HuggingFaceModel
 from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.storage import client
-from opsml.types import (
-    AllowedDataType,
-    CardType,
-    ModelMetadata,
-    SaveName,
-    Suffix,
-    UriNames,
-)
+from opsml.types import CardType, ModelMetadata, SaveName, Suffix, UriNames
 from opsml.types.model import HuggingFaceOnnxArgs
 
 logger = ArtifactLogger.get_logger()
@@ -196,9 +189,13 @@ class DataCardSaver(CardSaver):
 
         save_path = Path(self.lpath / SaveName.CARD.value).with_suffix(Suffix.JSON.value)
 
-        if self.card.interface.name() in [AllowedDataType.IMAGE.value, AllowedDataType.TEXT.value]:
+        if isinstance(self.card.interface, Dataset):
             # remove text and image dataset interface
             dumped_datacard["interface"] = None
+
+        else:
+            assert isinstance(self.card.interface, DataInterface), "Expected DataInterface"
+            dumped_datacard["interface"]["dependencies"] = self.card.interface.dependencies
 
         # save json
         with save_path.open("w", encoding="utf-8") as file_:
@@ -342,8 +339,7 @@ class ModelCardSaver(CardSaver):
             model_repository=self.card.repository,
             data_schema=self.card.metadata.data_schema,
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
-            model_library=self.card.interface.model_library,
-            model_library_version=self.card.interface.version,
+            dependencies=self.card.interface.dependencies,
         )
 
         # add extra uris
@@ -385,8 +381,6 @@ class ModelCardSaver(CardSaver):
         # save model metadata to json
         save_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
         save_path.write_text(model_metadata.model_dump_json(), "utf-8")
-
-        return None
 
     def _save_modelcard(self) -> None:
         """Saves a modelcard to file system"""

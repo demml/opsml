@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -46,6 +46,18 @@ class ArrowData(DataInterface):
         pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
 
         self.data = pa_table
+
+    @property
+    def dependencies(self) -> Dict[str, str]:
+        dependencies = {}
+
+        try:
+            dependencies["pyarrow"] = pa.__version__
+
+        except AttributeError:
+            pass
+
+        return dependencies
 
     @property
     def data_type(self) -> str:

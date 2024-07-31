@@ -379,8 +379,7 @@ class ModelMetadata(BaseModel):
     model_repository: str
     sample_data_uri: str
     opsml_version: str = __version__
-    model_library: str
-    model_library_version: str
+    requirements: Dict[str, str] = Field(default_factory=dict)
     data_schema: DataSchema
 
     model_config = ConfigDict(
