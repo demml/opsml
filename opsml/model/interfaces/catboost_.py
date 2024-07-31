@@ -84,7 +84,9 @@ try:
                         sample_data,
                         get_class_name(sample_data),
                     )
-                    assert isinstance(sample_data, NumpyData), "Sample data should be a numpy array if using an interface"
+                    assert isinstance(
+                        sample_data, NumpyData
+                    ), "Sample data should be a numpy array if using an interface"
 
                 # validate data
                 assert isinstance(sample_data.data, np.ndarray), "Data should be a numpy array if using an interface"
@@ -210,7 +212,11 @@ try:
             assert self.onnx_model is not None, "No onnx model detected in interface"
 
             # no need to save onnx to bytes since its done during onnx conversion
-            return _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+            return _get_onnx_metadata(
+                self,
+                cast(rt.InferenceSession, self.onnx_model.sess),
+                self.onnx_model.data_schema,
+            )
 
         def save_preprocessor(self, path: Path) -> None:
             """Saves preprocessor to path if present. Base implementation use Joblib

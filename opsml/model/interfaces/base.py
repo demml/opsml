@@ -199,7 +199,12 @@ class ModelInterface(BaseModel):
             self.onnx_model.sess_to_path(path.with_suffix(Suffix.ONNX.value))
 
         assert self.onnx_model is not None, "No onnx model detected in interface"
-        metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
+
+        metadata = _get_onnx_metadata(
+            self,
+            cast(rt.InferenceSession, self.onnx_model.sess),
+            self.onnx_model.data_schema,
+        )
 
         return metadata
 
@@ -211,7 +216,11 @@ class ModelInterface(BaseModel):
             return None
 
         metadata = _OnnxModelConverter(self).convert_model()
+
         self.onnx_model = metadata.onnx_model
+
+        assert self.onnx_model is not None, "No onnx model detected in interface"
+        self.onnx_model.data_schema = metadata.data_schema
 
         return None
 

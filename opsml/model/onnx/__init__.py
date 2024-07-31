@@ -1,8 +1,10 @@
+from typing import Optional
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
 from opsml.model.metadata_creator import _TrainedModelMetadataCreator
 from opsml.model.utils.data_helper import ModelDataHelper, get_model_data
-from opsml.types import ModelReturn
+from opsml.types import DataSchema, ModelReturn
 
 logger = ArtifactLogger.get_logger()
 
@@ -96,7 +98,11 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
         return False
 
 
-def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.InferenceSession) -> ModelReturn:
+def _get_onnx_metadata(
+    model_interface: ModelInterface,
+    onnx_model: rt.InferenceSession,
+    data_schema: Optional[DataSchema] = None,
+) -> ModelReturn:
     """Helper for extracting model metadata for a model that is skipping auto onnx conversion.
     This is primarily used for huggingface models.
 
@@ -109,10 +115,16 @@ def _get_onnx_metadata(model_interface: ModelInterface, onnx_model: rt.Inference
     # set metadata
     meta_creator = _TrainedModelMetadataCreator(model_interface)
     metadata = meta_creator.get_model_metadata()
-    onnx_input_features, onnx_output_features = _ModelConverter.create_feature_dict(onnx_model)
 
-    metadata.data_schema.onnx_input_features = onnx_input_features
-    metadata.data_schema.onnx_output_features = onnx_output_features
+    if data_schema is not None:
+        metadata.data_schema.onnx_input_features = data_schema.onnx_input_features
+        metadata.data_schema.onnx_output_features = data_schema.onnx_output_features
+
+    else:
+        onnx_input_features, onnx_output_features = _ModelConverter.create_feature_dict(onnx_model)
+        metadata.data_schema.onnx_input_features = onnx_input_features
+        metadata.data_schema.onnx_output_features = onnx_output_features
+
     metadata.data_schema.onnx_version = onnx.__version__  # type: ignore[attr-defined]
 
     return metadata

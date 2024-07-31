@@ -5,6 +5,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+
 from typing import Any, Dict, List, Optional, Tuple
 
 import onnx
@@ -186,7 +187,6 @@ class _ModelConverter:
             onnx_output_features=onnx_output_features,
             onnx_version=onnx.__version__,  # type: ignore[attr-defined]
         )
-
         return ModelReturn(onnx_model=onnx_model, data_schema=schema)
 
     def _create_onnx_session(self, onnx_model: ModelProto) -> None:

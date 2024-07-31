@@ -128,6 +128,7 @@ class DataSchema(BaseModel):
 class OnnxModel(BaseModel):
     onnx_version: str = Field(..., description="Version of onnx model used to create proto")
     sess: Union[OnnxInferenceSession, ORTModel, Pipeline] = Field(default=None, description="Onnx model session")  # type: ignore
+    data_schema: Optional[DataSchema] = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -389,19 +390,16 @@ class ModelMetadata(BaseModel):
 
 
 # Sklearn protocol stub
-class BaseEstimator(Protocol):
-    ...
+class BaseEstimator(Protocol): ...
 
 
 # Onnx protocol stubs
 class Graph:
     @property
-    def output(self) -> Any:
-        ...
+    def output(self) -> Any: ...
 
     @property
-    def input(self) -> Any:
-        ...
+    def input(self) -> Any: ...
 
 
 class ModelProto(Protocol):
@@ -512,16 +510,13 @@ class LightGBMBooster(ModelType):
 
 class ModelCard(Protocol):
     @property
-    def metadata(self) -> ModelCardMetadata:
-        ...
+    def metadata(self) -> ModelCardMetadata: ...
 
     @property
-    def model(self) -> Any:
-        ...
+    def model(self) -> Any: ...
 
     @property
-    def to_onnx(self) -> bool:
-        ...
+    def to_onnx(self) -> bool: ...
 
 
 class ModelInterfaceTypes(str, Enum):
