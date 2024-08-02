@@ -13,6 +13,10 @@ from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Unio
 
 from fsspec.implementations.local import LocalFileSystem
 
+from datetime import datetime, timedelta
+
+from adlfs import BlobServiceClient, BlobClient, generate_container_sas
+
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
 from opsml.storage.api import ApiClient, ApiRoutes, RequestType
@@ -38,7 +42,7 @@ logger = ArtifactLogger.get_logger()
 class _FileSystemProtocol(Protocol):
     """
     The *low level* file system interface which the storage client uses to write
-    to it's underlying file system.
+    to its underlying file system.
 
     This interface is based on the fsspec AbstractFileSystem interface, however
     simplified to only the functions needed by opsml to reduce the API surface.
@@ -295,8 +299,44 @@ class AzureStorageClient(StorageClientBase):
             settings=settings,
             client=client,
         )
-
-
+    
+    @cached_property
+    
+    #Adapted from: https://stackoverflow.com/questions/78475904/generating-sas-url-for-azure-blob-container-with-proper-permissions - windows example
+    ## Since adlfs The AzureBlobFileSystem accepts all of the Async BlobServiceClient arguments. The code should probably work...
+    
+    ## Should maybe be possible to replace credentials here with client from client = AzureStorageClient(settings=settings) because of the acceptance of BlobServiceClient arguments (above)?
+    
+    def generate_sas_url_for_container(account_name, credentials, container_name, permissions, validity_hours, blob_name):
+        try:
+            blob_service_client = BlobServiceClient(account_url=f"https://{account_name}.blob.core.windows.net/", credential=credentials) #this is for windows currently
+            user_delegation_key = blob_service_client.get_user_delegation_key(datetime.now(datetime.UTC), datetime.now(datetime.UTC) + timedelta(hours=1))
+            expiry = datetime.now(datetime.UTC) + timedelta(hours=validity_hours)
+            sas_token = generate_container_sas(
+                account_name=blob_service_client.account_name,
+                user_delegation_key=user_delegation_key,
+                container_name=container_name,
+                permission=permissions,
+                expiry=expiry,
+                protocol="https"
+            )
+            sas_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
+            return sas_url
+        except Exception as e:
+            print(f"Error generating SAS URL for container: {e}")
+            return None
+    
+    # this probably belongs in the Filesystem protocol section...
+    def upload_file_to_container_with_sas_url(sas_url_with_blob_name, client, file_path):
+        try:
+            blob_client = client.from_blob_url(sas_url_with_blob_name)
+            with open(file_path, "rb") as data:
+                blob_client.upload_blob(data)
+            return True
+        except Exception as e:
+            print(f"Error uploading file to container: {e}")
+            return False
+    
 class LocalStorageClient(StorageClientBase):
     def put(self, lpath: Path, rpath: Path) -> None:
         if rpath.suffix:
