@@ -4,8 +4,9 @@ from typing import Optional
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from opsml.data.formatter import generate_feature_schema
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix
+from opsml.types import AllowedDataType, Suffix
 
 
 class ArrowData(DataInterface):
@@ -35,15 +36,7 @@ class ArrowData(DataInterface):
         """Saves pandas dataframe to parquet"""
 
         assert self.data is not None, "No data detected in interface"
-        schema = self.data.schema
-        self.feature_map = {
-            feature: Feature(
-                feature_type=str(type_),
-                shape=(1,),
-            )
-            for feature, type_ in zip(schema.names, schema.types)
-        }
-
+        self.feature_map = generate_feature_schema(self.data, self.data_type)
         pq.write_table(self.data, path)
 
     def load_data(self, path: Path) -> None:

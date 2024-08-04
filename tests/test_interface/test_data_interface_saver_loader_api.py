@@ -3,6 +3,9 @@ import uuid
 from pathlib import Path
 from typing import cast
 
+import polars as pl
+from sklearn.preprocessing import LabelEncoder
+
 from opsml.cards import DataCard
 from opsml.data import (
     ArrowData,
@@ -64,6 +67,11 @@ def test_pandas_api_client(
     api_storage_client: client.StorageClientBase,
 ) -> None:
     data: PandasData = pandas_data
+    assert data.data is not None
+
+    encoder = LabelEncoder()
+    data.data["animals"] = encoder.fit_transform(data.data["animals"])
+
     data.create_data_profile()
 
     datacard = DataCard(
@@ -79,8 +87,7 @@ def test_pandas_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
@@ -108,6 +115,12 @@ def test_polars_api_client(
     api_storage_client: client.StorageClientBase,
 ) -> None:
     data: PolarsData = polars_data
+    assert data.data is not None
+
+    encoder = LabelEncoder()
+    transformed = encoder.fit_transform(data.data["bar"].to_pandas())
+    data.data = data.data.with_columns([pl.Series(transformed).alias("bar")])
+
     data.create_data_profile()
 
     datacard = DataCard(
@@ -123,8 +136,7 @@ def test_polars_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JOBLIB.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
@@ -223,13 +235,14 @@ def test_image_data(
 
     ## swap write path so we can test loading
     write_dir_path = uuid.uuid4().hex
-    loaded_card.interface.data_dir = data_dir.parent / write_dir_path
+    loaded_interface = cast(ImageDataset, loaded_card.interface)
+    loaded_interface.data_dir = data_dir.parent / write_dir_path
     loaded_card.load_data()
 
-    assert loaded_card.interface.data_dir.exists()
+    assert loaded_interface.data_dir.exists()
 
-    shutil.rmtree(loaded_card.interface.data_dir, ignore_errors=True)
-    assert not loaded_card.interface.data_dir.exists()
+    shutil.rmtree(loaded_interface.data_dir, ignore_errors=True)
+    assert not loaded_interface.data_dir.exists()
 
 
 def test_text_data(
@@ -270,10 +283,11 @@ def test_text_data(
 
     ## swap write path so we can test loading
     write_dir_path = uuid.uuid4().hex
-    loaded_card.interface.data_dir = data_dir.parent / write_dir_path
+    loaded_interface = cast(TextDataset, loaded_card.interface)
+    loaded_interface.data_dir = data_dir.parent / write_dir_path
     loaded_card.load_data()
 
-    assert loaded_card.interface.data_dir.exists()
+    assert loaded_interface.data_dir.exists()
 
-    shutil.rmtree(loaded_card.interface.data_dir, ignore_errors=True)
-    assert not loaded_card.interface.data_dir.exists()
+    shutil.rmtree(loaded_interface.data_dir, ignore_errors=True)
+    assert not loaded_interface.data_dir.exists()

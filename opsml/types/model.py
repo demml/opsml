@@ -107,6 +107,7 @@ class HuggingFaceModuleType(str, Enum):
 class Feature(BaseModel):
     feature_type: str
     shape: Tuple[Any, ...]
+    extra_args: Dict[str, Optional[Union[str, int, float, List[str]]]] = Field(default_factory=dict)
 
 
 class DataSchema(BaseModel):

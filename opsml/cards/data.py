@@ -14,6 +14,7 @@ from typing import (  # noqa # pylint: disable=unused-import
 )
 
 from pydantic import ConfigDict, SerializeAsAny
+from scouter import DataProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.data import Dataset
@@ -21,11 +22,6 @@ from opsml.data.interfaces._base import DataInterface
 from opsml.data.splitter import Data, DataSplit
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CardType, DataCardMetadata
-
-try:
-    from ydata_profiling import ProfileReport
-except ModuleNotFoundError:
-    ProfileReport = Any
 
 logger = ArtifactLogger.get_logger()
 
@@ -96,6 +92,16 @@ class DataCard(ArtifactCard):
 
         DataCardLoader(self).load_data(**kwargs)
 
+    def create_data_profile(self, bin_size: int = 20, features: Optional[List[str]] = None) -> Optional[DataProfile]:
+        """
+        Create data profile for the current data card
+        """
+        if isinstance(self.interface, DataInterface):
+            return self.interface.create_data_profile(bin_size=bin_size, features=features)
+
+        logger.warning("Data profile is only supported for DataInterface subclasses. You have a Dataset subclass.")
+        return None
+
     def load_data_profile(self) -> None:
         """
         Load data to interface
@@ -127,20 +133,6 @@ class DataCard(ArtifactCard):
         """
 
         self.metadata.additional_info = {**info, **self.metadata.additional_info}
-
-    def create_data_profile(self, sample_perc: float = 1) -> ProfileReport:
-        """Creates a data profile report
-
-        Args:
-            sample_perc:
-                Percentage of data to use when creating a profile. Sampling is recommended for large dataframes.
-                Percentage is expressed as a decimal (e.g. 1 = 100%, 0.5 = 50%, etc.)
-
-        """
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data profile can only be created for a DataInterface subclasses"
-        self.interface.create_data_profile(sample_perc, str(self.name))
 
     def split_data(self) -> Dict[str, Data]:
         """Splits data interface according to data split logic"""

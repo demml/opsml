@@ -5,7 +5,7 @@ import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, field_serializer, model_validator, field_validator
+from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer, model_validator, field_validator
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
@@ -270,11 +270,15 @@ class HardwareMetricRecord(BaseModel):
     metrics: HardwareMetrics
 
     # serialize datetime
-    @field_serializer("created_at")
-    def serialize_created_at(self, value: Optional[datetime.datetime] = None) -> Optional[str]:
-        if value is not None:
-            return value.isoformat()
-        return value
+    @field_serializer("created_at", mode="plain")
+    def serialize_created_at(
+        self,
+        created_at: Optional[datetime.datetime],
+        _info: FieldSerializationInfo,
+    ) -> Optional[str]:
+        if created_at is not None:
+            return created_at.isoformat()
+        return created_at
 
 
 class HardwareMetricscPut(BaseModel):

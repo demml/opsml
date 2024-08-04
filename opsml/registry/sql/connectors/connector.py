@@ -2,52 +2,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from functools import cached_property
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import all_subclasses
-from opsml.registry.sql.connectors.base import (
-    BaseSQLConnection,
-    CloudSQLConnection,
-    CloudSqlPrefix,
-    PythonCloudSqlType,
-    SqlType,
-)
+from opsml.registry.sql.connectors.base import BaseSQLConnection, SqlType
 
 logger = ArtifactLogger.get_logger()
 
 _ENGINE_CACHE: Dict[str, BaseSQLConnection] = {}
 
 
-class CloudSqlPostgresql(CloudSQLConnection):
-    @property
-    def _sqlalchemy_prefix(self) -> str:
-        return CloudSqlPrefix.POSTGRES.value
-
-    @property
-    def _python_db_type(self) -> str:
-        return PythonCloudSqlType.POSTGRES.value
-
-    @staticmethod
-    def validate_type(connector_type: str) -> bool:
-        return connector_type == SqlType.CLOUDSQL_POSTGRES
-
-
-class CloudSqlMySql(CloudSQLConnection):
-    @property
-    def _sqlalchemy_prefix(self) -> str:
-        return CloudSqlPrefix.MYSQL.value
-
-    @property
-    def _python_db_type(self) -> str:
-        return PythonCloudSqlType.MYSQL.value
-
-    @staticmethod
-    def validate_type(connector_type: str) -> bool:
-        return connector_type == SqlType.CLOUDSQL_MYSQL
-
-
-class LocalSQLConnection(BaseSQLConnection):
+class SQLConnection(BaseSQLConnection):
     def __init__(
         self,
         tracking_uri: str,
@@ -76,10 +41,6 @@ class LocalSQLConnection(BaseSQLConnection):
     def _sqlalchemy_prefix(self) -> str:
         return self.tracking_uri
 
-    @staticmethod
-    def validate_type(connector_type: str) -> bool:
-        return connector_type == SqlType.LOCAL
-
 
 class DefaultConnector:
     def __init__(
@@ -98,21 +59,7 @@ class DefaultConnector:
             if db_type in self.tracking_uri:
                 connector_type = db_type
 
-        if "cloudsql" in self.tracking_uri:
-            connector_type = f"cloudsql_{connector_type}"
-
         return connector_type
-
-    def _get_connector_type(self, connector_type: str) -> Type[BaseSQLConnection]:
-        """Gets the sql connection given a connector type"""
-        return next(
-            (
-                connector
-                for connector in all_subclasses(BaseSQLConnection)
-                if connector.validate_type(connector_type=connector_type)
-            ),
-            LocalSQLConnection,
-        )
 
     def get_connector(self) -> BaseSQLConnection:
         """Gets the sql connector to use when running opsml locally (without api proxy)"""
@@ -121,8 +68,7 @@ class DefaultConnector:
         if cached_conn is not None:
             return cached_conn
 
-        connector_type = self._get_connector_type(connector_type=self._get_connector_type_str())
-        connector = connector_type(self.tracking_uri, self.credentials)
+        connector = SQLConnection(self.tracking_uri, self.credentials)
 
         _ENGINE_CACHE[self.tracking_uri] = connector
         return connector

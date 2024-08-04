@@ -75,7 +75,7 @@ class _OnnxModelConverter(_TrainedModelMetadataCreator):
 
         model_data = get_model_data(
             data_type=self.interface.data_type,
-            input_data=self.interface.sample_data,
+            input_data=self.interface._prediction_data,  # pylint: disable=protected-access
         )
 
         onnx_model_return = _OnnxConverterHelper.convert_model(model_interface=self.interface, data_helper=model_data)

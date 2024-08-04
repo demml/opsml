@@ -165,7 +165,7 @@ class TensorflowDictOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        assert isinstance(self.interface.model, tf.keras.Model)
+        assert isinstance(self.interface.model, tf.keras.Model)  # pylint: disable=no-member
         spec = []
         for input_ in self.interface.model.inputs:
             shape_, dtype = list(input_.shape), input_.dtype
@@ -190,7 +190,7 @@ class TensorflowNumpyOnnxConverter(DataConverter):
         """
         import tensorflow as tf
 
-        assert isinstance(self.interface.model, tf.keras.Model)
+        assert isinstance(self.interface.model, tf.keras.Model)  # pylint: disable=no-member
 
         input_ = self.interface.model.inputs[0]
         shape_, dtype = list(input_.shape), input_.dtype

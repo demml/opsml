@@ -182,8 +182,7 @@ class DataCardSaver(CardSaver):
         save_path = self.lpath / SaveName.DATA_PROFILE.value
 
         # save html and joblib version
-        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.HTML.value))
-        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.JOBLIB.value))
+        self.card.interface.save_data_profile(save_path.with_suffix(Suffix.JSON.value))
 
     def _save_datacard(self) -> None:
         """Saves a datacard to file system"""
@@ -275,7 +274,12 @@ class ModelCardSaver(CardSaver):
     def _save_sample_data(self) -> None:
         """Saves sample data associated with ModelCard to filesystem"""
 
-        save_path = (self.lpath / SaveName.SAMPLE_MODEL_DATA.value).with_suffix(self.card.interface.data_suffix)
+        if isinstance(self.card.sample_data, DataInterface):
+            save_path = (self.lpath / SaveName.SAMPLE_MODEL_DATA.value).with_suffix(self.card.sample_data.data_suffix)
+
+        else:
+            save_path = (self.lpath / SaveName.SAMPLE_MODEL_DATA.value).with_suffix(self.card.interface.data_suffix)
+
         self.card.interface.save_sample_data(save_path)
         self.card_uris.sample_data_uri = save_path
 

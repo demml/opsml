@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
   Lints:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-            fetch-depth: 0
+          fetch-depth: 0
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
@@ -29,8 +29,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - run : make setup.project
-      - run : make lints.ci
+      - run: make setup.project
+      - run: make lints.ci
 
   Unit-Test-Ubuntu:
     needs: Lints
@@ -44,6 +44,7 @@ jobs:
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
+
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -53,15 +54,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : |
-            rm -rf /opt/hostedtoolcache/CodeQL
-            rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
-            rm -rf /opt/hostedtoolcache/Ruby
-            rm -rf /opt/hostedtoolcache/go
-            rm -rf /opt/hostedtoolcache/node
-            make setup.project
-            make test.unit
+          cache: "poetry"
+
+      - name: Build and tests
+        run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.project
+          make test.unit
 
   Unit-Test-MacOS:
     needs: Lints
@@ -71,10 +74,11 @@ jobs:
         poetry-version: ["1.7.1"]
         os: [macos]
 
-    runs-on: ${{ matrix.os }}-12
+    runs-on: ${{ matrix.os }}-latest
     env:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
+
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -84,10 +88,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.unit
+          cache: "poetry"
 
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Extras
+        run: |
+          brew install postgresql libomp
+          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+
+      - name: Setup Project
+        run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.project
+
+      - name: Unit Tests
+        run: make test.unit
 
   Unit-Test-310-Coverage:
     strategy:
@@ -103,6 +126,7 @@ jobs:
       OPSML_AUTH: True
       OPSML_USERNAME: admin
       OPSML_PASSWORD: admin
+
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
@@ -112,8 +136,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : |
+          cache: "poetry"
+      - run: |
           rm -rf /opt/hostedtoolcache/CodeQL
           rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
           rm -rf /opt/hostedtoolcache/Ruby
@@ -146,12 +170,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.unit
+          cache: "poetry"
+      - run: make setup.project
+      - run: make test.unit
 
   Postgres-Unit:
-    needs: [Unit-Test-Ubuntu,Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-310-Coverage]
+    needs:
+      [
+        Unit-Test-Ubuntu,
+        Unit-Test-MacOS,
+        Unit-Test-Windows,
+        Unit-Test-310-Coverage,
+      ]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -166,7 +196,7 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_DB: postgres        
+          POSTGRES_DB: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
         ports:
@@ -187,15 +217,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      
-      - run : make setup.project
-      - run : make test.registry
+          cache: "poetry"
+
+      - run: make setup.project
+      - run: make test.registry
         env:
-            OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
+          OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
 
   MySql-Unit:
-    needs: [Unit-Test-Ubuntu,Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-310-Coverage]
+    needs:
+      [
+        Unit-Test-Ubuntu,
+        Unit-Test-MacOS,
+        Unit-Test-Windows,
+        Unit-Test-310-Coverage,
+      ]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -223,7 +259,7 @@ jobs:
           --name=mysql-test
 
     steps:
-      - uses: actions/checkout@v4 
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: |
           sudo apt-get update
@@ -234,10 +270,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      
-      - run : make setup.project
-      - run : make test.registry
-        env:
-            OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5
+          cache: "poetry"
 
+      - run: make setup.project
+      - run: make test.registry
+        env:
+          OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5

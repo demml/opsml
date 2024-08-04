@@ -1,15 +1,9 @@
 # test scripts to testing some ui routes
-import sys
 from typing import Tuple
 
 from starlette.testclient import TestClient
 
 from opsml.cards import AuditCard, DataCard, ModelCard
-
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
-
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 def test_card_routes(

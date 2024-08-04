@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import Optional, cast
+from typing import Optional
 
 import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from opsml.data.formatter import check_data_schema
+from opsml.data.formatter import check_data_schema, generate_feature_schema
 from opsml.data.interfaces._base import DataInterface
-from opsml.types import AllowedDataType, Feature, Suffix
+from opsml.types import AllowedDataType, Suffix
 
 
 class PolarsData(DataInterface):
@@ -36,13 +36,11 @@ class PolarsData(DataInterface):
         """Saves pandas dataframe to parquet"""
 
         assert self.data is not None, "No data detected in interface"
-        self.feature_map = {
-            key: Feature(
-                feature_type=str(value),
-                shape=(1,),
-            )
-            for key, value in self.data.schema.items()
-        }
+
+        self.feature_map = generate_feature_schema(
+            self.data,
+            self.data_type,
+        )
 
         pq.write_table(self.data.to_arrow(), path)
 
@@ -51,13 +49,16 @@ class PolarsData(DataInterface):
 
         load_path = path.with_suffix(self.data_suffix)
         pa_table: pa.Table = pq.ParquetDataset(path_or_paths=load_path).read()
+
+        # attempt to validate schema
         data = check_data_schema(
             pl.from_arrow(data=pa_table),
             self.feature_map,
             self.data_type,
         )
+        assert isinstance(data, pl.DataFrame), "Data is not a Polars DataFrame"
 
-        self.data = cast(pl.DataFrame, data)
+        self.data = data
 
     @property
     def data_type(self) -> str:

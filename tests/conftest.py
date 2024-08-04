@@ -1,5 +1,9 @@
+# type: ignore
+
 import logging
 import os
+import platform
+import sys
 import tempfile
 import warnings
 from pathlib import Path
@@ -130,6 +134,12 @@ TODAY_YMD = datetime.date.today().strftime("%Y-%m-%d")
 
 T = TypeVar("T")
 YieldFixture = Generator[T, None, None]
+
+
+DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
+WINDOWS_EXCLUDE = sys.platform == "win32"
+
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
 def cleanup() -> None:
@@ -2358,7 +2368,7 @@ def deeplabv3_resnet50():
 
 
 @pytest.fixture(scope="module")
-def pytorch_lightning_model():
+def pytorch_lightning_model() -> LightningModel:
     # define any number of nn.Modules (or use your current ones)
     nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
     nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
@@ -2382,9 +2392,9 @@ def pytorch_lightning_model():
 
 
 @pytest.fixture(scope="module")
-def lightning_regression():
-    class SimpleDataset(Dataset):
-        def __init__(self):
+def lightning_regression() -> Generator[LightningModel, L.LightningModule, None]:
+    class SimpleDataset(Dataset):  # type: ignore
+        def __init__(self) -> None:
             X = np.arange(10000)
             y = X * 2
             X = [[_] for _ in X]
@@ -2392,27 +2402,27 @@ def lightning_regression():
             self.X = torch.Tensor(X)
             self.y = torch.Tensor(y)
 
-        def __len__(self):
+        def __len__(self) -> int:
             return len(self.y)
 
-        def __getitem__(self, idx):
+        def __getitem__(self, idx: Any) -> Any:
             return {"X": self.X[idx], "y": self.y[idx]}
 
     class MyModel(L.LightningModule):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
             self.fc = nn.Linear(1, 1)
             self.criterion = MSELoss()
 
-        def forward(self, inputs_id, labels=None):
+        def forward(self, inputs_id, labels=None) -> Any:
             outputs = self.fc(inputs_id)
             return outputs
 
-        def train_dataloader(self):
+        def train_dataloader(self) -> Any:
             dataset = SimpleDataset()
             return DataLoader(dataset, batch_size=1000)
 
-        def training_step(self, batch, batch_idx):
+        def training_step(self, batch, batch_idx) -> Any:
             input_ids = batch["X"]
             labels = batch["y"]
             outputs = self(input_ids, labels)
@@ -2421,7 +2431,7 @@ def lightning_regression():
                 loss = self.criterion(outputs, labels)
             return {"loss": loss}
 
-        def configure_optimizers(self):
+        def configure_optimizers(self) -> Any:
             optimizer = Adam(self.parameters())
             return optimizer
 

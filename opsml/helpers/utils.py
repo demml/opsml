@@ -293,6 +293,7 @@ def get_class_name(object_: object) -> str:
     Returns:
         fully qualified class name
     """
+
     klass = object_.__class__
     module = klass.__module__
     if module == "builtins":

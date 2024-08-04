@@ -7,7 +7,12 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pyarrow as pa
-from pydantic import BaseModel, field_serializer, model_validator
+from pydantic import (
+    BaseModel,
+    FieldSerializationInfo,
+    field_serializer,
+    model_validator,
+)
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CommonKwargs, Description, Suffix
@@ -177,9 +182,29 @@ class Dataset(BaseModel):
     splits: Dict[Optional[str], Metadata] = {}
     description: Description = Description()
 
-    @field_serializer("data_dir", return_type=str)
-    def serialize_data_dir(self, data_dir: Path, _info: Any) -> str:
+    @field_serializer("data_dir", return_type=str, mode="plain")
+    def serialize_data_dir(
+        self,
+        data_dir: Path,
+        _info: FieldSerializationInfo,
+    ) -> str:
         return data_dir.as_posix()
+
+    @property
+    def data(self) -> Path:
+        """Returns data_dir. This was implemented to make mypy happy when
+        accessing the 'data' attribute in the DataCard class"""
+        return self.data_dir
+
+    @property
+    def data_splits(self) -> Dict[Optional[str], Metadata]:
+        """Returns data splits"""
+        return self.splits
+
+    @property
+    def data_profile(self) -> None:
+        """Returns data profile"""
+        logger.info("Data profile not implemented for ImageDataset")
 
     def split_data(self) -> None:
         """Creates data splits based on subdirectories of data_dir and supplied split value

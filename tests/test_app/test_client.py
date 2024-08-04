@@ -1,12 +1,12 @@
 import re
 import shutil
-import sys
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Tuple, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
+from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
 from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
@@ -27,12 +27,7 @@ from opsml.storage import client
 from opsml.storage.api import ApiRoutes
 from opsml.types import Metric, SaveName
 from opsml.types.extra import Suffix
-from tests.conftest import TODAY_YMD
-
-DARWIN_EXCLUDE = sys.platform == "darwin" and sys.version_info < (3, 11)
-WINDOWS_EXCLUDE = sys.platform == "win32"
-
-EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+from tests.conftest import EXCLUDE, TODAY_YMD
 
 
 def test_debug(test_app: TestClient) -> None:
@@ -79,6 +74,12 @@ def test_error(test_app: TestClient) -> None:
 def test_register_data(
     api_registries: CardRegistries, api_storage_client: client.StorageClient, pandas_data: PandasData
 ) -> None:
+    assert pandas_data.data is not None
+
+    # encode data
+    encoder = LabelEncoder()
+    pandas_data.data["animals"] = encoder.fit_transform(pandas_data.data["animals"])
+
     # create data card
     registry = api_registries.data
     datacard = DataCard(
@@ -87,10 +88,11 @@ def test_register_data(
         repository="mlops",
         contact="mlops.com",
     )
+
     datacard.create_data_profile()
     registry.register_card(card=datacard)
 
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(".joblib"))
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     _ = registry.list_cards(name=datacard.name, repository=datacard.repository, max_date=TODAY_YMD)
