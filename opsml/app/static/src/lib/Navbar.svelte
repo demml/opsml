@@ -42,13 +42,13 @@
         {#each names as name}
           {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
           <li class="hidden md:block">
-              <a class="group flex items-center text-white text-base text-xl md:text-2xl active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
+              <a class="group flex items-center text-white text-base text-lg md:text-xl active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
                 {name}
               </a>
           </li>
         {/each}
         <li class="hidden md:block">
-          <a class="group flex items-center text-white text-base text-xl md:text-2xl active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
+          <a class="group flex items-center text-white text-base text-lg md:text-xl active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
             Docs
           </a>
         </li>
@@ -63,7 +63,7 @@
             </button>
             <div class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
               <section class="p-4 pb-5 space-y-4 overflow-y-auto">
-                <p class="font-bold text-2xl">Opsml</p>
+                <p class="font-bold text-xl">Opsml</p>
                 <nav class="list-nav">
                   <ul>
                     {#each names as name}

@@ -51,7 +51,7 @@
 
 
 
-<div class="flex items-center justify-center pt-8">
+<div class="flex items-center justify-center pt-8 text-sm">
 
   <div class="justify-center w-2/3">
 
@@ -77,7 +77,9 @@
     {#if subdir}
     <div class="w-full bg-white border border-gray-200 px-3 py-2 min-w-96">
       <div class="grid h-6 grid-cols-12 gap-x-3">
-        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => navigateToFolder(prevPath)}>
+
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" href="#" role="button" on:click={() => navigateToFolder(prevPath)}>
           <Fa class="h-5 mr-2" icon={faFolder} color="#4b3978"/>
           <div class="flex truncate items-center text-black">..</div>
         </a>

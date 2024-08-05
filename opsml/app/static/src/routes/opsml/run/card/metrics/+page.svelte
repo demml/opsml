@@ -297,14 +297,22 @@
     }
   }
 
+  export let isOpen = true;
+  
+  function toggleSidebar() {
+    isOpen = !isOpen;
+  }
+
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
-    
 
-      <div class="flex flex-row flex-wrap gap-2 p-4 justify-between">
-       
+
+    {#if isOpen}
+    <div class="hidden md:block flex-initial w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
+      
+      <div class="flex flex-row flex-wrap gap-1 p-2 justify-between">
+
         <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
@@ -358,8 +366,22 @@
 
       </div>
 
- 
+    <!-- place button in top right corner -->
+    <div class="relative flex pt-3 pb-1 pr-2  items-center">
+      <div class="flex-grow border-t border-gray-400"></div>
+    </div> 
+
+    <div class="flex flex-row flex-wrap gap-1 p-1 justify-start">
+      <button type="button" class="chip bg-darkpurple text-white" on:click={() => toggleSidebar() }>Hide</button>
+    </div>  
     </div>
+    {:else}
+      <div class="hidden md:block w-16 bg-surface-100 dark:bg-surface-600">
+        <div class="flex flex-row flex-wrap gap-1 p-1 justify-start">
+          <button type="button" class="chip bg-darkpurple text-white" on:click={() => toggleSidebar() }>Show</button>
+        </div>
+      </div>
+    {/if}
   
     <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
@@ -395,11 +417,5 @@
             </div>
           </figure>
       </div>
-      
-
-
-    
-
-
     </div>
 </div>

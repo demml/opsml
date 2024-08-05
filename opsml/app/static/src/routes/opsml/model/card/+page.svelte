@@ -288,7 +288,7 @@
           <header class="pl-2 text-darkpurple text-lg font-bold">Data Schema</header>
         </div>
 
-      <div class="max-h-96 overflow-scroll text-base">
+      <div class="max-h-96 overflow-scroll text-sm">
 
         <Highlight language={json}  code={JSON.stringify(metadata.data_schema, null, 2)} let:highlighted>
         </Highlight>

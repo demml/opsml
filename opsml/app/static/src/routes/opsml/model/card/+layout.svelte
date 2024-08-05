@@ -79,7 +79,7 @@
       </div>
     </h1>
 
-    <div class="pt-2 text-lg">
+    <div class="pt-2">
       <TabGroup 
         border=""
         active='border-b-2 border-primary-500'

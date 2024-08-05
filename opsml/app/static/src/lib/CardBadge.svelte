@@ -25,12 +25,14 @@
 
 <div>
     {#if artifactInterface in logos }
-        <a class="badge bg-surface-50 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a class="badge bg-surface-50 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100"  href="#">
         <img alt="{artifactInterface} logo" class="h-5" src="{logos[artifactInterface]}">
         <span class="text-primary-500">{artifactInterface}</span>
         </a>
     {:else}
-        <a class="badge bg-surface-50 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
+        <!-- svelte-ignore a11y-invalid-attribute -->
+        <a class="badge bg-surface-50 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100"  href="#">
         <span class="text-primary-500">{artifactInterface}</span>
         </a>
     {/if}

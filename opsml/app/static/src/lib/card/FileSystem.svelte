@@ -33,14 +33,17 @@
 
   {#if file.type === 'file'}
 
-    <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => viewFile(file.uri)}>
+    
+    <!-- svelte-ignore a11y-invalid-attribute -->
+    <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" href="#" role="button" on:click={() => viewFile(file.uri)}>
         <Fa class="h-5 mr-2" icon={faFile} color="#4b3978"/>
         <div class="flex truncate items-center text-black">{file.name}</div>
     </a>
 
   {:else}
-
-    <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" on:click={() => navigateToFolder(file.uri)}>
+  
+    <!-- svelte-ignore a11y-invalid-attribute -->
+    <a class="flex flex-row col-span-8 md:col-span-4 items-center cursor-pointer hover:underline" href="#" role="button" on:click={() => navigateToFolder(file.uri)}>
       <Fa class="h-5 mr-2" icon={faFolder} color="#4b3978"/>
       <div class="flex truncate items-center text-black">{file.name}</div>
     </a>

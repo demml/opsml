@@ -5,7 +5,7 @@
 </script>
 
 <div class="relative col-span-1 flex flex-col items-stretch text-center">
-  <h2 class="mb-3 flex items-center justify-center  text-xl font-bold 2xl:mb-4 2xl:text-2xl">
+  <h2 class="mb-3 flex items-center justify-center  text-lg font-bold 2xl:mb-4 2xl:text-xl">
     {header}
   </h2>
   <div class="mb-3 flex flex-col items-center gap-2.5 rounded-xl shadow-primary-300 shadow-md dark:shadow-primary-500 p-3 backdrop-blur-lg sm:mb-7">
