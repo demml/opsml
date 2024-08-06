@@ -34,27 +34,27 @@
   let repository: string;
   $: repository = data.repository;
 
-  let metadata: ModelMetadata;
-  $: metadata = data.metadata;
-
-  let hasReadme: boolean;
-  $: hasReadme = data.hasReadme;
-
+  let version: string;
+  $: version = data.version;
 
   let tabSet: string;
   $: tabSet = data.tabSet;
+
+  let icon: string;
+  $: icon = modelcard_circuit;
+
 
   async function showTabContent(value: string ) {
     let baseURL: string = `/opsml/${registry}/card`;
 
     if (value === 'card') {
-      goto(`${baseURL}?name=${name}&repository=${repository}&version=${metadata.model_version}`);
+      goto(`${baseURL}?name=${name}&repository=${repository}&version=${version}`);
     } else if (value === 'versions') {
-      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${metadata.model_version}`);
+      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${version}`);
 
     }
     else {
-      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${metadata.model_version}`);
+      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${version}`);
     }
 
   }
@@ -72,9 +72,9 @@
       </div>
       <div class="font-bold text-primary-500">{name}</div>
       <div class="pl-2">
-        <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={metadata.model_version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
+        <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
           <Fa class="h-7" icon={faTag} color="#4b3978"/>
-          <span class="text-primary-500">{metadata.model_version}</span>
+          <span class="text-primary-500">{version}</span>
         </a>
       </div>
     </h1>
@@ -86,7 +86,7 @@
         >
           <Tab bind:group={tabSet} name="card" value="card" on:click={() => showTabContent("card")}>
             <div class="flex flex-row  items-center">
-              <img class="h-6" src={modelcard_circuit} alt="ModelCard Circuit" />
+              <img class="h-6" src={icon} alt="ModelCard Circuit" />
               <div class="font-semibold">Card</div>
             </div>
           </Tab>
@@ -121,6 +121,13 @@
             <div class="flex flex-row  items-center">
               <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
               <div class="font-semibold">Settings</div>
+            </div>
+          </Tab>
+
+          <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("comments")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
+              <div class="font-semibold">Comments/Notes</div>
             </div>
           </Tab>
 

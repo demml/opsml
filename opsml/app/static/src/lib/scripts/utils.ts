@@ -8,6 +8,7 @@ import {
   type Parameters,
   type Graph,
   type RunMetrics,
+  type Comment,
 } from "$lib/scripts/types";
 
 export function calculateTimeBetween(timestamp: number): string {
@@ -35,6 +36,17 @@ export async function listCards(request: CardRequest): Promise<CardResponse> {
   }).then((res) => res.json());
 
   return cards;
+}
+
+export async function getComments(
+  uid: string,
+  registry: string
+): Promise<Comment[]> {
+  const comments: Comment[] = await fetch(
+    `/opsml/${registry}/comment?uid=${uid}`
+  ).then((res) => res.json());
+
+  return comments;
 }
 
 export async function getDataCard(

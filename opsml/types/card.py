@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-import datetime
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -20,6 +19,7 @@ class RegistryType(str, Enum):
     AUDIT = "audit"
     PROJECT = "project"
     AUTH = "auth"
+    COMMENTS = "comments"
 
     @staticmethod
     def from_str(name: str) -> "RegistryType":
@@ -70,17 +70,6 @@ class Artifact(BaseModel):
 Metrics = Dict[str, List[Metric]]
 Params = Dict[str, List[Param]]
 ArtifactUris = Dict[str, Artifact]
-
-
-class Comment(BaseModel):
-    name: str
-    comment: str
-    timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Comment):
-            return False
-        return self.__dict__ == other.__dict__
 
 
 @dataclass

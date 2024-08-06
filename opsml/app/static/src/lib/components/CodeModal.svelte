@@ -3,26 +3,22 @@
 	import type { SvelteComponent } from 'svelte';
 	import Highlight, { LineNumbers } from "svelte-highlight";
   	import python from "svelte-highlight/languages/python";
-	import { getModalStore } from '@skeletonlabs/skeleton';
+	import { type ModalStore} from '@skeletonlabs/skeleton';
 
 	import { clipboard } from '@skeletonlabs/skeleton';
 
 	// Props
 	/** Exposes parent props to this component. */
-	export let parent: SvelteComponent;
-	let code = "hello";
-
-	const modalStore = getModalStore();
-
-	const cButton = 'fixed top-4 right-4 z-50 font-bold shadow-xl';
 
 	export let uid: string;
 	export let registry: string;
+	export let modalStore: ModalStore;
 
 	let copied = false;
 
 	function onClickHandler(): void {
 		copied = true;
+		console.log(codeBlock);
 		setTimeout(() => {
 			copied = false;
 		}, 1000);
@@ -58,4 +54,5 @@ ${registry}card.load_${registry}()
   </div>
 
 {/if}
+
 

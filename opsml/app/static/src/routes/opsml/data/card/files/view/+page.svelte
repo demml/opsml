@@ -1,10 +1,6 @@
 <script lang="ts">
     import FileView from "$lib/card/FileView.svelte";
     import { type ViewContent, type FileInfo } from "$lib/scripts/types";
-    import { onMount } from 'svelte';
-    import { keymap } from "@codemirror/view"
-  
-    import { editorTheme } from '$lib/scripts/editor_theme'
     import { calculateTimeBetween } from "$lib/scripts/utils";
   
   

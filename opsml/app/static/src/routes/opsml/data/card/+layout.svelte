@@ -2,28 +2,10 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faIdCard, faFolderOpen, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass, faBrain, faLink } from '@fortawesome/free-solid-svg-icons'
-  import { onMount } from 'svelte';
-  import { keymap } from "@codemirror/view"
-  import icon from '$lib/images/opsml-green.ico'
-
-
-  import { indentWithTab } from "@codemirror/commands"
-  import {basicSetup, EditorView} from "codemirror"
-  import {markdown} from "@codemirror/lang-markdown"
-  import {languages} from "@codemirror/language-data"
-  import { Compartment } from '@codemirror/state'
+  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears} from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
-
-  
-  import { editorTheme } from '$lib/scripts/editor_theme'
-  import { type CardRequest, type Card, type DataCardMetadata } from "$lib/scripts/types";
-  import CardBadge from "$lib/CardBadge.svelte";
+  import { type Card, type DataCardMetadata } from "$lib/scripts/types";
   import { goto } from '$app/navigation';
-  import { listCards } from "$lib/scripts/utils";
-  import atomOneLight from "svelte-highlight/styles/atom-one-light";
-  import Markdown from "$lib/card/Markdown.svelte";
-  import FileView from "$lib/card/FileView.svelte";
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
@@ -40,24 +22,11 @@
   let card: Card;
   $: card = data.card;
 
-  let hasReadme: boolean;
-  $: hasReadme = data.hasReadme;
-
   let metadata: DataCardMetadata;
   $: metadata = data.metadata;
 
-
   let tabSet: string;
   $: tabSet = data.tabSet;
-
-
-  async function createReadme() {
-      let baseURL: string = `/opsml/model/card/readme`;
-  
-       goto(`${baseURL}?name=${card.name}&repository=${card.repository}&status=edit`);
-     
-  
-    }
 
   async function showTabContent(value: string ) {
     let baseURL: string = `/opsml/${registry}/card`;
@@ -75,17 +44,12 @@
 
   }
 
-
 </script>
-
-<svelte:head>
-  {@html atomOneLight}
-</svelte:head>
 
 <div class="flex flex-1 flex-col">
 
   <div class="pl-4 md:pl-20 pt-6 sm:pt-8 bg-slate-50 w-full border-b">
-    <h1 class="flex flex-row flex-wrap items-center text-xl">
+    <h1 class="flex flex-row flex-wrap items-center text-lg">
       <div class="group flex flex-none items-center">
         <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
         <div class="mx-0.5 text-gray-800">/</div>
@@ -99,7 +63,7 @@
       </div>
     </h1>
 
-    <div class="pt-2 text-lg">
+    <div class="pt-2">
       <TabGroup 
         border=""
         active='border-b-2 border-primary-500'

@@ -11,6 +11,7 @@ export let registry: string;
 export let repository: string;
 export let name: string;
 export let paginationSettings: PaginationSettings;
+export let artifactSearchTerm: string | undefined = undefined;
 
 async function onPageChange(e: CustomEvent) {
     let page = e.detail;
@@ -51,8 +52,6 @@ async function onPageChange(e: CustomEvent) {
 
     cards = await listCards(cardReq);
   }
-
-let artifactSearchTerm: string | undefined = undefined;
 
 </script>
 

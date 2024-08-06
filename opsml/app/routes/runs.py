@@ -4,17 +4,18 @@
 
 # pylint: disable=protected-access
 
-from fastapi import APIRouter, Request, HTTPException, status
-import joblib
-from pathlib import Path
-from typing import Dict, Any
-from opsml import RunCard, CardRegistry
-from opsml.storage import client
 import tempfile
+from pathlib import Path
+from typing import Any, Dict
+
+import joblib
+from fastapi import APIRouter, HTTPException, Request, status
+
+from opsml import CardRegistry, RunCard
+from opsml.app.routes.pydantic_models import CardRequest
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
-from opsml.app.routes.pydantic_models import CardRequest
-from opsml.types import SaveName, RegistryTableNames
+from opsml.types import RegistryTableNames, SaveName
 
 logger = ArtifactLogger.get_logger()
 

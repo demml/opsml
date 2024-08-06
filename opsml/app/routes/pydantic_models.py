@@ -5,12 +5,19 @@ import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer, model_validator, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    FieldSerializationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment, HardwareMetrics
+from opsml.types import HardwareMetrics
 
 
 class Success(BaseModel):
@@ -184,7 +191,9 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
+    onnx: bool = Field(
+        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
+    )
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -486,7 +495,7 @@ class AuditReport(BaseModel):
     status: Optional[bool] = False
     audit: Optional[Dict[str, Any]] = AuditSections().model_dump()  # type: ignore
     timestamp: Optional[str] = None
-    comments: List[Optional[Comment]] = []
+    # comments: List[Optional[Comment]] = []
 
 
 class ProjectIdResponse(BaseModel):

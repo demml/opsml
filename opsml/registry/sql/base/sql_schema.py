@@ -9,6 +9,7 @@ from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
@@ -198,12 +199,30 @@ class HardwareMetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class CommentSchema(Base):
+    __tablename__ = RegistryTableNames.COMMENTS.value
+
+    uid = Column("uid", String(64), nullable=False)
+    registry = Column("registry", String(16), nullable=False)
+    comment_id = Column("comment_id", Integer, primary_key=True, autoincrement=True)
+    parent_id = Column("parent_id", Integer, nullable=True)
+    content = Column("content", String(512), nullable=False)
+    user = Column("user", String(32), nullable=False)
+    votes = Column("votes", Integer, nullable=False, default=0)
+    created_at = Column("created_at", Float, default=lambda: dt.datetime.now(tz=timezone.utc).timestamp())
+
+    @hybrid_property
+    def path_string(self) -> str:
+        return str(self.comment_id)
+
+
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
         RegistryTableNames.BASE.value,
         RegistryTableNames.METRICS.value,
         RegistryTableNames.HARDWARE_METRICS.value,
+        RegistryTableNames.PARAMETERS.value,
     ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 

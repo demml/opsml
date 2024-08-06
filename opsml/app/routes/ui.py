@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 from typing import Optional
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates

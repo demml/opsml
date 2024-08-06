@@ -50,14 +50,14 @@ export async function load({ fetch, params, url }) {
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${res.model_repository}/${res.model_name}/README.md`;
   const markdown: FileExists = await fetch(
-    `/opsml/files/exists?path=${markdownPath}`,
+    `/opsml/files/exists?path=${markdownPath}`
   ).then((res) => res.json());
 
   let readme: string = "";
   if (markdown.exists) {
     // fetch markdown
     const viewData = await fetch(`/opsml/files/view?path=${markdownPath}`).then(
-      (res) => res.json(),
+      (res) => res.json()
     );
 
     readme = viewData.content.content;
@@ -83,5 +83,6 @@ export async function load({ fetch, params, url }) {
     card: cards.cards[0],
     readme,
     tabSet: tab,
+    version: res.model_version,
   };
 }

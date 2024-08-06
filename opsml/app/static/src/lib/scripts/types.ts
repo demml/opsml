@@ -221,3 +221,14 @@ export interface CompareMetricPage {
   metrics: RunMetrics;
   searchableMetrics: string[];
 }
+
+export interface Comment {
+  uid: string;
+  registry: string;
+  comment_id: string | null;
+  user: string;
+  votes: number;
+  content: string;
+  parent_uid: string | null;
+  created_at: number;
+}

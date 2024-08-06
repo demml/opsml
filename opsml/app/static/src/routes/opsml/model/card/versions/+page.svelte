@@ -1,15 +1,9 @@
 <script lang="ts">
 
-  import { Paginator, type PaginationSettings } from '@skeletonlabs/skeleton';
-  import {type registryPage } from "$lib/scripts/types";
-  import Card from "$lib/Card.svelte";
-  import { type CardResponse, type CardRequest } from "$lib/scripts/types";
-  import { getRegistryPage } from "$lib/scripts/registry_page";
-  import Search from "$lib/Search.svelte";
-  import { listCards } from "$lib/scripts/utils";
+  import { type PaginationSettings } from '@skeletonlabs/skeleton';
+  import { type CardResponse } from "$lib/scripts/types";
   import Versions from '$lib/card/Versions.svelte';
 
-  let artifactSearchTerm: string | undefined = undefined;
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -28,6 +22,8 @@
   let name: string;
   $: name = data.name;
 
+  let artifactSearchTerm: string | undefined = undefined;
+
   let paginationSettings = {
     page: 0,
     limit: 30,
@@ -45,4 +41,5 @@
   repository={repository} 
   name={name} 
   paginationSettings={paginationSettings} 
+  artifactSearchTerm={artifactSearchTerm}
 />

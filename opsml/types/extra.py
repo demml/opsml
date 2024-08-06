@@ -1,6 +1,7 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+from datetime import datetime
 from enum import Enum, unique
 from typing import Any, Dict, Optional
 
@@ -206,3 +207,14 @@ class User(BaseModel):
             user_args["hashed_password"] = hashed
 
         return user_args
+
+
+class Comment(BaseModel):
+    uid: str
+    registry: str
+    comment_id: Optional[int] = None
+    user: str
+    votes: int = 0
+    content: str
+    parent_id: Optional[int] = None
+    created_at: Optional[float] = None

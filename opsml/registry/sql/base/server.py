@@ -23,6 +23,7 @@ from opsml.registry.semver import (
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
     AuthQueryEngine,
+    CommentQueryEngine,
     ProjectQueryEngine,
     RunQueryEngine,
     get_query_engine,
@@ -34,7 +35,7 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
-from opsml.types.extra import User
+from opsml.types.extra import Comment, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -390,7 +391,9 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
+    def get_metric(
+        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
+    ) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
@@ -648,3 +651,70 @@ class ServerAuthRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUTH.value
+
+
+class ServerCommentRegistry(ServerRegistry):
+    @property
+    def registry_type(self) -> RegistryType:
+        return RegistryType.COMMENTS
+
+    @property
+    def comment_db(self) -> CommentQueryEngine:
+        assert isinstance(self.engine, CommentQueryEngine)
+        return self.engine
+
+    def get_comments(self, registry: str, uid: str) -> List[Comment]:
+        """Get comments from registry
+
+        Args:
+            registry:
+                registry name
+            uid:
+                uid
+
+        Returns:
+            comments
+
+        """
+        assert isinstance(self.engine, CommentQueryEngine)
+        return self.engine.get_comments(registry=registry, uid=uid)
+
+    def insert_comment(self, comment: Comment) -> None:
+        """Add comment to registry
+
+        Args:
+            comment:
+                comment
+
+        """
+        assert isinstance(self.engine, CommentQueryEngine)
+
+        self.engine.insert_comment(comment=comment)
+
+    def update_comment(self, comment: Comment) -> None:
+        """Update comment in registry
+
+        Args:
+            comment:
+                comment
+
+        """
+        assert isinstance(self.engine, CommentQueryEngine)
+
+        self.engine.update_comment(comment=comment)
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        return registry_name.lower() == RegistryType.COMMENTS.value
+
+    def delete_card(self, card: Card) -> None:
+        raise ValueError("CommentRegistry does not support delete_card")
+
+    def register_card(
+        self,
+        card: Card,
+        version_type: VersionType = VersionType.MINOR,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
+    ) -> None:
+        raise ValueError("CommentRegistry does not support register_card")
