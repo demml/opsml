@@ -1,7 +1,6 @@
 # Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-from datetime import datetime
 from enum import Enum, unique
 from typing import Any, Dict, Optional
 
@@ -209,10 +208,10 @@ class User(BaseModel):
         return user_args
 
 
-class Comment(BaseModel):
+class Message(BaseModel):
     uid: str
     registry: str
-    comment_id: Optional[int] = None
+    message_id: Optional[int] = None
     user: str
     votes: int = 0
     content: str

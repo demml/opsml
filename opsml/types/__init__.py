@@ -19,10 +19,10 @@ from opsml.types.card import (
 from opsml.types.data import AllowedDataType, AllowedTableTypes, DataCardMetadata
 from opsml.types.extra import (
     ArtifactClass,
-    Comment,
     CommonKwargs,
     Description,
     GraphStyle,
+    Message,
     PresignableTypes,
     SaveName,
     Suffix,
@@ -148,5 +148,5 @@ __all__ = [
     "NetworkRates",
     "MemoryMetrics",
     "CPUMetrics",
-    "Comment",
+    "Message",
 ]

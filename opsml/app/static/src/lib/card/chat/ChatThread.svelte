@@ -2,8 +2,10 @@
   import {
     type CardRequest,
     type CardResponse,
-    type Comment,
+
+    type MessageThread,
   } from "$lib/scripts/types";
+  import MessageComponent from "./MessageComponent.svelte";
   import { listCards, getComments } from "$lib/scripts/utils";
 
   export let registry: string;
@@ -18,7 +20,7 @@
       registry_type: registry,
     };
 
-  async function getCardComments():  Promise<Comment[]> {
+  async function getMessages():  Promise<MessageThread> {
     const cards: CardResponse = await listCards(cardReq);
     const selectedCard = cards.cards[0];
     return getComments(selectedCard.uid, registry);
@@ -27,18 +29,17 @@
 
 </script>
 
-{#await getCardComments()}
-{:then comments}
+{#await getMessages()}
+{:then messages}
 
-  {#if comments.length === 0}
-    <p>No comments yet</p>
+  {#if messages.length === 0}
+    <p>No messages yet</p>
   {:else}
-    {#each comments as comment}
-      <div class="bg-white dark:bg-surface-900 p-4 rounded-lg shadow-md my-4">
-        <p>{comment.content}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{comment.created_at}</p>
-      </div>
-    {/each}
+    <div class="chat-thread">
+      {#each messages as message (message.message.message_id)}
+        <MessageComponent {message} />
+      {/each}
+    </div>
   {/if}
 
 {:catch error}

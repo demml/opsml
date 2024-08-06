@@ -222,13 +222,20 @@ export interface CompareMetricPage {
   searchableMetrics: string[];
 }
 
-export interface Comment {
+export interface Message {
   uid: string;
   registry: string;
-  comment_id: string | null;
+  message_id: string | null;
   user: string;
   votes: number;
   content: string;
-  parent_uid: string | null;
-  created_at: number;
+  parent_id: number | null;
+  created_at: number | null;
 }
+
+export interface MessageWithReplies {
+  message: Message;
+  replies: MessageWithReplies[];
+}
+
+export type MessageThread = MessageWithReplies[];

@@ -23,15 +23,15 @@ from opsml.registry.semver import get_version_to_search
 from opsml.registry.sql.base.sql_schema import (
     AuthSchema,
     CardSQLTable,
-    CommentSchema,
     HardwareMetricSchema,
+    MessageSchema,
     MetricSchema,
     ParameterSchema,
     ProjectSchema,
     SQLTableGetter,
 )
 from opsml.types import RegistryType
-from opsml.types.extra import Comment, User
+from opsml.types.extra import Message, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -784,25 +784,25 @@ class AuthQueryEngine(QueryEngine):
         return deleted
 
 
-class CommentQueryEngine(QueryEngine):
-    def insert_comment(self, comment: Comment) -> None:
-        """Insert comment
+class MessageQueryEngine(QueryEngine):
+    def insert_message(self, message: Message) -> None:
+        """Insert message
 
         Args:
-            comment:
-                Comment record
+            message:
+                message record
         """
 
         with self.session() as sess:
-            sess.execute(insert(CommentSchema), comment.model_dump())
+            sess.execute(insert(MessageSchema), message.model_dump())
             sess.commit()
 
-    def get_comments(
+    def get_messages(
         self,
         registry: str,
         uid: str,
-    ) -> List[Comment]:
-        """Get comments
+    ) -> List[Message]:
+        """Get messages
 
         Args:
             uid:
@@ -810,20 +810,20 @@ class CommentQueryEngine(QueryEngine):
             registry:
                 Registry type
         Returns:
-            List of comments
+            List of messages
         """
 
-        parent_query = select(CommentSchema).filter(
-            CommentSchema.uid.is_(uid),
-            CommentSchema.registry.is_(registry),
-            CommentSchema.parent_id.is_(None),
+        parent_query = select(MessageSchema).filter(
+            MessageSchema.uid.is_(uid),
+            MessageSchema.registry.is_(registry),
+            MessageSchema.parent_id.is_(None),
         )
 
         query = parent_query.union_all(
-            select(CommentSchema).filter(
-                CommentSchema.uid.is_(uid),
-                CommentSchema.registry.is_(registry),
-                CommentSchema.parent_id.isnot(None),
+            select(MessageSchema).filter(
+                MessageSchema.uid.is_(uid),
+                MessageSchema.registry.is_(registry),
+                MessageSchema.parent_id.isnot(None),
             )
         )
 
@@ -833,19 +833,19 @@ class CommentQueryEngine(QueryEngine):
         if not results:
             return []
 
-        return [Comment(**row._asdict()) for row in results]
+        return [Message(**row._asdict()) for row in results]
 
-    def update_comment(self, comment: Comment) -> None:
-        """Update comment
+    def update_message(self, message: Message) -> None:
+        """Update message
 
         Args:
-            comment:
-                Comment record
+            message:
+                message record
         """
-        comment_uid = cast(int, comment.get("comment_id"))
+        message_uid = cast(int, message.get("message_id"))
         with self.session() as sess:
-            query = sess.query(CommentSchema).filter(CommentSchema.comment_id == comment_uid)
-            query.update(comment.model_dump())  # type: ignore
+            query = sess.query(MessageSchema).filter(MessageSchema.message_id == message_uid)
+            query.update(message.model_dump())  # type: ignore
             sess.commit()
 
 
@@ -867,6 +867,6 @@ def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[Qu
         return RunQueryEngine(engine=db_engine)
     if registry_type == RegistryType.AUTH:
         return AuthQueryEngine(engine=db_engine)
-    if registry_type == RegistryType.COMMENTS:
-        return CommentQueryEngine(engine=db_engine)
+    if registry_type == RegistryType.MESSAGE:
+        return MessageQueryEngine(engine=db_engine)
     return QueryEngine(engine=db_engine)

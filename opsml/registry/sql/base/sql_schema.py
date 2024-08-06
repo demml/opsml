@@ -199,12 +199,12 @@ class HardwareMetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
-class CommentSchema(Base):
-    __tablename__ = RegistryTableNames.COMMENTS.value
+class MessageSchema(Base):
+    __tablename__ = RegistryTableNames.MESSAGE.value
 
     uid = Column("uid", String(64), nullable=False)
     registry = Column("registry", String(16), nullable=False)
-    comment_id = Column("comment_id", Integer, primary_key=True, autoincrement=True)
+    message_id = Column("message_id", Integer, primary_key=True, autoincrement=True)
     parent_id = Column("parent_id", Integer, nullable=True)
     content = Column("content", String(512), nullable=False)
     user = Column("user", String(32), nullable=False)
@@ -213,7 +213,7 @@ class CommentSchema(Base):
 
     @hybrid_property
     def path_string(self) -> str:
-        return str(self.comment_id)
+        return str(self.message_id)
 
 
 AVAILABLE_TABLES: List[CardSQLTable] = []

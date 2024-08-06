@@ -19,7 +19,7 @@ class RegistryTableNames(str, Enum):
     PARAMETERS = "OPSML_RUN_PARAMETERS"
     HARDWARE_METRICS = "OPSML_RUN_HARDWARE_METRICS"
     AUTH = "OPSML_AUTH_REGISTRY"
-    COMMENTS = "OPSML_COMMENTS_REGISTRY"
+    MESSAGE = "OPSML_MESSAGE_REGISTRY"
 
     @staticmethod
     def from_str(name: str) -> "RegistryTableNames":

@@ -19,7 +19,7 @@ class RegistryType(str, Enum):
     AUDIT = "audit"
     PROJECT = "project"
     AUTH = "auth"
-    COMMENTS = "comments"
+    MESSAGE = "message"
 
     @staticmethod
     def from_str(name: str) -> "RegistryType":
