@@ -99,3 +99,25 @@ def get_message(request: Request, uid: str, registry: str) -> List[Optional[Dict
     except Exception as e:
         logger.error("Error getting message: {}", e)
         raise HTTPException(status_code=500, detail="Error getting message")
+
+
+@router.patch("/{registry}/messages", response_model=Success)
+def patch_message(request: Request, message: Message) -> Success:
+    """Inserts message into message table
+
+    Args:
+        request:
+            FastAPI request object
+        message:
+            messageModel
+    """
+
+    message_db = request.app.state.message_db
+    assert isinstance(message_db, ServerMessageRegistry)
+
+    try:
+        message_db.update_message(message)
+        return Success(message="message updated successfully")
+    except Exception as e:
+        logger.error("Error inserting message: {}", e)
+        raise HTTPException(status_code=500, detail="Error inserting message")
