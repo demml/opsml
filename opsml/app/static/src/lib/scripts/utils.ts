@@ -8,8 +8,10 @@ import {
   type Parameters,
   type Graph,
   type RunMetrics,
+  type Message,
   type MessageThread,
 } from "$lib/scripts/types";
+import { faVoteYea } from "@fortawesome/free-solid-svg-icons";
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -38,15 +40,55 @@ export async function listCards(request: CardRequest): Promise<CardResponse> {
   return cards;
 }
 
-export async function getComments(
+export async function getMessages(
   uid: string,
   registry: string
 ): Promise<MessageThread> {
   const comments: MessageThread = await fetch(
-    `/opsml/${registry}/comment?uid=${uid}`
+    `/opsml/${registry}/messages?uid=${uid}`
   ).then((res) => res.json());
 
   return comments;
+}
+
+export async function putMessage(message: Message): Promise<void> {
+  const request = {
+    uid: message.uid,
+    registry: message.registry,
+    content: message.content,
+    user: message.user,
+    votes: message.votes,
+    parent_id: message.parent_id,
+    created_at: message.created_at,
+  };
+
+  await fetch(`/opsml/${message.registry}/messages`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
+}
+
+export async function patchMessage(message: Message): Promise<void> {
+  const request = {
+    uid: message.uid,
+    registry: message.registry,
+    content: message.content,
+    user: message.user,
+    votes: message.votes,
+    parent_id: message.parent_id,
+    created_at: message.created_at,
+  };
+
+  await fetch(`/opsml/${message.registry}/messages`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  }).then((res) => res.json());
 }
 
 export async function getDataCard(

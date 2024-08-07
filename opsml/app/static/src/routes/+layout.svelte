@@ -3,8 +3,10 @@
   import "github-markdown-css/github-markdown-light.css";
   import Navbar from "$lib/Navbar.svelte";
   import favicon from "$lib/images/opsml-green.ico";
-  import { initializeStores, Toast, Modal } from '@skeletonlabs/skeleton';
+  import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
+  import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
 
+  storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
   
 </script>

@@ -11,14 +11,14 @@ from fastapi import APIRouter, HTTPException, Request
 
 from opsml.app.routes.pydantic_models import Success
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.base.server import ServermessageRegistry
+from opsml.registry.sql.base.server import ServerMessageRegistry
 from opsml.types.extra import Message
 
 logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-def organize_messages(messages: List[Message]) -> List[Dict[str, Any]]:
+def organize_messages(messages: List[Optional[Message]]) -> List[Optional[Dict[str, Any]]]:
     """Organize messages into a hierarchical structure
 
     Args:
@@ -29,27 +29,30 @@ def organize_messages(messages: List[Message]) -> List[Dict[str, Any]]:
         List of messages organized into parent and replies
     """
 
-    message_dict = {}
+    message_dict: Dict[str, Any] = {}
     root_messages = []
+
+    if not messages:
+        return []
 
     # First pass: Create a dictionary of all messages
     for message in messages:
-        message_dict[message.message_id] = {"message": message, "replies": []}
+        message_dict[message.message_id] = {"message": message, "replies": []}  # type: ignore
 
     # Second pass: Organize messages into a hierarchical structure
     for message in messages:
-        if message.parent_id is None:
-            root_messages.append(message_dict[message.message_id])
+        if message.parent_id is None:  # type: ignore
+            root_messages.append(message_dict[message.message_id])  # type: ignore
         else:
-            parent = message_dict.get(message.parent_id)
+            parent = message_dict.get(message.parent_id)  # type: ignore
             if parent:
-                parent["replies"].append(message_dict[message.message_id])
+                parent["replies"].append(message_dict[message.message_id])  # type: ignore
 
     return root_messages
 
 
 @router.put("/{registry}/messages", response_model=Success)
-def update_user(request: Request, message: Message) -> Success:
+def insert_message(request: Request, message: Message) -> Success:
     """Inserts message into message table
 
     Args:
@@ -59,11 +62,11 @@ def update_user(request: Request, message: Message) -> Success:
             messageModel
     """
 
-    messages_db = request.app.state.messages_db
-    assert isinstance(messages_db, ServermessageRegistry)
+    message_db = request.app.state.message_db
+    assert isinstance(message_db, ServerMessageRegistry)
 
     try:
-        messages_db.insert_message(message)
+        message_db.insert_message(message)
         return Success(message="message inserted successfully")
     except Exception as e:
         logger.error("Error inserting message: {}", e)
@@ -84,11 +87,11 @@ def get_message(request: Request, uid: str, registry: str) -> List[Optional[Dict
             registry of the message
     """
 
-    messages_db = request.app.state.messages_db
-    assert isinstance(messages_db, ServermessageRegistry)
+    message_db = request.app.state.message_db
+    assert isinstance(message_db, ServerMessageRegistry)
 
     try:
-        messages = messages_db.get_messages(registry=registry, uid=uid)
+        messages = message_db.get_messages(registry=registry, uid=uid)
         organized_messages = organize_messages(messages)
 
         return organized_messages

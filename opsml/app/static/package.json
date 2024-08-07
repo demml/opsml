@@ -52,6 +52,7 @@
 		"@codemirror/language-data": "^6.4.1",
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.26.1",
+		"@floating-ui/dom": "^1.6.9",
 		"@fortawesome/free-brands-svg-icons": "^6.5.1",
 		"@fortawesome/free-regular-svg-icons": "^6.5.1",
 		"@fortawesome/free-solid-svg-icons": "^6.5.1",

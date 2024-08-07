@@ -23,7 +23,7 @@ from opsml.registry.semver import (
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
     AuthQueryEngine,
-    CommentQueryEngine,
+    MessageQueryEngine,
     ProjectQueryEngine,
     RunQueryEngine,
     get_query_engine,
@@ -35,7 +35,7 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
-from opsml.types.extra import Comment, User
+from opsml.types.extra import Message, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -391,9 +391,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
@@ -653,18 +651,18 @@ class ServerAuthRegistry(ServerRegistry):
         return registry_name.lower() == RegistryType.AUTH.value
 
 
-class ServerCommentRegistry(ServerRegistry):
+class ServerMessageRegistry(ServerRegistry):
     @property
     def registry_type(self) -> RegistryType:
-        return RegistryType.COMMENTS
+        return RegistryType.MESSAGE
 
     @property
-    def comment_db(self) -> CommentQueryEngine:
-        assert isinstance(self.engine, CommentQueryEngine)
+    def message_db(self) -> MessageQueryEngine:
+        assert isinstance(self.engine, MessageQueryEngine)
         return self.engine
 
-    def get_comments(self, registry: str, uid: str) -> List[Comment]:
-        """Get comments from registry
+    def get_messages(self, registry: str, uid: str) -> List[Optional[Message]]:
+        """Get messages from registry
 
         Args:
             registry:
@@ -673,42 +671,42 @@ class ServerCommentRegistry(ServerRegistry):
                 uid
 
         Returns:
-            comments
+            messages
 
         """
-        assert isinstance(self.engine, CommentQueryEngine)
-        return self.engine.get_comments(registry=registry, uid=uid)
+        assert isinstance(self.engine, MessageQueryEngine)
+        return self.engine.get_messages(registry=registry, uid=uid)
 
-    def insert_comment(self, comment: Comment) -> None:
-        """Add comment to registry
+    def insert_message(self, message: Message) -> None:
+        """Add message to registry
 
         Args:
-            comment:
-                comment
+            message:
+                message
 
         """
-        assert isinstance(self.engine, CommentQueryEngine)
+        assert isinstance(self.engine, MessageQueryEngine)
 
-        self.engine.insert_comment(comment=comment)
+        self.engine.insert_message(message=message)
 
-    def update_comment(self, comment: Comment) -> None:
-        """Update comment in registry
+    def update_message(self, message: Message) -> None:
+        """Update message in registry
 
         Args:
-            comment:
-                comment
+            message:
+                message
 
         """
-        assert isinstance(self.engine, CommentQueryEngine)
+        assert isinstance(self.engine, MessageQueryEngine)
 
-        self.engine.update_comment(comment=comment)
+        self.engine.update_message(message=message)
 
     @staticmethod
     def validate(registry_name: str) -> bool:
-        return registry_name.lower() == RegistryType.COMMENTS.value
+        return registry_name.lower() == RegistryType.MESSAGE.value
 
     def delete_card(self, card: Card) -> None:
-        raise ValueError("CommentRegistry does not support delete_card")
+        raise ValueError("MessageRegistry does not support delete_card")
 
     def register_card(
         self,
@@ -717,4 +715,4 @@ class ServerCommentRegistry(ServerRegistry):
         pre_tag: str = "rc",
         build_tag: str = "build",
     ) -> None:
-        raise ValueError("CommentRegistry does not support register_card")
+        raise ValueError("MessageRegistry does not support register_card")

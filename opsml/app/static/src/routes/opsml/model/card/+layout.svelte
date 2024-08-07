@@ -2,24 +2,10 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faIdCard, faFolderOpen, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
-  import { onMount } from 'svelte';
-  import { keymap } from "@codemirror/view"
-
-
-  import { indentWithTab } from "@codemirror/commands"
-  import {basicSetup, EditorView} from "codemirror"
-  import {markdown} from "@codemirror/lang-markdown"
-  import {languages} from "@codemirror/language-data"
-  import { Compartment } from '@codemirror/state'
+  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
-
-  
-  import { editorTheme } from '$lib/scripts/editor_theme'
-  import { type ModelMetadata, type CardRequest } from "$lib/scripts/types";
-  import CardBadge from "$lib/CardBadge.svelte";
   import { goto } from '$app/navigation';
-  import { listCards } from "$lib/scripts/utils";
+
 
 
   /** @type {import('./$types').LayoutData} */
@@ -124,10 +110,10 @@
             </div>
           </Tab>
 
-          <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("comments")}>
+          <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("messages")}>
             <div class="flex flex-row  items-center">
               <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
-              <div class="font-semibold">Comments/Notes</div>
+              <div class="font-semibold">Messages/Notes</div>
             </div>
           </Tab>
 

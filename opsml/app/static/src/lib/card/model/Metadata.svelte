@@ -38,7 +38,7 @@ async function showModal() {
 
 </script>
 
-<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2">
+<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2 overflow-x-scroll">
   <div class="flex flex-row justify-between mb-2 items-center border-b-2 border-gray-400">
   
     <div class="flex flex-row items-center pt-2">
