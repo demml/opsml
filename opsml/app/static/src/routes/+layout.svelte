@@ -5,19 +5,19 @@
   import favicon from "$lib/images/opsml-green.ico";
   import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
+  import { checkAuthstore } from "$lib/authStore";
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
-  let authStore = data.authStore;;
-  authStore.setupAuth();
-  console.log(authStore.needAuth());
+  let authStore = data.authStore;
 
-  // setup the token and auth store
-  //authStore.setup();
-  //console.log(authStore.needAuth());
+  checkAuthstore(authStore, data.previousPage);
+
+  // setup the token and auth store to be used in the app
+  
   
 </script>
 
@@ -29,6 +29,8 @@
 <Modal />
 
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
-    <Navbar />
+    <Navbar 
+      needAuth={authStore.needAuth()}
+    />
     <slot></slot>
 </div>

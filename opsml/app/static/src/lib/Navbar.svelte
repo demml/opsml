@@ -1,10 +1,19 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
   import js from "jquery";
-  import { LightSwitch } from "@skeletonlabs/skeleton";
   import logo from "$lib/images/opsml_word.png";
   import { page } from "$app/stores";
+  import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
+
+  export let needAuth: boolean;
+  let popupMessage: string = "";
+
+  const popupAuth: PopupSettings = {
+		event: 'hover',
+		target: 'popupAuth',
+		placement: 'bottom'
+	};
 
   onMount(() => {
     // @ts-ignore
@@ -20,9 +29,22 @@
 
   const names = ["Models", "Data", "Runs", "Audits"];
 
+  if (needAuth) {
+    popupMessage = "Login to access OpsML features";
+  } else {
+    popupMessage = "Authentication not required";
+  }
+
   
 
 </script>
+
+
+<div class="card p-2 w-48 bg-surface-200 shadow-xl rounded-2xl border border-primary-500 border-solid" data-popup="popupAuth">
+      <p class="text-sm text-primary-500 text-center">{popupMessage}</p>
+
+  <div class="arrow bg-surface-100-800-token"></div>
+</div>
 
 <div class="shadow-lg bg-primary-500" id="header">
 
@@ -92,7 +114,7 @@
       </a>
     </div>
 
-    <a class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" href="/opsml/auth/login">Login</a>
+    <a class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" href="/opsml/auth/login" use:popup={popupAuth}>Login</a>
 
   </div>
 </div>
