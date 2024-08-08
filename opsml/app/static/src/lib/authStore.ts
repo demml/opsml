@@ -92,8 +92,6 @@ class AuthStore {
       formData.append("username", username);
       formData.append("password", password);
 
-      console.log(formData);
-
       let response = await fetch(`/opsml/auth/token`, {
         method: "POST",
         body: formData,

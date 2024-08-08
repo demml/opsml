@@ -12,11 +12,10 @@
 
  
 	function logOutHandler(): void {
-    console.log('logging out');
 		authStore.logout();
     parent.onClose();
     updateLoginStore();
-    goto('/opsml/auth/login', { replaceState: true });
+    goto('/opsml/auth/login');
 	}
 
 
@@ -35,3 +34,4 @@
   </div>
 
 {/if}
+

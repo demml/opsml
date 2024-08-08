@@ -37,18 +37,10 @@
 
 		const modal: ModalSettings = {
 			type: 'component',
-			title: 'Sign Out',
-			body: 'Are you sure you want to sign out of your account?',
-      modalClasses: 'tex-primary-500',
       component: modalComponent,
-      response: (r) => console.log('response:', r),
-			// image: 'https://i.imgur.com/WOgTG96.gif'
 		};
 		modalStore.trigger(modal);
 
-  
-
-	
     
   }
 

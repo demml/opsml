@@ -97,9 +97,6 @@ async def login_for_access_token(
     logger.info("Logging in user: {}", form_data.username)
 
     # quick exit if auth is disabled
-    if not config.opsml_auth:
-        return Token(access_token="NA", token_type="bearer")
-
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     user = auth_db.get_user(form_data.username)
 
@@ -111,6 +108,9 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if not config.opsml_auth:
+        return Token(access_token="NA", token_type="bearer")
 
     assert user is not None
 
