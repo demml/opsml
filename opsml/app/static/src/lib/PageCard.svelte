@@ -12,7 +12,7 @@
   
 </script>
   
-<a class= "block card max-w-96 border p-4 bg-surface-200 rounded-2xl { hoverColor } hover:border-solid hover:border hover:border-secondary-500 dark:bg-surface-700 dark:hover:bg-surface-600" href="/opsml/{registry}/card?name={name}&repository={repository}">
+<a class= "block card max-w-96 border p-4 bg-surface-50 rounded-2xl { hoverColor } hover:border-solid hover:border hover:border-secondary-500 dark:bg-surface-700 dark:hover:bg-surface-600" href="/opsml/{registry}/card?name={name}&repository={repository}">
   <header class="flex items-center ml-0.5 mb-0.5" title="{repository}/{name}">
     <h4 class="truncate font-boing">{repository}/{name}</h4>
   </header>

@@ -9,10 +9,10 @@
 
 </script>
 
-<div id="active-page">
+<div class="min-h-screen bg-gradient-to-br from-surface-50/30 to-primary-200/40" id="active-page">
 
   <div class="container mx-auto mb-4 pt-12 sm:mb-4 sm:pt-20">
-    <div class="mb-10 flex items-center justify-center gap-2 text-xl font-bold sm:mb-8">
+    <div class="mb-10 flex items-center justify-center gap-2 text-xl font-bold sm:mb-8 text-primary-500">
         <div class="mr-2 h-px flex-1 translate-y-px bg-gradient-to-l from-primary-500 to-white"></div>
           Recent <img src={logo} class="w-12" alt=""> Assets
         <div class="ml-2 h-px flex-1 translate-y-px bg-gradient-to-r from-primary-500 to-white"></div>
@@ -22,7 +22,8 @@
 
       <HomeSpan header="ModelCards" >
         {#await cards}
-          <div>Loading...</div>
+          <div>Loadin
+            g...</div>
         {:then cards}
           {#each cards.modelcards as modelcard}
             <Card
