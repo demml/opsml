@@ -1,19 +1,56 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Fa from "svelte-fa";
   import js from "jquery";
   import logo from "$lib/images/opsml_word.png";
   import { page } from "$app/stores";
   import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
+  import { loadModal } from "$lib";
+  import type { ModalComponent, ModalSettings, ModalStore } from '@skeletonlabs/skeleton';
+  import LogoutModal from "$lib/components/LogoutModal.svelte";
+  import { goto } from "$app/navigation";
 
   export let needAuth: boolean;
+  export let loggedIn: string;
   let popupMessage: string = "";
+
+  const modalStore: ModalStore = loadModal();
 
   const popupAuth: PopupSettings = {
 		event: 'hover',
 		target: 'popupAuth',
 		placement: 'bottom'
 	};
+
+  function logInHandle() {
+    const currentPage = $page.url.pathname;
+    goto('/opsml/auth/login?url=' + currentPage);
+  }
+
+  async function logOut() {
+
+    const modalComponent: ModalComponent = {
+    ref: LogoutModal,
+    props: { 
+      modalStore: modalStore
+    },
+  };
+
+		const modal: ModalSettings = {
+			type: 'component',
+			title: 'Sign Out',
+			body: 'Are you sure you want to sign out of your account?',
+      modalClasses: 'tex-primary-500',
+      component: modalComponent,
+      response: (r) => console.log('response:', r),
+			// image: 'https://i.imgur.com/WOgTG96.gif'
+		};
+		modalStore.trigger(modal);
+
+  
+
+	
+    
+  }
 
   onMount(() => {
     // @ts-ignore
@@ -41,8 +78,7 @@
 
 
 <div class="card p-2 w-48 bg-surface-200 shadow-xl rounded-2xl border border-primary-500 border-solid" data-popup="popupAuth">
-      <p class="text-sm text-primary-500 text-center">{popupMessage}</p>
-
+    <p class="text-sm text-primary-500 text-center">{popupMessage}</p>
   <div class="arrow bg-surface-100-800-token"></div>
 </div>
 
@@ -114,7 +150,12 @@
       </a>
     </div>
 
-    <a class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" href="/opsml/auth/login" use:popup={popupAuth}>Login</a>
+
+    {#if loggedIn === 'false'}
+      <button class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
+    {:else}
+      <button class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" on:click={() => logOut()}>Logout</button>
+    {/if}
 
   </div>
 </div>

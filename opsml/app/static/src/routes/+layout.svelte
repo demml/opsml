@@ -6,6 +6,7 @@
   import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
   import { checkAuthstore } from "$lib/authStore";
+  import { loginStore } from "$lib/scripts/store";
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
@@ -14,10 +15,7 @@
 	export let data;
   let authStore = data.authStore;
 
-  checkAuthstore(authStore, data.previousPage);
-
-  // setup the token and auth store to be used in the app
-  
+  checkAuthstore(authStore, data.previousPath);
   
 </script>
 
@@ -31,6 +29,7 @@
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
     <Navbar 
       needAuth={authStore.needAuth()}
+      loggedIn={$loginStore}
     />
     <slot></slot>
 </div>

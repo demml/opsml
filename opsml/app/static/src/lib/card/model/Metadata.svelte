@@ -1,15 +1,14 @@
 <script lang="ts">
 
 import { type ModelMetadata , type Card } from "$lib/scripts/types";
-import { loadModal } from "$lib";
 import Fa from 'svelte-fa'
 import { faTag, faSquareCheck, faFileContract, faCircleInfo, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Highlight from "svelte-highlight";
 import json from "svelte-highlight/languages/json";
 
-import { type ModalStore} from '@skeletonlabs/skeleton';
 import CodeModal from '$lib/components/CodeModal.svelte';
-import type { ModalComponent, ModalSettings } from '@skeletonlabs/skeleton';
+import { loadModal } from "$lib";
+import type { ModalComponent, ModalSettings, ModalStore } from '@skeletonlabs/skeleton';
 
 export let metadata: ModelMetadata;
 export let card: Card;

@@ -248,3 +248,8 @@ export interface RegisterUser {
   security_question: string;
   security_answer: string;
 }
+
+export interface UserLogin {
+  username: string;
+  password: string;
+}

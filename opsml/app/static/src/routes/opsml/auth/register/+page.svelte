@@ -4,8 +4,7 @@
   import logo from "$lib/images/opsml-logo.png";
   import { type RegisterUser } from "$lib/scripts/types";
   import { registerUser, type RegisterResponse } from "$lib/scripts/register";
-  import Fa from "svelte-fa";
-  import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+  import LoginWarning from "$lib/components/LoginWarning.svelte";
 
   let username = '';
   let password = '';
@@ -17,12 +16,11 @@
 
 
   let warnUser: boolean = false;
-  let invalidArgs: boolean = false;
 
   /** @type {import('./$types').PageData} */
 	export let data;
 
-  let previousPage = data.previousPage;
+  let previousPath = data.previousPath;
 
 
   async function handleRegister() {
@@ -47,7 +45,7 @@
     if (response.success) {
       warnUser = false;
       errorMessage = '';
-      goto(previousPage);
+      goto(previousPath);
     } else {
       errorMessage = response.message;
       warnUser = true;
@@ -64,18 +62,9 @@
   <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
 
     {#if warnUser}
-        <aside class="mb-10 alert mx-auto shadow rounded-2xl bg-rose-500 md:w-1/3 items-center text-white">
-            <!-- Icon -->
-            <div>
-                <Fa size='2x' icon={faExclamationTriangle} color="#ffffff" />
-            </div>
-            <!-- Message -->
-            <div class="alert-message">
-                <h3 class="h4">Problem Encountered</h3>
-                <p class="text-sm">{errorMessage}</p>
-            </div>
-            <!-- Actions -->
-        </aside>
+      <LoginWarning
+      errorMessage={errorMessage}
+      />
     {/if}
 
 
