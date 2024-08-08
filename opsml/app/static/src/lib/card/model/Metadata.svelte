@@ -37,7 +37,7 @@ async function showModal() {
 
 </script>
 
-<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2 overflow-x-scroll">
+<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md shadow-primary-500 mb-2 overflow-x-scroll bg-white">
   <div class="flex flex-row justify-between mb-2 items-center border-b-2 border-gray-400">
   
     <div class="flex flex-row items-center pt-2">
@@ -220,7 +220,7 @@ async function showModal() {
   </div>
 </div>
 
-<div class="rounded-lg border-2 border-darkpurple p-2 shadow-md mb-2">
+<div class="rounded-lg border-2 border-darkpurple p-2 mb-2 shadow-md shadow-primary-500 bg-white">
 
   <div class="flex flex-row mb-2 items-center pt-2 border-b-2 border-gray-400">
     <Fa icon={faCircleInfo} color="#04cd9b"/>

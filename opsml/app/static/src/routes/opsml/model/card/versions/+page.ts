@@ -13,7 +13,7 @@ export async function load({ fetch, params, url }) {
     undefined,
     repository,
     name,
-    0,
+    0
   );
 
   const cardReq: CardRequest = {

@@ -5,17 +5,13 @@
     /** @type {import('./$types').PageData} */
 	export let data;
 
-    let name: string;
-    $: name = data.name;
+  let name: string = data.name;
 
-    let registry: string;
-    $: registry = data.registry;
+  let registry: string = data.registry;
 
-    let repository: string;
-    $: repository = data.repository;
+  let repository: string = data.repository;
 
-    let version: string;
-    $: version = data.version;
+  let version: string = data.version;
 
 
 </script>

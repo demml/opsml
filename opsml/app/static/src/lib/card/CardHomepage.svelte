@@ -20,7 +20,7 @@ async function createReadme() {
 
 </script>
 
-<div class="w-full md:w-3/5 mt-4 ml-4 pl-2 md:ml-12 shadow-md">
+<div class="w-full md:w-3/5 mt-4 ml-4 px-6 pt-6 pb-10 md:ml-12 shadow-lg shadow-primary-500 rounded-lg">
   {#if !hasReadme}
       <div class="mt-5 mx-5 py-24 bg-gradient-to-b from-secondary-50 to-white rounded-lg text-center items-center">
         <p class="mb-1 text-lg">No card README found</p>

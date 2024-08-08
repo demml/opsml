@@ -43,10 +43,10 @@
         {/each}
       </div>
   
-      <div class="bg-gradient-to-b from-primary-50 to-white flex rounded-t-lg border border-gray px-3 py-2 min-w-96">
+      <div class="bg-surface-100 to-white flex rounded-t-lg border border-gray px-3 py-2 min-w-96">
         <div class="inline-flex justify-between w-full items-center">
           <div class="text-primary-500 font-semibold">Files for {name}</div>
-          <div class="text-gray-500"> {modifiedAt}</div>
+          <div class="text-primary-500"> {modifiedAt}</div>
         </div>
       </div>
   

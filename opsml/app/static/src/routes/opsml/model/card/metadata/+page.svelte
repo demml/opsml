@@ -1,6 +1,5 @@
 
 <script lang="ts">
-import { type ModelMetadata } from "$lib/scripts/types";
 import Highlight, { LineNumbers } from "svelte-highlight";
 import json from "svelte-highlight/languages/json";
 import atomOneLight from "svelte-highlight/styles/atom-one-light";

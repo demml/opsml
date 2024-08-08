@@ -5,8 +5,7 @@
   /** @type {import('./$types').PageData} */
   export let data;
 
-  let status: string;
-  $: status = data.status;
+  let status: string = data.status;
 
   let tabSet = data.status;
 
@@ -14,8 +13,7 @@
   let repository: string = data.repository;
   let name: string = data.name;
   let version: string = data.version;
-  let content: string;
-  $: content = data.content;
+  let content: string = data.content;
 
 
 </script>

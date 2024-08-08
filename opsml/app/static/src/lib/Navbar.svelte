@@ -8,6 +8,8 @@
   import type { ModalComponent, ModalSettings, ModalStore } from '@skeletonlabs/skeleton';
   import LogoutModal from "$lib/components/LogoutModal.svelte";
   import { goto } from "$app/navigation";
+  import Fa from 'svelte-fa'
+  import { faUser } from '@fortawesome/free-solid-svg-icons'
 
   export let needAuth: boolean;
   export let loggedIn: string;
@@ -92,13 +94,13 @@
         {#each names as name}
           {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
           <li class="hidden md:block">
-              <a class="group flex items-center text-white text-base text-lg md:text-xl active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
+              <a class="group flex items-center md:text-lg text-white active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
                 {name}
               </a>
           </li>
         {/each}
         <li class="hidden md:block">
-          <a class="group flex items-center text-white text-base text-lg md:text-xl active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
+          <a class="group flex items-center md:text-lg text-white active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
             Docs
           </a>
         </li>
@@ -113,7 +115,7 @@
             </button>
             <div class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
               <section class="p-4 pb-5 space-y-4 overflow-y-auto">
-                <p class="font-bold text-xl">Opsml</p>
+                <p class="font-bold text-lg">Opsml</p>
                 <nav class="list-nav">
                   <ul>
                     {#each names as name}
@@ -144,9 +146,15 @@
 
 
     {#if loggedIn === 'false'}
-      <button class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
+      <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
     {:else}
-      <button class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" on:click={() => logOut()}>Logout</button>
+
+      <div class="flex items-center gap-x-2">
+        <a href="/opsml/auth/user/profile">
+          <Fa size='1x' icon={faUser} color="white"/>
+        </a>
+        <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={() => logOut()}>Logout</button>
+      </div>
     {/if}
 
   </div>

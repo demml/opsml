@@ -68,6 +68,7 @@ onMount(async () => {
 	:global(.markdown-body) {
 		box-sizing: border-box;
 		margin: 0 auto;
+    font-size: 15px;
 	}
 
 </style>

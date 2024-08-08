@@ -6,35 +6,25 @@
   /** @type {import('./$types').PageData} */
 	export let data;
 
-  let fileInfo: Files;
-  $: fileInfo = data.files;
+  let fileInfo: Files  = data.files;
+  
+  let modifiedAt: string= data.modifiedAt;
 
-  let modifiedAt: string;
-  $: modifiedAt = data.modifiedAt;
+  let name: string = data.name;
 
-  let name: string;
-  $: name = data.name;
+  let registry: string = data.registry;
 
-  let registry: string;
-  $: registry = data.registry;
+  let repository: string = data.repository;
 
-  let repository: string;
-  $: repository = data.repository;
+  let version: string = data.version;
 
-  let version: string;
-  $: version = data.version;
+  let basePath: string = data.basePath;
 
-  let basePath: string;
-  $: basePath = data.basePath;
+  let displayPath: string[] = data.displayPath;
 
-  let displayPath: string[];
-  $: displayPath = data.displayPath;
+  let subdir: string | null = data.subdir;
 
-  let subdir: string | null;
-  $: subdir = data.subdir;
-
-  let prevPath: string;
-  $: prevPath = data.prevPath;
+  let prevPath: string = data.prevPath;
 
   
 </script>

@@ -4,6 +4,7 @@ import {
   type FileExists,
   type CardRequest,
   type CardResponse,
+  type Card,
   RegistryName,
 } from "$lib/scripts/types";
 
@@ -12,7 +13,7 @@ import { listCards } from "$lib/scripts/utils";
 export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
-/** @type {import('./$types').PageLoad} */
+/** @type {import('./$types').LayoutLoad} */
 export async function load({ fetch, params, url }) {
   const name: string = url.searchParams.get("name")!;
   const repository: string = url.searchParams.get("repository")!;
@@ -20,6 +21,8 @@ export async function load({ fetch, params, url }) {
   const uid: string | null = url.searchParams.get("uid");
   const registry = "model";
   let metaAttr: metadataRequest;
+
+  console.log("hover");
 
   /** get last path from url */
   const tab = url.pathname.split("/").pop();
@@ -72,15 +75,15 @@ export async function load({ fetch, params, url }) {
 
   // get card info
   const cards: CardResponse = await listCards(cardReq);
-  const selectedCard = cards.cards[0];
+  let selectedCard = cards.cards[0];
 
   return {
     registry,
-    repository: selectedCard.repository,
-    name: selectedCard.name,
+    repository: repository,
+    name: name,
     metadata: res,
     hasReadme: markdown.exists,
-    card: cards.cards[0],
+    card: selectedCard,
     readme,
     tabSet: tab,
     version: res.model_version,
