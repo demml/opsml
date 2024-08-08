@@ -18,7 +18,6 @@
 
 	function onClickHandler(): void {
 		copied = true;
-		console.log(codeBlock);
 		setTimeout(() => {
 			copied = false;
 		}, 1000);

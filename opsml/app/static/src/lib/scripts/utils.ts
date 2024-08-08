@@ -11,7 +11,6 @@ import {
   type Message,
   type MessageThread,
 } from "$lib/scripts/types";
-import { faVoteYea } from "@fortawesome/free-solid-svg-icons";
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();

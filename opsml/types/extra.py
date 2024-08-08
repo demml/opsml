@@ -164,10 +164,18 @@ class PresignableTypes(str, Enum):
 
 
 class UserScope(BaseModel):
+    """Base user scope model. Default is read and write.
+    A user will be able to read from any repository, but only write to
+    repositories that they create. If a user needs access to additional
+    repositories, they will need to be granted access by an admin by updating
+    their scope object.
+    """
+
     read: bool = True
-    write: bool = False
+    write: bool = True
     delete: bool = False
     admin: bool = False
+    repository: Optional[str] = None
 
     @property
     def is_admin(self) -> bool:
@@ -177,6 +185,8 @@ class UserScope(BaseModel):
 class User(BaseModel):
     username: str
     password: Optional[str] = None
+    security_question: Optional[str] = None
+    security_answer: Optional[str] = None
     hashed_password: Optional[str] = None
     email: Optional[str] = None
     full_name: Optional[str] = None

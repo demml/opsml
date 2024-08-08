@@ -39,12 +39,13 @@ class OpsmlApp:
         # build routes for the app and include auth deps
 
         if self.app_config.opsml_auth:
+            # all auth routes are created by default, but we don't use them unless configured via settings
+            # ensure auth is required for all routes
             deps = [Depends(auth.get_current_active_user)]
         else:
             deps = None
 
         api_router = build_router(dependencies=deps)
-        # api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
         self.app.include_router(api_router)
         self.app.mount("/site", StaticFiles(directory=BUILD_PATH), name="site")

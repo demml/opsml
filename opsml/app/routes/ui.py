@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 from typing import Optional
-from opsml.settings.config import config
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -81,10 +81,22 @@ async def opsml_card(
 
 
 @router.get("/opsml/auth/login")
-async def has_auth(request: Request, url: str) -> HTMLResponse:
+async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
     try:
         return templates.TemplateResponse(
-            "site/opsml/auth.html",
+            "site/opsml/auth/login.html",
+            {"request": request, "path": url},
+        )
+    except Exception as e:
+        logger.error(f"Error rendering UI: {e}")
+        raise e
+
+
+@router.get("/opsml/auth/register")
+async def register_page(request: Request, url: Optional[str] = None) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            "site/opsml/auth/register.html",
             {"request": request, "path": url},
         )
     except Exception as e:

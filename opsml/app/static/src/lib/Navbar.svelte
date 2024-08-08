@@ -92,7 +92,7 @@
       </a>
     </div>
 
-    <LightSwitch />
+    <a class="items-center text-white text-lg md:text-xl active:font-bold hover:font-bold" href="/opsml/auth/login">Login</a>
 
   </div>
 </div>

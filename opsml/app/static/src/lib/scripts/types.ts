@@ -239,3 +239,12 @@ export interface MessageWithReplies {
 }
 
 export type MessageThread = MessageWithReplies[];
+
+export interface RegisterUser {
+  username: string;
+  full_name: string;
+  password: string;
+  email: string;
+  security_question: string;
+  security_answer: string;
+}

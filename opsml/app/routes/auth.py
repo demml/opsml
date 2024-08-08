@@ -153,7 +153,7 @@ def create_user(
     user: User,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> UserCreated:
-    """Create new user"""
+    """Create new user - requires admin permissions"""
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
@@ -167,10 +167,43 @@ def create_user(
     auth_db.add_user(user)
 
     # test getting user
-    user = auth_db.get_user(user.username)
+    db_user = auth_db.get_user(user.username)
 
-    if user is None:
+    if db_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Failed to create user")
+
+    return UserCreated(created=True)
+
+
+@router.post("/auth/register/user", response_model=UserCreated)
+def register_user(
+    request: Request,
+    user: User,
+) -> UserCreated:
+    """Create new user - for login page"""
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # check user not exists
+    if auth_db.get_user(user.username) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already exists",
+            headers={"detail": "User already exists"},
+        )
+
+    # add user
+    auth_db.add_user(user)
+
+    # test getting user
+    db_user = auth_db.get_user(user.username)
+
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failed to create user",
+            headers={"detail": "Failed to create user"},
+        )
 
     return UserCreated(created=True)
 
@@ -209,3 +242,8 @@ def delete_user(
 
     deleted = auth_db.delete_user(user)
     return UserDeleted(deleted=deleted)
+
+
+@router.get("/auth/verify")
+def check_auth() -> bool:
+    return config.opsml_auth

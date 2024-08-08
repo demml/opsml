@@ -18,7 +18,6 @@ from opsml.types import (
     AuditSectionType,
     CardType,
     CardVersion,
-    Message,
 )
 
 logger = ArtifactLogger.get_logger()

@@ -178,6 +178,8 @@ class AuthSchema(Base):
     username = Column("username", String(64), primary_key=True)
     full_name = Column("full_name", String(64))
     email = Column("email", String(64))
+    security_question = Column("security_question", String(64))
+    security_answer = Column("security_answer", String(64))
     hashed_password = Column("hashed_password", String(64))
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)

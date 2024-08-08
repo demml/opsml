@@ -8,6 +8,16 @@
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
+
+  /** @type {import('./$types').LayoutData} */
+	export let data;
+  let authStore = data.authStore;;
+  authStore.setupAuth();
+  console.log(authStore.needAuth());
+
+  // setup the token and auth store
+  //authStore.setup();
+  //console.log(authStore.needAuth());
   
 </script>
 

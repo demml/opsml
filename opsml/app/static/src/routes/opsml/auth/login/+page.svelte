@@ -1,7 +1,6 @@
 
-<script>
-  import Input from '$lib/components/LoginInput.svelte';
-  import Button from '$lib/components/LoginButton.svelte';
+<script lang="ts">
+  import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
 
   let email = '';
@@ -10,6 +9,13 @@
   function handleSubmit() {
     // Handle login logic here
     console.log('Login submitted', { email, password });
+  }
+
+  function handleRegister() {
+    // Handle register logic here
+ 
+    goto('/opsml/auth/register?url=/opsml/auth/login');
+
   }
 </script>
 
@@ -20,7 +26,7 @@
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-3xl font-bold text-primary-500">Log In</h1>
       <p class="mb-6 text-center text-gray-500">New to OpsML?
-        <a class="underline hover:text-primary-700" href="#">Register</a>
+        <button class="underline hover:text-primary-700" on:click={handleRegister}>Register</button>
       </p>
 
       <div class="mb-8 grid grid-cols-1 gap-3">
