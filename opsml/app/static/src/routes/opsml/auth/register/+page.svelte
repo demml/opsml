@@ -5,6 +5,7 @@
   import { type RegisterUser } from "$lib/scripts/types";
   import { registerUser, type RegisterResponse } from "$lib/scripts/register";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
+  import { CommonPaths } from "$lib/scripts/types";
 
   let username = '';
   let password = '';
@@ -16,12 +17,6 @@
 
 
   let warnUser: boolean = false;
-
-  /** @type {import('./$types').PageData} */
-	export let data;
-
-  let previousPath = data.previousPath;
-
 
   async function handleRegister() {
     // Handle login logic here
@@ -45,7 +40,7 @@
     if (response.success) {
       warnUser = false;
       errorMessage = '';
-      goto(previousPath);
+      goto(CommonPaths.LOGIN);
     } else {
       errorMessage = response.message;
       warnUser = true;
@@ -57,9 +52,7 @@
 
 </script>
 
-<div class="min-h-screen flex flex-col md:grid md:space-y-0 w-full h-full md:grid-cols-12 md:flex-1 md:grid-rows-full space-y-4 md:gap-6 max-w-full max-h-full bg-gradient-to-b from-surface-500 via-secondary-200 via-70% to-white pb-20">
-
-  <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
+  <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 items-center">
 
     {#if warnUser}
       <LoginWarning
@@ -143,4 +136,3 @@
       </div>
     </form>
   </section>
-</div>

@@ -159,6 +159,12 @@ export enum RegistryName {
   Run = "OPSML_RUN_REGISTRY",
 }
 
+export enum CommonPaths {
+  HOME = "/opsml",
+  LOGIN = "/opsml/auth/login",
+  REGISTER = "/opsml/auth/register",
+}
+
 export interface FileExists {
   exists: boolean;
 }

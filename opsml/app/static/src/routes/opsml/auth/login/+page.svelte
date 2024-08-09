@@ -5,6 +5,7 @@
   import { authStore } from "$lib/authStore";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { updateLoginStore } from "$lib/scripts/store";
+  import { CommonPaths } from "$lib/scripts/types";
 
   let username = '';
   let password = '';
@@ -17,7 +18,6 @@
 
   async function handleLogin() {
     // Handle login logic here
-    console.log('Login submitted', { username, password });
     let loggedIn: boolean = await authStore.loginWithCredentials(username, password);
 
     if (loggedIn) {
@@ -26,7 +26,7 @@
       if (previousPath) {
         goto(previousPath);
       } else {
-        goto('/opsml');
+        goto(CommonPaths.HOME);
       }
     } else {
       showLoginError = true;
@@ -34,14 +34,9 @@
 
   }
 
-  function handleRegister() {
-    // Handle register logic here
-    goto('/opsml/auth/register?url=' + previousPath);
 
-  }
 </script>
 
-<div class="min-h-screen flex flex-col md:grid md:space-y-0 w-full h-full md:grid-cols-12 md:flex-1 md:grid-rows-full space-y-4 md:gap-6 max-w-full max-h-full bg-gradient-to-b from-surface-500 via-secondary-200 via-70% to-white">
   <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
 
     {#if showLoginError}
@@ -55,7 +50,7 @@
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-3xl font-bold text-primary-500">Log In</h1>
       <p class="mb-6 text-center text-gray-500">New to OpsML?
-        <button class="underline hover:text-primary-700" on:click={handleRegister}>Register</button>
+        <a class="underline hover:text-primary-700" href={CommonPaths.REGISTER}>Register</a>
       </p>
 
       <div class="mb-8 grid grid-cols-1 gap-3">
@@ -86,4 +81,3 @@
       </div>
     </form>
   </section>
-</div>

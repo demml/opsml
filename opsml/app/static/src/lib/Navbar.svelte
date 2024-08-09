@@ -23,6 +23,12 @@
 		placement: 'bottom'
 	};
 
+  const popupUser: PopupSettings = {
+		event: 'click',
+		target: 'popupUser',
+		placement: 'bottom'
+	};
+
   function logInHandle() {
     const currentPage = $page.url.pathname;
     goto('/opsml/auth/login?url=' + currentPage);
@@ -70,13 +76,36 @@
 
 </script>
 
-
 <div class="card p-2 w-48 bg-surface-200 shadow-xl rounded-2xl border border-primary-500 border-solid" data-popup="popupAuth">
     <p class="text-sm text-primary-500 text-center">{popupMessage}</p>
   <div class="arrow bg-surface-100-800-token"></div>
 </div>
 
-<div class="shadow-lg bg-primary-500" id="header">
+<div class="card mt-3 w-40 shadow-xl bg-white z-10 rounded-lg" data-popup="popupUser">
+	<div>
+    <p class="text-sm font-bold text-primary-500 px-2 pl-2 py-1 rounded-t-lg border-dashed text-center">Options</p>
+    
+    <p class="w-32 mx-4 border-b-2 border-primary-500" />
+
+    <div class="flex flex-col p-2">
+        <div class="mr-1 ml-0.5 flex items-center overflow-hidden whitespace-nowrap text-sm leading-tight">
+          <svg class="w-5 h-5 text-gray-800 flex-none w-3 mr-1 fill-primary-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M17 10v1.126c.367.095.714.24 1.032.428l.796-.797 1.415 1.415-.797.796c.188.318.333.665.428 1.032H21v2h-1.126c-.095.367-.24.714-.428 1.032l.797.796-1.415 1.415-.796-.797a3.979 3.979 0 0 1-1.032.428V20h-2v-1.126a3.977 3.977 0 0 1-1.032-.428l-.796.797-1.415-1.415.797-.796A3.975 3.975 0 0 1 12.126 16H11v-2h1.126c.095-.367.24-.714.428-1.032l-.797-.796 1.415-1.415.796.797A3.977 3.977 0 0 1 15 11.126V10h2Zm.406 3.578.016.016c.354.358.574.85.578 1.392v.028a2 2 0 0 1-3.409 1.406l-.01-.012a2 2 0 0 1 2.826-2.83ZM5 8a4 4 0 1 1 7.938.703 7.029 7.029 0 0 0-3.235 3.235A4 4 0 0 1 5 8Zm4.29 5H7a4 4 0 0 0-4 4v1a2 2 0 0 0 2 2h6.101A6.979 6.979 0 0 1 9 15c0-.695.101-1.366.29-2Z" clip-rule="evenodd"/>
+          </svg>
+          <a class="truncate text-black hover:text-primary-500" href="/opsml/auth/update?type=username">Username</a>
+        </div>
+        <div class="mr-1 ml-0.5 flex items-center overflow-hidden whitespace-nowrap text-sm leading-tight">
+          <svg  class="icon icon-tabler icons-tabler-outline icon-tabler-lock w-5 h-5 text-gray-800 flex-none w-3 mr-1 stroke-primary-500" xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg>
+          <a class="truncate text-black hover:text-primary-500" href="/opsml/auth/update?type=password">Password</a>
+        </div>
+      </div>
+    </div>
+</div>
+
+
+
+
+<div class="bg-primary-500" id="header">
 
   <div class="mx-auto px-4 container relative flex h-16 items-center">
 
@@ -130,9 +159,7 @@
             </div>
           </div>
         </li>
-
       </ul>
-
     </nav>
 
     <div class="flex items-center border-l border-slate-200 ml-4 mr-4 pl-2">
@@ -150,9 +177,9 @@
     {:else}
 
       <div class="flex items-center gap-x-2">
-        <a href="/opsml/auth/user/profile">
+        <button  use:popup={popupUser}>
           <Fa size='1x' icon={faUser} color="white"/>
-        </a>
+        </button>
         <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={() => logOut()}>Logout</button>
       </div>
     {/if}

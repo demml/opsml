@@ -147,6 +147,25 @@ def get_user(
     return user
 
 
+@router.get("/auth/user/exists", response_model=User)
+def user_exists(request: Request, username: str) -> User:
+    """Retrieves user by username"""
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # try username first
+    user = auth_db.get_user(username)
+
+    if user is None:
+        # try email
+        user = auth_db.get_user_by_email(username)
+
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return user
+
+
 @router.post("/auth/user", response_model=UserCreated)
 def create_user(
     request: Request,

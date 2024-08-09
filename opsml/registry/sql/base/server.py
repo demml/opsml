@@ -575,6 +575,20 @@ class ServerAuthRegistry(ServerRegistry):
 
         return self.auth_db.get_user(username=username)
 
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user from auth db
+
+        Args:
+            username:
+                username
+
+        Returns:
+            user
+
+        """
+
+        return self.auth_db.get_user_by_email(email=email)
+
     def add_user(self, user: User) -> None:
         """Add user to auth db
 
