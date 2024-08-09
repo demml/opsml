@@ -1,4 +1,5 @@
-import { type RegisterUser } from "$lib/scripts/types";
+import { CommonPaths, type RegisterUser } from "$lib/scripts/types";
+import { apiHandler } from "./apiHandler";
 
 export interface RegisterResponse {
   message: string;
@@ -8,13 +9,11 @@ export interface RegisterResponse {
 export async function registerUser(
   request: RegisterUser
 ): Promise<RegisterResponse> {
-  const response = await fetch("/opsml/auth/register/user", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  });
+  let response = await apiHandler.post(
+    CommonPaths.REGISTER,
+    request,
+    "application/json"
+  );
 
   if (response.ok) {
     return { success: true, message: "User registered successfully" };
@@ -25,14 +24,8 @@ export async function registerUser(
 }
 
 export async function checkUser(request: RegisterUser): Promise<Boolean> {
-  const response = await fetch(
-    "/opsml/auth/user/exists" +
-      new URLSearchParams({
-        username: request.username,
-      }).toString(),
-    { method: "GET" }
-  );
-
+  let url: string = CommonPaths.EXISTS + "?username=" + request.username;
+  let response = await apiHandler.get(url);
   if (response.ok) {
     return true;
   } else {

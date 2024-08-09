@@ -185,7 +185,7 @@ def test_app_ui_routes(test_app: TestClient) -> None:
     
     # register new user
     response = test_app.post(
-        "/opsml/auth/register/user",
+        "/opsml/auth/register",
         json={"username": "ui_user", "password": "test_password"},
     )
     
@@ -193,7 +193,7 @@ def test_app_ui_routes(test_app: TestClient) -> None:
     
     # try registering same user again
     response = test_app.post(
-        "/opsml/auth/register/user",
+        "/opsml/auth/register",
         json={"username": "ui_user", "password": "test_password"},
     )
     

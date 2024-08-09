@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { authStore } from "$lib/authStore";
+import { authStore } from "$lib/scripts/authStore";
 
 export const loginStore = writable(authStore.loggedIn());
 

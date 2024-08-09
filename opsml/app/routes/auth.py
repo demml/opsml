@@ -194,7 +194,7 @@ def create_user(
     return UserCreated(created=True)
 
 
-@router.post("/auth/register/user", response_model=UserCreated)
+@router.post("/auth/register", response_model=UserCreated)
 def register_user(
     request: Request,
     user: User,

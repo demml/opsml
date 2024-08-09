@@ -1,6 +1,7 @@
 // src/lib/stores/authStore.js
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
+import { CommonPaths } from "$lib/scripts/types";
 
 class AuthStore {
   constructor() {
@@ -59,9 +60,9 @@ class AuthStore {
     }
   }
 
-  setupAuth() {
+  async setupAuth() {
     if (browser) {
-      let response = fetch("/opsml/auth/verify", {
+      let response = fetch(CommonPaths.VERIFY, {
         method: "GET", // default, so we can ignore
       })
         .then((response) => {
@@ -92,7 +93,7 @@ class AuthStore {
       formData.append("username", username);
       formData.append("password", password);
 
-      let response = await fetch(`/opsml/auth/token`, {
+      let response = await fetch(CommonPaths.TOKEN, {
         method: "POST",
         body: formData,
       });
@@ -130,9 +131,9 @@ export function checkAuthstore(
   if (store.needAuth() && !store.getToken()) {
     // redirect to login page with previous page as query param
     if (previousPath) {
-      goto("/opsml/auth/login?url=" + previousPath);
+      goto(CommonPaths.LOGIN + "?redirect=" + previousPath);
     } else {
-      goto("/opsml/auth/login");
+      goto(CommonPaths.LOGIN);
     }
     // do nothing
   } else {

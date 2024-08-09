@@ -8,7 +8,7 @@ export interface RegisterResponse {
 export async function registerUser(
   request: RegisterUser
 ): Promise<RegisterResponse> {
-  const response = await fetch("/opsml/auth/register/user", {
+  const response = await fetch("/opsml/auth/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

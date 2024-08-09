@@ -163,6 +163,9 @@ export enum CommonPaths {
   HOME = "/opsml",
   LOGIN = "/opsml/auth/login",
   REGISTER = "/opsml/auth/register",
+  UPDATE = "/opsml/auth/update",
+  VERIFY = "/opsml/auth/verify",
+  TOKEN = "/opsml/auth/token",
 }
 
 export interface FileExists {
