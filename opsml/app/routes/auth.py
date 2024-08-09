@@ -97,9 +97,6 @@ async def login_for_access_token(
     logger.info("Logging in user: {}", form_data.username)
 
     # quick exit if auth is disabled
-    if not config.opsml_auth:
-        return Token(access_token="", token_type="bearer")
-
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     user = auth_db.get_user(form_data.username)
 
@@ -111,6 +108,9 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    if not config.opsml_auth:
+        return Token(access_token="NA", token_type="bearer")
 
     assert user is not None
 
@@ -147,13 +147,32 @@ def get_user(
     return user
 
 
+@router.get("/auth/user/exists", response_model=User)
+def user_exists(request: Request, username: str) -> bool:
+    """Retrieves user by username"""
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # try username first
+    user = auth_db.get_user(username)
+
+    if user is None:
+        # try email
+        user = auth_db.get_user_by_email(username)
+
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return True
+
+
 @router.post("/auth/user", response_model=UserCreated)
 def create_user(
     request: Request,
     user: User,
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> UserCreated:
-    """Create new user"""
+    """Create new user - requires admin permissions"""
     if not current_user.scopes.admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
@@ -167,10 +186,43 @@ def create_user(
     auth_db.add_user(user)
 
     # test getting user
-    user = auth_db.get_user(user.username)
+    db_user = auth_db.get_user(user.username)
 
-    if user is None:
+    if db_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Failed to create user")
+
+    return UserCreated(created=True)
+
+
+@router.post("/auth/register", response_model=UserCreated)
+def register_user(
+    request: Request,
+    user: User,
+) -> UserCreated:
+    """Create new user - for login page"""
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # check user not exists
+    if auth_db.get_user(user.username) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already exists",
+            headers={"detail": "User already exists"},
+        )
+
+    # add user
+    auth_db.add_user(user)
+
+    # test getting user
+    db_user = auth_db.get_user(user.username)
+
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Failed to create user",
+            headers={"detail": "Failed to create user"},
+        )
 
     return UserCreated(created=True)
 
@@ -209,3 +261,8 @@ def delete_user(
 
     deleted = auth_db.delete_user(user)
     return UserDeleted(deleted=deleted)
+
+
+@router.get("/auth/verify")
+def check_auth() -> bool:
+    return config.opsml_auth

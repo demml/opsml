@@ -18,7 +18,6 @@ from opsml.types import (
     AuditSectionType,
     CardType,
     CardVersion,
-    Comment,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -126,7 +125,7 @@ class AuditCard(ArtifactCard):
 
     audit: AuditSections = AuditSections()
     approved: bool = False
-    comments: List[SerializeAsAny[Comment]] = []
+    comments: List[SerializeAsAny[Any]] = []
     metadata: AuditCardMetadata = AuditCardMetadata()
 
     def add_comment(self, name: str, comment: str) -> None:
@@ -139,7 +138,7 @@ class AuditCard(ArtifactCard):
                 Comment to add
 
         """
-        comment_model = Comment(name=name, comment=comment)
+        comment_model = ""
 
         if any(comment_model == _comment for _comment in self.comments):
             return  # Exit early if comment already exists

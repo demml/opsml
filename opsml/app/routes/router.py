@@ -7,15 +7,19 @@ from fastapi import APIRouter
 
 from opsml.app.routes import (
     audit,
+    auth,
     cards,
     data,
     files,
     healthcheck,
-    homepage,
+    message,
     metrics,
     models,
+    parameters,
     projects,
     registry,
+    runs,
+    ui,
 )
 
 
@@ -27,9 +31,13 @@ def build_router(dependencies: Optional[Sequence[Any]] = None) -> APIRouter:
     api_router.include_router(files.router, tags=["file"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(data.router, tags=["data"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(audit.router, tags=["audit"], prefix="/opsml", dependencies=dependencies)
-    api_router.include_router(homepage.router, tags=["homepage"], dependencies=dependencies)
     api_router.include_router(registry.router, tags=["registry"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(projects.router, tags=["project"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(metrics.router, tags=["metrics"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(ui.router, tags=["ui"], dependencies=dependencies)
+    api_router.include_router(runs.router, tags=["runs"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(parameters.router, tags=["parameters"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(message.router, tags=["messages"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(auth.router, tags=["auth"], prefix="/opsml", dependencies=dependencies)
 
     return api_router

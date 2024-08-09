@@ -103,6 +103,8 @@ def query_registry_stats(
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         stats: Dict[str, int] = registry._registry.query_stats(search_term)
 
+        logger.info("Querying registry stats: {}", stats)
+
         return stats
 
     except Exception as error:
@@ -223,12 +225,7 @@ def list_cards(
     """Lists a Card"""
 
     try:
-        registry_type = get_registry_type_from_table(
-            table_name=payload.table_name,
-            registry_type=payload.registry_type,
-        )
-
-        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
         logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry._registry.list_cards(

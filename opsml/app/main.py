@@ -17,11 +17,12 @@ from opsml.app.routes import auth
 from opsml.app.routes.router import build_router
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
+from opsml.types import StorageSystem
 
 logger = ArtifactLogger.get_logger()
 
 instrumentator = Instrumentator()
-STATIC_PATH = (Path(__file__).parent / "static").absolute()
+BUILD_PATH = (Path(__file__).parent / "static" / "site").absolute()
 
 
 class OpsmlApp:
@@ -38,15 +39,23 @@ class OpsmlApp:
         # build routes for the app and include auth deps
 
         if self.app_config.opsml_auth:
+            # all auth routes are created by default, but we don't use them unless configured via settings
+            # ensure auth is required for all routes
             deps = [Depends(auth.get_current_active_user)]
         else:
             deps = None
 
         api_router = build_router(dependencies=deps)
-        api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
         self.app.include_router(api_router)
-        self.app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
+        self.app.mount("/site", StaticFiles(directory=BUILD_PATH), name="site")
+        self.app.mount("/app", StaticFiles(directory=f"{BUILD_PATH}/app"), name="build")
+
+        if self.app_config.storage_system == StorageSystem.LOCAL:
+            # find path to storage root
+            storage_root = Path(config.storage_root)
+            storage_root.mkdir(parents=True, exist_ok=True)
+            self.app.mount("/artifacts", StaticFiles(directory=config.storage_root), name="artifacts")
 
         instrumentator.instrument(self.app).expose(self.app)
         self.app.middleware("http")(rollbar_middleware)
