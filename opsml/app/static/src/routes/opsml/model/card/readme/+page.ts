@@ -1,4 +1,11 @@
-import { type FileExists, RegistryName } from "$lib/scripts/types";
+import {
+  type FileExists,
+  RegistryName,
+  CommonPaths,
+  type Readme,
+} from "$lib/scripts/types";
+import { getReadme } from "$lib/scripts/utils";
+import { apiHandler } from "$lib/scripts/apiHandler";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
@@ -11,21 +18,14 @@ export async function load({ fetch, params, url }) {
 
   status = "edit";
 
+  let content: string = "";
+
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${repository}/${name}/README.md`;
+  let readme: Readme = await getReadme(markdownPath);
 
-  const markdown: FileExists = await fetch(
-    `/opsml/files/exists?path=${markdownPath}`
-  ).then((res) => res.json());
-
-  let content: string = "";
-  if (markdown.exists) {
-    // fetch markdown
-    const viewData = await fetch(`/opsml/files/view?path=${markdownPath}`).then(
-      (res) => res.json()
-    );
-
-    content = viewData.content.content;
+  if (readme.exists) {
+    content = readme.readme;
   } else {
     content = `# ModelCard Description for ${name} 
 

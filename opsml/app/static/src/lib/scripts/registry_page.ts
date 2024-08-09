@@ -1,4 +1,6 @@
 import { type registryStats, type registryPage } from "$lib/scripts/types";
+import { apiHandler } from "$lib/scripts/apiHandler";
+import { CommonPaths } from "$lib/scripts/types";
 
 // Function for searching general stats given a registry and search term
 //
@@ -18,7 +20,8 @@ async function getRegistryStats(
     params.append("search_term", searchTerm);
   }
 
-  const page_resp = await fetch(`/opsml/cards/registry/stats?${params}`);
+  let url = CommonPaths.REGISTRY_STATS + "?" + params.toString();
+  let page_resp = await apiHandler.get(url);
 
   const response: registryStats = await page_resp.json();
   return response;
@@ -59,7 +62,10 @@ async function getRegistryPage(
     params.append("page", page.toString());
   }
 
-  const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
+  let url = CommonPaths.QUERY_PAGE + "?" + params.toString();
+  let page_resp = await apiHandler.get(url);
+
+  //const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
 
   const response: registryPage = await page_resp.json();
   return response;

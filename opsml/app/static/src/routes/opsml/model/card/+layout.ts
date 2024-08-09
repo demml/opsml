@@ -1,14 +1,13 @@
 import {
-  type metadataRequest,
   type ModelMetadata,
-  type FileExists,
   type CardRequest,
   type CardResponse,
-  type Card,
+  type Readme,
   RegistryName,
 } from "$lib/scripts/types";
 
-import { listCards } from "$lib/scripts/utils";
+import { listCards, getReadme, getModelMetadata } from "$lib/scripts/utils";
+import { apiHandler } from "$lib/scripts/apiHandler";
 
 export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
@@ -20,56 +19,26 @@ export async function load({ fetch, params, url }) {
   const version = url.searchParams.get("version");
   const uid: string | null = url.searchParams.get("uid");
   const registry = "model";
-  let metaAttr: metadataRequest;
-
-  console.log("hover");
 
   /** get last path from url */
   const tab = url.pathname.split("/").pop();
 
-  if (uid !== null) {
-    metaAttr = {
-      uid,
-    };
-  } else {
-    metaAttr = {
-      name,
-      repository,
-    };
-
-    if (version) {
-      metaAttr.version = version;
-    }
-  }
-
-  const res: ModelMetadata = await fetch("/opsml/models/metadata", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(metaAttr),
-  }).then((res) => res.json());
+  let metadata: ModelMetadata = await getModelMetadata(
+    uid,
+    name,
+    repository,
+    version
+  );
 
   // check if markdown exists
-  const markdownPath = `${opsmlRoot}/${res.model_repository}/${res.model_name}/README.md`;
-  const markdown: FileExists = await fetch(
-    `/opsml/files/exists?path=${markdownPath}`
-  ).then((res) => res.json());
+  const markdownPath = `${opsmlRoot}/${metadata.model_repository}/${metadata.model_name}/README.md`;
 
-  let readme: string = "";
-  if (markdown.exists) {
-    // fetch markdown
-    const viewData = await fetch(`/opsml/files/view?path=${markdownPath}`).then(
-      (res) => res.json()
-    );
-
-    readme = viewData.content.content;
-  }
+  let readme: Readme = await getReadme(markdownPath);
 
   const cardReq: CardRequest = {
     name,
     repository,
-    version: res.model_version,
+    version: metadata.model_version,
     registry_type: registry,
   };
 
@@ -81,11 +50,11 @@ export async function load({ fetch, params, url }) {
     registry,
     repository: repository,
     name: name,
-    metadata: res,
-    hasReadme: markdown.exists,
+    metadata: metadata,
+    hasReadme: readme.exists,
     card: selectedCard,
-    readme,
+    readme: readme.readme,
     tabSet: tab,
-    version: res.model_version,
+    version: metadata.model_version,
   };
 }

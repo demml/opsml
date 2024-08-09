@@ -1,3 +1,6 @@
+import { apiHandler } from "$lib/scripts/apiHandler";
+import { CommonPaths } from "$lib/scripts/types";
+
 interface CardRequest {
   registry_type: string;
   limit: number;
@@ -26,14 +29,12 @@ interface RecentCards {
 }
 
 async function getCards(registry: string): Promise<CardJson[]> {
-  const modelcards = await fetch("/opsml/cards/list", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ registry_type: registry, limit: 10 }),
-  });
+  let modelcards = await apiHandler.post(
+    CommonPaths.LIST_CARDS,
+    { registry_type: registry, limit: 10 },
+    "application/json",
+    { Accept: "application/json" }
+  );
 
   const response: CardResponse = await modelcards.json();
   return response.cards;

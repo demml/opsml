@@ -25,12 +25,61 @@ class ApiHandler {
   async post(
     url: string,
     body: any,
-    contentType: string | undefined
+    contentType: string = "application/json",
+    additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
+    let headers = {
+      "Content-Type": contentType,
+      Authorization: `Bearer ${authStore.getToken()}`,
+      ...additionalHeaders,
+    };
     let response = await fetch(url, {
       method: "POST",
+      headers: headers,
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 401) {
+      authStore.clearToken();
+      authStore.clearUsername();
+      goto(CommonPaths.LOGIN);
+    }
+
+    return response;
+  }
+
+  async put(
+    url: string,
+    body: any,
+    contentType: string = "application/json"
+  ): Promise<Response> {
+    let response = await fetch(url, {
+      method: "PUT",
       headers: {
-        "Content-Type": contentType || "application/json",
+        "Content-Type": contentType,
+        Authorization: `Bearer ${authStore.getToken()}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 401) {
+      authStore.clearToken();
+      authStore.clearUsername();
+      goto(CommonPaths.LOGIN);
+    }
+
+    return response;
+  }
+
+  async patch(
+    url: string,
+    body: any,
+    contentType: string = "application/json"
+  ): Promise<Response> {
+    let response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": contentType,
         Authorization: `Bearer ${authStore.getToken()}`,
       },
       body: JSON.stringify(body),

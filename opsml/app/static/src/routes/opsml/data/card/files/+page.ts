@@ -4,8 +4,10 @@ import {
   type FileExists,
   type Files,
   RegistryName,
+  CommonPaths,
 } from "$lib/scripts/types";
 import { calculateTimeBetween } from "$lib/scripts/utils";
+import { apiHandler } from "$lib/scripts/apiHandler";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
@@ -34,7 +36,9 @@ export async function load({ fetch, params, url }) {
     prevPath = `${basePath}/${prevDir}`;
   }
 
-  const fileInfo: Files = await fetch(urlPath).then((res) => res.json());
+  const fileInfo: Files = await apiHandler
+    .get(urlPath)
+    .then((res) => res.json());
 
   return {
     files: fileInfo,

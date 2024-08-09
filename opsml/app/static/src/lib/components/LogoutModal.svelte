@@ -1,7 +1,7 @@
 
 <script lang="ts">
 	import { type ModalStore} from '@skeletonlabs/skeleton';
-  import { authStore } from '$lib/authStore';
+  import { authStore } from '$lib/scripts/authStore';
   import { goto } from '$app/navigation';
   import type { SvelteComponent } from 'svelte';
   import { updateLoginStore } from '$lib/scripts/store';

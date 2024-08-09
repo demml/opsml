@@ -1,12 +1,8 @@
 
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import logo from "$lib/images/opsml-logo.png";
-    import { type RegisterUser } from "$lib/scripts/types";
-    import { registerUser, type RegisterResponse } from "$lib/scripts/register";
-    import LoginWarning from "$lib/components/LoginWarning.svelte";
     import { CommonPaths } from "$lib/scripts/types";
-    import { authStore } from "$lib/authStore";
+    import { authStore } from "$lib/scripts/authStore";
     import { onMount } from "svelte";
   
     /** @type {import('./$types').PageData} */

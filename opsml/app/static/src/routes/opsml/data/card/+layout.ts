@@ -1,12 +1,12 @@
 import {
-  type FileExists,
   type CardRequest,
   type CardResponse,
   type DataCardMetadata,
+  type Readme,
   RegistryName,
 } from "$lib/scripts/types";
 
-import { listCards, getDataCard } from "$lib/scripts/utils";
+import { listCards, getDataCard, getReadme } from "$lib/scripts/utils";
 
 export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
@@ -42,19 +42,8 @@ export async function load({ fetch, params, url }) {
 
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${selectedCard.repository}/${selectedCard.name}/README.md`;
-  const markdown: FileExists = await fetch(
-    `/opsml/files/exists?path=${markdownPath}`,
-  ).then((res) => res.json());
 
-  let readme: string = "";
-  if (markdown.exists) {
-    // fetch markdown
-    const viewData = await fetch(`/opsml/files/view?path=${markdownPath}`).then(
-      (res) => res.json(),
-    );
-
-    readme = viewData.content.content;
-  }
+  let readme: Readme = await getReadme(markdownPath);
 
   // get datacard
   const dataCard: DataCardMetadata = await getDataCard(cardReq);
@@ -63,9 +52,9 @@ export async function load({ fetch, params, url }) {
     registry,
     repository: selectedCard.repository,
     name: selectedCard.name,
-    hasReadme: markdown.exists,
+    hasReadme: readme.exists,
     card: cards.cards[0],
-    readme,
+    readme: readme.readme,
     metadata: dataCard,
     tabSet: tab,
   };

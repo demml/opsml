@@ -10,7 +10,13 @@ import {
   type RunMetrics,
   type Message,
   type MessageThread,
+  type FileExists,
+  type Readme,
+  CommonPaths,
+  type ModelMetadata,
+  type metadataRequest,
 } from "$lib/scripts/types";
+import { apiHandler } from "$lib/scripts/apiHandler";
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -28,13 +34,10 @@ export function calculateTimeBetween(timestamp: number): string {
 
 export async function listCards(request: CardRequest): Promise<CardResponse> {
   // get card info
-  const cards: CardResponse = await fetch("/opsml/cards/list", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+
+  let cards = await apiHandler
+    .post(CommonPaths.LIST_CARDS, request, "application/json")
+    .then((res) => res.json());
 
   return cards;
 }
@@ -43,9 +46,9 @@ export async function getMessages(
   uid: string,
   registry: string
 ): Promise<MessageThread> {
-  const comments: MessageThread = await fetch(
-    `/opsml/${registry}/messages?uid=${uid}`
-  ).then((res) => res.json());
+  const comments: MessageThread = await apiHandler
+    .get(`/opsml/${registry}/messages?uid=${uid}`)
+    .then((res) => res.json());
 
   return comments;
 }
@@ -61,13 +64,9 @@ export async function putMessage(message: Message): Promise<void> {
     created_at: message.created_at,
   };
 
-  await fetch(`/opsml/${message.registry}/messages`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  await apiHandler
+    .put(`/opsml/${message.registry}/messages`, request)
+    .then((res) => res.json());
 }
 
 export async function patchMessage(message: Message): Promise<void> {
@@ -81,37 +80,25 @@ export async function patchMessage(message: Message): Promise<void> {
     created_at: message.created_at,
   };
 
-  await fetch(`/opsml/${message.registry}/messages`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  await apiHandler
+    .patch(`/opsml/${message.registry}/messages`, request)
+    .then((res) => res.json());
 }
 
 export async function getDataCard(
   request: CardRequest
 ): Promise<DataCardMetadata> {
-  const dataCard: DataCardMetadata = await fetch("/opsml/data/card", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  let dataCard = await apiHandler
+    .post(CommonPaths.DATACARD, request)
+    .then((res) => res.json());
 
   return dataCard;
 }
 
 export async function getRunCard(request: CardRequest): Promise<RunCard> {
-  const runCard: RunCard = await fetch("/opsml/run/card", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  let runCard = await apiHandler
+    .post(CommonPaths.RUNCARD, request)
+    .then((res) => res.json());
 
   return runCard;
 }
@@ -119,13 +106,9 @@ export async function getRunCard(request: CardRequest): Promise<RunCard> {
 export async function getRunMetricNames(uid: string): Promise<MetricNames> {
   const request = { run_uid: uid, names_only: true };
 
-  const names: MetricNames = await fetch("/opsml/metrics", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  let names: MetricNames = await apiHandler
+    .post(CommonPaths.METRICS, request)
+    .then((res) => res.json());
 
   return names;
 }
@@ -140,13 +123,9 @@ export async function getRunMetrics(
     request["name"] = name;
   }
 
-  const metrics: Metrics = await fetch("/opsml/metrics", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  let metrics: Metrics = await apiHandler
+    .post(CommonPaths.METRICS, request)
+    .then((res) => res.json());
 
   return metrics;
 }
@@ -154,13 +133,9 @@ export async function getRunMetrics(
 export async function getRunParameters(uid: string): Promise<Parameters> {
   const request = { run_uid: uid };
 
-  const params: Parameters = await fetch("/opsml/parameters", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(request),
-  }).then((res) => res.json());
+  let params: Parameters = await apiHandler
+    .post(CommonPaths.PARAMETERS, request)
+    .then((res) => res.json());
 
   return params;
 }
@@ -170,9 +145,93 @@ export async function getRunGraphs(
   name: string,
   version: string
 ): Promise<Map<string, Graph>> {
-  const graphs = await fetch(
-    `/opsml/runs/graphs?repository=${repository}&name=${name}&version=${version}`
-  ).then((res) => res.json());
+  let params = new URLSearchParams();
+  params.append("repository", repository);
+  params.append("name", name);
+  params.append("version", version);
+
+  let url = CommonPaths.GRAPHS + "?" + params.toString();
+  let graphs = await apiHandler.get(url).then((res) => res.json());
 
   return graphs;
+}
+
+/**
+ * Get the readme for a given markdown path
+ * @param {string} markdownPath
+ *
+ * @returns {Promise<string>} readme
+ *
+ */
+export async function getReadme(markdownPath: string): Promise<Readme> {
+  let markdown: FileExists = await apiHandler
+    .get(
+      CommonPaths.FILE_EXISTS +
+        "?" +
+        new URLSearchParams({
+          path: markdownPath,
+        }).toString()
+    )
+    .then((res) => res.json());
+
+  let readme: string = "";
+
+  if (markdown.exists) {
+    // fetch markdown
+
+    let viewData = await apiHandler
+      .get(
+        CommonPaths.FILES_VIEW +
+          "?" +
+          new URLSearchParams({
+            path: markdownPath,
+          }).toString()
+      )
+      .then((res) => res.json());
+
+    readme = viewData.content.content;
+  }
+
+  // return readme and markdown exists
+  return { readme, exists: markdown.exists };
+}
+
+/**
+ * Get metadata for a model
+ * @param {string | null} uid
+ * @param {string} name
+ * @param {string} repository
+ * @param {string | null} version
+ *
+ * @returns {Promise<ModelMetadata>} metadata
+ *
+ */
+export async function getModelMetadata(
+  uid: string | null,
+  name: string,
+  repository: string,
+  version: string | null
+): Promise<ModelMetadata> {
+  let metaAttr: metadataRequest = {};
+
+  if (uid !== null) {
+    metaAttr = {
+      uid,
+    };
+  } else {
+    metaAttr = {
+      name,
+      repository,
+    };
+
+    if (version) {
+      metaAttr.version = version;
+    }
+  }
+
+  let res: ModelMetadata = await apiHandler
+    .post(CommonPaths.MODEL_METADATA, metaAttr)
+    .then((res) => res.json());
+
+  return res;
 }

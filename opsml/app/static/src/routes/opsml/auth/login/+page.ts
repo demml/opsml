@@ -1,4 +1,4 @@
-import { CommonPaths } from "$lib/scripts/types.ts";
+import { CommonPaths } from "$lib/scripts/types";
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */

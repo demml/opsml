@@ -1,4 +1,4 @@
-import { authStore } from "$lib/authStore";
+import { authStore } from "$lib/scripts/authStore";
 
 export const prerender = true;
 

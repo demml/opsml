@@ -166,6 +166,19 @@ export enum CommonPaths {
   UPDATE = "/opsml/auth/update",
   VERIFY = "/opsml/auth/verify",
   TOKEN = "/opsml/auth/token",
+  EXISTS = "/opsml/auth/user/exists",
+  LIST_CARDS = "/opsml/cards/list",
+  REGISTRY_STATS = "/opsml/cards/registry/stats",
+  QUERY_PAGE = "/opsml/cards/registry/query/page",
+  DATACARD = "/opsml/data/card",
+  RUNCARD = "/opsml/run/card",
+  METRICS = "/opsml/metrics",
+  PARAMETERS = "/opsml/parameters",
+  GRAPHS = "/opsml/runs/graphs",
+  REPOSITORIES = "/opsml/cards/repositories",
+  FILE_EXISTS = "/opsml/files/exists",
+  FILES_VIEW = "/opsml/files/view",
+  MODEL_METADATA = "/opsml/models/metadata",
 }
 
 export interface FileExists {
@@ -261,4 +274,9 @@ export interface RegisterUser {
 export interface UserLogin {
   username: string;
   password: string;
+}
+
+export interface Readme {
+  readme: string;
+  exists: boolean;
 }
