@@ -148,7 +148,7 @@ def get_user(
 
 
 @router.get("/auth/user/exists", response_model=User)
-def user_exists(request: Request, username: str) -> User:
+def user_exists(request: Request, username: str) -> bool:
     """Retrieves user by username"""
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
@@ -163,7 +163,7 @@ def user_exists(request: Request, username: str) -> User:
         if user is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return user
+    return True
 
 
 @router.post("/auth/user", response_model=UserCreated)

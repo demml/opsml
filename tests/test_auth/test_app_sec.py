@@ -100,6 +100,7 @@ def test_app_user_mgmt_creds(test_app: TestClient) -> None:
     )
 
     assert response.status_code == 200
+    
     # set bearer token
     admin_token = response.json()["access_token"]
     test_app.headers.update({"Authorization": f"Bearer {admin_token}"})
@@ -111,6 +112,21 @@ def test_app_user_mgmt_creds(test_app: TestClient) -> None:
     )
     assert response.status_code == 200
 
+    
+    # check that test user exists
+    response = test_app.get(
+        "/opsml/auth/user/exists",
+        params={"username": "test_user"},
+    )
+    assert response.status_code == 200
+    
+    # Confirm random user doesn't exist
+    response = test_app.get(
+        "/opsml/auth/user/exists",
+        params={"username": "blah"},
+    )
+    assert response.status_code == 404
+    
     # switch to test user
     response = test_app.post(
         "/opsml/auth/token",
@@ -154,3 +170,31 @@ def test_app_user_mgmt_creds(test_app: TestClient) -> None:
     )
 
     assert response.status_code == 403
+
+@pytest.mark.appsec
+def test_app_ui_routes(test_app: TestClient) -> None:
+    """Test user management"""
+    
+    # get token for admin (just to make sure everything is working)
+    response = test_app.post(
+        "/opsml/auth/token",
+        data={"username": "admin", "password": "admin"},
+    )
+
+    assert response.status_code == 200
+    
+    # register new user
+    response = test_app.post(
+        "/opsml/auth/register/user",
+        json={"username": "ui_user", "password": "test_password"},
+    )
+    
+    assert response.status_code == 200
+    
+    # try registering same user again
+    response = test_app.post(
+        "/opsml/auth/register/user",
+        json={"username": "ui_user", "password": "test_password"},
+    )
+    
+    assert response.status_code == 409
