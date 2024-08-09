@@ -1,13 +1,5 @@
-import {
-  type metadataRequest,
-  type ModelMetadata,
-  type FileExists,
-  type Files,
-  RegistryName,
-  CommonPaths,
-} from "$lib/scripts/types";
-import { calculateTimeBetween } from "$lib/scripts/utils";
-import { apiHandler } from "$lib/scripts/apiHandler";
+import { RegistryName, type FileSetup } from "$lib/scripts/types";
+import { calculateTimeBetween, setupFiles } from "$lib/scripts/utils";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
@@ -20,34 +12,24 @@ export async function load({ fetch, params, url }) {
   const registry = "model";
 
   const basePath = `${opsmlRoot}/${repository}/${name}/v${version}`;
-
-  let urlPath = `/opsml/files/list/info?path=${basePath}`;
-  let displayPath = [repository, name, `v${version}`];
-  let prevPath: string = basePath;
-
-  if (subdir !== null) {
-    urlPath = `${urlPath}&subdir=${subdir}`;
-
-    // split the subdir path
-    displayPath = displayPath.concat(subdir.split("/"));
-
-    const subPath = subdir.split("/");
-    const prevDir = subPath.slice(0, subPath.length - 1).join("/");
-    prevPath = `${basePath}/${prevDir}`;
-  }
-
-  let fileInfo: Files = await apiHandler.get(urlPath).then((res) => res.json());
+  let setup: FileSetup = await setupFiles(
+    basePath,
+    repository,
+    name,
+    version,
+    subdir
+  );
 
   return {
-    files: fileInfo,
+    files: setup.fileInfo,
     name,
     repository,
     version,
     registry,
     subdir,
-    modifiedAt: calculateTimeBetween(fileInfo.mtime),
+    modifiedAt: calculateTimeBetween(setup.fileInfo.mtime),
     basePath,
-    displayPath,
-    prevPath,
+    displayPath: setup.displayPath,
+    prevPath: setup.prevPath,
   };
 }

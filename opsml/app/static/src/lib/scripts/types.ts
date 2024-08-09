@@ -179,6 +179,7 @@ export enum CommonPaths {
   FILE_EXISTS = "/opsml/files/exists",
   FILES_VIEW = "/opsml/files/view",
   MODEL_METADATA = "/opsml/models/metadata",
+  FILE_INFO = "/opsml/files/list/info",
 }
 
 export interface FileExists {
@@ -279,4 +280,17 @@ export interface UserLogin {
 export interface Readme {
   readme: string;
   exists: boolean;
+}
+
+export interface FileSetup {
+  fileInfo: Files;
+  prevPath: string;
+  displayPath: string[];
+}
+
+export interface registryPageReturn {
+  repos: string[];
+  registry: string;
+  registryStats: registryStats;
+  registryPage: registryPage;
 }

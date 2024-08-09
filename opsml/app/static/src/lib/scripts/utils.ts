@@ -15,6 +15,12 @@ import {
   CommonPaths,
   type ModelMetadata,
   type metadataRequest,
+  type Files,
+  type FileSetup,
+  type registryStats,
+  type repositories,
+  type registryPage,
+  type registryPageReturn,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -234,4 +240,95 @@ export async function getModelMetadata(
     .then((res) => res.json());
 
   return res;
+}
+
+/**
+ * Generic function for setting up filesystem view
+ * @param {string} basePath
+ * @param {string} repository
+ * @param {string} name
+ * @param {string} version
+ * @param {string | null} subdir
+ *
+ * @returns {Promise<FileSetup>} setup
+ *
+ */
+export async function setupFiles(
+  basePath: string,
+  repository: string,
+  name: string,
+  version: string | null,
+  subdir: string | null
+): Promise<FileSetup> {
+  let urlPath = CommonPaths.FILE_INFO + `?path=${basePath}`;
+  let displayPath = [repository, name, `v${version}`];
+  let prevPath: string = basePath;
+
+  if (subdir !== null) {
+    urlPath = `${urlPath}&subdir=${subdir}`;
+
+    // split the subdir path
+    displayPath = displayPath.concat(subdir.split("/"));
+
+    const subPath = subdir.split("/");
+    const prevDir = subPath.slice(0, subPath.length - 1).join("/");
+    prevPath = `${basePath}/${prevDir}`;
+  }
+
+  let fileInfo: Files = await apiHandler.get(urlPath).then((res) => res.json());
+
+  return {
+    fileInfo,
+    prevPath,
+    displayPath,
+  };
+}
+
+/**
+ * Setup the registry page
+ * @param {string} registry
+ *
+ * @returns {Promise<registryPageReturn>} page
+ *
+ */
+export async function setupRegistryPage(
+  registry: string
+): Promise<registryPageReturn> {
+  let repos: repositories = await apiHandler
+    .get(
+      CommonPaths.REPOSITORIES +
+        "?" +
+        new URLSearchParams({
+          registry_type: registry,
+        }).toString()
+    )
+    .then((res) => res.json());
+
+  let stats: registryStats = await apiHandler
+    .get(
+      CommonPaths.REGISTRY_STATS +
+        "?" +
+        new URLSearchParams({
+          registry_type: registry,
+        }).toString()
+    )
+    .then((res) => res.json());
+
+  let page: registryPage = await apiHandler
+    .get(
+      CommonPaths.QUERY_PAGE +
+        "?" +
+        new URLSearchParams({
+          registry_type: registry,
+          page: "0",
+        }).toString()
+    )
+    .then((res) => res.json());
+
+  return {
+    repos: repos.repositories,
+    registry,
+    registryStats: stats,
+    registryPage: page,
+  };
 }

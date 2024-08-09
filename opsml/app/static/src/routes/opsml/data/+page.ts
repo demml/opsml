@@ -1,10 +1,5 @@
-import {
-  type registryStats,
-  type registryPage,
-  type repositories,
-  CommonPaths,
-} from "$lib/scripts/types";
-import { apiHandler } from "$lib/scripts/apiHandler";
+import { type registryPageReturn } from "$lib/scripts/types";
+import { setupRegistryPage } from "$lib/scripts/utils";
 
 export const ssr = false;
 
@@ -21,45 +16,16 @@ export async function load({ fetch, params, url }) {
 
   const registry: string = "data";
 
-  let repos: repositories = await apiHandler
-    .get(
-      CommonPaths.REPOSITORIES +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-        }).toString()
-    )
-    .then((res) => res.json());
-
-  let stats: registryStats = await apiHandler
-    .get(
-      CommonPaths.REGISTRY_STATS +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-        }).toString()
-    )
-    .then((res) => res.json());
-
-  let page = await apiHandler
-    .get(
-      CommonPaths.QUERY_PAGE +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-          page: "0",
-        }).toString()
-    )
-    .then((res) => res.json());
+  let page: registryPageReturn = await setupRegistryPage(registry);
 
   return {
     args: {
       searchTerm: undefined,
-      repos: repos.repositories,
+      repos: page.repos,
       registry,
       selectedRepo: repository,
-      registryStats: stats,
-      registryPage: page,
+      registryStats: page.registryStats,
+      registryPage: page.registryPage,
     },
   };
 }

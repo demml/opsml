@@ -57,7 +57,7 @@
       <div class="font-bold text-primary-500">{name}</div>
       <div class="pl-2">
         <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={card.version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-          <Fa class="h-7" icon={faTag} color="#4b3978"/>
+          <Fa class="h-4" icon={faTag} color="#4b3978"/>
           <span class="text-primary-500">{card.version}</span>
         </a>
       </div>

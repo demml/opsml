@@ -7,7 +7,6 @@ import {
 } from "$lib/scripts/types";
 
 import { listCards, getReadme, getModelMetadata } from "$lib/scripts/utils";
-import { apiHandler } from "$lib/scripts/apiHandler";
 
 export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
@@ -48,8 +47,8 @@ export async function load({ fetch, params, url }) {
 
   return {
     registry,
-    repository: repository,
-    name: name,
+    repository: metadata.model_repository,
+    name: metadata.model_name,
     metadata: metadata,
     hasReadme: readme.exists,
     card: selectedCard,

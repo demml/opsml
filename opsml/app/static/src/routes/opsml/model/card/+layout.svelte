@@ -11,23 +11,17 @@
   /** @type {import('./$types').LayoutData} */
 	export let data;
 
-  let registry: string;
-  $: registry = data.registry;
+  let registry: string = data.registry;
 
-  let name: string;
-  $: name = data.name;
+  let name: string = data.name;
 
-  let repository: string;
-  $: repository = data.repository;
+  let repository: string = data.repository;
 
-  let version: string;
-  $: version = data.version;
+  let version: string = data.version;
 
-  let tabSet: string;
-  $: tabSet = data.tabSet;
+  let tabSet: string = data.tabSet;
 
-  let icon: string;
-  $: icon = modelcard_circuit;
+  let icon: string = modelcard_circuit;
 
 
   async function showTabContent(value: string ) {
@@ -59,7 +53,7 @@
       <div class="font-bold text-primary-500">{name}</div>
       <div class="pl-2">
         <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
-          <Fa class="h-7" icon={faTag} color="#4b3978"/>
+          <Fa class="h-4" icon={faTag} color="#4b3978"/>
           <span class="text-primary-500">{version}</span>
         </a>
       </div>
