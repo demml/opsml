@@ -166,6 +166,7 @@ export enum CommonPaths {
   UPDATE = "/opsml/auth/update",
   VERIFY = "/opsml/auth/verify",
   TOKEN = "/opsml/auth/token",
+  USER_AUTH = "/opsml/auth/user",
   EXISTS = "/opsml/auth/user/exists",
   LIST_CARDS = "/opsml/cards/list",
   REGISTRY_STATS = "/opsml/cards/registry/stats",
@@ -180,6 +181,7 @@ export enum CommonPaths {
   FILES_VIEW = "/opsml/files/view",
   MODEL_METADATA = "/opsml/models/metadata",
   FILE_INFO = "/opsml/files/list/info",
+  README = "/opsml/files/readme",
 }
 
 export interface FileExists {
@@ -270,6 +272,47 @@ export interface RegisterUser {
   email: string;
   security_question: string;
   security_answer: string;
+}
+
+export interface UpdateUserRequest {
+  username: string;
+  updated_username: string | null;
+  full_name: string;
+  password: string;
+  email: string;
+  security_question: string;
+  security_answer: string;
+  scopes: UserScope;
+  is_active: boolean;
+}
+
+export interface UpdateUserResponse {
+  updated: boolean;
+}
+
+export interface UserScope {
+  read: boolean;
+  write: boolean;
+  delete: boolean;
+  admin: boolean;
+  model_repository: string[] | null;
+  data_repository: string[] | null;
+  run_repository: string[] | null;
+}
+
+export interface User {
+  username: string;
+  full_name: string | null;
+  email: string | null;
+  security_question: string;
+  security_answer: string;
+  is_active: boolean;
+  scopes: UserScope;
+}
+
+export interface UserResponse {
+  user: User | null;
+  error: string | null;
 }
 
 export interface UserLogin {

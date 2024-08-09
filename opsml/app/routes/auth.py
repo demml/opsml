@@ -109,9 +109,6 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not config.opsml_auth:
-        return Token(access_token="NA", token_type="bearer")
-
     assert user is not None
 
     # check if password is correct
@@ -135,14 +132,24 @@ def get_user(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ) -> User:
     """Retrieves user by username"""
+
+    logger.info("Getting user: {}", username)
+
+    # check if user is admin
     if not current_user.scopes.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        # check if user is requesting themselves
+        if current_user.username != username:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     user = auth_db.get_user(username)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # remove passwords
+    user.password = None
+    user.hashed_password = None
 
     return user
 
@@ -235,7 +242,9 @@ def update_user(
 ) -> UserUpdated:
     """Update user"""
     if not current_user.scopes.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        # check if user is updating themselves
+        if current_user.username != user.username:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     updated = auth_db.update_user(user)

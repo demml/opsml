@@ -6,6 +6,7 @@
   import { registerUser, type RegisterResponse } from "$lib/scripts/auth_routes";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { CommonPaths } from "$lib/scripts/types";
+  import { goTop } from "$lib/scripts/utils";
 
   let username = '';
   let password = '';
@@ -24,6 +25,7 @@
     if (username === '' || password === '' || securityAnswer === '' || email === '') {
       warnUser = true;
       errorMessage = 'Check all inputs. User, password and security answer cannot be none.';
+      goTop();
       return;
     }
 
@@ -44,6 +46,7 @@
     } else {
       errorMessage = response.message;
       warnUser = true;
+      goTop();
     }
 
   }

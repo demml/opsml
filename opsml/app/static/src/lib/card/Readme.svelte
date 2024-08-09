@@ -13,6 +13,8 @@
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
   import { goto } from '$app/navigation';
+  import { apiHandler } from "$lib/scripts/apiHandler";
+  import { CommonPaths } from "$lib/scripts/types";
 
 
   const themeConfig = new Compartment()
@@ -53,22 +55,16 @@
     // save the content
     content = editor.state.doc.toString();
 
-    let body = JSON.stringify({
+    let body = {
       name: name,
       repository: repository,
       registry_type: registry,
       content: content
-    });
+    };
 
     // pass content to server
-    let result = await fetch(`/opsml/files/readme`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: body
-    });
-
+    let result = await apiHandler.post(CommonPaths.README, body);
+    
     // check the result is true
     let message: string ;
     if (result.ok) {

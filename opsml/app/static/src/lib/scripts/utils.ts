@@ -21,6 +21,10 @@ import {
   type repositories,
   type registryPage,
   type registryPageReturn,
+  type User,
+  type UserResponse,
+  type UpdateUserRequest,
+  type UpdateUserResponse,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -331,4 +335,52 @@ export async function setupRegistryPage(
     registryStats: stats,
     registryPage: page,
   };
+}
+
+/**
+ * Get user information
+ * @param {string} username
+ * @returns {Promise<UserResponse>} user
+ *
+ */
+export async function getUser(username: string): Promise<UserResponse> {
+  let user: User | null = null;
+  let error: string | null = null;
+  let url: string = CommonPaths.USER_AUTH + "?username=" + username;
+
+  let response = await apiHandler.get(url);
+  if (response.ok) {
+    user = await response.json();
+  } else {
+    error = await response.text();
+  }
+  return { user, error };
+}
+
+/**
+ * Update user information
+ *
+ * @param {UpdateUserRequest} user
+ * @returns {Promise<UpdateUserResponse>} updated
+ *
+ */
+export async function updateUser(
+  user: UpdateUserRequest
+): Promise<UpdateUserResponse> {
+  let response = await apiHandler.put(CommonPaths.USER_AUTH, user);
+  if (!response.ok) {
+    return {
+      updated: false,
+    };
+  } else {
+    let res = await response.json();
+    console.log(res);
+    return {
+      updated: res["updated"],
+    };
+  }
+}
+
+export function goTop() {
+  document.body.scrollIntoView();
 }

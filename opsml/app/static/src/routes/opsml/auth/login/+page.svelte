@@ -6,6 +6,7 @@
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { updateLoginStore } from "$lib/scripts/store";
   import { CommonPaths } from "$lib/scripts/types";
+  import { goTop } from "$lib/scripts/utils";
 
   let username = '';
   let password = '';
@@ -30,6 +31,7 @@
       }
     } else {
       showLoginError = true;
+      goTop();
     }
 
   }

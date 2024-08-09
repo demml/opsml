@@ -175,7 +175,8 @@ class UserScope(BaseModel):
     write: bool = True
     delete: bool = False
     admin: bool = False
-    repository: Optional[str] = None
+    model_repository: Optional[str] = None
+    data_repository: Optional[str] = None
 
     @property
     def is_admin(self) -> bool:
@@ -192,6 +193,7 @@ class User(BaseModel):
     full_name: Optional[str] = None
     is_active: bool = True
     scopes: UserScope = UserScope()
+    updated_username: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
