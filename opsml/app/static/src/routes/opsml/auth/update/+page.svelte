@@ -9,6 +9,7 @@
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+  import { apiHandler } from "$lib/scripts/apiHandler";
 
 
     // toast
@@ -117,8 +118,14 @@
       return;
     }
 
+  }
 
-}
+  async function test() {
+    console.log('testing');
+    apiHandler.get('/opsml/auth/test').then((response) => {
+      console.log(response);
+    });
+  }
 
 </script>
 

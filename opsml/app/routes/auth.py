@@ -1,7 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Union
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response, Cookie
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
@@ -93,6 +93,7 @@ async def get_current_active_user(
 @router.post("/auth/token")
 async def login_for_access_token(
     request: Request,
+    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
     logger.info("Logging in user: {}", form_data.username)
@@ -123,7 +124,83 @@ async def login_for_access_token(
         )
 
     logger.info("User authenticated: {}", form_data.username)
-    return Token(access_token=auth_db.create_access_token(user), token_type="bearer")
+
+    jwt_token = auth_db.create_access_token(user, minutes=1)
+    refresh_token = auth_db.create_access_token(user, minutes=60)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
+
+    return Token(access_token=jwt_token, token_type="bearer")
+
+
+@router.get("/auth/token/rotate")
+async def create_refresh_token(
+    request: Request,
+    response: Response,
+    refresh_token: Annotated[Union[str, None], Cookie()] = None,
+) -> bool:
+    """Rotates refresh token
+
+    Args:
+        request:
+            FastAPI request object
+        response:
+            FastAPI response object
+        refresh_token:
+            refresh token cookie
+    """
+
+    if refresh_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No refresh token provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        # check user
+        auth_db: ServerAuthRegistry = request.app.state.auth_db
+        user = await get_current_user(request, refresh_token)
+
+        # create new access token
+        refresh_token = auth_db.create_access_token(user, minutes=60)
+        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
+
+        return True
+
+    except Exception as e:
+        logger.error("Failed to rotate token: {}", e)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Failed to rotate token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+
+@router.get("/auth/token/refresh")
+async def get_refresh_from_cookie(
+    request: Request,
+    response: Response,
+    refresh_token: Annotated[Union[str, None], Cookie()] = None,
+) -> Token:
+    """Generates new access token from refresh token"""
+
+    if refresh_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await get_current_user(request, refresh_token)
+    logger.info("Refreshing token for user: {}", user.username)
+
+    # create new access token
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+    jwt_token = auth_db.create_access_token(user)
+    refresh_token = auth_db.create_access_token(user, minutes=60)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
+
+    return Token(access_token=jwt_token, token_type="bearer")
 
 
 @router.get("/auth/user", response_model=User)
