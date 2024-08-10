@@ -182,6 +182,8 @@ export enum CommonPaths {
   MODEL_METADATA = "/opsml/models/metadata",
   FILE_INFO = "/opsml/files/list/info",
   README = "/opsml/files/readme",
+  FORGOT = "/opsml/auth/forgot",
+  SECURITY_QUESTION = "/opsml/auth/security",
 }
 
 export interface FileExists {
@@ -320,6 +322,11 @@ export interface UserLogin {
   password: string;
 }
 
+export interface UserExistsResponse {
+  exists: boolean;
+  username: string;
+}
+
 export interface Readme {
   readme: string;
   exists: boolean;
@@ -336,4 +343,16 @@ export interface registryPageReturn {
   registry: string;
   registryStats: registryStats;
   registryPage: registryPage;
+}
+
+export interface securityQuestionResponse {
+  question: string;
+  exists: boolean;
+  error: string;
+}
+
+export interface PasswordStrength {
+  power: number;
+  color: string;
+  message: string;
 }

@@ -36,6 +36,8 @@
 
   }
 
+ 
+
 
 </script>
 
@@ -71,6 +73,7 @@
             type="text" 
             placeholder="Password"
             bind:value={password}
+
           />
         </label>
       </div>
@@ -79,7 +82,7 @@
         <button type="submit" class="btn bg-primary-500 text-white rounded-lg md:w-72 justify-self-center mb-2">
           <span>Login</span>
         </button>
-        <a class="text-primary-500 hover:text-primary-700" href="#">Forgot password?</a>
+        <a class="text-primary-500 hover:text-primary-700" href={CommonPaths.FORGOT}>Forgot password?</a>
       </div>
     </form>
   </section>

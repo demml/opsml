@@ -14,6 +14,7 @@ import {
 import Fa from 'svelte-fa'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import PageCard from "$lib/PageCard.svelte";
+import { delay } from "$lib/scripts/utils";
 
 
 
@@ -67,16 +68,6 @@ const searchPage = async function () {
   paginationSettings.size = registryStats.nbr_names;
 
 
-}
-
-function delay(fn, ms: number) {
-  let timer = 0
-  return function(...args) {
-    clearTimeout(timer)
-
-    // @ts-ignore
-    timer = window.setTimeout(fn.bind(this, ...args), ms || 0)
-  }
 }
 
 

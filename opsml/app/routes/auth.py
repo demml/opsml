@@ -9,6 +9,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import config
 from opsml.types.extra import User
+from opsml.app.routes.pydantic_models import UserExistsResponse, SecurityQuestionResponse
 
 logger = ArtifactLogger.get_logger()
 
@@ -154,8 +155,8 @@ def get_user(
     return user
 
 
-@router.get("/auth/user/exists", response_model=User)
-def user_exists(request: Request, username: str) -> bool:
+@router.get("/auth/user/exists", response_model=UserExistsResponse)
+def user_exists(request: Request, username: str) -> UserExistsResponse:
     """Retrieves user by username"""
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
@@ -170,7 +171,7 @@ def user_exists(request: Request, username: str) -> bool:
         if user is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return True
+    return UserExistsResponse(exists=True, username=user.username)
 
 
 @router.post("/auth/user", response_model=UserCreated)
@@ -275,3 +276,26 @@ def delete_user(
 @router.get("/auth/verify")
 def check_auth() -> bool:
     return config.opsml_auth
+
+
+@router.get("/auth/security", response_model=SecurityQuestionResponse)
+def secret_question(request: Request, username: str) -> SecurityQuestionResponse:
+    """Retrieves user secret question by username
+
+    Args:
+        request:
+            FastAPI request object
+        username:
+            username of the user
+
+    """
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # try username first
+    user = auth_db.get_user(username)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return SecurityQuestionResponse(question=user.security_question)

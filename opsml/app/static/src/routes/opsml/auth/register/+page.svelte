@@ -5,8 +5,10 @@
   import { type RegisterUser } from "$lib/scripts/types";
   import { registerUser, type RegisterResponse } from "$lib/scripts/auth_routes";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
-  import { CommonPaths } from "$lib/scripts/types";
+  import { CommonPaths, type PasswordStrength } from "$lib/scripts/types";
   import { goTop } from "$lib/scripts/utils";
+  import { checkPasswordStrength, delay } from "$lib/scripts/utils";
+  import { ProgressBar } from '@skeletonlabs/skeleton';
 
   let username = '';
   let password = '';
@@ -15,6 +17,10 @@
   let securityAnswer = '';
   let securityQuestion = '';
   let errorMessage = '';
+  let passStrength = 0;
+  let meterColor: string = 'bg-red-600';
+  let textColor: string = 'text-red-600';
+  let passMessage: string | null = null;
 
 
   let warnUser: boolean = false;
@@ -25,6 +31,13 @@
     if (username === '' || password === '' || securityAnswer === '' || email === '') {
       warnUser = true;
       errorMessage = 'Check all inputs. User, password and security answer cannot be none.';
+      goTop();
+      return;
+    }
+
+    if (passStrength < 100) {
+      warnUser = true;
+      errorMessage = 'Password is weak. Please provide a stronger password.';
       goTop();
       return;
     }
@@ -51,7 +64,21 @@
 
   }
 
- 
+
+  let checkPassword = delay(() => {
+    let strength: PasswordStrength = checkPasswordStrength(password);
+    passStrength = strength.power;
+    meterColor = `bg-${strength.color}`;
+    textColor = `text-${strength.color}`;
+
+    if (strength.power < 100) {
+      passMessage = strength.message;
+    } else {
+      passMessage = null;
+    };
+
+  }, 500);
+
 
 </script>
 
@@ -64,7 +91,7 @@
     {/if}
 
 
-    <form class="z-10 mx-auto rounded-2xl bg-slate-100 border shadow p-4 md:w-96 md:px-5" on:submit|preventDefault={handleRegister}>
+    <form class="z-10 mx-auto rounded-2xl bg-slate-100 border shadow p-4 w-96 md:w-1/3 md:px-5" on:submit|preventDefault={handleRegister}>
 
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-3xl font-bold text-primary-500">Register</h1>
@@ -107,8 +134,16 @@
             class="input rounded-lg bg-slate-200 hover:bg-slate-100"
             type="text" 
             placeholder="Password"
+            on:keydown={checkPassword}
             bind:value={password}
           />
+          <div class="mt-2">
+            <p class="text-xs text-primary-400">Password Strength</p>
+            {#if passMessage}
+              <p class="text-xs text-primary-400 mb-0.5">{passMessage}</p>
+            {/if}
+            <ProgressBar meter="bg-secondary-600" value={passStrength} />
+          </div>
         </label>
 
         <label class="text-primary-500">Security Question

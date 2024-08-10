@@ -132,7 +132,7 @@
 
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
     <h1 class="pt-1 text-center text-3xl font-bold text-primary-500">Update User Profile</h1>
-    <p class="mb-1 text-gray-500 text-xs">
+    <p class="mb-1 text-gray-500 text-xs text-center">
       Update any of the following parameters and click update. Leave defaults or blanks if you do not wish to update.
     </p>
     

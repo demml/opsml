@@ -1,4 +1,9 @@
-import { CommonPaths, type RegisterUser } from "$lib/scripts/types";
+import {
+  CommonPaths,
+  type RegisterUser,
+  type UserExistsResponse,
+  type securityQuestionResponse,
+} from "$lib/scripts/types";
 import { apiHandler } from "./apiHandler";
 
 export interface RegisterResponse {
@@ -23,12 +28,48 @@ export async function registerUser(
   }
 }
 
-export async function checkUser(request: RegisterUser): Promise<Boolean> {
-  let url: string = CommonPaths.EXISTS + "?username=" + request.username;
+export async function checkUser(username: string): Promise<UserExistsResponse> {
+  let url: string = CommonPaths.EXISTS + "?username=" + username;
   let response = await apiHandler.get(url);
   if (response.ok) {
-    return true;
+    let res = await response.json();
+    return {
+      exists: res["exists"],
+      username: res["username"],
+    };
   } else {
-    return false;
+    return {
+      exists: false,
+      username: username,
+    };
+  }
+}
+
+export async function getSecurityQuestion(
+  username: string
+): Promise<securityQuestionResponse> {
+  let url: string = CommonPaths.SECURITY_QUESTION + "?username=" + username;
+  let response = await apiHandler.get(url);
+  if (response.ok) {
+    let res = await response.json();
+    return {
+      question: res["question"],
+      exists: true,
+      error: "NA",
+    };
+  }
+
+  if (response.status === 404) {
+    return {
+      question: "NA",
+      exists: false,
+      error: "User not found",
+    };
+  } else {
+    return {
+      question: "NA",
+      exists: false,
+      error: "Error fetching security question",
+    };
   }
 }

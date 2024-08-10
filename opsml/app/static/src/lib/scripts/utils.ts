@@ -25,6 +25,7 @@ import {
   type UserResponse,
   type UpdateUserRequest,
   type UpdateUserResponse,
+  type PasswordStrength,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -383,4 +384,68 @@ export async function updateUser(
 
 export function goTop() {
   document.body.scrollIntoView();
+}
+
+export function checkPasswordStrength(password: string): PasswordStrength {
+  let point = 0;
+  let widthPower = [0, 20, 40, 60, 80, 100];
+  let colorPower = [
+    "red-600",
+    "orange-600",
+    "yellow-500",
+    "lime-500",
+    "green-500",
+  ];
+  let message = "Missing:";
+
+  let isLength = password.length >= 8;
+  let hasNum = /[0-9]/.test(password);
+  let hasLower = /[a-z]/.test(password);
+  let hasUpper = /[A-Z]/.test(password);
+  let hasSpecial = /[^0-9a-zA-Z]/.test(password);
+
+  if (isLength) {
+    point += 1;
+  } else {
+    message += " 8 chars";
+  }
+
+  if (hasNum) {
+    point += 1;
+  } else {
+    message += ", number";
+  }
+
+  if (hasLower) {
+    point += 1;
+  } else {
+    message += ", lowercase";
+  }
+
+  if (hasUpper) {
+    point += 1;
+  } else {
+    message += ", uppercase";
+  }
+
+  if (hasSpecial) {
+    point += 1;
+  } else {
+    message += ", special char";
+  }
+
+  let power = widthPower[point];
+  let color = colorPower[point];
+
+  return { power, color, message };
+}
+
+export function delay(fn, ms: number) {
+  let timer = 0;
+  return function (...args) {
+    clearTimeout(timer);
+
+    // @ts-ignore
+    timer = window.setTimeout(fn.bind(this, ...args), ms || 0);
+  };
 }
