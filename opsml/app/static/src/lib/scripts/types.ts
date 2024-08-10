@@ -184,6 +184,15 @@ export enum CommonPaths {
   README = "/opsml/files/readme",
   FORGOT = "/opsml/auth/forgot",
   SECURITY_QUESTION = "/opsml/auth/security",
+  TEMP_TOKEN = "/opsml/auth/temp",
+}
+
+export enum CommonErrors {
+  USER_NOT_FOUND = "User not found",
+  USER_EXISTS = "User already exists",
+  INVALID_PASSWORD = "Invalid password",
+  TOKEN_ERROR = "Error generating token",
+  INCORRECT_ANSWER = "Incorrect answer",
 }
 
 export interface FileExists {

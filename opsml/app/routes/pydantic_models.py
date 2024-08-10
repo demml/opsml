@@ -526,3 +526,8 @@ class UserExistsResponse(BaseModel):
 
 class SecurityQuestionResponse(BaseModel):
     question: str
+
+
+class TempRequest(BaseModel):
+    username: str
+    answer: str

@@ -18,8 +18,6 @@
   let securityQuestion = '';
   let errorMessage = '';
   let passStrength = 0;
-  let meterColor: string = 'bg-red-600';
-  let textColor: string = 'text-red-600';
   let passMessage: string | null = null;
 
 
@@ -68,8 +66,6 @@
   let checkPassword = delay(() => {
     let strength: PasswordStrength = checkPasswordStrength(password);
     passStrength = strength.power;
-    meterColor = `bg-${strength.color}`;
-    textColor = `text-${strength.color}`;
 
     if (strength.power < 100) {
       passMessage = strength.message;

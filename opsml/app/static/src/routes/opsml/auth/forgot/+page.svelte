@@ -8,12 +8,16 @@
   import { CommonPaths, type UserExistsResponse } from "$lib/scripts/types";
   import { goTop} from "$lib/scripts/utils";
   import { checkUser } from "$lib/scripts/auth_routes";
-  import { type securityQuestionResponse } from "$lib/scripts/types";
+  import { type securityQuestionResponse, CommonErrors, type PasswordStrength } from "$lib/scripts/types";
   import { onMount } from "svelte";
-  import { getSecurityQuestion } from "$lib/scripts/auth_routes";
+  import { getSecurityQuestion, generateTempToken } from "$lib/scripts/auth_routes";
+  import { checkPasswordStrength, delay } from "$lib/scripts/utils";
+  import { ProgressBar } from '@skeletonlabs/skeleton';
 
   let warnUser: boolean = false;
   let errorMessage: string = '';
+  let passStrength = 0;
+  let passMessage: string | null = null;
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -21,9 +25,49 @@
   let secretQuestionRes: securityQuestionResponse | null = data.secretQuestion;
   let secretQuestion = secretQuestionRes?.question as string;
   let secretAnswer = '';
+  let tokenResult: string = '';
+  let showReset: boolean = false;
+  let newPassword = '';
 
-  async function handleReset() {
-  
+  let checkPassword = delay(() => {
+    let strength: PasswordStrength = checkPasswordStrength(newPassword);
+    passStrength = strength.power;
+
+    if (strength.power < 100) {
+      passMessage = strength.message;
+    } else {
+      passMessage = null;
+    };
+
+  }, 500);
+
+  async function resetPassword() {
+    if (passStrength < 100) {
+      warnUser = true;
+      errorMessage = 'Password is weak. Please provide a stronger password.';
+      goTop();
+      return;
+    }
+
+    console.log('resetting password');
+  }
+
+  async function getToken() {
+    tokenResult = await generateTempToken(username as string, secretAnswer);
+      if ([CommonErrors.USER_NOT_FOUND.toString(), CommonErrors.INCORRECT_ANSWER.toString(), CommonErrors.TOKEN_ERROR.toString()].includes(tokenResult)) {
+        warnUser = true
+        errorMessage = tokenResult;
+        goTop();
+        return;
+
+      } else {
+        showReset = true;
+        goTop();
+        return;
+      }
+  }
+
+  async function getSecurity() {
     // reset warning
     warnUser = false;
 
@@ -44,17 +88,32 @@
       goTop();
       return;
     }
-  
+
     secretQuestionRes = await getSecurityQuestion(username);
     secretQuestion = secretQuestionRes?.question as string;
 
     if (secretQuestionRes) {
-     if (!secretQuestionRes.exists) {
+    if (!secretQuestionRes.exists) {
       warnUser = true;
       errorMessage = secretQuestionRes.error;
       goTop();
       return;
       }  
+    }
+  }
+  
+
+  async function handleReset() {
+
+    warnUser = false;
+
+    if (showReset) {
+      await resetPassword();
+    }
+    if (secretAnswer !== '') {
+      await getToken();
+    } else {
+      await getSecurity();
     }
 
   }
@@ -78,7 +137,7 @@
     
     <div class="mb-8 grid grid-cols-1 gap-3">
 
-      {#if !secretQuestionRes}
+      {#if !secretQuestionRes && !showReset}
         <label class="text-primary-500">Username
           <p class="mb-1 text-gray-500 text-xs">Username or Email associated with account</p>
           <input
@@ -90,7 +149,7 @@
         </label>
       {/if}
 
-      {#if secretQuestionRes}
+      {#if secretQuestionRes && !showReset}
         <label class="text-primary-500">Secret Question
           <input
             class="input rounded-lg bg-slate-200 hover:bg-slate-100"
@@ -107,6 +166,27 @@
             placeholder="Secret answer"
             bind:value={secretAnswer}
           />
+        </label>
+      {/if}
+
+      {#if showReset}
+        <label class="text-primary-500">New Password
+          <p class="mb-1 text-gray-500 text-xs">Provide new password. Temporary token will expire in 5 minutes.</p>
+          <input
+            class="input rounded-lg bg-slate-200 hover:bg-slate-100"
+            type="text" 
+            placeholder="New Password"
+            on:keydown={checkPassword}
+            bind:value={newPassword}
+          />
+
+          <div class="mt-2">
+            <p class="text-xs text-primary-400">Password Strength</p>
+            {#if passMessage}
+              <p class="text-xs text-primary-400 mb-0.5">{passMessage}</p>
+            {/if}
+            <ProgressBar meter="bg-secondary-600" value={passStrength} />
+          </div>
         </label>
       {/if}
 

@@ -9,7 +9,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import config
 from opsml.types.extra import User
-from opsml.app.routes.pydantic_models import UserExistsResponse, SecurityQuestionResponse
+from opsml.app.routes.pydantic_models import UserExistsResponse, SecurityQuestionResponse, TempRequest
 
 logger = ArtifactLogger.get_logger()
 
@@ -299,3 +299,36 @@ def secret_question(request: Request, username: str) -> SecurityQuestionResponse
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return SecurityQuestionResponse(question=user.security_question)
+
+
+# check security question
+@router.post("/auth/temp")
+def generate_temp_token(
+    request: Request,
+    temp_request: TempRequest,
+) -> str:
+    """Check user security question by username and generate temporary token
+
+    Args:
+        request:
+            FastAPI request object
+        username:
+            username of the user
+        answer:
+            answer to the security question
+
+    """
+
+    auth_db: ServerAuthRegistry = request.app.state.auth_db
+
+    # try username first
+    user = auth_db.get_user(temp_request.username)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if not user.security_answer == temp_request.answer:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect answer")
+
+    # short lived token for password reset
+    return auth_db.create_access_token(user, minutes=5)

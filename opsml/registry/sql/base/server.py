@@ -644,9 +644,9 @@ class ServerAuthRegistry(ServerRegistry):
 
         return self.auth_db.delete_user(user)
 
-    def create_access_token(self, user: User) -> str:
+    def create_access_token(self, user: User, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
         """Creates a temporary access token for user"""
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
 
         data = {
             "sub": user.username,

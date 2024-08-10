@@ -73,3 +73,22 @@ export async function getSecurityQuestion(
     };
   }
 }
+
+export async function generateTempToken(
+  username: string,
+  answer: string
+): Promise<string> {
+  let body = { username: username, answer: answer };
+  let response = await apiHandler.post(CommonPaths.TEMP_TOKEN, body);
+  if (response.ok) {
+    return await response.json();
+  }
+
+  if (response.status === 404) {
+    return "User not found";
+  } else if (response.status === 401) {
+    return "Incorrect answer";
+  } else {
+    return "Error generating token";
+  }
+}
