@@ -120,13 +120,6 @@
 
   }
 
-  async function test() {
-    console.log('testing');
-    apiHandler.get('/opsml/auth/test').then((response) => {
-      console.log(response);
-    });
-  }
-
 </script>
 
 <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 items-center">
