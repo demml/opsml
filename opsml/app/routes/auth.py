@@ -402,10 +402,10 @@ def generate_temp_token(
     user = auth_db.get_user(temp_request.username)
 
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return "User not found"
 
     if not user.security_answer == temp_request.answer:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect answer")
+        return "Incorrect answer"
 
     # short lived token for password reset
     return auth_db.create_access_token(user, minutes=5)

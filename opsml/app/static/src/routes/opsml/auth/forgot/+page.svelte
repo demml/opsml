@@ -5,7 +5,7 @@
   import { authStore } from "$lib/scripts/authStore";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { updateLoginStore } from "$lib/scripts/store";
-  import { CommonPaths, type UserExistsResponse } from "$lib/scripts/types";
+  import { CommonPaths, type UserExistsResponse, type User } from "$lib/scripts/types";
   import { goTop} from "$lib/scripts/utils";
   import { checkUser } from "$lib/scripts/auth_routes";
   import { type securityQuestionResponse, CommonErrors, type PasswordStrength } from "$lib/scripts/types";
@@ -13,6 +13,15 @@
   import { getSecurityQuestion, generateTempToken } from "$lib/scripts/auth_routes";
   import { checkPasswordStrength, delay } from "$lib/scripts/utils";
   import { ProgressBar } from '@skeletonlabs/skeleton';
+  import { apiHandler } from "$lib/scripts/apiHandler";
+  import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+  import { sleep } from "$lib/scripts/utils";
+
+  // toast
+  const toastStore = getToastStore();
+  const t: ToastSettings = {
+      message: 'Password updated. Redirecting to login page...',
+    };
 
   let warnUser: boolean = false;
   let errorMessage: string = '';
@@ -39,7 +48,7 @@
       passMessage = null;
     };
 
-  }, 500);
+  }, 100);
 
   async function resetPassword() {
     if (passStrength < 100) {
@@ -49,11 +58,31 @@
       return;
     }
 
-    console.log('resetting password');
+    // get user data
+    let response = await apiHandler.get(`${CommonPaths.USER_AUTH}?username=${username}`);
+    let user: User = await response.json();
+
+    // update password
+    user.password = newPassword;
+    let updateResponse = await apiHandler.put(CommonPaths.USER_AUTH, user);
+    let updateResult = await updateResponse.json();
+    
+    toastStore.trigger(t);
+
+    // sleep so toast can be seen
+    await sleep(2000);
+
+    // clear temp token
+    authStore.clearToken();
+
+    // redirect
+    goto(CommonPaths.LOGIN);
+
   }
 
   async function getToken() {
     tokenResult = await generateTempToken(username as string, secretAnswer);
+
       if ([CommonErrors.USER_NOT_FOUND.toString(), CommonErrors.INCORRECT_ANSWER.toString(), CommonErrors.TOKEN_ERROR.toString()].includes(tokenResult)) {
         warnUser = true
         errorMessage = tokenResult;
@@ -61,7 +90,13 @@
         return;
 
       } else {
+        // show reset option now that user has been verified
         showReset = true;
+
+        // add tokenResult as authorization header
+        authStore.setToken(tokenResult);
+
+        // go back to top of page
         goTop();
         return;
       }

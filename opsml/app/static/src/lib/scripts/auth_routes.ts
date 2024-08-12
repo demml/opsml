@@ -83,12 +83,5 @@ export async function generateTempToken(
   if (response.ok) {
     return await response.json();
   }
-
-  if (response.status === 404) {
-    return "User not found";
-  } else if (response.status === 401) {
-    return "Incorrect answer";
-  } else {
-    return "Error generating token";
-  }
+  return "Error generating token";
 }

@@ -375,7 +375,6 @@ export async function updateUser(
     };
   } else {
     let res = await response.json();
-    console.log(res);
     return {
       updated: res["updated"],
     };
@@ -449,3 +448,6 @@ export function delay(fn, ms: number) {
     timer = window.setTimeout(fn.bind(this, ...args), ms || 0);
   };
 }
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

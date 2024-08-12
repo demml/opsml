@@ -315,12 +315,14 @@ export interface UserScope {
 
 export interface User {
   username: string;
+  password: string | null;
   full_name: string | null;
   email: string | null;
   security_question: string;
   security_answer: string;
   is_active: boolean;
   scopes: UserScope;
+  updated_username: string | null;
 }
 
 export interface UserResponse {
