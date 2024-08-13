@@ -26,8 +26,11 @@ import {
   type UpdateUserRequest,
   type UpdateUserResponse,
   type PasswordStrength,
+  type Metric,
+  type TableMetric,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import { Table } from "@skeletonlabs/skeleton";
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -451,3 +454,46 @@ export function delay(fn, ms: number) {
 
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export function sortMetrics(metrics: Metrics): RunMetrics {
+  let sorted: RunMetrics = {};
+
+  // create loop for metricNames.metric
+  for (let metric of metrics.metric) {
+    // check if metric.name is in metrics
+    if (sorted[metric.name] === undefined) {
+      sorted[metric.name] = [];
+    }
+
+    // push metric
+    sorted[metric.name].push(metric);
+  }
+
+  return sorted;
+}
+
+export function metricsToTable(
+  metrics: Map<string, RunMetrics>,
+  metricsToPlot: string[]
+): Map<string, TableMetric[]> {
+  let table: Map<string, TableMetric[]> = new Map();
+  for (let [key, value] of metrics) {
+    table.set(key, []);
+
+    metricsToPlot.forEach((metric) => {
+      let metricValue: Metric[] = value[metric];
+      if (metricValue) {
+        table.get(key)!.push({
+          name: metric,
+          value: metricValue[metricValue.length - 1].value,
+        });
+      } else {
+        table.get(key)!.push({
+          name: metric,
+          value: "N/A",
+        });
+      }
+    });
+  }
+  return table;
+}

@@ -187,6 +187,7 @@ export enum CommonPaths {
   TEMP_TOKEN = "/opsml/auth/temp",
   ROTATE_TOKEN = "/opsml/auth/token/rotate",
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
+  GET_METRICS = "/opsml/metrics",
 }
 
 export enum CommonErrors {
@@ -368,4 +369,9 @@ export interface PasswordStrength {
   power: number;
   color: string;
   message: string;
+}
+
+export interface TableMetric {
+  name: string;
+  value: string | number;
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
 
-  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric, type RunMetrics, type Graph, CardRegistries, type CardRequest, type CardResponse, type CompareMetricPage } from "$lib/scripts/types";
+  import { type ModelMetadata , type Card, type RunCard, type Parameter, type Metric, type RunMetrics, type Graph, CardRegistries, type CardRequest, type CardResponse, type CompareMetricPage, CommonPaths, type Metrics, type TableMetric } from "$lib/scripts/types";
   import { listCards } from "$lib/scripts/utils";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
@@ -8,6 +8,8 @@
   import { faCheck, faChartBar, faChartLine } from '@fortawesome/free-solid-svg-icons'
   import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
   import { keys } from "highcharts";
+  import { apiHandler } from "$lib/scripts/apiHandler";
+  import { getRunMetrics, sortMetrics, metricsToTable } from "$lib/scripts/utils";
 
 
 
@@ -20,7 +22,8 @@
   let filteredMetrics: string[] = [];
   let tabSet: string = "metrics";
   let plotSet: string = "bar";
-  let compareSet: string = "compare";
+  let compareMetrics = new Map<string, RunMetrics>();
+  let tableMetrics: Map<string, TableMetric[]>;
 
   let metricNames: string[];
   $: metricNames = data.metricNames;
@@ -36,7 +39,6 @@
 
   let plot: boolean = false;
   $: plot = false;
-
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
@@ -56,7 +58,9 @@
       if (cardsToCompare.length > 0) {
         cardsToCompare = [];
       } else {
-        cardsToCompare = [...cards.keys()];
+        for (let card of cards.values()) {
+          cardsToCompare = [...cardsToCompare, card.uid];
+        }
       }
       return;
     }
@@ -70,8 +74,6 @@
     } else {
       cardsToCompare = [...cardsToCompare, cardName];
     }
-
-    console.log(cardsToCompare);
   }
 
 
@@ -153,161 +155,46 @@
 
 
   async function plot_metrics() {
-
-    // check combined and separated booleans
-    if (!plot) {
-      plot = true;
-    }
+  
 
     // check if selectedMetrics is empty
     if (selectedMetrics.length == 0) {
       alert("Please select metrics to plot");
-      // clear plots
-      // get div element
-      let div = document.getElementById('compare_metrics') as HTMLElement;
-      // clear div
-      div.innerHTML = "";
-      metricsToPlot = [];
-
       return;
     }
     // get select metric for all cards in cardsToCompare
 
     if (cardsToCompare.length == 0)
       {
-        alert("Please select cards to compare");
-
         return;
       }
 
-  
 
     // update metricsToPlot
     metricsToPlot = selectedMetrics.slice();
-    // remove "select all" from selectedMetricsCopy
+    
+    // remove select all from metricsToPlot
     metricsToPlot = metricsToPlot.filter((item) => item !== 'select all');
+    let compareMetrics = new Map<string, RunMetrics>();
 
-
-    if (plot) {
-
-      const y: Map<string, number[]> = new Map<string, number[]>();
-      const x: Map<string, number[]> = new Map<string, number[]>();
-
-
-      if (plotSet === "line") {
-        for (let metric of metricsToPlot) {
-
-          // get metric from metrics
-          let metricData = metrics[metric];
-          y.set(metricData[0].name, []);
-          x.set(metricData[0].name, []);
-
-
-          for (let data of metricData) {
-            y.get(metricData[0].name)!.push(data.value);
-            x.get(metricData[0].name)!.push(data.step || 0);
-          }
-        }
-
-      
-        let graph: Graph = {
-          name: "combined",
-          x_label: "Step",
-          y_label: "Value",
-          x,
-          y,
-          graph_type: "line",
-          graph_style: "combined",
-        }
-        buildLineChart(graph, (9 / 16 * 100) + '%');
-      
-      } else {
-          for (let metric of metricsToPlot) {
-
-            // get metric from metrics
-            let metricData = metrics[metric];
-            y.set(metricData[0].name, [metricData[metricData.length - 1].value]);
-        }
-          let graph: Graph = {
-                name: "combined",
-                x_label: "Group",
-                y_label: "Value",
-                x: [0],
-                y,
-                graph_type: "bar",
-                graph_style: "combined",
-              }
-
-          
-          buildBarChart(graph,  (9 / 16 * 100) + '%');
-        
-            }
-      return;
-
-    } else {
-      for (let metric of metricsToPlot) {
-
-        if (metricPlotSettings.has(metric)) {
-          // get graphType
-          let graphType = metricPlotSettings.get(metric)!.graph_type;
-
-          if (graphType == "line") {
-            buildLineChart(metricPlotSettings.get(metric)!, undefined);
-          } else {
-            buildBarChart(metricPlotSettings.get(metric)!, undefined);
-          }
-        } else {
-          // get metric from metrics
-
-        if (plotSet === "line") {
-          let metricData = metrics[metric];
-          const y = new Map<string, number[]>();
-          const x = new Map<string, number[]>();
-
-          y.set(metricData[0].name, []);
-          x.set(metricData[0].name, []);
-
-
-          for (let data of metricData) {
-            y.get(metricData[0].name)!.push(data.value);
-            x.get(metricData[0].name)!.push(data.step || 0);
-          }
-
-          let graph: Graph = {
-            name: metric,
-            x_label: "Step",
-            y_label: "Value",
-            x,
-            y,
-            graph_type: "line",
-            graph_style: "separate",
-          }
-
-          buildLineChart(graph, undefined);
-          metricPlotSettings.set(metric, graph);
-
-
-        } else {
-          // get metric from metrics
-        let metricData = metrics[metric];
-        let graph: Graph = {
-          name: metric,
-          x_label: "Group",
-          y_label: "Value",
-          x: [0],
-          y: new Map([[metricData[0].name, [metricData[metricData.length - 1].value]]]),
-          graph_type: "bar",
-          graph_style: "separate",
-          }
-
-        buildBarChart(graph, undefined);
-        metricPlotSettings.set(metric, graph);
-          }
-        }
-      }
-      return;
-     }
+    // reset compareMetrics
+    compareMetrics = new Map<string, RunMetrics>();
+    for (let card of cardsToCompare) {
+      let cardMetrics: RunMetrics = sortMetrics(await getRunMetrics(card, metricsToPlot));
+      compareMetrics.set(card, cardMetrics);
     }
+
+    //parse for table
+
+    // get metrics for each card
+    //plot = true;
+    tableMetrics = metricsToTable(compareMetrics, metricsToPlot);
+    plot = true;
+    return;
+    }
+
+  
+    
 
 
 </script>
@@ -318,11 +205,11 @@
       <div class="flex flex-col">
         <div class="flex flex-row flex-wrap gap-2 py-4 justify-between ">
         
-          <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
+          <TabGroup border="" active='border-b-2 border-primary-500'>
             <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
           </TabGroup>
 
-          <div class="flex flex-row flex-wrap gap-2 justify-between text-lg">
+          <div class="flex flex-row flex-wrap gap-2 justify-between">
        
             <TabGroup border="" active='border-b-2 border-secondary-500'>
               <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
@@ -343,7 +230,7 @@
             {#each filteredMetrics as metric}
               
               <button
-                class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                class="chip hover:bg-primary-300 text-sm {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
                 on:click={() => { setActiveMetrics(metric); }}
                 on:keypress
               >
@@ -357,7 +244,7 @@
             {#each metricNames as metric}
 
               <button
-                class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+                class="chip hover:bg-primary-300 text-sm {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
                 on:click={() => { setActiveMetrics(metric); }}
               
               >
@@ -374,7 +261,7 @@
       </div>
 
       <div class="pt-2">
-        <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
+        <TabGroup border="" active='border-b-2 border-primary-500'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Compare Previous Runs</Tab>
         </TabGroup>
       </div>
@@ -401,19 +288,19 @@
             <div>
               <label class="flex items-center p-1 ">
                 
-                {#if cardsToCompare.includes(card.name)}
+                {#if cardsToCompare.includes(card.uid)}
                 <input 
                   class="checkbox" 
                   type="checkbox" 
                   checked
-                  on:click={() => { setComparedCards(card.name); }}
+                  on:click={() => { setComparedCards(card.uid); }}
                 
                 />
                 {:else}
                 <input 
                   class="checkbox" 
                   type="checkbox" 
-                  on:click={() => { setComparedCards(card.name); }}
+                  on:click={() => { setComparedCards(card.uid); }}
                 
                 />
                 {/if}
@@ -448,11 +335,37 @@
             </div>
           </figure>
       </div>
-      
 
 
-    
 
-
+      {#if plot}
+        <div class="mt-2">
+          <div class="table-container border border-2 border-primary-500">
+            <!-- Native Table Element -->
+            <table class="table-compact table-compact table-hover text-xs text-center min-w-full">
+              <thead class="bg-surface-200">
+                <tr>
+                  <th class="text-sm text-center py-2">Name</th>
+                  {#each metricsToPlot as row}
+                    <th class="text-sm text-center py-2">{row}</th>
+                  {/each}
+                </tr>
+              </thead>
+              <tbody>
+                {#each tableMetrics as row}
+               
+                <tr class="text-xs">
+                    <td>{row[0]}</td>
+                    {#each row[1] as cell}
+                      <td><span class="badge variant-soft-primary">{cell.value}</span></td>
+                    {/each}
+                </tr>
+                {/each}
+         
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {/if}
     </div>
 </div>

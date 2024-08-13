@@ -313,11 +313,11 @@
       
       <div class="flex flex-row flex-wrap gap-1 p-2 justify-between">
 
-        <TabGroup border="" active='border-b-2 border-primary-500 text-lg'>
+        <TabGroup border="" active='border-b-2 border-primary-500'>
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
 
-        <div class="flex flex-row flex-wrap gap-2 justify-between text-lg">
+        <div class="flex flex-row flex-wrap gap-2 justify-between">
        
           <TabGroup border="" active='border-b-2 border-secondary-500'>
             <div><Tab bind:group={plotSet} name="set1" value="bar">Bar</Tab></div>
@@ -352,7 +352,7 @@
           {#each metricNames as metric}
 
             <button
-              class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip text-sm hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
              
             >
