@@ -1,4 +1,4 @@
-import Highcharts from "highcharts";
+import Highcharts, { charts } from "highcharts";
 
 import addExporting from "highcharts/modules/exporting";
 import addExportData from "highcharts/modules/export-data";
@@ -8,6 +8,20 @@ import addSeriesLabel from "highcharts/modules/series-label";
 
 import { type Graph } from "$lib/scripts/types";
 import { type Metric } from "$lib/scripts/types";
+import Chart from "chart.js/auto";
+
+let data = [20, 100, 50, 12, 20, 130, 45];
+let labels = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+let ctx;
+let canvas;
 
 addExporting(Highcharts);
 addExportData(Highcharts);
@@ -240,6 +254,8 @@ function buildBarChart(graph: Graph, height: string | undefined) {
   const metricNames = [...y.keys()];
   const chartName = name;
 
+  const ctx = document.getElementById(chartName);
+
   Highcharts.setOptions({
     colors: ["#04b78a", "#5e0fb7", "#bdbdbd", "#009adb"],
   });
@@ -251,69 +267,25 @@ function buildBarChart(graph: Graph, height: string | undefined) {
     scores.push(data[data.length - 1]);
   });
 
-  // get min and max values for y axis across all metrics
-  // if min is greater than 0 set to 0
-  // add padding to max
-  const minyValue = Math.min(Math.min(...scores), 0);
-
-  Highcharts.chart({
-    chart: {
-      type: "column",
-      renderTo: chartName,
-      height: height,
-      backgroundColor: "transparent",
-      zooming: {
-        type: "xy",
-      },
-    },
-    title: {
-      text: name,
-      align: "left",
-    },
-    credits: {
-      enabled: false,
-    },
-
-    xAxis: {
-      type: "category",
-      categories: metricNames,
-      lineWidth: 1,
-    },
-    yAxis: {
-      min: minyValue,
-      title: {
-        text: "Value",
-      },
-      lineWidth: 1,
-      tickLength: 10,
-      tickWidth: 1,
-    },
-    legend: {
-      enabled: true,
-    },
-    plotOptions: {
-      series: {
-        shadow: false,
-        borderWidth: 1,
-        borderColor: "black",
-        animation: false,
-        states: {
-          inactive: {
-            opacity: 1,
-          },
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+      datasets: [
+        {
+          label: "# of Votes",
+          data: [12, 19, 3, 5, 2, 3],
+          borderWidth: 1,
         },
-        lineWidth: 3,
+      ],
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
       },
     },
-    series: [
-      {
-        showInLegend: false,
-        colorByPoint: true,
-        data: scores,
-        colors: ["#04b78a", "#5e0fb7", "#bdbdbd", "#009adb"],
-        type: "column",
-      },
-    ],
   });
 }
 
@@ -327,7 +299,6 @@ interface GraphMetric {
 
 function buildLineChart(graph: Graph, height: string | undefined) {
   const chartName = graph.name;
-
   const y: Map<string, number[]> = graph.y as Map<string, number[]>;
   const x: Map<string, number[]> = graph.x as Map<string, number[]>;
   const metricNames = [...y.keys()];
@@ -411,49 +382,4 @@ function buildLineChart(graph: Graph, height: string | undefined) {
   });
 }
 
-function render_single_chart(
-  metrics: Metric[],
-  type: string,
-  height: string | undefined
-) {
-  // get metric name from first in list
-  const metricName: string = metrics[0].name;
-
-  // create x and y maps for metricName
-  const y: Map<string, number[]> = new Map();
-  const x: Map<string, number[]> = new Map();
-
-  y.set(metricName, []);
-  x.set(metricName, []);
-
-  for (let metric of metrics) {
-    const metricName = metric.name;
-    y.get(metricName).push(metric.value);
-    x.get(metricName).push(metric.step);
-  }
-
-  const graph: Graph = {
-    name: metricName,
-    x_label: "Step",
-    y_label: "Value",
-    x,
-    y,
-    graph_style: type,
-  };
-
-  if (type === "bar") {
-    buildBarChart(graph, height);
-  } else if (type === "line") {
-    buildLineChart(graph, height);
-  }
-
-  metricPlotSettings.set(metric, graph);
-}
-
-export {
-  buildXyChart,
-  buildMultiXyChart,
-  buildBarChart,
-  buildLineChart,
-  render_single_chart,
-};
+export { buildXyChart, buildMultiXyChart, buildBarChart, buildLineChart };

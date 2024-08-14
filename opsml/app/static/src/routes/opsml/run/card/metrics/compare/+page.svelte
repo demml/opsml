@@ -343,7 +343,7 @@
           <div class="table-container border border-2 border-primary-500">
             <!-- Native Table Element -->
             <table class="table-compact table-compact table-hover text-xs text-center min-w-full">
-              <thead class="bg-surface-200">
+              <thead class="bg-surface-100 border border-b-2 border-primary-500">
                 <tr>
                   <th class="text-sm text-center py-2">Name</th>
                   {#each metricsToPlot as row}
@@ -352,14 +352,24 @@
                 </tr>
               </thead>
               <tbody>
-                {#each tableMetrics as row}
+                {#each tableMetrics as row, i}
                
-                <tr class="text-xs">
-                    <td>{row[0]}</td>
+                {#if i % 2 == 0}
+                  <tr>
+                      <td class="text-sm">{row[0].slice(0,7)}</td>
+                      {#each row[1] as cell}
+                        <td class="text-sm"><span class="badge variant-soft-primary">{cell.value}</span></td>
+                      {/each}
+                  </tr>
+                {:else}
+                  <tr class="bg-surface-100">
+                    <td class="text-sm">{row[0].slice(0,7)}</td>
                     {#each row[1] as cell}
-                      <td><span class="badge variant-soft-primary">{cell.value}</span></td>
+                      <td class="text-sm"><span class="badge variant-soft-primary">{cell.value}</span></td>
                     {/each}
-                </tr>
+                  </tr>
+                {/if}
+
                 {/each}
          
               </tbody>

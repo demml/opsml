@@ -28,9 +28,10 @@ import {
   type PasswordStrength,
   type Metric,
   type TableMetric,
+  type ChartData,
+  type ChartjsData,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import { Table } from "@skeletonlabs/skeleton";
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -482,6 +483,7 @@ export function metricsToTable(
 
     metricsToPlot.forEach((metric) => {
       let metricValue: Metric[] = value[metric];
+
       if (metricValue) {
         table.get(key)!.push({
           name: metric,
@@ -496,4 +498,130 @@ export function metricsToTable(
     });
   }
   return table;
+}
+
+async function parseMetric(type: string, metric: Metric[]): Promise<ChartData> {
+  let x: number[] = [];
+  let y: number[] = [];
+
+  if (type == "line") {
+    for (let data of metric) {
+      y.push(data.value);
+      x.push(data.step || 0);
+    }
+  } else {
+    y.push(metric[metric.length - 1].value);
+    x.push(metric[metric.length - 1].step || 0);
+  }
+
+  return { x, y };
+}
+
+export async function buildDataforBarChart(
+  chartData: ChartData,
+  x_label: string,
+  y_label: string,
+  name: string
+): Promise<ChartjsData> {
+  return {
+    type: "bar",
+    data: {
+      labels: chartData.x,
+      datasets: [
+        {
+          label: name,
+          backgroundColor: "#8174a1",
+          borderColor: "#4b3978",
+          borderWidth: 2,
+          borderRadius: 2,
+          borderSkipped: false,
+          data: chartData.y,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: {
+          display: false,
+        },
+        title: {
+          display: true,
+          text: name,
+          position: "top",
+          align: "start",
+          font: {
+            size: 16,
+          },
+          padding: {
+            bottom: 20,
+          },
+        },
+      },
+      responsive: true,
+      aspectRatio: 1,
+      maintainAspectRatio: true,
+      scales: {
+        x: {
+          title: { display: true, text: x_label },
+        },
+        y: {
+          title: { display: true, text: y_label },
+          ticks: {
+            stepSize: 1,
+          },
+          grace: "5%",
+        },
+      },
+      layout: {
+        padding: 10,
+      },
+    },
+  };
+}
+
+/**
+ * Create metric settings for visualizations
+ * @param {RunMetrics} metrics
+ * @returns {Map<string, Graph>} mapping
+ *
+ *
+ */
+export async function createMetricVizData(
+  metrics: RunMetrics
+): Promise<Map<string, any>> {
+  let mapping = new Map<string, ChartjsData>();
+
+  // if metrics keys are not empty
+  if (Object.keys(metrics).length !== 0) {
+    // loop over keys
+    for (let key in metrics) {
+      // get metric name from first in list
+      const metricName: string = key;
+      let metricData: Metric[] = metrics[key];
+
+      let chartData: ChartData = await parseMetric("bar", metricData);
+
+      const graph: Graph = {
+        name: metricName,
+        x_label: "Step",
+        y_label: "Value",
+        graphType: "bar",
+        x: chartData.x,
+        y: chartData.y,
+      };
+
+      let data = await buildDataforBarChart(
+        chartData,
+        graph.x_label,
+        graph.y_label,
+        metricName
+      );
+
+      mapping.set(key, data);
+    }
+  }
+
+  return mapping;
+
+  // loop
 }

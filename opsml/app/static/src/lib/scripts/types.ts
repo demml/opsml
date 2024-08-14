@@ -239,8 +239,7 @@ export interface Graph {
   y_label: string;
   x: number[] | Map<string, number[]>;
   y: number[] | Map<string, number[]>;
-  graph_type: string;
-  graph_style: string;
+  graphType: string;
 }
 
 export enum CardRegistries {
@@ -374,4 +373,15 @@ export interface PasswordStrength {
 export interface TableMetric {
   name: string;
   value: string | number;
+}
+
+export interface ChartData {
+  x: string[] | number[];
+  y: number[];
+}
+
+export interface ChartjsData {
+  data: any;
+  options: any;
+  type: string;
 }
