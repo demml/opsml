@@ -1,13 +1,16 @@
 <script lang="ts">
 
-  import { type RunMetrics, type ChartjsData } from "$lib/scripts/types";
+  import { type RunMetrics, type ChartjsData, type Metric } from "$lib/scripts/types";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
-  import { faCheck, faChartBar, faChartLine } from '@fortawesome/free-solid-svg-icons'
+  import { faCheck, faChartBar, faChartLine, faDownload, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
   import { createMetricVizData } from "$lib/scripts/utils";
+  import { metricsToTable } from "$lib/scripts/utils";
+  import {type  Card, type TableMetric } from "$lib/scripts/types";
+  import { routeros } from "svelte-highlight/styles";
 
 
   /** @type {import('./$types').LayoutData} */
@@ -36,6 +39,7 @@
   $: searchableMetrics = data.searchableMetrics;
 
   let metricVizData: ChartjsData = data.metricVizData;
+  let tableMetrics: Metric[] = data.tableMetrics;
 
   export let isOpen = true;
 
@@ -81,6 +85,30 @@
   onMount(() => {
     selectedMetrics = metricNames;
   });
+
+
+  async function refreshPlot() {
+    if (selectedMetrics.length == 0) {
+      alert("Please select metrics to plot");
+      return;
+    }
+
+    // remove select all from selectedMetrics
+    selectedMetrics = selectedMetrics.filter((item) => item !== 'select all');
+
+    // get metrics to plot
+    metricsToPlot = selectedMetrics.slice();
+
+    // create metric viz data
+    let newMetrics: RunMetrics = Object.fromEntries(
+    Object.entries(metrics).filter(([key]) => metricsToPlot.includes(key))
+  );
+
+    metricVizData = createMetricVizData(newMetrics);
+
+    console.log(metricVizData);
+
+  }
 
 
   //async function plotMetrics() {
@@ -137,15 +165,14 @@
 
 <div class="flex min-h-screen">
 
-
     {#if isOpen}
-    <div class="hidden md:block flex-initial w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
+    <div class="hidden md:block flex w-1/4 pl-8 bg-surface-100 dark:bg-surface-600">
       
       <div class="flex flex-row flex-wrap gap-1 p-2 justify-between">
 
-        <TabGroup border="" active='border-b-2 border-primary-500'>
-          <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
-        </TabGroup>
+          <TabGroup border="" active='border-b-2 border-primary-500'>
+            <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
+          </TabGroup>
 
         <div class="flex flex-row flex-wrap gap-2 justify-between">
        
@@ -168,7 +195,7 @@
           {#each filteredMetrics as metric}
             
             <button
-              class="chip hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip text-xs hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
               on:keypress
             >
@@ -182,7 +209,7 @@
           {#each metricNames as metric}
 
             <button
-              class="chip text-sm hover:bg-primary-300 text-base {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip text-xs hover:bg-primary-300 {selectedMetrics.includes(metric) ? 'bg-primary-300' : 'variant-soft'}"
               on:click={() => { setActiveMetrics(metric); }}
              
             >
@@ -196,38 +223,93 @@
 
       </div>
 
-    <!-- place button in top right corner -->
-    <div class="relative flex pt-3 pb-1 pr-2  items-center">
-      <div class="flex-grow border-t border-gray-400"></div>
-    </div> 
+      <!-- place button in top right corner -->
+      <div class="relative flex pt-3 pb-1 pr-2  items-center">
+        <div class="flex-grow border-t border-gray-400"></div>
+      </div> 
 
-    <div class="flex flex-row flex-wrap gap-1 p-1 justify-start">
-      <button type="button" class="chip bg-darkpurple text-white" on:click={() => toggleSidebar() }>Hide</button>
-    </div>  
+      <div class="flex flex-row flex-wrap gap-1 justify-between">
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white text-xs" on:click={() => toggleSidebar() }>Hide</button>
+
+        <div class="flex flex-row items-center">
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => render_chart("line")}>
+            <Fa class="h-3" icon={faDownload}/>
+            <header class="text-white text-xs">CSV</header>
+          </button>
+        </div>
+
+      </div>  
     </div>
     {:else}
       <div class="hidden md:block w-16 bg-surface-100 dark:bg-surface-600">
         <div class="flex flex-row flex-wrap gap-1 p-1 justify-start">
-          <button type="button" class="chip bg-darkpurple text-white" on:click={() => toggleSidebar() }>Show</button>
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white text-xs" on:click={() => toggleSidebar() }>Show</button>
         </div>
       </div>
     {/if}
 
-      <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
+    <div class="flex-col p-4 w-full bg-white dark:bg-surface-900 pr-16">
 
-        <div id="chart" class="pt-4 flex flex-wrap gap-4 min-h-screen">
-            <div class="relative w-3/4 md:w-1/3 grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
-              <IndividualChart
-                data={metricVizData.data}
-                type={plotSet}
-                options={metricVizData.options}
-              />
-              <div class="flex flex-row flex-wrap">
-                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_chart("bar")}><Fa icon={faChartBar} /></button>
-                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_chart("line")}><Fa icon={faChartLine} /></button>
-              </div>
-            </div>
+        <div class="pt-2relative h-3/5 rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+
+          <div class="flex justify-between">
+
+            <div class="text-primary-500 text-lg font-bold pl-2">Metrics</div>
+
+            <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => refreshPlot()}>
+              <Fa class="h-3" icon={faArrowsRotate}/>
+              <header class="text-white text-xs">Refresh</header>
+            </button>
+
+          </div>  
+
+           
+          <IndividualChart
+            data={metricVizData.data}
+            type={plotSet}
+            options={metricVizData.options}
+          />
+       
+        </div>
+ 
+      
+
+
+      <div id="table">
+        <div class="mt-6">
+          <div class="table-container border border-1 border-primary-500">
+            <!-- Native Table Element -->
+            <table class="table-compact table-hover text-xs text-center min-w-full">
+              <thead class="bg-surface-100">
+                <tr>
+                  <th class="text-sm text-center py-2">Name</th>
+                  <th class="text-sm text-center py-2">Value</th>
+                  <th class="text-sm text-center py-2">Step</th>
+                  <th class="text-sm text-center py-2">Timestamp</th>
+                  <th class="text-sm text-center py-2">UID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each tableMetrics as row}
+                    <tr>
+                      <td class="text-sm">{row.name}</td>
+                      <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
+                      <td class="text-sm">{row.step}</td>
+                      <td class="text-sm">{row.timestamp}</td>
+                      <td class="text-sm">{row.run_uid}</td>
+                    </tr>
+                {/each}
+          
+              </tbody>
+            </table>
           </div>
+        </div>
       </div>
 
+    </div>
+
+    
+
 </div>
+
+

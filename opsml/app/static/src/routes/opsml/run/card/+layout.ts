@@ -9,6 +9,7 @@ import {
   type Parameters,
   type RunMetrics,
   type ChartjsData,
+  type TableMetric,
   RegistryName,
 } from "$lib/scripts/types";
 
@@ -19,6 +20,7 @@ import {
   getRunMetricNames,
   getRunParameters,
   createMetricVizData,
+  metricsToTable,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -81,7 +83,7 @@ export async function load({ fetch, params, url }) {
     }
   }
   // List of metrics for table
-  const tableMetrics: Metric[] = [];
+  let tableMetrics: Metric[] | Map<string, TableMetric[]> = [];
 
   // get last entry for each metric in metrics
   for (let metric in metrics) {
@@ -103,6 +105,9 @@ export async function load({ fetch, params, url }) {
   if (tab === "metrics") {
     // create chartjs data
     metricVizData = createMetricVizData(metrics);
+    //let cardMap = new Map<string, RunMetrics>();
+    //cardMap.set(selectedCard.name, metrics);
+    //tableMetrics = metricsToTable(cardMap, metricNames.metric);
   }
 
   return {

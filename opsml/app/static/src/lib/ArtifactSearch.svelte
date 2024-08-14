@@ -74,7 +74,7 @@ const searchPage = async function () {
 </script>
 
 <div class="flex min-h-screen">
-  <div class="hidden md:block flex-initial w-1/4 pl-6 bg-surface-100 dark:bg-surface-600">
+  <div class="hidden md:block flex-initial w-1/4 pl-6 bg-gray-50">
     <div class="p-4">
       <TabGroup 
       border=""
@@ -95,7 +95,7 @@ const searchPage = async function () {
           {#each filteredRepos as repo}
            
             <button
-              class="chip hover:bg-primary-300 text-sm {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip text-primary-500 hover:bg-primary-300 {selectedRepo === repo ? 'bg-primary-300' : 'bg-white'} border border-1 border-gray-200 shadow-sm"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >
@@ -109,7 +109,7 @@ const searchPage = async function () {
           {#each repos as repo}
 
             <button
-              class="chip hover:bg-primary-300 text-sm {selectedRepo === repo ? 'bg-primary-300' : 'variant-soft'}"
+              class="chip text-primary-500 hover:bg-primary-300 {selectedRepo === repo ? 'bg-primary-300' : 'bg-white'} shadow-sm"
               on:click={() => { setActiveRepo(repo); }}
               on:keypress
             >

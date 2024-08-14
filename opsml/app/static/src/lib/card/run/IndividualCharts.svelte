@@ -8,16 +8,29 @@
   
 	let ctx;
 	let chartCanvas;
+  let chart;
+
 
 	onMount(() => {
 		  ctx = chartCanvas.getContext('2d');
-			var chart = new Chart(ctx, {
+		  chart = new Chart(ctx, {
 				type: type,
 				data: data,
         options: options
 		});
 
+    return () => {
+      chart.destroy();
+    };
+
 	});
+
+  $: if (chart) {
+    chart.data = data;
+    chart.type = type;
+    chart.options = options;
+    chart.update();
+  }
 
 </script>
 

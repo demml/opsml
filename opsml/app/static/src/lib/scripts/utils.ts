@@ -517,6 +517,10 @@ function parseMetric(type: string, metric: Metric[]): ChartData {
   return { x, y };
 }
 
+const handleResize = (chart) => {
+  chart.resize();
+};
+
 export function buildDataforBarChart(
   x: any,
   y: number[],
@@ -544,22 +548,10 @@ export function buildDataforBarChart(
         legend: {
           display: false,
         },
-        title: {
-          display: true,
-          text: name,
-          position: "top",
-          align: "start",
-          font: {
-            size: 16,
-          },
-          padding: {
-            bottom: 20,
-          },
-        },
       },
       responsive: true,
-      aspectRatio: 1,
-      maintainAspectRatio: true,
+      onresize: handleResize,
+      maintainAspectRatio: false,
       scales: {
         x: {
           title: { display: true, text: x_label },
@@ -610,4 +602,39 @@ export function createMetricVizData(metrics: RunMetrics): ChartjsData {
   return data;
 
   // loop
+}
+
+function exportMetricsToCSV(runMetrics: RunMetrics): string {
+  // Define the header
+  let metrics = Object.values(runMetrics).flat();
+
+  const header = ["run_uid", "name", "value", "step", "timestamp"];
+
+  // Create the CSV content
+  const csvContent = metrics.map((metric) => [
+    metric.run_uid,
+    metric.name,
+    metric.value.toString(),
+    metric.step !== null ? metric.step.toString() : "",
+    metric.timestamp !== null ? metric.timestamp.toString() : "",
+  ]);
+
+  // Combine header and content
+  const allRows = [header, ...csvContent];
+
+  // Join rows and columns
+  return allRows.map((row) => row.join(",")).join("\n");
+}
+
+export function downloadCSV(data: string, filename: string) {
+  const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${filename}.csv`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
