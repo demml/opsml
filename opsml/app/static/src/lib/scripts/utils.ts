@@ -500,8 +500,8 @@ export function metricsToTable(
   return table;
 }
 
-async function parseMetric(type: string, metric: Metric[]): Promise<ChartData> {
-  let x: number[] = [];
+function parseMetric(type: string, metric: Metric[]): ChartData {
+  let x: any = [];
   let y: number[] = [];
 
   if (type == "line") {
@@ -511,31 +511,31 @@ async function parseMetric(type: string, metric: Metric[]): Promise<ChartData> {
     }
   } else {
     y.push(metric[metric.length - 1].value);
-    x.push(metric[metric.length - 1].step || 0);
+    x.push(metric[metric.length - 1].name);
   }
 
   return { x, y };
 }
 
-export async function buildDataforBarChart(
-  chartData: ChartData,
+export function buildDataforBarChart(
+  x: any,
+  y: number[],
   x_label: string,
   y_label: string,
   name: string
-): Promise<ChartjsData> {
+): ChartjsData {
   return {
     type: "bar",
     data: {
-      labels: chartData.x,
+      labels: x,
       datasets: [
         {
-          label: name,
           backgroundColor: "#8174a1",
           borderColor: "#4b3978",
           borderWidth: 2,
           borderRadius: 2,
           borderSkipped: false,
-          data: chartData.y,
+          data: y,
         },
       ],
     },
@@ -586,42 +586,28 @@ export async function buildDataforBarChart(
  *
  *
  */
-export async function createMetricVizData(
-  metrics: RunMetrics
-): Promise<Map<string, any>> {
-  let mapping = new Map<string, ChartjsData>();
+export function createMetricVizData(metrics: RunMetrics): ChartjsData {
+  let x: any[] = [];
+  let y: number[] = [];
 
   // if metrics keys are not empty
   if (Object.keys(metrics).length !== 0) {
     // loop over keys
+    // append to the x and y arrays
     for (let key in metrics) {
-      // get metric name from first in list
-      const metricName: string = key;
       let metricData: Metric[] = metrics[key];
 
-      let chartData: ChartData = await parseMetric("bar", metricData);
+      // parse x and y
+      let chartData: ChartData = parseMetric("bar", metricData);
 
-      const graph: Graph = {
-        name: metricName,
-        x_label: "Step",
-        y_label: "Value",
-        graphType: "bar",
-        x: chartData.x,
-        y: chartData.y,
-      };
-
-      let data = await buildDataforBarChart(
-        chartData,
-        graph.x_label,
-        graph.y_label,
-        metricName
-      );
-
-      mapping.set(key, data);
+      x.push(...chartData.x);
+      y.push(...chartData.y);
     }
   }
 
-  return mapping;
+  let data = buildDataforBarChart(x, y, "Metrics", "Values", "Metric Chart");
+
+  return data;
 
   // loop
 }

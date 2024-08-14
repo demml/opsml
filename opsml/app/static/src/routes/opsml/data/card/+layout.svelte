@@ -48,7 +48,7 @@
 
 <div class="flex flex-1 flex-col">
 
-  <div class="pl-4 md:pl-20 pt-6 sm:pt-8 bg-slate-50 w-full border-b">
+  <div class="pl-4 md:pl-20 pt-2 sm:pt-4 bg-slate-50 w-full border-b">
     <h1 class="flex flex-row flex-wrap items-center text-lg">
       <div class="group flex flex-none items-center">
         <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
@@ -63,46 +63,47 @@
       </div>
     </h1>
 
-    <div class="pt-2">
+    <div class="pt-1">
       <TabGroup 
+        padding="px-3 py-2"
         border=""
         active='border-b-2 border-primary-500'
         >
           <Tab bind:group={tabSet} name="card" value="card" on:click={() => showTabContent("card")}>
-            <div class="flex flex-row  items-center">
-              <img class="h-6" src={modelcard_circuit} alt="ModelCard Circuit" />
-              <div class="font-semibold">Card</div>
+            <div class="flex flex-row items-center">
+              <img class="h-4" src={modelcard_circuit} alt="ModelCard Circuit" />
+              <div class="font-semibold text-sm">Card</div>
             </div>
           </Tab>
 
           <Tab bind:group={tabSet} name="files" value="files" on:click={() => showTabContent("files")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faFolderTree} color="#4b3978"/>
-              <div class="font-semibold">Files</div>
+              <Fa class="h-4 mr-2" icon={faFolderTree} color="#4b3978"/>
+              <div class="font-semibold text-sm">Files</div>
             </div>
           </Tab>
 
           {#if metadata.data_splits}
             <Tab bind:group={tabSet} name="splits" value="splits" on:click={() => showTabContent("splits")}>
               <div class="flex flex-row  items-center">
-                <Fa class="h-5 mr-2" icon={faBolt} color="#4b3978"/>
-                <div class="font-semibold">Splits</div>
+                <Fa class="h-4 mr-2" icon={faBolt} color="#4b3978"/>
+                <div class="font-semibold text-sm">Splits</div>
               </div>
             </Tab>
           {/if}
 
           <Tab bind:group={tabSet} name="versions" value="versions" on:click={() => showTabContent("versions")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faCodeBranch} color="#4b3978"/>
-              <div class="font-semibold">Versions</div>
+              <Fa class="h-4 mr-2" icon={faCodeBranch} color="#4b3978"/>
+              <div class="font-semibold text-sm">Versions</div>
             </div>
           </Tab>
 
           {#if metadata.sql_logic}
             <Tab bind:group={tabSet} name="sql" value="sql" on:click={() => showTabContent("sql")}>
               <div class="flex flex-row  items-center">
-                <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
-                <div class="font-semibold">SQL</div>
+                <Fa class="h-4 mr-2" icon={faGears} color="#4b3978"/>
+                <div class="font-semibold text-sm">SQL</div>
               </div>
             </Tab>
           {/if}

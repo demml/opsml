@@ -376,7 +376,7 @@ export interface TableMetric {
 }
 
 export interface ChartData {
-  x: string[] | number[];
+  x: number[];
   y: number[];
 }
 

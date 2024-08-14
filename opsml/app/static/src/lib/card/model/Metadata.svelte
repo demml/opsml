@@ -44,8 +44,10 @@ async function showModal() {
       <Fa icon={faCircleInfo} color="#04cd9b"/>
       <header class="pl-2 text-darkpurple text-lg font-bold">Metadata</header>
     </div>
+
+
     <div>
-      <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end mb-2" on:click={() => showModal()}>Use this model</button>
+      <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end mb-2" on:click={() => showModal()}>Use this card</button>
     </div>
 
   </div>

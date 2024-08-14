@@ -8,6 +8,7 @@ import {
   type Metric,
   type Parameters,
   type RunMetrics,
+  type ChartjsData,
   RegistryName,
 } from "$lib/scripts/types";
 
@@ -17,6 +18,7 @@ import {
   getRunMetrics,
   getRunMetricNames,
   getRunParameters,
+  createMetricVizData,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -95,6 +97,14 @@ export async function load({ fetch, params, url }) {
   // add "select all" to searchableMetrics
   searchableMetrics.unshift("select all");
 
+  // check if "run/card/metrics" exists in url
+  let metricVizData: ChartjsData | undefined = undefined;
+
+  if (tab === "metrics") {
+    // create chartjs data
+    metricVizData = createMetricVizData(metrics);
+  }
+
   return {
     registry,
     repository: selectedCard.repository,
@@ -107,5 +117,6 @@ export async function load({ fetch, params, url }) {
     tableMetrics,
     parameters: parameters.parameter,
     searchableMetrics,
+    metricVizData,
   };
 }

@@ -32,20 +32,12 @@
   let metricsToPlot: string[];
   $: metricsToPlot = [];
 
-  let combined: boolean = false;
-  $: combined = false;
-
-  let separated: boolean = false;
-  $: separated = false;
-
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
 
-  let metricVizData: Map<string, ChartjsData> = new Map();
-  let metricTypes: Map<string, string> = new Map();
+  let metricVizData: ChartjsData = data.metricVizData;
 
   export let isOpen = true;
-
 
   function toggleSidebar() {
     isOpen = !isOpen;
@@ -63,8 +55,6 @@
     if (name == 'select all') {
       if (selectedMetrics.length > 0) {
         selectedMetrics = [];
-        combined = false;
-        separated = false;
         
       } else {
         selectedMetrics = metricNames;
@@ -84,37 +74,14 @@
     }
   }
 
-
-  async function renderIndividualCharts(){
-    metricVizData = await createMetricVizData(metrics);
-    separated = true;
+  function render_chart(type: string) {
+    plotSet = type;
   }
-  
-  onMount(async () => {
-    // loop over metric keys
-    Object.keys(metrics).forEach((key) => {
-      // get metric data
-      metricTypes.set(key, plotSet);
-    });
-    console.log(metricTypes);
+
+  onMount(() => {
+    selectedMetrics = metricNames;
   });
 
-  async function render_single_chart(metric: string, type: string) {
-    metricTypes.set(metric, type);
-    metricVizData = await createMetricVizData(metrics);
-  }
-
-  async function separatePlots() {
-    separated = true;
-    combined = false;
-    renderIndividualCharts();
-  }
-
-  async function combinePlots() {
-    combined = true;
-    separated = false;
-    renderIndividualCharts();
-  }
 
   //async function plotMetrics() {
 //
@@ -245,42 +212,22 @@
         </div>
       </div>
     {/if}
-  
-    <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
-      <div class="flex flex-row flex-wrap gap-2">
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => combinePlots()}>Combine</button>
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => separatePlots()}>Separate</button>
-      </div>
+      <div class="flex-auto w-64 p-4 bg-white dark:bg-surface-900 pr-16">
 
-
-      <div id="combined charts" class="{(combined && selectedMetrics.length > 0)  ? '' : 'hidden'} pt-4">
-          <figure class="w-128">
-            <div class="flex flex-wrap gap-4">
-              <div class="{combined ? '' : 'hidden'} w-3/4 max-w-screen-xl grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
-                <canvas id="myChart"></canvas>
-              </div>
-            </div>
-          </figure>
-      </div>
-
-      <div id="separate" class="{(separated && selectedMetrics.length > 0) ? '' : 'hidden'} pt-4 flex flex-wrap gap-4 min-h-screen">
-        {#each metricNames as metric}
-          {#if metric != 'select all'}
-            <div class="{metricsToPlot.includes(metric) ? '' : 'hidden'} relative w-3/4 md:w-1/3 grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+        <div id="chart" class="pt-4 flex flex-wrap gap-4 min-h-screen">
+            <div class="relative w-3/4 md:w-1/3 grow rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
               <IndividualChart
-                name={metric}
-                chartData={metricVizData.get(metric)?.data}
-                options={metricVizData.get(metric)?.options}
-                type={metricVizData.get(metric)?.type}
+                data={metricVizData.data}
+                type={plotSet}
+                options={metricVizData.options}
               />
               <div class="flex flex-row flex-wrap">
-                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metric, "bar")}><Fa icon={faChartBar} /></button>
-                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_single_chart(metric, "line")}><Fa icon={faChartLine} /></button>
+                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_chart("bar")}><Fa icon={faChartBar} /></button>
+                <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white" on:click={() => render_chart("line")}><Fa icon={faChartLine} /></button>
               </div>
             </div>
-          {/if}
-        {/each}
+          </div>
       </div>
-    </div>
+
 </div>

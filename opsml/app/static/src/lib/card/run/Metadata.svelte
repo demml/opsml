@@ -38,7 +38,7 @@
   
 </script>
 
-<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md mb-2">
+<div class="rounded-lg border-2 border-darkpurple p-4 shadow-md shadow-primary-500 mb-2 overflow-x-scroll bg-white">
   <div class="flex flex-row justify-between mb-2 items-center border-b-2 border-gray-400">
   
     <div class="flex flex-row items-center pt-2">
@@ -46,7 +46,7 @@
       <header class="pl-2 text-darkpurple text-lg font-bold">Metadata</header>
     </div>
     <div>
-      <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end mb-2" on:click={() => showModal()}>Load this run</button>
+      <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end mb-2" on:click={() => showModal()}>Use this card</button>
     </div>
 
   </div>
@@ -133,15 +133,17 @@
       <header class="pl-2 text-darkpurple text-lg font-bold">Tags</header>
     </div>
 
-    <div class="flex flex-col">
+    <div class="flex flex-col space-y-1">
 
       {#each Object.keys(card.tags) as key}
-        <div class="inline-flex items-center overflow-hidden text-sm w-fit">
-          <div class="px-2 text-darkpurple italic">{key}:</div> 
-          <div class="flex px-1.5 text-gray-800">
-            {card.tags[key]}
-          </div>
+
+      <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
+        <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">{key}</div> 
+        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
+          {card.tags[key]}
         </div>
+      </div>
+
       {/each}
     </div>
   {/if}

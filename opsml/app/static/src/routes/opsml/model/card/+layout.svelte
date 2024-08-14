@@ -44,8 +44,8 @@
 
 <div class="flex flex-1 flex-col">
 
-  <div class="pl-4 md:pl-20 pt-6 sm:pt-8 bg-slate-50 w-full border-b">
-    <h1 class="flex flex-row flex-wrap items-center text-xl">
+  <div class="pl-4 md:pl-20 pt-2 sm:pt-4 bg-slate-50 w-full border-b">
+    <h1 class="flex flex-row flex-wrap items-center text-lg">
       <div class="group flex flex-none items-center">
         <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
         <div class="mx-0.5 text-gray-800">/</div>
@@ -59,55 +59,56 @@
       </div>
     </h1>
 
-    <div class="pt-2">
+    <div class="pt-1">
       <TabGroup 
+        padding="px-3 py-2"
         border=""
         active='border-b-2 border-primary-500'
         >
           <Tab bind:group={tabSet} name="card" value="card" on:click={() => showTabContent("card")}>
-            <div class="flex flex-row  items-center">
-              <img class="h-6" src={icon} alt="ModelCard Circuit" />
-              <div class="font-semibold">Card</div>
+            <div class="flex flex-row items-center">
+              <img class="h-4" src={icon} alt="ModelCard Circuit" />
+              <div class="font-semibold text-sm">Card</div>
             </div>
           </Tab>
           <Tab bind:group={tabSet} name="files" value="files" on:click={() => showTabContent("files")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faFolderTree} color="#4b3978"/>
-              <div class="font-semibold">Files</div>
+              <Fa class="h-4 mr-2" icon={faFolderTree} color="#4b3978"/>
+              <div class="font-semibold text-sm">Files</div>
             </div>
           </Tab>
           <Tab bind:group={tabSet} name="metadata" value="metadata" on:click={() => showTabContent("metadata")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faBolt} color="#4b3978"/>
-              <div class="font-semibold">Metadata</div>
+              <Fa class="h-4 mr-1" icon={faBolt} color="#4b3978"/>
+              <div class="font-semibold text-sm">Metadata</div>
             </div>
           </Tab>
 
           <Tab bind:group={tabSet} name="versions" value="versions" on:click={() => showTabContent("versions")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faCodeBranch} color="#4b3978"/>
-              <div class="font-semibold">Versions</div>
+              <Fa class="h-4 mr-1" icon={faCodeBranch} color="#4b3978"/>
+              <div class="font-semibold text-sm">Versions</div>
             </div>
           </Tab>
 
           <Tab bind:group={tabSet} name="monitoring" value="monitoring" on:click={() => showTabContent("monitoring")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faMagnifyingGlass} color="#4b3978"/>
-              <div class="font-semibold">Monitoring</div>
+              <Fa class="h-4 mr-1" icon={faMagnifyingGlass} color="#4b3978"/>
+              <div class="font-semibold text-sm">Monitoring</div>
             </div>
           </Tab>
 
           <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("settings")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
-              <div class="font-semibold">Settings</div>
+              <Fa class="h-4 mr-1" icon={faGears} color="#4b3978"/>
+              <div class="font-semibold text-sm">Settings</div>
             </div>
           </Tab>
 
           <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("messages")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-5 mr-2" icon={faGears} color="#4b3978"/>
-              <div class="font-semibold">Messages/Notes</div>
+              <Fa class="h-4 mr-1" icon={faGears} color="#4b3978"/>
+              <div class="font-semibold text-sm">Messages/Notes</div>
             </div>
           </Tab>
 
