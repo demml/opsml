@@ -27,7 +27,7 @@
   
   
   
-  <div class="flex items-center justify-center pt-8 text-sm">
+  <div class="flex items-center justify-center pt-2 text-sm">
   
     <div class="justify-center w-2/3">
   
