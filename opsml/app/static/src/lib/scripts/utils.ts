@@ -506,15 +506,19 @@ export function metricsToTable(
         table.get(key)!.push({
           name: metric,
           value: metricValue[metricValue.length - 1].value,
+          step: metricValue[metricValue.length - 1].step || 0,
         });
       } else {
         table.get(key)!.push({
           name: metric,
           value: "N/A",
+          step: "N/A",
         });
       }
     });
   }
+
+  console.log(table);
   return table;
 }
 
@@ -541,7 +545,10 @@ const handleResize = (chart) => {
 
 export function buildDataforChart(
   x: number[] | string[],
-  datasets: ChartjsBarDataset[] | ChartjsLineDataset[],
+  datasets:
+    | ChartjsBarDataset[]
+    | ChartjsLineDataset[]
+    | ChartjsGroupedBarDataset[],
   x_label: string,
   y_label: string,
   chartType: string,
@@ -839,6 +846,56 @@ export function createGroupedMetricBarVizData(
   return data;
 }
 
+export function createGroupedMetricLineVizData(
+  metrics: Map<string, RunMetrics>,
+  metricNames: string[]
+): ChartjsData {
+  let datasets: ChartjsLineDataset[] = [];
+  let data;
+  let x: any[] = [];
+  let colors = generateColors(metrics.size + 1, 0.2);
+  let borders = generateColors(metrics.size + 1);
+  let runIdMetricMap = new Map<string, Map<string, number[]>>();
+
+  for (let metricName of metricNames) {
+    for (let runId of metrics.keys()) {
+      let metricData: Metric[] = metrics.get(runId)![metricName];
+
+      if (!runIdMetricMap.has(runId)) {
+        runIdMetricMap.set(runId, new Map<string, number[]>());
+      }
+      if (metricData) {
+        let chartData = parseMetric("line", metricData);
+        if (chartData.x.length > x.length) {
+          x = chartData.x;
+        }
+        runIdMetricMap.get(runId)!.set(metricName, chartData.y);
+      } else {
+        runIdMetricMap.get(runId)!.set(metricName, [0]);
+      }
+    }
+  }
+
+  Array.from(runIdMetricMap.entries()).forEach(([key, value], index) => {
+    let color = colors[index + 1];
+    let borderColor = borders[index + 1];
+
+    Array.from(value.entries()).forEach(([metricName, metricData]) => {
+      datasets.push({
+        label: `${key.slice(0, 8)}-${metricName}`,
+        data: metricData,
+        borderColor: borderColor,
+        backgroundColor: borderColor,
+        pointRadius: 1,
+      });
+    });
+  });
+
+  data = buildDataforChart(x, datasets, "Steps", "Value", "line", true);
+
+  return data;
+}
+
 export function createGroupMetricVizData(
   metrics: Map<string, RunMetrics>,
   metricNames: string[],
@@ -846,5 +903,59 @@ export function createGroupMetricVizData(
 ) {
   if (chartType === "bar") {
     return createGroupedMetricBarVizData(metrics, metricNames);
+  } else {
+    return createGroupedMetricLineVizData(metrics, metricNames);
   }
+}
+
+function compareMetrics(
+  currentMetric: number | string,
+  compareMetric: number | string | undefined
+): string {
+  if (typeof compareMetric === "string" || compareMetric === undefined) {
+    return "N/A";
+  }
+
+  if (typeof currentMetric === "string") {
+    return "N/A";
+  }
+
+  if (currentMetric === compareMetric) {
+    return "equal";
+  } else if (currentMetric > compareMetric) {
+    return "greater";
+  } else {
+    return "lesser";
+  }
+}
+
+export function downloadTableMetricsToCSV(
+  tableMetrics: Map<string, TableMetric[]>,
+  referenceMetrics: Map<string, number>,
+  currentUID: string
+) {
+  const header = ["run_uid", "comparison", "name", "value", "step", "result"];
+  const allRows = [header];
+
+  for (let [key, value] of tableMetrics) {
+    let comparison = currentUID === key ? "current" : "comparison";
+    // Create the CSV content
+    const csvContent = value.map((metric) => [
+      key,
+      comparison,
+      metric.name,
+      metric.value.toString(),
+      metric.step.toString(),
+      compareMetrics(metric.value, referenceMetrics.get(metric.name)),
+    ]);
+
+    allRows.push(...csvContent);
+  }
+
+  // Join rows and columns
+  let csv: string = allRows.map((row) => row.join(",")).join("\n");
+
+  console.log(csv);
+
+  downloadCSV(csv, "comparison_metrics");
 }

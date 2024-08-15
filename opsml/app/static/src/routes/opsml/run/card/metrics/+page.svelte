@@ -254,25 +254,13 @@
               </thead>
               <tbody>
                 {#each tableMetrics as row, i}
-
-                  {#if i % 2 != 0}
-                    <tr class="bg-gray-100">
+                    <tr class="even:bg-gray-100">
                       <td class="text-sm">{row.name}</td>
                       <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
                       <td class="text-sm">{row.step}</td>
                       <td class="text-sm">{row.timestamp}</td>
                       <td class="text-sm">{row.run_uid}</td>
                     </tr>
-                  {:else}
-                    <tr>
-                      <td class="text-sm">{row.name}</td>
-                      <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
-                      <td class="text-sm">{row.step}</td>
-                      <td class="text-sm">{row.timestamp}</td>
-                      <td class="text-sm">{row.run_uid}</td>
-                    </tr>
-                  {/if}
-
                 {/each}
           
               </tbody>

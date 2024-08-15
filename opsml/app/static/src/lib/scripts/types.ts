@@ -260,6 +260,7 @@ export interface CompareMetricPage {
   searchableMetrics: string[];
   show: boolean;
   metricVizData: ChartjsData;
+  referenceMetrics: Map<string, number>;
 }
 
 export interface Message {
@@ -375,6 +376,7 @@ export interface PasswordStrength {
 export interface TableMetric {
   name: string;
   value: string | number;
+  step: string | number;
 }
 
 export interface ChartData {
@@ -393,6 +395,7 @@ export interface ChartjsLineDataset {
   data: number[];
   borderColor: string;
   backgroundColor: string;
+  pointRadius: number | null;
 }
 
 export interface ChartjsBarDataset {

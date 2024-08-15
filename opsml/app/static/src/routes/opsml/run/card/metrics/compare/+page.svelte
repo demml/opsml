@@ -6,7 +6,7 @@
   import Fa from 'svelte-fa'
   import { faCheck, faDownload, faMagnifyingGlassMinus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
   import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
-  import { getRunMetrics, sortMetrics, metricsToTable, downloadMetricCSV, createGroupMetricVizData } from "$lib/scripts/utils";
+  import { getRunMetrics, sortMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
 
@@ -20,6 +20,7 @@
   let tabSet: string = "metrics";
   let plotSet: string = "bar";
   let compareMetrics = new Map<string, RunMetrics>();
+  
   let tableMetrics: Map<string, TableMetric[]>;
 
   let card: RunCard;
@@ -47,10 +48,13 @@
   $: cardsToCompare = [];
 
   let metricVizData: ChartjsData = data.metricVizData;
-  let show: boolean = true;
+  let showTable: boolean = false;
 
   let isOpen = true;
   let cardSelectAll: boolean = false;
+
+  let referenceMetrics: Map<string, number>;
+  $: referenceMetrics = data.referenceMetrics;
 
   function toggleSidebar() {
     isOpen = !isOpen;
@@ -96,6 +100,11 @@
     }
     metricVizData = createGroupMetricVizData(compareMetrics, metricsToPlot, plotSet);
 
+    tableMetrics = metricsToTable(compareMetrics, metricsToPlot);
+
+    showTable = true;
+
+
   }
 
   async function setComparedCards( cardName: string) {
@@ -124,6 +133,9 @@
     }
   }
 
+  function isNumber(value) {
+    return typeof value === 'number';
+  }
 
   const searchMetrics = () => {	
 
@@ -162,6 +174,16 @@
     selectedMetrics = metricNames;
   });
 
+  function downloadComparisonMetric(){
+    if (tableMetrics.size == 0) {
+      alert("No metrics to download. CSV download is only available after selecting runs to compare and refreshing.");
+      return;
+    }
+
+    downloadTableMetricsToCSV(tableMetrics, referenceMetrics, card.uid);
+
+  }
+
   
     
 
@@ -180,7 +202,7 @@
           <Tab bind:group={tabSet} name="repos" value="metrics">Metrics</Tab>
         </TabGroup>
 
-        <div class="flex flex-row flex-wrap gap-2 justify-between">
+        <div class="flex flex-row flex-wrap gap-2 justify-between pr-2">
       
           <TabGroup border="" active='border-b-2 border-secondary-500'>
             <div><Tab bind:group={plotSet} name="bar" value="bar" on:click={() => changePlotType("bar") } >Bar</Tab></div>
@@ -307,7 +329,7 @@
       <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white text-xs" on:click={() => toggleSidebar() }>Hide</button>
 
       <div class="flex flex-row items-center">
-        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => downloadMetricCSV(metrics, "metrics") }>
+        <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => downloadComparisonMetric() }>
           <Fa class="h-3" icon={faDownload}/>
           <header class="text-white text-xs">CSV</header>
         </button>
@@ -323,38 +345,95 @@
   </div>
   {/if}
 
-  {#if show}
   <div class="flex-col p-4 w-full bg-white dark:bg-surface-900 pr-16">
 
-    <div class="pt-2 pb-10 relative h-3/5 rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+    <div class="pt-2 pb-10 relative h-3/5 max-h-[512px] rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
 
       <div class="flex justify-between">
 
         <div class="text-primary-500 text-lg font-bold pl-4 pt-1 pb-2">Metrics</div>
 
-          <div class="flex justify-end">
+        <div class="flex justify-end">
 
-            <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => resetZoom()}>
-              <Fa class="h-3" icon={faMagnifyingGlassMinus}/>
-              <header class="text-white text-xs">Reset Zoom</header>
-            </button>
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => resetZoom()}>
+            <Fa class="h-3" icon={faMagnifyingGlassMinus}/>
+            <header class="text-white text-xs">Reset Zoom</header>
+          </button>
 
-            <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => refreshPlot()}>
-              <Fa class="h-3" icon={faArrowsRotate}/>
-              <header class="text-white text-xs">Refresh</header>
-            </button>
-          </div>
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => refreshPlot()}>
+            <Fa class="h-3" icon={faArrowsRotate}/>
+            <header class="text-white text-xs">Refresh</header>
+          </button>
+        </div>
 
-         </div>  
+      </div>  
 
-         <IndividualChart
+        <IndividualChart
           data={metricVizData.data}
           type={plotSet}
           options={metricVizData.options}
         />
-  
+    </div>
+
+    {#if showTable}
+    <div id="table">
+      <div class="mt-6">
+        <div class="table-container border border-2 border-primary-500">
+          <!-- Native Table Element -->
+          <table class="table-compact table-hover text-xs text-center min-w-full">
+            <thead class="bg-primary-200">
+              <tr>
+                <th class="text-sm text-center py-2">UID</th>
+                <th class="text-sm text-center py-2">Comparison</th>
+                <th class="text-sm text-center py-2">Name</th>
+                <th class="text-sm text-center py-2">Value</th>
+                <th class="text-sm text-center py-2">Step</th>
+                <th class="text-sm text-center py-2">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each tableMetrics as [key, value]}
+
+                {#each value as row}
+
+                    <tr class="{card.uid === key ? 'bg-primary-50' : 'even:bg-gray-100'} ">
+                      <td class="text-sm">{key}</td>
+                      {#if card.uid == key}
+                        <td class="text-sm"><span class="badge variant-soft-primary">Current</span></td>
+                      {:else}
+                        <td class="text-sm"><span class="badge variant-soft-primary">Comparison</span></td>
+                      {/if}
+                      <td class="text-sm">{row.name}</td>
+                      <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
+                      <td class="text-sm">{row.step}</td>
+
+                      {#if referenceMetrics.has(row.name)}
+                        {#if isNumber(row.value)}
+                          {#if row.value > referenceMetrics.get(row.name)}
+                            <td class="text-sm"><span class="badge variant-soft-success">Greater</span></td>
+                          {:else if row.value === referenceMetrics.get(row.name)}
+                            <td class="text-sm"><span class="badge variant-soft-primary">Equal</span></td>
+                          {:else}
+                            <td class="text-sm"><span class="badge variant-soft-error">Lesser</span></td>
+                          {/if}
+                        {:else}
+                          <td class="text-sm"><span class="badge variant-soft-primary">N/A</span></td>
+                        {/if}
+                      {:else}
+                        <td class="text-sm"><span class="badge variant-soft-primary">N/A</span></td>
+                      {/if}
+                    </tr>
+                  
+                {/each}
+
+              {/each}
+        
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  {/if}
+    {/if}
+  </div>
 </div>
   

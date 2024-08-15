@@ -4,8 +4,10 @@ import {
   type CompareMetricPage,
   CardRegistries,
   type Card,
+  type RunMetrics,
 } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
+import { d } from "svelte-highlight/languages";
 
 export const ssr = false;
 
@@ -33,6 +35,17 @@ export async function load({ parent, url }) {
     }
   }
 
+  let runMetrics: RunMetrics = data.metrics;
+  let referenceMetrics = new Map<string, number>();
+
+  // iterate through runMetrics
+  for (let metricName in runMetrics) {
+    let metric = runMetrics[metricName];
+    // get last value
+    let metricValue = metric[metric.length - 1].value;
+    referenceMetrics.set(metricName, metricValue);
+  }
+
   let comparePageData: CompareMetricPage = {
     cards: cardMap,
     name: name,
@@ -44,6 +57,7 @@ export async function load({ parent, url }) {
     searchableMetrics: data.searchableMetrics,
     show: false,
     metricVizData: data.metricVizData,
+    referenceMetrics: referenceMetrics,
   };
 
   return comparePageData;
