@@ -62,26 +62,13 @@ export async function load({ fetch, params, url }) {
   const metricNames = await getRunMetricNames(runCard.uid);
 
   // dictionary to store metrics
-  const metrics: RunMetrics = {};
+  let metrics: RunMetrics = {};
 
   if (metricNames.metric.length > 0) {
     // get first step for each metric
-    let metricData: Metrics = await getRunMetrics(
-      runCard.uid,
-      metricNames.metric
-    );
-
-    // create loop for metricNames.metric
-    for (let metric of metricData.metric) {
-      // check if metric.name is in metrics
-      if (metrics[metric.name] === undefined) {
-        metrics[metric.name] = [];
-      }
-
-      // push metric
-      metrics[metric.name].push(metric);
-    }
+    metrics = await getRunMetrics(runCard.uid, metricNames.metric);
   }
+
   // List of metrics for table
   let tableMetrics: Metric[] | Map<string, TableMetric[]> = [];
 
@@ -102,9 +89,9 @@ export async function load({ fetch, params, url }) {
   // check if "run/card/metrics" exists in url
   let metricVizData: ChartjsData | undefined = undefined;
 
-  if (tab === "metrics") {
+  if (tab === "metrics" || tab === "compare") {
     // create chartjs data
-    metricVizData = createMetricVizData(metrics);
+    metricVizData = createMetricVizData(metrics, "bar");
     //let cardMap = new Map<string, RunMetrics>();
     //cardMap.set(selectedCard.name, metrics);
     //tableMetrics = metricsToTable(cardMap, metricNames.metric);

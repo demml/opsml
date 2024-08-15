@@ -42,6 +42,8 @@ export async function load({ parent, url }) {
     metricNames: data.metricNames,
     metrics: data.metrics,
     searchableMetrics: data.searchableMetrics,
+    show: false,
+    metricVizData: data.metricVizData,
   };
 
   return comparePageData;

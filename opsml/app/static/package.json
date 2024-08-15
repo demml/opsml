@@ -59,6 +59,7 @@
 		"@octokit/rest": "^20.1.0",
 		"@popperjs/core": "^2.11.8",
 		"chart.js": "^4.4.3",
+		"chartjs-plugin-zoom": "^2.0.1",
 		"codemirror": "^6.0.1",
 		"github-markdown-css": "^5.5.1",
 		"highcharts": "^11.4.1",

@@ -258,6 +258,8 @@ export interface CompareMetricPage {
   metricNames: string[];
   metrics: RunMetrics;
   searchableMetrics: string[];
+  show: boolean;
+  metricVizData: ChartjsData;
 }
 
 export interface Message {
@@ -384,4 +386,20 @@ export interface ChartjsData {
   data: any;
   options: any;
   type: string;
+}
+
+export interface ChartjsLineDataset {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string;
+}
+
+export interface ChartjsBarDataset {
+  data: number[];
+  borderColor: string[];
+  backgroundColor: string[];
+  borderWidth: number;
+  borderRadius: number;
+  borderSkipped: boolean;
 }

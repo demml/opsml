@@ -4,13 +4,10 @@
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
-  import { faCheck, faChartBar, faChartLine, faDownload, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
+  import { faCheck, faDownload, faArrowsRotate, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons'
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
-  import { createMetricVizData } from "$lib/scripts/utils";
-  import { metricsToTable } from "$lib/scripts/utils";
-  import {type  Card, type TableMetric } from "$lib/scripts/types";
-  import { routeros } from "svelte-highlight/styles";
+  import { createMetricVizData, downloadMetricCSV } from "$lib/scripts/utils";
 
 
   /** @type {import('./$types').LayoutData} */
@@ -82,9 +79,19 @@
     plotSet = type;
   }
 
+  function resetZoom() {
+    // reset zoom
+    window.metricChart.resetZoom();
+  }
+
   onMount(() => {
     selectedMetrics = metricNames;
   });
+
+  async function changePlotType(type: string) {
+    plotSet = type;
+    await refreshPlot();
+  }
 
 
   async function refreshPlot() {
@@ -104,62 +111,10 @@
     Object.entries(metrics).filter(([key]) => metricsToPlot.includes(key))
   );
 
-    metricVizData = createMetricVizData(newMetrics);
-
-    console.log(metricVizData);
+    metricVizData = createMetricVizData(newMetrics, plotSet);
 
   }
 
-
-  //async function plotMetrics() {
-//
-  //// check combined and separated booleans
-  //if (!combined && !separated) {
-  //  combined = true;
-  //}
-//
-  //// check if selectedMetrics is empty
-  //if (selectedMetrics.length == 0) {
-  //    alert("Please select metrics to plot");
-  //    // clear plots
-  //    // get div element
-  //    let div = document.getElementById('combined') as HTMLElement;
-  //    // clear div
-  //    div.innerHTML = "";
-  //    metricsToPlot = [];
-//
-  //    return;
-  //  }
-//
-  //// update metricsToPlot
-  //metricsToPlot = selectedMetrics.slice();
-//
-  //// remove "select all" from selectedMetricsCopy
-  //metricsToPlot = metricsToPlot.filter((item) => item !== 'select all');
-//
-//}//
-//
-  //function combine_plots() {
-  //  combined = true;
-  //  separated = false;
-//
-  //  try {
-  //    plotMetrics();
-  //  } catch (error) {
-  //    console.log(error);
-  //  }
-  //}
-//
-  //function separate_plots() {
-  //  separated = true;
-  //  combined = false;
-//
-  //  try {
-  //    plotMetrics();
-  //  } catch (error) {
-  //    console.log(error);
-  //  }
-  //}
 
 </script>
 
@@ -177,8 +132,8 @@
         <div class="flex flex-row flex-wrap gap-2 justify-between">
        
           <TabGroup border="" active='border-b-2 border-secondary-500'>
-            <div><Tab bind:group={plotSet} name="bar" value="bar">Bar</Tab></div>
-            <div><Tab bind:group={plotSet} name="line" value="line">Line</Tab></div>
+            <div><Tab bind:group={plotSet} name="bar" value="bar" on:click={() => changePlotType("bar") } >Bar</Tab></div>
+            <div><Tab bind:group={plotSet} name="line" value="line" on:click={() => changePlotType("line") } >Line</Tab></div>
           </TabGroup>
         </div> 
 
@@ -232,7 +187,7 @@
         <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white text-xs" on:click={() => toggleSidebar() }>Hide</button>
 
         <div class="flex flex-row items-center">
-          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => render_chart("line")}>
+          <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => downloadMetricCSV(metrics, "metrics") }>
             <Fa class="h-3" icon={faDownload}/>
             <header class="text-white text-xs">CSV</header>
           </button>
@@ -250,16 +205,24 @@
 
     <div class="flex-col p-4 w-full bg-white dark:bg-surface-900 pr-16">
 
-        <div class="pt-2relative h-3/5 rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+        <div class="pt-2 pb-10 relative h-3/5 rounded-2xl bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
 
           <div class="flex justify-between">
 
-            <div class="text-primary-500 text-lg font-bold pl-2">Metrics</div>
+            <div class="text-primary-500 text-lg font-bold pl-4 pt-1 pb-2">Metrics</div>
 
-            <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => refreshPlot()}>
-              <Fa class="h-3" icon={faArrowsRotate}/>
-              <header class="text-white text-xs">Refresh</header>
-            </button>
+            <div class="flex justify-end">
+
+              <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => resetZoom()}>
+                <Fa class="h-3" icon={faMagnifyingGlassMinus}/>
+                <header class="text-white text-xs">Reset Zoom</header>
+              </button>
+
+              <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => refreshPlot()}>
+                <Fa class="h-3" icon={faArrowsRotate}/>
+                <header class="text-white text-xs">Refresh</header>
+              </button>
+            </div>
 
           </div>  
 
@@ -277,10 +240,10 @@
 
       <div id="table">
         <div class="mt-6">
-          <div class="table-container border border-1 border-primary-500">
+          <div class="table-container border border-2 border-primary-500">
             <!-- Native Table Element -->
             <table class="table-compact table-hover text-xs text-center min-w-full">
-              <thead class="bg-surface-100">
+              <thead class="bg-primary-200">
                 <tr>
                   <th class="text-sm text-center py-2">Name</th>
                   <th class="text-sm text-center py-2">Value</th>
@@ -290,7 +253,17 @@
                 </tr>
               </thead>
               <tbody>
-                {#each tableMetrics as row}
+                {#each tableMetrics as row, i}
+
+                  {#if i % 2 != 0}
+                    <tr class="bg-gray-100">
+                      <td class="text-sm">{row.name}</td>
+                      <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
+                      <td class="text-sm">{row.step}</td>
+                      <td class="text-sm">{row.timestamp}</td>
+                      <td class="text-sm">{row.run_uid}</td>
+                    </tr>
+                  {:else}
                     <tr>
                       <td class="text-sm">{row.name}</td>
                       <td class="text-sm"><span class="badge variant-soft-primary">{row.value}</span></td>
@@ -298,6 +271,8 @@
                       <td class="text-sm">{row.timestamp}</td>
                       <td class="text-sm">{row.run_uid}</td>
                     </tr>
+                  {/if}
+
                 {/each}
           
               </tbody>

@@ -30,6 +30,8 @@ import {
   type TableMetric,
   type ChartData,
   type ChartjsData,
+  type ChartjsLineDataset,
+  type ChartjsBarDataset,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -131,7 +133,7 @@ export async function getRunMetricNames(uid: string): Promise<MetricNames> {
 export async function getRunMetrics(
   uid: string,
   name?: string[]
-): Promise<Metrics> {
+): Promise<RunMetrics> {
   const request = { run_uid: uid };
 
   if (name) {
@@ -142,7 +144,22 @@ export async function getRunMetrics(
     .post(CommonPaths.METRICS, request)
     .then((res) => res.json());
 
-  return metrics;
+  const runMetrics: RunMetrics = {};
+
+  if (metrics.metric.length > 0) {
+    // create loop for metricNames.metric
+    for (let metric of metrics.metric) {
+      // check if metric.name is in metrics
+      if (runMetrics[metric.name] === undefined) {
+        runMetrics[metric.name] = [];
+      }
+
+      // push metric
+      runMetrics[metric.name].push(metric);
+    }
+  }
+
+  return runMetrics;
 }
 
 export async function getRunParameters(uid: string): Promise<Parameters> {
@@ -521,30 +538,44 @@ const handleResize = (chart) => {
   chart.resize();
 };
 
-export function buildDataforBarChart(
-  x: any,
-  y: number[],
+export function buildDataforChart(
+  x: number[],
+  datasets: ChartjsBarDataset[] | ChartjsLineDataset[],
   x_label: string,
   y_label: string,
-  name: string
+  chartType: string
 ): ChartjsData {
+  let grace = "2%";
+  if (chartType === "line") {
+    grace = "0%";
+  }
+
+  const zoomOptions = {
+    pan: {
+      enabled: true,
+      mode: "xy",
+      modifierKey: "ctrl",
+    },
+    zoom: {
+      mode: "xy",
+      drag: {
+        enabled: true,
+        borderColor: "rgb(54, 162, 235)",
+        borderWidth: 1,
+        backgroundColor: "rgba(54, 162, 235, 0.3)",
+      },
+    },
+  };
+
   return {
-    type: "bar",
+    type: chartType,
     data: {
       labels: x,
-      datasets: [
-        {
-          backgroundColor: "#8174a1",
-          borderColor: "#4b3978",
-          borderWidth: 2,
-          borderRadius: 2,
-          borderSkipped: false,
-          data: y,
-        },
-      ],
+      datasets: datasets,
     },
     options: {
       plugins: {
+        zoom: zoomOptions,
         legend: {
           display: false,
         },
@@ -555,13 +586,16 @@ export function buildDataforBarChart(
       scales: {
         x: {
           title: { display: true, text: x_label },
+          ticks: {
+            maxTicksLimit: 30,
+          },
         },
         y: {
           title: { display: true, text: y_label },
           ticks: {
-            stepSize: 1,
+            maxTicksLimit: 30,
           },
-          grace: "5%",
+          grace: grace,
         },
       },
       layout: {
@@ -571,6 +605,13 @@ export function buildDataforBarChart(
   };
 }
 
+function generateColors(count): string[] {
+  return Array.from({ length: count }, (_, index) => {
+    const hue = (index * 137.508) % 360; // Golden angle approximation
+    return `hsl(${hue}, 70%, 60%)`;
+  });
+}
+
 /**
  * Create metric settings for visualizations
  * @param {RunMetrics} metrics
@@ -578,15 +619,21 @@ export function buildDataforBarChart(
  *
  *
  */
-export function createMetricVizData(metrics: RunMetrics): ChartjsData {
+export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
   let x: any[] = [];
   let y: number[] = [];
+  let backgroundColor: string[] = [];
+  let borderColor: string[] = [];
+  let data;
+  let dataset: ChartjsBarDataset[] = [];
+
+  let colors = generateColors(Object.keys(metrics).length + 1);
+
+  let metricKeys = Object.keys(metrics);
 
   // if metrics keys are not empty
-  if (Object.keys(metrics).length !== 0) {
-    // loop over keys
-    // append to the x and y arrays
-    for (let key in metrics) {
+  if (metricKeys.length !== 0) {
+    metricKeys.forEach(function (key, index) {
       let metricData: Metric[] = metrics[key];
 
       // parse x and y
@@ -594,17 +641,59 @@ export function createMetricVizData(metrics: RunMetrics): ChartjsData {
 
       x.push(...chartData.x);
       y.push(...chartData.y);
-    }
+      backgroundColor.push(colors[index + 1]);
+      borderColor.push("black");
+    });
+
+    dataset.push({
+      data: y,
+      borderColor: borderColor,
+      backgroundColor: backgroundColor,
+      borderWidth: 2,
+      borderRadius: 2,
+      borderSkipped: false,
+    });
+    data = buildDataforChart(x, dataset, "Metrics", "Values", "bar");
   }
 
-  let data = buildDataforBarChart(x, y, "Metrics", "Values", "Metric Chart");
-
   return data;
-
-  // loop
 }
 
-function exportMetricsToCSV(runMetrics: RunMetrics): string {
+export function createMetricLineVizData(metrics: RunMetrics): ChartjsData {
+  let x: any[] = [];
+  let datasets: ChartjsLineDataset[] = [];
+  let metricKeys = Object.keys(metrics);
+  let miny = 0;
+  let colors = generateColors(metricKeys.length + 1);
+  let data;
+
+  // if metrics keys are not empty
+  if (metricKeys.length !== 0) {
+    // loop over keys
+    // append to the x and y arrays
+    metricKeys.forEach(function (key, index) {
+      let metricData: Metric[] = metrics[key];
+      // parse x and y
+      let chartData: ChartData = parseMetric("line", metricData);
+
+      if (chartData.x.length > x.length) {
+        x = chartData.x;
+      }
+
+      datasets.push({
+        label: key,
+        data: chartData.y,
+        borderColor: colors[index + 1],
+        backgroundColor: colors[index + 1],
+      });
+    });
+
+    data = buildDataforChart(x, datasets, "Steps", "Values", "line");
+  }
+  return data;
+}
+
+export function exportMetricsToCSV(runMetrics: RunMetrics): string {
   // Define the header
   let metrics = Object.values(runMetrics).flat();
 
@@ -626,7 +715,7 @@ function exportMetricsToCSV(runMetrics: RunMetrics): string {
   return allRows.map((row) => row.join(",")).join("\n");
 }
 
-export function downloadCSV(data: string, filename: string) {
+function downloadCSV(data: string, filename: string) {
   const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
   const url = window.URL.createObjectURL(blob);
 
@@ -637,4 +726,20 @@ export function downloadCSV(data: string, filename: string) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+export function downloadMetricCSV(metrics: RunMetrics, filename: string) {
+  const csv = exportMetricsToCSV(metrics);
+  downloadCSV(csv, filename);
+}
+
+export function createMetricVizData(
+  metrics: RunMetrics,
+  chartType: string
+): ChartjsData {
+  if (chartType === "bar") {
+    return createMetricBarVizData(metrics);
+  } else {
+    return createMetricLineVizData(metrics);
+  }
 }

@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
   import zoomPlugin from 'chartjs-plugin-zoom';
 
-	export let data;
+  export let data;
   export let type;
   export let options;
   
@@ -12,8 +12,6 @@
   let chart;
 
   Chart.register(zoomPlugin);
-
-
 
 
 	onMount(() => {
