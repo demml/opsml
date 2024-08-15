@@ -6,7 +6,7 @@
   import Fa from 'svelte-fa'
   import { faCheck, faDownload, faMagnifyingGlassMinus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
   import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
-  import { getRunMetrics, sortMetrics, metricsToTable, downloadMetricCSV } from "$lib/scripts/utils";
+  import { getRunMetrics, sortMetrics, metricsToTable, downloadMetricCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
 
@@ -49,7 +49,8 @@
   let metricVizData: ChartjsData = data.metricVizData;
   let show: boolean = true;
 
-  export let isOpen = true;
+  let isOpen = true;
+  let cardSelectAll: boolean = false;
 
   function toggleSidebar() {
     isOpen = !isOpen;
@@ -93,27 +94,29 @@
         compareMetrics.set(uid, cardMetrics);
       }
     }
+    metricVizData = createGroupMetricVizData(compareMetrics, metricsToPlot, plotSet);
 
-    console.log(compareMetrics);
   }
 
   async function setComparedCards( cardName: string) {
 
-    if (cardName == 'select_all') {
+    if (cardName == 'select all') {
       if (cardsToCompare.length > 0) {
         cardsToCompare = [];
+        cardSelectAll = false;
       } else {
         for (let card of cards.values()) {
           cardsToCompare = [...cardsToCompare, card.uid];
         }
+        cardSelectAll = true;
       }
       return;
     }
    
     if (cardsToCompare.includes(cardName)) {
 
-      if (cardsToCompare.includes('select_all')) {
-        cardsToCompare = cardsToCompare.filter((item) => item !== 'select_all');
+      if (cardsToCompare.includes('select all')) {
+        cardsToCompare = cardsToCompare.filter((item) => item !== 'select all');
       }
       cardsToCompare = cardsToCompare.filter((item) => item !== cardName);
     } else {
@@ -239,18 +242,28 @@
       <div class="inline-flex items-center overflow-hidden text-sm w-fit my-1">
         <div>
           <label class="flex items-center p-1 ">
+
+          {#if cardSelectAll} 
           <input 
               class="checkbox" 
               type="checkbox" 
-              on:click={() => { setComparedCards("select_all"); }}
-              
+              checked 
+              on:click={() => { setComparedCards("select all"); }}
             />
+          {:else}
+            <input 
+            class="checkbox" 
+            type="checkbox" 
+            on:click={() => { setComparedCards("select all"); }}
+          />
+
+          {/if}
           </label>
         </div>
 
-
       <div class="px-2 text-darkpurple bg-primary-50 italic text-xs">select all</div> 
       </div>
+
       {#each [...cards.values()] as card}
         <div class="inline-flex items-center overflow-hidden rounded-lg border border-dashed border-darkpurple text-xs w-fit my-1">
           <div>

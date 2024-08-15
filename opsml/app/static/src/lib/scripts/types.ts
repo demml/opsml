@@ -403,3 +403,13 @@ export interface ChartjsBarDataset {
   borderRadius: number;
   borderSkipped: boolean;
 }
+
+export interface ChartjsGroupedBarDataset {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string;
+  borderWidth: number;
+  borderRadius: number;
+  borderSkipped: boolean;
+}

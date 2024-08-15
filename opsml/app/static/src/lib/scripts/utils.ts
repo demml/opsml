@@ -32,6 +32,7 @@ import {
   type ChartjsData,
   type ChartjsLineDataset,
   type ChartjsBarDataset,
+  type ChartjsGroupedBarDataset,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -539,15 +540,27 @@ const handleResize = (chart) => {
 };
 
 export function buildDataforChart(
-  x: number[],
+  x: number[] | string[],
   datasets: ChartjsBarDataset[] | ChartjsLineDataset[],
   x_label: string,
   y_label: string,
-  chartType: string
+  chartType: string,
+  showLegend: boolean = false
 ): ChartjsData {
   let grace = "2%";
+  let legend = {
+    display: false,
+  };
+
   if (chartType === "line") {
     grace = "0%";
+  }
+
+  if (showLegend) {
+    legend = {
+      display: true,
+      position: "bottom",
+    };
   }
 
   const zoomOptions = {
@@ -576,9 +589,7 @@ export function buildDataforChart(
     options: {
       plugins: {
         zoom: zoomOptions,
-        legend: {
-          display: false,
-        },
+        legend: legend,
       },
       responsive: true,
       onresize: handleResize,
@@ -605,11 +616,43 @@ export function buildDataforChart(
   };
 }
 
-function generateColors(count): string[] {
+function generateColors(count: number, opacity?: number): string[] {
   return Array.from({ length: count }, (_, index) => {
     const hue = (index * 137.508) % 360; // Golden angle approximation
-    return `hsl(${hue}, 70%, 60%)`;
+    const [r, g, b] = hslToRgb(hue, 0.7, 0.6);
+
+    if (opacity !== undefined) {
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    } else {
+      return `rgb(${r}, ${g}, ${b})`;
+    }
   });
+}
+
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  h /= 360;
+  let r: number, g: number, b: number;
+
+  if (s === 0) {
+    r = g = b = l;
+  } else {
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
 /**
@@ -627,7 +670,8 @@ export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
   let data;
   let dataset: ChartjsBarDataset[] = [];
 
-  let colors = generateColors(Object.keys(metrics).length + 1);
+  let colors = generateColors(Object.keys(metrics).length + 1, 0.2);
+  let borders = generateColors(Object.keys(metrics).length + 1);
 
   let metricKeys = Object.keys(metrics);
 
@@ -642,7 +686,7 @@ export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
       x.push(...chartData.x);
       y.push(...chartData.y);
       backgroundColor.push(colors[index + 1]);
-      borderColor.push("black");
+      borderColor.push(borders[index + 1]);
     });
 
     dataset.push({
@@ -663,8 +707,7 @@ export function createMetricLineVizData(metrics: RunMetrics): ChartjsData {
   let x: any[] = [];
   let datasets: ChartjsLineDataset[] = [];
   let metricKeys = Object.keys(metrics);
-  let miny = 0;
-  let colors = generateColors(metricKeys.length + 1);
+  let colors = generateColors(Object.keys(metrics).length + 1);
   let data;
 
   // if metrics keys are not empty
@@ -741,5 +784,67 @@ export function createMetricVizData(
     return createMetricBarVizData(metrics);
   } else {
     return createMetricLineVizData(metrics);
+  }
+}
+
+export function createGroupedMetricBarVizData(
+  metrics: Map<string, RunMetrics>,
+  metricNames: string[]
+): ChartjsData {
+  // x will be the metric names
+  let datasets: ChartjsGroupedBarDataset[] = [];
+  let data;
+
+  let colors = generateColors(metrics.size + 1, 0.2);
+  let borders = generateColors(metrics.size + 1);
+  let runIdMetricMap = new Map<string, number[]>();
+
+  for (let metricName of metricNames) {
+    for (let runId of metrics.keys()) {
+      let metricData: Metric[] = metrics.get(runId)![metricName];
+
+      if (!runIdMetricMap.has(runId)) {
+        runIdMetricMap.set(runId, []);
+      }
+      if (metricData) {
+        let chartData = parseMetric("bar", metricData);
+        runIdMetricMap.get(runId)!.push(chartData.y[0]);
+      } else {
+        runIdMetricMap.get(runId)!.push(0);
+      }
+    }
+  }
+
+  Array.from(runIdMetricMap.entries()).forEach(([key, value], index) => {
+    datasets.push({
+      label: key.slice(0, 8),
+      data: value,
+      borderColor: borders[index + 1],
+      backgroundColor: colors[index + 1],
+      borderWidth: 2,
+      borderRadius: 2,
+      borderSkipped: false,
+    });
+  });
+
+  data = buildDataforChart(
+    metricNames,
+    datasets,
+    "Metrics",
+    "Values",
+    "bar",
+    true
+  );
+
+  return data;
+}
+
+export function createGroupMetricVizData(
+  metrics: Map<string, RunMetrics>,
+  metricNames: string[],
+  chartType: string
+) {
+  if (chartType === "bar") {
+    return createGroupedMetricBarVizData(metrics, metricNames);
   }
 }
