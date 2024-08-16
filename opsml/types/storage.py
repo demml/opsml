@@ -71,7 +71,6 @@ class BotoClient(Protocol):
         operation_name: str,
         Params: Dict[str, Any],  # pylint: disable=invalid-name
         ExpiresIn: int,  # pylint: disable=invalid-name
-    ) -> str:
     ) -> str: ...
 
 
