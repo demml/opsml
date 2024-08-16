@@ -116,7 +116,7 @@ If you'd like to contribute, be sure to check out our [contributing guide](https
 Thanks goes to these phenomenal [projects and people](https://github.com/demml/opsml/blob/main/ATTRIBUTIONS.md) and people for creating a great foundation to build from!
 
 <a href="https://github.com/demml/opsml/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=shipt/opsml" />
+  <img src="https://contrib.rocks/image?repo=demml/opsml" />
 </a>
 
 

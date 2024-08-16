@@ -1,4 +1,4 @@
-# Contributing to Shipt/opsml
+# Contributing to demml/opsml
 
 ## Welcome
 Hello! We're glad and grateful that you're interested in contributing to `Opsml` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
