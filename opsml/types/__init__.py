@@ -86,7 +86,6 @@ __all__ = [
     "CardInfo",
     "CardType",
     "CardVersion",
-    "Comment",
     "Metric",
     "Metrics",
     "Param",
