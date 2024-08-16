@@ -1,7 +1,8 @@
 # pylint: disable=[import-outside-toplevel,import-error,no-name-in-module]
 
 """Code for generating Onnx Models"""
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 

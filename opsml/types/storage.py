@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from __future__ import annotations
@@ -71,21 +72,25 @@ class BotoClient(Protocol):
         operation_name: str,
         Params: Dict[str, Any],  # pylint: disable=invalid-name
         ExpiresIn: int,  # pylint: disable=invalid-name
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Blob(Protocol):
     def generate_signed_url(
         self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
-    ) -> str: ...
+    ) -> str:
+        ...
 
 
 class Bucket(Protocol):
-    def blob(self, name: str) -> Blob: ...
+    def blob(self, name: str) -> Blob:
+        ...
 
 
 class GCSClient(Protocol):
-    def bucket(self, name: str) -> Bucket: ...
+    def bucket(self, name: str) -> Bucket:
+        ...
 
 
 class StorageClientProtocol(Protocol):

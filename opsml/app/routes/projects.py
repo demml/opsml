@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -29,9 +30,7 @@ project_route_helper = ProjectRouteHelper()
 
 @router.get("/projects/list/", response_class=HTMLResponse)
 @error_to_500
-async def project_list_page(
-    request: Request, project: Optional[str] = None, run_uid: Optional[str] = None
-) -> HTMLResponse:
+async def project_list_page(request: Request, project: Optional[str] = None, run_uid: Optional[str] = None) -> HTMLResponse:
     """UI home for listing models in model registry
 
     Args:

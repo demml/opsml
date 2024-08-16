@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import textwrap
@@ -41,9 +42,7 @@ class CardRegistry:
             data_registry.list_cards()
         """
 
-        _registry_type = (
-            registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
-        )
+        _registry_type = registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
 
         self._registry = _set_registry(_registry_type)
         self.table_name = self._registry.table_name

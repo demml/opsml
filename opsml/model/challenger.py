@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Optional, Union, cast
@@ -299,9 +300,7 @@ class ModelChallenger:
             # get challenger metric
             if value is None:
                 if self._challenger.metadata.runcard_uid is not None:
-                    self.challenger_metric = self._get_runcard_metric(
-                        self._challenger.metadata.runcard_uid, metric_name=name
-                    )
+                    self.challenger_metric = self._get_runcard_metric(self._challenger.metadata.runcard_uid, metric_name=name)
                 else:
                     raise ValueError("Challenger and champions must be associated with a registered RunCard")
             else:
