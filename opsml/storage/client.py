@@ -1,6 +1,5 @@
 # # pylint: disable=import-outside-toplevel,broad-exception-caught
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -43,7 +42,7 @@ logger = ArtifactLogger.get_logger()
 class _FileSystemProtocol(Protocol):
     """
     The *low level* file system interface which the storage client uses to write
-    to its underlying file system.
+    to it's underlying file system.
 
     This interface is based on the fsspec AbstractFileSystem interface, however
     simplified to only the functions needed by opsml to reduce the API surface.

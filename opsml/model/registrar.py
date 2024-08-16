@@ -1,5 +1,4 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
@@ -54,7 +53,9 @@ class ModelRegistrar:
 
     def _registry_path(self, request: RegistrationRequest) -> Path:
         """Returns hardcoded uri"""
-        return Path(f"{config.storage_root}/{config.opsml_registry_path}/{request.repository}/{request.name}/v{request.version}")
+        return Path(
+            f"{config.storage_root}/{config.opsml_registry_path}/{request.repository}/{request.name}/v{request.version}"
+        )
 
     def is_registered(self, request: RegistrationRequest) -> bool:
         """Checks if registry path is empty.
@@ -197,6 +198,8 @@ class ModelRegistrar:
 
         logger.info("ModelRegistrar: registering model: {}", model_request.model_dump())
         registry_path = self._copy_model_to_registry(model_request, swapped_uri, metadata)
-        logger.info("ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix())
+        logger.info(
+            "ModelRegistrar: registered model: {} path={}", model_request.model_dump(), registry_path.as_posix()
+        )
 
         return registry_path

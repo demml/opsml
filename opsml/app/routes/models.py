@@ -1,5 +1,4 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -156,6 +155,7 @@ def post_model_metadata(request: Request, payload: CardRequest) -> ModelMetadata
     Returns:
         ModelMetadata or HTTP_404_NOT_FOUND if the model is not found.
     """
+
     storage_root = request.app.state.storage_root
     registry: CardRegistry = request.app.state.registries.model
 

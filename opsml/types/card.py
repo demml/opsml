@@ -1,16 +1,14 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-import datetime
 import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, SerializeAsAny
+from pydantic import BaseModel, SerializeAsAny, field_validator
 
 
 class RegistryType(str, Enum):
@@ -21,6 +19,7 @@ class RegistryType(str, Enum):
     AUDIT = "audit"
     PROJECT = "project"
     AUTH = "auth"
+    MESSAGE = "message"
 
     @staticmethod
     def from_str(name: str) -> "RegistryType":
@@ -49,7 +48,7 @@ class Metric(BaseModel):
 
 class Param(BaseModel):
     name: str
-    value: Union[float, int, str]
+    value: Union[int, float, str]
 
 
 class RunGraph(BaseModel):
@@ -71,17 +70,6 @@ class Artifact(BaseModel):
 Metrics = Dict[str, List[Metric]]
 Params = Dict[str, List[Param]]
 ArtifactUris = Dict[str, Artifact]
-
-
-class Comment(BaseModel):
-    name: str
-    comment: str
-    timestamp: str = str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M"))
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Comment):
-            return False
-        return self.__dict__ == other.__dict__
 
 
 @dataclass

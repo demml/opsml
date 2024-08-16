@@ -1,5 +1,4 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -334,6 +333,8 @@ class RunCard(ArtifactCard):
         _key = TypeChecker.replace_spaces(key)
 
         param = Param(name=key, value=value)
+
+        self._registry.insert_parameter([{**param.model_dump(), **{"run_uid": self.uid}}])
 
         if self.parameters.get(_key) is not None:
             self.parameters[_key].append(param)
