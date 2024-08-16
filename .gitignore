@@ -1,8 +1,10 @@
 # opsml-artifacts
 mlruns/
+opsml_registries/
 opsml/api/
 test_scripts*
 tmp.db
+local_test_db.db
 model_registry
 opsml_artifacts
 opsml/deploy/seldon/api_test.txt
