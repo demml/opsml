@@ -301,14 +301,14 @@ class AzureStorageClient(StorageClientBase):
             client=client,
         )
 
-    @cached_property
-
     # Adapted from: https://stackoverflow.com/questions/78475904/generating-sas-url-for-azure-blob-container-with-proper-permissions - windows example
     ## Since adlfs The AzureBlobFileSystem accepts all of the Async BlobServiceClient arguments. The code should probably work...
-
     ## Should maybe be possible to replace credentials here with client from client = AzureStorageClient(settings=settings) because of the acceptance of BlobServiceClient arguments (above)?
 
-    def generate_sas_url_for_container(account_name, credentials, container_name, permissions, validity_hours, blob_name):
+    @cached_property
+    def generate_sas_url_for_container(
+        account_name, credentials, container_name, permissions, validity_hours, blob_name
+    ) -> Optional[str]:
         try:
             blob_service_client = BlobServiceClient(
                 account_url=f"https://{account_name}.blob.core.windows.net/", credential=credentials
