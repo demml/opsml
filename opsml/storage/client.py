@@ -280,11 +280,17 @@ class AzureStorageClient(StorageClientBase):
         settings: StorageSettings,
     ) -> None:
         import adlfs
+        import logging
 
         from opsml.helpers.azure_utils import AzureCreds
 
         assert isinstance(settings, AzureStorageClientSettings)
         assert isinstance(settings.credentials, AzureCreds)
+
+        # Set the logging level for all azure* libraries
+        # Azure logs a lot of info messages by default (dumb)
+        _logger = logging.getLogger("azure")
+        _logger.setLevel(logging.ERROR)
 
         client = adlfs.AzureBlobFileSystem(
             account_name=settings.credentials.account_name,
@@ -298,6 +304,41 @@ class AzureStorageClient(StorageClientBase):
             settings=settings,
             client=client,
         )
+
+    async def _generate_blob_sas(
+        self,
+        path: Path,
+        start_time: datetime.datetime,
+        expiry_time: datetime.datetime,
+    ) -> Optional[str]:
+        """Generates pre signed url for Azure object. This re-implements the
+        fsspec _url Azure BlobFileSystem logic to generate a SAS token for a blob.
+        The library does not current accept a user delegation key, so this is a workaround.
+        """
+
+        import adlfs
+        from azure.storage.blob import generate_blob_sas
+
+        assert isinstance(self.client, adlfs.AzureBlobFileSystem)
+
+        user_delegation_key = await self.client.service_client.get_user_delegation_key(
+            key_start_time=start_time,
+            key_expiry_time=expiry_time,
+        )
+
+        sas_token = generate_blob_sas(
+            account_name=self.client.account_name,
+            container_name=config.storage_root,
+            blob_name=str(path),
+            user_delegation_key=user_delegation_key,
+            permission="r",
+            start=start_time,
+            expiry=expiry_time,
+        )
+
+        async with self.client.service_client.get_blob_client(config.storage_root, str(path)) as bc:
+            url = f"{bc.url}?{sas_token}"
+        return url
 
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for Azure object
@@ -313,9 +354,22 @@ class AzureStorageClient(StorageClientBase):
         """
         try:
             import adlfs
+            from fsspec.asyn import sync
 
             assert isinstance(self.client, adlfs.AzureBlobFileSystem)
-            return cast(str, self.client.sign(path, expiration=expiration))
+            # Get a user delegation key that's valid for 1 day
+            delegation_key_start_time = datetime.datetime.now(datetime.timezone.utc)
+            delegation_key_expiry_time = delegation_key_start_time + datetime.timedelta(minutes=30)
+
+            presigned_url: str = sync(
+                self.client.loop,
+                self._generate_blob_sas,
+                str(path),
+                delegation_key_start_time,
+                delegation_key_expiry_time,
+            )
+
+            return presigned_url
 
         except Exception as e:
             logger.error(f"Error generating SAS URL for container: {e}")

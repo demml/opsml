@@ -257,12 +257,23 @@ def test_app() -> YieldFixture[TestClient]:
 def gcs_test_bucket() -> Path:
     return Path(os.environ["OPSML_GCS_BUCKET"])
 
+@pytest.fixture
+def azure_container() -> Path:
+    return Path(os.environ["AZURE_CONTAINER_NAME"])
 
 @pytest.fixture
 def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
     cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"gs://{str(gcs_test_bucket)}")
     storage_client = client.get_storage_client(cfg)
     assert isinstance(storage_client, client.GCSFSStorageClient)
+    return storage_client
+
+
+@pytest.fixture
+def azure_storage_client(azure_container: Path) -> client.AzureStorageClient:
+    cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"az://{str(azure_container)}")
+    storage_client = client.get_storage_client(cfg)
+    assert isinstance(storage_client, client.AzureStorageClient)
     return storage_client
 
 

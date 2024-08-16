@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-      
+
 jobs:
-  Unit-Integration:
+  GCS-Integration:
     strategy:
       matrix:
         python-version: ["3.11"]
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-       
+
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
@@ -32,6 +32,39 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      - run : make setup.project
-      - run : make test.integration
+          cache: "poetry"
+      - run: make setup.project
+      - run: make test.integration
+
+  Azure-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+      AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+      AZURE_STORAGE_TENANT_ID: ${{ secrets.AZURE_STORAGE_TENANT_ID }}
+      AZURE_STORAGE_CLIENT_ID: gs://${{ secrets.AZURE_STORAGE_CLIENT_ID }}
+      AZURE_STORAGE_CLIENT_SECRET: ${{ secrets.AZURE_STORAGE_CLIENT_SECRET }}
+      OPSML_STORAGE_URI: az://${{ secrets.AZURE_CONTAINER_NAME }}
+      AZURE_CONTAINER_NAME: ${{ secrets.AZURE_CONTAINER_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+      - run: make setup.project
+      - run: make test.integration
