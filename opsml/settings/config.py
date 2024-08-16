@@ -49,7 +49,11 @@ class OpsmlConfig(BaseSettings):
         """Opsml uses storage cients that follow fsspec guidelines. LocalFileSystem only deals
         in absolutes, so we need to convert relative paths to absolute paths.
         """
-        if opsml_storage_uri.startswith("gs://") or opsml_storage_uri.startswith("s3://"):
+        if (
+            opsml_storage_uri.startswith("gs://")
+            or opsml_storage_uri.startswith("s3://")
+            or opsml_storage_uri.startswith("az://")
+        ):
             return opsml_storage_uri
 
         return Path(opsml_storage_uri).absolute().as_posix()

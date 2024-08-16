@@ -18,7 +18,7 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
         lazy_fixture("sklearn_pipeline"),
     ],
 )
-def test_gcs_full_run(
+def test_azure_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
 ) -> None:
