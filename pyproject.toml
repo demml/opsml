@@ -2,7 +2,7 @@
 name = "opsml"
 description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
-    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' }
+    { name = 'Steven Forrester', email = 'support@demmlai.com' }
 ]
 readme = "README.md"
 license = 'MIT'
@@ -40,8 +40,7 @@ version = "2.3.0"
 readme = "README.md"
 description = "Python MLOPs quality control tooling for your production ML workflows"
 authors = [
-    "Steven Forrester <steven.forrester@shipt.com>",
-    "Damon Allison <damon@shipt.com>",
+    "Steven Forrester <support@demmlai.com>",
 ]
 
 [tool.poetry.dependencies]
