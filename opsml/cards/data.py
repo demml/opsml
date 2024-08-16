@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -152,9 +153,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -45,9 +46,7 @@ def insert_metric(request: Request, payload: Metrics) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
 
 
 @router.put("/metrics/hardware", name="hw_metric_put", response_model=Success)
@@ -73,9 +72,7 @@ def insert_hw_metrics(
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert metrics") from error
 
 
 # GET would be used, but we are using POST to allow for a request body so that we can pass in a list of metrics to retrieve
@@ -100,9 +97,7 @@ def get_metric(request: Request, payload: GetMetricRequest) -> Metrics:
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error
 
 
 @router.get("/metrics/hardware", response_model=HardwareMetricsResponse, name="hw_metric_get")
@@ -126,6 +121,4 @@ def get_hw_metric(request: Request, run_uid: str) -> HardwareMetricsResponse:
 
     except Exception as error:
         logger.error(f"Failed to get metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get metrics") from error

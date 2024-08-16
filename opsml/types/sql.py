@@ -1,4 +1,5 @@
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -44,23 +45,29 @@ class RegistryTableNames(str, Enum):
 
 
 class RunCardRegistry(Protocol):
-    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None: ...
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        ...
 
-    def insert_metric(self, metric: List[Dict[str, Any]]) -> None: ...
+    def insert_metric(self, metric: List[Dict[str, Any]]) -> None:
+        ...
 
-    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None: ...
+    def insert_hw_metrics(self, metrics: List[Dict[str, Any]]) -> None:
+        ...
 
-    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]: ...
+    def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
+        ...
 
     def get_metric(
         self,
         run_uid: str,
         name: Optional[List[str]] = None,
         names_only: bool = False,
-    ) -> List[Dict[str, Any]]: ...
+    ) -> List[Dict[str, Any]]:
+        ...
 
     def get_parameter(
         self,
         run_uid: str,
         name: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]: ...
+    ) -> List[Dict[str, Any]]:
+        ...

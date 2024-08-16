@@ -1,5 +1,6 @@
 # pylint: disable=invalid-envvar-value,disable=protected-access
-# Copyright (c) Shipt, Inc.
+# Copyright (c) 2023-2024 Shipt, Inc.
+# Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -69,7 +70,8 @@ def get_hw_metrics(
         time.sleep(interval / 2)
 
 
-class ActiveRunException(Exception): ...
+class ActiveRunException(Exception):
+    ...
 
 
 class _RunManager:
