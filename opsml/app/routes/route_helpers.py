@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -291,7 +290,9 @@ class DataRouteHelper(RouteHelper):
             )
         return None
 
-    def _load_profile(self, request: Request, load_profile: bool, datacard: DataCard) -> Tuple[Optional[str], bool, bool]:
+    def _load_profile(
+        self, request: Request, load_profile: bool, datacard: DataCard
+    ) -> Tuple[Optional[str], bool, bool]:
         """If load_profile is True, attempts to load the data profile
 
         Args:

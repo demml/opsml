@@ -1,5 +1,4 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json as py_json
@@ -44,6 +43,7 @@ class ApiRoutes:
     MODEL_METADATA = "models/metadata"
     PROJECT_ID = "projects/id"
     METRICS = "metrics"
+    PARAMETERS = "parameters"
     DOWNLOAD_FILE = "files/download"
     DELETE_FILE = "files/delete"
     LIST_FILES = "files/list"

@@ -1,8 +1,7 @@
 # pylint: disable=no-member
 # mypy: disable-error-code="attr-defined"
 
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -387,19 +386,16 @@ class ModelMetadata(BaseModel):
 
 
 # Sklearn protocol stub
-class BaseEstimator(Protocol):
-    ...
+class BaseEstimator(Protocol): ...
 
 
 # Onnx protocol stubs
 class Graph:
     @property
-    def output(self) -> Any:
-        ...
+    def output(self) -> Any: ...
 
     @property
-    def input(self) -> Any:
-        ...
+    def input(self) -> Any: ...
 
 
 class ModelProto(Protocol):
@@ -510,16 +506,13 @@ class LightGBMBooster(ModelType):
 
 class ModelCard(Protocol):
     @property
-    def metadata(self) -> ModelCardMetadata:
-        ...
+    def metadata(self) -> ModelCardMetadata: ...
 
     @property
-    def model(self) -> Any:
-        ...
+    def model(self) -> Any: ...
 
     @property
-    def to_onnx(self) -> bool:
-        ...
+    def to_onnx(self) -> bool: ...
 
 
 class ModelInterfaceTypes(str, Enum):

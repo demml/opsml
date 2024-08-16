@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Dict, Optional, Union
@@ -103,6 +102,8 @@ def query_registry_stats(
     try:
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
         stats: Dict[str, int] = registry._registry.query_stats(search_term)
+
+        logger.info("Querying registry stats: {}", stats)
 
         return stats
 
@@ -224,12 +225,7 @@ def list_cards(
     """Lists a Card"""
 
     try:
-        registry_type = get_registry_type_from_table(
-            table_name=payload.table_name,
-            registry_type=payload.registry_type,
-        )
-
-        registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+        registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
         logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry._registry.list_cards(

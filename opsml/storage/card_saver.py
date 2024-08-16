@@ -1,5 +1,4 @@
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
@@ -552,7 +551,9 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 

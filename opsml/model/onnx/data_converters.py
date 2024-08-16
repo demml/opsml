@@ -1,7 +1,6 @@
 # pylint: disable=[import-outside-toplevel,import-error]
 """Code for generating Onnx Models"""
-# Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) Shipt, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -148,7 +147,9 @@ class PandasPipelineOnnxConverter(DataConverter):
 
     @staticmethod
     def validate(data_type: str, model_type: str, model_class: str) -> bool:
-        model_match = model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        model_match = (
+            model_class == TrainedModelType.SKLEARN_ESTIMATOR and model_type == TrainedModelType.SKLEARN_PIPELINE
+        )
         return data_type == AllowedDataType.PANDAS and model_match
 
 
