@@ -518,7 +518,6 @@ export function metricsToTable(
     });
   }
 
-  console.log(table);
   return table;
 }
 
@@ -954,8 +953,6 @@ export function downloadTableMetricsToCSV(
 
   // Join rows and columns
   let csv: string = allRows.map((row) => row.join(",")).join("\n");
-
-  console.log(csv);
 
   downloadCSV(csv, "comparison_metrics");
 }

@@ -155,12 +155,15 @@ class PresignableTypes(str, Enum):
     TEXT = ".txt"
     CSV = ".csv"
     JSON = ".json"
+    JSONL = ".jsonl"
     TIFF = ".tiff"
     GIF = ".gif"
     MP4 = ".mp4"
     PY = ".py"
     YML = ".yml"
     YAML = ".yaml"
+    TXT = ".txt"
+    LOG = ".log"
 
 
 class UserScope(BaseModel):

@@ -3,7 +3,7 @@
     import Fa from 'svelte-fa'
     import { faFolder } from '@fortawesome/free-solid-svg-icons'
     import { type Files  } from "$lib/scripts/types";
-    import { goto } from '$app/navigation';
+    import { goto  } from '$app/navigation';
   
   
     export let registry: string;
@@ -16,11 +16,12 @@
     export let subdir: string | null;
     export let fileInfo: Files;
     export let prevPath: string;
+
    
-    function navigateToFolder(folderPath: string) {
-      let subDir: string = folderPath.replace(`${basePath}/`, '');
-      goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
-    }
+  function navigateToFolder(folderPath: string) {
+    let subDir: string = folderPath.replace(`${basePath}/`, '');
+    goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
+  }
   
     
   </script>
@@ -31,17 +32,18 @@
   
     <div class="justify-center w-2/3">
   
-      <div class="flex">
+      <ol class="breadcrumb">
         {#each displayPath as path, index}
   
         {#if index !== displayPath.length - 1}
-          <div class="font-bold mt-6 text-primary-500">{path}</div>
-          <div class="font-bold mt-6 text-gray-500">&nbsp;/&nbsp;</div>
+
+          <li class="crumb"><a class="anchor" href="/elements/breadcrumbs">{path}</a></li>
+          <li class="crumb-separator" aria-hidden>/</li>
         {:else}
-          <div class="font-bold mt-6 text-secondary-500">{path}</div>
+          <li class="crumb"><a class="anchor" href="/elements/breadcrumbs">{path}</a></li>
         {/if}
         {/each}
-      </div>
+      </ol>
   
       <div class="bg-surface-100 to-white flex rounded-t-lg border border-gray px-3 py-2 min-w-96">
         <div class="inline-flex justify-between w-full items-center">

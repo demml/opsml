@@ -31,7 +31,7 @@ interface RecentCards {
 async function getCards(registry: string): Promise<CardJson[]> {
   let modelcards = await apiHandler.post(
     CommonPaths.LIST_CARDS,
-    { registry_type: registry, limit: 10 },
+    { registry_type: registry, limit: 10, sort_by_timestamp: true },
     "application/json",
     { Accept: "application/json" }
   );

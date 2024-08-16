@@ -167,7 +167,7 @@ class ParameterSchema(Base):
     run_uid = Column("uid", String(64))
     name = Column("name", String(128))
     value = Column("value", String(128))
-    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now()))
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now(tz=timezone.utc)))
     idx = Column(Integer, primary_key=True)
 
 

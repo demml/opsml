@@ -51,6 +51,16 @@ MAX_REQUEST_BODY_SIZE = MAX_FILE_SIZE + 1024
 PRESIGN_DEFAULT_EXPIRATION = 60
 router = APIRouter()
 
+_ACCEPTED_FILE_TYPES = [
+    PresignableTypes.JSON,
+    PresignableTypes.JSONL,
+    PresignableTypes.TXT,
+    PresignableTypes.LOG,
+    PresignableTypes.CSV,
+    PresignableTypes.PY,
+    PresignableTypes.MD,
+]
+
 
 @router.post("/files/upload", name="upload", dependencies=[Depends(verify_token)])
 async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
@@ -363,7 +373,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
         file_info["suffix"] = swapped_path.suffix
 
         if swapped_path.suffix in list(PresignableTypes):
-            if size < MAX_VIEWSIZE and swapped_path.suffix in [".txt", ".log", ".json", ".csv", ".py", ".md"]:
+            if size < MAX_VIEWSIZE and swapped_path.suffix in _ACCEPTED_FILE_TYPES:
                 # download load file to string
                 with tempfile.TemporaryDirectory() as tmpdirname:
                     lpath = Path(tmpdirname) / swapped_path.name
@@ -372,8 +382,12 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
                     with lpath.open("rb") as file_:
                         file_ = file_.read().decode("utf-8")
 
-                        if swapped_path.suffix == ".json":
-                            view_meta["content"] = json.dumps(json.loads(file_), indent=4)  # type: ignore
+                        if swapped_path.suffix == PresignableTypes.JSON:
+                            view_meta["content"] = file_  # type: ignore
+
+                        if swapped_path.suffix == PresignableTypes.JSONL:
+                            data = [json.loads(line) for line in file_.split("\n") if line]
+                            view_meta["content"] = json.dumps(data, indent=4)  # type: ignore
 
                         else:
                             view_meta["content"] = file_

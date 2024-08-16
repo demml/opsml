@@ -1,4 +1,4 @@
-import { type FileSetup, RegistryName } from "$lib/scripts/types";
+import { type Files, type FileSetup, RegistryName } from "$lib/scripts/types";
 import { calculateTimeBetween, setupFiles } from "$lib/scripts/utils";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;

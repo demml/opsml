@@ -1,7 +1,6 @@
 
 <script lang="ts">
-  import {type FileView } from "$lib/scripts/types";
-
+ 
 
   import Highlight, { LineNumbers } from "svelte-highlight";
   import json from "svelte-highlight/languages/json";
@@ -10,6 +9,13 @@
   import sql from "svelte-highlight/languages/sql";
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
   import Markdown from "$lib/card/Markdown.svelte";
+
+  function formatJson(jsonString: string): string {
+    console.log(jsonString);
+    let newJson = JSON.stringify(JSON.parse(jsonString), null, 2);
+    console.log(newJson);
+    return newJson;
+  }
 
 
   export let name: string;
@@ -40,9 +46,10 @@
     <div class="min-w-96 w-full border border-gray overflow-scroll">
 
       {#if viewType === "code" && content !== null && suffix !== null}
-        {#if suffix === "json"}
 
-          <Highlight language={json}  code={content} let:highlighted>
+        {#if suffix === "json" || suffix === "jsonl"}
+
+          <Highlight language={json}  code={formatJson(content)} let:highlighted>
             <LineNumbers {highlighted} />
           </Highlight>
         
@@ -70,10 +77,9 @@
           <Markdown source={content}/>
 
         {/if}
-      {/if}
+  
 
-
-      {#if viewType === "iframe" && uri !== null}
+      {:else if viewType === "iframe" && uri !== null}
 
         {#if suffix === "jpeg" || suffix === "jpg" || suffix === "png" || suffix === "gif" || suffix === "tiff"}
 
@@ -82,7 +88,9 @@
         </div>
 
         {/if}
-      
+
+      {:else}
+        <div class="p-4 text-center text-gray-500">No content to display</div>
       {/if}
     </div>
   </div>

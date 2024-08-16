@@ -97,6 +97,8 @@ export async function load({ fetch, params, url }) {
     //tableMetrics = metricsToTable(cardMap, metricNames.metric);
   }
 
+  console.log(parameters.parameter);
+
   return {
     registry,
     repository: selectedCard.repository,

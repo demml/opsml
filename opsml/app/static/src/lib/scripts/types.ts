@@ -416,3 +416,17 @@ export interface ChartjsGroupedBarDataset {
   borderRadius: number;
   borderSkipped: boolean;
 }
+
+export interface FileSystemAttr {
+  files: Files;
+  name: string;
+  repository: string;
+  version: string;
+  registry: string;
+  subdir: string | null;
+  modifiedAt: string;
+  basePath: string;
+  displayPath: string[];
+  prevPath: string;
+  baseRedirectPath: string;
+}

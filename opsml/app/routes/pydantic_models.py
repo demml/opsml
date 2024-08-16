@@ -356,7 +356,7 @@ class DataCardMetadata(BaseModel):
     uid: str
     interface_type: str
     data_splits: Optional[str] = None
-    sql_logic: Dict[str, str] = {}
+    sql_logic: Optional[Dict[str, str]] = None
     feature_map: Optional[str] = None
 
 

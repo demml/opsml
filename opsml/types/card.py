@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, SerializeAsAny
+from pydantic import BaseModel, SerializeAsAny, field_validator
 
 
 class RegistryType(str, Enum):
@@ -48,7 +48,7 @@ class Metric(BaseModel):
 
 class Param(BaseModel):
     name: str
-    value: Union[float, int, str]
+    value: Union[int, float, str]
 
 
 class RunGraph(BaseModel):

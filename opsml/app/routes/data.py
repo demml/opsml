@@ -10,7 +10,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml import DataInterface
 from opsml.app.routes.files import download_artifacts_ui, download_file
 from opsml.app.routes.pydantic_models import CardRequest, DataCardMetadata
 from opsml.app.routes.route_helpers import DataRouteHelper
