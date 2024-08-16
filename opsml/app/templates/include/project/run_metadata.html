@@ -1,0 +1,99 @@
+<hr id="version-spacer">
+<div class="card-body content" id="CardMetadata">
+<div class="table-responsive">
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    <colgroup>
+      <col span="1" style="width: 5%;">
+      <col span="1" style="width: 15%;">
+      <col span="1" style="width: 59%;">
+  </colgroup>
+    <tbody>
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">ID:</font></td>
+        <td>{{ runcard["uid"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Name:</font></td>
+        <td>{{ runcard["name"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Version:</font></td>
+        <td>{{ runcard["version"] }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-users" style="color:#04b78a"></i></td>
+        <td><font color="#999">repository:</font></td>
+        <td>{{ runcard["repository"] }}</td>
+      </tr>
+    
+      {% if runcard["datacard_uids"]|length > 0 %}
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">DataCard:</font></td>
+        <td>
+
+          {% if runcard["datacard_uids"]|length == 1 %}
+          <a href="/opsml/data/versions/uid/?uid={{runcard["datacard_uids"][0]}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+          {% else %}
+
+          <div class="btn-group">
+            <div class="dropdown" id="CardDropdownSelect">
+              <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-display="html" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
+                Link
+              </a>
+            
+              <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
+                  {% for datacard_uid in runcard["datacard_uids"] %}
+                    <a class="dropdown-item" href="/opsml/data/versions/uid/?uid={{datacard_uid}}">{{datacard_uid}}</a>
+                  {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+      </td>
+      </tr>
+      {% endif %}
+
+      {% if runcard["modelcard_uids"]|length > 0 %}
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">ModelCard:</font></td>
+        <td>
+
+          {% if runcard["modelcard_uids"]|length == 1 %}
+          <a href="/opsml/models/versions/?uid={{runcard["modelcard_uids"][0]}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+          {% else %}
+
+          <div class="btn-group">
+            <div class="dropdown" id="CardDropdownSelect">
+              <a class="btn dropdown-toggle m-1" href="#" role="button" id="dropdownMenuLink" data-bs-display="html" data-bs-toggle='dropdown' aria-haspopup="true" aria-expanded="false">
+                Link
+              </a>
+            
+              <div class="dropdown-menu scrollable-menu" aria-labelledby="dropdownMenuLink">
+                  {% for modelcard_uid in runcard["modelcard_uids"] %}
+                    <a class="dropdown-item" href="/opsml/models/versions/?uid={{modelcard_uid}}">{{modelcard_uid}}</a>
+                  {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+      </td>
+      </tr>
+      {% endif %}
+
+
+    </tbody>
+  </table>
+</div>
+</div>

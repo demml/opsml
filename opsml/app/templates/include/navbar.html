@@ -1,0 +1,35 @@
+
+
+<nav class="navbar navbar-expand navbar-light px-5" id="MainNav">
+  <a class="navbar-brand" href="/">
+    <img src="{{ url_for('static', path='/images/opsml-logo.png') }}" alt="" width="40" height="40">
+  </a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link {{model_status}}" href="/opsml/models/list/" style="font-size: 20px; color:white;" id="models" ><i class="bi-lightbulb-fill"></i> Models</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {{data_status}}" href="/opsml/data/list/" style="font-size: 20px; color:white;" id="data"><i class="bi-table"></i> Data</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {{runs_status}}" href="/opsml/projects/list/" style="font-size: 20px; color:white;" id="runs"><i class="bi-play-circle"></i> Runs</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link {{audit_status}}" href="/opsml/audit/"style="font-size: 20px; color:white;" id="audit"><i class="bi-journal-text"></i> Audit</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="https://thorrester.github.io/opsml-ghpages/"style="font-size: 20px; color:white;"><i class="bi-journal-text"></i> Docs</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+  
+  
+ 
+

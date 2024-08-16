@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "opsml-api"
+version = "1.0.0"
+description = ""
+authors = ["opsml"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+opsml = {version ="^2", extras = ["gcs", "postgres", "server"]}
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+darglint = "^1.8.1"
+debugpy = "^1.6.0"
+flake8 = "^4.0.1"
+isort = "^5.10.1"
+mypy = "^1.0.0"
+pep8-naming = "^0.13.0"
+pylint = "^2.13.9"
+pytest = "^7.1.2"
+pytest-cov = "^4.0.0"
+requests = "^2.27.1"
+types-requests = "^2.27.27"
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.coverage.paths]
+source = ["app", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.darglint]
+ignore_regex = "^_(.*)"
+strictness = "short"
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.flake8]
+max-complexity = 10
+format = "pylint"
+statistics = "True"
+max-line-length = 120
+# ignore non-PEP8 lints
+ignore = ["E203", "W503"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+
+[tool.mypy]
+# platform configuration
+python_version = "3.10"
+platform = "linux"
+mypy_path = "stubs"
+ignore_missing_imports = true
+
+
+[tool.pylint.basic]
+# just allow short names
+argument-rgx = "^[_a-z][_a-z0-9]{0,30}$"
+variable-rgx = "^[_a-z][_a-z0-9]{0,30}$"
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    "design",
+    "duplicate-code",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-many-nested-blocks",
+]
+extension-pkg-whitelist = [
+    "pydantic"
+]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

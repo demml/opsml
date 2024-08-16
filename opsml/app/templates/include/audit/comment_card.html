@@ -1,0 +1,53 @@
+
+
+        <form action="/opsml/audit/comment/save" method="POST" id="CommentForm" name="CommentForm">
+
+          <div class="form-group">
+            <label for="CommentName">Name</label>
+            <input name="comment_name" type="text" class="form-control" id="CommentName" placeholder="Enter name">
+          </div>
+          <br>
+          <div class="form-group">
+            <div class="form-group row">
+              <label>Message</label>
+            </div>
+            <textarea form="CommentForm" id="CommentText" name="comment_text" style="width:100%;"></textarea>
+          </div>
+          <br>
+            <div class="vertical-center" style="text-align:center">
+              <button id="CommentSubmit" type="submit" class="btn btn-primary" style="background:#038767; color:#fffefe; border:none">Submit</button>
+            </div>
+
+            <!-- Hidden fields that need to be passed in order to re-render page on comment submit -->
+            <input name="name" type="hidden" class="form-control" id="InputName" placeholder="Name" {% if audit_report["name"] is not none %} value={{audit_report["name"]}} {% endif %} required>
+            <input name="repository" type="hidden" class="form-control" id="Inputrepository" placeholder="repository" {% if audit_report["repository"] is not none %} value={{audit_report["repository"]}} {% endif %} required>
+            <input name="contact" type="hidden" class="form-control" id="InputContact" placeholder="Contact" {% if audit_report["contact"] is not none %} value={{audit_report["contact"]}} {% endif %} required>
+            <input name="selected_model_name" type="hidden" class="form-control" id="InputModelName" value={{selected_model}}>
+            <input name="selected_model_repository" type="hidden" class="form-control" id="InputModelrepository" value={{selected_repository}}>
+            <input name="selected_model_version" type="hidden" class="form-control" id="InputModelVersion" value={{version}}>
+            <input name="selected_model_contact" type="hidden" class="form-control" id="InputModelContact" value={{selected_contact}}>
+            <input name="uid" type="hidden" class="form-control" id="InputUid" {% if audit_report["uid"] is not none %} value={{audit_report["uid"]}} {% endif %}>
+        </form>
+        <br>
+
+        <div class="overflow-auto">
+          {% if audit_report["comments"]|length > 0 %}
+            {% for comment in audit_report["comments"] %}
+                <div class="card mt-1" id="comment-card" style="margin-left:.25;">
+                  <div class="card-header" style="background-color:rgba(26, 255, 163, 0.24);">
+                    <a>{{comment["name"]}}</a>
+                    <i class="bi bi-clock"></i>
+                    {{comment["timestamp"]}}
+                  </div>
+                  <div class="card-body">
+                    <p class="comment-text" style="color:black;">
+                      {{comment["comment"]}}
+                    </p>
+                  </div>
+                </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+
+

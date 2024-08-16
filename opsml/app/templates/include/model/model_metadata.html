@@ -1,0 +1,146 @@
+<hr id="version-spacer">
+<div class="card-body content" id="CardMetadata">
+<div class="table-responsive">
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    <colgroup>
+      <col span="1" style="width: 5%;">
+      <col span="1" style="width: 15%;">
+      <col span="1" style="width: 60%;">
+  </colgroup>
+    <tbody>
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">ID:</font></td>
+        <td>{{ selected_model.uid }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Name:</font></td>
+        <td>{{ metadata.model_name }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Version:</font></td>
+        <td>{{ metadata.model_version }}</td>
+      </tr>
+
+      <tr>
+        <td><i class="fa fa-users" style="color:#04b78a"></i></td>
+        <td><font color="#999">Repository:</font></td>
+        <td>{{ metadata.model_repository }}</td>
+      </tr>
+  
+      <tr>
+        <td><i class="fa-solid fa-brain" style="color:#04b78a"></i></td>
+        <td><font color="#999">Model Interface:</font></td>
+        <td>{{metadata.model_interface}}</td>
+      </tr>
+
+
+      <tr>
+        <td><i class="fa fa-file" style="color:#04b78a"></i></td>
+        <td><font color="#999">Model Type:</font></td>
+        <td>{{metadata.model_type}}</td>
+      </tr>
+
+      {% if metadata.onnx_uri is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Onnx Model:</font></td>
+          <td>
+            <a href="/opsml/files/download/ui?path={{metadata.onnx_uri}}" download={{onnx_filename}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+      <tr>
+        <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+        <td><font color="#999">Trained Model:</font></td>
+        <td>
+            <a href="/opsml/files/download/ui?path={{metadata.model_uri}}" download={{model_filename}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+      </tr>
+
+      {% if processor_uris["preprocessor"]["filename"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Preprocessor:</font></td>
+          <td>
+            <a href="/opsml/files/download?path={{processor_uris["preprocessor"]["rpath"]}}" download={{processor_uris["preprocessor"]["filename"]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+
+      {% if processor_uris["tokenizer"]["filename"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Tokenizer:</font></td>
+          <td>
+            <a href="/opsml/files/download?path={{processor_uris["tokenizer"]["rpath"]}}" download={{processor_uris["tokenizer"]["filename"]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+      {% if processor_uris["feature_extractor"]["filename"] is not none %}
+        <tr>
+          <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+          <td><font color="#999">Tokenizer:</font></td>
+          <td>
+            <a href="/opsml/files/download?path={{processor_uris["feature_extractor"]["rpath"]}}" download={{processor_uris["feature_extractor"]["filename"]}}>
+              <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">AuditCard:</font></td>
+        <td>
+          <a href="/opsml/audit/?repository={{selected_model.repository}}&model={{selected_model.name}}&version={{selected_model.version}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+      </td>
+      </tr>
+
+      {% if selected_model.datacard_uid is not none %}
+      <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">DataCard:</font></td>
+        <td>
+          <a href="/opsml/data/versions/uid/?uid={{selected_model.datacard_uid}}" >
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+          </a>
+      </td>
+      </tr>
+      {% endif %}
+
+      {% if runcard is not none %} 
+        <tr>
+          <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+          <td><font color="#999">RunCard:</font></td>
+          <td>
+            <a href="/opsml/projects/list/?project={{ runcard["project"] }}&run_uid={{ runcard["uid"] }}" >
+              <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+            </a>
+        </td>
+        </tr>
+      {% endif %}
+
+
+    </tbody>
+  </table>
+</div>
+</div>
+

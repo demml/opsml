@@ -1,0 +1,48 @@
+
+
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Summary</button></a>
+  
+  {% if data.metadata.description.summary is not none %}
+
+  <zero-md>
+    <script type="text/markdown" data-dedent>
+      {{data.metadata.description.summary}}
+    </script>
+  </zero-md>
+  
+  {% else %}
+    
+    <div id="SummaryText">
+        <p id="SummaryText">No summary provided</p>
+    </div>
+  
+  {% endif %}
+</div>
+
+<hr id="version-spacer">
+
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Sample Code</button></a>
+  {% if data.metadata.description.sample_code is not none %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">{{ data.metadata.description.sample_code }}</p>
+    </div>
+
+  {% else %}
+
+    <pre>
+      <code class="python">
+from opsml import CardRegistry
+
+data_registry = CardRegistry("data")
+datacard = data_registry.load_card(name="{{data.name}}", version="{{data.version}}")
+datacard.load_data() # load the data
+      </code>
+    </pre>
+
+</div>
+{% endif %}
+
+  

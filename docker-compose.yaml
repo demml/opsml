@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - 5432:5432
+    healthcheck:
+      # CMD-SHELL is a docker command which runs a shell (typically /bin/sh) to call your command
+      # It differs from CMD in that all parameters can be passed in a single argument
+      # ["CMD", "curl", "-f", "http://localhost"]
+      # ["CMD-SHELL", "curl -f http://localhost"]
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.2
+    environment:
+      MYSQL_DATABASE: mysql
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    ports:
+      - 3306:3306
+    # Set health checks to wait until postgres has started
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

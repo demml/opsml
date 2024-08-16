@@ -1,0 +1,55 @@
+
+
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Summary</button></a>
+
+  {% if model.metadata.description.summary is not none %}
+
+      <zero-md>
+        <script type="text/markdown" data-dedent>
+          {{model.metadata.description.summary}}
+        </script>
+      </zero-md>
+
+  {% else %}
+    
+    <div id="SummaryText">
+        <p id="SummaryText">No summary provided</p>
+    </div>
+
+  {% endif %}
+</div>
+
+<hr id="version-spacer">
+
+<div class="card-body">
+  <a><button id="label-button" class="btn btn-success">Sample Code</button></a>
+  {% if model.metadata.description.sample_code is not none %}
+
+    <div id="SummaryText">
+        <p id="SummaryText">{{ model.metadata.description.sample_code }}</p>
+    </div>
+
+  {% else %}
+
+    <pre>
+      <code class="python">
+from opsml import CardRegistry
+
+model_registry = CardRegistry("model")
+modelcard = model_registry.load_card(name="{{model.name}}", version="{{model.version}}")
+modelcard.load_trained_model() # load the train model
+
+# run predictions on trained model
+print(modelcard.trained_model.predict(modelcard.sample_input_data))
+
+# onnx version of model (if converted to onnx) if you want to play around with it
+onnx_model = modelcard.onnx_model()
+print(onnx_model.predict(onnx_model.sample_api_data))
+      </code>
+    </pre>
+
+</div>
+{% endif %}
+
+

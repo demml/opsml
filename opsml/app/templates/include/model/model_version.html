@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% set model_status = 'active' %}
+{% set data_status = none %}
+{% set audit_status = none %}
+{% set runs_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Version</title>
+{% endblock %}
+
+{% block content %}
+<body id="ModelVersionPage">
+  <div class="container" style="padding-top:65px;">
+  </div>
+
+{% set model_name_subnav = none %}
+{% set model_version_subnav = 'active' %}
+{% include "include/model/model_subnav.html" %}
+
+<br>
+
+<div class="container-fluid" style="padding-top:50px;" id="VersionContainer">
+  <div class="row">
+    <h5 class="display-8">Available Model Versions</h5>
+  </div>
+</div>
+
+
+
+<!---- Model version table -------->
+<div class="container-fluid" id="VersionContainer">
+  <div class="page-header">
+    <h2>{{selected_model["name"]}}</h2>
+  </div>
+</div>
+<br>
+
+
+<div class"containter" id="split-column">
+
+  <!---Create vesion tables ------>
+  <div class="boxes" id="VersionContainer">
+
+    <div id="VersionColumn">
+      <div class="list-group">
+        {% for version in versions %}
+          <a href="/opsml/models/versions/?model={{ selected_model["name"] }}&version={{ version["version"] }}" class="list-group-item list-group-item-action {% if selected_version ==  version["version"] %}active {% endif %}">v{{ version["version"] }} -- {{ version["date"] }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="MetadataColumn">
+
+      <div class="card" style="width:100%;">
+        <div class="card-body">
+          <h4>Model 
+            <div id="CardTabBox">
+            <span><button id="metadata-button" type="button" class="btn btn-success" >Metadata</button></span>
+            <span><button id="summary-button" type="button" class="btn btn-success">Summary</button></span>
+            </div>
+          </h4>
+      </div>
+
+      <div class="card border-0" id="CardBox" style="width:100%;">
+      {% include "include/model/model_metadata.html" %}
+      </div>
+  
+      {% if runcard is not none %}  
+        {% if runcard["tags"]|length > 0 %}
+        <div class="card border-0" id="TagBox" style="width:100%;">
+          {% include "include/model/model_tags.html" %}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <hr id="version-spacer">
+
+      <div class="card border-0" id="ExtraBox" style="width:100%;">
+        {% include "include/model/model_extras.html" %}
+      </div>
+    
+
+      <div class="card border-0" style="display: None; width:100%;" id="SummaryBox">
+        {% with model=selected_model %}
+          {% include "include/model/model_summary.html" %}
+          {% endwith %}
+      </div>
+  </div>
+</div>
+</body>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+
+$('.list-group-item').click(function() {
+  $('.list-group-item').removeClass('active');
+  $(this).addClass('active');
+  var version_uid = $(this).attr('id');
+  alert(id);
+  // write javscript that will take the value of the active div on click and pass that value to another div
+});
+
+$( "#metadata-extra-button" ).on( "click", function() {
+  $( "#MetadataJson" ).toggle();
+  } );
+
+$( "#sample-data-button" ).on( "click", function() {
+  $( "#SampleData" ).toggle();
+  } );
+
+$( "#metric-button" ).on( "click", function() {
+  $( "#Metrics" ).toggle();
+  } );
+
+$( "#param-button" ).on( "click", function() {
+  $( "#Params" ).toggle();
+  } );
+
+$( "#artifact-button" ).on( "click", function() {
+  $( "#Artifacts" ).toggle();
+  } );
+
+$('#CardTabBox > span').click(function() {
+  var ix = $(this).index();
+  
+  $('#CardBox').toggle( ix === 0 );
+  $('#TagBox').toggle( ix === 0 );
+  $('#ExtraBox').toggle( ix === 0 );
+  $('#SummaryBox').toggle( ix === 1 );
+});
+
+</script>
+
+
+{% endblock %}
