@@ -130,3 +130,5 @@ node_modules/
 # macOS
 .DS_Store
 **/.DS_Store
+/opsml_registries
+local_test_db.db
