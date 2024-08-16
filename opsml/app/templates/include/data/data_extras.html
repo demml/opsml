@@ -1,0 +1,126 @@
+
+<hr id="version-spacer">
+
+<div class="card-body" id="CardButtons" >
+  <button id="split-button" type="submit" class="btn btn-success" >Splits</button>
+  <button id="dep-var-button" type="submit" class="btn btn-success" >Dependent Vars</button>
+  <button id="feature-map-button" type="submit" class="btn btn-success" >Feature Map</button>
+  <button id="feature-desc-button" type="submit" class="btn btn-success" >Feature Descriptions</button>
+  <button id="sql-button" type="submit" class="btn btn-success" >SQL</button>
+</div>
+
+
+{% if data_splits is not none %}
+<div class="card-body" id="Splits" style="display:none">
+<h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Data Splits</font>
+  <clipboard-copy for="DataSplitCode">
+    Copy
+    <span class="notice" hidden>Copied!</span>
+  </clipboard-copy>
+</h5>
+    <pre style="max-height: 500px; overflow: scroll;"><code id="DataSplitCode" class="json">{{data_splits}}</code></pre>
+</div>
+{% endif %}
+
+{% if selected_data.dependent_vars is not none %}
+<div class="card-body" id="DependentVars" style="display:none">
+  <h5><i class="fa-solid fa-gear" style="color:#04b78a"></i> <font color="#999">Dependent Vars</font></h5>
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+
+    <thead style="background:white;">
+    <tr>
+        <th scope="col">Name</th>
+    </tr>
+    </thead>
+
+    <colgroup>
+    <col span="1" style="width: 15%;">
+    <col span="1" style="width: 15%;">
+    </colgroup>
+
+    <tbody>
+    {% for depen_var in selected_data.interface.dependent_vars %}
+        <tr>
+        <td>{{depen_var}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+
+{% if selected_data.metadata.feature_map is not none %}
+<div class="card-body" id="FeatureMap" style="display:none">
+<h5><i class="fa-solid fa-gear" style="color:#04b78a"></i> <font color="#999">Feature Map</font></h5>
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+
+    <thead style="background:white;">
+    <tr>
+        <th scope="col">Feature</th>
+        <th scope="col">Type</th>
+    </tr>
+    </thead>
+
+    <colgroup>
+    <col span="1" style="width: 15%;">
+    <col span="1" style="width: 15%;">
+    </colgroup>
+
+    <tbody>
+    {% for name, type_ in selected_data.interface.feature_map.items() %}
+        <tr>
+        <td><font color="#999">{{name}}</font></td>
+        <td>{{type_}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if selected_data.metadata.feature_descriptions |length > 0 %}
+<div class="card-body" id="FeatureDescriptions" style="display:none">
+<h5><i class="fa-solid fa-gear" style="color:#04b78a"></i> <font color="#999">Feature Descriptions</font></h5>
+  <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+
+    <thead style="background:white;">
+    <tr>
+        <th scope="col">Feature</th>
+        <th scope="col">Description</th>
+    </tr>
+    </thead>
+
+    <colgroup>
+    <col span="1" style="width: 15%;">
+    <col span="1" style="width: 50%;">
+    </colgroup>
+
+    <tbody>
+    {% for name, description in selected_data.interface.feature_descriptions.items() %}
+        <tr>
+        <td><font color="#999">{{name}}</font></td>
+        <td>{{description}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if selected_data.interface.sql_logic |length > 0 %}
+<div class="card-body" id="SQL" style="display:none">
+<h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">SQL</font></h5>
+    {% for name, query in selected_data.interface.sql_logic.items() %}
+
+    <h6><i style="color:#04b78a"></i> <font color="#999">{{name}}</font>
+      <clipboard-copy for="{{name}}Code">
+        Copy
+        <span class="notice" hidden>Copied!</span>
+      </clipboard-copy>
+    </h6>
+    <pre style="max-height: 500px; overflow: scroll;"><code id="{{name}}Code" class="sql">{{query}}</code></pre>
+
+    {% endfor %}
+</div>
+{% endif %}

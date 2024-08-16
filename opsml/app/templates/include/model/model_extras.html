@@ -1,0 +1,118 @@
+
+<div class="card-body" id="CardButtons" >
+  <button id="metadata-extra-button" type="submit" class="btn btn-success" >Metadata</button>
+
+  {% if runcard is not none %}
+    <button id="metric-button" type="submit" class="btn btn-success" >Metrics</button>
+    <button id="param-button" type="submit" class="btn btn-success" >Params</button>
+    <button id="artifact-button" type="submit" class="btn btn-success" >Artifacts</button>
+    {% endif %}
+</div>
+
+  <div class="card-body" id="MetadataJson" style="display:none;">
+    <h5><i class="fa-solid fa-table" style="color:#04b78a"></i> <font color="#999">Metadata</font>
+      <clipboard-copy for="MetadataCode">
+        Copy
+        <span class="notice" hidden>Copied!</span>
+      </clipboard-copy>
+    </h5>
+      <pre style="max-height: 500px; overflow: scroll;"><code id="MetadataCode" class="json">{{metadata_json}}</code></pre>
+  </div>
+
+  
+  {% if runcard is not none %}
+    {% if runcard["metrics"]|length > 0 %}
+    <div class="card-body" id="Metrics" style="display:none">
+    
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+        <h5><i class="fa-solid fa-chart-simple" style="color:#04b78a"></i> <font color="#999">Metrics</font></h5>
+        <thead style="background:white;">
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Value</th>
+            <th scope="col">Step</th>
+            <th scope="col">Timestamps</th>
+          </tr>
+        </thead>
+        
+        <colgroup>
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 15%;">
+    
+      </colgroup>
+        <tbody>
+          {% for metric_name, metric_values in runcard["metrics"].items() %}
+              <tr>
+                <td><font color="#999">{{metric_name}}</font></td>
+                <td>{{metric_values[-1].value}}</td>
+                <td>{{metric_values[-1].step}}</td>
+                <td>{{metric_values[-1].timestamp}}</td>
+              </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  
+
+  
+  
+    {% if runcard["parameters"]|length > 0 %}
+    <div class="card-body" id="Params" style="display:none">
+      <h5><i class="fa-solid fa-gear" style="color:#04b78a"></i> <font color="#999">Parameters</font></h5>
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    
+        <thead style="background:white;">
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Value</th>
+          </tr>
+        </thead>
+    
+        <colgroup>
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 15%;">
+        </colgroup>
+    
+        <tbody>
+          {% for param_name, param_value in runcard["parameters"].items() %}
+            <tr>
+              <td><font color="#999">{{param_name}}</font></td>
+              <td>{{param_value[0]["value"]}}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    
+    {% if runcard["artifact_uris"]|length > 0 %}
+    <div class="card-body" id="Artifacts" style="display:none">
+      <h5><i class="fa-solid fa-floppy-disk" style="color:#04b78a"></i> <font color="#999">Artifacts</font></h5>
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+        <colgroup>
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 50%;">
+        </colgroup>
+    
+        <tbody>
+          {% for name, artifact in runcard["artifact_uris"].items() %}
+            <tr>
+              <td><font color="#999">{{name}}</font></td>
+              <td>
+                <a href="/opsml/files/download?path={{artifact.remote_path}}" download={{artifact.remote_path.split("/")[-1]}}>
+                  <button id="download-button" type="submit" class="btn btn-success">Download</button>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  {% endif %}
+  
+  
+ 

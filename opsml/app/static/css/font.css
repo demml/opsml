@@ -1,0 +1,20 @@
+/* Scandia Fonts */
+@font-face {
+    font-family: "Scandia";
+    src: url("/static/fonts/scandia/Scandia-Regular.otf") format("opentype"),
+      url("/static/fonts/scandia/Scandia-Regular.eot") format("embedded-opentype"),
+      url("/static/fonts/scandia/Scandia-Regular.woff2") format("woff2"),
+      url("/static/fonts/scandia/Scandia-Regular.woff") format("woff");
+    font-style: normal;
+    font-weight: normal;
+  }
+  
+  @font-face {
+    font-family: "Scandia";
+    src: url("/static/fonts/scandia/Scandia-Bold.otf") format("opentype"),
+      url("/static/fonts/scandia/Scandia-Bold.eot") format("embedded-opentype"),
+      url("/static/fonts/scandia/Scandia-Bold.woff2") format("woff2"),
+      url("/static/fonts/scandia/Scandia-Bold.woff") format("woff");
+    font-style: normal;
+    font-weight: bold;
+  }

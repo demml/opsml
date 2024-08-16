@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% set model_status = none %}
+{% set data_status = 'active' %}
+{% set audit_status = none %}
+{% set runs_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Data</title>
+{% endblock %}
+
+{% block content %}
+<body id="DataPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+{% set data_name_subnav = 'active' %}
+{% set data_version_subnav = none %}
+{% include "include/data/data_subnav.html" %}
+
+<br>
+<div class="container" style="padding-top:50px;">
+    <div class="row">
+      <h5 class="display-8">Select a repository to view available data</h5>
+</div>
+
+  <div>
+    <select class="dropdown" id="MetadataRepositoriesSelect" style="visibility:hidden;">
+
+      {% if all_repositories is not none %}
+
+        {% for repository in all_repositories %}
+        <option value="/opsml/data/list/?repository={{repository}}" {% if repository == selected_repository %} selected="selected" {% endif %}>{{ repository }}</option>
+        {% endfor %}
+
+      {% else %}
+      <option value="None">No repository found</option>
+      {% endif %}
+
+    </select>
+  </div>
+
+
+
+  <br>
+<!---- Form for selecting model -------->
+<div class="container">
+    <div class="page-header">
+      <h2>{{selected_repository}}</h2>
+    </div>
+</div>
+<br>
+<div class="model-container">
+  <div class="row row-cols-md-5">
+      {% for datum in data %}
+        <div class="col-12">
+          {% with datum=datum %}
+      		{% include "include/data/card.html" %}
+    	    {% endwith %}
+        </div>
+      {% endfor %}
+    </div>
+</div>
+</body>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $(document).ready(function() {
+    $('#MetadataRepositoriesSelect').select2();
+  
+    $("#MetadataRepositoriesSelect").on('select2:select', function(e){
+      window.location.href = e.params.data.id;
+    });
+  });
+</script>
+{% endblock %}

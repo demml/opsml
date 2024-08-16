@@ -1,0 +1,321 @@
+[project]
+name = "opsml"
+description = "Python MLOPs quality control tooling for your production ML workflows"
+authors = [
+    { name = 'Steven Forrester', email = 'steven.forrester@shipt.com' }
+]
+readme = "README.md"
+license = 'MIT'
+classifiers = [
+    "Environment :: Web Environment",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+]
+requires-python = '>=3.9, <3.12'
+
+[project.urls]
+Homepage = "https://github.com/demml/opsml"
+Source = "https://github.com/demml/opsml"
+
+
+[tool.poetry]
+name = "opsml"
+version = "2.3.0"
+readme = "README.md"
+description = "Python MLOPs quality control tooling for your production ML workflows"
+authors = [
+    "Steven Forrester <steven.forrester@shipt.com>",
+    "Damon Allison <damon@shipt.com>",
+]
+
+[tool.poetry.dependencies]
+
+# required dependencies
+python = ">=3.9,<3.12"
+fsspec = ">=2023.1.0, <=2024.2.0"
+httpx = ">=0.23.3, <1.0.0"
+joblib = "^1.3.2"
+opsml-cli = "^0.5.0"
+pandas = ">=1.5.3, <3"
+polars = "^1.0.0"
+psutil = "^5.9.0"
+pyarrow = ">=15.0.0, <17.0.0"
+pydantic = "^2"
+pydantic_settings = "^2"
+pyyaml = "^6.0.1"
+rich = "^13.3.5"
+rusty-logger = "^0.3.0"
+scouter-ml="^0.2.4rc3"
+semver = "^2.13.0"
+tenacity = "^8.2.2"
+zarr = ">2.12.0"
+
+# optional dependencies for auth
+bcrypt = { version = "^4.0.0", optional = true }
+PyJWT = { version = "2.8.0", optional = true }
+
+# optional dependencies for sql
+psycopg2 = { version = "^2.9.6", optional = true }
+
+# optional dependencies for onnx
+onnx = { version = "~1.16.0", optional = true }
+onnxruntime = { version = "~1.16.0", optional = true }
+
+# optional dependencies for sklearn onnx
+skl2onnx = { version = "^1.15.0, !=1.17.0", optional = true }
+onnxmltools = { version = "^1.11.1", optional = true }
+
+# optional dependencies for tensorflow onnx
+tf2onnx = { version = ">=1.16.1", optional = true }
+
+# optional dependencies for server
+alembic = { version = "^1.10.3", optional = true }
+fastapi = { version = "^0.109.0", optional = true }
+gunicorn = { version = "^20.1.0", optional = true }
+jinja2 = { version = "^3.1.2", optional = true }
+prometheus-fastapi-instrumentator = { version = "^6.0.0", optional = true }
+python-multipart = { version = "^0.0.7", optional = true }
+rollbar = { version = ">=0.16.3", optional = true }
+uvicorn = { version = ">=0.24.0", optional = true }
+streaming-form-data = { version = ">=1.11.0, <1.16.0", optional = true }
+sqlalchemy = { extras = ["mypy"], version = "^2", optional = true }
+
+# optional dependencies for gcp
+gcsfs = { version = "^2024.2.0", optional = true }
+
+# optional dependencies for cloud-sql
+pymysql = { version = "^1.0.2", optional = true }
+
+# optional dependencies for aws
+s3fs = { version = "^2024.2.0", optional = true }
+boto3 = { version = "^1.28", optional = true }
+
+# optional dependencies for azure
+adlfs = { version = "^2024.2.0", optional = true }
+
+[tool.poetry.extras]
+server = [
+    "streaming-form-data",
+    "fastapi",
+    "uvicorn",
+    "rollbar",
+    "gunicorn",
+    "prometheus-fastapi-instrumentator",
+    "wsgi-basic-auth",
+    "python-multipart",
+    "jinja2",
+    "sqlalchemy",
+    "alembic",
+]
+gcp_mysql = ["pymysql", "gcsfs"]
+gcp_postgres = ["psycopg2", "gcsfs"]
+s3 = ["s3fs", "boto3"]
+gcs = ["gcsfs"]
+azure = ["adlfs"]
+postgres = ["psycopg2"]
+mysql = ["pymysql"]
+tf_onnx = ["onnx", "onnxruntime", "tf2onnx"]
+sklearn_onnx = ["onnx", "onnxruntime", "skl2onnx", "onnxmltools"]
+torch_onnx = ["onnx", "onnxruntime"]
+auth = ["PyJWT", "bcrypt"]
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.2"
+pytest-lazy-fixture = "^0.6.3"
+pytest-cov = "^3.0.0"
+coverage = { extras = ["toml"], version = "^6.5.0" }
+torch = "^2.1.0"
+torchvision = "^0.16"
+lightgbm = "4"
+xgboost = "^1.7.1"
+sentence-transformers = "3.0.1"
+tensorflow = { version = ">=2.16.0, <2.17.0", platform = "linux" }
+tf-keras = { version = "2.16.0", platform = "linux" }
+transformers = ">=4.27.3, <4.42.0"
+lightning = "^2.1.2"
+optimum = "^1.16.1"
+pytest-rerunfailures = "^13.0"
+catboost = "^1.2.2"
+accelerate = "^0.26.1"
+vowpalwabbit = { version = "^9.9.0", python = "<3.11", platform = "linux" }
+
+[tool.poetry.group.dev-lints]
+optional = true
+
+[tool.poetry.group.dev-lints.dependencies]
+ruff = "^0.1.0"
+types-pymysql = "^1.0.19.1"
+types-requests = "^2.28.11.7"
+black = ">=24.3.0"
+mypy = "^1"
+types-protobuf = "^4.21.0.3"
+pylint = "^2.17.5"
+pylint-pydantic = "^0.2.4"
+types-pyyaml = "^6.0.12.12"
+isort = "^5.12.0"
+
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.1.7"
+mkdocstrings = { extras = ["python"], version = "^0.21.2" }
+
+
+[tool.poetry.scripts]
+opsml-uvicorn-server = 'opsml.cli.launch_server:cli'
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.pylint.MASTER]
+ignore-paths = ["opsml/.local_tests/*", "opsml/registry/sql/migration/*"]
+load-plugins = ["pylint_pydantic", "pylint.extensions.docparams"]
+
+[tool.pylint.messages_control]
+max-line-length = 130
+disable = [
+    "multiple-statements",
+    "too-few-public-methods",
+    "design",
+    "duplicate-code",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-many-nested-blocks",
+    "unused-argument",
+    "fixme",
+    "import-outside-toplevel",
+    "no-name-in-module",
+    "ungrouped-imports",
+    "cyclic-import", 
+    "logging-too-many-args",
+]
+extension-pkg-whitelist = ["pydantic"]
+
+
+[tool.flake8]
+# This section is just a doc placeholder..see setup.cfg
+max-complexity = 10
+format = "pylint"
+statistics = true
+max-line-length = 125
+# ignore non-PEP8 lints
+ignore = ["E203", "W503", "W0511"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+testpaths = ["tests"]
+addopts = "--ignore=tests/test_docs"
+markers = [
+    "large",
+    "compat",
+]
+
+
+[tool.mypy]
+# platform configuration
+python_version = "3.9"
+platform = "linux"
+ignore_missing_imports = true
+strict = true
+disable_error_code = [
+    "attr-defined",
+    "assignment",
+]
+
+plugins = [
+    "numpy.typing.mypy_plugin",
+    "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin",
+]
+exclude = [
+    "opsml/.local_tests/*",
+    "opsml/registry/sql/query_helpers.py",
+    "opsml/registry/sql/migration/*",
+]
+
+
+[tool.coverage.paths]
+source = ["opsml", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["opsml"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+
+
+[tool.ruff]
+line-length = 130
+
+# Enable Pyflakes `E` and `F` codes by default.
+select = ["E", "F"]
+ignore = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "tests/",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "opsml/registry/sql/migration/*",
+]
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F841", "F401", "F811"]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[build-system]
+requires = ["poetry-core>=1.2.2"]
+build-backend = "poetry.core.masonry.api"

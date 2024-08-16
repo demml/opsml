@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+
+{% set model_status = none %}
+{% set data_status = none %}
+{% set runs_status = 'active' %}
+{% set audit_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Metrics</title>
+{% endblock %}
+
+{% block content %}
+<body id="RunPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+<br>
+
+
+<h5 style="padding-top:10px; padding-left:80px;"><button onclick="window.location.href='/opsml/projects/list/?project={{ runcard["project"] }}&run_uid={{ runcard["uid"] }}';" id="project-button" class="btn btn-success">{{ runcard["project"] }}</button> - {{ runcard["name"] }} - Metrics</h5>
+
+
+{% if runcard["metrics"]|length > 0 %}
+
+<div class"containter" id="split-column" style="padding-left:70px;">
+    <div id="MetricSelectColumn">
+        <form id="myForm" action="javascript:void(0);">
+
+            <div style="padding-top:2px; padding-left:40px;">
+                {% for metric in runcard["metrics"].keys() %}
+                    <div class="form-check">
+                        <label class="form-check-label" for="flexCheckDefault">{{ metric }}</label>
+                        <input class="form-check-input" type="checkbox" name={{ metric }} value={{ metric }} id="flexCheckDefault">
+                    </div>
+                {% endfor %}
+                    
+                <div class="form-check">
+                    <label class="form-check-label" for="flexCheckDefault">Bar Chart</label>
+                    <input class="form-check-input" type="checkbox" name="bar" value="true" id="flexCheckDefault">
+                </div>
+                <div style="padding-bottom:5px;" class="form-check">
+                    <label class="form-check-label" for="flexCheckDefault">Step Chart</label>
+                    <input class="form-check-input" type="checkbox" name="step" value="true" id="flexCheckDefault">
+                </div>
+                <button onclick="plot_fun()" id="download-button" class="btn btn-success"> Plot </button>
+            </div>
+        </form> 
+       
+    </div>
+   
+    <div id="PlotColumn">
+        <figure class="highcharts-figure">
+            <div id="MetricChart"></div>
+        </figure>
+    </div>
+</div>
+
+<p> 
+    <div id = "result"> </div> 
+ </p>
+
+{% endif %}
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
+<script>
+
+    Highcharts.setOptions({
+        colors: ['#04b78a', "#5e0fb7", "#bdbdbd", "#009adb"],
+    });
+    
+
+    function build_bar_chart (metrics, selected_metrics) {
+        var scores = [];
+        for (var i = 0; i < selected_metrics.length; i++) {
+
+            var metric = metrics[selected_metrics[i]];
+            var last_metric = metric[metric.length - 1]
+            scores.push(last_metric["value"]);
+            
+        };
+
+        // get min and max values for y axis across all metrics
+        // if min is greater than 0 set to 0
+        // add padding to max
+        minyValue = Math.min(Math.min(...scores), 0);
+        maxyValue = Math.max(...scores) * 1.1;
+
+        
+        Highcharts.chart('MetricChart', {
+            chart: {
+              type: 'column'
+            },
+            title: {
+              text: 'Metrics for {{ runcard["name"] }}',
+              align: 'left'
+            },
+          
+            xAxis: {
+                type: 'category',
+                categories: selected_metrics,
+                lineWidth: 1,
+            },
+            yAxis: {
+              min: minyValue,
+              title: {
+                text: 'Metric Value)'
+              },
+                lineWidth: 1,
+                tickLength: 10,
+                tickWidth: 1
+            },
+            legend: {
+                enabled: true
+            },
+            plotOptions: {
+                series: {
+                    borderWidth: 1,
+                    borderColor: 'black'
+                }
+            },
+            series: [
+                {
+                    name: 'Metrics',
+                    colorByPoint: true,
+                    data: scores,
+                    colors: ['#04b78a', "#5e0fb7", "#bdbdbd", "#009adb"],
+                    pointPadding: 0,
+            
+                }
+            ],
+            plotOptions: {
+                series: {
+                  states: {
+                    inactive: {
+                        opacity: 1
+                      }
+                    },
+                  lineWidth: 3,
+                }
+            },
+        });
+
+    }
+
+    function build_line_chart(metrics, selected_metrics) {
+
+    
+  
+        var data = [];
+        for (var i = 0; i < selected_metrics.length; i++) {
+
+            var metric = metrics[selected_metrics[i]];
+
+        
+            var points = [];
+
+            for (var j = 0; j < metric.length; j++) {
+                var curr_metric = metric[j];
+                points.push([curr_metric["step"] || 1, curr_metric["value"]]);
+            }
+
+            data.push({
+                name: selected_metrics[i],
+                data: points,
+                marker: {
+                    enabled: false,
+                  },
+            });
+        };
+
+      
+
+        Highcharts.chart('MetricChart', {
+            chart: {
+              type: 'line'
+            },
+            title: {
+              text: 'Metrics for {{ runcard["name"] }}',
+              align: 'left'
+            },
+          
+            xAxis: {
+                type: 'category',
+                title: {
+                    text: 'Step'
+                  },
+                  lineWidth: 1,
+            },
+            yAxis: {
+              title: {
+                text: 'Value'
+              },
+                lineWidth: 1,
+                tickLength: 10,
+                tickWidth: 1
+            },
+            legend: {
+                enabled: true
+            },
+         
+            series: data,
+            plotOptions: {
+                series: {
+                  states: {
+                    inactive: {
+                        opacity: 1
+                      }
+                    },
+                  lineWidth: 3,
+                }
+            },
+        });
+
+
+    }
+
+    function plot_fun() { 
+
+        var selected_metrics = [];
+        var selected_chart = [];
+        $('#myForm input:checked').each(function() {
+
+            if ($(this).attr('name') == 'bar' || $(this).attr('name') == 'step') {
+                selected_chart.push($(this).attr('name'));
+            }
+            else {
+                selected_metrics.push($(this).attr('name'));
+            }
+      
+        });
+
+        var metrics = {{ runcard["metrics"]|tojson }};
+
+        
+
+
+        if (selected_chart.length == 0) {
+            
+            build_bar_chart(metrics , selected_metrics);
+      
+        }
+    
+        else if (selected_chart[0] == 'bar') {
+            build_bar_chart(metrics , selected_metrics);
+        }
+
+        else {
+            build_line_chart(metrics , selected_metrics);
+        };
+
+    };
+
+      
+</script>
+{% endblock %}
+

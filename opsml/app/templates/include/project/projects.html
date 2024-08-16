@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+
+{% set model_status = none %}
+{% set data_status = none %}
+{% set runs_status = 'active' %}
+{% set audit_status = none %}
+{% include "include/navbar.html" %}
+
+{% block title %}
+  <title>Runs</title>
+{% endblock %}
+
+{% block content %}
+<body id="RunPage">
+<div class="container" style="padding-top:65px;">
+</div>
+
+<br>
+<h5 style="padding-top:10px; padding-left:40px;">Select a project to view available runs</h5>
+
+<div style="padding-top:2px; padding-left:40px;">
+   
+  <select class="dropdown" id="MetadataRepositoriesSelect" style="visibility:hidden;">
+    
+      {% if all_projects is not none %}
+
+        {% for project in all_projects %}
+        <option value="/opsml/projects/list/?project={{ project }}" {% if project == selected_project %} selected="selected" {% endif %}>{{ project }}</option>
+        {% endfor %}
+      {% else %}
+      <option value="None">No project found</option>
+      {% endif %}
+  </select>
+
+</div>
+
+
+{% if runcard is not none %}
+<div class"containter" id="split-column">
+  <div class="boxes" id="VersionContainer">
+
+    <div id="VersionColumn">
+      <div class="list-group">
+        {% for run in project_runs %}
+          <a href="/opsml/projects/list/?project={{ selected_project }}&run_uid={{ run["uid"] }}" class="list-group-item list-group-item-action {% if runcard["uid"] ==  run["uid"] %}active {% endif %}">{{ run["name"] }} -- {{ run["date"] }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div id="MetadataColumn">
+
+      <div class="card" style="width:100%;">
+        <div class="card-body">
+          <h4>Run: {{ runcard["name"] }}
+            <div id="CardTabBox">
+            </div>
+          </h4>
+      </div>
+
+      <div class="card border-0" id="CardBox" style="width:100%;">
+        {% include "include/project/run_metadata.html" %}
+      </div>
+
+      {% if runcard["tags"]|length > 0 %}
+      <div class="card border-0" id="TagBox" style="width:100%;">
+        {% include "include/model/model_tags.html" %}
+      </div>
+      {% endif %}
+
+      <div class="card border-0" id="ExtraBox" style="width:100%;">
+        {% include "include/project/runcard_extras.html" %}
+      </div>
+
+
+      <div class="card border-0" id="PlotBox" style="width:100%;">
+        {% include "include/project/plot_extras.html" %}
+      </div>
+
+    </div>
+
+  </div> 
+
+</div>
+{% endif %}
+
+
+</body>
+
+{% endblock %}
+
+{% block scripts %}
+
+
+<script>
+$('.list-group-item').click(function() {
+  $('.list-group-item').removeClass('active');
+  $(this).addClass('active');
+  var version_uid = $(this).attr('id');
+  alert(id);
+    // write javscript that will take the value of the active div on click and pass that value to another div
+ });
+
+$(document).ready(function() {
+  $('#MetadataRepositoriesSelect').select2();
+
+  $("#MetadataRepositoriesSelect").on('select2:select', function(e){
+    window.location.href = e.params.data.id;
+  });
+});
+
+$( "#metric-button" ).on( "click", function() {
+  $( "#Metrics" ).toggle();
+} );
+
+$( "#param-button" ).on( "click", function() {
+  $( "#Params" ).toggle();
+} );
+
+$( "#artifact-button" ).on( "click", function() {
+  $( "#Artifacts" ).toggle();
+} );
+
+$( "#graph-button" ).on( "click", function() {
+  $( "#Graphs" ).toggle();
+} );
+
+
+</script>
+
+
+{% endblock %}
+
+
+
+
+
+

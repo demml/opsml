@@ -1,0 +1,352 @@
+
+<hr id="version-spacer">
+
+<div class="card-body" id="CardButtons" >
+    <h5><i class="fa-solid fa-tag" style="color:#04b78a"></i> <font color="#999">Metadata</font></h5>
+    <button id="metric-button" type="submit" class="btn btn-success" >Metrics</button>
+    <button id="param-button" type="submit" class="btn btn-success" >Params</button>
+    <button id="artifact-button" type="submit" class="btn btn-success" >Artifacts</button>
+    <button id="graph-button" type="submit" class="btn btn-success" >Graphs</button>
+  </div>
+
+  
+  {% if runcard["metrics"]|length > 0 %}
+  <div class="card-body" id="Metrics" style="display:none">
+  
+    <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+      <h5><i class="fa-solid fa-chart-simple" style="color:#04b78a"></i> <font color="#999">Metrics</font></h5>
+      <thead style="background:white;">
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Value</th>
+          <th scope="col">Step</th>
+          <th scope="col">Timestamps</th>
+        </tr>
+      </thead>
+      
+      <colgroup>
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 15%;">
+  
+    </colgroup>
+      <tbody>
+        {% for metric_name, metric_values in runcard["metrics"].items() %}
+            <tr>
+              <td><font color="#999">{{metric_name}}</font></td>
+              <td>{{metric_values[-1].value}}</td>
+              <td>{{metric_values[-1].step}}</td>
+              <td>{{metric_values[-1].timestamp}}</td>
+            </tr>
+          {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  
+  {% if runcard["parameters"]|length > 0 %}
+  <div class="card-body" id="Params" style="display:none">
+    <h5><i class="fa-solid fa-gear" style="color:#04b78a"></i> <font color="#999">Parameters</font></h5>
+    <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+  
+      <thead style="background:white;">
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Value</th>
+        </tr>
+      </thead>
+  
+      <colgroup>
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 15%;">
+      </colgroup>
+  
+      <tbody>
+        {% for param_name, param_value in runcard["parameters"].items() %}
+          <tr>
+            <td><font color="#999">{{param_name}}</font></td>
+            <td>{{param_value[0]["value"]}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  
+  {% if runcard["artifact_uris"]|length > 0 %}
+  <div class="card-body" id="Artifacts" style="display:none">
+    <h5><i class="fa-solid fa-floppy-disk" style="color:#04b78a"></i> <font color="#999">Artifacts</font></h5>
+    <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+      <colgroup>
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 50%;">
+      </colgroup>
+  
+      <tbody>
+        {% for name, artifact in runcard["artifact_uris"].items() %}
+          <tr>
+            <td><font color="#999">{{name}}</font></td>
+            <td>
+              <a href="/opsml/files/download?read_path={{artifact.remote_path}}" download={{artifact.remote_path.split("/")[-1]}}>
+                <button id="download-button" type="submit" class="btn btn-success">Download</button>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  
+  <div class="card-body" id="Graphs" style="display:none">
+    <h5><i class="fa-solid fa-chart-simple" style="color:#04b78a"></i> <font color="#999">Graphs</font></h5>
+    {% if graphs|length > 0 %}
+      <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+        <colgroup>
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 50%;">
+        </colgroup>
+    
+        <tbody>
+          <div id="GraphContainer">
+            {% for key in graphs.keys() %}
+            <figure class="highcharts-figure">
+                <div class="graph-child" id="graph_{{key}}"></div>
+            </figure>
+            {% endfor %}
+          </div>
+        </tbody>
+      </table>
+    {% else %}
+        <b>No graphs recorded during run</b>
+    {% endif %}
+  </div>
+ 
+
+{% block scripts %}
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="https://code.highcharts.com/modules/boost.js"></script>
+<script>
+
+  Highcharts.setOptions({
+    colors: ['#04b78a', "#5e0fb7", "#bdbdbd", "#009adb", "#e74c3c", "#e73c3c", "#f2cc35"],
+  });
+
+  function get_plot_options(graph_style) {
+    var plot_options = {};
+    if (graph_style == "line") {
+      plot_options = {
+        series: {
+          states: {
+            inactive: {
+                opacity: 1
+              }
+            },
+          lineWidth: 3,
+          animation: false,
+          marker: {
+            enabled: false,
+          },
+        }
+      };
+    } else if (graph_style == "scatter"){
+      plot_options = {
+        series: {
+          states: {
+            inactive: {
+                opacity: 1
+              }
+            },
+          marker: {
+            enabled: true,
+            radius: 3,
+          },
+          animation: false
+        }
+      };
+    }
+    return plot_options;
+  }
+
+  function build_xy_chart(graph) {
+
+    var name = graph["name"];
+    var x_label = graph["x_label"];
+    var y_label = graph["y_label"];
+    var x = graph["x"];
+    var y = graph["y"];
+    var chart_name="graph_" + name;
+    var graph_style = graph["graph_style"];
+    var plot_options = get_plot_options(graph_style);
+
+    Highcharts.chart(chart_name, {
+      chart: {
+          type: graph_style,
+          borderColor:'#390772',
+          borderWidth: 2,
+          shadow: true
+      },
+      title: {
+          text: name,
+          align: 'left'
+      },
+
+      xAxis: {
+          labels: {
+            format: '{value:.1f}',
+            tickInterval: 5
+        },
+          categories: x,
+          allowDecimals: false,
+          title: {
+            text: x_label
+        },
+        lineWidth: 1,
+      },
+
+      yAxis: {
+          labels: {
+            format: '{value:.1f}',
+            step: 1
+        },
+          title: {
+              text: y_label
+          },
+        lineWidth: 1,
+        tickLength: 10,
+        tickWidth: 1
+      },
+
+      series: [{data: y,}],
+      plotOptions: plot_options,
+      credits: {
+        enabled: false
+      },
+    });
+  }
+
+  function get_y_series(y_keys, y) {
+    var y_series = [];
+    for (var i = 0; i < y_keys.length; i++) {
+      y_series.push({
+        name: y_keys[i],
+        data: y[y_keys[i]],
+      });
+    }
+    return y_series;
+
+  }
+
+  
+  
+  function build_multixy_chart(graph) {
+
+    var name = graph["name"];
+    var x_label = graph["x_label"];
+    var y_label = graph["y_label"];
+    var x = graph["x"];
+    var y = graph["y"];
+    var y_keys = Object.keys(y);
+    var chart_name="graph_" + name;
+    var y_series = get_y_series(y_keys, y);
+    var graph_style = graph["graph_style"];
+    var plot_options = get_plot_options(graph_style);
+
+
+    
+    Highcharts.chart(chart_name, {
+      chart: {
+        type: graph_style,
+        borderColor:'#390772',
+        borderWidth: 2,
+        shadow: true
+      },
+      title: {
+          text: name,
+          align: 'left'
+      },
+
+      xAxis: {
+          labels: {
+            format: '{value:.1f}',
+            tickInterval: 5
+        },
+          categories: x,
+          allowDecimals: false,
+          title: {
+            text: x_label
+        },
+        lineWidth: 1,
+      },
+
+      yAxis: {
+          labels: {
+            format: '{value:.1f}',
+            step: 1
+        },
+        title: {
+              text: y_label
+          },
+        lineWidth: 1,
+        tickLength: 10,
+        tickWidth: 1
+      },
+
+      series: y_series,
+      plotOptions: plot_options,
+    
+      credits: {
+        enabled: false
+      },
+
+      legend: {
+        align: 'left',
+        verticalAlign: 'top',
+        borderWidth: 0
+    },
+      tooltip: {
+        shared: true,
+        crosshairs: true
+    },
+    });
+    
+  }
+
+
+
+  var graphs = {{ graphs|tojson }};
+
+  for (var key in graphs) {
+    var graph = graphs[key];
+    var graph_type = graph["graph_type"];
+
+    if (graph_type == "single") {
+      build_xy_chart(graph);
+    } else {
+      build_multixy_chart(graph);
+    }
+
+  }
+
+
+  
+    
+  
+
+
+  
+
+  
+
+
+</script>
+{% endblock %}
+
+
+ 

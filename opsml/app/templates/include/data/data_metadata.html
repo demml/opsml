@@ -1,0 +1,86 @@
+<hr id="version-spacer">
+<div class="card-body">
+  <div class="table-responsive">
+    <table align="left" class="no-spacing" cellspacing="0" id="VersionTable">
+    <colgroup>
+        <col span="1" style="width: 5%;">
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 59%;">
+    </colgroup>
+    <tbody>
+        <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">ID:</font></td>
+        <td>{{ selected_data.uid }}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Name:</font></td>
+        <td>{{ selected_data.name }}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa fa-id-card" style="color:#04b78a"></i></td>
+        <td><font color="#999">Version:</font></td>
+        <td>{{ selected_data.version }}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa fa-users" style="color:#04b78a"></i></td>
+        <td><font color="#999">Repository:</font></td>
+        <td>{{ selected_data.repository }}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa-solid fa-brain" style="color:#04b78a"></i></td>
+        <td><font color="#999">Data Interface:</font></td>
+        <td>{{selected_data.metadata.interface_type}}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa fa-file" style="color:#04b78a"></i></td>
+        <td><font color="#999">Data Type:</font></td>
+        <td>{{selected_data.metadata.data_type}}</td>
+        </tr>
+
+        <tr>
+        <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+        <td><font color="#999">Data:</font></td>
+        <td>
+            <a href="/opsml/data/download?uid={{selected_data.uid}}" download={{data_filename}}>
+                <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+
+        {% if html_exists == True %}
+        <tr>
+            <td><i class="fa-solid fa-download" style="color:#04b78a"></i></td>
+            <td><font color="#999">Data Profile:</font></td>
+            <td>
+            <a href="/opsml/data/download/profile?uid={{selected_data.uid}}" download={{data_profile_filename}}>
+                <button id="download-button" type="submit" class="btn btn-success" >Download</button>
+            </a>
+        </td>
+        </tr>
+        {% endif %}
+
+
+        {% if selected_data.metadata.auditcard_uid is not none %}
+        <tr>
+        <td><i class="fa-solid fa-link" style="color:#04b78a"></i></td>
+        <td><font color="#999">AuditCard:</font></td>
+        <td>
+            <a href="/opsml/audit/?uid={{selected_data.metadata.auditcard_uid}}">
+            <button id="download-button" type="submit" class="btn btn-success" >Link</button>
+            </a>
+        </td>
+        </tr>
+        {% endif %}
+
+
+    </tbody>
+    </table>
+  </div>
+</div>
