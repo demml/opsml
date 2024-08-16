@@ -64,10 +64,10 @@ from opsml.types.model import (
 from opsml.types.sql import RegistryTableNames, RunCardRegistry
 from opsml.types.storage import (
     ApiStorageClientSettings,
+    AzureStorageClientSettings,
     BotoClient,
     FilePath,
     GCSClient,
-    AzureStorageClientSettings,
     GcsStorageClientSettings,
     S3StorageClientSettings,
     StorageClientProtocol,
