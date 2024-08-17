@@ -291,14 +291,31 @@ class AzureStorageClient(StorageClientBase):
         # Azure logs a lot of info messages by default (dumb)
         _logger = logging.getLogger("azure")
         _logger.setLevel(logging.ERROR)
+        print()
+        print(settings)
+        print()
 
-        client = adlfs.AzureBlobFileSystem(
-            account_name=settings.credentials.account_name,
-            anon=False,
-            tenant_id=settings.credentials.tenant_id,
-            client_id=settings.credentials.client_id,
-            client_secret=settings.credentials.client_secret,
-        )
+        try:
+            client = adlfs.AzureBlobFileSystem(
+                account_name=settings.credentials.account_name,
+                anon=False,
+                tenant_id=settings.credentials.tenant_id,
+                client_id=settings.credentials.client_id,
+                client_secret=settings.credentials.client_secret,
+            )
+        except Exception as e:
+            from azure.identity import DefaultAzureCredential
+            from azure.identity.aio import (
+                DefaultAzureCredential as AIODefaultAzureCredential,
+            )
+
+            async_credential = AIODefaultAzureCredential()
+            sync_credential = DefaultAzureCredential()
+
+            print(async_credential)
+            print(sync_credential)
+
+            raise e
 
         super().__init__(
             settings=settings,
