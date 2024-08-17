@@ -71,6 +71,10 @@ class GcpCredsSetter:
     ) -> Tuple[Optional[Union[ComputeEngineCredentials, IdentityPoolCredentials]], Optional[str], bool]:
         credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/devstorage.full_control"])  # type: ignore
 
+        # print credential name
+        print(credentials)
+        print(project_id)
+
         return credentials, project_id, True
 
     def decode_base64(self, service_base64_creds: str) -> str:
