@@ -39,6 +39,7 @@ jobs:
       LOG_LEVEL: DEBUG
       OPSML_STORAGE_URI: az://${{ secrets.AZURE_CONTAINER_NAME }}
       AZURE_CONTAINER_NAME: ${{ secrets.AZURE_CONTAINER_NAME }}
+      AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
     permissions:
       id-token: write
       contents: read
