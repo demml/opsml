@@ -67,3 +67,4 @@ jobs:
         run: |
           gcloud auth list
           gcloud projects list
+          gcloud storage ls --recursive gs://${{ secrets.GCS_BUCKET_NAME }}
