@@ -113,15 +113,32 @@ test.coverage:
 		--cov-report term \
 		--junitxml=./results.xml
 
-.PHONY: test.integration
+.PHONY: test.integration.gcs
 test.integration:
-	poetry run pytest tests/integration \
+	poetry run pytest tests/integration/gcs \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \
 		--cov-report term \
 		--junitxml=./results.xml
 
+.PHONY: test.integration.azure
+test.integration:
+	poetry run pytest tests/integration/azure \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report html:coverage \
+		--cov-report term \
+		--junitxml=./results.xml
+
+.PHONY: test.integration.aws
+test.integration:
+	poetry run pytest tests/integration/aws \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report html:coverage \
+		--cov-report term \
+		--junitxml=./results.xml
 
 .PHONY: test.unit.missing
 test.unit.missing:

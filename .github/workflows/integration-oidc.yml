@@ -28,11 +28,20 @@ jobs:
           aws s3 cp ./LICENSE.md s3://${{ env.BUCKET_NAME }}/
 
   AZURE-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: "Az CLI login"
         uses: azure/login@v1
         with:
@@ -44,6 +53,17 @@ jobs:
         run: |
           az account show
           az group list
+
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+      - run: make setup.project
+      - run: make test.integration.azure
 
   GCS-Integration:
     runs-on: ubuntu-latest
