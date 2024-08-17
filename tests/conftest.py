@@ -257,9 +257,11 @@ def test_app() -> YieldFixture[TestClient]:
 def gcs_test_bucket() -> Path:
     return Path(os.environ["OPSML_GCS_BUCKET"])
 
+
 @pytest.fixture
 def azure_container() -> Path:
     return Path(os.environ["AZURE_CONTAINER_NAME"])
+
 
 @pytest.fixture
 def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:

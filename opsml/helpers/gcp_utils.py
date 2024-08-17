@@ -16,6 +16,7 @@ from google.auth import compute_engine
 from google.auth.compute_engine.credentials import (
     Credentials as ComputeEngineCredentials,
 )
+from google.auth.identity_pool import Credentials as IdentityPoolCredentials
 from google.oauth2 import service_account
 from google.oauth2.service_account import Credentials
 from pydantic import BaseModel, ConfigDict
@@ -27,7 +28,14 @@ logger = ArtifactLogger.get_logger()
 
 class GcpCreds(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    creds: Optional[Union[Credentials, compute_engine.IDTokenCredentials, ComputeEngineCredentials]] = None
+    creds: Optional[
+        Union[
+            Credentials,
+            compute_engine.IDTokenCredentials,
+            ComputeEngineCredentials,
+            IdentityPoolCredentials,
+        ]
+    ] = None
     project: Optional[str] = None
     default_creds: bool = False
 
