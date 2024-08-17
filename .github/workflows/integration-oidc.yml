@@ -2,15 +2,17 @@
 # The workflow Creates static website using aws s3
 name: AWS example workflow
 on: push
-env:
-  BUCKET_NAME: "${{ secrets.AWS_S3_BUCKET }}"
-  AWS_REGION: "${{ secrets.AWS_REGION }}"
+
 # permission can be added at job level or workflow level
-permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
+
 jobs:
   S3PackageUpload:
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      BUCKET_NAME: "${{ secrets.AWS_S3_BUCKET }}"
+      AWS_REGION: "${{ secrets.AWS_REGION }}"
     runs-on: ubuntu-latest
     steps:
       - name: Git clone the repository
@@ -24,3 +26,21 @@ jobs:
       - name: Copy index.html to s3
         run: |
           aws s3 cp ./LICENSE.md s3://${{ env.BUCKET_NAME }}/
+
+  AZURE-Integration:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: "Run az commands"
+        run: |
+          az account show
+          az group list
