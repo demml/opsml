@@ -69,7 +69,7 @@ class GcpCredsSetter:
     def get_default_creds(
         self,
     ) -> Tuple[Optional[Union[ComputeEngineCredentials, IdentityPoolCredentials]], Optional[str], bool]:
-        credentials, project_id = google.auth.default()  # type: ignore
+        credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/devstorage.full_control"])  # type: ignore
 
         return credentials, project_id, True
 
