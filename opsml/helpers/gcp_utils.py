@@ -60,6 +60,7 @@ class GcpCredsSetter:
             Tuple of gcp credentials and project name, and whether default credentials are used
         """
         if self.service_base64_creds is not None:
+            print("Using base64 encoded service creds")
             logger.info("Using base64 encoded service creds")
             return self.create_gcp_creds_from_base64(self.service_base64_creds)
 
@@ -70,10 +71,6 @@ class GcpCredsSetter:
         self,
     ) -> Tuple[Optional[Union[ComputeEngineCredentials, IdentityPoolCredentials]], Optional[str], bool]:
         credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/devstorage.full_control"])  # type: ignore
-
-        # print credential name
-        print(credentials)
-        print(project_id)
 
         return credentials, project_id, True
 

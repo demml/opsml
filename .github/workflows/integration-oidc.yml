@@ -95,8 +95,8 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
       - name: set credentials file
         run: >-
-          gcloud auth login
-          --cred-file=${{steps.auth.outputs.credentials_file_path}}
+          export GOOGLE_ACCOUNT_JSON_BASE64=$(${{steps.auth.outputs.credentials_file_path}} | base64 -w 0)
+          echo "GOOGLE_ACCOUNT_JSON_BASE64=$GOOGLE_ACCOUNT_JSON_BASE64" >> $GITHUB_ENV
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
