@@ -113,9 +113,9 @@ test.coverage:
 		--cov-report term \
 		--junitxml=./results.xml
 
-.PHONY: test.integration.gcs
-test.integration.gcs:
-	poetry run pytest tests/integration/gcs \
+.PHONY: test.integration.gcp
+test.integration.gcp:
+	poetry run pytest tests/integration/gcp \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report html:coverage \
