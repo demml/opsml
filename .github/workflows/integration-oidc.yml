@@ -20,7 +20,7 @@ jobs:
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::360571623544:role/opsml-integration-oidc
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
       # Upload a file to AWS s3
       - name: Copy index.html to s3
@@ -44,3 +44,19 @@ jobs:
         run: |
           az account show
           az group list
+
+  GCS-Integration:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: "Authenticate with Google Cloud"
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - name: "List items in a bucket"
+        run: |
+          gsutil ls gs://${{ secrets.GCS_BUCKET_NAME }}
