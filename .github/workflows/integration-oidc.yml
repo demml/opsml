@@ -83,16 +83,20 @@ jobs:
           fetch-depth: 0
 
       - name: "Authenticate with Google Cloud"
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          create_credentials_file: true
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v1"
-        with:
-          version: ">= 444.0.0"
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: set credentials file
+        run: >-
+          gcloud auth login
+          --cred-file=${{steps.auth.outputs.credentials_file_path}}
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
