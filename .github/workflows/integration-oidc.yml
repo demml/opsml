@@ -41,7 +41,7 @@ jobs:
       AZURE_CONTAINER_NAME: ${{ secrets.AZURE_CONTAINER_NAME }}
       AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
       AZURE_STORAGE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_STORAGE_CLIENT_ID: gs://${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_STORAGE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_STORAGE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
     permissions:
       id-token: write
