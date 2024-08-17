@@ -10,8 +10,8 @@ pytestmark = [
 ]
 
 
-# gcs integration tests perform operation on test bucket that has a TTL of 1 day for all objects
-def _test_azure_storage_client(tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path) -> None:
+# azure integration tests perform operation on test bucket that has a TTL of 1 day for all objects
+def test_azure_storage_client(tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path) -> None:
     lpath = Path("tests/assets/cats.jpg")
     rpath_dir = azure_container / "test_dir"
     rpath = rpath_dir / "cats.jpg"
@@ -61,7 +61,9 @@ def _test_azure_storage_client(tmp_path: Path, azure_storage_client: StorageClie
             azure_storage_client.rm(rpath_dir)
 
 
-def _test_azure_storage_client_trees(tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path) -> None:
+def _test_azure_storage_client_trees(
+    tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path
+) -> None:
     #
     # test.txt
     # child/

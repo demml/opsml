@@ -49,7 +49,7 @@ def test_azure_full_run(
                 repository="mlops",
                 contact="mlops.com",
             )
-            #datacard.create_data_profile()
+            # datacard.create_data_profile()
             run.register_card(card=datacard)
             run.log_metric("test_metric", 10)
             run.log_metrics({"test_metric2": 20})
@@ -71,7 +71,7 @@ def test_azure_full_run(
         # check data assets
         assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
         assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-        #assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
+        # assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
 
         # check model assets
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -90,11 +90,11 @@ def test_azure_full_run(
 
         # load datacard
         _datacard: DataCard = data_registry.load_card(uid=datacard.uid)
-        #_datacard.load_data_profile()
+        # _datacard.load_data_profile()
         _datacard.load_data()
 
         assert _datacard.interface.data is not None
-        #assert _datacard.interface.data_profile is not None
+        # assert _datacard.interface.data_profile is not None
 
         # load modelcard
 

@@ -279,8 +279,9 @@ class AzureStorageClient(StorageClientBase):
         self,
         settings: StorageSettings,
     ) -> None:
-        import adlfs
         import logging
+
+        import adlfs
 
         from opsml.helpers.azure_utils import AzureCreds
 
