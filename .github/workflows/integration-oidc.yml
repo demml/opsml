@@ -62,3 +62,8 @@ jobs:
         with:
           version: ">= 444.0.0"
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: "Run gcloud commands"
+        run: |
+          gcloud auth list
+          gcloud projects list
