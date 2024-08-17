@@ -114,7 +114,7 @@ test.coverage:
 		--junitxml=./results.xml
 
 .PHONY: test.integration.gcs
-test.integration:
+test.integration.gcs:
 	poetry run pytest tests/integration/gcs \
 		--cov \
 		--cov-fail-under=0 \
@@ -123,7 +123,7 @@ test.integration:
 		--junitxml=./results.xml
 
 .PHONY: test.integration.azure
-test.integration:
+test.integration.azure:
 	poetry run pytest tests/integration/azure \
 		--cov \
 		--cov-fail-under=0 \
@@ -132,7 +132,7 @@ test.integration:
 		--junitxml=./results.xml
 
 .PHONY: test.integration.aws
-test.integration:
+test.integration.aws:
 	poetry run pytest tests/integration/aws \
 		--cov \
 		--cov-fail-under=0 \
