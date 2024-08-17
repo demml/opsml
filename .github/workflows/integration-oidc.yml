@@ -57,6 +57,8 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
 
-      - name: "List items in a bucket"
-        run: |
-          gsutil ls gs://${{ secrets.GCS_BUCKET_NAME }}
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+        with:
+          version: ">= 444.0.0"
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
