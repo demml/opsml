@@ -68,9 +68,6 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
     _write_path = Path(swap_opsml_root(request, Path(write_path)))
     body_validator = MaxBodySizeValidator(MAX_REQUEST_BODY_SIZE)
 
-    print("write_path")
-    _write_path = print(_write_path)
-
     try:
         file_ = ExternalFileTarget(
             write_path=_write_path,
