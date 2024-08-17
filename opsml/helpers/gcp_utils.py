@@ -51,7 +51,9 @@ class GcpCredsSetter:
 
         return GcpCreds(creds=service_creds, project=project_name, default_creds=default_creds)
 
-    def _get_creds(self) -> Tuple[Optional[Union[ComputeEngineCredentials, Credentials]], Optional[str], bool]:
+    def _get_creds(
+        self,
+    ) -> Tuple[Optional[Union[ComputeEngineCredentials, Credentials, IdentityPoolCredentials]], Optional[str], bool]:
         """Get GCP credentials
 
         Returns:
@@ -64,7 +66,9 @@ class GcpCredsSetter:
         logger.info("Using default creds")
         return self.get_default_creds()
 
-    def get_default_creds(self) -> Tuple[Optional[ComputeEngineCredentials], Optional[str], bool]:
+    def get_default_creds(
+        self,
+    ) -> Tuple[Optional[Union[ComputeEngineCredentials, IdentityPoolCredentials]], Optional[str], bool]:
         credentials, project_id = google.auth.default()  # type: ignore
 
         return credentials, project_id, True
