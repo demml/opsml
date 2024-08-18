@@ -103,7 +103,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
       - run: |
-          export GOOGLE_APPLICATION_CREDENTIALS=${{steps.auth.outputs.credentials_file_path}}
-          echo $GOOGLE_APPLICATION_CREDENTIALS
+          export GOOGLE_APPLICATION_CREDENTIALS_SA=${{steps.auth.outputs.credentials_file_path}}
+          echo $GOOGLE_APPLICATION_CREDENTIALS_SA
           make setup.project
           make test.integration.gcp
