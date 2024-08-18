@@ -60,7 +60,6 @@ class GcpCredsSetter:
             Tuple of gcp credentials and project name, and whether default credentials are used
         """
         if self.service_base64_creds is not None:
-            print("Using base64 encoded service creds")
             logger.info("Using base64 encoded service creds")
             return self.create_gcp_creds_from_base64(self.service_base64_creds)
 
