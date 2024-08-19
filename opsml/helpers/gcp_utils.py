@@ -105,7 +105,13 @@ class GcpCredsSetter:
         Returns
             Tuple of gcp credentials and project name, and whether default credentials are used
         """
+
         scopes = {"scopes": ["https://www.googleapis.com/auth/devstorage.full_control"]}  # needed for gcsfs
+
+        print(self.creds.service_account["type"])  # type: ignore # noqa
+        service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
+        print("hello")
+
         service_creds: Credentials = service_account.Credentials.from_service_account_info(  # type: ignore # noqa
             info=self.creds.service_account,
             **scopes,
