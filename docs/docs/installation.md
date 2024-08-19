@@ -29,38 +29,38 @@ Types of extras that can be installed:
 
 - **GCP with mysql**: Installs mysql and gcsfs to be used with `Opsml`
   ```bash
-  poetry add "opsml[gcs,mysql]"
-  ```
-
-- **GCP with mysql(cloud-sql)**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
-  ```bash
-  poetry add "opsml[gcp_mysql]"
+  poetry add "opsml[gcp_mysql]" or "opsml[gcs,mysql]"
   ```
 
 - **GCP with postgres**: Installs postgres and gcsgs to be used with `Opsml`
   ```bash
-  poetry add "opsml[gcs,postgres]"
+  poetry add "opsml[gcp_postgres]" or "opsml[gcs,postgres]"
   ```
 
-- **GCP with postgres(cloud-sql)**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `Opsml`
   ```bash
-  poetry add "opsml[gcp_postgres]"
+  poetry add "opsml[aws_mysql]" or "opsml[s3,mysql]"
   ```
 
 - **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
   ```bash
-  poetry add "opsml[s3,postgres]"
-  ```
+  poetry add "opsml[aws_postgres]" or "opsml[s3,postgres]"
+  ``` 
 
-- **AWS with mysql**: Installs mysql and s3fs dependencies to be used with `Opsml`
+- **Azure with mysql**: Installs postgres and s3fs dependencies to be used with `Opsml`
   ```bash
-  poetry add "opsml[s3,mysql]"
+  poetry add "opsml[azure_mysql]" or "opsml[azure,mysql]"
+  ``` 
+
+- **Azure with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
+  ```bash
+  poetry add "opsml[azure_postgres]" or "opsml[azure,postgres]"
   ```
 
 ### Example setup for gcs storage and postgres with opsml server
 
 ```bash
-  poetry add "opsml[gcs, postgres, server]"
+  poetry add "opsml[gcp_postgres, server]"
 ```
 
 ## Environment Variables
@@ -70,6 +70,34 @@ Types of extras that can be installed:
 
 - **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file system, google cloud storage and amazon s3.
 If running `Opsml` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
+
+
+### Example setups
+
+  - **Server setup with local storage and sqlite**:
+    ```bash
+    export OPSML_TRACKING_URI="sqlite:///tmp.db"
+    export OPSML_STORAGE_URI="./opsml_registries"
+    ```
+
+  - **Server setup with gcs storage and postgres (with ssl)**:
+    ```bash
+    export OPSML_TRACKING_URI="postgresql+psycopg2://username:password@opsml-host:5432/db_name?connect_timeout=5&sslmode=require"
+    export OPSML_STORAGE_URI="gs://opsml_bucket"
+    ```
+
+  - **Server setup with s3 storage and mysql**:
+    ```bash
+    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
+    export OPSML_STORAGE_URI="s3://opsml_bucket"
+    ```
+
+  - **Server setup with azure storage and mysql**:
+    ```bash
+    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
+    export OPSML_STORAGE_URI="az://opsml_container"
+    ```
+
 
 ## TLDR Scenarios
 
@@ -81,4 +109,4 @@ If running `Opsml` as an all-in-one interface, this variable is required and wil
 
   - Set `OPSML_TRACKING_URI` to the sql tracking uri of your card registry database
   - Set `OPSML_STORAGE_URI` to the storage uri of your choice
-  - Follow instructions in [server](./engineering/server.md) docs
+  - Follow additional instructions in [server](./engineering/server.md) docs
