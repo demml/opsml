@@ -114,10 +114,11 @@ class GcpCredsSetter:
                 info=self.creds.service_account,
                 **scopes,
             )
+            project_name = cast(str, service_creds.project_id)
+
         except Exception as _:
             service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
-
-        project_name = cast(str, service_creds.project_id)
+            project_name = None
 
         self.creds.project = project_name
         self.creds.creds = service_creds
