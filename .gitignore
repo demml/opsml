@@ -1,6 +1,5 @@
 # opsml-artifacts
 opsml_registries/
-opsml_registries/
 opsml/api/
 test_scripts*
 tmp.db
