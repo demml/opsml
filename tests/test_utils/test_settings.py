@@ -10,7 +10,7 @@ from opsml.storage.client import (
 
 
 def test_default_local_settings() -> None:
-    cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./mlruns")
+    cfg = OpsmlConfig(opsml_tracking_uri="sqlite:///test.db", opsml_storage_uri="./opsml_registries")
     assert isinstance(get_storage_client(cfg=cfg), LocalStorageClient)
 
 
