@@ -55,9 +55,8 @@ class GcpCreds(BaseModel):
 
         if service_account_file:
             logger.info("Using service account file")
-            with open(service_account_file, "r") as f:
-                service_account = json.load(f)
-                model_args["service_account"] = service_account
+            with open(service_account_file, "r", encoding="utf-8") as _file:
+                model_args["service_account"] = json.load(_file)
 
         return model_args
 
@@ -92,7 +91,9 @@ class GcpCredsSetter:
         return self.get_default_creds()
 
     def get_default_creds(self) -> None:
-        credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/devstorage.full_control"])  # type: ignore
+        credentials, project_id = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/devstorage.full_control"],  # type: ignore
+        )
 
         self.creds.project = project_id
         self.creds.creds = credentials

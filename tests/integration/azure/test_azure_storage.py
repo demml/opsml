@@ -61,9 +61,7 @@ def test_azure_storage_client(tmp_path: Path, azure_storage_client: StorageClien
             azure_storage_client.rm(rpath_dir)
 
 
-def _test_azure_storage_client_trees(
-    tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path
-) -> None:
+def test_azure_storage_client_trees(tmp_path: Path, azure_storage_client: StorageClient, azure_container: Path) -> None:
     #
     # test.txt
     # child/
