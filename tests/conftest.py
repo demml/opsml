@@ -262,6 +262,10 @@ def gcs_test_bucket() -> Path:
 def azure_container() -> Path:
     return Path(os.environ["AZURE_CONTAINER_NAME"])
 
+@pytest.fixture
+def aws_s3_bucket() -> Path:
+    return Path(os.environ["AWS_S3_BUCKET"])
+
 
 @pytest.fixture
 def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
@@ -274,6 +278,13 @@ def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
 @pytest.fixture
 def azure_storage_client(azure_container: Path) -> client.AzureStorageClient:
     cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"az://{str(azure_container)}")
+    storage_client = client.get_storage_client(cfg)
+    assert isinstance(storage_client, client.AzureStorageClient)
+    return storage_client
+
+@pytest.fixture
+def aws_storage_client(aws_s3_bucket: Path) -> client.S3StorageClient:
+    cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"s3://{str(aws_s3_bucket)}")
     storage_client = client.get_storage_client(cfg)
     assert isinstance(storage_client, client.AzureStorageClient)
     return storage_client

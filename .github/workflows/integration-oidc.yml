@@ -6,13 +6,19 @@ on: push
 # permission can be added at job level or workflow level
 
 jobs:
-  S3PackageUpload:
+  AWS-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
     permissions:
       id-token: write
       contents: read
     env:
-      BUCKET_NAME: "${{ secrets.AWS_S3_BUCKET }}"
       AWS_REGION: "${{ secrets.AWS_REGION }}"
+      AWS_S3_BUCKET: "${{ secrets.AWS_S3_BUCKET }}"
+      OPSML_STORAGE_URI: s3://${{ secrets.AWS_S3_BUCKET }}
     runs-on: ubuntu-latest
     steps:
       - name: Git clone the repository
@@ -22,10 +28,17 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-      # Upload a file to AWS s3
-      - name: Copy index.html to s3
-        run: |
-          aws s3 cp ./LICENSE.md s3://${{ env.BUCKET_NAME }}/
+
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+      - run: make setup.project
+      - run: make test.integration.aws
 
   AZURE-Integration:
     strategy:
@@ -68,9 +81,8 @@ jobs:
       OPSML_TESTING: 1
       LOG_LEVEL: DEBUG
       OPSML_GCS_BUCKET: ${{ secrets.OPSML_GCS_BUCKET }}
-      #GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GCS_ACCOUNT_BASE64 }}
       OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_BUCKET }}
-      GCP_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
     strategy:
       matrix:
         python-version: ["3.11"]
@@ -83,17 +95,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Authenticate with Google Cloud"
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          create_credentials_file: true
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+      # identity token doesn't work with python storage client and pre-signed urls
+      #- name: "Authenticate with Google Cloud"
+      #  id: auth
+      #  uses: google-github-actions/auth@v2
+      #  with:
+      #    project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #    workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      #    create_credentials_file: true
+      #    service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      #- name: Set up Cloud SDK
+      #  uses: google-github-actions/setup-gcloud@v2
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
@@ -104,6 +117,5 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
       - run: |
-          export GOOGLE_APPLICATION_CREDENTIALS=${{steps.auth.outputs.credentials_file_path}}
           make setup.project
           make test.integration.gcp
