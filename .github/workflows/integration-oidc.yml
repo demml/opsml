@@ -1,10 +1,10 @@
-# Sample workflow to access AWS resources when workflow is tied to branch
-# The workflow Creates static website using aws s3
-name: AWS example workflow
+# Integration tests for AWS, GCP and AZURE storage
+# AWS and AZURE use oidc method for authentication
+# GCP uses service account json file (workload identity provider does not currently support presigned urls in python)
+name: Storage Integration tests
 on: push
 
 # permission can be added at job level or workflow level
-
 jobs:
   AWS-Integration:
     strategy:

@@ -337,8 +337,8 @@ class AzureStorageClient(StorageClientBase):
             expiry=expiry_time,
         )
 
-        async with self.client.service_client.get_blob_client(config.storage_root, str(path)) as bc:
-            url = f"{bc.url}?{sas_token}"
+        async with self.client.service_client.get_blob_client(config.storage_root, str(path)) as blob_client:
+            url = f"{blob_client.url}?{sas_token}"
         return url
 
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
@@ -372,8 +372,8 @@ class AzureStorageClient(StorageClientBase):
 
             return presigned_url
 
-        except Exception as e:
-            logger.error(f"Error generating SAS URL for container: {e}")
+        except Exception as error:
+            logger.error(f"Error generating SAS URL for container: {error}")
             return None
 
 
