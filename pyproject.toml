@@ -73,8 +73,16 @@ PyJWT = { version = "2.8.0", optional = true }
 psycopg2 = { version = "^2.9.6", optional = true }
 
 # optional dependencies for onnx
-onnx = { version = "~1.16.0", optional = true }
-onnxruntime = { version = "~1.16.0", optional = true }
+onnx = [
+        { version = "~1.16.0", optional = true, platform = "linux" },
+        { version = "1.16.1", optional = true, platform = "win32" },
+        { version = "~1.16.0", optional = true, platform = "darwin" },
+    ]
+onnxruntime  = [
+        { version = "^1.16.0", optional = true, platform = "linux" },
+        { version = "^1.16.0", optional = true, platform = "win32" },
+        { version = "~1.16.0", optional = true, platform = "darwin" },
+    ]
 
 # optional dependencies for sklearn onnx
 skl2onnx = { version = "^1.15.0, !=1.17.0", optional = true }
@@ -156,6 +164,7 @@ pytest-rerunfailures = "^13.0"
 catboost = "^1.2.2"
 accelerate = "^0.26.1"
 vowpalwabbit = { version = "^9.9.0", python = "<3.11", platform = "linux" }
+matplotlib = { version = "<3.9.1", platform = "win32" }
 
 [tool.poetry.group.dev-lints]
 optional = true
