@@ -20,7 +20,7 @@ class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
     app_env: str = "development"
 
-    opsml_storage_uri: str = "./mlruns"
+    opsml_storage_uri: str = "./opsml_registries"
     opsml_tracking_uri: str = "sqlite:///tmp.db"
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"
