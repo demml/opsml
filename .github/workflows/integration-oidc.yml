@@ -70,6 +70,7 @@ jobs:
       OPSML_GCS_BUCKET: ${{ secrets.OPSML_GCS_BUCKET }}
       #GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GCS_ACCOUNT_BASE64 }}
       OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_BUCKET }}
+      GCP_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
     strategy:
       matrix:
         python-version: ["3.11"]
