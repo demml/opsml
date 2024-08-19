@@ -153,10 +153,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   Unit-Test-Windows:
-    needs: Lints
+    #needs: Lints
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.11"]
         poetry-version: ["1.7.1"]
         os: [windows]
 
