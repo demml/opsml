@@ -61,9 +61,7 @@ def test_aws_storage_client(tmp_path: Path, aws_storage_client: StorageClient, a
             aws_storage_client.rm(rpath_dir)
 
 
-def test_aws_storage_client_trees(
-    tmp_path: Path, aws_storage_client: StorageClient, aws_s3_bucket: Path
-) -> None:
+def test_aws_storage_client_trees(tmp_path: Path, aws_storage_client: StorageClient, aws_s3_bucket: Path) -> None:
     #
     # test.txt
     # child/

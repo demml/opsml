@@ -9,6 +9,7 @@ from opsml.data import PandasData
 from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
+from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
@@ -21,10 +22,16 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
 def test_azure_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
+    azure_storage_client: StorageClient,
+    azure_container: Path,
 ) -> None:
     """Verifies the full cycle of model and data card persistence.
     Because a profile is saved, data must be PandasData.
     """
+
+    for i in azure_storage_client.find(azure_container):
+        azure_storage_client.rm(i)  # type: ignore
+
     # get data and model
     model, data = model_and_data
 

@@ -9,7 +9,7 @@
 import base64
 import json
 import os
-from typing import Optional, Tuple, Union, cast, Dict, Any
+from typing import Any, Dict, Optional, Union, cast
 
 import google.auth
 from google.auth import compute_engine
