@@ -8,7 +8,6 @@
 import datetime
 import io
 import warnings
-import os
 from functools import cached_property
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union, cast
@@ -207,18 +206,15 @@ class GCSFSStorageClient(StorageClientBase):
     def get_id_credentials(self) -> Any:
         assert isinstance(self.settings, GcsStorageClientSettings)
 
-        # if self.settings.default_creds:
-        logger.debug("Default Creds: {}", self.settings.default_creds)
-        from google.auth import compute_engine
-        from google.auth.transport import requests
+        if self.settings.default_creds:
+            logger.debug("Default Creds: {}", self.settings.default_creds)
+            from google.auth import compute_engine
+            from google.auth.transport import requests
 
-        print(os.environ.get("GCP_SERVICE_ACCOUNT_EMAIL"))
-        auth_request = requests.Request()  # type: ignore
-        return compute_engine.IDTokenCredentials(
-            auth_request, "", service_account_email=os.environ.get("GCP_SERVICE_ACCOUNT_EMAIL")
-        )  # type: ignore
+            auth_request = requests.Request()  # type: ignore
+            return compute_engine.IDTokenCredentials(auth_request, "")  # type: ignore
 
-        # return self.settings.credentials
+        return self.settings.credentials
 
     def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
         """Generates pre signed url for S3 object"""
