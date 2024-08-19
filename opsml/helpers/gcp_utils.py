@@ -108,7 +108,7 @@ class GcpCredsSetter:
 
         scopes = {"scopes": ["https://www.googleapis.com/auth/devstorage.full_control"]}  # needed for gcsfs
 
-        print(self.creds.service_account["type"])  # type: ignore # noqa
+        print(self.creds.service_account)  # type: ignore # noqa
         service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
         print("hello")
 
