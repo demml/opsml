@@ -8,6 +8,7 @@
 import datetime
 import io
 import warnings
+import os
 from functools import cached_property
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Union, cast
@@ -211,8 +212,11 @@ class GCSFSStorageClient(StorageClientBase):
         from google.auth import compute_engine
         from google.auth.transport import requests
 
+        print(os.environ.get("GCP_SERVICE_ACCOUNT_EMAIL"))
         auth_request = requests.Request()  # type: ignore
-        return compute_engine.IDTokenCredentials(auth_request, "")  # type: ignore
+        return compute_engine.IDTokenCredentials(
+            auth_request, "", service_account_email=os.environ.get("GCP_SERVICE_ACCOUNT_EMAIL")
+        )  # type: ignore
 
         # return self.settings.credentials
 
