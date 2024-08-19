@@ -58,6 +58,7 @@ class GcpCreds(BaseModel):
             with open(service_account_file, "r") as f:
                 service_account = json.load(f)
                 model_args["service_account"] = service_account
+                print(service_account.keys())
 
         return model_args
 
