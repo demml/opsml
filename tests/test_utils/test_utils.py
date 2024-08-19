@@ -150,6 +150,8 @@ def test_gcp_creds(gcp_cred_path: str):
 
     assert isinstance(creds.creds, Credentials)
 
+    # pop env var
+    os.environ.pop("GOOGLE_ACCOUNT_JSON_BASE64")
     with patch("google.auth.default", return_value=(None, None)):
         cred_setter = gcp_utils.GcpCredsSetter()
 

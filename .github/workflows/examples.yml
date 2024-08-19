@@ -32,7 +32,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
-      - run: make setup.project
+      - run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.project
 
       - name: Run Sklearn Basic example
         run: poetry run python examples/sklearn/basic.py && rm -rf opsml_registries && rm tmp.db
