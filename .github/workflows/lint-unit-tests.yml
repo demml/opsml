@@ -153,7 +153,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   Unit-Test-Windows:
-    #needs: Lints
+    needs: Lints
     strategy:
       matrix:
         python-version: ["3.11"]
