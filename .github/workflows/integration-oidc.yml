@@ -89,7 +89,7 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           create_credentials_file: true
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          #service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -103,7 +103,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
       - run: |
-          export GOOGLE_APPLICATION_CREDENTIALS_SA=${{steps.auth.outputs.credentials_file_path}}
-          echo $GOOGLE_APPLICATION_CREDENTIALS_SA
+          export GOOGLE_APPLICATION_CREDENTIALS=${{steps.auth.outputs.credentials_file_path}}
           make setup.project
           make test.integration.gcp

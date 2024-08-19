@@ -58,7 +58,6 @@ class GcpCreds(BaseModel):
             with open(service_account_file, "r") as f:
                 service_account = json.load(f)
                 model_args["service_account"] = service_account
-                print(service_account.keys())
 
         return model_args
 
@@ -107,18 +106,11 @@ class GcpCredsSetter:
         """
 
         scopes = {"scopes": ["https://www.googleapis.com/auth/devstorage.full_control"]}  # needed for gcsfs
-
-        # try regular service account first
-        try:
-            service_creds: Credentials = service_account.Credentials.from_service_account_info(  # type: ignore # noqa
-                info=self.creds.service_account,
-                **scopes,
-            )
-            project_name = cast(str, service_creds.project_id)
-
-        except Exception as _:
-            service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
-            project_name = None
+        service_creds: Credentials = service_account.Credentials.from_service_account_info(  # type: ignore # noqa
+            info=self.creds.service_account,
+            **scopes,
+        )
+        project_name = cast(str, service_creds.project_id)
 
         self.creds.project = project_name
         self.creds.creds = service_creds
