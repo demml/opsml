@@ -1,6 +1,7 @@
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, model_validator
 import os
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, model_validator
 
 
 class AwsCredsSetter(BaseModel):

@@ -14,20 +14,16 @@ from typing import Any, BinaryIO, Dict, Iterator, List, Optional, Protocol, Unio
 
 from fsspec.implementations.local import LocalFileSystem
 
-from datetime import datetime, timedelta
-
-from adlfs import BlobServiceClient, BlobClient, generate_container_sas
-
 from opsml.helpers.logging import ArtifactLogger
 from opsml.settings.config import OpsmlConfig, config
 from opsml.storage.api import ApiClient, ApiRoutes, RequestType
 from opsml.types import (
     ApiStorageClientSettings,
+    AzureStorageClientSettings,
     BotoClient,
     GCSClient,
     GcsStorageClientSettings,
     S3StorageClientSettings,
-    AzureStorageClientSettings,
     StorageClientProtocol,
     StorageClientSettings,
     StorageSettings,
@@ -242,6 +238,7 @@ class S3StorageClient(StorageClientBase):
         settings: StorageSettings,
     ):
         import s3fs
+
         from opsml.helpers.aws_utils import AwsCredsSetter
 
         assert isinstance(settings, S3StorageClientSettings)
@@ -249,8 +246,8 @@ class S3StorageClient(StorageClientBase):
 
         client = s3fs.S3FileSystem(
             key=settings.credentials.access_key,
-            secret=settings.credentials.secret_key,
-            token=settings.credentials.session_token,
+            secret=settings.credentials.secret,
+            token=settings.credentials.token,
         )
 
         super().__init__(
@@ -282,11 +279,19 @@ class AzureStorageClient(StorageClientBase):
         self,
         settings: StorageSettings,
     ) -> None:
+        import logging
+
         import adlfs
+
         from opsml.helpers.azure_utils import AzureCreds
 
         assert isinstance(settings, AzureStorageClientSettings)
         assert isinstance(settings.credentials, AzureCreds)
+
+        # Set the logging level for all azure* libraries
+        # Azure logs a lot of info messages by default (dumb)
+        _logger = logging.getLogger("azure")
+        _logger.setLevel(logging.ERROR)
 
         client = adlfs.AzureBlobFileSystem(
             account_name=settings.credentials.account_name,
@@ -301,46 +306,75 @@ class AzureStorageClient(StorageClientBase):
             client=client,
         )
 
-    @cached_property
+    async def _generate_blob_sas(
+        self,
+        path: Path,
+        start_time: datetime.datetime,
+        expiry_time: datetime.datetime,
+    ) -> Optional[str]:
+        """Generates pre signed url for Azure object. This re-implements the
+        fsspec _url Azure BlobFileSystem logic to generate a SAS token for a blob.
+        The library does not current accept a user delegation key, so this is a workaround.
+        """
 
-    # Adapted from: https://stackoverflow.com/questions/78475904/generating-sas-url-for-azure-blob-container-with-proper-permissions - windows example
-    ## Since adlfs The AzureBlobFileSystem accepts all of the Async BlobServiceClient arguments. The code should probably work...
+        import adlfs
+        from azure.storage.blob import generate_blob_sas
 
-    ## Should maybe be possible to replace credentials here with client from client = AzureStorageClient(settings=settings) because of the acceptance of BlobServiceClient arguments (above)?
+        assert isinstance(self.client, adlfs.AzureBlobFileSystem)
 
-    def generate_sas_url_for_container(account_name, credentials, container_name, permissions, validity_hours, blob_name):
+        user_delegation_key = await self.client.service_client.get_user_delegation_key(
+            key_start_time=start_time,
+            key_expiry_time=expiry_time,
+        )
+
+        sas_token = generate_blob_sas(
+            account_name=self.client.account_name,
+            container_name=config.storage_root,
+            blob_name=str(path),
+            user_delegation_key=user_delegation_key,
+            permission="r",
+            start=start_time,
+            expiry=expiry_time,
+        )
+
+        async with self.client.service_client.get_blob_client(config.storage_root, str(path)) as blob_client:
+            url = f"{blob_client.url}?{sas_token}"
+        return url
+
+    def generate_presigned_url(self, path: Path, expiration: int) -> Optional[str]:
+        """Generates pre signed url for Azure object
+
+        Args:
+            path:
+                Path to object
+            expiration:
+                Expiration time in seconds
+
+        Returns:
+            str: SAS URL
+        """
         try:
-            blob_service_client = BlobServiceClient(
-                account_url=f"https://{account_name}.blob.core.windows.net/", credential=credentials
-            )  # this is for windows currently
-            user_delegation_key = blob_service_client.get_user_delegation_key(
-                datetime.now(datetime.UTC), datetime.now(datetime.UTC) + timedelta(hours=1)
+            import adlfs
+            from fsspec.asyn import sync
+
+            assert isinstance(self.client, adlfs.AzureBlobFileSystem)
+            # Get a user delegation key that's valid for 1 day
+            delegation_key_start_time = datetime.datetime.now(datetime.timezone.utc)
+            delegation_key_expiry_time = delegation_key_start_time + datetime.timedelta(minutes=30)
+
+            presigned_url: str = sync(
+                self.client.loop,
+                self._generate_blob_sas,
+                str(path),
+                delegation_key_start_time,
+                delegation_key_expiry_time,
             )
-            expiry = datetime.now(datetime.UTC) + timedelta(hours=validity_hours)
-            sas_token = generate_container_sas(
-                account_name=blob_service_client.account_name,
-                user_delegation_key=user_delegation_key,
-                container_name=container_name,
-                permission=permissions,
-                expiry=expiry,
-                protocol="https",
-            )
-            sas_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{container_name}/{blob_name}?{sas_token}"
-            return sas_url
-        except Exception as e:
-            print(f"Error generating SAS URL for container: {e}")
+
+            return presigned_url
+
+        except Exception as error:
+            logger.error(f"Error generating SAS URL for container: {error}")
             return None
-
-    # this probably belongs in the Filesystem protocol section...
-    def upload_file_to_container_with_sas_url(sas_url_with_blob_name, client, file_path):
-        try:
-            blob_client = client.from_blob_url(sas_url_with_blob_name)
-            with open(file_path, "rb") as data:
-                blob_client.upload_blob(data)
-            return True
-        except Exception as e:
-            print(f"Error uploading file to container: {e}")
-            return False
 
 
 class LocalStorageClient(StorageClientBase):

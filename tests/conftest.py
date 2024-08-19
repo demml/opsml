@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 LOCAL_DB_FILE_PATH = "tmp.db"
 LOCAL_TRACKING_URI = f"sqlite:///{LOCAL_DB_FILE_PATH}"
-LOCAL_STORAGE_URI = f"{os.getcwd()}/mlruns"
+LOCAL_STORAGE_URI = f"{os.getcwd()}/opsml_registries"
 
 # The unit tests are setup to use local tracking and storage by default. All
 # unit tests must use the default local client or a mocked GCS / S3 account.
@@ -155,7 +155,7 @@ def cleanup() -> None:
     # shutil.rmtree("local", ignore_errors=True)
 
     # remove test experiment mlrun path
-    shutil.rmtree("mlruns", ignore_errors=True)
+    shutil.rmtree(LOCAL_STORAGE_URI, ignore_errors=True)
 
     # delete test image dir
     shutil.rmtree("test_image_dir", ignore_errors=True)
@@ -173,7 +173,7 @@ def gcp_cred_path() -> str:
 
 
 def save_path() -> str:
-    p = Path(f"mlruns/OPSML_MODEL_REGISTRY/{uuid.uuid4().hex}")
+    p = Path(f"opsml_registries/OPSML_MODEL_REGISTRY/{uuid.uuid4().hex}")
     p.mkdir(parents=True, exist_ok=True)
     return str(p)
 
@@ -259,10 +259,36 @@ def gcs_test_bucket() -> Path:
 
 
 @pytest.fixture
+def azure_container() -> Path:
+    return Path(os.environ["AZURE_CONTAINER_NAME"])
+
+
+@pytest.fixture
+def aws_s3_bucket() -> Path:
+    return Path(os.environ["AWS_S3_BUCKET"])
+
+
+@pytest.fixture
 def gcs_storage_client(gcs_test_bucket: Path) -> client.GCSFSStorageClient:
-    cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri=f"gs://{str(gcs_test_bucket)}")
+    cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri=f"gs://{str(gcs_test_bucket)}")
     storage_client = client.get_storage_client(cfg)
     assert isinstance(storage_client, client.GCSFSStorageClient)
+    return storage_client
+
+
+@pytest.fixture
+def azure_storage_client(azure_container: Path) -> client.AzureStorageClient:
+    cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri=f"az://{str(azure_container)}")
+    storage_client = client.get_storage_client(cfg)
+    assert isinstance(storage_client, client.AzureStorageClient)
+    return storage_client
+
+
+@pytest.fixture
+def aws_storage_client(aws_s3_bucket: Path) -> client.S3StorageClient:
+    cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri=f"s3://{str(aws_s3_bucket)}")
+    storage_client = client.get_storage_client(cfg)
+    assert isinstance(storage_client, client.S3StorageClient)
     return storage_client
 
 
