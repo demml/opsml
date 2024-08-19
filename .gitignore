@@ -11,6 +11,7 @@ expressions.txt
 test.png
 blob/
 opsml/app/static/site/
+mlruns/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
