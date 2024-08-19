@@ -57,30 +57,35 @@ Our goal is 2-fold. (1) We want to provide a simple and consistent interface for
 With the plethora of available ML tooling it can be difficult to decide which tooling to use. The following are some reasons why you might want to use `Opsml` and why we created it.
 
 - Need for a consistent and standardized ML workflow to use in your organization
-- Not enthusiastic about vendor lock-in or paying a vendor to use an SDK and UI but still need to create and maintain your own infrastructure
 - You want to use a tool that is open source and continually developed
 - You want all artifacts to be given the same priority (no more treating data as less of a priority than models)
 - Don't want to worry about implementation details (how to version, store and track artifacts)
 - You'd like to have auto-generated metadata that meets engineering standards and can be used in production
 - You want to be able to share artifacts and workflows across teams
 
-### Nitty Gritty Details and OpsML
+### Key Features
 
-- Supports streaming (can use big data and models!) 
-- Supports a variety of storage backends (local, gcs, s3) 
-- Supports a variety of databases (sqlite, postgres, mysql)
-- Supports many ML and data libraries (sklearn, pytorch, tensorflow, huggingface, xgboost, lightgbm, catboost, polars, pandas, numpy, pyarrow, onnx, etc.)
-- Can create your own interfaces if we're missing anything!
-- Supports semantic versioning for all cards
-- Type checking for all interfaces
-- Strongly typed codebase 
-
+| Feature | OpsML | Others |
+|---------|:-------:|:--------:|
+| **Built in Model and Data Type Checking** | ✅ | ❌ |
+| **Stream Artifacts by Default** | ✅ | ❌ |
+| **End to End Observability** | ✅ | ❌ |
+| **No Shared Environments (no cross-polluting staging and prod)** | ✅ | ❌ |
+| **Auto-Onnx Conversion** | ✅ | ❌ |
+| **Auditability or Model and Data Assets** | ✅ | ❌ |
+| **Out of the Box Model Monitoring and Data Profiling** | ✅ | ❌ |
+| **Automated Metadata Generation** | ✅ | ❌ (for most) |
+| **Artifact Tracking** - Data, Models, Runs | ✅ | ❌ (for most) |
+| **Artifact Semantic Versioning** | ✅ | ❌ (for most) |
+| **Support for Multiple Cloud Providers** | ✅ | ✅ |
+| **Support for Multiple Databases** | ✅ | ✅ |
+| **Codebase is Readable** | ✅ | 🙏 |
 
 To get started using `OpsML`, check out the [installation](installation.md) and [quickstart](quickstart.md) guides.
 
 # Supported Libraries
 
-`Opsml` is designed to work with a variety of ML and data libraries. The following libraries are currently supported:
+`Opsml` is designed to work with a variety of ML and data libraries. The following libraries are currently supported out of the box. OpsML also supports custom data and model interfaces, so if you're library isn't supported, you can create your own interface as well as request that we add it to the library 😃
 
 
 ## Data Libraries
