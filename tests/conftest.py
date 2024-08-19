@@ -262,6 +262,7 @@ def gcs_test_bucket() -> Path:
 def azure_container() -> Path:
     return Path(os.environ["AZURE_CONTAINER_NAME"])
 
+
 @pytest.fixture
 def aws_s3_bucket() -> Path:
     return Path(os.environ["AWS_S3_BUCKET"])
@@ -281,6 +282,7 @@ def azure_storage_client(azure_container: Path) -> client.AzureStorageClient:
     storage_client = client.get_storage_client(cfg)
     assert isinstance(storage_client, client.AzureStorageClient)
     return storage_client
+
 
 @pytest.fixture
 def aws_storage_client(aws_s3_bucket: Path) -> client.S3StorageClient:
