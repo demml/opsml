@@ -246,8 +246,8 @@ class S3StorageClient(StorageClientBase):
 
         client = s3fs.S3FileSystem(
             key=settings.credentials.access_key,
-            secret=settings.credentials.secret_key,
-            token=settings.credentials.session_token,
+            secret=settings.credentials.secret,
+            token=settings.credentials.token,
         )
 
         super().__init__(
