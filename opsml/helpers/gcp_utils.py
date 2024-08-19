@@ -108,14 +108,15 @@ class GcpCredsSetter:
 
         scopes = {"scopes": ["https://www.googleapis.com/auth/devstorage.full_control"]}  # needed for gcsfs
 
-        print(self.creds.service_account)  # type: ignore # noqa
-        service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
-        print("hello")
+        # try regular service account first
+        try:
+            service_creds: Credentials = service_account.Credentials.from_service_account_info(  # type: ignore # noqa
+                info=self.creds.service_account,
+                **scopes,
+            )
+        except Exception as _:
+            service_creds = IdentityPoolCredentials.from_info(self.creds.service_account, **scopes)  # type: ignore # noqa
 
-        service_creds: Credentials = service_account.Credentials.from_service_account_info(  # type: ignore # noqa
-            info=self.creds.service_account,
-            **scopes,
-        )
         project_name = cast(str, service_creds.project_id)
 
         self.creds.project = project_name
