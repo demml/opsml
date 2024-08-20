@@ -221,7 +221,7 @@ def get_user(
     if not current_user.scopes.admin:
         # check if user is requesting themselves
         if current_user.username != username:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     user = auth_db.get_user(username)
@@ -250,7 +250,7 @@ def user_exists(request: Request, username: str) -> UserExistsResponse:
         user = auth_db.get_user_by_email(username)
 
         if user is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            return UserExistsResponse(exists=False, username=username)
 
     return UserExistsResponse(exists=True, username=user.username)
 
@@ -263,7 +263,7 @@ def create_user(
 ) -> UserCreated:
     """Create new user - requires admin permissions"""
     if not current_user.scopes.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
 
@@ -326,7 +326,10 @@ def update_user(
     if not current_user.scopes.admin:
         # check if user is updating themselves
         if current_user.username != user.username:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
+
+    if current_user.scopes.model_dump() != user.scopes.model_dump() and not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions to change scopes")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     updated = auth_db.update_user(user)

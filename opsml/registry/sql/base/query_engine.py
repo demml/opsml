@@ -786,13 +786,13 @@ class AuthQueryEngine(QueryEngine):
             user.username = user.updated_username
 
         dumped_model = user.model_dump(exclude={"password", "updated_username"})
+
         with self.session() as sess:
             query = sess.query(AuthSchema).filter(AuthSchema.username == current_username)
             query.update(dumped_model)  # type: ignore
             sess.commit()
             updated = True
 
-        print(dumped_model)
         return updated
 
     def delete_user(self, user: User) -> bool:
