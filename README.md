@@ -233,7 +233,3 @@ see [Installation](https://demml.github.io/opsml/installation/) for more informa
 If you'd like to contribute, be sure to check out our [contributing guide](./CONTRIBUTING.md)! If you'd like to work on any outstanding items, check out the `roadmap` section in the docs and get started :smiley:
 
 Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
-
-<a href="https://github.com/demml/opsml/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=demml/opsml" />
-</a>
