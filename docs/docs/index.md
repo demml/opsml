@@ -15,27 +15,46 @@
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://docs.pydantic.dev/latest/contributing/#badges)
 [![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
+[![AWS S3](https://img.shields.io/badge/AWS%20S3-orange)](https://aws.amazon.com/s3/)
+[![Google Cloud Storage](https://img.shields.io/badge/GCS-success)](https://cloud.google.com/storage)
+[![Azure](https://img.shields.io/badge/Azure-%230072C6)](https://azure.microsoft.com/en-us/products/storage/blobs)
 
 ## **What is it?**
 
-`OpsML` provides tooling that enables data science and engineering teams to better govern and manage their machine learning projects and artifacts by providing a standardized and universal registration system and repeatable patterns for tracking, versioning and storing ML artifacts.
+`OpsML` is a comprehensive toolkit designed to streamline and standardize machine learning operations. It offers:
 
+- Universal Registration System: A centralized platform for managing all ML artifacts.
+- Standardized Governance: Implement consistent practices across data science and engineering teams.
+- Artifact Lifecycle Management: Robust tracking, versioning, and storage solutions for all ML components.
+- Reproducible Workflows: Establish repeatable patterns for ML project management.
+- Cross-functional Compatibility: Bridge the gap between data science experimentation and production engineering.
+- Version Control for ML: Apply software engineering best practices to machine learning artifacts.
+- Metadata-Driven Approach: Enhance discoverability and traceability of models, datasets, and experiments.
 
-## **Why?**
+This toolkit empowers teams to maintain rigorous control over their ML projects, from initial data preprocessing to model deployment and monitoring, all within a unified, scalable framework.
 
-The core focus of `OpsML` is artifact registration, management and governance. After using various open-source and vendor tooling to manage different aspects of the machine learning project lifecycle, we found that we were still spending ample time gluing different tooling together in order to adequately govern, manage and deploy artifacts. Moreover, <b>machine learning currently lacks a universal standard for artifact registration and governance<b>, which makes managing machine learning projects and systems challenging. And given how expansive the machine learning tooling ecosystem is, and how each tool tends to have it's own way of saving, storing and tracking artifacts, we decided to build `OpsML` with the goal of providing a common framework.
+## **Why OpsML?**
 
+OpsML addresses a critical gap in the ML ecosystem: the lack of a universal standard for artifact registration and governance. Our experience with various open-source and proprietary tools revealed a persistent need to integrate disparate systems for effective artifact management and deployment. This led to the development of OpsML, a unified framework designed to streamline ML operations.
+Key Features:
 
-## **Features**:
-  - **Simple Design**: Standardized design that can easily be incorporated into existing projects.
+- **Modular Architecture**: Seamlessly integrates into existing ML pipelines and workflows.
+- **Card-based Artifact System**: Implements a SQL-based registry for tracking, versioning, and storing ML artifacts (data, models, runs, projects). Think of it as `trading cards for machine learning`.
+- **Strong Type Enforcement**: Ensures data integrity with built-in type checking for data and model artifacts.
+- **Extensive Library Support**: Compatible with a wide range of ML and data processing libraries.
+- **Automated ML Ops**:
+    - Auto-conversion to ONNX format
+    - Intelligent metadata generation
+    - Streamlined production packaging
+    - Out of the box model monitoring<sup>*</sup>
+- **Unified Governance Model**: Provides a consistent framework for managing the entire ML lifecycle, from experimentation to production.
+- **Scalable Design**: Accommodates growing complexity of ML projects and increasing team sizes.
 
-  - **Cards**: Track, version and store a variety of ML artifacts via cards (data, models, runs, projects) and a SQL-based card registry system. Think `trading cards for machine learning`.
+OpsML aims to be the common language for ML artifact management, reducing cognitive overhead and enabling teams to focus on model development and deployment rather than operational complexities.
 
-  - **Type Checking**: Strongly typed and type checking for data and model artifacts.
-
-  - **Support**: Robust support for a variety of ML and data libraries.
-
-  - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
+<sup>
+* OpsML is integrated with `Scouter` out of the box. However, a `Scouter` server instance is required to use this feature.
+</sup>
 
 ## Incorporate into Existing Workflows
 
@@ -47,39 +66,52 @@ Add quality control to your ML projects with little effort! With `opsml`, data a
   <br>
 </h1>
 
-## Our Goal
+## Our Mission
 
-Our goal is 2-fold. (1) We want to provide a simple and consistent interface for managing and tracking ML artifacts that is easy for DSs to use and incorporate, and (2) we want to inject quality control by providing standardized interfaces to DSs that automate the creation and governance of ML artifacts for our engineers.
+Our mission with OpsML is twofold:
 
+1. **Streamlined Artifact Management**
+     - Provide a intuitive, consistent API for ML artifact tracking and management
+     - Design a low-friction interface that data scientists can easily adopt and integrate into their workflows
+     - Minimize the learning curve for adopting robust ML ops practices
+
+2. **Automated Quality Assurance**
+      - Implement standardized interfaces that enforce best practices in ML artifact creation and governance
+      - Automate critical aspects of artifact management to reduce human error and inconsistency
+      - Bridge the gap between data science experimentation and production engineering requirements
+      - Facilitate seamless handoffs between data science and engineering teams
 
 ## Why Use OpsML vs other open source or vendor tooling?
 
-With the plethora of available ML tooling it can be difficult to decide which tooling to use. The following are some reasons why you might want to use `Opsml` and why we created it.
+Navigating the crowded landscape of ML tools can be challenging. Here's why Opsml stands out and why we developed it:
 
-- Need for a consistent and standardized ML workflow to use in your organization
-- You want to use a tool that is open source and continually developed
-- You want all artifacts to be given the same priority (no more treating data as less of a priority than models)
-- Don't want to worry about implementation details (how to version, store and track artifacts)
-- You'd like to have auto-generated metadata that meets engineering standards and can be used in production
-- You want to be able to share artifacts and workflows across teams
+1. Standardized ML Workflows: Implement a consistent, reproducible workflow across your organization.
+2. Open-Source Advantage: Benefit from continuous development and community-driven improvements.
+3. Artifact Equality: Elevate data to the same priority as models in your ML lifecycle.
+4. Abstraction of Implementation Details: Focus on your core ML tasks while Opsml handles versioning, storage, and tracking of artifacts.
+5. Production-Ready Metadata: Automatically generate metadata that meets stringent engineering standards and is deployment-ready.
+6. Cross-Team Collaboration: Easily share artifacts and workflows, fostering synergy between data science and engineering teams.
+7. Reduced Technical Debt: Streamline your ML operations with a tool designed for long-term maintainability and scalability.
 
 ### Key Features
 
 | Feature | OpsML | Others |
 |---------|:-------:|:--------:|
-| **Built in Model and Data Type Checking** | ✅ | ❌ |
-| **Stream Artifacts by Default** | ✅ | ❌ |
-| **End to End Observability** | ✅ | ❌ |
-| **No Shared Environments (no cross-polluting staging and prod)** | ✅ | ❌ |
-| **Auto-Onnx Conversion** | ✅ | ❌ |
-| **Auditability or Model and Data Assets** | ✅ | ❌ |
-| **Out of the Box Model Monitoring and Data Profiling** | ✅ | ❌ |
-| **Automated Metadata Generation** | ✅ | ❌ (for most) |
-| **Artifact Tracking** - Data, Models, Runs | ✅ | ❌ (for most) |
-| **Artifact Semantic Versioning** | ✅ | ❌ (for most) |
-| **Support for Multiple Cloud Providers** | ✅ | ✅ |
-| **Support for Multiple Databases** | ✅ | ✅ |
-| **Codebase is Readable** | ✅ | 🙏 |
+| **Built-in Type Checking for Models & Data** | ✅ | ❌ |
+| **Default Artifact Streaming** | ✅ | ❌ |
+| **Full-Stack Observability** | ✅ | ❌ |
+| **Isolated Environments (No Staging/Prod Conflicts)** | ✅ | ❌ |
+| **Automated ONNX Conversion** | ✅ | ❌ |
+| **Comprehensive Model & Data Asset Auditing** | ✅ | ❌ |
+| **Out-of-the-Box Model Monitoring & Data Profiling** | ✅ | ❌ |
+| **Automated Metadata Generation** | ✅ | ❌ (rare) |
+| **Granular Artifact Tracking (Data, Models, Runs)** - Data, Models, Runs | ✅ | ❌ (uncommon) |
+| **SemVer for All Artifacts** | ✅ | ❌ (rare) |
+| **Multi-Cloud Compatibility** | ✅ | ✅ |
+| **Multi-Database Support** | ✅ | ✅ |
+| **Clean, Maintainable Codebase** | ✅ | 🤔 |
+
+
 
 To get started using `OpsML`, check out the [installation](installation.md) and [quickstart](quickstart.md) guides.
 
