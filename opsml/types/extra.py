@@ -164,32 +164,43 @@ class PresignableTypes(str, Enum):
     YAML = ".yaml"
 
 
+class UserRepositories(BaseModel):
+    data: List[str] = []
+    models: List[str] = []
+    runs: List[str] = []
+
+
 class UserScope(BaseModel):
+    """Base user scope model. Default is read and write.
+    A user will be able to read from any repository, but only write to
+    repositories that they create. If a user needs access to additional
+    repositories, they will need to be granted access by an admin by updating
+    their scope object.
+    """
+
     read: bool = True
-    write: bool = False
+    write: bool = True
     delete: bool = False
     admin: bool = False
+    repositories: UserRepositories = UserRepositories()
 
     @property
     def is_admin(self) -> bool:
         return self.admin
 
 
-class DefaultRepositories(BaseModel):
-    data: List[str] = []
-    models: List[str] = []
-    runs: List[str] = []
-
-
 class User(BaseModel):
     username: str
     password: Optional[str] = None
+    security_question: Optional[str] = None
+    security_answer: Optional[str] = None
     hashed_password: Optional[str] = None
     email: Optional[str] = None
     full_name: Optional[str] = None
     is_active: bool = True
     scopes: UserScope = UserScope()
-    default_repositories: DefaultRepositories = DefaultRepositories()
+    watchlist: UserRepositories = UserRepositories()
+    updated_username: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -214,3 +225,14 @@ class User(BaseModel):
             user_args["hashed_password"] = hashed
 
         return user_args
+
+
+class Message(BaseModel):
+    uid: str
+    registry: str
+    message_id: Optional[int] = None
+    user: str
+    votes: int = 0
+    content: str
+    parent_id: Optional[int] = None
+    created_at: Optional[float] = None
