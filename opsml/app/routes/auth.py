@@ -1,15 +1,19 @@
 from typing import Annotated, Union
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Request, status, Response, Cookie
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
+from opsml.app.routes.pydantic_models import (
+    SecurityQuestionResponse,
+    TempRequest,
+    UserExistsResponse,
+)
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import config
 from opsml.types.extra import User
-from opsml.app.routes.pydantic_models import UserExistsResponse, SecurityQuestionResponse, TempRequest
 
 logger = ArtifactLogger.get_logger()
 
