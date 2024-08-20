@@ -191,7 +191,7 @@ registries.model.register_card(card=modelcard)
 
 Now that `OpsML` is installed, you're ready to start using it!
 
-It's time to point you to the official [Documentation Website](https://demml.github.io/opsml-ghpages/) for more information on how to use `OpsML`
+It's time to point you to the official [Documentation Website](https://demml.github.io/opsml/) for more information on how to use `OpsML`
 
 ## Advanced Installation Scenarios
 
