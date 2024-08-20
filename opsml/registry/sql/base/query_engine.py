@@ -25,12 +25,14 @@ from opsml.registry.sql.base.sql_schema import (
     AuthSchema,
     CardSQLTable,
     HardwareMetricSchema,
+    MessageSchema,
     MetricSchema,
+    ParameterSchema,
     ProjectSchema,
     SQLTableGetter,
 )
 from opsml.types import RegistryType
-from opsml.types.extra import User
+from opsml.types.extra import Message, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -644,7 +646,7 @@ class RunQueryEngine(QueryEngine):
         run_uid: str,
         name: Optional[List[str]] = None,
         names_only: bool = False,
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Get run metrics. By default, all metrics are returned. If name is provided,
         only metrics with that name are returned. Metric type can be either "metric" or "graph".
         "metric" will return name, value, step records. "graph" will return graph (x, y) records.
@@ -672,15 +674,70 @@ class RunQueryEngine(QueryEngine):
         with self.session() as sess:
             results = sess.execute(query).all()
         if not results:
-            return None
+            return []
 
         if names_only:
             return [row[0] for row in results]
 
         return self._parse_records(results)
 
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Insert run parameter
+        Args:
+            parameter:
+                List of run parameter(s)
+        """
+        with self.session() as sess:
+            sess.execute(insert(ParameterSchema), parameter)
+            sess.commit()
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Get run parameters. By default, all parameters are returned. If name is provided,
+        only parameters with that name are returned.
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the parameter
+        Returns:
+            List of run metrics
+        """
+
+        query = select(ParameterSchema).filter(ParameterSchema.run_uid == run_uid)
+        if name is not None:
+            filters = [ParameterSchema.name == n for n in name]
+            query = query.filter(or_(*filters))
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+
+        if not results:
+            return []
+
+        return self._parse_records(results)
+
 
 class AuthQueryEngine(QueryEngine):
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by username
+
+        Args:
+            email:
+                Email
+
+        Returns:
+            User record
+        """
+
+        query = select(AuthSchema).filter(AuthSchema.email == email)
+        with self.session() as sess:
+            result = sess.execute(query).first()
+
+        if not result:
+            return None
+
+        return User(**result[0].__dict__)
+
     def get_user(self, username: str) -> Optional[User]:
         """Get user by username
 
@@ -708,7 +765,7 @@ class AuthQueryEngine(QueryEngine):
             user:
                 User record
         """
-        dumped_model = user.model_dump(exclude={"password"})
+        dumped_model = user.model_dump(exclude={"password", "updated_username"})
         with self.session() as sess:
             sess.execute(insert(AuthSchema), dumped_model)
             sess.commit()
@@ -722,13 +779,22 @@ class AuthQueryEngine(QueryEngine):
         """
 
         updated = False
-        dumped_model = user.model_dump(exclude={"password"})
+        current_username = user.username
+
+        # handle updated username
+        if user.updated_username:
+            user.username = user.updated_username
+
+        dumped_model = user.model_dump(exclude={"password", "updated_username"})
+
+        print(dumped_model)
         with self.session() as sess:
-            query = sess.query(AuthSchema).filter(AuthSchema.username == user.username)
+            query = sess.query(AuthSchema).filter(AuthSchema.username == current_username)
             query.update(dumped_model)  # type: ignore
             sess.commit()
             updated = True
 
+        print(dumped_model)
         return updated
 
     def delete_user(self, user: User) -> bool:
@@ -746,6 +812,71 @@ class AuthQueryEngine(QueryEngine):
             deleted = True
 
         return deleted
+
+
+class MessageQueryEngine(QueryEngine):
+    def insert_message(self, message: Message) -> None:
+        """Insert message
+
+        Args:
+            message:
+                message record
+        """
+
+        with self.session() as sess:
+            sess.execute(insert(MessageSchema), message.model_dump())
+            sess.commit()
+
+    def get_messages(
+        self,
+        registry: str,
+        uid: str,
+    ) -> List[Optional[Message]]:
+        """Get messages
+
+        Args:
+            uid:
+                Uid
+            registry:
+                Registry type
+        Returns:
+            List of messages
+        """
+
+        parent_query = select(MessageSchema).filter(
+            MessageSchema.uid.is_(uid),
+            MessageSchema.registry.is_(registry),
+            MessageSchema.parent_id.is_(None),
+        )
+
+        query = parent_query.union_all(
+            select(MessageSchema).filter(
+                MessageSchema.uid.is_(uid),
+                MessageSchema.registry.is_(registry),
+                MessageSchema.parent_id.isnot(None),
+            )
+        )
+
+        with self.session() as sess:
+            results = sess.execute(query).all()
+
+        if not results:
+            return []
+
+        return [Message(**row._asdict()) for row in results]
+
+    def update_message(self, message: Message) -> None:
+        """Update message
+
+        Args:
+            message:
+                message record
+        """
+        message_uid = cast(int, message.get("message_id"))
+        with self.session() as sess:
+            query = sess.query(MessageSchema).filter(MessageSchema.message_id == message_uid)
+            query.update(message.model_dump())  # type: ignore
+            sess.commit()
 
 
 def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[QueryEngine, ProjectQueryEngine]:
@@ -766,4 +897,6 @@ def get_query_engine(db_engine: Engine, registry_type: RegistryType) -> Union[Qu
         return RunQueryEngine(engine=db_engine)
     if registry_type == RegistryType.AUTH:
         return AuthQueryEngine(engine=db_engine)
+    if registry_type == RegistryType.MESSAGE:
+        return MessageQueryEngine(engine=db_engine)
     return QueryEngine(engine=db_engine)
