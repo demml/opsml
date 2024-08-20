@@ -11,13 +11,14 @@ from pydantic import (
     Field,
     FieldSerializationInfo,
     field_serializer,
+    field_validator,
     model_validator,
 )
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
 from opsml.registry.semver import CardVersion, VersionType
-from opsml.types import Comment, HardwareMetrics
+from opsml.types import HardwareMetrics
 
 
 class Success(BaseModel):
@@ -97,8 +98,7 @@ class ListCardRequest(BaseModel):
     tags: Optional[Dict[str, str]] = None
     ignore_release_candidates: bool = False
     project_id: Optional[str] = None
-    registry_type: Optional[str] = None
-    table_name: Optional[str] = None
+    registry_type: str
     query_terms: Optional[Dict[str, Any]] = None
     sort_by_timestamp: bool = False
     page: Optional[int] = None
@@ -271,7 +271,40 @@ class Metric(BaseModel):
 
 
 class Metrics(BaseModel):
-    metric: Union[Optional[List[Metric]], Optional[List[str]]]
+    metric: List[Optional[Union[Metric, str]]] = []
+
+
+class Parameter(BaseModel):
+    run_uid: str
+    name: str
+    value: Union[float, int, str]
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def check_type(cls, value: str) -> Union[float, int, str]:
+        """All params are stored as strings in the database. This function coerces the value
+        to a float of int if possible when returning values
+        """
+
+        if isinstance(value, (int, float)):
+            return value
+
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
+
+class Parameters(BaseModel):
+    parameter: List[Optional[Parameter]] = []
+
+
+class GetParameterRequest(BaseModel):
+    run_uid: str
+    name: Optional[List[str]] = None
 
 
 class HardwareMetricRecord(BaseModel):
@@ -326,7 +359,7 @@ class DataCardMetadata(BaseModel):
     uid: str
     interface_type: str
     data_splits: Optional[str] = None
-    sql_logic: Dict[str, str] = {}
+    sql_logic: Optional[Dict[str, str]] = None
     feature_map: Optional[str] = None
 
 
@@ -463,7 +496,6 @@ class AuditReport(BaseModel):
     status: Optional[bool] = False
     audit: Optional[Dict[str, Any]] = AuditSections().model_dump()  # type: ignore
     timestamp: Optional[str] = None
-    comments: List[Optional[Comment]] = []
 
 
 class ProjectIdResponse(BaseModel):
@@ -487,3 +519,17 @@ class ReadMeRequest(BaseModel):
     repository: str
     registry_type: str
     content: str
+
+
+class UserExistsResponse(BaseModel):
+    exists: bool
+    username: str
+
+
+class SecurityQuestionResponse(BaseModel):
+    question: str
+
+
+class TempRequest(BaseModel):
+    username: str
+    answer: str
