@@ -240,7 +240,7 @@ def test_app() -> YieldFixture[TestClient]:
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
-        
+
         if os.environ.get("OPSML_AUTH") == "True":
             # set header if needed
             response = tc.post(
