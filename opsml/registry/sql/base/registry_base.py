@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from semver import VersionInfo
 
@@ -37,6 +37,18 @@ class SQLRegistryBase:
         raise NotImplementedError
 
     def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
+        raise NotImplementedError
+
+    def query_stats(self, search_term: Optional[str]) -> Dict[str, int]:
+        raise NotImplementedError
+
+    def query_page(
+        self,
+        sort_by: str,
+        page: int,
+        repository: Optional[str] = None,
+        search_term: Optional[str] = None,
+    ) -> List[Tuple[Union[str, int], ...]]:
         raise NotImplementedError
 
     @property
@@ -293,6 +305,9 @@ class SQLRegistryBase:
                     sorted_records.append(record)
 
         return sorted_records
+
+    def _sort_by_timestamp(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        return sorted(records, key=lambda k: k["timestamp"], reverse=True)
 
     def delete_card(self, card: Card) -> None:
         """Delete a specific card"""

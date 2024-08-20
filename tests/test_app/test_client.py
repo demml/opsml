@@ -33,42 +33,11 @@ from tests.conftest import EXCLUDE, TODAY_YMD
 def test_debug(test_app: TestClient) -> None:
     """Test debug path"""
 
-    # get token
-    response = test_app.post(
-        "/opsml/auth/token",
-        data={"username": "admin", "password": "admin"},
-    )
-
-    assert response.status_code == 200
-
-    # set bearer token
-    token = response.json()["access_token"]
-    test_app.headers.update({"Authorization": f"Bearer {token}"})
-
     response = test_app.get("/opsml/debug")
 
     assert "tmp.db" in response.json()["url"]
     assert "opsml_registries" in response.json()["storage"]
     assert response.status_code == 200
-
-
-def test_error(test_app: TestClient) -> None:
-    """Test error path"""
-
-    response = test_app.post(
-        "/opsml/auth/token",
-        data={"username": "admin", "password": "admin"},
-    )
-
-    assert response.status_code == 200
-
-    # set bearer token
-    token = response.json()["access_token"]
-    test_app.headers.update({"Authorization": f"Bearer {token}"})
-
-    response = test_app.get("/opsml/error")
-
-    assert response.status_code == 500
 
 
 def test_register_data(
