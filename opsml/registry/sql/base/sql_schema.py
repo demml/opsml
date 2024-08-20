@@ -10,6 +10,7 @@ from typing import List, cast
 
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import declarative_base, declarative_mixin, validates
 
 from opsml.helpers.logging import ArtifactLogger
@@ -161,6 +162,16 @@ class MetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class ParameterSchema(Base):
+    __tablename__ = RegistryTableNames.PARAMETERS.value
+
+    run_uid = Column("uid", String(64))
+    name = Column("name", String(128))
+    value = Column("value", String(128))
+    date_ts = Column("date_ts", String(64), default=lambda: str(dt.datetime.now(tz=timezone.utc)))
+    idx = Column(Integer, primary_key=True)
+
+
 # only used if using auth
 class AuthSchema(Base):
     __tablename__ = RegistryTableNames.AUTH.value
@@ -168,12 +179,12 @@ class AuthSchema(Base):
     username = Column("username", String(64), primary_key=True)
     full_name = Column("full_name", String(64))
     email = Column("email", String(64))
+    security_question = Column("security_question", String(64))
+    security_answer = Column("security_answer", String(64))
     hashed_password = Column("hashed_password", String(64))
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)
     created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
-    default_repositories = Column("default_repositories", JSON)
-    # example {"model": ["repo1", "repo2"], "data": ["repo1", "repo2"], "run": ["repo1", "repo2"]}
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
@@ -191,12 +202,30 @@ class HardwareMetricSchema(Base):
         return f"<SqlTable: {self.__tablename__}>"
 
 
+class MessageSchema(Base):
+    __tablename__ = RegistryTableNames.MESSAGE.value
+
+    uid = Column("uid", String(64), nullable=False)
+    registry = Column("registry", String(16), nullable=False)
+    message_id = Column("message_id", Integer, primary_key=True, autoincrement=True)
+    parent_id = Column("parent_id", Integer, nullable=True)
+    content = Column("content", String(512), nullable=False)
+    user = Column("user", String(32), nullable=False)
+    votes = Column("votes", Integer, nullable=False, default=0)
+    created_at = Column("created_at", Float, default=lambda: dt.datetime.now(tz=timezone.utc).timestamp())
+
+    @hybrid_property
+    def path_string(self) -> str:
+        return str(self.message_id)
+
+
 AVAILABLE_TABLES: List[CardSQLTable] = []
 for schema in Base.__subclasses__():
     if schema.__tablename__ not in [
         RegistryTableNames.BASE.value,
         RegistryTableNames.METRICS.value,
         RegistryTableNames.HARDWARE_METRICS.value,
+        RegistryTableNames.PARAMETERS.value,
     ]:
         AVAILABLE_TABLES.append(cast(CardSQLTable, schema))
 
