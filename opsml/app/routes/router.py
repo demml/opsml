@@ -8,6 +8,7 @@ from fastapi import APIRouter
 
 from opsml.app.routes import (
     audit,
+    auth,
     cards,
     data,
     files,
@@ -32,6 +33,6 @@ def build_router(dependencies: Optional[Sequence[Any]] = None) -> APIRouter:
     api_router.include_router(registry.router, tags=["registry"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(projects.router, tags=["project"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(metrics.router, tags=["metrics"], prefix="/opsml", dependencies=dependencies)
-    api_router.include_router(metrics.router, tags=["auth"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
     return api_router
