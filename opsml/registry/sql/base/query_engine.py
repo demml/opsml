@@ -786,8 +786,6 @@ class AuthQueryEngine(QueryEngine):
             user.username = user.updated_username
 
         dumped_model = user.model_dump(exclude={"password", "updated_username"})
-
-        print(dumped_model)
         with self.session() as sess:
             query = sess.query(AuthSchema).filter(AuthSchema.username == current_username)
             query.update(dumped_model)  # type: ignore

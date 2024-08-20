@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from enum import Enum, unique
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import bcrypt
 from pydantic import BaseModel, field_validator, model_validator
@@ -175,6 +175,12 @@ class UserScope(BaseModel):
         return self.admin
 
 
+class DefaultRepositories(BaseModel):
+    data: List[str] = []
+    models: List[str] = []
+    runs: List[str] = []
+
+
 class User(BaseModel):
     username: str
     password: Optional[str] = None
@@ -183,6 +189,7 @@ class User(BaseModel):
     full_name: Optional[str] = None
     is_active: bool = True
     scopes: UserScope = UserScope()
+    default_repositories: DefaultRepositories = DefaultRepositories()
 
     @model_validator(mode="before")
     @classmethod
