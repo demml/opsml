@@ -18,7 +18,7 @@ Recommendation based on needs
 
 ### How do I turn off onnx conversion?
 
-Auto onnx conversion can be turned off by default. It can be turned on by setting `to_onnx=True` in the `ModelCard` constructor.
+Auto onnx conversion is turned off by default. It can be turned on by setting `to_onnx=True` in the `ModelCard` constructor.
 
 ### How do I supply my own onnx definition?
 
