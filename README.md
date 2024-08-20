@@ -17,35 +17,57 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
-[![codecov](https://codecov.io/gh/demml/opsml/graph/badge.svg?token=VXY6UJYLDQ)](https://codecov.io/gh/demml/opsml)
-[![Pydantic](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://docs.pydantic.dev/latest/contributing/#badges)
+[![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://docs.pydantic.dev/latest/contributing/#badges)
 [![gitleaks](https://img.shields.io/badge/protected%20by-gitleaks-purple)](https://github.com/zricethezav/gitleaks-action)
+[![AWS S3](https://img.shields.io/badge/AWS%20S3-orange)](https://aws.amazon.com/s3/)
+[![Google Cloud Storage](https://img.shields.io/badge/GCS-success)](https://cloud.google.com/storage)
+[![Azure](https://img.shields.io/badge/Azure-%230072C6)](https://azure.microsoft.com/en-us/products/storage/blobs)
+
+## **What is it?**
+
+`OpsML` is a comprehensive toolkit designed to streamline and standardize machine learning operations. It offers:
+
+- Universal Registration System: A centralized platform for managing all ML artifacts.
+- Standardized Governance: Implement consistent practices across data science and engineering teams.
+- Artifact Lifecycle Management: Robust tracking, versioning, and storage solutions for all ML components.
+- Reproducible Workflows: Establish repeatable patterns for ML project management.
+- Cross-functional Compatibility: Bridge the gap between data science experimentation and production engineering.
+- Version Control for ML: Apply software engineering best practices to machine learning artifacts.
+- Metadata-Driven Approach: Enhance discoverability and traceability of models, datasets, and experiments.
+
+This toolkit empowers teams to maintain rigorous control over their ML projects, from initial data preprocessing to model deployment and monitoring, all within a unified, scalable framework.
 
 
-## What is it?
+## **Why OpsML?**
 
-`OpsML` provides tooling that enables data science and engineering teams to better govern and manage their machine learning projects and artifacts by providing a standardized and universal registration system and repeatable patterns for tracking, versioning and storing ML artifacts.
+OpsML addresses a critical gap in the ML ecosystem: the lack of a universal standard for artifact registration and governance. Our experience with various open-source and proprietary tools revealed a persistent need to integrate disparate systems for effective artifact management and deployment. This led to the development of OpsML, a unified framework designed to streamline ML operations.
+Key Features:
 
+- **Modular Architecture**: Seamlessly integrates into existing ML pipelines and workflows.
+- **Card-based Artifact System**: Implements a SQL-based registry for tracking, versioning, and storing ML artifacts (data, models, runs, projects). Think of it as `trading cards for machine learning`.
+- **Strong Type Enforcement**: Ensures data integrity with built-in type checking for data and model artifacts.
+- **Extensive Library Support**: Compatible with a wide range of ML and data processing libraries.
+- **Automated ML Ops**:
+    - Auto-conversion to ONNX format
+    - Intelligent metadata generation
+    - Streamlined production packaging
+    - Out of the box model monitoring<sup>*</sup>
+- **Unified Governance Model**: Provides a consistent framework for managing the entire ML lifecycle, from experimentation to production.
+- **Scalable Design**: Accommodates growing complexity of ML projects and increasing team sizes.
 
-## Features:
-  - **Simple Design**: Standardized design that can easily be incorporated into existing projects.
+OpsML aims to be the common language for ML artifact management, reducing cognitive overhead and enabling teams to focus on model development and deployment rather than operational complexities.
 
-  - **Cards**: Track, version and store a variety of ML artifacts via cards (data, models, runs, projects) and a SQL-based card registry system. Think `trading cards for machine learning`.
-
-  - **Type Checking**: Strongly typed and type checking for data and model artifacts.
-
-  - **Support**: Robust support for a variety of ML and data libraries.
-
-  - **Automation**: Automated processes including onnx model conversion, metadata creation and production packaging.
-
+<sup>
+* OpsML is integrated with `Scouter` out of the box. However, a `Scouter` server instance is required to use this feature.
+</sup>
 
 ## Incorporate into Existing Workflows
 
-Add quality control to your ML projects with little effort! With `opsml`, data and models are added to interfaces and cards, which are then registered via card registries. 
+Add quality control to your ML projects with little effort! With `OpsML`, data and models are added to interfaces and cards, which are then registered via card registries. 
 
 # Incorporate into Existing Workflows
 
-Given its simple and modular design, `opsml` can be easily incorporated into existing workflows. 
+Given its simple and modular design, `OpsML` can be easily incorporated into existing workflows. 
 
 <h1 align="center">
   <br>
@@ -70,15 +92,17 @@ pip install opsml
 
 Setup your local environment:
 
-By default, `opsml` will log artifacts and experiments locally. To change this behavior and log to a remote server, you'll need to set the following environment variables:
+By default, `OpsML` will log artifacts and experiments locally. To change this behavior and log to a remote server, you'll need to set the following environment variables:
 
 ```shell
 export OPSML_TRACKING_URI=${YOUR_TRACKING_URI}
 ```
 
+You can find more information on how to set up the tracking and storage uris [here](https://demml.github.io/opsml/installation/).
+
 ## Quickstart
 
-If running the example below locally without a server, make sure to install the `server` extra:
+If running the example below locally, with a local server, make sure to install the `server` extra:
 
 ```bash 
 poetry add "opsml[server]"
@@ -158,7 +182,6 @@ registries.model.register_card(card=modelcard)
   - [Table of Contents](#table-of-contents)
   - [Usage](#usage)
   - [Advanced Installation Scenarios](#advanced-installation-scenarios)
-  - [Environment Variables](#environment-variables)
 - [Supported Libraries](#supported-libraries)
   - [Data Libraries](#data-libraries)
   - [Model Libraries](#model-libraries)
@@ -166,79 +189,18 @@ registries.model.register_card(card=modelcard)
 
 ## Usage
 
-Now that `opsml` is installed, you're ready to start using it!
+Now that `OpsML` is installed, you're ready to start using it!
 
-It's time to point you to the official [Documentation Website](https://demml.github.io/opsml-ghpages/) for more information on how to use `opsml`
-
+It's time to point you to the official [Documentation Website](https://demml.github.io/opsml-ghpages/) for more information on how to use `OpsML`
 
 ## Advanced Installation Scenarios
 
-`Opsml` is designed to work with a variety of 3rd-party integrations depending on your use-case.
-
-Types of extras that can be installed:
-
-- **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
-  ```bash
-  poetry add "opsml[postgres]"
-  ```
-
-- **Server**: Installs necessary packages for setting up a `Fastapi`-based `Opsml` server
-  ```bash
-  poetry add "opsml[server]"
-  ```
-
-- **GCP with mysql**: Installs mysql and gcsfs to be used with `Opsml`
-  ```bash
-  poetry add "opsml[gcs,mysql]"
-  ```
-
-- **GCP with mysql(cloud-sql)**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
-  ```bash
-  poetry add "opsml[gcp_mysql]"
-  ```
-
-- **GCP with postgres**: Installs postgres and gcsgs to be used with `Opsml`
-  ```bash
-  poetry add "opsml[gcs,postgres]"
-  ```
-
-- **GCP with postgres(cloud-sql)**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
-  ```bash
-  poetry add "opsml[gcp_postgres]"
-  ```
-
-- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
-  ```bash
-  poetry add "opsml[s3,postgres]"
-  ```
-
-- **AWS with mysql**: Installs mysql and s3fs dependencies to be used with `Opsml`
-  ```bash
-  poetry add "opsml[s3,mysql]"
-  ```
-
-## Environment Variables
-
-The following environment variables are used to configure opsml. When using
-opsml as a client (i.e., not running a server), the only variable that must be
-set is `OPSML_TRACKING_URI`.
-
-| Name                       | Description                                                                                                                     |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| APP_ENV                    | The environment to use. Supports `development`, `staging`, and `production`                                                      |
-| GOOGLE_ACCOUNT_JSON_BASE64 | The base64 string of the the GCP service account to use.                                                                        |
-| OPSML_MAX_OVERFLOW         | The SQL "max_overflow" size. Defaults to 5                                                                                      |
-| OPSML_POOL_SIZE            | The SQL connection pool size. Defaults to 10.                                                                                   |
-| OPSML_STORAGE_URI          | The location of storage to use. Supports a local file system, AWS, and GCS. Example: `gs://some-bucket`                         |
-| OPSML_TRACKING_URI         | Used when logging artifacts to an opsml server (a.k.a., the server which "tracks" artifacts)                                    |
-| OPSML_USERNAME             | An optional server username. If the server is setup with login enabled, all clients must use HTTP basic auth with this username |
-| OPSML_PASSWORD             | An optional server password. If the server is setup with login enabled, all clients must use HTTP basic auth with this password |
-| OPSML_RUN_ID               | If set, the run will be automatically loaded when creating new cards.                                                           |
+see [Installation](https://demml.github.io/opsml/installation/) for more information on how to install `OpsML` in different environments.
 
 
 # Supported Libraries
 
-`Opsml` is designed to work with a variety of ML and data libraries. The following libraries are currently supported:
+`OpsML` is designed to work with a variety of ML and data libraries. The following libraries are currently supported:
 
 ## Data Libraries
 
@@ -273,5 +235,5 @@ If you'd like to contribute, be sure to check out our [contributing guide](./CON
 Thanks goes to these phenomenal [projects and people](./ATTRIBUTIONS.md) for creating a great foundation to build from!
 
 <a href="https://github.com/demml/opsml/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=shipt/opsml" />
+  <img src="https://contrib.rocks/image?repo=demml/opsml" />
 </a>

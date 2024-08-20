@@ -58,7 +58,7 @@ OpsML aims to be the common language for ML artifact management, reducing cognit
 
 ## Incorporate into Existing Workflows
 
-Add quality control to your ML projects with little effort! With `opsml`, data and models are represented as `cards` and stored in a `card registry`. This allows for easy versioning, tracking and storage of ML artifacts. 
+Add quality control to your ML projects with little effort! With `OpsML`, data and models are represented as `cards` and stored in a `card registry`. This allows for easy versioning, tracking and storage of ML artifacts. 
 
 <h1 align="center">
   <br>
@@ -117,7 +117,7 @@ To get started using `OpsML`, check out the [installation](installation.md) and 
 
 # Supported Libraries
 
-`Opsml` is designed to work with a variety of ML and data libraries. The following libraries are currently supported out of the box. OpsML also supports custom data and model interfaces, so if you're library isn't supported, you can create your own interface as well as request that we add it to the library 😃
+`OpsML` is designed to work with a variety of ML and data libraries. The following libraries are currently supported out of the box. OpsML also supports custom data and model interfaces, so if you're library isn't supported, you can create your own interface as well as request that we add it to the library 😃
 
 
 ## Data Libraries

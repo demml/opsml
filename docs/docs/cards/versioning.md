@@ -63,7 +63,7 @@ registry.register_card(card=card)
 # 1.0.0
 ```
 
-All Cards accept manual insertion of `major.minor.patch`, `major.minor` or `major`. If a version is supplied, `opsml` will search the associated registry for the latest version that matches the supplied version. As an example, if the latest registered version of a card is `1.2.0` and a new card is registered with a version specified as `1.2` and a `version_type` of `patch`, `opsml` will increment the version to `1.2.1`.
+All Cards accept manual insertion of `major.minor.patch`, `major.minor` or `major`. If a version is supplied, `OpsML` will search the associated registry for the latest version that matches the supplied version. As an example, if the latest registered version of a card is `1.2.0` and a new card is registered with a version specified as `1.2` and a `version_type` of `patch`, `OpsML` will increment the version to `1.2.1`.
 
 Example:
 ```python

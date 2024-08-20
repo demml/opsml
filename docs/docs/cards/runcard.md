@@ -79,7 +79,7 @@ with project.run() as run:
     run.log_artifact_from_file("artifact", "artifact.txt")
 ```
 
-You can now log into the `Opsml` server and see your recent run and associated metadata
+You can now log into the `OpsML` server and see your recent run and associated metadata
 
 ### Logging Hardware
 
