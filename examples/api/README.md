@@ -6,7 +6,7 @@ The following example shows how you can load a previously registered model and u
 
 ### Workflow
 
-1. (Omitted) - Use `opsml` cli to download model to folder
+1. (Omitted) - Use `OpsML` cli to download model to folder
 
 ```bash
 opsml-cli download-model --name lightgbm-reg -- version 1.0.0  --onnx

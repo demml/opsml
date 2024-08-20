@@ -1,6 +1,6 @@
-# `Opsml` Server Setup
+# `OpsML` Server Setup
 
-In addition to using `Opsml` as a stand-alone python package, it can also be used as a server (`FastApi`) providing a proxy interface between data scientists and backend infrastructure (**recommended approach**). What this means for **data scientists**, is that they can use `Opsml` as they normally would without having to set any credentials apart from the http proxy uri. For **engineers**, this means that they can control the infrastucture, databases, and overall server setup based on their specifications and security requirements. More on this can be found [here](../engineering/ownership.md)
+In addition to using `OpsML` as a stand-alone python package, it can also be used as a server (`FastApi`) providing a proxy interface between data scientists and backend infrastructure (**recommended approach**). What this means for **data scientists**, is that they can use `OpsML` as they normally would without having to set any credentials apart from the http proxy uri. For **engineers**, this means that they can control the infrastucture, databases, and overall server setup based on their specifications and security requirements. More on this can be found [here](../engineering/ownership.md)
 
 
 ## Registry Architecture
@@ -13,11 +13,11 @@ In addition to using `Opsml` as a stand-alone python package, it can also be use
 ---
 
 ## **Setup**
-You can setup the `Opsml` server based on your repository needs. As an example, you could follow a conventional setup whereby you host Docker images via K8s. For this setup, you would install `Opsml` and its dependencies into a Dockerfile and host the server on k8s.
+You can setup the `OpsML` server based on your repository needs. As an example, you could follow a conventional setup whereby you host Docker images via K8s. For this setup, you would install `OpsML` and its dependencies into a Dockerfile and host the server on k8s.
 
 ### Required Env Vars
 
-As mentioned [here](../installation.md) `Opsml` expects 2 variables to be set (these can be set in an Dockerfile or at webserver runtime).
+As mentioned [here](../installation.md) `OpsML` expects 2 variables to be set (these can be set in an Dockerfile or at webserver runtime).
 
 - OPSML_TRACKING_URI: This is the tracking uri of your backend database.
 - OPSML_STORAGE_URI: This is the storage uri of your storage backend (e.g. GCP, AWS).
@@ -110,9 +110,9 @@ As mentioned [here](../installation.md) `Opsml` expects 2 variables to be set (t
 
 ### Server Command
 
-- During local development/testing, you can spin up and test the `Opsml` server via the **CLI** command `opsml-uvicorn-server` which will launch a Uvicorn server.
+- During local development/testing, you can spin up and test the `OpsML` server via the **CLI** command `opsml-uvicorn-server` which will launch a Uvicorn server.
 - For production, it is recommended that you run Gunicorn.
-- The following command can be used to run a Gunicorn `Opsml` server.
+- The following command can be used to run a Gunicorn `OpsML` server.
 
 `gunicorn -k uvicorn.workers.UvicornWorker --config=./app/gunicorn_conf.py --bind=0.0.0.0:3000 "opsml.app.main:run_app(login=False)"`
 
