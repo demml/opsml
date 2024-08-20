@@ -9,7 +9,7 @@ import pytest
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
-from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
+from opsml.app.routes.pydantic_models import AuditFormRequest
 from opsml.app.routes.utils import error_to_500, list_repository_name_info
 from opsml.cards import (
     AuditCard,
@@ -642,26 +642,6 @@ def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelC
 
     response = test_app.get(
         f"/opsml/audit/?repository={modelcard.repository}&model={modelcard.name}&version={modelcard.version}"
-    )
-    assert response.status_code == 200
-
-    comment = CommentSaveRequest(
-        uid=auditcard.uid,
-        name=auditcard.name,
-        repository=auditcard.repository,
-        contact=auditcard.contact,
-        selected_model_name=modelcard.name,
-        selected_model_version=modelcard.version,
-        selected_model_repository=modelcard.repository,
-        selected_model_contact=modelcard.contact,
-        comment_name="test",
-        comment_text="test",
-    )
-    #
-    ## test auditcard comment
-    response = test_app.post(
-        "/opsml/audit/comment/save",
-        data=comment.model_dump(),
     )
     assert response.status_code == 200
 

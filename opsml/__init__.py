@@ -38,7 +38,6 @@ from opsml.registry import CardRegistries, CardRegistry
 from opsml.types import (
     AuditCardMetadata,
     CardInfo,
-    Comment,
     DataCardMetadata,
     Description,
     HuggingFaceOnnxArgs,
@@ -99,7 +98,6 @@ __all__ = [
     "ModelCardMetadata",
     "DataCardMetadata",
     "Description",
-    "Comment",
     "AuditCardMetadata",
     "ModelMetadata",
     "ModelLoader",
