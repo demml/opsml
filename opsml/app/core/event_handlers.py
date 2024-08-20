@@ -46,6 +46,7 @@ def _init_registries(app: FastAPI) -> None:
 
 def _shutdown_registries(app: FastAPI) -> None:
     app.state.registries = None
+    app.state.message_db = None
     # app.state.storage_client = None
     # app.state.model_registrar = None
 

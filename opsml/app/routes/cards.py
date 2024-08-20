@@ -228,8 +228,8 @@ def list_cards(
             table_name=payload.table_name,
             registry_type=payload.registry_type,
         )
-
         registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+
         logger.info("Listing cards with request: {}", payload.model_dump())
 
         cards = registry._registry.list_cards(
