@@ -125,7 +125,7 @@ async def login_for_access_token(
 
     logger.info("User authenticated: {}", form_data.username)
 
-    jwt_token = auth_db.create_access_token(user, minutes=1)
+    jwt_token = auth_db.create_access_token(user, minutes=30)
     refresh_token = auth_db.create_access_token(user, minutes=60)
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
 
