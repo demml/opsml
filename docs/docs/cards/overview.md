@@ -1,4 +1,4 @@
-Cards (aka ArtifactCards) are one of the primary data structures for working with `Opsml` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
+Cards (aka ArtifactCards) are one of the primary data structures for working with `OpsML` that contain both data and model interface objects as well as associated metadata. `ArtifactCards` are stored in registries and can be used to track and version data and models.
 
 ```mermaid
 flowchart TD
@@ -99,7 +99,7 @@ DataCard(interface=data_interface)
 
 ### Name Uniqueness
 
-When registering cards, `Opsml` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the `repository/name` level. Thus, different repositories can share cards with the same name.
+When registering cards, `OpsML` will check to see if a card with the same name, repository and version already exists. Therefore, name uniqueness is guaranteed at the `repository/name` level. Thus, different repositories can share cards with the same name.
 
 ### Listing Cards
 Returns a list of dictionaries. 

@@ -20,7 +20,7 @@ def test_s3_presigned_uri():
             autospec=True,
         ),
     ):
-        cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="s3://fake")
+        cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri="s3://fake")
         storage_client = client.get_storage_client(cfg)
         assert isinstance(storage_client, client.S3StorageClient)
 
@@ -32,7 +32,7 @@ def test_s3_presigned_uri():
         "boto3.client",
         return_value=None,
     ):
-        cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="s3://fake")
+        cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri="s3://fake")
         storage_client = client.get_storage_client(cfg)
         signed_url = storage_client.generate_presigned_url(Path("fake"), 1)
         assert signed_url is None

@@ -19,7 +19,7 @@ flowchart LR
 
 
 
-Interfaces are one of the 3 primary objects in `Opsml` and can be viewed as a low-level object with the most flexibility. Although each subclassed interface is unique, they are all designed to be injected into a `ModelCard` or `DataCard`
+Interfaces are one of the 3 primary objects in `OpsML` and can be viewed as a low-level object with the most flexibility. Although each subclassed interface is unique, they are all designed to be injected into a `ModelCard` or `DataCard`
 
 ## Interface Types
 
@@ -29,7 +29,7 @@ Interfaces are one of the 3 primary objects in `Opsml` and can be viewed as a lo
 
 ## Data Interface
 
-The `DataInterface` is the primary interface for working with data in `Opsml`. It is designed to be subclassed and can be used to store data in a variety of formats depending on the library. Out of the box the following subclasses are available:
+The `DataInterface` is the primary interface for working with data in `OpsML`. It is designed to be subclassed and can be used to store data in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
 - `PandasData`: Stores data from a pandas dataframe
 - `NumpyData`: Stores data from a numpy array
@@ -42,7 +42,7 @@ The `DataInterface` is the primary interface for working with data in `Opsml`. I
 
 ## Model Interface
 
-The `ModelInterface` is the primary interface for working with models in `Opsml`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
+The `ModelInterface` is the primary interface for working with models in `OpsML`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
 - `SklearnModel`: Stores data from a sklearn model
 - `TorchModel`: Stores data from a pytorch model

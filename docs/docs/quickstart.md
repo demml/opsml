@@ -1,4 +1,4 @@
-To get a quick feel for `Opsml`, run the following code in a new terminal. The following uses Mlflow as a UI interface and local storage and sqlite.
+To get a quick feel for `OpsML`, run the following code in a new terminal. The following uses Mlflow as a UI interface and local storage and sqlite.
 
 ### Start Local Server
 
@@ -18,7 +18,7 @@ $ opsml-uvicorn-server
 
 </div>
 
-Next, open a new terminal and run the following python script. Make sure to set the `OPSML_TRACKING_URI` which tells `opsml` where to log experiments.
+Next, open a new terminal and run the following python script. Make sure to set the `OPSML_TRACKING_URI` which tells `OpsML` where to log experiments.
 
 
 ## Run Initial Python Script

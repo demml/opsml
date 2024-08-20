@@ -13,63 +13,100 @@ pip install opsml
 ```
 
 ## Optional Dependencies
-`Opsml` is designed to work with a variety of 3rd-party integrations depending on your use-case.
+`OpsML` is designed to work with a variety of 3rd-party integrations depending on your use-case.
 
 Types of extras that can be installed:
 
-- **Postgres**: Installs postgres pyscopg2 dependency to be used with `Opsml`
+- **Postgres**: Installs postgres pyscopg2 dependency to be used with `OpsML`
   ```bash
   poetry add "opsml[postgres]"
   ```
 
-- **Server**: Installs necessary packages for setting up a `Fastapi` based `Opsml` server
+- **Server**: Installs necessary packages for setting up a `Fastapi` based `OpsML` server
   ```bash
   poetry add "opsml[server]"
   ```
 
-- **GCP with mysql**: Installs mysql and gcsfs to be used with `Opsml`
+- **GCP with mysql**: Installs mysql and gcsfs to be used with `OpsML`
   ```bash
-  poetry add "opsml[gcs,mysql]"
+  poetry add "opsml[gcp_mysql]" or "opsml[gcs,mysql]"
   ```
 
-- **GCP with mysql(cloud-sql)**: Installs mysql and cloud-sql gcp dependencies to be used with `Opsml`
+- **GCP with postgres**: Installs postgres and gcsgs to be used with `OpsML`
   ```bash
-  poetry add "opsml[gcp_mysql]"
+  poetry add "opsml[gcp_postgres]" or "opsml[gcs,postgres]"
   ```
 
-- **GCP with postgres**: Installs postgres and gcsgs to be used with `Opsml`
+- **AWS with mysql**: Installs postgres and s3fs dependencies to be used with `OpsML`
   ```bash
-  poetry add "opsml[gcs,postgres]"
+  poetry add "opsml[aws_mysql]" or "opsml[s3,mysql]"
   ```
 
-- **GCP with postgres(cloud-sql)**: Installs postgres and cloud-sql gcp dependencies to be used with `Opsml`
+- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `OpsML`
   ```bash
-  poetry add "opsml[gcp_postgres]"
-  ```
+  poetry add "opsml[aws_postgres]" or "opsml[s3,postgres]"
+  ``` 
 
-- **AWS with postgres**: Installs postgres and s3fs dependencies to be used with `Opsml`
+- **Azure with mysql**: Installs postgres and s3fs dependencies to be used with `OpsML`
   ```bash
-  poetry add "opsml[s3,postgres]"
-  ```
+  poetry add "opsml[azure_mysql]" or "opsml[azure,mysql]"
+  ``` 
 
-- **AWS with mysql**: Installs mysql and s3fs dependencies to be used with `Opsml`
+- **Azure with postgres**: Installs postgres and s3fs dependencies to be used with `OpsML`
   ```bash
-  poetry add "opsml[s3,mysql]"
+  poetry add "opsml[azure_postgres]" or "opsml[azure,postgres]"
   ```
 
 ### Example setup for gcs storage and postgres with opsml server
 
 ```bash
-  poetry add "opsml[gcs, postgres, server]"
+  poetry add "opsml[gcp_postgres, server]"
 ```
 
 ## Environment Variables
-`Opsml` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `Opsml` [server](./engineering/server.md).
+`OpsML` requires 1 or 2 environment variables depending on if you are using it as an all-in-one interface (no proxy) or you are using it as an interface to interact with an `OpsML` [server](./engineering/server.md).
 
-- **OPSML_TRACKING_URI**: This is the sql tracking uri to your card registry database. If interacting with an `Opsml` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
+**OPSML_TRACKING_URI**
+:   This is the sql tracking uri to your card registry database. If interacting with an `OpsML` server, this will be the http address of the server. If this variable is not set, it will default to a local `SQLite` connection.
 
-- **OPSML_STORAGE_URI**: This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `Opsml` currently supports local file system, google cloud storage and amazon s3.
-If running `Opsml` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `Opsml` server, this variable does not need to be set.
+**OPSML_STORAGE_URI**
+:   This is the storage uri to use for storing ml artifacts (models, data, figures, etc.). `OpsML` currently supports local file system, Google Cloud Storage, AWS S3 and Azure.
+If running `OpsML` as an all-in-one interface, this variable is required and will default to a local folder if not specified. If interacting with an `OpsML` server, this variable does not need to be set.
+
+| Storage Type | URI Format |
+|--------------|------------|
+| Local        | `./path/to/folder` |
+| Google Cloud | `gs://bucket_name` |
+| AWS S3       | `s3://bucket_name` |
+| Azure        | `az://container_name` |
+
+
+### Example setups
+
+  - **Server setup with local storage and sqlite**:
+    ```bash
+    export OPSML_TRACKING_URI="sqlite:///tmp.db"
+    export OPSML_STORAGE_URI="./opsml_registries"
+    ```
+
+  - **Server setup with gcs storage and postgres (with ssl)**:
+    ```bash
+    export OPSML_TRACKING_URI="postgresql+psycopg2://username:password@opsml-host:5432/db_name?connect_timeout=5&sslmode=require"
+    export OPSML_STORAGE_URI="gs://opsml_bucket"
+    ```
+
+  - **Server setup with s3 storage and mysql**:
+    ```bash
+    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
+    export OPSML_STORAGE_URI="s3://opsml_bucket"
+    ```
+
+  - **Server setup with azure storage and mysql**:
+    ```bash
+    export OPSML_TRACKING_URI="mysql+pymysql://username:password@opsml-host:3306/db_name"
+    export OPSML_STORAGE_URI="az://opsml_container"
+    ```
+
 
 ## TLDR Scenarios
 
@@ -81,4 +118,4 @@ If running `Opsml` as an all-in-one interface, this variable is required and wil
 
   - Set `OPSML_TRACKING_URI` to the sql tracking uri of your card registry database
   - Set `OPSML_STORAGE_URI` to the storage uri of your choice
-  - Follow instructions in [server](./engineering/server.md) docs
+  - Follow additional instructions in [server](./engineering/server.md) docs

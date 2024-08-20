@@ -48,7 +48,7 @@ def test_debug(test_app: TestClient) -> None:
     response = test_app.get("/opsml/debug")
 
     assert "tmp.db" in response.json()["url"]
-    assert "mlruns" in response.json()["storage"]
+    assert "opsml_registries" in response.json()["storage"]
     assert response.status_code == 200
 
 

@@ -1,5 +1,4 @@
 # opsml-artifacts
-mlruns/
 opsml_registries/
 opsml/api/
 test_scripts*
@@ -13,6 +12,7 @@ expressions.txt
 test.png
 blob/
 opsml/app/static/site/
+mlruns/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -132,3 +132,5 @@ node_modules/
 # macOS
 .DS_Store
 **/.DS_Store
+/opsml_registries
+local_test_db.db

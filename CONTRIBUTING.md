@@ -1,10 +1,10 @@
 # Contributing to demml/opsml
 
 ## Welcome
-Hello! We're glad and grateful that you're interested in contributing to `Opsml` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
+Hello! We're glad and grateful that you're interested in contributing to `OpsML` :tada:! Below you will find the general guidelines for setting up your environment and creating/submitting `pull requests`.
 
 ## Very Important
-To contribute to `Opsml` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address
+To contribute to `OpsML` you will need to sign a Contributor License Agreement (CLA) via HelloSign when you create your first `pull_request` (this is an automated process). For a `pull_request` to be valid, your Github email address must match the email address used to sign the CLA. Github has [documentation](https://help.github.com/articles/setting-your-commit-email-address-on-github/) on setting email addresses. Your git email must also match this email address
 
 
 ## Table of contents
@@ -19,8 +19,8 @@ To contribute to `Opsml` you will need to sign a Contributor License Agreement (
 
 ## Environment Setup
 Steps:
-1. Create a new env. `Opsml` currently supports python 3.9 -> 3.11
-2. Fork `Opsml`
+1. Create a new env. `OpsML` currently supports python 3.9 -> 3.11
+2. Fork `OpsML`
 3. Install all required and development packages in your new env (we use [poetry](https://github.com/python-poetry/poetry) for dependency management).
 
 ```bash
@@ -48,7 +48,7 @@ poetry install --all-extras --with dev,dev-lints
    * Make sure you fill out the `pull_request` template (included with every `pull_request`)
 6. Request review from one of our maintainers (this should happen automatically via `.github/CODEOWNERS`). 
 7. Get Approval. We'll let you know if there are any changes that are needed. 
-8. Merge your changes into `Opsml`!
+8. Merge your changes into `OpsML`!
 
 ## Contributing TLDR
 1. Create branch
@@ -62,9 +62,9 @@ poetry install --all-extras --with dev,dev-lints
 ## Community Guidelines
   1. Be Kind
     - Working with us should be a fun learning opportunity, and we want it to be a good experience for everyone. Please treat each other with respect.  
-    - If something looks outdated or incorrect, please let us know! We want to make `Opsml` as useful as possible. 
+    - If something looks outdated or incorrect, please let us know! We want to make `OpsML` as useful as possible. 
   2. Own Your Work
-     * Creating a PR for `Opsml` is your first step to becoming a contributor, so make sure that you own your changes. 
+     * Creating a PR for `OpsML` is your first step to becoming a contributor, so make sure that you own your changes. 
      * Our maintainers will do their best to respond to you in a timely manner, but we ask the same from you as the contributor. 
 
 ## Submitting issues/bugs
@@ -76,6 +76,6 @@ We use [GitHub issues](https://github.com/thorrester/opsml/issues) to track bugs
 You can suggest an enhancement by opening a [new feature request](https://github.com/demml/opsml/issues/new?labels=enhancement&template=feature_request.yml).
 Before creating an enhancement suggestion, please check that a similar issue does not already exist.
 
-Please describe the behavior you want and why, and provide examples of how `Opsml` would be used if your feature were added.
+Please describe the behavior you want and why, and provide examples of how `OpsML` would be used if your feature were added.
 
 ## _Thank you!_

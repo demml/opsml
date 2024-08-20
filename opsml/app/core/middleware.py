@@ -14,7 +14,9 @@ logger = ArtifactLogger.get_logger()
 MiddlewareReturnType = Union[Awaitable[Any], Response]
 
 
-async def rollbar_middleware(request: Request, call_next: Callable[[Request], MiddlewareReturnType]) -> MiddlewareReturnType:
+async def rollbar_middleware(
+    request: Request, call_next: Callable[[Request], MiddlewareReturnType]
+) -> MiddlewareReturnType:
     try:
         return await call_next(request)  # type: ignore
     except Exception as ex:  # pylint: disable=broad-except

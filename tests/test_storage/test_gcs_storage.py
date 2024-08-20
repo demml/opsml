@@ -8,24 +8,24 @@ from opsml.storage import client
 
 def test_gcs_presigned_uri() -> None:
     class MockBlob:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
-        def generate_signed_url(self, *args, **kwargs):
+        def generate_signed_url(self, *args, **kwargs) -> str:
             return "https://fake.com"
 
     class MockBucket:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
-        def blob(self, *args, **kwargs):
+        def blob(self, *args, **kwargs) -> MockBlob:
             return MockBlob()
 
     class MockGCSClient:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
-        def bucket(self, *args, **kwargs):
+        def bucket(self, *args, **kwargs) -> MockBucket:
             return MockBucket()
 
     with (
@@ -50,7 +50,7 @@ def test_gcs_presigned_uri() -> None:
             return_value=MockGCSClient(),
         ),
     ):
-        cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="gs://fake")
+        cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri="gs://fake")
         storage_client = client.get_storage_client(cfg)
         assert isinstance(storage_client, client.GCSFSStorageClient)
 
@@ -76,7 +76,7 @@ def test_gcs_presigned_uri() -> None:
             return_value=MockGCSClient(),
         ),
     ):
-        cfg = OpsmlConfig(opsml_tracking_uri="./mlruns", opsml_storage_uri="gs://fake")
+        cfg = OpsmlConfig(opsml_tracking_uri="./opsml_registries", opsml_storage_uri="gs://fake")
         storage_client = client.get_storage_client(cfg)
         assert isinstance(storage_client, client.GCSFSStorageClient)
 
