@@ -172,6 +172,8 @@ class AuthSchema(Base):
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)
     created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
+    default_repositories = Column("default_repositories", JSON)
+    # example {"model": ["repo1", "repo2"], "data": ["repo1", "repo2"], "run": ["repo1", "repo2"]}
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"
