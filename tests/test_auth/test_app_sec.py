@@ -238,7 +238,7 @@ def test_user_routes(test_app: TestClient) -> None:
 
 @pytest.mark.appsec
 def test_create_user(test_app: TestClient) -> None:
-    
+
     response = test_app.post(
         "/opsml/auth/token",
         data={"username": "admin", "password": "admin"},
@@ -271,7 +271,7 @@ def test_create_user(test_app: TestClient) -> None:
     )
 
     assert response.status_code == 409
-    
+
     user.username = "new_user"
 
     response = test_app.post(
@@ -281,31 +281,29 @@ def test_create_user(test_app: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json()["created"] == True
-    
-    
+
     # test temp token
     response = test_app.post(
         "/opsml/auth/temp",
         json={"username": "new_user", "answer": "test_answer"},
     )
-    
+
     assert response.status_code == 200
-    
-    
+
     # test temp token with wrong answer
     response = test_app.post(
         "/opsml/auth/temp",
         json={"username": "new_user", "answer": "test_answer_fail"},
     )
-    
+
     assert response.status_code == 200
     assert response.json() == "Incorrect answer"
-    
+
     # test temp token with wrong user
     response = test_app.post(
         "/opsml/auth/temp",
         json={"username": "no_user", "answer": "test_answer_fail"},
     )
-    
+
     assert response.status_code == 200
     assert response.json() == "User not found"
