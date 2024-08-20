@@ -1,4 +1,4 @@
-#type: ignore
+# type: ignore
 from opsml.registry.registry import CardRegistries
 from opsml.settings.config import OpsmlConfig
 from opsml.storage.client import (
