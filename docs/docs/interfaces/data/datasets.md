@@ -1,6 +1,6 @@
 ## Datasets
 
-In addition to `DataInterface` classes, `opsml` also provides a `Dataset` class that is used when working with text or image data.
+In addition to `DataInterface` classes, `OpsML` also provides a `Dataset` class that is used when working with text or image data.
 
 
 ### Required Arguments for all Datasets (examples below)

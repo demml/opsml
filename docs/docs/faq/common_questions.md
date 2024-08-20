@@ -18,7 +18,7 @@ Recommendation based on needs
 
 ### How do I turn off onnx conversion?
 
-Auto onnx conversion can be turned off by default. It can be turned on by setting `to_onnx=True` in the `ModelCard` constructor.
+Auto onnx conversion is turned off by default. It can be turned on by setting `to_onnx=True` in the `ModelCard` constructor.
 
 ### How do I supply my own onnx definition?
 
@@ -28,6 +28,6 @@ If you'd like to create your onnx model yourself and associate that with the Mod
 
 Every `ArtifactCard` requires a name, repository and contact. For convenience, you can instead provide a `CardInfo` instance.
 
-### How is `Opsml` different than other products out there?
+### How is `OpsML` different than other products out there?
 
-A key difference between `Opsml` and other products is that `Opsml` was not designed to be a platform or lock you in to any specific way of doing things. Instead, the goal and initial idea behind `Opsml` was to provide tooling and an interface that stitches, standardizes and automates some of the key building blocks (storage, tracking, versioning) to any machine learning workflow or platform. Thus, `Opsml` is capable of being used with other platforms or machine learning workflow systems. Or you can build your own!
+A key difference between `OpsML` and other products is that `OpsML` was not designed to be a platform or lock you in to any specific way of doing things. Instead, the goal and initial idea behind `OpsML` was to provide tooling and an interface that stitches, standardizes and automates some of the key building blocks (storage, tracking, versioning) to any machine learning workflow or platform. Thus, `OpsML` is capable of being used with other platforms or machine learning workflow systems. Or you can build your own!

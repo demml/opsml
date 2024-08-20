@@ -36,8 +36,6 @@ class NumpyData(DataInterface):
 
         assert self.data is not None, "No data detected in interface"
 
-        print(type(self.data))
-
         zarr.save(path, self.data)
 
         self.feature_map = generate_feature_schema(self.data, self.data_type)

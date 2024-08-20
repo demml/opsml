@@ -70,8 +70,7 @@ def get_hw_metrics(
         time.sleep(interval / 2)
 
 
-class ActiveRunException(Exception):
-    ...
+class ActiveRunException(Exception): ...
 
 
 class _RunManager:

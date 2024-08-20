@@ -42,7 +42,9 @@ class CardRegistry:
             data_registry.list_cards()
         """
 
-        _registry_type = registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
+        _registry_type = (
+            registry_type if isinstance(registry_type, RegistryType) else RegistryType.from_str(registry_type)
+        )
 
         self._registry = _set_registry(_registry_type)
         self.table_name = self._registry.table_name

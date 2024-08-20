@@ -1,6 +1,6 @@
 # Data Interface
 
-The `DataInterface` is the primary interface for working with data in `Opsml`. It is designed to be subclassed and can be used to store data in a variety of formats depending on the library. Out of the box the following subclasses are available:
+The `DataInterface` is the primary interface for working with data in `OpsML`. It is designed to be subclassed and can be used to store data in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
 - `PandasData`: Stores data from a pandas dataframe
 - `NumpyData`: Stores data from a numpy array
@@ -201,7 +201,7 @@ data_registry.register_card(card=datacard)
 ---
 ## SqlData
 
-SqlData is an interface for storing sql logic in the event that you prefer to not save the data itself. This is useful for large datasets that you may not want to store in `Opsml` but still want to keep track of the logic used to generate the data.
+SqlData is an interface for storing sql logic in the event that you prefer to not save the data itself. This is useful for large datasets that you may not want to store in `OpsML` but still want to keep track of the logic used to generate the data.
 
 |  |  |
 | --- | --- |
@@ -237,7 +237,7 @@ In the event that the currently supported `DataInterfaces` do not meet your need
 - `load_data` method must be overwritten to your desired logic and must accept a `path` argument
 - `data_suffix` property must be overwritten to return your specific data suffix (e.g. `.csv`, `.json`, etc.)
 
-These requirements are necessary for `Opsml` to properly save and load your data, as these are called during either saving or loading via the `DataCard`.
+These requirements are necessary for `OpsML` to properly save and load your data, as these are called during either saving or loading via the `DataCard`.
 
 
 ### Example
@@ -275,4 +275,4 @@ datacard = registry.load_card(uid=datacard.uid, interface=MyDataInterface)
 ```
 
 ### **Final Note** 
-It is up to you to make sure your subclass works as expected and is compatible with the `DataCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.
+It is up to you to make sure your subclass works as expected and is compatible with the `DataCard` class. If you feel your subclass is useful to others, please consider contributing it to the `OpsML` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.

@@ -1,6 +1,6 @@
 # Deployment
 
-While `Opsml` is not an all-in-one platform that will deploy your model in one click (maybe one day :smile:), it does provide a helper class and a happy path to deploy your model. This is outlined below.
+While `OpsML` is not an all-in-one platform that will deploy your model in one click (maybe one day :smile:), it does provide a helper class and a happy path to deploy your model. This is outlined below.
 
 ```mermaid
 flowchart LR

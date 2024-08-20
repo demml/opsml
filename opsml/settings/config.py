@@ -20,7 +20,7 @@ class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
     app_env: str = "development"
 
-    opsml_storage_uri: str = "./mlruns"
+    opsml_storage_uri: str = "./opsml_registries"
     opsml_tracking_uri: str = "sqlite:///tmp.db"
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"
@@ -49,7 +49,11 @@ class OpsmlConfig(BaseSettings):
         """Opsml uses storage cients that follow fsspec guidelines. LocalFileSystem only deals
         in absolutes, so we need to convert relative paths to absolute paths.
         """
-        if opsml_storage_uri.startswith("gs://") or opsml_storage_uri.startswith("s3://"):
+        if (
+            opsml_storage_uri.startswith("gs://")
+            or opsml_storage_uri.startswith("s3://")
+            or opsml_storage_uri.startswith("az://")
+        ):
             return opsml_storage_uri
 
         return Path(opsml_storage_uri).absolute().as_posix()

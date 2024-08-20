@@ -1,6 +1,6 @@
 # Model Interface
 
-The `ModelInterface` is the primary interface for working with models in `Opsml`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
+The `ModelInterface` is the primary interface for working with models in `OpsML`. It is designed to be subclassed and can be used to store models in a variety of formats depending on the library. Out of the box the following subclasses are available:
 
 - `SklearnModel`: Stores data from a sklearn model
 - `TorchModel`: Stores data from a pytorch model
@@ -601,7 +601,7 @@ In the event that the currently supported `ModelInterfaces` do not meet your nee
 - `model_suffix` The suffix to be used when saving the model. This is used to determine the file extension when saving the model.
 - `save_onnx` If you plan to save your model via onnx, you will also need to specify your onnx conversion logic. (Optional, but to_onnx must be set to False if you don't plan on using onnx). Must return a `ModelReturn` class.
 
-These requirements are necessary for `Opsml` to properly save and load your model, as these are called during either saving or loading via the `ModelCard`.
+These requirements are necessary for `OpsML` to properly save and load your model, as these are called during either saving or loading via the `ModelCard`.
 
 
 ### Example
@@ -661,4 +661,4 @@ modelcard = registry.load_card(uid=modelcard.uid, interface=MyModelInterface)
 ```
 
 ### **Final Note** 
-It is up to you to make sure your subclass works as expected and is compatible with the `ModelCard` class. If you feel your subclass is useful to others, please consider contributing it to the `Opsml` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.
+It is up to you to make sure your subclass works as expected and is compatible with the `ModelCard` class. If you feel your subclass is useful to others, please consider contributing it to the `OpsML` library. In addition, if using a custom subclass, others will not be able to load/use your `card` unless they have access to the custom subclass.

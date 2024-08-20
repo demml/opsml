@@ -153,7 +153,9 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(
+            self.interface, DataInterface
+        ), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property

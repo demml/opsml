@@ -1,7 +1,7 @@
 import json
 import shutil
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import torch
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
@@ -27,17 +27,19 @@ from opsml import (
 )
 
 
-class ExampleDataset(torch.utils.data.Dataset):
-    def __init__(self, encodings, labels):
+class ExampleDataset(torch.utils.data.Dataset):  # type: ignore
+    def __init__(self, encodings: Any, labels: Any) -> None:
         self.encodings = encodings
         self.labels = labels
 
-    def __getitem__(self, idx):
-        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}  # pylint: disable=no-member
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        item: Dict[str, torch.Tensor] = {
+            key: torch.tensor(val[idx]) for key, val in self.encodings.items()
+        }  # pylint: disable=no-member
         item["labels"] = torch.tensor(self.labels[idx])  # pylint: disable=no-member
         return item
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.labels)
 
 
@@ -56,7 +58,7 @@ class OpsmlHuggingFaceWorkflow:
         self.info = info
         self.registries = CardRegistries()
 
-    def _create_datacard(self):
+    def _create_datacard(self) -> None:
         """Shows how to create a data interface and datacard
 
         You can think of cards as outputs to each step in your workflow.
@@ -86,7 +88,7 @@ class OpsmlHuggingFaceWorkflow:
 
         return texts, labels
 
-    def _create_modelcard(self):
+    def _create_modelcard(self) -> None:
         """Shows how to create a model interface and modelcard
 
         This example highlights the uses of the HuggingFaceModel.
@@ -109,13 +111,13 @@ class OpsmlHuggingFaceWorkflow:
         val_dataset = ExampleDataset(val_encodings, val_labels)
 
         training_args = TrainingArguments(
-            output_dir="mlruns/results",
+            output_dir="opsml_registries/results",
             num_train_epochs=1,
             per_device_train_batch_size=4,
             per_device_eval_batch_size=4,
             warmup_steps=500,
             weight_decay=0.01,
-            logging_dir="mlruns/logs",
+            logging_dir="opsml_registries/logs",
             logging_steps=10,
         )
 
@@ -153,7 +155,7 @@ class OpsmlHuggingFaceWorkflow:
         )
         self.registries.model.register_card(card=modelcard)
 
-    def _test_onnx_model(self):
+    def _test_onnx_model(self) -> None:
         """This shows how to load a modelcard and the associated model and onnx model (if converted to onnx)"""
 
         modelcard: ModelCard = self.registries.model.load_card(name=self.info.name)
@@ -163,10 +165,11 @@ class OpsmlHuggingFaceWorkflow:
         inputs = dict(
             modelcard.preprocessor("This is a test", return_tensors="np", padding="max_length", truncation=True)
         )
+        assert modelcard.onnx_model is not None, "Onnx model is not loaded"
 
         print(modelcard.onnx_model.sess(**inputs))
 
-    def run_workflow(self):
+    def run_workflow(self) -> None:
         """Helper method for executing workflow"""
         self._create_datacard()
         self._create_modelcard()

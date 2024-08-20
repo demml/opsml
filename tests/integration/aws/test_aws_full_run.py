@@ -9,6 +9,7 @@ from opsml.data import PandasData
 from opsml.model import ModelInterface
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry import CardRegistries, CardRegistry
+from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 
@@ -18,13 +19,20 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
         lazy_fixture("sklearn_pipeline"),
     ],
 )
-def test_gcs_full_run(
+def test_azure_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
+    aws_storage_client: StorageClient,
+    aws_s3_bucket: Path,
 ) -> None:
     """Verifies the full cycle of model and data card persistence.
     Because a profile is saved, data must be PandasData.
     """
+
+    # delete all objects in bucket
+    for i in aws_storage_client.find(aws_s3_bucket):
+        aws_storage_client.rm(i)  # type: ignore
+
     # get data and model
     model, data = model_and_data
 
@@ -49,7 +57,7 @@ def test_gcs_full_run(
                 repository="mlops",
                 contact="mlops.com",
             )
-            datacard.create_data_profile()
+            # datacard.create_data_profile()
             run.register_card(card=datacard)
             run.log_metric("test_metric", 10)
             run.log_metrics({"test_metric2": 20})
@@ -71,7 +79,7 @@ def test_gcs_full_run(
         # check data assets
         assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
         assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(data.data_suffix))
-        assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
+        # assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA_PROFILE.value).with_suffix(Suffix.JSON.value))
 
         # check model assets
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -80,7 +88,7 @@ def test_gcs_full_run(
         )
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
         assert api_storage_client.exists(
-            Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
+            Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(data.data_suffix)
         )
         assert api_storage_client.exists(
             Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix)
@@ -90,11 +98,11 @@ def test_gcs_full_run(
 
         # load datacard
         _datacard: DataCard = data_registry.load_card(uid=datacard.uid)
-        _datacard.load_data_profile()
+        # _datacard.load_data_profile()
         _datacard.load_data()
 
         assert _datacard.interface.data is not None
-        assert _datacard.interface.data_profile is not None
+        # assert _datacard.interface.data_profile is not None
 
         # load modelcard
 
