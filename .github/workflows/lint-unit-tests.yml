@@ -118,7 +118,6 @@ jobs:
         python-version: ["3.10"]
         poetry-version: ["1.7.1"]
         os: [ubuntu]
-
     runs-on: ${{ matrix.os }}-latest
     env:
       OPSML_TESTING: 1
