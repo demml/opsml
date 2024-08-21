@@ -13,16 +13,16 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').LayoutLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version = url.searchParams.get("version");
-  const uid: string | null = url.searchParams.get("uid");
+  const name: string = (url as URL).searchParams.get("name");
+  const repository: string = (url as URL).searchParams.get("repository");
+  const version = (url as URL).searchParams.get("version");
+  const uid: string | null = (url as URL).searchParams.get("uid");
   const registry = "model";
 
   /** get last path from url */
-  const tab = url.pathname.split("/").pop();
+  const tab = (url as URL).pathname.split("/").pop();
 
-  let metadata: ModelMetadata = await getModelMetadata(
+  const metadata: ModelMetadata = await getModelMetadata(
     uid,
     name,
     repository,
@@ -32,7 +32,7 @@ export async function load({ fetch, params, url }) {
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${metadata.model_repository}/${metadata.model_name}/README.md`;
 
-  let readme: Readme = await getReadme(markdownPath);
+  const readme: Readme = await getReadme(markdownPath);
 
   const cardReq: CardRequest = {
     name,
@@ -43,13 +43,13 @@ export async function load({ fetch, params, url }) {
 
   // get card info
   const cards: CardResponse = await listCards(cardReq);
-  let selectedCard = cards.cards[0];
+  const selectedCard = cards.cards[0];
 
   return {
     registry,
     repository: metadata.model_repository,
     name: metadata.model_name,
-    metadata: metadata,
+    metadata,
     hasReadme: readme.exists,
     card: selectedCard,
     readme: readme.readme,

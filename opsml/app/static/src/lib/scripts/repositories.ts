@@ -6,15 +6,13 @@ interface repositories {
 }
 
 async function getRepos(registry: string) {
-  let repos = await apiHandler.get(
-    CommonPaths.REPOSITORIES +
-      "?" +
-      new URLSearchParams({
-        registry_type: registry,
-      }).toString()
+  const repos = await apiHandler.get(
+    `${CommonPaths.REPOSITORIES}?${new URLSearchParams({
+      registry_type: registry,
+    }).toString()}`
   );
 
-  const response: repositories = await repos.json();
+  const response = (await repos.json()) as repositories;
   return response.repositories;
 }
 

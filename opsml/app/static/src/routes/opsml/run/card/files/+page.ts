@@ -5,18 +5,18 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version = url.searchParams.get("version");
-  const subdir: string | null = url.searchParams.get("subdir");
+  const name: string | null = (url as URL).searchParams.get("name");
+  const repository: string | null = (url as URL).searchParams.get("repository");
+  const version = (url as URL).searchParams.get("version");
+  const subdir: string | null = (url as URL).searchParams.get("subdir");
   const registry = "run";
 
   const basePath = `${opsmlRoot}/${repository}/${name}/v${version}`;
 
-  let setup: FileSetup = await setupFiles(
+  const setup: FileSetup = await setupFiles(
     basePath,
-    repository,
-    name,
+    repository!,
+    name!,
     version,
     subdir
   );

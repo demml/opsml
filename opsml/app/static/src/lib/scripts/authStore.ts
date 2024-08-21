@@ -1,7 +1,7 @@
 // src/lib/stores/authStore.js
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
-import { CommonPaths } from "$lib/scripts/types";
+import { CommonPaths, type Token } from "$lib/scripts/types";
 
 class AuthStore {
   constructor() {
@@ -27,12 +27,11 @@ class AuthStore {
   loggedIn() {
     if (this.getToken()) {
       return "true";
-    } else {
-      return "false";
     }
+    return "false";
   }
 
-  setToken(token) {
+  setToken(token: string) {
     if (browser) {
       localStorage.setItem("jwtToken", token);
     }
@@ -54,20 +53,19 @@ class AuthStore {
     if (browser) {
       if (localStorage.getItem("needAuth") === "true") {
         return true;
-      } else {
-        return false;
       }
+      return false;
     }
   }
 
-  async setupAuth() {
+  setupAuth() {
     if (browser) {
-      let response = fetch(CommonPaths.VERIFY, {
+      const response = fetch(CommonPaths.VERIFY, {
         method: "GET", // default, so we can ignore
       })
         .then((response) => {
           if (!response.ok) {
-            throw new Error("HTTP error " + response.status);
+            throw new Error(`HTTP error ${response.status}`);
           } else {
             return response.json();
           }
@@ -76,11 +74,15 @@ class AuthStore {
           console.error("Fetch error: ", error);
         });
 
-      response.then((data) => {
-        if (browser) {
-          localStorage.setItem("needAuth", data);
-        }
-      });
+      response
+        .then((data: string) => {
+          if (browser) {
+            localStorage.setItem("needAuth", data);
+          }
+        })
+        .catch((error) => {
+          console.error("Fetch error: ", error);
+        });
     }
   }
 
@@ -89,27 +91,26 @@ class AuthStore {
     password: string
   ): Promise<boolean> {
     if (browser) {
-      let formData = new FormData();
+      const formData = new FormData();
       formData.append("username", username);
       formData.append("password", password);
 
-      let response = await fetch(CommonPaths.TOKEN, {
+      const response = await fetch(CommonPaths.TOKEN, {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
-        let data = await response.json();
-        let accessToken = data["access_token"];
+        const data = (await response.json()) as Token;
+        const accessToken = data.access_token;
 
         // need to set token and username
         this.setToken(accessToken);
         this.setUsername(username);
 
         return true;
-      } else {
-        return false;
       }
+      return false;
     }
     return false;
   }
@@ -127,16 +128,14 @@ export const authStore = new AuthStore();
 export function checkAuthstore(
   store: AuthStore,
   previousPath: string | undefined
-) {
+): void {
   if (store.needAuth() && !store.getToken()) {
     // redirect to login page with previous page as query param
     if (previousPath) {
-      goto(CommonPaths.LOGIN + "?redirect=" + previousPath);
+      void goto(`${CommonPaths.LOGIN}?redirect=${previousPath}`);
     } else {
-      goto(CommonPaths.LOGIN);
+      void goto(CommonPaths.LOGIN);
     }
     // do nothing
-  } else {
-    return;
   }
 }

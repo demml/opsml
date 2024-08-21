@@ -23,7 +23,7 @@ export interface metadataRequest {
 
 export interface CardRequest {
   repository: string;
-  name?: string;
+  name: string | null;
   version?: string;
   registry_type: string;
   uid?: string;
@@ -48,7 +48,7 @@ export interface RunMetrics {
 }
 
 export interface MetricNames {
-  metric;
+  metric: string[];
 }
 
 export interface Parameter {
@@ -104,10 +104,19 @@ export interface CardResponse {
 
 export interface DataSchema {
   data_type: string;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   input_features: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ouput_features: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onnx_input_features: any;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onnx_output_features: any;
+
   onnx_data_type: string | undefined;
   onnx_version: string | undefined;
 }
@@ -187,7 +196,6 @@ export enum CommonPaths {
   TEMP_TOKEN = "/opsml/auth/temp",
   ROTATE_TOKEN = "/opsml/auth/token/rotate",
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
-  GET_METRICS = "/opsml/metrics",
 }
 
 export enum CommonErrors {
@@ -259,7 +267,7 @@ export interface CompareMetricPage {
   metrics: RunMetrics;
   searchableMetrics: string[];
   show: boolean;
-  metricVizData: ChartjsData;
+  metricVizData: ChartjsData | undefined;
   referenceMetrics: Map<string, number>;
 }
 
@@ -316,6 +324,12 @@ export interface UserScope {
   run_repository: string[] | null;
 }
 
+export interface UserRepositories {
+  model_repository: string[];
+  data_repository: string[];
+  run_repository: string[];
+}
+
 export interface User {
   username: string;
   password: string | null;
@@ -326,6 +340,7 @@ export interface User {
   is_active: boolean;
   scopes: UserScope;
   updated_username: string | null;
+  watchlist: UserRepositories;
 }
 
 export interface UserResponse {
@@ -380,12 +395,14 @@ export interface TableMetric {
 }
 
 export interface ChartData {
-  x: number[];
+  x: number[] | string[];
   y: number[];
 }
 
 export interface ChartjsData {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options: any;
   type: string;
 }
@@ -429,4 +446,18 @@ export interface FileSystemAttr {
   displayPath: string[];
   prevPath: string;
   baseRedirectPath: string;
+}
+
+export interface Token {
+  access_token: string;
+  token_type: string;
+}
+
+export interface FileViewResponse {
+  file_info: FileInfo;
+  content: ViewContent;
+}
+
+export interface UserUpdated {
+  updated: boolean;
 }

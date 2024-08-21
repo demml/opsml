@@ -1,5 +1,7 @@
 import { render } from "@testing-library/svelte";
-import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
+import {
+  expect, afterAll, afterEach, beforeAll, it,
+} from "vitest";
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
 import ModelPage from "../routes/opsml/model/+page.svelte";
