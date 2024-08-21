@@ -38,6 +38,7 @@ jobs:
         python-version: ["3.9", "3.11"]
         poetry-version: ["1.7.1"]
         os: [ubuntu]
+        node-version: ["22.5.1"]
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -46,6 +47,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "opsml/app/static/package-lock.json"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          npm install
+          npm run build --if-present
+
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
@@ -72,6 +87,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11"]
         poetry-version: ["1.7.1"]
         os: [macos]
+        node-version: ["22.5.1"]
 
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -80,6 +96,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "opsml/app/static/package-lock.json"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          npm install
+          npm run build --if-present
+
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
