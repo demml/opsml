@@ -2,6 +2,9 @@
 # Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
+# pylint: disable=abstract-method
+
 import textwrap
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
@@ -380,6 +383,40 @@ class ClientRunCardRegistry(ClientRegistry):
 
         metric = data.get("metric")
         return cast(Optional[List[Dict[str, Any]]], metric)
+
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Inserts parameters into the run registry
+        Args:
+            parameter:
+                List of parameter(s) to insert
+        """
+
+        self._session.request(
+            route=api_routes.PARAMETERS,
+            request_type=RequestType.PUT,
+            json={"parameter": parameter},
+        )
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Optional[Dict[str, Any]]]:
+        """Get run parameters. By default, all parameters are returned. If name is provided,
+        only parameters with that name are returned.
+        Args:
+            run_uid:
+                Run uid
+            name:
+                Name of the parameter
+        Returns:
+            List of run parameter
+        """
+        body = {"run_uid": run_uid}
+
+        if name is not None:
+            body["name"] = name
+
+        data = self._session.request(route=api_routes.PARAMETERS, request_type=RequestType.POST, json=body)
+
+        param = data.get("parameter")
+        return cast(List[Optional[Dict[str, Any]]], param)
 
     def get_hw_metric(self, run_uid: str) -> Optional[List[Dict[str, Any]]]:
         """Gets run hardware metrics

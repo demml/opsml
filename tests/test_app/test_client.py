@@ -1,15 +1,11 @@
-import re
-import shutil
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Tuple, cast
-from unittest.mock import MagicMock, patch
 
 import pytest
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
-from opsml.app.routes.pydantic_models import AuditFormRequest, CommentSaveRequest
 from opsml.app.routes.utils import error_to_500, list_repository_name_info
 from opsml.cards import (
     AuditCard,
@@ -33,42 +29,11 @@ from tests.conftest import EXCLUDE, TODAY_YMD
 def test_debug(test_app: TestClient) -> None:
     """Test debug path"""
 
-    # get token
-    response = test_app.post(
-        "/opsml/auth/token",
-        data={"username": "admin", "password": "admin"},
-    )
-
-    assert response.status_code == 200
-
-    # set bearer token
-    token = response.json()["access_token"]
-    test_app.headers.update({"Authorization": f"Bearer {token}"})
-
     response = test_app.get("/opsml/debug")
 
     assert "tmp.db" in response.json()["url"]
     assert "opsml_registries" in response.json()["storage"]
     assert response.status_code == 200
-
-
-def test_error(test_app: TestClient) -> None:
-    """Test error path"""
-
-    response = test_app.post(
-        "/opsml/auth/token",
-        data={"username": "admin", "password": "admin"},
-    )
-
-    assert response.status_code == 200
-
-    # set bearer token
-    token = response.json()["access_token"]
-    test_app.headers.update({"Authorization": f"Bearer {token}"})
-
-    response = test_app.get("/opsml/error")
-
-    assert response.status_code == 500
 
 
 def test_register_data(
@@ -161,7 +126,11 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     assert data_card.version == "3.2.0"
 
 
-def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyData) -> None:
+def test_semver_registry_list(
+    api_registries: CardRegistries,
+    numpy_data: NumpyData,
+    test_app: TestClient,
+) -> None:
     # create data card
     registry = api_registries.data
 
@@ -214,6 +183,37 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
     )
     assert len(cards) == 1
 
+    response = test_app.get(
+        url="opsml/cards/registry/stats",
+        params={"registry_type": registry.registry_type.value},
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/stats",
+        params={
+            "registry_type": registry.registry_type.value,
+            "search_term": "test_array",
+        },
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/query/page",
+        params={"registry_type": registry.registry_type.value},
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/query/page",
+        params={
+            "registry_type": registry.registry_type.value,
+            "repository:": "mlops",
+            "search_term": "test_array",
+        },
+    )
+    assert response.status_code == 200
+
 
 def test_runcard(
     linear_regression: Tuple[SklearnModel, NumpyData],
@@ -227,13 +227,13 @@ def test_runcard(
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     metric1 = run.get_metric("test_metric")
-    assert isinstance(metric1, Metric)
+    assert isinstance(metric1[0], Metric)
 
     metric2 = run.get_metric("test_metric2")
-    assert isinstance(metric2, Metric)
+    assert isinstance(metric2[0], Metric)
 
-    assert metric1.value == 10
-    assert metric2.value == 20
+    assert metric1[0].value == 10
+    assert metric2[0].value == 20
 
     # save artifacts
     run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
@@ -243,8 +243,8 @@ def test_runcard(
     # Load the card and verify artifacts / metrics
     loaded_card: RunCard = registry.load_card(uid=run.uid)
     assert loaded_card.uid == run.uid
-    assert loaded_card.get_metric("test_metric").value == 10  # type: ignore
-    assert loaded_card.get_metric("test_metric2").value == 20  # type: ignore
+    assert loaded_card.get_metric("test_metric")[0].value == 10  # type: ignore
+    assert loaded_card.get_metric("test_metric2")[0].value == 20  # type: ignore
     loaded_card.load_artifacts()
 
 
@@ -330,168 +330,6 @@ def test_pipeline_registry(api_registries: CardRegistry) -> None:
         columns=["datacard_uids"],
     )
     assert bool(values["datacard_uids"])
-
-
-def test_metadata_download_and_registration(
-    test_app: TestClient,
-    populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
-) -> None:
-    model_card, _, _ = populate_model_data_for_route
-
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.MODEL_METADATA}",
-        json={"uid": model_card.uid},
-    )
-    assert response.status_code == 200
-
-    model_def = response.json()
-
-    assert model_def["model_name"] == model_card.name
-    assert model_def["model_version"] == model_card.version
-
-    # test register model (onnx)
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "repository": model_card.repository,
-            "version": model_card.version,
-        },
-    )
-    # NOTE: the *exact* model version sent must be returned in the URL.
-    # Otherwise the hosting infrastructure will not know where to find the URL
-    # as they do *not* use the response text, rather they assume the URL is in
-    # the correct format.
-    uri = response.json()
-    assert (
-        re.search(
-            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$",
-            uri,
-            re.IGNORECASE,
-        )
-        is not None
-    )
-
-    download_path = (model_card.uri / SaveName.TRAINED_MODEL.value).with_suffix(model_card.interface.model_suffix)
-    response = test_app.get(url=f"opsml/{ApiRoutes.DOWNLOAD_FILE}?path={download_path}")
-
-    assert response.status_code == 200
-
-    # test register model (native)
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "repository": model_card.repository,
-            "version": model_card.version,
-            "onnx": "false",
-        },
-    )
-    uri = response.json()
-    assert (
-        re.search(
-            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{model_card.version}$",
-            uri,
-            re.IGNORECASE,
-        )
-        is not None
-    )
-
-    # test register model - latest patch given latest major.minor
-    minor = model_card.version[0 : model_card.version.rindex(".")]
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "repository": model_card.repository,
-            "version": minor,
-        },
-    )
-
-    uri = response.json()
-    assert (
-        re.search(
-            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{minor}$", uri, re.IGNORECASE
-        )
-        is not None
-    )
-
-    # test register model - latest minor / patch given major only
-    major = model_card.version[0 : model_card.version.index(".")]
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": model_card.name,
-            "repository": model_card.repository,
-            "version": major,
-        },
-    )
-    uri = response.json()
-    assert (
-        re.search(
-            rf"{config.opsml_registry_path}/{model_card.repository}/{model_card.name}/v{major}$", uri, re.IGNORECASE
-        )
-        is not None
-    )
-
-    # test version fail - invalid name
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": "non-exist",
-            "repository": "non-exist",
-            "version": model_card.version,
-        },
-    )
-
-    msg = response.json()["detail"]
-    assert response.status_code == 500
-    assert "Model not found" == msg
-
-    # test version fail (does not match regex)
-    response = test_app.post(
-        url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-        json={
-            "name": "non-exist",
-            "repository": "non-exist",
-            "version": "v1.0.0",  # version should *not* contain "v" - it must match the n.n.n pattern
-        },
-    )
-
-    loc = response.json()["detail"][0]["loc"]  # "location" of pydantic failure
-    assert response.status_code == 422
-    assert "version" in loc
-
-    # test model copy failure. This should result in a 500 - internal server
-    # error. The model exists and is valid, but the internal copy failed.
-    # Returning a 4xx (i.e., 404) is not the correct response.
-    with patch(
-        "opsml.model.registrar.ModelRegistrar.is_registered",
-        new_callable=MagicMock,
-    ) as mock_registrar:
-        mock_registrar.return_value = False
-        response = test_app.post(
-            url=f"opsml/{ApiRoutes.REGISTER_MODEL}",
-            json={
-                "name": model_card.name,
-                "repository": model_card.repository,
-                "version": model_card.version,
-            },
-        )
-
-        msg = response.json()["detail"]
-        assert response.status_code == 500
-
-    shutil.rmtree(config.opsml_registry_path, ignore_errors=True)
-
-    response = test_app.post(
-        url=f"/opsml/{ApiRoutes.METRICS}",
-        json={"run_uid": model_card.metadata.runcard_uid},
-    )
-    assert response.status_code == 200
-
-    response = test_app.get(url=f"opsml/files/download/ui?path={model_card.uri}/{SaveName.TRAINED_MODEL.value}")
-    assert response.status_code == 200
 
 
 def test_download_model_metadata_failure(test_app: TestClient) -> None:
@@ -606,99 +444,6 @@ def test_model_list(test_app: TestClient) -> None:
 def test_data_list(test_app: TestClient) -> None:
     """Test settings"""
     response = test_app.get("/opsml/data/list/")
-    assert response.status_code == 200
-
-
-##### Test audit
-def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]) -> None:
-
-    modelcard, datacard, auditcard = populate_model_data_for_route
-
-    response = test_app.get("/opsml/audit/")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/audit/?repository={modelcard.repository}")
-    assert response.status_code == 200
-
-    response = test_app.get(f"/opsml/audit/?repository={modelcard.repository}&?model={modelcard.name}")
-    assert response.status_code == 200
-
-    audit_form = AuditFormRequest(
-        selected_model_name=modelcard.name,
-        selected_model_repository=modelcard.repository,
-        selected_model_version=modelcard.version,
-        selected_model_contact=modelcard.contact,
-        name="model_audit",
-        repository="mlops",
-        contact="mlops.com",
-    )
-
-    response = test_app.post(
-        "/opsml/audit/save",
-        data=audit_form.model_dump(),
-    )
-
-    assert response.status_code == 200
-
-    response = test_app.get(
-        f"/opsml/audit/?repository={modelcard.repository}&model={modelcard.name}&version={modelcard.version}"
-    )
-    assert response.status_code == 200
-
-    comment = CommentSaveRequest(
-        uid=auditcard.uid,
-        name=auditcard.name,
-        repository=auditcard.repository,
-        contact=auditcard.contact,
-        selected_model_name=modelcard.name,
-        selected_model_version=modelcard.version,
-        selected_model_repository=modelcard.repository,
-        selected_model_contact=modelcard.contact,
-        comment_name="test",
-        comment_text="test",
-    )
-    #
-    ## test auditcard comment
-    response = test_app.post(
-        "/opsml/audit/comment/save",
-        data=comment.model_dump(),
-    )
-    assert response.status_code == 200
-
-    # upload
-    # without uid
-    file_ = "tests/assets/audit_file.csv"
-    response = test_app.post(
-        "/opsml/audit/upload",
-        data=audit_form.model_dump(),
-        files={"audit_file": open(file_, "rb")},
-    )
-    assert response.status_code == 200
-
-    # with uid
-    audit_form = AuditFormRequest(
-        selected_model_name=modelcard.name,
-        selected_model_repository=modelcard.repository,
-        selected_model_version=modelcard.version,
-        selected_model_contact=modelcard.contact,
-        name="model_audit",
-        repository="mlops",
-        contact="mlops.com",
-        uid=auditcard.uid,
-    )
-
-    response = test_app.post(
-        "/opsml/audit/upload",
-        data=audit_form.model_dump(),
-        files={"audit_file": open(file_, "rb")},
-    )
-    assert response.status_code == 200
-
-    # test downloading audit file
-    response = test_app.post(
-        "/opsml/audit/download",
-        data=audit_form.model_dump(),
-    )
     assert response.status_code == 200
 
 

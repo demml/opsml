@@ -41,8 +41,8 @@ from opsml.types import (
 
 logger = ArtifactLogger.get_logger()
 
-_List = List[Union[float, int]]
-_Dict = Dict[str, List[Union[float, int]]]
+_List = Union[List[int], List[float]]
+_Dict = Dict[str, Union[List[int], List[float]]]
 _YReturn = Union[_List, _Dict]
 _ParseReturn = Tuple[_YReturn, str]
 
@@ -68,7 +68,7 @@ def _dump_graph_artifact(graph: RunGraph, name: str, uri: Path) -> Tuple[Path, P
         return lpath, rpath
 
 
-def _decimate_list(array: List[Union[float, int]]) -> List[Union[float, int]]:
+def _decimate_list(array: Union[List[int], List[float]]) -> Union[List[int], List[float]]:
     """Decimates array to no more than 200,000 points
 
     Args:
@@ -88,7 +88,7 @@ def _decimate_list(array: List[Union[float, int]]) -> List[Union[float, int]]:
 
 def _parse_y_to_list(
     x_length: int,
-    y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
+    y: Union[List[int], List[float], NDArray[Any], Dict[str, Union[List[int], List[float], NDArray[Any]]]],
 ) -> _ParseReturn:
     """Helper method for parsing y to list when logging a graph
 
@@ -104,7 +104,7 @@ def _parse_y_to_list(
     """
     # if y is dictionary
     if isinstance(y, dict):
-        _y: Dict[str, List[Union[float, int]]] = {}
+        _y: Dict[str, Union[List[int], List[float]]] = {}
 
         # common sense constraint
         if len(y.keys()) > 50:
@@ -231,8 +231,8 @@ class RunCard(ArtifactCard):
     def log_graph(
         self,
         name: str,
-        x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
+        x: Union[List[int], List[float], NDArray[Any]],
+        y: Union[List[int], List[float], NDArray[Any], Dict[str, Union[List[int], List[float], NDArray[Any]]]],
         y_label: str,
         x_label: str,
         graph_style: str,
@@ -460,7 +460,7 @@ class RunCard(ArtifactCard):
         elif card_type == CardType.MODELCARD:
             self.modelcard_uids = [uid, *self.modelcard_uids]
 
-    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+    def get_metric(self, name: str) -> List[Metric]:
         """
         Gets a metric by name
 
@@ -481,16 +481,12 @@ class RunCard(ArtifactCard):
             assert self.uid is not None, "RunCard must be registered to get metric"
             _metric = self._registry.get_metric(run_uid=self.uid, name=[_key])
 
-            if _metric is not None:
+            if len(_metric) > 0:
                 metric = [Metric(**i) for i in _metric]
 
             else:
-                raise ValueError(f"Metric {metric} was not defined")
+                return cast(List[Metric], [])
 
-        if len(metric) > 1:
-            return metric
-        if len(metric) == 1:
-            return metric[0]
         return metric
 
     def load_metrics(self) -> None:
@@ -536,14 +532,21 @@ class RunCard(ArtifactCard):
         """
         _key = TypeChecker.replace_spaces(name)
         param = self.parameters.get(_key)
-        if param is not None:
-            if len(param) > 1:
-                return param
-            if len(param) == 1:
-                return param[0]
-            return param
 
-        raise ValueError(f"Param {param} is not defined")
+        if param is None:
+            # try to get metric from registry
+            assert self.uid is not None, "RunCard must be registered to get metric"
+            _param = self._registry.get_parameter(run_uid=self.uid, name=[_key])
+
+            if len(_param) > 0:
+                param = [Param(**i) for i in _param]
+
+            else:
+                return cast(List[Param], [])
+
+        if len(param) == 1:
+            return param[0]
+        return param
 
     def load_artifacts(self, name: Optional[str] = None) -> None:
         """Loads artifacts from artifact_uris"""

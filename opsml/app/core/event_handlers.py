@@ -41,13 +41,12 @@ def _init_registries(app: FastAPI) -> None:
     app.state.storage_client = client.storage_client
     app.state.model_registrar = ModelRegistrar(client.storage_client)
     app.state.storage_root = config.storage_root
-
-    if config.opsml_auth:
-        app.state.auth_db = _set_registry(RegistryType.AUTH)
+    app.state.auth_db = _set_registry(RegistryType.AUTH)
 
 
 def _shutdown_registries(app: FastAPI) -> None:
     app.state.registries = None
+    app.state.message_db = None
     # app.state.storage_client = None
     # app.state.model_registrar = None
 

@@ -259,7 +259,7 @@ class ActiveRun:
         self._verify_active()
         self.runcard.log_metrics(metrics=metrics, step=step)
 
-    def log_parameter(self, key: str, value: str) -> None:
+    def log_parameter(self, key: str, value: Union[int, float, str]) -> None:
         """
         Logs a parameter to project run
 
@@ -288,8 +288,8 @@ class ActiveRun:
     def log_graph(
         self,
         name: str,
-        x: Union[List[Union[float, int]], NDArray[Any]],
-        y: Union[List[Union[float, int]], NDArray[Any], Dict[str, Union[List[Union[float, int]], NDArray[Any]]]],
+        x: Union[List[int], List[float], NDArray[Any]],
+        y: Union[List[int], List[float], NDArray[Any], Dict[str, Union[List[int], List[float], NDArray[Any]]]],
         x_label: str = "x",
         y_label: str = "y",
         graph_style: str = "line",

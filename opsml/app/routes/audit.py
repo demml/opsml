@@ -9,17 +9,13 @@ import codecs
 import csv
 import datetime
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, cast
+from typing import Any, BinaryIO, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from opsml.app.routes.pydantic_models import (
-    AuditFormRequest,
-    AuditReport,
-    CommentSaveRequest,
-)
+from opsml.app.routes.pydantic_models import AuditFormRequest, AuditReport
 from opsml.app.routes.route_helpers import AuditRouteHelper
 from opsml.app.routes.utils import (
     AuditFormParser,
@@ -29,7 +25,6 @@ from opsml.app.routes.utils import (
 )
 from opsml.cards.audit import AuditCard, AuditSections
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry import CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
@@ -126,7 +121,6 @@ async def save_audit_form(
         status=audit_card.approved,
         audit=audit_card.audit.model_dump(),  # using updated section
         timestamp=str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M")),
-        comments=audit_card.comments,
     )
 
     return templates.TemplateResponse(
@@ -140,65 +134,6 @@ async def save_audit_form(
             "selected_contact": form.selected_model_contact,
             "versions": versions,
             "version": form.selected_model_version,
-            "audit_report": audit_report.model_dump(),
-        },
-    )
-
-
-@router.post("/audit/comment/save", response_class=HTMLResponse)
-@error_to_500
-async def save_audit_comment(
-    request: Request,
-    comment: CommentSaveRequest = Depends(CommentSaveRequest),
-) -> HTMLResponse:
-    """Save comment to AuditCard
-
-    Args:
-        request:
-            The incoming HTTP request.
-        comment:
-            `CommentSaveRequest`
-    """
-    registry: CardRegistry = request.app.state.registries.audit
-    audit_card = cast(AuditCard, registry.load_card(uid=comment.uid))
-
-    # most recent first
-    audit_card.add_comment(
-        name=comment.comment_name,
-        comment=comment.comment_text,
-    )
-
-    model_names, repositories, versions = get_names_repositories_versions(
-        registry=request.app.state.registries.model,
-        name=comment.selected_model_name,
-        repository=comment.selected_model_repository,
-    )
-
-    registry.update_card(card=audit_card)
-
-    audit_report = AuditReport(
-        name=audit_card.name,
-        repository=audit_card.repository,
-        contact=audit_card.contact,
-        version=audit_card.version,
-        uid=audit_card.uid,
-        status=audit_card.approved,
-        audit=audit_card.audit.model_dump(),  # using updated section
-        timestamp=str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M")),
-        comments=audit_card.comments,
-    )
-
-    return templates.TemplateResponse(
-        "include/audit/audit.html",
-        {
-            "request": request,
-            "repositories": repositories,
-            "selected_repository": comment.selected_model_repository,
-            "models": model_names,
-            "selected_model": comment.selected_model_name,
-            "selected_contact": comment.selected_model_contact,
-            "versions": versions,
-            "version": comment.selected_model_version,
             "audit_report": audit_report.model_dump(),
         },
     )
@@ -259,7 +194,6 @@ async def upload_audit_data(
             status=audit_card.approved,
             audit=audit_sections,  # using updated section
             timestamp=str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M")),
-            comments=audit_card.comments,
         )
 
     else:
@@ -272,7 +206,6 @@ async def upload_audit_data(
             status=form.status,
             audit=audit_sections,  # using updated section
             timestamp=str(datetime.datetime.today().strftime("%Y-%m-%d %H:%M")),
-            comments=[],
         )
 
     # base attr needed for html
