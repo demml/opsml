@@ -106,6 +106,50 @@ const handlers = [
       ],
     });
   }),
+
+  http.post("/opsml/parameters", async ({ request }) => {
+    return HttpResponse.json({
+      parameter: [
+        {
+          run_uid: "test",
+          name: "test",
+          value: 1,
+          step: 1,
+          timestamp: 1,
+        },
+      ],
+    });
+  }),
+
+  http.get("/opsml/files/exists", async ({ request }) => {
+    return HttpResponse.json({
+      exists: true,
+    });
+  }),
+
+  http.get("/opsml/files/view", async ({ request }) => {
+    return HttpResponse.json({
+      file_info: {
+        name: "test",
+        size: 10,
+        type: "markdown",
+        created: 234342,
+        islink: false,
+        mode: 10,
+        uid: 10,
+        gid: 10,
+        mtime: 10,
+        ino: 10,
+        nlink: 10,
+        uri: "uri",
+        suffix: ".md",
+      },
+      content: {
+        content: "test",
+        view_type: "markdown",
+      },
+    });
+  }),
 ];
 
 export const server = setupServer(...handlers);
