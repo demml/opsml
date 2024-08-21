@@ -238,9 +238,9 @@ export async function getReadme(markdownPath: string): Promise<Readme> {
  *
  */
 export async function getModelMetadata(
-  uid: string | null,
   name: string,
   repository: string,
+  uid: string | null,
   version: string | null
 ): Promise<ModelMetadata> {
   let metaAttr: metadataRequest = {};
@@ -255,7 +255,7 @@ export async function getModelMetadata(
       repository,
     };
 
-    if (version) {
+    if (version !== null) {
       metaAttr.version = version;
     }
   }

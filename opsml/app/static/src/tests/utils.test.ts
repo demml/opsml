@@ -1,11 +1,18 @@
 import { it, expect } from "vitest";
 import * as page from "../lib/scripts/utils";
-import { type CardRequest, type Message } from "$lib/scripts/types";
+import {
+  type CardRequest,
+  type Message,
+  type User,
+  type UpdateUserRequest,
+} from "$lib/scripts/types";
 import { server } from "./server";
+import { metricsForTable, user } from "./constants";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
 // test calculateTimeBetween
 it("calculateTimeBetween", () => {
   const ts = new Date().getTime();
@@ -15,6 +22,12 @@ it("calculateTimeBetween", () => {
 
 it("cardRequest", async () => {
   const cardRequest: CardRequest = {
+    name: null,
+    repository: "model",
+    version: "1.0.0",
+    uid: "test",
+    limit: 10,
+    page: 1,
     registry_type: "run".toString(),
   };
   const cards = await page.listCards(cardRequest);
@@ -66,6 +79,11 @@ it("patchMessage", async () => {
 // get datacard
 it("getDataCard", async () => {
   const cardRequest: CardRequest = {
+    name: null,
+    repository: "model",
+    version: "1.0.0",
+    limit: 10,
+    page: 1,
     uid: "uid",
     registry_type: "data".toString(),
   };
@@ -84,6 +102,11 @@ it("getDataCard", async () => {
 // get runcard
 it("getRunCard", async () => {
   const cardRequest: CardRequest = {
+    name: null,
+    repository: "model",
+    version: "1.0.0",
+    limit: 10,
+    page: 1,
     uid: "uid",
     registry_type: "data".toString(),
   };
@@ -152,4 +175,197 @@ it("getReadme", async () => {
     readme: "test",
     exists: true,
   });
+});
+
+// get modelMetadata
+it("getModelMetadata", async () => {
+  const metadata = await page.getModelMetadata("name", "model", "test", null);
+  expect(metadata).toEqual({
+    model_name: "test",
+    model_class: "test",
+    model_type: "test",
+    model_interface: "test",
+    model_uri: "test",
+    model_version: "test",
+    model_repository: "test",
+    opsml_version: "1.0.0",
+    uid: "test",
+    data_schema: {
+      data_type: "test",
+      input_features: "test",
+      ouput_features: "test",
+    },
+  });
+});
+
+// test setup files
+it("setupFiles", async () => {
+  const files = await page.setupFiles(
+    "opsml/bastpath",
+    "model",
+    "name",
+    null,
+    "subdir"
+  );
+  expect(files).toEqual({
+    displayPath: ["model", "name", "vnull", "subdir"],
+    fileInfo: {
+      files: [
+        {
+          created: 234342,
+          gid: 10,
+          ino: 10,
+          islink: false,
+          mode: 10,
+          mtime: 10,
+          name: "test",
+          nlink: 10,
+          size: 10,
+          suffix: ".md",
+          type: "markdown",
+          uid: 10,
+          uri: "uri",
+        },
+      ],
+      mtime: 10,
+    },
+    prevPath: "opsml/bastpath/",
+  });
+});
+
+// test setup registry page
+it("setupRegistryPage", async () => {
+  const registryPage = await page.setupRegistryPage("model");
+  expect(registryPage).toEqual({
+    registry: "model",
+    registryPage: {
+      page: ["model", "repo", 10, 120, 110, 10],
+    },
+    registryStats: {
+      nbr_names: 1,
+      nbr_repos: 1,
+      nbr_versions: 1,
+    },
+    repos: ["model", "run", "data"],
+  });
+});
+
+// test getUser
+it("getUser", async () => {
+  const user = await page.getUser("username");
+  expect(user).toEqual({
+    error: null,
+    user: {
+      user: {
+        is_active: true,
+        scopes: {
+          admin: true,
+          delete: true,
+          read: true,
+          write: true,
+        },
+        username: "test",
+        watchlist: {
+          data: ["test"],
+          model: ["test"],
+          run: ["test"],
+        },
+      },
+    },
+  });
+});
+
+// test update user
+it("updateUser", async () => {
+  const userRequest: UpdateUserRequest = {
+    username: "username",
+    updated_username: "newusername",
+    full_name: "test",
+    password: "test",
+    email: "test",
+    is_active: true,
+    security_question: "test",
+    security_answer: "test",
+    scopes: user.scopes,
+  };
+
+  const updated = await page.updateUser(userRequest);
+  expect(updated).toEqual({
+    updated: true,
+  });
+});
+
+// test password strength
+it("passwordStrength", () => {
+  const password = "testsd8@";
+  const strength = page.checkPasswordStrength(password);
+  expect(strength).toEqual({
+    color: "green-500",
+    message: "Missing:, uppercase",
+    power: 80,
+  });
+});
+
+// sort metrics
+it("sortMetrics", () => {
+  const metrics = {
+    metric: [
+      {
+        run_uid: "test",
+        name: "test",
+        value: 1,
+        step: 1,
+        timestamp: 1,
+      },
+      {
+        run_uid: "test",
+        name: "test",
+        value: 2,
+        step: 2,
+        timestamp: 1,
+      },
+    ],
+  };
+
+  const sortedMetrics = page.sortMetrics(metrics);
+  expect(sortedMetrics).toEqual({
+    test: [
+      {
+        name: "test",
+        run_uid: "test",
+        step: 1,
+        timestamp: 1,
+        value: 1,
+      },
+      {
+        name: "test",
+        run_uid: "test",
+        step: 2,
+        timestamp: 1,
+        value: 2,
+      },
+    ],
+  });
+});
+
+// test metricsToTable
+it("metricsToTable", () => {
+  const metricNames = ["accuracy"];
+  const tableMetrics = page.metricsToTable(metricsForTable, metricNames);
+  let expected = new Map();
+  expected.set("run_1", [
+    {
+      name: "accuracy",
+      step: 300,
+      value: 0.97,
+    },
+  ]);
+  expected.set("run_2", [
+    {
+      name: "accuracy",
+      step: 150,
+      value: 0.94,
+    },
+  ]);
+  expect(tableMetrics).toEqual(expected);
 });

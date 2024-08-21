@@ -13,9 +13,9 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').LayoutLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = (url as URL).searchParams.get("name");
-  const repository: string = (url as URL).searchParams.get("repository");
-  const version = (url as URL).searchParams.get("version");
+  const name: string | null = (url as URL).searchParams.get("name");
+  const repository: string | null = (url as URL).searchParams.get("repository");
+  const version: string | null = (url as URL).searchParams.get("version");
   const uid: string | null = (url as URL).searchParams.get("uid");
   const registry = "model";
 
@@ -23,9 +23,9 @@ export async function load({ fetch, params, url }) {
   const tab = (url as URL).pathname.split("/").pop();
 
   const metadata: ModelMetadata = await getModelMetadata(
+    name!,
+    repository!,
     uid,
-    name,
-    repository,
     version
   );
 

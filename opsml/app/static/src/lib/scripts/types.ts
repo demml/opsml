@@ -22,13 +22,13 @@ export interface metadataRequest {
 }
 
 export interface CardRequest {
-  repository?: string;
-  name?: string;
-  version?: string;
+  repository: string | null;
+  name: string | null;
+  version: string | null;
   registry_type: string;
-  uid?: string;
-  page?: number;
-  limit?: number;
+  uid: string | null;
+  page: number | null;
+  limit: number | null;
 }
 
 export interface Metric {
@@ -112,13 +112,13 @@ export interface DataSchema {
   ouput_features: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onnx_input_features: any;
+  onnx_input_features?: any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onnx_output_features: any;
+  onnx_output_features?: any;
 
-  onnx_data_type: string | undefined;
-  onnx_version: string | undefined;
+  onnx_data_type?: string;
+  onnx_version?: string;
 }
 
 export interface ModelMetadata {
