@@ -251,7 +251,7 @@ def test_app() -> YieldFixture[TestClient]:
             token = response.json()["access_token"]
             tc.headers.update({"Authorization": f"Bearer {token}"})
         except Exception as _:
-                pass
+            pass
 
         yield tc
     cleanup()
