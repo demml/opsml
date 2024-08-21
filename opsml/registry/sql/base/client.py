@@ -2,6 +2,9 @@
 # Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
+# pylint: disable=abstract-method
+
 import textwrap
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
@@ -384,8 +387,8 @@ class ClientRunCardRegistry(ClientRegistry):
     def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
         """Inserts parameters into the run registry
         Args:
-            metric:
-                List of parameters to insert
+            parameter:
+                List of parameter(s) to insert
         """
 
         self._session.request(

@@ -56,8 +56,7 @@ class VersionRequest(BaseModel):
     repository: str
     version: Optional[CardVersion] = None
     version_type: VersionType
-    registry_type: Optional[str] = None
-    table_name: Optional[str] = None
+    registry_type: str
     pre_tag: str = "rc"
     build_tag: str = "build"
 
@@ -192,9 +191,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -272,6 +269,39 @@ class Metric(BaseModel):
 
 class Metrics(BaseModel):
     metric: List[Optional[Union[Metric, str]]] = []
+
+
+class Parameter(BaseModel):
+    run_uid: str
+    name: str
+    value: Union[float, int, str]
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def check_type(cls, value: str) -> Union[float, int, str]:
+        """All params are stored as strings in the database. This function coerces the value
+        to a float of int if possible when returning values
+        """
+
+        if isinstance(value, (int, float)):
+            return value
+
+        try:
+            return int(value)
+        except ValueError:
+            try:
+                return float(value)
+            except ValueError:
+                return value
+
+
+class Parameters(BaseModel):
+    parameter: List[Optional[Parameter]] = []
+
+
+class GetParameterRequest(BaseModel):
+    run_uid: str
+    name: Optional[List[str]] = None
 
 
 class HardwareMetricRecord(BaseModel):
@@ -380,20 +410,6 @@ def form_body(cls: Any) -> Any:
 
 
 @form_body
-class CommentSaveRequest(BaseModel):
-    uid: str
-    name: str
-    contact: str
-    repository: str
-    selected_model_name: str
-    selected_model_repository: str
-    selected_model_version: str
-    selected_model_contact: str
-    comment_name: str
-    comment_text: str
-
-
-@form_body
 class AuditFormRequest(BaseModel):
     name: Optional[str] = None
     contact: Optional[str] = None
@@ -406,7 +422,6 @@ class AuditFormRequest(BaseModel):
     selected_model_version: str
     selected_model_contact: str
     audit_file: Optional[UploadFile] = None
-    comments: Optional[str] = None
     business_understanding_1: Optional[str] = None
     business_understanding_2: Optional[str] = None
     business_understanding_3: Optional[str] = None
@@ -496,7 +511,6 @@ class AuditReport(BaseModel):
     status: Optional[bool] = False
     audit: Optional[Dict[str, Any]] = AuditSections().model_dump()  # type: ignore
     timestamp: Optional[str] = None
-    # comments: List[Optional[Comment]] = []
 
 
 class ProjectIdResponse(BaseModel):

@@ -5,6 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
+from opsml.app.routes.pydantic_models import (
+    SecurityQuestionResponse,
+    TempRequest,
+    UserExistsResponse,
+)
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import config
@@ -125,7 +130,7 @@ async def login_for_access_token(
 
     logger.info("User authenticated: {}", form_data.username)
 
-    jwt_token = auth_db.create_access_token(user, minutes=1)
+    jwt_token = auth_db.create_access_token(user, minutes=30)
     refresh_token = auth_db.create_access_token(user, minutes=60)
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True)
 
@@ -167,13 +172,13 @@ async def create_refresh_token(
 
         return True
 
-    except Exception as e:
-        logger.error("Failed to rotate token: {}", e)
+    except Exception as error:
+        logger.error("Failed to rotate token: {}", error)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Failed to rotate token",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from e
+        ) from error
 
 
 @router.get("/auth/token/refresh")
@@ -217,7 +222,7 @@ def get_user(
     if not current_user.scopes.admin:
         # check if user is requesting themselves
         if current_user.username != username:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     user = auth_db.get_user(username)
@@ -246,7 +251,7 @@ def user_exists(request: Request, username: str) -> UserExistsResponse:
         user = auth_db.get_user_by_email(username)
 
         if user is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            return UserExistsResponse(exists=False, username=username)
 
     return UserExistsResponse(exists=True, username=user.username)
 
@@ -259,7 +264,7 @@ def create_user(
 ) -> UserCreated:
     """Create new user - requires admin permissions"""
     if not current_user.scopes.admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
 
@@ -322,7 +327,10 @@ def update_user(
     if not current_user.scopes.admin:
         # check if user is updating themselves
         if current_user.username != user.username:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions")
+
+    if current_user.scopes.model_dump() != user.scopes.model_dump() and not current_user.scopes.admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not enough permissions to change scopes")
 
     auth_db: ServerAuthRegistry = request.app.state.auth_db
     updated = auth_db.update_user(user)
@@ -386,13 +394,19 @@ def generate_temp_token(
 ) -> str:
     """Check user security question by username and generate temporary token
 
-    Args:
-        request:
-            FastAPI request object
-        username:
-            username of the user
-        answer:
-            answer to the security question
+        Args:
+            request:
+                FastAPI request object
+    <<<<<<< HEAD
+            username:
+                username of the user
+            answer:
+                answer to the security question
+    =======
+            temp_request:
+                TempRequest object with username and answer
+
+    >>>>>>> main
 
     """
 

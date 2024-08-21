@@ -139,7 +139,7 @@ def test_check_package_exists() -> None:
     assert not utils.check_package_exists("notthere")
 
 
-def test_gcp_creds(gcp_cred_path: str):
+def test_gcp_creds(gcp_cred_path: str) -> None:
     with open(gcp_cred_path) as creds:
         creds = json.load(creds)
 
@@ -161,12 +161,12 @@ def test_gcp_creds(gcp_cred_path: str):
         assert creds.creds is None
 
 
-def test_import_exception():
+def test_import_exception() -> None:
     with pytest.raises(ModuleNotFoundError):
         utils.try_import("fail", "fail", "fail")
 
 
-def test_startup_error():
+def test_startup_error() -> None:
     err = ModuleNotFoundError("test")
 
     with pytest.raises(SystemExit) as ve:

@@ -52,6 +52,7 @@ class ApiRoutes:
     FILE_EXISTS = "files/exists"
     TOKEN = "auth/token"
     HW_METRICS = "metrics/hardware"
+    PARAMETERS = "parameters"
 
 
 api_routes = ApiRoutes()

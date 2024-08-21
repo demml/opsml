@@ -185,6 +185,7 @@ class AuthSchema(Base):
     scopes = Column("scopes", JSON)
     is_active = Column("is_active", Boolean)
     created_at = Column("created_at", DateTime(True), default=lambda: dt.datetime.now(tz=timezone.utc))
+    watchlist = Column("watchlist", JSON)
 
     def __repr__(self) -> str:
         return f"<SqlTable: {self.__tablename__}>"

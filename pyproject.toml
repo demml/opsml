@@ -240,8 +240,9 @@ log_cli_level = "INFO"
 testpaths = ["tests"]
 addopts = "--ignore=tests/test_docs"
 markers = [
-    "large",
-    "compat",
+    "large: for testing large artifacts",
+    "compat: compatibility marker",
+    "appsec: application security marker"
 ]
 
 
