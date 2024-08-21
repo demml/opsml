@@ -1,5 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { type Files, type ModelMetadata } from "$lib/scripts/types";
+import { type AsyncResponseResolverReturnType } from "msw";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -148,6 +150,82 @@ const handlers = [
         content: "test",
         view_type: "markdown",
       },
+    });
+  }),
+
+  http.post(
+    "/opsml/models/metadata",
+    ({
+      request,
+      params,
+      cookies,
+    }): AsyncResponseResolverReturnType<ModelMetadata> =>
+      HttpResponse.json({
+        model_name: "test",
+        model_class: "test",
+        model_type: "test",
+        model_interface: "test",
+        model_uri: "test",
+        model_version: "test",
+        model_repository: "test",
+        opsml_version: "1.0.0",
+        uid: "test",
+        data_schema: {
+          data_type: "test",
+          input_features: "test",
+          ouput_features: "test",
+        },
+      })
+  ),
+
+  http.get("/opsml/files/list/info", async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      files: [
+        {
+          name: "test",
+          size: 10,
+          type: "markdown",
+          created: 234342,
+          islink: false,
+          mode: 10,
+          uid: 10,
+          gid: 10,
+          mtime: 10,
+          ino: 10,
+          nlink: 10,
+          uri: "uri",
+          suffix: ".md",
+        },
+      ],
+      mtime: 10,
+    });
+  }),
+
+  // get for /opsml/auth/user
+  http.get("/opsml/auth/user", async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      user: {
+        username: "test",
+        is_active: true,
+        scopes: {
+          read: true,
+          write: true,
+          delete: true,
+          admin: true,
+        },
+        watchlist: {
+          model: ["test"],
+          data: ["test"],
+          run: ["test"],
+        },
+      },
+    });
+  }),
+
+  // put for /opsml/auth/user
+  http.put("/opsml/auth/user", async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      updated: true,
     });
   }),
 ];
