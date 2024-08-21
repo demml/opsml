@@ -130,7 +130,11 @@ def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyD
     assert data_card.version == "3.2.0"
 
 
-def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyData) -> None:
+def test_semver_registry_list(
+    api_registries: CardRegistries,
+    numpy_data: NumpyData,
+    test_app: TestClient,
+) -> None:
     # create data card
     registry = api_registries.data
 
@@ -182,6 +186,37 @@ def test_semver_registry_list(api_registries: CardRegistries, numpy_data: NumpyD
         version="~2.3.0",
     )
     assert len(cards) == 1
+
+    response = test_app.get(
+        url="opsml/cards/registry/stats",
+        params={"registry_type": registry.registry_type.value},
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/stats",
+        params={
+            "registry_type": registry.registry_type.value,
+            "search_term": "test_array",
+        },
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/query/page",
+        params={"registry_type": registry.registry_type.value},
+    )
+    assert response.status_code == 200
+
+    response = test_app.get(
+        url="opsml/cards/registry/query/page",
+        params={
+            "registry_type": registry.registry_type.value,
+            "repository:": "mlops",
+            "search_term": "test_array",
+        },
+    )
+    assert response.status_code == 200
 
 
 def test_runcard(
