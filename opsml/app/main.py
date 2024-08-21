@@ -47,7 +47,6 @@ class OpsmlApp:
             deps = None
 
         api_router = build_router(dependencies=deps)
-
         self.app.include_router(api_router)
         self.app.mount("/site", StaticFiles(directory=BUILD_PATH), name="site")
         self.app.mount("/app", StaticFiles(directory=f"{BUILD_PATH}/app"), name="build")

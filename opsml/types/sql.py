@@ -41,6 +41,7 @@ class RegistryTableNames(str, Enum):
             return RegistryTableNames.METRICS
         if l_name == "parameter":
             return RegistryTableNames.PARAMETERS
+
         raise NotImplementedError()
 
 

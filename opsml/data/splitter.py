@@ -16,6 +16,7 @@ from pydantic import (
     FieldSerializationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 from opsml.types import AllowedDataType
@@ -61,20 +62,19 @@ class DataSplit(BaseModel):
     indices: Optional[List[int]] = None
     column_type: str = "builtin"
 
-    def __init__(self, **data: Dict[str, Any]) -> None:
-        """Custom initialization logic to handle timestamp split types.
-        Custom JSON serialization logic coerces timestamp into string. Thus, column_value
-        needs to be coerced back into timestamp when loading datasplit from card
-        JSON file.
+    @model_validator(mode="before")
+    @classmethod
+    def check_timestamp(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        column_value = model_args.get("column_value")
 
-        """
-        super().__init__(**data)
+        if column_value is not None:
+            if model_args.get("column_type") == "timestamp" and not isinstance(column_value, pd.Timestamp):
+                model_args["column_value"] = pd.Timestamp(column_value)
 
-        if isinstance(self.column_value, pd.Timestamp):
-            self.column_type = "timestamp"
+            if isinstance(column_value, pd.Timestamp):
+                model_args["column_type"] = "timestamp"
 
-        if self.column_type == "timestamp" and not isinstance(self.column_value, pd.Timestamp):
-            self.column_value = pd.Timestamp(self.column_value)
+        return model_args
 
     @field_validator("indices", mode="before")
     @classmethod

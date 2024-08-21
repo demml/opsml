@@ -39,6 +39,6 @@ def build_router(dependencies: Optional[Sequence[Any]] = None) -> APIRouter:
     api_router.include_router(runs.router, tags=["runs"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(parameters.router, tags=["parameters"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(message.router, tags=["messages"], prefix="/opsml", dependencies=dependencies)
-    api_router.include_router(auth.router, tags=["auth"], prefix="/opsml", dependencies=dependencies)
+    api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
     return api_router

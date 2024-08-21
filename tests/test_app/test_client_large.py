@@ -1,3 +1,4 @@
+# type: ignore
 """Tests large models and data.
 
 These tests should be ran manually when you want to verify large data and model
@@ -16,7 +17,7 @@ from opsml.registry import CardRegistries
 
 
 @pytest.mark.large
-def test_register_large_data(api_registries: CardRegistries):
+def test_register_large_data(api_registries: CardRegistries) -> None:
 
     data = NumpyData(data=np.random.rand(500000, 100))
 

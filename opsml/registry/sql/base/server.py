@@ -93,24 +93,18 @@ class ServerRegistry(SQLRegistryBase):
         search_term: Optional[str] = None,
     ) -> List[Tuple[Union[str, int], ...]]:
         """Query page from Card Database
-                Args:
-                    sort_by:
-                        Field to sort by
-        <<<<<<< HEAD
-                    repository:
-                        Repository to filter by
-                    name:
-                        Card name to filter by
-        =======
-                    page:
-                        Page number
-                    repository:
-                        Repository to filter by
-                    search_term:
-                        Search term to filter by
-        >>>>>>> main
-                Returns:
-                    List of tuples
+        Args:
+            sort_by:
+                Field to sort by
+            page:
+                Page number
+            repository:
+                Repository to filter by
+            search_term:
+                Search term to filter by
+
+        Returns:
+            List of tuples
         """
         return cast(
             List[Tuple[Union[str, int], ...]],
@@ -468,9 +462,13 @@ class ServerRunCardRegistry(ServerRegistry):
 
     def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
         """Insert parameter into run card
-        Args:
-            metric:
-                list of parameter(s)
+                Args:
+        <<<<<<< HEAD
+                    metric:
+        =======
+                    parameter:
+        >>>>>>> main
+                        list of parameter(s)
         """
         assert isinstance(self.engine, RunQueryEngine)
 
@@ -579,12 +577,17 @@ class ServerAuthRegistry(ServerRegistry):
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user from auth db
 
-        Args:
-            username:
-                username
+                Args:
+        <<<<<<< HEAD
+                    username:
+                        username
+        =======
+                    email:
+                        email
+        >>>>>>> main
 
-        Returns:
-            user
+                Returns:
+                    user
 
         """
 

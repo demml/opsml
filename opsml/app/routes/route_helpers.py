@@ -181,7 +181,6 @@ class AuditRouteHelper(RouteHelper):
                 status=False,
                 audit=AuditSections().model_dump(),  # type: ignore
                 timestamp=None,
-                comments=[],
             )
 
         audit_card: AuditCard = audit_registry.load_card(uid=uid)  # type: ignore
@@ -194,7 +193,6 @@ class AuditRouteHelper(RouteHelper):
             status=audit_card.approved,
             audit=audit_card.audit.model_dump(),
             timestamp=None,
-            comments=audit_card.comments,
         )
 
     def get_name_version_page(

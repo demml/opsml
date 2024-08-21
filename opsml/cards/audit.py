@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, SerializeAsAny, model_validator
@@ -126,25 +126,7 @@ class AuditCard(ArtifactCard):
 
     audit: AuditSections = AuditSections()
     approved: bool = False
-    comments: List[SerializeAsAny[Any]] = []
     metadata: AuditCardMetadata = AuditCardMetadata()
-
-    def add_comment(self, name: str, comment: str) -> None:
-        """Adds comment to AuditCard
-
-        Args:
-            name:
-                Name of person making comment
-            comment:
-                Comment to add
-
-        """
-        comment_model = ""
-
-        if any(comment_model == _comment for _comment in self.comments):
-            return  # Exit early if comment already exists
-
-        self.comments.insert(0, comment_model)
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record for a audit"""

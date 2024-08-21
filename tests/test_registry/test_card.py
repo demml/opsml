@@ -2,7 +2,7 @@ import pytest
 
 from opsml.cards import ArtifactCard
 from opsml.helpers.utils import validate_name_repository_pattern
-from opsml.types import CardInfo, Comment, RegistryType
+from opsml.types import CardInfo, RegistryType
 
 card_info = CardInfo(name="test", repository="opsml", contact="opsml@email.com")
 
@@ -60,13 +60,6 @@ def test_artifact_card_name_repository_fail() -> None:
 def test_registry_type() -> None:
     for i in ["data", "model", "run", "pipeline", "audit", "project"]:
         assert RegistryType.from_str(i) == RegistryType(i)
-
-
-def test_comment() -> None:
-    comment1 = Comment(name="foo", comment="bar")
-    comment2 = Comment(name="foo", comment="bar")
-
-    assert comment1.__eq__(comment2)
 
 
 def test_argument_fail() -> None:

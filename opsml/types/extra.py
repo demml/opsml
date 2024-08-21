@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from enum import Enum, unique
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import bcrypt
 from pydantic import BaseModel, field_validator, model_validator
@@ -167,6 +167,12 @@ class PresignableTypes(str, Enum):
     LOG = ".log"
 
 
+class UserRepositories(BaseModel):
+    data: List[str] = []
+    models: List[str] = []
+    runs: List[str] = []
+
+
 class UserScope(BaseModel):
     """Base user scope model. Default is read and write.
     A user will be able to read from any repository, but only write to
@@ -179,8 +185,7 @@ class UserScope(BaseModel):
     write: bool = True
     delete: bool = False
     admin: bool = False
-    model_repository: Optional[str] = None
-    data_repository: Optional[str] = None
+    repositories: UserRepositories = UserRepositories()
 
     @property
     def is_admin(self) -> bool:
@@ -197,6 +202,7 @@ class User(BaseModel):
     full_name: Optional[str] = None
     is_active: bool = True
     scopes: UserScope = UserScope()
+    watchlist: UserRepositories = UserRepositories()
     updated_username: Optional[str] = None
 
     @model_validator(mode="before")
