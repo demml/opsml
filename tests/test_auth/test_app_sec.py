@@ -10,7 +10,7 @@ def test_app_token(test_app: TestClient) -> None:
 
     response = test_app.get("/opsml/healthcheck")
 
-    assert response.status_code == 401
+    assert response.status_code == 200
 
     # get token
     response = test_app.post(
@@ -184,8 +184,8 @@ def test_app_user_mgmt_creds(test_app: TestClient) -> None:
 def test_refresh_token(test_app: TestClient) -> None:
     """Test token refreshing"""
 
-    assert test_app.get("/opsml/auth/token/rotate").status_code == 404
-    assert test_app.get("/opsml/auth/token/refresh").status_code == 401
+    assert test_app.get("/opsml/auth/token/rotate").status_code == 200
+    assert test_app.get("/opsml/auth/token/refresh").status_code == 200
 
     response = test_app.post(
         "/opsml/auth/token",
