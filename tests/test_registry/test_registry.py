@@ -323,8 +323,8 @@ def test_runcard(
     )
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
-    assert run.get_metric("test_metric").value == 10
-    assert run.get_metric("test_metric2").value == 20
+    assert run.get_metric("test_metric")[0].value == 10
+    assert run.get_metric("test_metric2")[0].value == 20
 
     # log artifact from file
     name = uuid.uuid4().hex
@@ -343,14 +343,11 @@ def test_runcard(
     os.remove(loaded_card.artifact_uris.get("linear_reg").local_path)
     assert loaded_card.uid == run.uid
 
-    assert loaded_card.get_metric("test_metric").value == 10
-    assert loaded_card.get_metric("test_metric2").value == 20
+    assert loaded_card.get_metric("test_metric")[0].value == 10
+    assert loaded_card.get_metric("test_metric2")[0].value == 20
 
-    with pytest.raises(ValueError):
-        loaded_card.get_metric("test")
-
-    with pytest.raises(ValueError):
-        loaded_card.get_parameter("test")
+    assert loaded_card.get_metric("test") == []
+    assert loaded_card.get_parameter("test") == []
 
     # metrics take floats, ints
     with pytest.raises(ValueError):
@@ -366,7 +363,7 @@ def test_runcard(
 
     # should be same runid
     loaded_card = registry.load_card(uid=run.uid)
-    assert loaded_card.get_metric("updated_metric").value == 20
+    assert loaded_card.get_metric("updated_metric")[0].value == 20
 
 
 def test_model_registry_onnx(

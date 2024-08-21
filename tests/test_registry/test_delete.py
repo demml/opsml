@@ -90,8 +90,8 @@ def test_delete_runcard(db_registries: CardRegistries) -> None:
     )
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
-    assert run.get_metric("test_metric").value == 10  # type: ignore
-    assert run.get_metric("test_metric2").value == 20  # type: ignore
+    assert run.get_metric("test_metric")[0].value == 10  # type: ignore
+    assert run.get_metric("test_metric2")[0].value == 20  # type: ignore
 
     registry.register_card(card=run)
     assert Path(run.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()

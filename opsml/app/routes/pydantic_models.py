@@ -56,7 +56,7 @@ class VersionRequest(BaseModel):
     repository: str
     version: Optional[CardVersion] = None
     version_type: VersionType
-    registry_type: Optional[str] = None
+    registry_type: str
     pre_tag: str = "rc"
     build_tag: str = "build"
 

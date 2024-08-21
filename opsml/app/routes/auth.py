@@ -171,13 +171,13 @@ async def create_refresh_token(
 
         return True
 
-    except Exception as e:
-        logger.error("Failed to rotate token: {}", e)
+    except Exception as error:
+        logger.error("Failed to rotate token: {}", error)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Failed to rotate token",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from e
+        ) from error
 
 
 @router.get("/auth/token/refresh")
@@ -396,10 +396,9 @@ def generate_temp_token(
     Args:
         request:
             FastAPI request object
-        username:
-            username of the user
-        answer:
-            answer to the security question
+        temp_request:
+            TempRequest object with username and answer
+
 
     """
 
