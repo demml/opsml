@@ -22,7 +22,7 @@ from opsml.settings.config import OpsmlConfig, config
 logger = ArtifactLogger.get_logger()
 
 instrumentator = Instrumentator()
-STATIC_PATH = (Path(__file__).parent / "static").absolute()
+BUILD_PATH = (Path(__file__).parent / "static" / "site").absolute()
 
 
 class OpsmlApp:
@@ -45,7 +45,8 @@ class OpsmlApp:
 
         api_router = build_router(dependencies=deps)
         self.app.include_router(api_router)
-        self.app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
+        self.app.mount("/site", StaticFiles(directory=BUILD_PATH), name="site")
+        self.app.mount("/app", StaticFiles(directory=f"{BUILD_PATH}/app"), name="build")
 
         instrumentator.instrument(self.app).expose(self.app)
         self.app.middleware("http")(rollbar_middleware)

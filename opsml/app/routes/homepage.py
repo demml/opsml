@@ -4,24 +4,104 @@
 # Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+# pylint: disable=protected-access
+
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from opsml.helpers.logging import ArtifactLogger
+
+logger = ArtifactLogger.get_logger()
+
 # Constants
-TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
+TEMPLATE_PATH = Path(__file__).parents[1] / "static"
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 router = APIRouter()
 
 
-@router.get("/opsml")
-async def opsml_homepage(request: Request) -> RedirectResponse:
-    return RedirectResponse(url="/opsml/models/list/")
-
-
 @router.get("/")
 async def homepage(request: Request) -> RedirectResponse:
     return RedirectResponse("/opsml")
+
+
+@router.get("/opsml/index")
+async def index(request: Request) -> RedirectResponse:
+    return RedirectResponse("/opsml")
+
+
+@router.get("/opsml")
+async def opsml_ui(request: Request) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            "site/opsml/index.html",
+            {"request": request},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
+
+
+@router.get("/opsml/{path}")
+async def opsml_(request: Request, path: str) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            f"site/opsml/{path}.html",
+            {"request": request, "path": path},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
+
+
+@router.get("/opsml/{path}/card")
+async def opsml_card(
+    request: Request,
+    path: str,
+    name: str,
+    repository: str,
+    version: Optional[str] = None,
+    uid: Optional[str] = None,
+) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            f"site/opsml/{path}/card.html",
+            {
+                "request": request,
+                "name": name,
+                "repository": repository,
+                "version": version,
+                "uid": uid,
+            },
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
+
+
+@router.get("/opsml/auth/login")
+async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            "site/opsml/auth/login.html",
+            {"request": request, "path": url},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
+
+
+@router.get("/opsml/auth/register")
+async def register_page(request: Request, url: Optional[str] = None) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            "site/opsml/auth/register.html",
+            {"request": request, "path": url},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error

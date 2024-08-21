@@ -5,17 +5,16 @@
 
 import json
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from opsml import DataInterface
 from opsml.app.routes.files import download_artifacts_ui, download_file
 from opsml.app.routes.pydantic_models import CardRequest, DataCardMetadata
 from opsml.app.routes.route_helpers import DataRouteHelper
-from opsml.app.routes.utils import error_to_500
 from opsml.cards.data import DataCard
 from opsml.registry.registry import CardRegistry
 from opsml.types import SaveName
@@ -30,55 +29,6 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 data_route_helper = DataRouteHelper()
 router = APIRouter()
-
-
-@router.get("/data/list/", response_class=HTMLResponse)
-@error_to_500
-async def data_list_homepage(request: Request, repository: Optional[str] = None) -> HTMLResponse:
-    """UI home for listing models in model registry
-
-    Args:
-        request:
-            The incoming HTTP request.
-        repository:
-            The repository to query
-    Returns:
-        200 if the request is successful. The body will contain a JSON string
-        with the list of models.
-    """
-    return data_route_helper.get_homepage(request=request, repository=repository)
-
-
-@router.get("/data/versions/", response_class=HTMLResponse)
-@error_to_500
-async def data_versions_page(
-    request: Request,
-    load_profile: bool = False,
-    name: Optional[str] = None,
-    version: Optional[str] = None,
-) -> HTMLResponse:
-    if name is None:
-        return RedirectResponse(url="/opsml/data/list/")  # type: ignore[return-value]
-
-    return data_route_helper.get_versions_page(
-        request=request,
-        name=name,
-        version=version,
-        load_profile=load_profile,
-    )
-
-
-@router.get("/data/versions/uid/")
-@error_to_500
-async def data_versions_uid_page(request: Request, uid: str) -> HTMLResponse:
-    registry: CardRegistry = request.app.state.registries.data
-    selected_data = registry.list_cards(uid=uid)[0]
-
-    return await data_versions_page(  # type: ignore
-        request=request,
-        name=selected_data["name"],
-        version=selected_data["version"],
-    )
 
 
 @router.get("/data/download", name="download_data")

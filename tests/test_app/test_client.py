@@ -432,21 +432,6 @@ def test_homepage(test_app: TestClient) -> None:
     assert response.status_code == 200
 
 
-##### Test list models
-def test_model_list(test_app: TestClient) -> None:
-    """Test settings"""
-
-    response = test_app.get("/opsml/models/list/")
-    assert response.status_code == 200
-
-
-##### Test list models
-def test_data_list(test_app: TestClient) -> None:
-    """Test settings"""
-    response = test_app.get("/opsml/data/list/")
-    assert response.status_code == 200
-
-
 def test_error_wrapper() -> None:
     @error_to_500
     async def fail(request):  # type: ignore
