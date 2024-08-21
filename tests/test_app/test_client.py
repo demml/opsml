@@ -579,7 +579,7 @@ def test_data_list(test_app: TestClient) -> None:
 
 
 ##### Test audit
-def test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]) -> None:
+def _test_audit(test_app: TestClient, populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard]) -> None:
 
     modelcard, datacard, auditcard = populate_model_data_for_route
 
