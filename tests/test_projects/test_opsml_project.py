@@ -1,5 +1,6 @@
 import os
 import time
+from pathlib import Path
 from typing import Tuple, cast
 
 import numpy as np
@@ -20,7 +21,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     with OpsmlProject(info=info).run() as run:
         run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
         run_id = run.run_id
-        assert run._info.storage_client.exists(run.artifact_uris["cats"].remote_path)
+        assert run._info.storage_client.exists(Path(run.artifact_uris["cats"].remote_path))
 
     proj = OpsmlProject(info=info)
     proj.run_id = run_id
@@ -28,7 +29,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     runcard.load_artifacts()
     assert proj.project_id == 1
 
-    assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
+    assert run._info.storage_client.exists(Path(runcard.artifact_uris["cats"].local_path))
 
 
 def test_opsml_read_only(
@@ -84,7 +85,7 @@ def test_opsml_read_only(
 
         # save and artifact
         run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
-        assert run._info.storage_client.exists(run.artifact_uris["cats"].remote_path)
+        assert run._info.storage_client.exists(Path(run.artifact_uris["cats"].remote_path))
         info.run_id = run.run_id
 
         assert data_card.metadata.runcard_uid == run.run_id
@@ -108,10 +109,10 @@ def test_opsml_read_only(
     assert len(runcard.metrics) == nbr_metrics
 
     runcard.load_artifacts()
-    assert run._info.storage_client.exists(runcard.artifact_uris["cats"].local_path)
+    assert run._info.storage_client.exists(Path(runcard.artifact_uris["cats"].local_path))
 
     assert len(proj.metrics) == 2
-    assert proj.get_metric("m1").value == 1.1
+    assert proj.get_metric("m1")[0].value == 1.1
     assert len(proj.parameters) == 1
     assert proj.get_parameter("m1").value == "apple"
 
@@ -197,8 +198,8 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     read_project = OpsmlProject(info=info)
 
     assert len(read_project.metrics) == 2
-    assert read_project.get_metric("m1").value == 1.1
-    assert read_project.get_metric("m2").value == 1.2
+    assert read_project.get_metric("m1")[0].value == 1.1
+    assert read_project.get_metric("m2")[0].value == 1.2
     assert len(read_project.parameters) == 4
     assert read_project.get_parameter("m1").value == "apple"
     assert read_project.get_parameter("m2").value == "banana"
@@ -237,7 +238,7 @@ def test_run_fail(db_registries: CardRegistries) -> None:
     # open the project in read only mode (don't activate w/ context)
     proj = OpsmlProject(info=info)
     assert len(proj.metrics) == 1
-    assert proj.get_metric("m1").value == 1.1
+    assert proj.get_metric("m1")[0].value == 1.1
 
     # Failed run should still exist
     cards = proj._run_mgr.registries.run.list_cards(

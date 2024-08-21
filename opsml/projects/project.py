@@ -204,7 +204,7 @@ class OpsmlProject:
         runcard.load_metrics()
         return runcard.metrics
 
-    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+    def get_metric(self, name: str) -> List[Metric]:
         """
         Get metric by name
 
