@@ -191,12 +191,7 @@ def set_version(
 ) -> Union[VersionResponse, UidExistsResponse]:
     """Sets the version for an artifact card"""
 
-    registry_type = get_registry_type_from_table(
-        table_name=payload.table_name,
-        registry_type=payload.registry_type,
-    )
-
-    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
+    registry: CardRegistry = getattr(request.app.state.registries, payload.registry_type)
 
     try:
         version = registry._registry.set_version(

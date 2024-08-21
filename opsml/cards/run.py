@@ -460,7 +460,7 @@ class RunCard(ArtifactCard):
         elif card_type == CardType.MODELCARD:
             self.modelcard_uids = [uid, *self.modelcard_uids]
 
-    def get_metric(self, name: str) -> Union[List[Metric], Metric]:
+    def get_metric(self, name: str) -> List[Metric]:
         """
         Gets a metric by name
 
@@ -481,16 +481,12 @@ class RunCard(ArtifactCard):
             assert self.uid is not None, "RunCard must be registered to get metric"
             _metric = self._registry.get_metric(run_uid=self.uid, name=[_key])
 
-            if _metric is not None:
+            if len(_metric) > 0:
                 metric = [Metric(**i) for i in _metric]
 
             else:
-                raise ValueError(f"Metric {metric} was not defined")
+                return cast(List[Metric], [])
 
-        if len(metric) > 1:
-            return metric
-        if len(metric) == 1:
-            return metric[0]
         return metric
 
     def load_metrics(self) -> None:
@@ -522,7 +518,7 @@ class RunCard(ArtifactCard):
         assert self.uid is not None, "RunCard must be registered to get hardware metrics"
         return self._registry.get_hw_metric(run_uid=self.uid)
 
-    def get_parameter(self, name: str) -> Union[List[Param], Param]:
+    def get_parameter(self, name: str) -> List[Param]:
         """
         Gets a parameter by name
 
@@ -536,14 +532,19 @@ class RunCard(ArtifactCard):
         """
         _key = TypeChecker.replace_spaces(name)
         param = self.parameters.get(_key)
-        if param is not None:
-            if len(param) > 1:
-                return param
-            if len(param) == 1:
-                return param[0]
-            return param
 
-        raise ValueError(f"Param {param} is not defined")
+        if param is None:
+            # try to get metric from registry
+            assert self.uid is not None, "RunCard must be registered to get metric"
+            _param = self._registry.get_parameter(run_uid=self.uid, name=[_key])
+
+            if len(_param) > 0:
+                param = [Param(**i) for i in _param]
+
+            else:
+                return cast(List[Param], [])
+
+        return param
 
     def load_artifacts(self, name: Optional[str] = None) -> None:
         """Loads artifacts from artifact_uris"""
