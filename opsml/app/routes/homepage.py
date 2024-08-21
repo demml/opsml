@@ -41,9 +41,9 @@ async def opsml_ui(request: Request) -> HTMLResponse:
             "site/opsml/index.html",
             {"request": request},
         )
-    except Exception as e:
-        logger.error(f"Error rendering UI: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
 
 
 @router.get("/opsml/{path}")
@@ -53,9 +53,9 @@ async def opsml_(request: Request, path: str) -> HTMLResponse:
             f"site/opsml/{path}.html",
             {"request": request, "path": path},
         )
-    except Exception as e:
-        logger.error(f"Error rendering UI: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
 
 
 @router.get("/opsml/{path}/card")
@@ -78,9 +78,9 @@ async def opsml_card(
                 "uid": uid,
             },
         )
-    except Exception as e:
-        logger.error(f"Error rendering UI: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
 
 
 @router.get("/opsml/auth/login")
@@ -90,9 +90,9 @@ async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
             "site/opsml/auth/login.html",
             {"request": request, "path": url},
         )
-    except Exception as e:
-        logger.error(f"Error rendering UI: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
 
 
 @router.get("/opsml/auth/register")
@@ -102,6 +102,6 @@ async def register_page(request: Request, url: Optional[str] = None) -> HTMLResp
             "site/opsml/auth/register.html",
             {"request": request, "path": url},
         )
-    except Exception as e:
-        logger.error(f"Error rendering UI: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
