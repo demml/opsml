@@ -127,3 +127,29 @@ it("getRunMetrics", async () => {
     ],
   });
 });
+
+// get run parameters
+
+it("getRunParameters", async () => {
+  const runCard = await page.getRunParameters("uid");
+  expect(runCard).toEqual({
+    parameter: [
+      {
+        name: "test",
+        run_uid: "test",
+        value: 1,
+        step: 1,
+        timestamp: 1,
+      },
+    ],
+  });
+});
+
+// get readme
+it("getReadme", async () => {
+  const readme = await page.getReadme("markdown_path");
+  expect(readme).toEqual({
+    readme: "test",
+    exists: true,
+  });
+});
