@@ -241,7 +241,8 @@ def test_app() -> YieldFixture[TestClient]:
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
 
-        if os.environ.get("OPSML_AUTH") == "True":
+        try:
+            print(os.environ["OPSML_AUTH"])
             # set header if needed
             response = tc.post(
                 "/opsml/auth/token",
@@ -249,6 +250,8 @@ def test_app() -> YieldFixture[TestClient]:
             )
             token = response.json()["access_token"]
             tc.headers.update({"Authorization": f"Bearer {token}"})
+        except Exception as _:
+                pass
 
         yield tc
     cleanup()
