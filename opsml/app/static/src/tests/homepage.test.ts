@@ -2,9 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import {
-  expect, afterAll, afterEach, beforeAll, it,
-} from "vitest";
+import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import * as page from "../lib/scripts/homepage";
