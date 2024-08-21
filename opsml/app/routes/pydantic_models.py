@@ -379,20 +379,6 @@ def form_body(cls: Any) -> Any:
 
 
 @form_body
-class CommentSaveRequest(BaseModel):
-    uid: str
-    name: str
-    contact: str
-    repository: str
-    selected_model_name: str
-    selected_model_repository: str
-    selected_model_version: str
-    selected_model_contact: str
-    comment_name: str
-    comment_text: str
-
-
-@form_body
 class AuditFormRequest(BaseModel):
     name: Optional[str] = None
     contact: Optional[str] = None
@@ -405,7 +391,6 @@ class AuditFormRequest(BaseModel):
     selected_model_version: str
     selected_model_contact: str
     audit_file: Optional[UploadFile] = None
-    comments: Optional[str] = None
     business_understanding_1: Optional[str] = None
     business_understanding_2: Optional[str] = None
     business_understanding_3: Optional[str] = None

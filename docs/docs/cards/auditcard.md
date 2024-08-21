@@ -224,7 +224,7 @@ Navigate to the model tab and find your specific model and version.
 
 ### Click the Audit link and fill out the audit form
 
-You can also upload and existing audit csv, download the current audit as a csv, and add comments via the comment button.
+You can also upload and existing audit csv, download the current audit as a csv.
 
 <p align="left">
   <img src="../../images/audit-ui.png" width="958"/>
