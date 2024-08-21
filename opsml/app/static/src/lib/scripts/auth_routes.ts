@@ -14,7 +14,7 @@ export interface RegisterResponse {
 export async function registerUser(
   request: RegisterUser
 ): Promise<RegisterResponse> {
-  let response = await apiHandler.post(
+  const response = await apiHandler.post(
     CommonPaths.REGISTER,
     request,
     "application/json"
@@ -22,38 +22,39 @@ export async function registerUser(
 
   if (response.ok) {
     return { success: true, message: "User registered successfully" };
-  } else {
-    let error = await response.json();
-    return { success: false, message: error["detail"] };
   }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const error = await response.json();
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return { success: false, message: error.detail as string };
 }
 
 export async function checkUser(username: string): Promise<UserExistsResponse> {
-  let url: string = CommonPaths.EXISTS + "?username=" + username;
-  let response = await apiHandler.get(url);
+  const url: string = `${CommonPaths.EXISTS}?username=${username}`;
+  const response = await apiHandler.get(url);
   if (response.ok) {
-    let res = await response.json();
+    const res = (await response.json()) as UserExistsResponse;
     return {
-      exists: res["exists"],
-      username: res["username"],
-    };
-  } else {
-    return {
-      exists: false,
-      username: username,
+      exists: res.exists,
+      username: res.username,
     };
   }
+  return {
+    exists: false,
+    username,
+  };
 }
 
 export async function getSecurityQuestion(
   username: string
 ): Promise<securityQuestionResponse> {
-  let url: string = CommonPaths.SECURITY_QUESTION + "?username=" + username;
-  let response = await apiHandler.get(url);
+  const url: string = `${CommonPaths.SECURITY_QUESTION}?username=${username}`;
+  const response = await apiHandler.get(url);
   if (response.ok) {
-    let res = await response.json();
+    const res = (await response.json()) as securityQuestionResponse;
     return {
-      question: res["question"],
+      question: res.question,
       exists: true,
       error: "NA",
     };
@@ -65,23 +66,22 @@ export async function getSecurityQuestion(
       exists: false,
       error: "User not found",
     };
-  } else {
-    return {
-      question: "NA",
-      exists: false,
-      error: "Error fetching security question",
-    };
   }
+  return {
+    question: "NA",
+    exists: false,
+    error: "Error fetching security question",
+  };
 }
 
 export async function generateTempToken(
   username: string,
   answer: string
 ): Promise<string> {
-  let body = { username: username, answer: answer };
-  let response = await apiHandler.post(CommonPaths.TEMP_TOKEN, body);
+  const body = { username, answer };
+  const response = await apiHandler.post(CommonPaths.TEMP_TOKEN, body);
   if (response.ok) {
-    return await response.json();
+    return (await response.json()) as string;
   }
   return "Error generating token";
 }

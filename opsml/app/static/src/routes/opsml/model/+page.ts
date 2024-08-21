@@ -12,7 +12,9 @@ export const ssr = false;
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
   let repository: string | undefined;
-  const providedRepository: string | null = url.searchParams.get("repository");
+  const providedRepository: string | null = (url as URL).searchParams.get(
+    "repository"
+  );
 
   if (providedRepository === null) {
     repository = undefined;
@@ -22,7 +24,7 @@ export async function load({ fetch, params, url }) {
 
   const registry: string = "model";
 
-  let page: registryPageReturn = await setupRegistryPage(registry);
+  const page: registryPageReturn = await setupRegistryPage(registry);
 
   return {
     args: {

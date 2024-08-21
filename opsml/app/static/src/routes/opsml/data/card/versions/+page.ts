@@ -4,16 +4,16 @@ import { listCards } from "$lib/scripts/utils";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const registry: string = url.searchParams.get("registry")!;
+  const name: string = (url as URL).searchParams.get("name");
+  const repository: string = (url as URL).searchParams.get("repository");
+  const registry: string = (url as URL).searchParams.get("registry");
 
   const registryPage = await getRegistryPage(
     registry,
     undefined,
     repository,
     name,
-    0,
+    0
   );
 
   const cardReq: CardRequest = {

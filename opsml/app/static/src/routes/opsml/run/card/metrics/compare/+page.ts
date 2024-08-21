@@ -1,3 +1,4 @@
+import { d } from "svelte-highlight/languages";
 import {
   type CardRequest,
   type CardResponse,
@@ -5,22 +6,30 @@ import {
   CardRegistries,
   type Card,
   type RunMetrics,
+  type RunCard,
+  type ChartjsData,
 } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
-import { d } from "svelte-highlight/languages";
 
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ parent, url }) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const data = await parent();
 
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version: string = url.searchParams.get("version")!;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const name: string | null = (url as URL).searchParams.get("name");
 
-  let cardReq: CardRequest = {
-    repository: repository,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const repository: string | null = (url as URL).searchParams.get("repository");
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const version: string | null = (url as URL).searchParams.get("version");
+
+  const cardReq: CardRequest = {
+    name,
+    repository: repository!,
     registry_type: CardRegistries.Run,
     limit: 50,
   };
@@ -29,35 +38,47 @@ export async function load({ parent, url }) {
 
   const cardMap: Map<string, Card> = new Map();
 
-  for (let card of cards.cards) {
+  for (const card of cards.cards) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (card.uid !== data.metadata.uid) {
       cardMap.set(card.name, card);
     }
   }
 
-  let runMetrics: RunMetrics = data.metrics;
-  let referenceMetrics = new Map<string, number>();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const runMetrics = data.metrics as RunMetrics;
+  const referenceMetrics = new Map<string, number>();
 
   // iterate through runMetrics
-  for (let metricName in runMetrics) {
-    let metric = runMetrics[metricName];
+  for (const metricName in runMetrics) {
+    const metric = runMetrics[metricName];
     // get last value
-    let metricValue = metric[metric.length - 1].value;
+    const metricValue = metric[metric.length - 1].value;
     referenceMetrics.set(metricName, metricValue);
   }
 
-  let comparePageData: CompareMetricPage = {
+  const comparePageData: CompareMetricPage = {
     cards: cardMap,
-    name: name,
-    repository: repository,
-    version: version,
-    card: data.metadata,
-    metricNames: data.metricNames,
-    metrics: data.metrics,
-    searchableMetrics: data.searchableMetrics,
+    name: name!,
+    repository: repository!,
+    version: version!,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    card: data.metadata as RunCard,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    metricNames: data.metricNames as string[],
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    metrics: data.metrics as RunMetrics,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    searchableMetrics: data.searchableMetrics as string[],
     show: false,
-    metricVizData: data.metricVizData,
-    referenceMetrics: referenceMetrics,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    metricVizData: data.metricVizData as ChartjsData | undefined,
+    referenceMetrics,
   };
 
   return comparePageData;

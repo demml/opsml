@@ -20,10 +20,10 @@ async function getRegistryStats(
     params.append("search_term", searchTerm);
   }
 
-  let url = CommonPaths.REGISTRY_STATS + "?" + params.toString();
-  let page_resp = await apiHandler.get(url);
+  const url = `${CommonPaths.REGISTRY_STATS}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
 
-  const response: registryStats = await page_resp.json();
+  const response = (await page_resp.json()) as registryStats;
   return response;
 }
 
@@ -62,12 +62,12 @@ async function getRegistryPage(
     params.append("page", page.toString());
   }
 
-  let url = CommonPaths.QUERY_PAGE + "?" + params.toString();
-  let page_resp = await apiHandler.get(url);
+  const url = `${CommonPaths.QUERY_PAGE}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
 
-  //const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
+  // const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
 
-  const response: registryPage = await page_resp.json();
+  const response = (await page_resp.json()) as registryPage;
   return response;
 }
 

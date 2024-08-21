@@ -7,14 +7,14 @@ export async function setupFileAttr(
   repository: string,
   version: string,
   registry: string,
-  subdir: string | null
+  subdir: string | null,
 ): Promise<FileSystemAttr> {
-  let setup: FileSetup = await setupFiles(
+  const setup: FileSetup = await setupFiles(
     basePath,
     repository,
     name,
     version,
-    subdir
+    subdir,
   );
 
   return {

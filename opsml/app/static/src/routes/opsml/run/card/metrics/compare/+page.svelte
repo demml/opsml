@@ -1,12 +1,11 @@
 <script lang="ts">
 
-  import { type Card, type Metric, type RunMetrics, type Graph, type CompareMetricPage, type TableMetric, type ChartjsData, type RunCard } from "$lib/scripts/types";
+  import { type Card, type RunMetrics, type CompareMetricPage, type TableMetric, type ChartjsData, type RunCard } from "$lib/scripts/types";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Search from "$lib/Search.svelte";
   import Fa from 'svelte-fa'
   import { faCheck, faDownload, faMagnifyingGlassMinus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
-  import { buildBarChart, buildLineChart} from "$lib/scripts/charts";
-  import { getRunMetrics, sortMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
+  import { getRunMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
 
@@ -47,7 +46,7 @@
   let cardsToCompare: string[];
   $: cardsToCompare = [];
 
-  let metricVizData: ChartjsData = data.metricVizData;
+  let metricVizData: ChartjsData | undefined = data.metricVizData;
   let showTable: boolean = false;
 
   let isOpen = true;
@@ -62,7 +61,8 @@
 
   function resetZoom() {
     // reset zoom
-    window.metricChart.resetZoom();
+    // @ts-ignore
+    window.metricChart.resetZoom(); 
   }
 
   async function changePlotType(type: string) {
@@ -368,11 +368,17 @@
 
       </div>  
 
+      {#if metricVizData}
         <IndividualChart
           data={metricVizData.data}
           type={plotSet}
           options={metricVizData.options}
         />
+      {:else}
+        <div class="flex justify-center items-center h-full">
+          <p class="text-gray-400">No metrics to plot</p>
+        </div>
+      {/if}
     </div>
 
     {#if showTable}
@@ -409,7 +415,8 @@
 
                       {#if referenceMetrics.has(row.name)}
                         {#if isNumber(row.value)}
-                          {#if row.value > referenceMetrics.get(row.name)}
+                          {@const referenceValue = referenceMetrics.get(row.name)}
+                          {#if referenceValue !== undefined && row.value > referenceValue }
                             <td class="text-sm"><span class="badge variant-soft-success">Greater</span></td>
                           {:else if row.value === referenceMetrics.get(row.name)}
                             <td class="text-sm"><span class="badge variant-soft-primary">Equal</span></td>

@@ -48,6 +48,7 @@
     chart.options = options;
     chart.update();
 
+    // @ts-ignore
     window.metricChart = chart;
 
   }
