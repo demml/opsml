@@ -1,27 +1,21 @@
-import { render } from "@testing-library/svelte";
-import {
-  expect, afterAll, afterEach, beforeAll, it,
-} from "vitest";
-import Homepage from "../lib/Homepage.svelte";
-import Card from "../lib/Card.svelte";
-import ModelPage from "../routes/opsml/model/+page.svelte";
-import ModelCardPage from "../routes/opsml/model/card/+page.svelte";
-import ModelCardFiles from "../routes/opsml/model/card/files/+page.svelte";
-import ModelCardMetadata from "../routes/opsml/model/card/metadata/+page.svelte";
-import Versions from "../routes/opsml/model/card/versions/+page.svelte";
-import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 import { server } from "./server";
-import {
-  type Files,
-  type FileView,
-  type FileInfo,
-  type ViewContent,
-} from "$lib/scripts/types";
-import { calculateTimeBetween } from "$lib/scripts/utils";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+import { render } from "@testing-library/svelte";
+import { afterAll, afterEach, beforeAll, it } from "vitest";
+import Homepage from "../lib/Homepage.svelte";
+import Card from "../lib/Card.svelte";
+import ModelPage from "../routes/opsml/model/+page.svelte";
+import ModelCardFiles from "../routes/opsml/model/card/files/+page.svelte";
+import ModelCardMetadata from "../routes/opsml/model/card/metadata/+page.svelte";
+import Versions from "../routes/opsml/model/card/versions/+page.svelte";
+import type { RecentCards, CardJson } from "$lib/scripts/homepage";
+
+import { type Files } from "$lib/scripts/types";
+import { calculateTimeBetween } from "$lib/scripts/utils";
 
 const cards: CardJson[] = [
   {

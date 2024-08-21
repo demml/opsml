@@ -1,6 +1,4 @@
-import {
-  expect, afterAll, afterEach, beforeAll, it,
-} from "vitest";
+import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
 import * as page from "../lib/scripts/repositories";
 import { server } from "./server";
 

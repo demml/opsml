@@ -60,6 +60,11 @@ class AuthStore {
 
   setupAuth() {
     if (browser) {
+      // for testing purposes (don't have another way currently)
+      if (import.meta.env.VITE_TEST) {
+        localStorage.setItem("needAuth", "false");
+        return;
+      }
       const response = fetch(CommonPaths.VERIFY, {
         method: "GET", // default, so we can ignore
       })
@@ -71,7 +76,7 @@ class AuthStore {
           }
         })
         .catch((error) => {
-          console.error("Fetch error: ", error);
+          throw new Error(`Fetch error: ${error}`);
         });
 
       response

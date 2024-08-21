@@ -22,8 +22,8 @@ export interface metadataRequest {
 }
 
 export interface CardRequest {
-  repository: string;
-  name: string | null;
+  repository?: string;
+  name?: string;
   version?: string;
   registry_type: string;
   uid?: string;
@@ -159,7 +159,7 @@ export interface DataCardMetadata {
   interface_type: string;
   data_splits: string | null;
   feature_map: string | null;
-  sql_logic: Map<string, string>;
+  sql_logic: Map<string, string> | undefined;
 }
 
 export enum RegistryName {
@@ -274,7 +274,6 @@ export interface CompareMetricPage {
 export interface Message {
   uid: string;
   registry: string;
-  message_id: string | null;
   user: string;
   votes: number;
   content: string;
