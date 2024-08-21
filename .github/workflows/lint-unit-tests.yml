@@ -134,6 +134,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+          cache-dependency-path: "opsml/app/static/package-lock.json"
 
       - name: Build App for testing
         run: |
