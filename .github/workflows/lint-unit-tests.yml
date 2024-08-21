@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   Lints:
     runs-on: ubuntu-latest
@@ -112,7 +111,7 @@ jobs:
       - name: Unit Tests
         run: make test.unit
 
-  Unit-Test-310-Coverage:
+  Unit-Test-Coverage:
     strategy:
       matrix:
         python-version: ["3.10"]
@@ -189,12 +188,7 @@ jobs:
 
   Postgres-Unit:
     needs:
-      [
-        Unit-Test-Ubuntu,
-        Unit-Test-MacOS,
-        Unit-Test-Windows,
-        Unit-Test-310-Coverage,
-      ]
+      [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -239,12 +233,7 @@ jobs:
 
   MySql-Unit:
     needs:
-      [
-        Unit-Test-Ubuntu,
-        Unit-Test-MacOS,
-        Unit-Test-Windows,
-        Unit-Test-310-Coverage,
-      ]
+      [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
