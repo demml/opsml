@@ -196,13 +196,13 @@ def test_runcard(
     run.log_metric("test_metric", 10)
     run.log_metrics({"test_metric2": 20})
     metric1 = run.get_metric("test_metric")
-    assert isinstance(metric1, Metric)
+    assert isinstance(metric1[0], Metric)
 
     metric2 = run.get_metric("test_metric2")
-    assert isinstance(metric2, Metric)
+    assert isinstance(metric2[0], Metric)
 
-    assert metric1.value == 10
-    assert metric2.value == 20
+    assert metric1[0].value == 10
+    assert metric2[0].value == 20
 
     # save artifacts
     run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
@@ -212,8 +212,8 @@ def test_runcard(
     # Load the card and verify artifacts / metrics
     loaded_card: RunCard = registry.load_card(uid=run.uid)
     assert loaded_card.uid == run.uid
-    assert loaded_card.get_metric("test_metric").value == 10  # type: ignore
-    assert loaded_card.get_metric("test_metric2").value == 20  # type: ignore
+    assert loaded_card.get_metric("test_metric")[0].value == 10  # type: ignore
+    assert loaded_card.get_metric("test_metric2")[0].value == 20  # type: ignore
     loaded_card.load_artifacts()
 
 
