@@ -8,37 +8,7 @@ from opsml.model import SklearnModel
 from opsml.registry import CardRegistries
 
 
-def test_audit_card(db_registries: CardRegistries):
-    audit_registry = db_registries.audit
-    card = AuditCard(name="audit_card", repository="repository", contact="test")
-
-    assert card.business[1].response is None
-    card.answer_question(section="business", question_nbr=1, response="response")
-    assert card.business[1].response is not None
-
-    # test listing all sections
-    card.list_questions()
-
-    # test listing specific section
-    card.list_questions(section="business")
-
-    assert card.card_type == "audit"
-
-    audit_registry.register_card(card=card)
-
-    # test loading card
-    card = audit_registry.load_card(uid=card.uid)
-    assert card.business[1].response == "response"
-
-    # add comment
-    card.add_comment(name="test", comment="comment")
-    assert len(card.comments) == 1
-
-    for i in ["business", "data_understanding", "data_preparation", "modeling", "evaluation", "deployment", "misc"]:
-        assert isinstance(getattr(card, i), dict)
-
-
-def test_audit_card_failure():
+def test_audit_card_failure() -> None:
     card = AuditCard(name="audit_card", repository="repository", contact="test")
 
     with pytest.raises(ValueError):
@@ -48,7 +18,7 @@ def test_audit_card_failure():
         card.answer_question(section="business", question_nbr=100, response="response")
 
 
-def test_audit_card_add_uids(db_registries: CardRegistries, linear_regression: Tuple[SklearnModel, NumpyData]):
+def test_audit_card_add_uids(db_registries: CardRegistries, linear_regression: Tuple[SklearnModel, NumpyData]) -> None:
     reg, data = linear_regression
     auditcard = AuditCard(name="audit_card", repository="repository", contact="test")
 

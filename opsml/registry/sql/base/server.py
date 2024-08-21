@@ -24,6 +24,7 @@ from opsml.registry.semver import (
 from opsml.registry.sql.base.db_initializer import DBInitializer
 from opsml.registry.sql.base.query_engine import (
     AuthQueryEngine,
+    MessageQueryEngine,
     ProjectQueryEngine,
     RunQueryEngine,
     get_query_engine,
@@ -35,7 +36,7 @@ from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
-from opsml.types.extra import User
+from opsml.types.extra import Message, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -101,6 +102,7 @@ class ServerRegistry(SQLRegistryBase):
                 Repository to filter by
             search_term:
                 Search term to filter by
+
         Returns:
             List of tuples
         """
@@ -271,6 +273,9 @@ class ServerRegistry(SQLRegistryBase):
         # if cleaned_name is not None:
         # records = self._sort_by_version(records=records)
 
+        if self._table.__tablename__ == RegistryTableNames.RUN.value:
+            records = self._sort_by_timestamp(records=records)
+
         if version is not None:
             if ignore_release_candidates:
                 records = [record for record in records if not SemVerUtils.is_release_candidate(record["version"])]
@@ -383,7 +388,7 @@ class ServerRunCardRegistry(ServerRegistry):
 
     def get_metric(
         self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
@@ -442,6 +447,30 @@ class ServerRunCardRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.RUN.value
+
+    def get_parameter(self, run_uid: str, name: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Get metric from run card
+        Args:
+            run_uid:
+                run card uid
+            name:
+                List of names of parameters to retrieve
+        Returns:
+            metrics
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        return self.engine.get_parameter(run_uid=run_uid, name=name)
+
+    def insert_parameter(self, parameter: List[Dict[str, Any]]) -> None:
+        """Insert parameter into run card
+        Args:
+            parameter:
+                list of parameter(s)
+        """
+        assert isinstance(self.engine, RunQueryEngine)
+
+        self.engine.insert_parameter(parameter=parameter)
 
 
 class ServerPipelineCardRegistry(ServerRegistry):
@@ -543,6 +572,20 @@ class ServerAuthRegistry(ServerRegistry):
 
         return self.auth_db.get_user(username=username)
 
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user from auth db
+
+        Args:
+            email:
+                email
+
+        Returns:
+            user
+
+        """
+
+        return self.auth_db.get_user_by_email(email=email)
+
     def add_user(self, user: User) -> None:
         """Add user to auth db
 
@@ -598,9 +641,9 @@ class ServerAuthRegistry(ServerRegistry):
 
         return self.auth_db.delete_user(user)
 
-    def create_access_token(self, user: User) -> str:
+    def create_access_token(self, user: User, minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES) -> str:
         """Creates a temporary access token for user"""
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
 
         data = {
             "sub": user.username,
@@ -617,3 +660,70 @@ class ServerAuthRegistry(ServerRegistry):
     @staticmethod
     def validate(registry_name: str) -> bool:
         return registry_name.lower() == RegistryType.AUTH.value
+
+
+class ServerMessageRegistry(ServerRegistry):
+    @property
+    def registry_type(self) -> RegistryType:
+        return RegistryType.MESSAGE
+
+    @property
+    def message_db(self) -> MessageQueryEngine:
+        assert isinstance(self.engine, MessageQueryEngine)
+        return self.engine
+
+    def get_messages(self, registry: str, uid: str) -> List[Optional[Message]]:
+        """Get messages from registry
+
+        Args:
+            registry:
+                registry name
+            uid:
+                uid
+
+        Returns:
+            messages
+
+        """
+        assert isinstance(self.engine, MessageQueryEngine)
+        return self.engine.get_messages(registry=registry, uid=uid)
+
+    def insert_message(self, message: Message) -> None:
+        """Add message to registry
+
+        Args:
+            message:
+                message
+
+        """
+        assert isinstance(self.engine, MessageQueryEngine)
+
+        self.engine.insert_message(message=message)
+
+    def update_message(self, message: Message) -> None:
+        """Update message in registry
+
+        Args:
+            message:
+                message
+
+        """
+        assert isinstance(self.engine, MessageQueryEngine)
+
+        self.engine.update_message(message=message)
+
+    @staticmethod
+    def validate(registry_name: str) -> bool:
+        return registry_name.lower() == RegistryType.MESSAGE.value
+
+    def delete_card(self, card: Card) -> None:
+        raise ValueError("MessageRegistry does not support delete_card")
+
+    def register_card(
+        self,
+        card: Card,
+        version_type: VersionType = VersionType.MINOR,
+        pre_tag: str = "rc",
+        build_tag: str = "build",
+    ) -> None:
+        raise ValueError("MessageRegistry does not support register_card")
