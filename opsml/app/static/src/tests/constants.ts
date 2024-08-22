@@ -4,6 +4,8 @@ import {
   type Card,
   type Artifact,
   type Parameter,
+  type ModelMetadata,
+  type DataCardMetadata,
 } from "$lib/scripts/types";
 
 export const user: User = {
@@ -305,3 +307,82 @@ sampleCards.set("card2", {
 });
 
 export { sampleCards };
+
+export const sampleCard = sampleCards.get("card1")!;
+
+export const sampleModelMetadata: ModelMetadata = {
+  model_name: "test",
+  model_class: "test",
+  model_type: "test",
+  model_interface: "test",
+  model_uri: "test",
+  model_version: "test",
+  model_repository: "test",
+  opsml_version: "1.0.0",
+  data_schema: {
+    data_type: "test",
+    input_features: "test",
+    ouput_features: "test",
+    onnx_input_features: "test",
+    onnx_output_features: "test",
+    onnx_data_type: "test",
+    onnx_version: "test",
+  },
+  uid: "test",
+};
+
+export const sampleDataMetadata: DataCardMetadata = {
+  name: "test",
+  repository: "test",
+  version: "1.0.0",
+  uid: "test",
+  contact: "test",
+  interface_type: "polars",
+  data_splits: JSON.stringify({ test: 0.2, train: 0.8 }),
+  feature_map: JSON.stringify({ test: 0.2, train: 0.8 }),
+  sql_logic: new Map(),
+};
+
+export const sampleFiles = {
+  mtime: 1711563309,
+  files: [
+    {
+      name: "test",
+      size: 10,
+      type: "test",
+      created: 1711563309,
+      islink: false,
+      mode: 10,
+      uid: 10,
+      gid: 10,
+      mtime: 1711563309,
+      ino: 10,
+      nlink: 10,
+      uri: "test",
+      suffix: ".md",
+    },
+  ],
+};
+
+export const sampleCardVersions = {
+  nbr_cards: 10,
+  name: "test",
+  repository: "test",
+  registry: "test",
+  cards: {
+    cards: [
+      {
+        date: "2021-09-01T00:00:00Z",
+        uid: "test",
+        repository: "test",
+        contact: "test",
+        name: "test",
+        version: "0.1.0",
+        timestamp: 1711563309,
+        tags: new Map(),
+        datacard_uid: "test",
+        runcard_uid: "test",
+      },
+    ],
+  },
+};

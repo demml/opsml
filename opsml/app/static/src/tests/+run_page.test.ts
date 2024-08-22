@@ -11,7 +11,6 @@ import {
   sampleParameters,
   sampleMetrics,
   sampleRunMetics,
-  metricsForTable,
   sampleCards,
 } from "./constants";
 
@@ -40,7 +39,6 @@ it("render runPage", async () => {
 });
 
 it("render runCardPage", async () => {
-  const registryPage = await utils.setupRegistryPage("model");
   const data = {
     card: {
       date: "2021-09-01T00:00:00Z",
