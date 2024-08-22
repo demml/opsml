@@ -22,13 +22,13 @@ export interface metadataRequest {
 }
 
 export interface CardRequest {
-  repository: string | null;
-  name: string | null;
-  version: string | null;
+  repository?: string;
+  name?: string;
+  version?: string;
   registry_type: string;
-  uid: string | null;
-  page: number | null;
-  limit: number | null;
+  uid?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface Metric {

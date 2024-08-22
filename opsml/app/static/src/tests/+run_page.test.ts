@@ -6,12 +6,14 @@ import RunPage from "../routes/opsml/run/+page.svelte";
 import RunCardPage from "../routes/opsml/run/card/+page.svelte";
 import RunCardMetricPage from "../routes/opsml/run/card/metrics/+page.svelte";
 import RunCardCompareMetricPage from "../routes/opsml/run/card/metrics/compare/+page.svelte";
+import RunCardFilesPage from "../routes/opsml/run/card/files/+page.svelte";
 import {
   sampleRunCard,
   sampleParameters,
   sampleMetrics,
   sampleRunMetics,
   sampleCards,
+  sampleFiles,
 } from "./constants";
 
 beforeAll(() => server.listen());
@@ -95,4 +97,24 @@ it("render runCardMetricComparePage", async () => {
   };
 
   render(RunCardCompareMetricPage, { data });
+});
+
+it("render RunCardFiles", async () => {
+  const modifiedAt = utils.calculateTimeBetween(sampleFiles.mtime);
+  const basePath = "test";
+
+  const data = {
+    repository: "test",
+    registry: "test",
+    name: "test",
+    version: "test",
+    displayPath: ["test"],
+    subdir: "test",
+    prevPath: "test",
+    files: sampleFiles,
+    modifiedAt,
+    basePath,
+  };
+
+  render(RunCardFilesPage, { data });
 });
