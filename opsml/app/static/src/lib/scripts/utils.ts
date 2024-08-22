@@ -536,7 +536,7 @@ function parseMetric(type: string, metric: Metric[]): ChartData {
   return { x, y };
 }
 
-const handleResize = (chart) => {
+export const handleResize = (chart) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   chart.resize();
 };

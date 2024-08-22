@@ -1,9 +1,4 @@
 import { server } from "./server";
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
 import { render } from "@testing-library/svelte";
 import { afterAll, afterEach, beforeAll, it } from "vitest";
 import Homepage from "../lib/Homepage.svelte";
@@ -16,6 +11,10 @@ import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 
 import { type Files } from "$lib/scripts/types";
 import { calculateTimeBetween } from "$lib/scripts/utils";
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 const cards: CardJson[] = [
   {

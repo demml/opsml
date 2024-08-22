@@ -1,6 +1,5 @@
 <script lang="ts">
   import logo from "$lib/images/opsml-logo.png";
-  import modelcard from "$lib/images/modelcard-circuit.svg";
   import type { RecentCards } from "$lib/scripts/homepage";
   import HomeSpan from "$lib/Homepage_span.svelte";
   import Card from "$lib/Card.svelte";

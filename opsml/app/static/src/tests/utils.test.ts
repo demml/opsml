@@ -3,11 +3,11 @@ import * as page from "../lib/scripts/utils";
 import {
   type CardRequest,
   type Message,
-  type User,
   type UpdateUserRequest,
+  type ChartjsData,
 } from "$lib/scripts/types";
 import { server } from "./server";
-import { metricsForTable, user } from "./constants";
+import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -368,4 +368,67 @@ it("metricsToTable", () => {
     },
   ]);
   expect(tableMetrics).toEqual(expected);
+});
+
+// test createMetricBarVizData
+it("createMetricBarVizData", () => {
+  const metricVizData: ChartjsData = page.createMetricVizData(
+    sampleRunMetics,
+    "bar"
+  );
+  expect(metricVizData.data.datasets[0]).toEqual(barData.data.datasets[0]);
+});
+
+// test createMetricBarVizData
+it("createMetricLINEVizData", () => {
+  const metricVizData: ChartjsData = page.createMetricVizData(
+    sampleRunMetics,
+    "line"
+  );
+  expect(metricVizData.data.datasets[0]).toEqual({
+    backgroundColor: "rgb(82, 224, 123)",
+    borderColor: "rgb(82, 224, 123)",
+    data: [0.92, 0.95, 0.97],
+    label: "accuracy",
+    pointRadius: 1,
+  });
+});
+
+// test exportMetricsToCSV
+it("downloadMetricCSV", () => {
+  const csv = page.exportMetricsToCSV(sampleRunMetics);
+  expect(csv).toContain(
+    "run_uid,name,value,step,timestamp\nrun_1,accuracy,0.92,100,1593561600000\nrun_1,accuracy,0.95,200,1593648000000"
+  );
+});
+
+// test createGroupMetricVizData
+it("createGroupMetricVizData", () => {
+  const metricVizDataBar: ChartjsData = page.createGroupMetricVizData(
+    metricsForTable,
+    ["accuracy"],
+    "bar"
+  );
+  expect(metricVizDataBar.data.datasets[0]).toEqual({
+    backgroundColor: "rgba(82, 224, 123, 0.2)",
+    borderColor: "rgb(82, 224, 123)",
+    borderRadius: 2,
+    borderSkipped: false,
+    borderWidth: 2,
+    data: [0.97],
+    label: "run_1",
+  });
+
+  const metricVizDataLine: ChartjsData = page.createGroupMetricVizData(
+    metricsForTable,
+    ["accuracy"],
+    "line"
+  );
+  expect(metricVizDataLine.data.datasets[0]).toEqual({
+    backgroundColor: "rgb(82, 224, 123)",
+    borderColor: "rgb(82, 224, 123)",
+    data: [0.92, 0.95, 0.97],
+    label: "run_1-accuracy",
+    pointRadius: 1,
+  });
 });
