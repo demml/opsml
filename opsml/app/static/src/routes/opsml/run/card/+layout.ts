@@ -41,6 +41,10 @@ export async function load({ fetch, params, url }) {
     name,
     repository: repository!,
     registry_type: registry,
+    limit: null,
+    page: null,
+    uid: null,
+    version: null,
   };
 
   if (uid !== null) {

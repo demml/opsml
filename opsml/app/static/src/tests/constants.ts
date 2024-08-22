@@ -1,4 +1,10 @@
-import { type User, type RunMetrics } from "$lib/scripts/types";
+import {
+  type User,
+  type RunMetrics,
+  type Card,
+  type Artifact,
+  type Parameter,
+} from "$lib/scripts/types";
 
 export const user: User = {
   username: "test",
@@ -148,3 +154,154 @@ metricsForTable.set("run_2", {
 });
 
 export { metricsForTable };
+
+export const sampleRunMetics = metricsForTable.get("run_1")!;
+
+export const barData = {
+  data: {
+    datasets: [
+      {
+        backgroundColor: ["rgba(82, 224, 123, 0.2)", "rgba(165, 82, 224, 0.2)"],
+        borderColor: ["rgb(82, 224, 123)", "rgb(165, 82, 224)"],
+        borderRadius: 2,
+        borderSkipped: false,
+        borderWidth: 2,
+        data: [0.97, 0.12],
+      },
+    ],
+    labels: ["accuracy", "loss"],
+  },
+  options: {
+    layout: {
+      padding: 10,
+    },
+    maintainAspectRatio: false,
+
+    plugins: {
+      legend: {
+        display: false,
+      },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "xy",
+          modifierKey: "ctrl",
+        },
+        zoom: {
+          drag: {
+            backgroundColor: "rgba(54, 162, 235, 0.3)",
+            borderColor: "rgb(54, 162, 235)",
+            borderWidth: 1,
+            enabled: true,
+          },
+          mode: "xy",
+        },
+      },
+    },
+    responsive: true,
+    scales: {
+      x: {
+        ticks: {
+          maxTicksLimit: 30,
+        },
+        title: {
+          display: true,
+          text: "Metrics",
+        },
+      },
+      y: {
+        grace: "2%",
+        ticks: {
+          maxTicksLimit: 30,
+        },
+        title: {
+          display: true,
+          text: "Values",
+        },
+      },
+    },
+  },
+  type: "bar",
+};
+
+const tags = new Map();
+tags.set("test", "test");
+
+const artifact_uris: Map<string, Artifact> = new Map();
+artifact_uris.set("test", {
+  local_path: "test",
+  remote_path: "test",
+  name: "test",
+});
+
+export const sampleParameters = [
+  {
+    name: "test",
+    run_uid: "test",
+    value: 1,
+    step: 1,
+    timestamp: 1,
+  },
+];
+
+const runParams: Map<string, Parameter[]> = new Map();
+runParams.set("test", sampleParameters);
+
+export const sampleRunCard = {
+  name: "test",
+  repository: "test",
+  version: "1.0.0",
+  uid: "test",
+  contact: "test",
+  datacard_uids: ["test"],
+  modelcard_uids: ["test"],
+  pipelinecard_uid: null,
+  parameters: runParams,
+  artifact_uris: artifact_uris,
+  tags: tags,
+  project: "test",
+};
+
+export const sampleMetrics = [
+  {
+    run_uid: "test",
+    name: "test",
+    value: 1,
+    step: 1,
+    timestamp: 1,
+  },
+];
+
+const sampleCards: Map<string, Card> = new Map();
+
+sampleCards.set("card1", {
+  date: "2021-09-01T00:00:00Z",
+  uid: "test",
+  repository: "test",
+  contact: "test",
+  name: "test",
+  version: "0.1.0",
+  timestamp: 1711563309,
+  tags: new Map(),
+  runcard_uid: "test",
+  datacard_uid: "test",
+  modelcard_uids: ["test"],
+  datacard_uids: ["test"],
+});
+
+sampleCards.set("card2", {
+  date: "2021-09-01T00:00:00Z",
+  uid: "test",
+  repository: "test",
+  contact: "test",
+  name: "test",
+  version: "0.1.0",
+  timestamp: 1711563309,
+  tags: new Map(),
+  runcard_uid: "test",
+  datacard_uid: "test",
+  modelcard_uids: ["test"],
+  datacard_uids: ["test"],
+});
+
+export { sampleCards };
