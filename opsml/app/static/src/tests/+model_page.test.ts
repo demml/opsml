@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, it } from "vitest";
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
 import ModelPage from "../routes/opsml/model/+page.svelte";
+import ModelCardPage from "../routes/opsml/model/card/+page.svelte";
 import ModelCardFiles from "../routes/opsml/model/card/files/+page.svelte";
 import ModelCardMetadata from "../routes/opsml/model/card/metadata/+page.svelte";
 import Versions from "../routes/opsml/model/card/versions/+page.svelte";
@@ -11,6 +12,7 @@ import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 
 import { type Files } from "$lib/scripts/types";
 import { calculateTimeBetween } from "$lib/scripts/utils";
+import { sampleCard, sampleModelMetadata } from "./constants";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -161,4 +163,16 @@ it("render opsml/model/card/versions", () => {
     },
   };
   render(Versions, { data });
+});
+
+it("render ModelCardPage", () => {
+  const data = {
+    hasReadme: true,
+    readme: "test",
+    card: sampleCard,
+    metadata: sampleModelMetadata,
+    uid: "test",
+    registry: "model",
+  };
+  render(ModelCardPage, { data });
 });
