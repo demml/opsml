@@ -65,7 +65,7 @@ it("render runCardPage", async () => {
   render(RunCardPage, { data });
 });
 
-it("render runCardMetricPage", async () => {
+it("render runCardMetricPage", () => {
   const metricViz = utils.createMetricVizData(sampleRunMetics, "bar");
   const data = {
     metrics: sampleRunMetics,
