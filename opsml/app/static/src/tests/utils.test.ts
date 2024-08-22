@@ -6,6 +6,7 @@ import {
   type UpdateUserRequest,
   type ChartjsData,
 } from "$lib/scripts/types";
+import * as homepage from "../lib/scripts/homepage";
 import { server } from "./server";
 import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
 
@@ -22,7 +23,6 @@ it("calculateTimeBetween", () => {
 
 it("cardRequest", async () => {
   const cardRequest: CardRequest = {
-    name: null,
     repository: "model",
     version: "1.0.0",
     uid: "test",
@@ -79,7 +79,6 @@ it("patchMessage", async () => {
 // get datacard
 it("getDataCard", async () => {
   const cardRequest: CardRequest = {
-    name: null,
     repository: "model",
     version: "1.0.0",
     limit: 10,
@@ -102,7 +101,6 @@ it("getDataCard", async () => {
 // get runcard
 it("getRunCard", async () => {
   const cardRequest: CardRequest = {
-    name: null,
     repository: "model",
     version: "1.0.0",
     limit: 10,
@@ -273,6 +271,23 @@ it("getUser", async () => {
       },
     },
   });
+});
+
+it("getRepos", async () => {
+  const repos = await page.getRepos("model");
+  expect(repos).toEqual(["model", "run", "data"]);
+});
+
+// test getRegistryPage
+it("getRegistryPage", async () => {
+  const pageData = await page.getRegistryPage(
+    "model",
+    undefined,
+    "repo",
+    "model",
+    0
+  );
+  expect(pageData.page).toEqual(["model", "repo", 10, 120, 110, 10]);
 });
 
 // test update user

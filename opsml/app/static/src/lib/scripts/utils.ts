@@ -37,7 +37,17 @@ import {
   type UserUpdated,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import type { Mode } from "chartjs-plugin-zoom/types/options";
+
+export async function getRepos(registry: string) {
+  const repos = await apiHandler.get(
+    `${CommonPaths.REPOSITORIES}?${new URLSearchParams({
+      registry_type: registry,
+    }).toString()}`
+  );
+
+  const response = (await repos.json()) as repositories;
+  return response.repositories;
+}
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -352,6 +362,75 @@ export async function setupRegistryPage(
     registryStats: stats,
     registryPage: page,
   };
+}
+
+// Function for searching a registry page given a registry, sort_by, repository, name, and page
+//
+// Args:
+//   registry: string - the registry to search
+//   sort_by: string - the sort_by to use
+//   repository: string - the repository to use
+//   name: string - the name to use
+//   page: number - the page to use
+//
+// Returns:
+//   registryQuery - the page for the registry
+export async function getRegistryPage(
+  registry: string,
+  sort_by: string | undefined,
+  repository: string | undefined,
+  search_term: string | undefined,
+  page: number | undefined
+): Promise<registryPage> {
+  // build request
+  const params = new URLSearchParams();
+  params.append("registry_type", registry);
+
+  if (sort_by) {
+    params.append("sort_by", sort_by);
+  }
+  if (repository) {
+    params.append("repository", repository);
+  }
+  if (search_term) {
+    params.append("search_term", search_term);
+  }
+  if (page) {
+    params.append("page", page.toString());
+  }
+
+  const url = `${CommonPaths.QUERY_PAGE}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
+
+  // const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
+
+  const response = (await page_resp.json()) as registryPage;
+  return response;
+}
+
+// Function for searching general stats given a registry and search term
+//
+// Args:
+//   registry: string - the registry to search
+//   searchTerm: string - the search term to use
+//
+// Returns:
+//   registryQuery - the general stats for the registry
+export async function getRegistryStats(
+  registry: string,
+  searchTerm: string | undefined
+): Promise<registryStats> {
+  const params = new URLSearchParams();
+  params.append("registry_type", registry);
+  if (searchTerm) {
+    params.append("search_term", searchTerm);
+  }
+
+  const url = `${CommonPaths.REGISTRY_STATS}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
+
+  const response = (await page_resp.json()) as registryStats;
+  return response;
 }
 
 /**

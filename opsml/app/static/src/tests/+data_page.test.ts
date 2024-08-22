@@ -9,15 +9,8 @@ import DataCardSplits from "../routes/opsml/data/card/splits/+page.svelte";
 import DataVersionPage from "../routes/opsml/data/card/versions/+page.svelte";
 import DataSqlPage from "../routes/opsml/data/card/sql/+page.svelte";
 
-import { type Files } from "$lib/scripts/types";
 import * as utils from "../lib/scripts/utils";
-import {
-  sampleCard,
-  sampleDataMetadata,
-  sampleFiles,
-  sampleCards,
-} from "./constants";
-import { registry } from "chart.js";
+import { sampleCard, sampleDataMetadata, sampleFiles } from "./constants";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -107,7 +100,6 @@ it("render DataVersionPage", async () => {
 
 // sql
 it("render sqlPage", async () => {
-  const registryPage = await utils.setupRegistryPage("sql");
   const data = {
     metadata: sampleDataMetadata,
   };
