@@ -69,5 +69,6 @@
                 ]
             }
         }
-    }
+    },
+    "ignorePatterns": "**/tests"
 }

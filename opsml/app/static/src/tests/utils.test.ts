@@ -352,7 +352,7 @@ it("sortMetrics", () => {
 it("metricsToTable", () => {
   const metricNames = ["accuracy"];
   const tableMetrics = page.metricsToTable(metricsForTable, metricNames);
-  let expected = new Map();
+  const expected = new Map();
   expected.set("run_1", [
     {
       name: "accuracy",
