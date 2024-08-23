@@ -5,7 +5,7 @@
   import favicon from "$lib/images/opsml-green.ico";
   import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
-  import { checkAuthstore } from "$lib/scripts/authStore";
+  import { checkAuthstore } from "$lib/scripts/auth/authStore";
   import { loginStore } from "$lib/scripts/store";
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
