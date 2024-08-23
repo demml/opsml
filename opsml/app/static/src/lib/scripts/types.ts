@@ -196,7 +196,7 @@ export enum CommonPaths {
   TEMP_TOKEN = "/opsml/auth/temp",
   ROTATE_TOKEN = "/opsml/auth/token/rotate",
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
-  ERROR = "/opsml/error",
+  ERROR = "/opsml/error/page",
 }
 
 export enum CommonErrors {
