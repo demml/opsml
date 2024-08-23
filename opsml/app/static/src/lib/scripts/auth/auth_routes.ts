@@ -4,7 +4,7 @@ import {
   type UserExistsResponse,
   type securityQuestionResponse,
 } from "$lib/scripts/types";
-import { apiHandler } from "./apiHandler";
+import { apiHandler } from "../apiHandler";
 
 export interface RegisterResponse {
   message: string;

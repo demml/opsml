@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { type Files, type ModelMetadata } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
+import { user } from "./constants";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -226,6 +227,48 @@ const handlers = [
   http.put("/opsml/auth/user", async ({ request, params, cookies }) => {
     return HttpResponse.json({
       updated: true,
+    });
+  }),
+
+  http.get("/opsml/auth/security", async ({ request, params, cookies }) => {
+    const url = new URL(request.url);
+    const username = url.searchParams.get("username")!;
+
+    if (username === "active") {
+      return HttpResponse.json({
+        question: "test question",
+        exists: true,
+        error: "NA",
+      });
+    } else if (username === "inactive") {
+      return HttpResponse.json({
+        question: "NA",
+        exists: false,
+        error: "User not found",
+      });
+    }
+
+    return HttpResponse.json({
+      question: "NA",
+      exists: false,
+      error: "Error fetching security question",
+    });
+  }),
+
+  http.get("/opsml/auth/user/exists", async ({ request, params, cookies }) => {
+    const url = new URL(request.url);
+    const username = url.searchParams.get("username")!;
+
+    if (username === "active") {
+      return HttpResponse.json({
+        exists: true,
+        username: "active",
+      });
+    }
+
+    return HttpResponse.json({
+      exists: false,
+      username: "inactive",
     });
   }),
 ];
