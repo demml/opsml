@@ -7,7 +7,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function handleError(response: Response) {
   const errorMessage = await response.text();
-  void goto(`${CommonPaths.ERROR}?error=${errorMessage}`);
+  void goto(`${CommonPaths.ERROR}?message=${errorMessage}`);
 }
 
 class ApiHandler {
