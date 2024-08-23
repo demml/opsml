@@ -1,10 +1,4 @@
-import {
-  type registryStats,
-  type registryPage,
-  type repositories,
-  CommonPaths,
-  type registryPageReturn,
-} from "$lib/scripts/types";
+import { type registryPageReturn } from "$lib/scripts/types";
 import { setupRegistryPage } from "$lib/scripts/utils";
 
 export const ssr = false;

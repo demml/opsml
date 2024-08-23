@@ -44,13 +44,13 @@ export async function getSecurity(
     return { error: errorMessage, warnUser };
   }
 
-  let userExists: UserExistsResponse = await checkUser(username as string);
+  const userExists: UserExistsResponse = await checkUser(username);
   if (!userExists.exists) {
     errorMessage = "User does not exist";
     return { error: errorMessage, warnUser: true };
   }
 
-  let secResponse = await getSecurityQuestion(username);
+  const secResponse = await getSecurityQuestion(username);
 
   if (!secResponse.exists) {
     errorMessage = secResponse.error;
@@ -64,7 +64,7 @@ export async function getToken(
   username: string,
   answer: string
 ): Promise<TokenReturn> {
-  let tokenResult = await generateTempToken(username, answer);
+  const tokenResult = await generateTempToken(username, answer);
 
   if (
     [
@@ -88,15 +88,15 @@ export async function resetPassword(
     return { error: "Password is not strong enough", warnUser: true };
   }
 
-  let response = await apiHandler.get(
+  const response = await apiHandler.get(
     `${CommonPaths.USER_AUTH}?username=${username}`
   );
-  let user: User = await response.json();
+  const user = (await response.json()) as User;
 
   // update password
   user.password = newPassword;
-  let updateResponse = await apiHandler.put(CommonPaths.USER_AUTH, user);
-  let updateResult = (await updateResponse.json()) as UserUpdated;
+  const updateResponse = await apiHandler.put(CommonPaths.USER_AUTH, user);
+  const updateResult = (await updateResponse.json()) as UserUpdated;
 
   if (updateResult.updated) {
     return { error: "", warnUser: false };

@@ -5,6 +5,11 @@ import type { Token } from "$lib/scripts/types";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function handleError(response: Response) {
+  const errorMessage = await response.text();
+  void goto(`${CommonPaths.ERROR}?error=${errorMessage}`);
+}
+
 class ApiHandler {
   constructor() {}
 
@@ -34,11 +39,15 @@ class ApiHandler {
 
       if (!response.ok) {
         // Try refreshing the jwt token if the response is unauthorized
-        const refreshed = await this.refreshToken();
+        if (response.status === 401) {
+          const refreshed = await this.refreshToken();
 
-        if (refreshed) {
-          retries -= 1;
-          await sleep(500);
+          if (refreshed) {
+            retries -= 1;
+            await sleep(500);
+          }
+        } else {
+          await handleError(response);
         }
       } else {
         return response;
@@ -72,11 +81,15 @@ class ApiHandler {
 
       if (!response.ok) {
         // Try refreshing the jwt token if the response is unauthorized
-        const refreshed = await this.refreshToken();
+        if (response.status === 401) {
+          const refreshed = await this.refreshToken();
 
-        if (refreshed) {
-          retries -= 1;
-          await sleep(500);
+          if (refreshed) {
+            retries -= 1;
+            await sleep(500);
+          }
+        } else {
+          await handleError(response);
         }
       } else {
         return response;
@@ -108,12 +121,15 @@ class ApiHandler {
         body: JSON.stringify(body),
       });
       if (!response.ok) {
-        // Try refreshing the jwt token if the response is unauthorized
-        const refreshed = await this.refreshToken();
+        if (response.status === 401) {
+          const refreshed = await this.refreshToken();
 
-        if (refreshed) {
-          retries -= 1;
-          await sleep(500);
+          if (refreshed) {
+            retries -= 1;
+            await sleep(500);
+          }
+        } else {
+          await handleError(response);
         }
       } else {
         return response;
@@ -122,6 +138,7 @@ class ApiHandler {
     // only get here if retries are exhausted
     authStore.clearToken();
     authStore.clearUsername();
+    // check if authentication is eve
     void goto(CommonPaths.LOGIN);
 
     return new Response("Unauthorized", { status: 401 });
@@ -151,11 +168,15 @@ class ApiHandler {
       });
       if (!response.ok) {
         // Try refreshing the jwt token if the response is unauthorized
-        const refreshed = await this.refreshToken();
+        if (response.status === 401) {
+          const refreshed = await this.refreshToken();
 
-        if (refreshed) {
-          retries -= 1;
-          await sleep(500);
+          if (refreshed) {
+            retries -= 1;
+            await sleep(500);
+          }
+        } else {
+          await handleError(response);
         }
       } else {
         return response;
