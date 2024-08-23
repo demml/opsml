@@ -29,8 +29,12 @@ async def get_graph_plots(request: Request, repository: str, name: str, version:
     Args:
         request:
             The incoming HTTP request.
-        run_uid:
-            The uid of the run.
+        repository:
+            The repository name.
+        name:
+            The run name.
+        version:
+            The run version.
 
     Returns:
         Dict[str, str]: A dictionary of plot names and their corresponding plots.
