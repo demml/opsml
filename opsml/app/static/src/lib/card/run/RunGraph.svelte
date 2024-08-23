@@ -2,12 +2,12 @@
 	import Chart from 'chart.js/auto';
 	import { onMount } from 'svelte';
   import zoomPlugin from 'chartjs-plugin-zoom';
-  import type RunGraph from "$lib/scripts/types";
+  import {type RunGraph} from "$lib/scripts/types";
+  import {type ChartjsData} from "$lib/scripts/types";
+  import { createRunGraphChart } from '$lib/scripts/runGraphChart';
 
-	export let graph: RunGraph;
+	export let graph: RunGraph | undefined;
   export let key: string;
-  //export let type;
-  //export let options;
   
 	let ctx;
 	let chartCanvas;
@@ -18,16 +18,26 @@
   // get graph
 
   onMount(() => {
-		  ctx = chartCanvas.getContext('2d');
-		  chart = new Chart(ctx, {
-				type: type,
-				data: data,
-        options: options
-		});
 
-    return () => {
-      chart.destroy();
-    };
+    if (!graph) {
+      let chartData = createRunGraphChart(graph!) as ChartjsData;
+      ctx = chartCanvas.getContext('2d');
+      chart = new Chart(ctx, {
+
+        // @ts-ignore
+        type: chartData.type,
+        data: chartData.data,
+        options: chartData.options
+      }
+    );
+    
+   };
+
+  return () => {
+    chart.destroy();
+  };
 
 	});
 </script>
+
+<canvas bind:this={chartCanvas} id={key}></canvas>

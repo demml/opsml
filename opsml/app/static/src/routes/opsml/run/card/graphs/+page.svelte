@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import {type Graph} from "$lib/scripts/types";
-    import RunGraph from "$lib/card/run/RunGraph.svelte";
+    import {type RunGraph} from "$lib/scripts/types";
+    import RunGraphChart from "$lib/card/run/RunGraph.svelte";
+
     //import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
 
     // Alternatively, this is how to load Highcharts Stock. The Maps and Gantt
@@ -12,19 +12,25 @@
     /** @type {import('./$types').LayoutData} */
     export let data;
 
-    let graphs: Map<string, Graph> | undefined;
+    let graphs: Map<string, RunGraph> | undefined;
     $: graphs = data.graphs
 
     
 
 </script>
+<div class="flex min-h-screen">
 
-{#if graphs}
+  {#if graphs}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {#each Array.from(graphs.keys()) as key}
+        <RunGraphChart graph={graphs.get(key)} key={key} />
+      {/each}
+    </div>
+  {:else}
 
-  {#each Array.from(graphs.keys()) as key}
-      <RunGraph graph={graphs.get(key)} key={key} />
-  {/each}
- 
-{:else}
-    <div class="text-center text-gray-500">No graphs available</div>
-{/if}
+      <div class="text-center text-gray-500">No graphs available</div>
+  {/if}
+
+
+
+</div>
