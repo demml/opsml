@@ -18,7 +18,7 @@
   let securityQuestion = '';
   let errorMessage = '';
   let passStrength = 0;
-  let passMessage: string | null = null;
+  let passMessage: string | undefined;
 
 
   let warnUser: boolean = false;
@@ -70,7 +70,7 @@
     if (strength.power < 100) {
       passMessage = strength.message;
     } else {
-      passMessage = null;
+      passMessage = undefined;
     };
 
   }, 500);

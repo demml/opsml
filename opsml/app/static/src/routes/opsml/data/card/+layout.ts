@@ -13,10 +13,14 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = (url as URL).searchParams.get("name");
-  const repository: string = (url as URL).searchParams.get("repository");
-  const version: string | null = (url as URL).searchParams.get("version");
-  const uid: string | null = (url as URL).searchParams.get("uid");
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "data";
 
   /** get last path from url */
@@ -28,11 +32,11 @@ export async function load({ fetch, params, url }) {
     registry_type: registry,
   };
 
-  if (uid !== null) {
+  if (uid) {
     cardReq.uid = uid;
   }
 
-  if (version !== null) {
+  if (version) {
     cardReq.version = version;
   }
 

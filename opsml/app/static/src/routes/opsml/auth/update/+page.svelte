@@ -76,7 +76,6 @@
   
     let request: UpdateUserRequest = {
       username: currentUsername,
-      updated_username: null,
       password: password,
       email: email,
       full_name: fullName,

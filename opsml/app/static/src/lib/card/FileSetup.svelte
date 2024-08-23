@@ -13,7 +13,7 @@
     export let basePath: string;
     export let displayPath: string[];
     export let modifiedAt: string;
-    export let subdir: string | null;
+    export let subdir: string | undefined;
     export let fileInfo: Files;
     export let prevPath: string;
 

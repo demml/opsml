@@ -35,8 +35,8 @@ export interface Metric {
   run_uid: string;
   name: string;
   value: number;
-  step: number | null;
-  timestamp: number | null;
+  step?: number;
+  timestamp?: number;
 }
 
 export interface Metrics {
@@ -54,8 +54,8 @@ export interface MetricNames {
 export interface Parameter {
   name: string;
   value: number | string;
-  step: number | null;
-  timestamp: number | null;
+  step?: number;
+  timestamp?: number;
 }
 
 export interface Parameters {
@@ -71,8 +71,8 @@ export interface Card {
   version: string;
   timestamp: number;
   tags: Map<string, string>;
-  datacard_uid: string | null;
-  runcard_uid: string | null;
+  datacard_uid?: string;
+  runcard_uid?: string;
   modelcard_uids: string[];
   datacard_uids: string[];
 }
@@ -91,11 +91,11 @@ export interface RunCard {
   contact: string;
   datacard_uids: string[];
   modelcard_uids: string[];
-  pipelinecard_uid: string | null;
+  pipelinecard_uid?: string;
   parameters: Map<string, Parameter[]>;
   artifact_uris: Map<string, Artifact>;
   tags: Map<string, string | number>;
-  project: string | null;
+  project?: string;
 }
 
 export interface CardResponse {
@@ -157,8 +157,8 @@ export interface DataCardMetadata {
   uid: string;
   contact: string;
   interface_type: string;
-  data_splits: string | null;
-  feature_map: string | null;
+  data_splits?: string;
+  feature_map?: string;
   sql_logic: Map<string, string> | undefined;
 }
 
@@ -227,8 +227,8 @@ export interface FileInfo {
 }
 
 export interface ViewContent {
-  content: string | null;
-  view_type: string | null;
+  content?: string;
+  view_type?: string;
 }
 
 export interface FileView {
@@ -277,8 +277,8 @@ export interface Message {
   user: string;
   votes: number;
   content: string;
-  parent_id: number | null;
-  created_at: number | null;
+  parent_id?: number;
+  created_at?: number;
 }
 
 export interface MessageWithReplies {
@@ -299,7 +299,7 @@ export interface RegisterUser {
 
 export interface UpdateUserRequest {
   username: string;
-  updated_username: string | null;
+  updated_username?: string;
   full_name: string;
   password: string;
   email: string;
@@ -318,9 +318,9 @@ export interface UserScope {
   write: boolean;
   delete: boolean;
   admin: boolean;
-  model_repository: string[] | null;
-  data_repository: string[] | null;
-  run_repository: string[] | null;
+  model_repository?: string[];
+  data_repository?: string[];
+  run_repository?: string[];
 }
 
 export interface UserRepositories {
@@ -331,20 +331,20 @@ export interface UserRepositories {
 
 export interface User {
   username: string;
-  password: string | null;
-  full_name: string | null;
-  email: string | null;
+  password?: string;
+  full_name?: string;
+  email?: string;
   security_question: string;
   security_answer: string;
   is_active: boolean;
   scopes: UserScope;
-  updated_username: string | null;
+  updated_username?: string;
   watchlist: UserRepositories;
 }
 
 export interface UserResponse {
-  user: User | null;
-  error: string | null;
+  user?: User;
+  error?: string;
 }
 
 export interface UserLogin {
@@ -411,7 +411,7 @@ export interface ChartjsLineDataset {
   data: number[];
   borderColor: string;
   backgroundColor: string;
-  pointRadius: number | null;
+  pointRadius?: number;
 }
 
 export interface ChartjsBarDataset {
@@ -439,7 +439,7 @@ export interface FileSystemAttr {
   repository: string;
   version: string;
   registry: string;
-  subdir: string | null;
+  subdir?: string;
   modifiedAt: string;
   basePath: string;
   displayPath: string[];

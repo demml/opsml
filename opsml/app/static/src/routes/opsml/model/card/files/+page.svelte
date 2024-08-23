@@ -34,7 +34,7 @@
   let displayPath: string[];
   $: displayPath = data.displayPath;
 
-  let subdir: string | null;
+  let subdir: string | undefined;
   $: subdir = data.subdir;
 
   let prevPath: string;
