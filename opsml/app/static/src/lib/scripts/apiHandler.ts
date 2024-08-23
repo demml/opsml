@@ -1,6 +1,6 @@
 import { goto } from "$app/navigation";
 import { CommonPaths } from "$lib/scripts/types";
-import { authStore } from "$lib/scripts/authStore";
+import { authStore } from "$lib/scripts/auth/authStore";
 import type { Token } from "$lib/scripts/types";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
