@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import {type Graph} from "$lib/scripts/types";
-    import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
+    //import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
 
     // Alternatively, this is how to load Highcharts Stock. The Maps and Gantt
     // packages are similar.
@@ -14,15 +14,15 @@
     let graphs: Map<string, Graph>;
     $: graphs = data.graphs;
 
-    onMount(() => {
-        Object.keys(graphs).forEach((graph) => {
-            if (graphs[graph].graph_type === "single") {
-                buildXyChart(graphs[graph]);
-            } else {
-                buildMultiXyChart(graphs[graph]);
-            }
-        });
-    });
+   //onMount(() => {
+   //    Object.keys(graphs).forEach((graph) => {
+   //        if (graphs[graph].graph_type === "single") {
+   //            buildXyChart(graphs[graph]);
+   //        } else {
+   //            buildMultiXyChart(graphs[graph]);
+   //        }
+   //    });
+   //});
 
     
 
