@@ -433,6 +433,19 @@ export interface ChartjsBarDataset {
   borderSkipped: boolean;
 }
 
+export interface ScatterData {
+  x: number;
+  y: number;
+}
+
+export interface ChartjsScatterDataset {
+  label: string;
+  data: ScatterData[];
+  borderColor: string;
+  backgroundColor: string;
+  pointRadius: number;
+}
+
 export interface ChartjsGroupedBarDataset {
   label: string;
   data: number[];

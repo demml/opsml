@@ -33,11 +33,13 @@ import {
   type ChartjsLineDataset,
   type ChartjsBarDataset,
   type ChartjsGroupedBarDataset,
+  type ChartjsScatterDataset,
   type FileViewResponse,
   type UserUpdated,
   type RunGraph,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import type { Chart } from "chart.js";
 
 export async function getRepos(registry: string) {
   const repos = await apiHandler.get(
@@ -627,7 +629,8 @@ export function buildDataforChart(
   datasets:
     | ChartjsBarDataset[]
     | ChartjsLineDataset[]
-    | ChartjsGroupedBarDataset[],
+    | ChartjsGroupedBarDataset[]
+    | ChartjsScatterDataset[],
   x_label: string,
   y_label: string,
   chartType: string,
@@ -704,7 +707,7 @@ export function buildDataforChart(
   };
 }
 
-function generateColors(count: number, opacity?: number): string[] {
+export function generateColors(count: number, opacity?: number): string[] {
   return Array.from({ length: count }, (_, index) => {
     const hue = (index * 137.508) % 360; // Golden angle approximation
     const [r, g, b] = hslToRgb(hue, 0.7, 0.6);

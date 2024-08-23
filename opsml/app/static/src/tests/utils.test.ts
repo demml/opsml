@@ -206,11 +206,11 @@ it("setupFiles", async () => {
     "opsml/bastpath",
     "model",
     "name",
-    undefined,
+    "1.0.0",
     "subdir"
   );
   expect(files).toEqual({
-    displayPath: ["model", "name", "vnull", "subdir"],
+    displayPath: ["model", "name", "v1.0.0", "subdir"],
     fileInfo: {
       files: [
         {
@@ -256,7 +256,7 @@ it("setupRegistryPage", async () => {
 it("getUser", async () => {
   const user = await page.getUser("username");
   expect(user).toEqual({
-    error: null,
+    error: undefined,
     user: {
       user: {
         is_active: true,

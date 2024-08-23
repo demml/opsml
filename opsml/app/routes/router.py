@@ -17,8 +17,8 @@ from opsml.app.routes import (
     metrics,
     models,
     projects,
-    runs,
     registry,
+    runs,
 )
 
 
