@@ -1,5 +1,5 @@
-import { type Graph } from "$lib/scripts/types";
-import { calculateTimeBetween, getRunGraphs } from "$lib/scripts/utils";
+import { type RunGraph } from "$lib/scripts/types";
+import { getRunGraphs } from "$lib/scripts/utils";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
@@ -12,7 +12,7 @@ export async function load({ fetch, params, url }) {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
-  const graphs: Map<string, Graph> = await getRunGraphs(
+  const graphs: Map<string, RunGraph> = await getRunGraphs(
     repository!,
     name!,
     version!

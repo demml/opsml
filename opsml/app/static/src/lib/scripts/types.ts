@@ -250,6 +250,16 @@ export interface Graph {
   graphType: string;
 }
 
+export interface RunGraph {
+  name: string;
+  x_label: string;
+  y_label: string;
+  x: number[];
+  y: number[] | Map<string, number[]>;
+  graph_type: string;
+  graph_style: string;
+}
+
 export enum CardRegistries {
   Run = "run",
   Data = "data",

@@ -35,6 +35,7 @@ import {
   type ChartjsGroupedBarDataset,
   type FileViewResponse,
   type UserUpdated,
+  type RunGraph,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -186,7 +187,7 @@ export async function getRunGraphs(
   repository: string,
   name: string,
   version: string
-): Promise<Map<string, Graph>> {
+): Promise<Map<string, RunGraph>> {
   const params = new URLSearchParams();
   params.append("repository", repository);
   params.append("name", name);
@@ -194,10 +195,11 @@ export async function getRunGraphs(
 
   const url = `${CommonPaths.GRAPHS}?${params.toString()}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const graphs = await apiHandler.get(url).then((res) => res.json());
+  const graphs = (await apiHandler.get(url).then((res) => res.json())) as Map<
+    string,
+    RunGraph
+  >;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return graphs;
 }
 
