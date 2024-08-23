@@ -3,15 +3,12 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import { authStore } from "$lib/scripts/auth/authStore";
+  import { getSecurity, getToken, resetPassword,type SecurityReturn, type TokenReturn, type PasswordReturn } from "$lib/scripts/auth/utils";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
-  import { CommonPaths, type UserExistsResponse, type User } from "$lib/scripts/types";
+  import { CommonPaths, type PasswordStrength } from "$lib/scripts/types";
   import { goTop} from "$lib/scripts/utils";
-  import { checkUser } from "$lib/scripts/auth/auth_routes";
-  import { type securityQuestionResponse, CommonErrors, type PasswordStrength } from "$lib/scripts/types";
-  import { getSecurityQuestion, generateTempToken } from "$lib/scripts/auth/auth_routes";
   import { checkPasswordStrength, delay } from "$lib/scripts/utils";
   import { ProgressBar } from '@skeletonlabs/skeleton';
-  import { apiHandler } from "$lib/scripts/apiHandler";
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
   import { sleep } from "$lib/scripts/utils";
 
@@ -29,10 +26,8 @@
   /** @type {import('./$types').PageData} */
   export let data;
   let username: string | undefined = data.username;
-  let secretQuestionRes: securityQuestionResponse | undefined = data.secretQuestion;
-  let secretQuestion = secretQuestionRes?.question as string;
+  let secretQuestion: string = '';
   let secretAnswer = '';
-  let tokenResult: string = '';
   let showReset: boolean = false;
   let newPassword = '';
 
@@ -48,112 +43,67 @@
 
   }, 100);
 
-  async function resetPassword() {
-    if (passStrength < 100) {
-      warnUser = true;
-      errorMessage = 'Password is weak. Please provide a stronger password.';
-      goTop();
-      return;
-    }
-
-    // get user data
-    let response = await apiHandler.get(`${CommonPaths.USER_AUTH}?username=${username}`);
-    let user: User = await response.json();
-
-    // update password
-    user.password = newPassword;
-    let updateResponse = await apiHandler.put(CommonPaths.USER_AUTH, user);
-    let updateResult = await updateResponse.json();
-    
-    toastStore.trigger(t);
-
-    // sleep so toast can be seen
-    await sleep(2000);
-
-    // clear temp token
-    authStore.clearToken();
-
-    // redirect
-    goto(CommonPaths.LOGIN);
-
-  }
-
-  async function getToken() {
-    tokenResult = await generateTempToken(username as string, secretAnswer);
-
-      if ([CommonErrors.USER_NOT_FOUND.toString(), CommonErrors.INCORRECT_ANSWER.toString(), CommonErrors.TOKEN_ERROR.toString()].includes(tokenResult)) {
-        warnUser = true
-        errorMessage = tokenResult;
-        goTop();
-        return;
-
-      } else {
-        // show reset option now that user has been verified
-        showReset = true;
-
-        // add tokenResult as authorization header
-        authStore.setToken(tokenResult);
-
-        // go back to top of page
-        goTop();
-        return;
-      }
-  }
-
-  async function getSecurity() {
-    // reset warning
-    warnUser = false;
-
-    // Handle login logic here
-    if (!username) {
-      // check if username is not empty
-      warnUser = true;
-      errorMessage = 'Username cannot be empty';
-      goTop();
-      return;
-    }
-
-    let userExists: UserExistsResponse = await checkUser(username as string);
-
-    if (!userExists.exists) {
-      warnUser = true;
-      errorMessage = 'User does not exist';
-      goTop();
-      return;
-    }
-
-    secretQuestionRes = await getSecurityQuestion(username);
-    secretQuestion = secretQuestionRes?.question as string;
-
-    if (secretQuestionRes) {
-    if (!secretQuestionRes.exists) {
-      warnUser = true;
-      errorMessage = secretQuestionRes.error;
-      goTop();
-      return;
-      }  
-    }
-  }
-  
 
   async function handleReset() {
 
     warnUser = false;
 
     if (showReset) {
-      await resetPassword();
+      let resetResponse = await resetPassword(passStrength, username as string, newPassword) as PasswordReturn;
+
+      if (resetResponse.warnUser) {
+        warnUser = resetResponse.warnUser;
+        errorMessage = resetResponse.error;
+        goTop();
+        return;
+      } else {
+        toastStore.trigger(t);
+
+        // sleep so toast can be seen
+        await sleep(2000);
+
+        // clear temp token
+        authStore.clearToken();
+
+        // redirect
+        goto(CommonPaths.LOGIN);
+        return;
+      }
     }
+
     if (secretAnswer !== '') {
-      await getToken();
+      let tokenReturn = await getToken(username as string, secretAnswer) as TokenReturn;
+
+      if (!tokenReturn.token) {
+        warnUser = tokenReturn.warnUser;
+        errorMessage = tokenReturn.error;
+        goTop();
+        return;
+      } else {
+        // show reset option now that user has been verified
+        showReset = true;
+        goTop();
+        return;
+      }
+
     } else {
-      await getSecurity();
+      let response = await getSecurity(username as string) as SecurityReturn;
+      if (response.warnUser) {
+        warnUser = response.warnUser;
+        errorMessage = response.error;
+        goTop();
+
+      } else {
+        warnUser = response.warnUser
+        secretQuestion = response.question!;
+      }
+
     }
 
   }
 
-
   
-  </script>
+</script>
 
 <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 md:pb-0 items-center">
 
@@ -170,7 +120,7 @@
     
     <div class="mb-8 grid grid-cols-1 gap-3">
 
-      {#if !secretQuestionRes && !showReset}
+      {#if !secretQuestion && !showReset}
         <label class="text-primary-500">Username
           <p class="mb-1 text-gray-500 text-xs">Username or Email associated with account</p>
           <input
@@ -182,7 +132,7 @@
         </label>
       {/if}
 
-      {#if secretQuestionRes && !showReset}
+      {#if secretQuestion && !showReset}
         <label class="text-primary-500">Secret Question
           <input
             class="input rounded-lg bg-slate-200 hover:bg-slate-100"
