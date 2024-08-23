@@ -271,6 +271,33 @@ const handlers = [
       username: "inactive",
     });
   }),
+
+  http.post("/opsml/auth/temp", async ({ request, params, cookies }) => {
+    const body = await request.json()!;
+
+    // @ts-ignore
+    let username = body.username!;
+
+    if (username === "User not found") {
+      return HttpResponse.json("User not found");
+    }
+
+    if (username === "Incorrect answer") {
+      return HttpResponse.json("Incorrect answer");
+    }
+
+    if (username === "Error generating token") {
+      return HttpResponse.json("Error generating token");
+    }
+
+    return HttpResponse.json("sadfusadf89s76df0safshd");
+  }),
+
+  http.post("/opsml/auth/register", async ({ request, params, cookies }) => {
+    return new HttpResponse("Registered", {
+      status: 200,
+    });
+  }),
 ];
 
 export const server = setupServer(...handlers);
