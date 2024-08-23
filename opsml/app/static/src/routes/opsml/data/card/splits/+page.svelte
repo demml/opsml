@@ -18,5 +18,5 @@
       viewType="code"
       content={metadata.data_splits}
       suffix="json"
-      uri={null}
+      uri={undefined}
     />

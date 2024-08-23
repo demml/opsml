@@ -26,12 +26,12 @@
   let warnUser: boolean = false;
   let errorMessage: string = '';
   let passStrength = 0;
-  let passMessage: string | null = null;
+  let passMessage: string | undefined;
 
   /** @type {import('./$types').PageData} */
   export let data;
-  let username: string | null = data.username;
-  let secretQuestionRes: securityQuestionResponse | null = data.secretQuestion;
+  let username: string | undefined = data.username;
+  let secretQuestionRes: securityQuestionResponse | undefined = data.secretQuestion;
   let secretQuestion = secretQuestionRes?.question as string;
   let secretAnswer = '';
   let tokenResult: string = '';
@@ -45,7 +45,7 @@
     if (strength.power < 100) {
       passMessage = strength.message;
     } else {
-      passMessage = null;
+      passMessage = undefined;
     };
 
   }, 100);

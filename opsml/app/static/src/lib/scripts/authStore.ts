@@ -2,6 +2,7 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import { CommonPaths, type Token } from "$lib/scripts/types";
+import { r } from "svelte-highlight/languages";
 
 class AuthStore {
   constructor() {
@@ -14,8 +15,12 @@ class AuthStore {
     }
   }
 
-  getUsername() {
-    return localStorage.getItem("username");
+  getUsername(): string | undefined {
+    const username: string | null = localStorage.getItem("username");
+    if (username === null) {
+      return undefined;
+    }
+    return username;
   }
 
   clearUsername() {
@@ -45,7 +50,11 @@ class AuthStore {
 
   getToken() {
     if (browser) {
-      return localStorage.getItem("jwtToken");
+      const token: string | null = localStorage.getItem("jwtToken");
+      if (token === null) {
+        return undefined;
+      }
+      return token;
     }
   }
 

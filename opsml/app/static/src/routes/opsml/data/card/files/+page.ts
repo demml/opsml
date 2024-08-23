@@ -5,18 +5,22 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = (url as URL).searchParams.get("name");
-  const repository: string = (url as URL).searchParams.get("repository");
-  const version = (url as URL).searchParams.get("version");
-  const subdir: string | null = (url as URL).searchParams.get("subdir");
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  const subdir = (url as URL).searchParams.get("subdir") as string | undefined;
   const registry = "data";
 
   const basePath = `${opsmlRoot}/${repository}/${name}/v${version}`;
 
   const setup: FileSetup = await setupFiles(
     basePath,
-    repository,
-    name,
+    repository!,
+    name!,
     version,
     subdir
   );

@@ -18,22 +18,21 @@ export async function load({ parent, url }) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const data = await parent();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const name: string | null = (url as URL).searchParams.get("name");
+  const name = (url as URL).searchParams.get("name") as string | undefined;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const repository: string | null = (url as URL).searchParams.get("repository");
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const version: string | null = (url as URL).searchParams.get("version");
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
 
   const cardReq: CardRequest = {
     name,
     repository: repository!,
     registry_type: CardRegistries.Run,
     limit: 50,
-    page: null,
-    uid: null,
     version: version,
   };
 

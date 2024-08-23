@@ -239,10 +239,10 @@ export async function getReadme(markdownPath: string): Promise<Readme> {
 
 /**
  * Get metadata for a model
- * @param {string | null} uid
+ * @param {string | undefined} uid
  * @param {string} name
  * @param {string} repository
- * @param {string | null} version
+ * @param {string | undefined} version
  *
  * @returns {Promise<ModelMetadata>} metadata
  *
@@ -250,12 +250,12 @@ export async function getReadme(markdownPath: string): Promise<Readme> {
 export async function getModelMetadata(
   name: string,
   repository: string,
-  uid: string | null,
-  version: string | null
+  uid?: string,
+  version?: string
 ): Promise<ModelMetadata> {
   let metaAttr: metadataRequest = {};
 
-  if (uid !== null) {
+  if (uid) {
     metaAttr = {
       uid,
     };
@@ -265,7 +265,7 @@ export async function getModelMetadata(
       repository,
     };
 
-    if (version !== null) {
+    if (version) {
       metaAttr.version = version;
     }
   }
@@ -283,7 +283,7 @@ export async function getModelMetadata(
  * @param {string} repository
  * @param {string} name
  * @param {string} version
- * @param {string | null} subdir
+ * @param {string | undefined} subdir
  *
  * @returns {Promise<FileSetup>} setup
  *
@@ -292,14 +292,14 @@ export async function setupFiles(
   basePath: string,
   repository: string,
   name: string,
-  version: string | null,
-  subdir: string | null
+  version?: string,
+  subdir?: string
 ): Promise<FileSetup> {
   let urlPath = `${CommonPaths.FILE_INFO}?path=${basePath}`;
   let displayPath = [repository, name, `v${version}`];
   let prevPath: string = basePath;
 
-  if (subdir !== null) {
+  if (subdir) {
     urlPath = `${urlPath}&subdir=${subdir}`;
 
     // split the subdir path
@@ -440,8 +440,8 @@ export async function getRegistryStats(
  *
  */
 export async function getUser(username: string): Promise<UserResponse> {
-  let user: User | null = null;
-  let error: string | null = null;
+  let user: User | undefined;
+  let error: string | undefined;
   const url: string = `${CommonPaths.USER_AUTH}?username=${username}`;
 
   const response = await apiHandler.get(url);
@@ -839,8 +839,8 @@ export function exportMetricsToCSV(runMetrics: RunMetrics): string {
     metric.run_uid,
     metric.name,
     metric.value.toString(),
-    metric.step !== null ? metric.step.toString() : "",
-    metric.timestamp !== null ? metric.timestamp.toString() : "",
+    metric.step ? metric.step.toString() : "",
+    metric.timestamp ? metric.timestamp.toString() : "",
   ]);
 
   // Combine header and content

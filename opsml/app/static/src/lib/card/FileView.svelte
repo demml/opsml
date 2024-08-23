@@ -20,10 +20,10 @@
 
   export let name: string;
   export let modifiedAt: string;
-  export let viewType: string | null;
-  export let content: string | null;
-  export let suffix: string | null;
-  export let uri: string | null;
+  export let viewType: string | undefined;
+  export let content: string | undefined;
+  export let suffix: string | undefined;
+  export let uri: string | undefined;
 
   
 </script>
@@ -45,7 +45,7 @@
 
     <div class="min-w-96 w-full border border-gray overflow-scroll">
 
-      {#if viewType === "code" && content !== null && suffix !== null}
+      {#if viewType === "code" && content && suffix}
 
         {#if suffix === "json" || suffix === "jsonl"}
 
@@ -79,7 +79,7 @@
         {/if}
   
 
-      {:else if viewType === "iframe" && uri !== null}
+      {:else if viewType === "iframe" && uri}
 
         {#if suffix === "jpeg" || suffix === "jpg" || suffix === "png" || suffix === "gif" || suffix === "tiff"}
 

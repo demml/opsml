@@ -6,7 +6,6 @@ import {
   type UpdateUserRequest,
   type ChartjsData,
 } from "$lib/scripts/types";
-import * as homepage from "../lib/scripts/homepage";
 import { server } from "./server";
 import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
 
@@ -177,7 +176,12 @@ it("getReadme", async () => {
 
 // get modelMetadata
 it("getModelMetadata", async () => {
-  const metadata = await page.getModelMetadata("name", "model", "test", null);
+  const metadata = await page.getModelMetadata(
+    "name",
+    "model",
+    "test",
+    undefined
+  );
   expect(metadata).toEqual({
     model_name: "test",
     model_class: "test",
@@ -202,7 +206,7 @@ it("setupFiles", async () => {
     "opsml/bastpath",
     "model",
     "name",
-    null,
+    undefined,
     "subdir"
   );
   expect(files).toEqual({

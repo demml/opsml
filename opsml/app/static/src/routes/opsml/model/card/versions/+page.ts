@@ -15,8 +15,8 @@ export async function load({ fetch, params, url }) {
   const registryPage = await getRegistryPage(
     registry!,
     undefined,
-    repository as string | undefined,
-    name as string | undefined,
+    repository,
+    name,
     0
   );
 
