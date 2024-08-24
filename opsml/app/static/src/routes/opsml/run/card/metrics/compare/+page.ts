@@ -28,8 +28,8 @@ export async function load({ parent, url }) {
     | string
     | undefined;
 
+  // want to pull in all cards for this repository
   const cardReq: CardRequest = {
-    name,
     repository: repository!,
     registry_type: CardRegistries.Run,
     limit: 50,
