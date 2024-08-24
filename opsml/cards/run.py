@@ -335,6 +335,8 @@ class RunCard(ArtifactCard):
 
         param = Param(name=key, value=value)
 
+        self._registry.insert_parameter([{**param.model_dump(), **{"run_uid": self.uid}}])
+
         if self.parameters.get(_key) is not None:
             self.parameters[_key].append(param)
 

@@ -14,8 +14,8 @@ export function createLineChart(graph: RunGraph): ChartjsData {
   datasets.push({
     label: graph.name,
     data: graph.y as number[],
-    borderColor: colors[0],
-    backgroundColor: colors[0],
+    borderColor: colors[0 + 1],
+    backgroundColor: colors[0 + 1],
     pointRadius: 1,
   });
 
@@ -32,14 +32,16 @@ export function createGroupedLineChart(graph: RunGraph): ChartjsData {
   const datasets: ChartjsLineDataset[] = [];
 
   const y = graph.y as Map<string, number[]>;
-  const borders = generateColors(y.size + 1);
+  const keys = Object.keys(y);
+  const borders = generateColors(keys.length + 1);
 
-  Array.from(y).forEach(([key, value], index) => {
+  // iterate over keys with index
+  keys.forEach((key, index) => {
     const borderColor = borders[index + 1];
 
     datasets.push({
       label: key,
-      data: value,
+      data: y[key],
       borderColor,
       backgroundColor: borderColor,
       pointRadius: 1,
@@ -59,16 +61,15 @@ export function createGroupedLineChart(graph: RunGraph): ChartjsData {
 export function createMultiScatterChart(graph: RunGraph): ChartjsData {
   const datasets: ChartjsScatterDataset[] = [];
   const y = graph.y as Map<string, number[]>;
-  const colors = generateColors(y.size + 1);
+  const keys = Object.keys(y);
+  const colors = generateColors(keys.length + 1);
 
-  Array.from(y).forEach(([key, value], index) => {
+  keys.forEach((key, index) => {
     const borderColor = colors[index + 1];
-
-    // iterate over x and y values
     const data: ScatterData[] = [];
 
     for (let i = 0; i < graph.x.length; i++) {
-      data.push({ x: graph.x[i], y: value[i] });
+      data.push({ x: graph.x[i], y: y[key][i] });
     }
 
     datasets.push({
@@ -76,7 +77,7 @@ export function createMultiScatterChart(graph: RunGraph): ChartjsData {
       data: data,
       borderColor,
       backgroundColor: borderColor,
-      pointRadius: 1,
+      pointRadius: 2,
     });
   });
 
@@ -119,13 +120,19 @@ export function createScatterChart(graph: RunGraph): ChartjsData {
 
 export function createRunGraphChart(graph: RunGraph): ChartjsData {
   if (graph.graph_style === "line") {
-    if (graph.graph_type === "multi" || graph.graph_type === "grouped") {
+    if (
+      graph.graph_type.includes("multi") ||
+      graph.graph_type.includes("grouped")
+    ) {
       return createGroupedLineChart(graph);
     }
     return createLineChart(graph);
   }
 
-  if (graph.graph_type === "multi" || graph.graph_type === "grouped") {
+  if (
+    graph.graph_type.includes("multi") ||
+    graph.graph_type.includes("grouped")
+  ) {
     return createMultiScatterChart(graph);
   }
   return createScatterChart(graph);
