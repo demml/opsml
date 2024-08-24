@@ -15,11 +15,30 @@ from fastapi import APIRouter, HTTPException, Request, status
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
 from opsml.types import RegistryTableNames, SaveName
+from opsml import RunCard, CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
 
 router = APIRouter()
+
+
+@router.post("/run/card", name="runcard", response_model=RunCard)
+def get_runcard(request: Request, payload: CardRequest) -> RunCard:
+    """Retrieve a RunCard"""
+
+    try:
+        registry: CardRegistry = request.app.state.registries.run
+        card: RunCard = registry.load_card(
+            name=payload.name,
+            repository=payload.repository,
+            version=payload.version,
+            uid=payload.uid,
+        )
+        return card
+    except Exception as e:
+        logger.error(f"Error retrieving RunCard: {e}")
+        raise e
 
 
 @router.get("/runs/graphs", name="graphs")
