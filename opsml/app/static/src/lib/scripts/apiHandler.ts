@@ -5,9 +5,13 @@ import type { Token } from "$lib/scripts/types";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function handleError(response: Response) {
+async function handleError(response: Response): Promise<Response> {
   const errorMessage = await response.text();
   void goto(`${CommonPaths.ERROR}?message=${errorMessage}`);
+  return new Response(null, {
+    status: 500,
+    statusText: "Failure",
+  });
 }
 
 class ApiHandler {
@@ -47,7 +51,7 @@ class ApiHandler {
             await sleep(500);
           }
         } else {
-          await handleError(response);
+          return await handleError(response);
         }
       } else {
         return response;
@@ -89,7 +93,7 @@ class ApiHandler {
             await sleep(500);
           }
         } else {
-          await handleError(response);
+          return await handleError(response);
         }
       } else {
         return response;
@@ -129,7 +133,7 @@ class ApiHandler {
             await sleep(500);
           }
         } else {
-          await handleError(response);
+          return await handleError(response);
         }
       } else {
         return response;
@@ -176,7 +180,7 @@ class ApiHandler {
             await sleep(500);
           }
         } else {
-          await handleError(response);
+          return await handleError(response);
         }
       } else {
         return response;
