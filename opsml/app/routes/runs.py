@@ -12,10 +12,11 @@ from typing import Any, Dict
 import joblib
 from fastapi import APIRouter, HTTPException, Request, status
 
+from opsml import CardRegistry, RunCard
+from opsml.app.routes.pydantic_models import CardRequest
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
 from opsml.types import RegistryTableNames, SaveName
-from opsml import RunCard, CardRegistry
 
 logger = ArtifactLogger.get_logger()
 
