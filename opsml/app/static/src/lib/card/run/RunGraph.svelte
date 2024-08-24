@@ -6,7 +6,7 @@
   import {type ChartjsData} from "$lib/scripts/types";
   import { createRunGraphChart } from '$lib/scripts/runGraphChart';
 
-	export let graph: RunGraph | undefined;
+	export let graph: RunGraph;
   export let key: string;
   
 	let ctx;
@@ -19,22 +19,23 @@
 
   onMount(() => {
 
-    if (!graph) {
-      let chartData = createRunGraphChart(graph!) as ChartjsData;
-      ctx = chartCanvas.getContext('2d');
-      chart = new Chart(ctx, {
+    let chartData = createRunGraphChart(graph!) as ChartjsData;
+    ctx = chartCanvas.getContext('2d');
+    chart = new Chart(ctx, {
 
-        // @ts-ignore
-        type: chartData.type,
-        data: chartData.data,
-        options: chartData.options
+      // @ts-ignore
+      type: chartData.type,
+      data: chartData.data,
+      options: chartData.options
       }
     );
-    
-   };
 
-  return () => {
-    chart.destroy();
+     // @ts-ignore
+     window[key] = chart;
+
+
+    return () => {
+      chart.destroy();
   };
 
 	});
