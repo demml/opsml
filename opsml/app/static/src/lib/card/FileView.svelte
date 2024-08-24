@@ -9,6 +9,7 @@
   import sql from "svelte-highlight/languages/sql";
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
   import Markdown from "$lib/card/Markdown.svelte";
+  import { goto } from "$app/navigation";
 
   function formatJson(jsonString: string): string {
     console.log(jsonString);
@@ -24,6 +25,22 @@
   export let content: string | undefined;
   export let suffix: string | undefined;
   export let uri: string | undefined;
+  
+  export let displayPath: string[];
+  export let registry: string;
+  export let repository: string;
+  export let version: string;
+  export let cardName: string;
+
+
+  function navigateBreadcrumb(index: number) {
+    if (index >= 3) {
+      let subDir: string = displayPath.slice(3, index + 1).join('/');
+      void goto(`/opsml/${registry}/card/files?name=${cardName}&repository=${repository}&version=${version}&subdir=${subDir}`);
+    } else {
+      void goto(`/opsml/${registry}/card/files?name=${cardName}&repository=${repository}&version=${version}`);
+    }
+  }
 
   
 </script>
@@ -32,9 +49,21 @@
   {@html atomOneLight}
 </svelte:head>
 
-<div class="flex items-center justify-center pt-8 text-sm">
+<div class="flex items-center justify-center py-8 text-sm">
 
   <div class="justify-center w-3/4">
+
+    <ol class="breadcrumb pl-2 pb-2">
+      {#each displayPath as path, index}
+
+      {#if index !== displayPath.length - 1}
+        <li class="crumb"><button class="anchor font-semibold" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
+        <li class="crumb-separator" aria-hidden>/</li>
+      {:else}
+        <li class="crumb"><button class="anchor font-semibold text-secondary-500" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
+      {/if}
+      {/each}
+    </ol>
 
     <div class="bg-surface-200 flex rounded-t-lg border border-gray px-3 py-2 min-w-96">
       <div class="inline-flex justify-between w-full items-center">
@@ -84,7 +113,7 @@
         {#if suffix === "jpeg" || suffix === "jpg" || suffix === "png" || suffix === "gif" || suffix === "tiff"}
 
         <div class="flex justify-center items-center">
-          <img src={uri} alt={name} class="center"/>
+          <img src={uri} alt={name} class="center py-4"/>
         </div>
 
         {/if}

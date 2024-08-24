@@ -1,10 +1,27 @@
-import { type FileView, CommonPaths } from "$lib/scripts/types";
+import { type FileView } from "$lib/scripts/types";
+import { CommonPaths } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import { RegistryName } from "$lib/scripts/types";
+
+const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+
   const path = (url as URL).searchParams.get("path");
   const filePath = atob(path!);
+
+  const displayPath = filePath
+    .replace(opsmlRoot, "")
+    .split("/")
+    .filter(Boolean);
 
   const viewData = (await apiHandler
     .get(
@@ -14,5 +31,11 @@ export async function load({ fetch, params, url }) {
     )
     .then((res) => res.json())) as FileView;
 
-  return viewData;
+  return {
+    viewData: viewData,
+    cardName: name,
+    repository: repository,
+    version: version,
+    displayPath: displayPath,
+  };
 }
