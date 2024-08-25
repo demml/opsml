@@ -31,6 +31,7 @@ def put_hw_metrics(
     _timekeeper = time.time()
 
     while run.active:  # producer function for hw output
+        # failure should not stop the thread
         try:
             time.sleep(3)
 
@@ -46,9 +47,9 @@ def put_hw_metrics(
             # add to the queue
             queue.put(metrics, block=False)
 
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             logger.error("Failed to log hardware metrics: {}", error)
-            pass
+            continue
 
     logger.info("Hardware logger stopped")
 
@@ -83,11 +84,11 @@ def get_hw_metrics(
             run.runcard._registry.insert_hw_metrics([metrics])
 
         except Empty:
-            pass
+            continue
 
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             logger.error("Failed to log hardware metrics: {}", error)
-            pass
+            continue
 
 
 class ActiveRunException(Exception): ...
