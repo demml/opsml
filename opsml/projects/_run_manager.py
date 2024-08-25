@@ -31,19 +31,24 @@ def put_hw_metrics(
     _timekeeper = time.time()
 
     while run.active:  # producer function for hw output
-        time.sleep(3)
+        try:
+            time.sleep(3)
 
-        # check if time to log
-        if time.time() - _timekeeper < interval:
-            continue
+            # check if time to log
+            if time.time() - _timekeeper < interval:
+                continue
 
-        metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
-            "metrics": hw_logger.get_metrics().model_dump(),
-            "run_uid": run.run_id,
-        }
+            metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
+                "metrics": hw_logger.get_metrics().model_dump(),
+                "run_uid": run.run_id,
+            }
 
-        # add to the queue
-        queue.put(metrics, block=False)
+            # add to the queue
+            queue.put(metrics, block=False)
+
+        except Exception as error:
+            logger.error("Failed to log hardware metrics: {}", error)
+            pass
 
     logger.info("Hardware logger stopped")
 
@@ -78,6 +83,10 @@ def get_hw_metrics(
             run.runcard._registry.insert_hw_metrics([metrics])
 
         except Empty:
+            pass
+
+        except Exception as error:
+            logger.error("Failed to log hardware metrics: {}", error)
             pass
 
 
