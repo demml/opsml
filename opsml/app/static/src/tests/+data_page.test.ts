@@ -11,6 +11,7 @@ import DataSqlPage from "../routes/opsml/data/card/sql/+page.svelte";
 
 import * as utils from "../lib/scripts/utils";
 import { sampleCard, sampleDataMetadata, sampleFiles } from "./constants";
+import { registry } from "chart.js";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -67,6 +68,8 @@ it("render DataCardFiles", async () => {
 it("render DataCardSplits", async () => {
   const data = {
     metadata: sampleDataMetadata,
+    registry: "data",
+    card: sampleCard,
   };
 
   render(DataCardSplits, { data });

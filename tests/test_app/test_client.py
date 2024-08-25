@@ -21,7 +21,7 @@ from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.api import ApiRoutes
-from opsml.types import Metric, SaveName
+from opsml.types import Metric, Param, SaveName
 from opsml.types.extra import Suffix
 from tests.conftest import EXCLUDE, TODAY_YMD
 
@@ -247,6 +247,15 @@ def test_runcard(
 
     assert metric1[0].value == 10
     assert metric2[0].value == 20
+
+    # parameters
+    run.log_parameter("test_param", 10)
+    run.log_parameters({"test_param2": 20})
+
+    param1 = run.get_parameter("test_param")
+    param2 = run.get_parameter("test_param2")
+    assert isinstance(param1[0], Param)
+    assert isinstance(param2[0], Param)
 
     # save artifacts
     run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")

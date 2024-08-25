@@ -30,7 +30,6 @@ export const user: User = {
     data_repository: ["test"],
     run_repository: ["test"],
   },
-  updated_username: null,
 };
 
 const metricsForTable: Map<string, RunMetrics> = new Map();
