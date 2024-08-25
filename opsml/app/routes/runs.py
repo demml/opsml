@@ -37,9 +37,9 @@ def get_runcard(request: Request, payload: CardRequest) -> RunCard:
             uid=payload.uid,
         )
         return card
-    except Exception as e:
-        logger.error(f"Error retrieving RunCard: {e}")
-        raise e
+    except Exception as error:
+        logger.error(f"Error retrieving RunCard: {error}")
+        raise error
 
 
 @router.get("/runs/graphs", name="graphs")

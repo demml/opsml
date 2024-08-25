@@ -17,33 +17,33 @@ const lineGraph: RunGraph = {
   graph_style: "line",
 };
 
-const groupedLineGraph: RunGraph = {
+const groupedLineGraph = Object.create({
   name: "grouped line",
   x_label: "x",
   y_label: "y",
   x: [1, 2, 3, 4, 5],
-  y: new Map([
-    ["a", [1, 2, 3, 4, 5]],
-    ["b", [5, 4, 3, 2, 1]],
-    ["c", [1, 3, 1, 3, 1]],
-  ]),
+  y: {
+    a: [1, 2, 3, 4, 5],
+    b: [5, 4, 3, 2, 1],
+    c: [1, 3, 1, 3, 1],
+  },
   graph_type: "grouped",
   graph_style: "line",
-};
+});
 
-const groupedScatterGraph: RunGraph = {
+const groupedScatterGraph = Object.create({
   name: "grouped scatter",
   x_label: "x",
   y_label: "y",
   x: [1, 2, 3, 4, 5],
-  y: new Map([
-    ["a", [1, 2, 3, 4, 5]],
-    ["b", [5, 4, 3, 2, 1]],
-    ["c", [1, 3, 1, 3, 1]],
-  ]),
+  y: {
+    a: [1, 2, 3, 4, 5],
+    b: [5, 4, 3, 2, 1],
+    c: [1, 3, 1, 3, 1],
+  },
   graph_type: "grouped",
   graph_style: "scatter",
-};
+});
 
 const scatterGraph: RunGraph = {
   name: "scatter",

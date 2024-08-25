@@ -202,10 +202,10 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_metric("m1")[0].value == 1.1
     assert read_project.get_metric("m2")[0].value == 1.2
     assert len(read_project.parameters) == 4
-    assert read_project.get_parameter("m1").value == "apple"
-    assert read_project.get_parameter("m2").value == "banana"
-    assert read_project.get_parameter("foo").value == "bar"
-    assert read_project.get_parameter("bar").value == "foo"
+    assert read_project.get_parameter("m1")[0].value == "apple"
+    assert read_project.get_parameter("m2")[0].value == "banana"
+    assert read_project.get_parameter("foo")[0].value == "bar"
+    assert read_project.get_parameter("bar")[0].value == "foo"
     runcard = read_project.runcard
 
     assert runcard.uid == info.run_id

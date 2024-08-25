@@ -520,7 +520,7 @@ class RunCard(ArtifactCard):
         assert self.uid is not None, "RunCard must be registered to get hardware metrics"
         return self._registry.get_hw_metric(run_uid=self.uid)
 
-    def get_parameter(self, name: str) -> Union[List[Param], Param]:
+    def get_parameter(self, name: str) -> List[Param]:
         """
         Gets a parameter by name
 
@@ -546,8 +546,6 @@ class RunCard(ArtifactCard):
             else:
                 return cast(List[Param], [])
 
-        if len(param) == 1:
-            return param[0]
         return param
 
     def load_artifacts(self, name: Optional[str] = None) -> None:

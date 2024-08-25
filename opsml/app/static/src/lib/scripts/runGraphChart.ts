@@ -41,6 +41,7 @@ export function createGroupedLineChart(graph: RunGraph): ChartjsData {
 
     datasets.push({
       label: key,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: y[key],
       borderColor,
       backgroundColor: borderColor,
@@ -69,6 +70,7 @@ export function createMultiScatterChart(graph: RunGraph): ChartjsData {
     const data: ScatterData[] = [];
 
     for (let i = 0; i < graph.x.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       data.push({ x: graph.x[i], y: y[key][i] });
     }
 

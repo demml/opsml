@@ -26,7 +26,8 @@
   export let suffix: string | undefined;
   export let uri: string | undefined;
   
-  export let displayPath: string[];
+  // optional props
+  export let displayPath: string[] | undefined = [];
   export let registry: string;
   export let repository: string;
   export let version: string;
@@ -34,6 +35,8 @@
 
 
   function navigateBreadcrumb(index: number) {
+    if (!displayPath) return;
+
     if (index >= 3) {
       let subDir: string = displayPath.slice(3, index + 1).join('/');
       void goto(`/opsml/${registry}/card/files?name=${cardName}&repository=${repository}&version=${version}&subdir=${subDir}`);
@@ -53,17 +56,20 @@
 
   <div class="justify-center w-3/4">
 
-    <ol class="breadcrumb pl-2 pb-2">
-      {#each displayPath as path, index}
+    {#if displayPath}
 
-      {#if index !== displayPath.length - 1}
-        <li class="crumb"><button class="anchor font-semibold" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
-        <li class="crumb-separator" aria-hidden>/</li>
-      {:else}
-        <li class="crumb"><button class="anchor font-semibold text-secondary-500" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
-      {/if}
-      {/each}
-    </ol>
+      <ol class="breadcrumb pl-2 pb-2">
+        {#each displayPath as path, index}
+
+        {#if index !== displayPath.length - 1}
+          <li class="crumb"><button class="anchor font-semibold" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
+          <li class="crumb-separator" aria-hidden>/</li>
+        {:else}
+          <li class="crumb"><button class="anchor font-semibold text-secondary-500" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
+        {/if}
+        {/each}
+      </ol>
+    {/if}
 
     <div class="bg-surface-200 flex rounded-t-lg border border-gray px-3 py-2 min-w-96">
       <div class="inline-flex justify-between w-full items-center">
