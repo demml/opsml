@@ -1,2 +1,0 @@
-[installer]
-no-binary = ["streaming-form-data"]
