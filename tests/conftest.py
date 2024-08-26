@@ -657,7 +657,6 @@ def pytorch_onnx_byo_bytes() -> TorchModel:
     import torch.nn.init as init
     import torch.onnx
     import torch.utils.model_zoo as model_zoo
-    from torch import nn
 
     class SuperResolutionNet(nn.Module):
         def __init__(self, upscale_factor, inplace=False):
@@ -745,7 +744,6 @@ def pytorch_onnx_byo_file() -> YieldFixture[TorchModel]:
     import torch.nn.init as init
     import torch.onnx
     import torch.utils.model_zoo as model_zoo
-    from torch import nn
 
     class SuperResolutionNet(nn.Module):
         def __init__(self, upscale_factor, inplace=False):

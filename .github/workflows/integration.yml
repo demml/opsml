@@ -50,11 +50,12 @@ jobs:
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
+
       - run: make setup.project
       - run: make test.integration.aws
 
@@ -100,14 +101,12 @@ jobs:
           tenant-id: ${{ secrets.AZURE_STORAGE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
+
       - run: make setup.project
       - run: make test.integration.azure
 
@@ -158,14 +157,12 @@ jobs:
       #- name: Set up Cloud SDK
       #  uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
+
       - run: |
           make setup.project
           make test.integration.gcp

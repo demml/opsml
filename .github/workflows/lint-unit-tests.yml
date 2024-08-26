@@ -36,13 +36,11 @@ jobs:
           npm run build --if-present
           npm run lints
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
       - run: make setup.project
       - run: make lints.ci
@@ -78,14 +76,11 @@ jobs:
           npm run build --if-present
           npm run test
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Build and tests
         run: |
@@ -128,14 +123,11 @@ jobs:
           npm run build --if-present
           npm run test
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -191,14 +183,12 @@ jobs:
           npm run build --if-present
           npm run test
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
+
       - run: |
           rm -rf /opt/hostedtoolcache/CodeQL
           rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
@@ -241,14 +231,13 @@ jobs:
           npm run build --if-present
           npm run test
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+        run: irm https://astral.sh/uv/install.ps1 | iex
+        shell: powershell
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
+
       - run: make setup.project
       - run: make test.unit
 
@@ -284,14 +273,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+      - name: Set up uv
+
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
 
       - run: make setup.project
       - run: make test.registry
@@ -329,17 +316,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
+      - name: Install uv
         run: |
           sudo apt-get update
           sudo apt-get install libcurl4-openssl-dev libmysqlclient-dev libgirepository1.0-dev
-          pipx install poetry==${{ matrix.poetry-version }}
+          curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
 
       - run: make setup.project
       - run: make test.registry
