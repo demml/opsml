@@ -26,7 +26,7 @@ jobs:
 
       - name: Set up uv
         # Install latest uv version using the installer
-        run: curl -LsSf https://astral.sh/uv/install.sh | s
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
