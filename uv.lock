@@ -3025,7 +3025,7 @@ dev = [
     { name = "tf-keras", marker = "platform_system == 'Linux'", specifier = "==2.16.0" },
     { name = "torch", specifier = "~=2.1.0" },
     { name = "torchvision", specifier = "~=0.16" },
-    { name = "transformers", specifier = "~=4.43.4" },
+    { name = "transformers", specifier = ">=4.41.0,<4.42.0" },
     { name = "types-protobuf", specifier = "~=4.21.0.3" },
     { name = "types-pymysql", specifier = "~=1.0.19.1" },
     { name = "types-pyyaml", specifier = "~=6.0.12.12" },
@@ -5088,7 +5088,7 @@ wheels = [
 
 [[package]]
 name = "transformers"
-version = "4.43.4"
+version = "4.41.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -5102,9 +5102,9 @@ dependencies = [
     { name = "tokenizers" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/57/9934679377d3c105621dc7659048a216569ff3ef6632422c120e7ad40dc9/transformers-4.43.4.tar.gz", hash = "sha256:b62288990a65ed9bfb79191e04dbb76c9376834ae6e0dd911320a2ced63324fe", size = 8059671 }
+sdist = { url = "https://files.pythonhosted.org/packages/50/c9/b8acdf584f19558e29f46d36b5ed80954c2d3831811f129a5a6e84c4537b/transformers-4.41.2.tar.gz", hash = "sha256:80a4db216533d573e9cc7388646c31ed9480918feb7c55eb211249cb23567f87", size = 7841904 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/34/71/af30c8afcdbee5d4ee4b89e366bd7c20ab8b07e7b5acb30e025b81e0ba65/transformers-4.43.4-py3-none-any.whl", hash = "sha256:d2202ed201e0c44f80de8d753a19f6164187754630bc1f915661b9511d61c773", size = 9412465 },
+    { url = "https://files.pythonhosted.org/packages/d9/b7/98f821d70102e2d38483bbb7013a689d2d646daa4495377bc910374ad727/transformers-4.41.2-py3-none-any.whl", hash = "sha256:05555d20e43f808de1ef211ab64803cdb513170cef70d29a888b589caebefc67", size = 9092643 },
 ]
 
 [package.optional-dependencies]
