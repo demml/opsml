@@ -1,6 +1,0 @@
-{
-    "ignorePatterns": [
-        "babel.config.js",
-        "**/*.test.js"
-    ]
-}

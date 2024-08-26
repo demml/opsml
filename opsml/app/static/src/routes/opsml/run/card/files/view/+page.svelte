@@ -9,10 +9,26 @@
     export let data;
     
     let fileInfo: FileInfo;
-    $: fileInfo = data.file_info;
+    $: fileInfo = data.viewData.file_info;
 
     let content: ViewContent;
-    $: content = data.content;
+    $: content = data.viewData.content;
+
+    let registry: string;
+    $: registry = data.registry;
+    
+    let repository: string;
+    $: repository = data.repository;
+
+    let version: string;
+    $: version = data.version;
+
+    let cardName: string;
+    $: cardName = data.cardName;
+
+    let displayPath: string[];
+    $: displayPath = data.displayPath;
+
   
   
   </script>
@@ -25,4 +41,10 @@
   content={content.content}
   uri={fileInfo.uri}
   suffix={fileInfo.suffix.replace('.', '')}
+  registry={registry}
+  repository={repository}
+  version={version}
+  cardName={cardName}
+  displayPath={displayPath}
+
 />

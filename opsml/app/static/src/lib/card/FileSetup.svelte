@@ -13,7 +13,7 @@
     export let basePath: string;
     export let displayPath: string[];
     export let modifiedAt: string;
-    export let subdir: string | null;
+    export let subdir: string | undefined;
     export let fileInfo: Files;
     export let prevPath: string;
 
@@ -22,6 +22,17 @@
     let subDir: string = folderPath.replace(`${basePath}/`, '');
     goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
   }
+
+
+  function navigateBreadcrumb(index: number) {
+    if (index >= 3) {
+      let subDir: string = displayPath.slice(3, index + 1).join('/');
+      goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
+    }
+    goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}`);
+  }
+
+
   
     
   </script>
@@ -37,10 +48,11 @@
   
         {#if index !== displayPath.length - 1}
 
-          <li class="crumb"><a class="anchor" href="/elements/breadcrumbs">{path}</a></li>
+          <li class="crumb"><button class="anchor" on:click={() => { navigateBreadcrumb(index); }}>fuck</button></li>
           <li class="crumb-separator" aria-hidden>/</li>
+    
         {:else}
-          <li class="crumb"><a class="anchor" href="/elements/breadcrumbs">{path}</a></li>
+          <li class="crumb"><a class="anchor">{path}</a></li>
         {/if}
         {/each}
       </ol>

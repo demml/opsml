@@ -28,16 +28,28 @@ def put_hw_metrics(
     queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
 ) -> bool:
     hw_logger = HardwareMetricsLogger(interval=interval)
+    _timekeeper = time.time()
 
     while run.active:  # producer function for hw output
-        metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
-            "metrics": hw_logger.get_metrics().model_dump(),
-            "run_uid": run.run_id,
-        }
+        # failure should not stop the thread
+        try:
+            time.sleep(3)
 
-        # add to the queue
-        queue.put(metrics, block=False)
-        time.sleep(interval)
+            # check if time to log
+            if time.time() - _timekeeper < interval:
+                continue
+
+            metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
+                "metrics": hw_logger.get_metrics().model_dump(),
+                "run_uid": run.run_id,
+            }
+
+            # add to the queue
+            queue.put(metrics, block=False)
+
+        except Exception as error:  # pylint: disable=broad-except
+            logger.error("Failed to log hardware metrics: {}", error)
+            continue
 
     logger.info("Hardware logger stopped")
 
@@ -59,15 +71,24 @@ def get_hw_metrics(
         queue:
             Queue[HardwareMetrics]
     """
+    _timekeeper = time.time()
     while run.active:  # consumer function for hw output
+        time.sleep(2)
+
+        # check if time to log
+        if time.time() - _timekeeper < interval:
+            continue
+
         try:
             metrics = queue.get(timeout=1)
             run.runcard._registry.insert_hw_metrics([metrics])
 
         except Empty:
-            pass
+            continue
 
-        time.sleep(interval / 2)
+        except Exception as error:  # pylint: disable=broad-except
+            logger.error("Failed to log hardware metrics: {}", error)
+            continue
 
 
 class ActiveRunException(Exception): ...
@@ -100,7 +121,7 @@ class _RunManager:
             self.run_id = None
             self._run_exists = False
 
-        self._thread_executor = None
+        self._thread_executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
 
     @property
     def thread_executor(self) -> Optional[concurrent.futures.ThreadPoolExecutor]:
@@ -183,10 +204,9 @@ class _RunManager:
 
         # run hardware logger in background thread
         queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        executor.submit(get_hw_metrics, interval, self.active_run, queue)
-        executor.submit(put_hw_metrics, interval, self.active_run, queue)
-        self.thread_executor = executor
+        self.thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+        self.thread_executor.submit(get_hw_metrics, interval, self.active_run, queue)
+        self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue)
 
     def start_run(
         self,

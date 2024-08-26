@@ -5,44 +5,70 @@
         "es2021": true
     },
     "extends": [
-        "airbnb-base",
         "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking"
     ],
     "globals": {
         "vi": true
     },
     "parserOptions": {
         "ecmaVersion": "latest",
-        "parser": "@typescript-eslint/parser"
+        "project": [
+            "./tsconfig.json"
+        ],
+        "extraFileExtensions": [
+            "./.svelte-kit"
+        ]
     },
     "plugins": [
         "@typescript-eslint",
         "import",
-        "eslint-plugin-tsdoc"
-      ],
-      "rules": {
-        "quotes": [2, "double", { "avoidEscape": true }],
+        "eslint-plugin-tsdoc",
+        "@typescript-eslint"
+    ],
+    "rules": {
+        "quotes": [
+            2,
+            "double",
+            {
+                "avoidEscape": true
+            }
+        ],
         "import/prefer-default-export": "off",
-        "import/no-extraneous-dependencies": ["error", {"devDependencies": true}],
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "devDependencies": true
+            }
+        ],
         "@typescript-eslint/no-unused-vars": "off",
         "import/extensions": [
-           "error",
-           "ignorePackages",
-           {
-             "jsx": "never",
-             "ts": "never",
-             "tsx": "never",
-             "": "never"
-           }
+            "error",
+            "ignorePackages",
+            {
+                "jsx": "never",
+                "ts": "never",
+                "tsx": "never",
+                "": "never"
+            }
         ]
-     },
+    },
     "settings": {
-    "import/resolver": {
-        "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx"],
-        "moduleDirectory": ["node_modules", "src/"]
+        "import/resolver": {
+            "node": {
+                "extensions": [
+                    ".js",
+                    ".jsx",
+                    ".ts",
+                    ".tsx"
+                ],
+                "moduleDirectory": [
+                    "node_modules",
+                    "src/"
+                ]
+            }
         }
-    }
- }
+    },
+    "ignorePatterns": "**/tests"
 }

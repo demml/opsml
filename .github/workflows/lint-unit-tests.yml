@@ -15,11 +15,27 @@ jobs:
       matrix:
         python-version: ["3.11"]
         poetry-version: ["1.7.1"]
+        node-version: ["22.5.1"]
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "opsml/app/static/package-lock.json"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          npm install
+          npm run build --if-present
+          npm run lints
+
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
 
@@ -60,6 +76,7 @@ jobs:
           cd opsml/app/static
           npm install
           npm run build --if-present
+          npm run test
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
@@ -109,6 +126,7 @@ jobs:
           cd opsml/app/static
           npm install
           npm run build --if-present
+          npm run test
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
@@ -171,6 +189,7 @@ jobs:
           cd opsml/app/static
           npm install
           npm run build --if-present
+          npm run test
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}
@@ -220,6 +239,7 @@ jobs:
           cd opsml/app/static
           npm install
           npm run build --if-present
+          npm run test
 
       - name: Install poetry
         run: pipx install poetry==${{ matrix.poetry-version }}

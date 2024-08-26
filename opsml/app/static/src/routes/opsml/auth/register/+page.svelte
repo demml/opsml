@@ -3,7 +3,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import { type RegisterUser } from "$lib/scripts/types";
-  import { registerUser, type RegisterResponse } from "$lib/scripts/auth_routes";
+  import { registerUser, type RegisterResponse } from "$lib/scripts/auth/auth_routes";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { CommonPaths, type PasswordStrength } from "$lib/scripts/types";
   import { goTop } from "$lib/scripts/utils";
@@ -18,7 +18,7 @@
   let securityQuestion = '';
   let errorMessage = '';
   let passStrength = 0;
-  let passMessage: string | null = null;
+  let passMessage: string | undefined;
 
 
   let warnUser: boolean = false;
@@ -70,7 +70,7 @@
     if (strength.power < 100) {
       passMessage = strength.message;
     } else {
-      passMessage = null;
+      passMessage = undefined;
     };
 
   }, 500);

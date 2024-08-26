@@ -10,7 +10,7 @@ import {
 import {
   getRegistryPage,
   getRegistryStats,
-} from "$lib/scripts/registry_page";
+} from "$lib/scripts/utils";
 import Fa from 'svelte-fa'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import PageCard from "$lib/PageCard.svelte";

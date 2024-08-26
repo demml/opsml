@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import { type RegisterUser } from "$lib/scripts/types";
-  import { registerUser, type RegisterResponse } from "$lib/scripts/auth_routes";
+  import { registerUser, type RegisterResponse } from "$lib/scripts/auth/auth_routes";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { CommonPaths } from "$lib/scripts/types";
 

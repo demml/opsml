@@ -115,7 +115,7 @@ def test_opsml_read_only(
     assert len(proj.metrics) == 2
     assert proj.get_metric("m1")[0].value == 1.1
     assert len(proj.parameters) == 1
-    assert proj.get_parameter("m1").value == "apple"
+    assert proj.get_parameter("m1")[0].value == "apple"
 
     # Load model card
     loaded_card: ModelCard = proj.load_card(
@@ -202,10 +202,10 @@ def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert read_project.get_metric("m1")[0].value == 1.1
     assert read_project.get_metric("m2")[0].value == 1.2
     assert len(read_project.parameters) == 4
-    assert read_project.get_parameter("m1").value == "apple"
-    assert read_project.get_parameter("m2").value == "banana"
-    assert read_project.get_parameter("foo").value == "bar"
-    assert read_project.get_parameter("bar").value == "foo"
+    assert read_project.get_parameter("m1")[0].value == "apple"
+    assert read_project.get_parameter("m2")[0].value == "banana"
+    assert read_project.get_parameter("foo")[0].value == "bar"
+    assert read_project.get_parameter("bar")[0].value == "foo"
     runcard = read_project.runcard
 
     assert runcard.uid == info.run_id
@@ -335,7 +335,7 @@ def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
-        time.sleep(5)
+        time.sleep(15)
 
     metrics = run.runcard.get_hardware_metrics()
     assert len(metrics) == 1

@@ -2,7 +2,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { CommonPaths, type UserResponse, type User, type UpdateUserRequest, type UpdateUserResponse } from "$lib/scripts/types";
-  import { authStore } from "$lib/scripts/authStore";
+  import { authStore } from "$lib/scripts/auth/authStore";
   import { updateUser, goTop } from "$lib/scripts/utils";
   import { onMount } from "svelte";
   import { getUser } from "$lib/scripts/utils";
@@ -76,7 +76,6 @@
   
     let request: UpdateUserRequest = {
       username: currentUsername,
-      updated_username: null,
       password: password,
       email: email,
       full_name: fullName,

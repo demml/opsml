@@ -21,7 +21,7 @@ from opsml.registry import CardRegistries, CardRegistry
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.api import ApiRoutes
-from opsml.types import Metric, SaveName
+from opsml.types import Metric, Param, SaveName
 from opsml.types.extra import Suffix
 from tests.conftest import EXCLUDE, TODAY_YMD
 
@@ -37,7 +37,10 @@ def test_debug(test_app: TestClient) -> None:
 
 
 def test_register_data(
-    api_registries: CardRegistries, api_storage_client: client.StorageClient, pandas_data: PandasData
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    api_storage_client: client.StorageClient,
+    pandas_data: PandasData,
 ) -> None:
     assert pandas_data.data is not None
 
@@ -87,6 +90,16 @@ def test_register_data(
     assert "mlops" in info.repositories
     assert info.names is not None
     assert "test-df" in info.names
+
+    # test ui routes for cards
+    response = test_app.get("/opsml/data")
+    assert response.status_code == 200
+
+    # test ui routes for cards
+    response = test_app.get(
+        f"/opsml/data/card?name={datacard.name}&repository={datacard.repository}&version={datacard.version}&uid={datacard.uid}"
+    )
+    assert response.status_code == 200
 
 
 def test_register_major_minor(api_registries: CardRegistries, numpy_data: NumpyData) -> None:
@@ -234,6 +247,15 @@ def test_runcard(
 
     assert metric1[0].value == 10
     assert metric2[0].value == 20
+
+    # parameters
+    run.log_parameter("test_param", 10)
+    run.log_parameters({"test_param2": 20})
+
+    param1 = run.get_parameter("test_param")
+    param2 = run.get_parameter("test_param2")
+    assert isinstance(param1[0], Param)
+    assert isinstance(param2[0], Param)
 
     # save artifacts
     run.log_artifact_from_file(name="cats", local_path="tests/assets/cats.jpg")
@@ -425,10 +447,22 @@ def test_card_list_fail(test_app: TestClient) -> None:
 
 
 ##### Test ui routes
-def test_homepage(test_app: TestClient) -> None:
+def test_ui(test_app: TestClient) -> None:
     """Test settings"""
 
     response = test_app.get("/opsml")
+    assert response.status_code == 200
+
+    response = test_app.get("/opsml")
+    assert response.status_code == 200
+
+    response = test_app.get("/opsml/error/page?message=blah")
+    assert response.status_code == 200
+
+    response = test_app.get("/opsml/auth/login")
+    assert response.status_code == 200
+
+    response = test_app.get("/opsml/auth/register")
     assert response.status_code == 200
 
 

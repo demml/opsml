@@ -35,7 +35,7 @@
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
 
-  let metricVizData: ChartjsData = data.metricVizData;
+  let metricVizData: ChartjsData | undefined = data.metricVizData;
   let tableMetrics: Metric[] = data.tableMetrics;
 
   export let isOpen = true;
@@ -81,6 +81,7 @@
 
   function resetZoom() {
     // reset zoom
+    // @ts-ignore
     window.metricChart.resetZoom();
   }
 
@@ -226,12 +227,18 @@
 
           </div>  
 
-           
-          <IndividualChart
-            data={metricVizData.data}
-            type={plotSet}
-            options={metricVizData.options}
-          />
+        
+          {#if metricVizData}
+            <IndividualChart
+              data={metricVizData.data}
+              type={plotSet}
+              options={metricVizData.options}
+            />
+          {:else}
+            <div class="flex justify-center items-center h-3/5">
+              <p class="text-gray-400">No metrics Found</p>
+            </div>
+          {/if}
        
         </div>
  

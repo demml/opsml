@@ -72,9 +72,6 @@
       user: userName,
       content: currentMessage,
       votes: 0,
-      message_id: null,
-      created_at: null,
-      parent_id: null,
     };
 
     // insert the message into the thread

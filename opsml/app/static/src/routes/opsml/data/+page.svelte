@@ -3,7 +3,7 @@
   import {
   getRegistryPage,
   getRegistryStats,
-} from "$lib/scripts/registry_page";
+} from "$lib/scripts/utils";
   import { type PaginationSettings } from '@skeletonlabs/skeleton';
   import {
   type registryStats,
