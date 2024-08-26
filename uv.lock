@@ -384,6 +384,15 @@ wheels = [
 ]
 
 [[package]]
+name = "babel"
+version = "2.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/74/f1bc80f23eeba13393b7222b11d95ca3af2c1e28edca18af487137eefed9/babel-2.16.0.tar.gz", hash = "sha256:d1f3554ca26605fe173f3de0c65f750f5a42f924499bf134de6423582298e316", size = 9348104 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ed/20/bc79bc575ba2e2a7f70e8a1155618bb1301eaa5132a8271373a6903f73f8/babel-2.16.0-py3-none-any.whl", hash = "sha256:368b5b98b37c06b7daf6696391c3240c938b37767d4584413e8438c5c435fa8b", size = 9587599 },
+]
+
+[[package]]
 name = "bcrypt"
 version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1977,22 +1986,24 @@ wheels = [
 
 [[package]]
 name = "mkdocs-material"
-version = "9.1.21"
+version = "9.5.33"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "babel" },
     { name = "colorama" },
     { name = "jinja2" },
     { name = "markdown" },
     { name = "mkdocs" },
     { name = "mkdocs-material-extensions" },
+    { name = "paginate" },
     { name = "pygments" },
     { name = "pymdown-extensions" },
     { name = "regex" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/18/d4/bc3e7f1ff5ae3a3d0568ba18d647608ead3ea1a73f5c9e867fc9be1bdb69/mkdocs_material-9.1.21.tar.gz", hash = "sha256:71940cdfca84ab296b6362889c25395b1621273fb16c93deda257adb7ff44ec8", size = 3733806 }
+sdist = { url = "https://files.pythonhosted.org/packages/73/d5/f393412423f92dde7a4d7b9b74f294c5f8589679132739bd3cd333099641/mkdocs_material-9.5.33.tar.gz", hash = "sha256:d23a8b5e3243c9b2f29cdfe83051104a8024b767312dc8fde05ebe91ad55d89d", size = 4107690 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/d3/abe920304e9dc6af40d4fd20f520c0ea64e9518fea259114e4f0956b975d/mkdocs_material-9.1.21-py3-none-any.whl", hash = "sha256:58bb2f11ef240632e176d6f0f7d1cff06be1d11c696a5a1b553b808b4280ed47", size = 7906915 },
+    { url = "https://files.pythonhosted.org/packages/7b/b1/1cebba96a01fa25299e9055bcd4c169f813f5cb73449194554a24bdda542/mkdocs_material-9.5.33-py3-none-any.whl", hash = "sha256:dbc79cf0fdc6e2c366aa987de8b0c9d4e2bb9f156e7466786ba2fd0f9bf7ffca", size = 8823286 },
 ]
 
 [[package]]
@@ -2769,7 +2780,7 @@ wheels = [
 
 [[package]]
 name = "opsml"
-version = "0.1.0"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },
@@ -3009,7 +3020,7 @@ dev = [
     { name = "lightgbm", specifier = ">=4.0.0,<4.4.0" },
     { name = "lightning", specifier = "~=2.1.2" },
     { name = "matplotlib", marker = "platform_system == 'Windows'", specifier = "<3.9.1" },
-    { name = "mkdocs-material", specifier = "~=9.1.7" },
+    { name = "mkdocs-material", specifier = "~=9.5" },
     { name = "mkdocstrings", extras = ["python"], specifier = "~=0.25.0" },
     { name = "mypy", specifier = "~=1.0" },
     { name = "optimum", specifier = ">=1.21.4" },
@@ -3153,6 +3164,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/51/65/50db4dda066951078f0a96cf12f4b9ada6e4b811516bf0262c0f4f7064d4/packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002", size = 148788 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/08/aa/cc0199a5f0ad350994d660967a8efb233fe0416e4639146c089643407ce6/packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124", size = 53985 },
+]
+
+[[package]]
+name = "paginate"
+version = "0.5.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/46/68dde5b6bc00c1296ec6466ab27dddede6aec9af1b99090e1107091b3b84/paginate-0.5.7.tar.gz", hash = "sha256:22bd083ab41e1a8b4f3690544afb2c60c25e5c9a63a30fa2f483f6c60c8e5945", size = 19252 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/96/04b8e52da071d28f5e21a805b19cb9390aa17a47462ac87f5e2696b9566d/paginate-0.5.7-py2.py3-none-any.whl", hash = "sha256:b885e2af73abcf01d9559fd5216b57ef722f8c42affbb63942377668e35c7591", size = 13746 },
 ]
 
 [[package]]
