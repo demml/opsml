@@ -51,7 +51,7 @@ setup: setup.sysdeps setup.python setup.project
 
 .PHONY: setup.project
 setup.project:
-	uv pip install ".[all]"
+	uv sync --all-extras --dev
 
 .PHONY: test.unit
 test.unit:
