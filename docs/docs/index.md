@@ -12,6 +12,7 @@
 [![Storage Integration Tests](https://github.com/demml/opsml/actions/workflows/integration.yml/badge.svg)](https://github.com/demml/opsml/actions/workflows/integration.yml)
 ![Style](https://img.shields.io/badge/code%20style-black-000000.svg)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Py-Versions](https://img.shields.io/pypi/pyversions/opsml.svg?color=%2334D058)](https://pypi.org/project/opsml)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json)](https://docs.pydantic.dev/latest/contributing/#badges)
@@ -19,6 +20,7 @@
 [![AWS S3](https://img.shields.io/badge/AWS%20S3-orange)](https://aws.amazon.com/s3/)
 [![Google Cloud Storage](https://img.shields.io/badge/GCS-success)](https://cloud.google.com/storage)
 [![Azure](https://img.shields.io/badge/Azure-%230072C6)](https://azure.microsoft.com/en-us/products/storage/blobs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 ## **What is it?**
 
