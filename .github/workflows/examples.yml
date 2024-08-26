@@ -23,16 +23,16 @@ jobs:
       LOG_LEVEL: DEBUG
     steps:
       - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up uv
+        # Install latest uv version using the installer
+        run: curl -LsSf https://astral.sh/uv/install.sh | s
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+        run: uv python install ${{ matrix.python-version }}
 
-      - run: |
+      - name: Set up Dependencies
+        run: |
           rm -rf /opt/hostedtoolcache/CodeQL
           rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
           rm -rf /opt/hostedtoolcache/Ruby
