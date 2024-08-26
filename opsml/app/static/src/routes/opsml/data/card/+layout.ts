@@ -13,14 +13,18 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version: string | null = url.searchParams.get("version");
-  const uid: string | null = url.searchParams.get("uid");
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "data";
 
   /** get last path from url */
-  const tab = url.pathname.split("/").pop();
+  const tab = (url as URL).pathname.split("/").pop();
 
   const cardReq: CardRequest = {
     name,
@@ -28,11 +32,11 @@ export async function load({ fetch, params, url }) {
     registry_type: registry,
   };
 
-  if (uid !== null) {
+  if (uid) {
     cardReq.uid = uid;
   }
 
-  if (version !== null) {
+  if (version) {
     cardReq.version = version;
   }
 
@@ -43,7 +47,7 @@ export async function load({ fetch, params, url }) {
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${selectedCard.repository}/${selectedCard.name}/README.md`;
 
-  let readme: Readme = await getReadme(markdownPath);
+  const readme: Readme = await getReadme(markdownPath);
 
   // get datacard
   const dataCard: DataCardMetadata = await getDataCard(cardReq);

@@ -221,7 +221,7 @@ class OpsmlProject:
     def parameters(self) -> Params:
         return self.runcard.parameters
 
-    def get_parameter(self, name: str) -> Union[List[Param], Param]:
+    def get_parameter(self, name: str) -> List[Param]:
         """
         Get param by name
 

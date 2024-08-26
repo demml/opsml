@@ -34,20 +34,26 @@
   let displayPath: string[];
   $: displayPath = data.displayPath;
 
-  let subdir: string | null;
+  let subdir: string | undefined;
   $: subdir = data.subdir;
 
   let prevPath: string;
   $: prevPath = data.prevPath;
 
-  let baseRedirectPath: string;
-  $: baseRedirectPath = data.baseRedirectPath;
-
-
 
   function navigateToFolder(folderPath: string) {
     let subDir: string = folderPath.replace(`${basePath}/`, '');
     goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
+  }
+
+  function navigateBreadcrumb(index: number) {
+    console.log('index', index);
+    if (index >= 3) {
+      let subDir: string = displayPath.slice(3, index + 1).join('/');
+      void goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);
+    } else {
+      void goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}`);
+    }
   }
   
 </script>
@@ -60,10 +66,10 @@
         {#each displayPath as path, index}
   
         {#if index !== displayPath.length - 1}
-          <li class="crumb"><a class="anchor font-semibold" href="{index <= 2 ? baseRedirectPath : `${baseRedirectPath}&subdir=${displayPath.slice(3, index+1).join("/")}`}">{path}</a></li>
+          <li class="crumb"><button class="anchor font-semibold" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
           <li class="crumb-separator" aria-hidden>/</li>
         {:else}
-          <li class="crumb"><a class="anchor font-semibold text-secondary-500" href="{index <= 2 ? baseRedirectPath : `${baseRedirectPath}&subdir=${displayPath.slice(3, index+1).join("/")}`}">{path}</a></li>
+          <li class="crumb"><button class="anchor font-semibold text-secondary-500" on:click={() => navigateBreadcrumb(index)}>{path}</button></li>
         {/if}
         {/each}
       </ol>

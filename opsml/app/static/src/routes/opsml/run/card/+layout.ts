@@ -28,26 +28,30 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version: string | null = url.searchParams.get("version");
-  const uid: string | null = url.searchParams.get("uid");
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "run";
 
   /** get last path from url */
-  const tab = url.pathname.split("/").pop();
+  const tab: string | undefined = (url as URL).pathname.split("/").pop();
 
   const cardReq: CardRequest = {
     name,
-    repository,
+    repository: repository!,
     registry_type: registry,
   };
 
-  if (uid !== null) {
+  if (uid) {
     cardReq.uid = uid;
   }
 
-  if (version !== null) {
+  if (version) {
     cardReq.version = version;
   }
 
@@ -70,35 +74,33 @@ export async function load({ fetch, params, url }) {
   }
 
   // List of metrics for table
-  let tableMetrics: Metric[] | Map<string, TableMetric[]> = [];
+  const tableMetrics: Metric[] | Map<string, TableMetric[]> = [];
 
   // get last entry for each metric in metrics
-  for (let metric in metrics) {
-    let lastEntry = metrics[metric][metrics[metric].length - 1];
+
+  Object.keys(metrics).forEach((metric) => {
+    const lastEntry = metrics[metric][metrics[metric].length - 1];
     tableMetrics.push(lastEntry);
-  }
+  });
 
   // get parameters
   const parameters: Parameters = await getRunParameters(runCard.uid);
 
-  let searchableMetrics = metricNames.metric;
+  const searchableMetrics = metricNames.metric;
 
   // add "select all" to searchableMetrics
   searchableMetrics.unshift("select all");
 
   // check if "run/card/metrics" exists in url
-  let metricVizData: ChartjsData | undefined = undefined;
+  let metricVizData: ChartjsData | undefined;
 
   if (tab === "metrics" || tab === "compare") {
     // create chartjs data
     metricVizData = createMetricVizData(metrics, "bar");
-    //let cardMap = new Map<string, RunMetrics>();
-    //cardMap.set(selectedCard.name, metrics);
-    //tableMetrics = metricsToTable(cardMap, metricNames.metric);
+    // let cardMap = new Map<string, RunMetrics>();
+    // cardMap.set(selectedCard.name, metrics);
+    // tableMetrics = metricsToTable(cardMap, metricNames.metric);
   }
-
-  console.log(parameters.parameter);
-
   return {
     registry,
     repository: selectedCard.repository,

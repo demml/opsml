@@ -1,10 +1,13 @@
 import { CommonPaths } from "$lib/scripts/types";
+
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
-  let currentPath = url.pathname;
-  let previousPath: string | null = url.searchParams.get("redirect");
+export function load({ fetch, params, url }) {
+  const currentPath = (url as URL).pathname;
+  let previousPath = (url as URL).searchParams.get("redirect") as
+    | string
+    | undefined;
 
   if (
     previousPath === CommonPaths.LOGIN ||

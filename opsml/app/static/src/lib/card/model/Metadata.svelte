@@ -114,7 +114,7 @@ async function showModal() {
   </div>
 
 
-  {#if card.datacard_uid !== null || card.runcard_uid !== null}
+  {#if card.datacard_uid || card.runcard_uid }
     <div class="flex flex-row items-center mb-2 pt-2 border-b-2 border-gray-400">
       <Fa icon={faFileContract} color="#04cd9b"/>
       <header class="pl-2 text-darkpurple text-lg font-bold">Cards</header>
@@ -122,7 +122,7 @@ async function showModal() {
 
     <div class="flex flex-col space-y-1">
 
-      {#if card.datacard_uid !== null}
+      {#if card.datacard_uid}
         <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
           <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">DataCard</div> 
           <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
@@ -133,7 +133,7 @@ async function showModal() {
         </div>
       {/if}
 
-      {#if card.runcard_uid !== null}
+      {#if card.runcard_uid}
         <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
           <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">RunCard</div> 
           <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">

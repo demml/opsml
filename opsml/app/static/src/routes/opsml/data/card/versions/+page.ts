@@ -1,25 +1,29 @@
-import { getRegistryPage } from "$lib/scripts/registry_page";
+import { getRegistryPage } from "$lib/scripts/utils.js";
 import { type CardRequest, type CardResponse } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const registry: string = url.searchParams.get("registry")!;
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const registry = (url as URL).searchParams.get("registry") as
+    | string
+    | undefined;
 
   const registryPage = await getRegistryPage(
-    registry,
+    registry!,
     undefined,
     repository,
     name,
-    0,
+    0
   );
 
   const cardReq: CardRequest = {
-    name,
-    repository,
-    registry_type: registry,
+    repository: repository,
+    name: name,
+    registry_type: registry!,
     page: 0,
   };
 

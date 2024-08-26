@@ -29,14 +29,14 @@ interface RecentCards {
 }
 
 async function getCards(registry: string): Promise<CardJson[]> {
-  let modelcards = await apiHandler.post(
+  const modelcards = await apiHandler.post(
     CommonPaths.LIST_CARDS,
     { registry_type: registry, limit: 10, sort_by_timestamp: true },
     "application/json",
     { Accept: "application/json" }
   );
 
-  const response: CardResponse = await modelcards.json();
+  const response = (await modelcards.json()) as CardResponse;
   return response.cards;
 }
 

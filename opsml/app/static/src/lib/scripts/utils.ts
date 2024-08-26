@@ -33,8 +33,24 @@ import {
   type ChartjsLineDataset,
   type ChartjsBarDataset,
   type ChartjsGroupedBarDataset,
+  type ChartjsScatterDataset,
+  type FileViewResponse,
+  type UserUpdated,
+  type RunGraph,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import type { Chart } from "chart.js";
+
+export async function getRepos(registry: string) {
+  const repos = await apiHandler.get(
+    `${CommonPaths.REPOSITORIES}?${new URLSearchParams({
+      registry_type: registry,
+    }).toString()}`
+  );
+
+  const response = (await repos.json()) as repositories;
+  return response.repositories;
+}
 
 export function calculateTimeBetween(timestamp: number): string {
   const presentDate: Date = new Date();
@@ -53,9 +69,9 @@ export function calculateTimeBetween(timestamp: number): string {
 export async function listCards(request: CardRequest): Promise<CardResponse> {
   // get card info
 
-  let cards = await apiHandler
+  const cards = (await apiHandler
     .post(CommonPaths.LIST_CARDS, request, "application/json")
-    .then((res) => res.json());
+    .then((res) => res.json())) as CardResponse;
 
   return cards;
 }
@@ -64,9 +80,9 @@ export async function getMessages(
   uid: string,
   registry: string
 ): Promise<MessageThread> {
-  const comments: MessageThread = await apiHandler
+  const comments = (await apiHandler
     .get(`/opsml/${registry}/messages?uid=${uid}`)
-    .then((res) => res.json());
+    .then((res) => res.json())) as MessageThread;
 
   return comments;
 }
@@ -106,17 +122,17 @@ export async function patchMessage(message: Message): Promise<void> {
 export async function getDataCard(
   request: CardRequest
 ): Promise<DataCardMetadata> {
-  let dataCard = await apiHandler
+  const dataCard = (await apiHandler
     .post(CommonPaths.DATACARD, request)
-    .then((res) => res.json());
+    .then((res) => res.json())) as DataCardMetadata;
 
   return dataCard;
 }
 
 export async function getRunCard(request: CardRequest): Promise<RunCard> {
-  let runCard = await apiHandler
+  const runCard = (await apiHandler
     .post(CommonPaths.RUNCARD, request)
-    .then((res) => res.json());
+    .then((res) => res.json())) as RunCard;
 
   return runCard;
 }
@@ -124,9 +140,9 @@ export async function getRunCard(request: CardRequest): Promise<RunCard> {
 export async function getRunMetricNames(uid: string): Promise<MetricNames> {
   const request = { run_uid: uid, names_only: true };
 
-  let names: MetricNames = await apiHandler
+  const names = (await apiHandler
     .post(CommonPaths.METRICS, request)
-    .then((res) => res.json());
+    .then((res) => res.json())) as MetricNames;
 
   return names;
 }
@@ -135,21 +151,17 @@ export async function getRunMetrics(
   uid: string,
   name?: string[]
 ): Promise<RunMetrics> {
-  const request = { run_uid: uid };
+  const request = { run_uid: uid, name };
 
-  if (name) {
-    request["name"] = name;
-  }
-
-  let metrics: Metrics = await apiHandler
+  const metrics = (await apiHandler
     .post(CommonPaths.METRICS, request)
-    .then((res) => res.json());
+    .then((res) => res.json())) as Metrics;
 
   const runMetrics: RunMetrics = {};
 
   if (metrics.metric.length > 0) {
     // create loop for metricNames.metric
-    for (let metric of metrics.metric) {
+    for (const metric of metrics.metric) {
       // check if metric.name is in metrics
       if (runMetrics[metric.name] === undefined) {
         runMetrics[metric.name] = [];
@@ -166,9 +178,9 @@ export async function getRunMetrics(
 export async function getRunParameters(uid: string): Promise<Parameters> {
   const request = { run_uid: uid };
 
-  let params: Parameters = await apiHandler
+  const params = (await apiHandler
     .post(CommonPaths.PARAMETERS, request)
-    .then((res) => res.json());
+    .then((res) => res.json())) as Parameters;
 
   return params;
 }
@@ -177,14 +189,18 @@ export async function getRunGraphs(
   repository: string,
   name: string,
   version: string
-): Promise<Map<string, Graph>> {
-  let params = new URLSearchParams();
+): Promise<Map<string, RunGraph>> {
+  const params = new URLSearchParams();
   params.append("repository", repository);
   params.append("name", name);
   params.append("version", version);
 
-  let url = CommonPaths.GRAPHS + "?" + params.toString();
-  let graphs = await apiHandler.get(url).then((res) => res.json());
+  const url = `${CommonPaths.GRAPHS}?${params.toString()}`;
+
+  const graphs = (await apiHandler.get(url).then((res) => res.json())) as Map<
+    string,
+    RunGraph
+  >;
 
   return graphs;
 }
@@ -197,32 +213,28 @@ export async function getRunGraphs(
  *
  */
 export async function getReadme(markdownPath: string): Promise<Readme> {
-  let markdown: FileExists = await apiHandler
+  const markdown = (await apiHandler
     .get(
-      CommonPaths.FILE_EXISTS +
-        "?" +
-        new URLSearchParams({
-          path: markdownPath,
-        }).toString()
+      `${CommonPaths.FILE_EXISTS}?${new URLSearchParams({
+        path: markdownPath,
+      }).toString()}`
     )
-    .then((res) => res.json());
+    .then((res) => res.json())) as FileExists;
 
   let readme: string = "";
 
   if (markdown.exists) {
     // fetch markdown
 
-    let viewData = await apiHandler
+    const viewData = (await apiHandler
       .get(
-        CommonPaths.FILES_VIEW +
-          "?" +
-          new URLSearchParams({
-            path: markdownPath,
-          }).toString()
+        `${CommonPaths.FILES_VIEW}?${new URLSearchParams({
+          path: markdownPath,
+        }).toString()}`
       )
-      .then((res) => res.json());
+      .then((res) => res.json())) as FileViewResponse;
 
-    readme = viewData.content.content;
+    readme = viewData.content.content!;
   }
 
   // return readme and markdown exists
@@ -231,23 +243,23 @@ export async function getReadme(markdownPath: string): Promise<Readme> {
 
 /**
  * Get metadata for a model
- * @param {string | null} uid
+ * @param {string | undefined} uid
  * @param {string} name
  * @param {string} repository
- * @param {string | null} version
+ * @param {string | undefined} version
  *
  * @returns {Promise<ModelMetadata>} metadata
  *
  */
 export async function getModelMetadata(
-  uid: string | null,
   name: string,
   repository: string,
-  version: string | null
+  uid?: string,
+  version?: string
 ): Promise<ModelMetadata> {
   let metaAttr: metadataRequest = {};
 
-  if (uid !== null) {
+  if (uid) {
     metaAttr = {
       uid,
     };
@@ -262,9 +274,9 @@ export async function getModelMetadata(
     }
   }
 
-  let res: ModelMetadata = await apiHandler
+  const res = (await apiHandler
     .post(CommonPaths.MODEL_METADATA, metaAttr)
-    .then((res) => res.json());
+    .then((res) => res.json())) as ModelMetadata;
 
   return res;
 }
@@ -275,7 +287,7 @@ export async function getModelMetadata(
  * @param {string} repository
  * @param {string} name
  * @param {string} version
- * @param {string | null} subdir
+ * @param {string | undefined} subdir
  *
  * @returns {Promise<FileSetup>} setup
  *
@@ -284,14 +296,14 @@ export async function setupFiles(
   basePath: string,
   repository: string,
   name: string,
-  version: string | null,
-  subdir: string | null
+  version?: string,
+  subdir?: string
 ): Promise<FileSetup> {
-  let urlPath = CommonPaths.FILE_INFO + `?path=${basePath}`;
+  let urlPath = `${CommonPaths.FILE_INFO}?path=${basePath}`;
   let displayPath = [repository, name, `v${version}`];
   let prevPath: string = basePath;
 
-  if (subdir !== null) {
+  if (subdir) {
     urlPath = `${urlPath}&subdir=${subdir}`;
 
     // split the subdir path
@@ -302,7 +314,9 @@ export async function setupFiles(
     prevPath = `${basePath}/${prevDir}`;
   }
 
-  let fileInfo: Files = await apiHandler.get(urlPath).then((res) => res.json());
+  const fileInfo = (await apiHandler
+    .get(urlPath)
+    .then((res) => res.json())) as Files;
 
   return {
     fileInfo,
@@ -321,36 +335,30 @@ export async function setupFiles(
 export async function setupRegistryPage(
   registry: string
 ): Promise<registryPageReturn> {
-  let repos: repositories = await apiHandler
+  const repos = (await apiHandler
     .get(
-      CommonPaths.REPOSITORIES +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-        }).toString()
+      `${CommonPaths.REPOSITORIES}?${new URLSearchParams({
+        registry_type: registry,
+      }).toString()}`
     )
-    .then((res) => res.json());
+    .then((res) => res.json())) as repositories;
 
-  let stats: registryStats = await apiHandler
+  const stats = (await apiHandler
     .get(
-      CommonPaths.REGISTRY_STATS +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-        }).toString()
+      `${CommonPaths.REGISTRY_STATS}?${new URLSearchParams({
+        registry_type: registry,
+      }).toString()}`
     )
-    .then((res) => res.json());
+    .then((res) => res.json())) as registryStats;
 
-  let page: registryPage = await apiHandler
+  const page = (await apiHandler
     .get(
-      CommonPaths.QUERY_PAGE +
-        "?" +
-        new URLSearchParams({
-          registry_type: registry,
-          page: "0",
-        }).toString()
+      `${CommonPaths.QUERY_PAGE}?${new URLSearchParams({
+        registry_type: registry,
+        page: "0",
+      }).toString()}`
     )
-    .then((res) => res.json());
+    .then((res) => res.json())) as registryPage;
 
   return {
     repos: repos.repositories,
@@ -360,6 +368,75 @@ export async function setupRegistryPage(
   };
 }
 
+// Function for searching a registry page given a registry, sort_by, repository, name, and page
+//
+// Args:
+//   registry: string - the registry to search
+//   sort_by: string - the sort_by to use
+//   repository: string - the repository to use
+//   name: string - the name to use
+//   page: number - the page to use
+//
+// Returns:
+//   registryQuery - the page for the registry
+export async function getRegistryPage(
+  registry: string,
+  sort_by: string | undefined,
+  repository: string | undefined,
+  search_term: string | undefined,
+  page: number | undefined
+): Promise<registryPage> {
+  // build request
+  const params = new URLSearchParams();
+  params.append("registry_type", registry);
+
+  if (sort_by) {
+    params.append("sort_by", sort_by);
+  }
+  if (repository) {
+    params.append("repository", repository);
+  }
+  if (search_term) {
+    params.append("search_term", search_term);
+  }
+  if (page) {
+    params.append("page", page.toString());
+  }
+
+  const url = `${CommonPaths.QUERY_PAGE}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
+
+  // const page_resp = await fetch(`/opsml/cards/registry/query/page?${params}`);
+
+  const response = (await page_resp.json()) as registryPage;
+  return response;
+}
+
+// Function for searching general stats given a registry and search term
+//
+// Args:
+//   registry: string - the registry to search
+//   searchTerm: string - the search term to use
+//
+// Returns:
+//   registryQuery - the general stats for the registry
+export async function getRegistryStats(
+  registry: string,
+  searchTerm: string | undefined
+): Promise<registryStats> {
+  const params = new URLSearchParams();
+  params.append("registry_type", registry);
+  if (searchTerm) {
+    params.append("search_term", searchTerm);
+  }
+
+  const url = `${CommonPaths.REGISTRY_STATS}?${params.toString()}`;
+  const page_resp = await apiHandler.get(url);
+
+  const response = (await page_resp.json()) as registryStats;
+  return response;
+}
+
 /**
  * Get user information
  * @param {string} username
@@ -367,13 +444,13 @@ export async function setupRegistryPage(
  *
  */
 export async function getUser(username: string): Promise<UserResponse> {
-  let user: User | null = null;
-  let error: string | null = null;
-  let url: string = CommonPaths.USER_AUTH + "?username=" + username;
+  let user: User | undefined;
+  let error: string | undefined;
+  const url: string = `${CommonPaths.USER_AUTH}?username=${username}`;
 
-  let response = await apiHandler.get(url);
+  const response = await apiHandler.get(url);
   if (response.ok) {
-    user = await response.json();
+    user = (await response.json()) as User;
   } else {
     error = await response.text();
   }
@@ -390,17 +467,16 @@ export async function getUser(username: string): Promise<UserResponse> {
 export async function updateUser(
   user: UpdateUserRequest
 ): Promise<UpdateUserResponse> {
-  let response = await apiHandler.put(CommonPaths.USER_AUTH, user);
+  const response = await apiHandler.put(CommonPaths.USER_AUTH, user);
   if (!response.ok) {
     return {
       updated: false,
     };
-  } else {
-    let res = await response.json();
-    return {
-      updated: res["updated"],
-    };
   }
+  const res = (await response.json()) as UserUpdated;
+  return {
+    updated: res.updated,
+  };
 }
 
 export function goTop() {
@@ -409,8 +485,8 @@ export function goTop() {
 
 export function checkPasswordStrength(password: string): PasswordStrength {
   let point = 0;
-  let widthPower = [0, 20, 40, 60, 80, 100];
-  let colorPower = [
+  const widthPower = [0, 20, 40, 60, 80, 100];
+  const colorPower = [
     "red-600",
     "orange-600",
     "yellow-500",
@@ -419,11 +495,11 @@ export function checkPasswordStrength(password: string): PasswordStrength {
   ];
   let message = "Missing:";
 
-  let isLength = password.length >= 8;
-  let hasNum = /[0-9]/.test(password);
-  let hasLower = /[a-z]/.test(password);
-  let hasUpper = /[A-Z]/.test(password);
-  let hasSpecial = /[^0-9a-zA-Z]/.test(password);
+  const isLength = password.length >= 8;
+  const hasNum = /[0-9]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasSpecial = /[^0-9a-zA-Z]/.test(password);
 
   if (isLength) {
     point += 1;
@@ -455,8 +531,8 @@ export function checkPasswordStrength(password: string): PasswordStrength {
     message += ", special char";
   }
 
-  let power = widthPower[point];
-  let color = colorPower[point];
+  const power = widthPower[point];
+  const color = colorPower[point];
 
   return { power, color, message };
 }
@@ -466,7 +542,8 @@ export function delay(fn, ms: number) {
   return function (...args) {
     clearTimeout(timer);
 
-    // @ts-ignore
+    // @ts-expect-error "ignore"
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,  @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
     timer = window.setTimeout(fn.bind(this, ...args), ms || 0);
   };
 }
@@ -475,10 +552,10 @@ export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 export function sortMetrics(metrics: Metrics): RunMetrics {
-  let sorted: RunMetrics = {};
+  const sorted: RunMetrics = {};
 
   // create loop for metricNames.metric
-  for (let metric of metrics.metric) {
+  for (const metric of metrics.metric) {
     // check if metric.name is in metrics
     if (sorted[metric.name] === undefined) {
       sorted[metric.name] = [];
@@ -495,12 +572,12 @@ export function metricsToTable(
   metrics: Map<string, RunMetrics>,
   metricsToPlot: string[]
 ): Map<string, TableMetric[]> {
-  let table: Map<string, TableMetric[]> = new Map();
-  for (let [key, value] of metrics) {
+  const table: Map<string, TableMetric[]> = new Map();
+  for (const [key, value] of metrics) {
     table.set(key, []);
 
     metricsToPlot.forEach((metric) => {
-      let metricValue: Metric[] = value[metric];
+      const metricValue: Metric[] = value[metric];
 
       if (metricValue) {
         table.get(key)!.push({
@@ -522,23 +599,28 @@ export function metricsToTable(
 }
 
 function parseMetric(type: string, metric: Metric[]): ChartData {
-  let x: any = [];
-  let y: number[] = [];
+  const x: number[] | string[] = [];
+  const y: number[] = [];
 
   if (type == "line") {
-    for (let data of metric) {
+    for (const data of metric) {
       y.push(data.value);
+
+      // @ts-expect-error "mismatch types"
       x.push(data.step || 0);
     }
   } else {
     y.push(metric[metric.length - 1].value);
+
+    // @ts-expect-error "mismatch types"
     x.push(metric[metric.length - 1].name);
   }
 
   return { x, y };
 }
 
-const handleResize = (chart) => {
+export const handleResize = (chart) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
   chart.resize();
 };
 
@@ -547,7 +629,8 @@ export function buildDataforChart(
   datasets:
     | ChartjsBarDataset[]
     | ChartjsLineDataset[]
-    | ChartjsGroupedBarDataset[],
+    | ChartjsGroupedBarDataset[]
+    | ChartjsScatterDataset[],
   x_label: string,
   y_label: string,
   chartType: string,
@@ -565,6 +648,8 @@ export function buildDataforChart(
   if (showLegend) {
     legend = {
       display: true,
+
+      // @ts-expect-error "ignore"
       position: "bottom",
     };
   }
@@ -590,12 +675,12 @@ export function buildDataforChart(
     type: chartType,
     data: {
       labels: x,
-      datasets: datasets,
+      datasets,
     },
     options: {
       plugins: {
         zoom: zoomOptions,
-        legend: legend,
+        legend,
       },
       responsive: true,
       onresize: handleResize,
@@ -612,7 +697,7 @@ export function buildDataforChart(
           ticks: {
             maxTicksLimit: 30,
           },
-          grace: grace,
+          grace,
         },
       },
       layout: {
@@ -622,22 +707,23 @@ export function buildDataforChart(
   };
 }
 
-function generateColors(count: number, opacity?: number): string[] {
+export function generateColors(count: number, opacity?: number): string[] {
   return Array.from({ length: count }, (_, index) => {
     const hue = (index * 137.508) % 360; // Golden angle approximation
     const [r, g, b] = hslToRgb(hue, 0.7, 0.6);
 
     if (opacity !== undefined) {
       return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-    } else {
-      return `rgb(${r}, ${g}, ${b})`;
     }
+    return `rgb(${r}, ${g}, ${b})`;
   });
 }
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   h /= 360;
-  let r: number, g: number, b: number;
+  let r: number;
+  let g: number;
+  let b: number;
 
   if (s === 0) {
     r = g = b = l;
@@ -669,26 +755,27 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
  *
  */
 export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
-  let x: any[] = [];
-  let y: number[] = [];
-  let backgroundColor: string[] = [];
-  let borderColor: string[] = [];
+  const x: number[] | string[] = [];
+  const y: number[] = [];
+  const backgroundColor: string[] = [];
+  const borderColor: string[] = [];
   let data;
-  let dataset: ChartjsBarDataset[] = [];
+  const dataset: ChartjsBarDataset[] = [];
 
-  let colors = generateColors(Object.keys(metrics).length + 1, 0.2);
-  let borders = generateColors(Object.keys(metrics).length + 1);
+  const colors = generateColors(Object.keys(metrics).length + 1, 0.2);
+  const borders = generateColors(Object.keys(metrics).length + 1);
 
-  let metricKeys = Object.keys(metrics);
+  const metricKeys = Object.keys(metrics);
 
   // if metrics keys are not empty
   if (metricKeys.length !== 0) {
-    metricKeys.forEach(function (key, index) {
-      let metricData: Metric[] = metrics[key];
+    metricKeys.forEach((key, index) => {
+      const metricData: Metric[] = metrics[key];
 
       // parse x and y
-      let chartData: ChartData = parseMetric("bar", metricData);
+      const chartData: ChartData = parseMetric("bar", metricData);
 
+      // @ts-expect-error "ignore"
       x.push(...chartData.x);
       y.push(...chartData.y);
       backgroundColor.push(colors[index + 1]);
@@ -697,8 +784,8 @@ export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
 
     dataset.push({
       data: y,
-      borderColor: borderColor,
-      backgroundColor: backgroundColor,
+      borderColor,
+      backgroundColor,
       borderWidth: 2,
       borderRadius: 2,
       borderSkipped: false,
@@ -706,24 +793,25 @@ export function createMetricBarVizData(metrics: RunMetrics): ChartjsData {
     data = buildDataforChart(x, dataset, "Metrics", "Values", "bar");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return data;
 }
 
 export function createMetricLineVizData(metrics: RunMetrics): ChartjsData {
-  let x: any[] = [];
-  let datasets: ChartjsLineDataset[] = [];
-  let metricKeys = Object.keys(metrics);
-  let colors = generateColors(Object.keys(metrics).length + 1);
+  let x: number[] | string[] = [];
+  const datasets: ChartjsLineDataset[] = [];
+  const metricKeys = Object.keys(metrics);
+  const colors = generateColors(Object.keys(metrics).length + 1);
   let data;
 
   // if metrics keys are not empty
   if (metricKeys.length !== 0) {
     // loop over keys
     // append to the x and y arrays
-    metricKeys.forEach(function (key, index) {
-      let metricData: Metric[] = metrics[key];
+    metricKeys.forEach((key, index) => {
+      const metricData: Metric[] = metrics[key];
       // parse x and y
-      let chartData: ChartData = parseMetric("line", metricData);
+      const chartData: ChartData = parseMetric("line", metricData);
 
       if (chartData.x.length > x.length) {
         x = chartData.x;
@@ -734,17 +822,20 @@ export function createMetricLineVizData(metrics: RunMetrics): ChartjsData {
         data: chartData.y,
         borderColor: colors[index + 1],
         backgroundColor: colors[index + 1],
+        pointRadius: 1,
       });
     });
 
     data = buildDataforChart(x, datasets, "Steps", "Values", "line");
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return data;
 }
 
 export function exportMetricsToCSV(runMetrics: RunMetrics): string {
   // Define the header
-  let metrics = Object.values(runMetrics).flat();
+  const metrics = Object.values(runMetrics).flat();
 
   const header = ["run_uid", "name", "value", "step", "timestamp"];
 
@@ -753,8 +844,8 @@ export function exportMetricsToCSV(runMetrics: RunMetrics): string {
     metric.run_uid,
     metric.name,
     metric.value.toString(),
-    metric.step !== null ? metric.step.toString() : "",
-    metric.timestamp !== null ? metric.timestamp.toString() : "",
+    metric.step ? metric.step.toString() : "",
+    metric.timestamp ? metric.timestamp.toString() : "",
   ]);
 
   // Combine header and content
@@ -788,9 +879,8 @@ export function createMetricVizData(
 ): ChartjsData {
   if (chartType === "bar") {
     return createMetricBarVizData(metrics);
-  } else {
-    return createMetricLineVizData(metrics);
   }
+  return createMetricLineVizData(metrics);
 }
 
 export function createGroupedMetricBarVizData(
@@ -798,22 +888,22 @@ export function createGroupedMetricBarVizData(
   metricNames: string[]
 ): ChartjsData {
   // x will be the metric names
-  let datasets: ChartjsGroupedBarDataset[] = [];
+  const datasets: ChartjsGroupedBarDataset[] = [];
   let data;
 
-  let colors = generateColors(metrics.size + 1, 0.2);
-  let borders = generateColors(metrics.size + 1);
-  let runIdMetricMap = new Map<string, number[]>();
+  const colors = generateColors(metrics.size + 1, 0.2);
+  const borders = generateColors(metrics.size + 1);
+  const runIdMetricMap = new Map<string, number[]>();
 
-  for (let metricName of metricNames) {
-    for (let runId of metrics.keys()) {
-      let metricData: Metric[] = metrics.get(runId)![metricName];
+  for (const metricName of metricNames) {
+    for (const runId of metrics.keys()) {
+      const metricData: Metric[] = metrics.get(runId)![metricName];
 
       if (!runIdMetricMap.has(runId)) {
         runIdMetricMap.set(runId, []);
       }
       if (metricData) {
-        let chartData = parseMetric("bar", metricData);
+        const chartData = parseMetric("bar", metricData);
         runIdMetricMap.get(runId)!.push(chartData.y[0]);
       } else {
         runIdMetricMap.get(runId)!.push(0);
@@ -833,7 +923,7 @@ export function createGroupedMetricBarVizData(
     });
   });
 
-  data = buildDataforChart(
+  return buildDataforChart(
     metricNames,
     datasets,
     "Metrics",
@@ -841,30 +931,28 @@ export function createGroupedMetricBarVizData(
     "bar",
     true
   );
-
-  return data;
 }
 
 export function createGroupedMetricLineVizData(
   metrics: Map<string, RunMetrics>,
   metricNames: string[]
 ): ChartjsData {
-  let datasets: ChartjsLineDataset[] = [];
-  let data;
-  let x: any[] = [];
-  let colors = generateColors(metrics.size + 1, 0.2);
-  let borders = generateColors(metrics.size + 1);
-  let runIdMetricMap = new Map<string, Map<string, number[]>>();
+  const datasets: ChartjsLineDataset[] = [];
 
-  for (let metricName of metricNames) {
-    for (let runId of metrics.keys()) {
-      let metricData: Metric[] = metrics.get(runId)![metricName];
+  let x: number[] | string[] = [];
+  const colors = generateColors(metrics.size + 1, 0.2);
+  const borders = generateColors(metrics.size + 1);
+  const runIdMetricMap = new Map<string, Map<string, number[]>>();
+
+  for (const metricName of metricNames) {
+    for (const runId of metrics.keys()) {
+      const metricData: Metric[] = metrics.get(runId)![metricName];
 
       if (!runIdMetricMap.has(runId)) {
         runIdMetricMap.set(runId, new Map<string, number[]>());
       }
       if (metricData) {
-        let chartData = parseMetric("line", metricData);
+        const chartData = parseMetric("line", metricData);
         if (chartData.x.length > x.length) {
           x = chartData.x;
         }
@@ -876,23 +964,21 @@ export function createGroupedMetricLineVizData(
   }
 
   Array.from(runIdMetricMap.entries()).forEach(([key, value], index) => {
-    let color = colors[index + 1];
-    let borderColor = borders[index + 1];
+    const color = colors[index + 1];
+    const borderColor = borders[index + 1];
 
     Array.from(value.entries()).forEach(([metricName, metricData]) => {
       datasets.push({
         label: `${key.slice(0, 8)}-${metricName}`,
         data: metricData,
-        borderColor: borderColor,
+        borderColor,
         backgroundColor: borderColor,
         pointRadius: 1,
       });
     });
   });
 
-  data = buildDataforChart(x, datasets, "Steps", "Value", "line", true);
-
-  return data;
+  return buildDataforChart(x, datasets, "Steps", "Value", "line", true);
 }
 
 export function createGroupMetricVizData(
@@ -902,9 +988,8 @@ export function createGroupMetricVizData(
 ) {
   if (chartType === "bar") {
     return createGroupedMetricBarVizData(metrics, metricNames);
-  } else {
-    return createGroupedMetricLineVizData(metrics, metricNames);
   }
+  return createGroupedMetricLineVizData(metrics, metricNames);
 }
 
 function compareMetrics(
@@ -921,11 +1006,11 @@ function compareMetrics(
 
   if (currentMetric === compareMetric) {
     return "equal";
-  } else if (currentMetric > compareMetric) {
-    return "greater";
-  } else {
-    return "lesser";
   }
+  if (currentMetric > compareMetric) {
+    return "greater";
+  }
+  return "lesser";
 }
 
 export function downloadTableMetricsToCSV(
@@ -936,8 +1021,8 @@ export function downloadTableMetricsToCSV(
   const header = ["run_uid", "comparison", "name", "value", "step", "result"];
   const allRows = [header];
 
-  for (let [key, value] of tableMetrics) {
-    let comparison = currentUID === key ? "current" : "comparison";
+  for (const [key, value] of tableMetrics) {
+    const comparison = currentUID === key ? "current" : "comparison";
     // Create the CSV content
     const csvContent = value.map((metric) => [
       key,
@@ -952,7 +1037,7 @@ export function downloadTableMetricsToCSV(
   }
 
   // Join rows and columns
-  let csv: string = allRows.map((row) => row.join(",")).join("\n");
+  const csv: string = allRows.map((row) => row.join(",")).join("\n");
 
   downloadCSV(csv, "comparison_metrics");
 }

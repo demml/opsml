@@ -105,3 +105,15 @@ async def register_page(request: Request, url: Optional[str] = None) -> HTMLResp
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
         raise error
+
+
+@router.get("/opsml/error/page")
+async def error_page(request: Request, message: str) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            "site/opsml/error/page.html",
+            {"request": request, "message": message},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error

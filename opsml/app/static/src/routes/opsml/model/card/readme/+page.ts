@@ -11,10 +11,10 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
-  const name: string = url.searchParams.get("name")!;
-  const repository: string = url.searchParams.get("repository")!;
-  const version: string = url.searchParams.get("version")!;
-  let status: string = url.searchParams.get("status")!;
+  const name: string = (url as URL).searchParams.get("name");
+  const repository: string = (url as URL).searchParams.get("repository");
+  const version: string = (url as URL).searchParams.get("version");
+  let status: string = (url as URL).searchParams.get("status");
 
   status = "edit";
 
@@ -22,7 +22,7 @@ export async function load({ fetch, params, url }) {
 
   // check if markdown exists
   const markdownPath = `${opsmlRoot}/${repository}/${name}/README.md`;
-  let readme: Readme = await getReadme(markdownPath);
+  const readme: Readme = await getReadme(markdownPath);
 
   if (readme.exists) {
     content = readme.readme;

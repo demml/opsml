@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import {type Graph} from "$lib/scripts/types";
-    import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
+    import {type RunGraph} from "$lib/scripts/types";
+    import RunGraphChart from "$lib/card/run/RunGraph.svelte";
+    import Fa from 'svelte-fa'
+    import { faArrowsRotate, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
+
+    //import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
 
     // Alternatively, this is how to load Highcharts Stock. The Maps and Gantt
     // packages are similar.
@@ -11,31 +14,49 @@
     /** @type {import('./$types').LayoutData} */
     export let data;
 
-    let graphs: Map<string, Graph>;
-    $: graphs = data.graphs;
+    let graphs: Map<string, RunGraph> | undefined;
+    $: graphs = data.graphs
 
-    onMount(() => {
-        Object.keys(graphs).forEach((graph) => {
-            if (graphs[graph].graph_type === "single") {
-                buildXyChart(graphs[graph]);
-            } else {
-                buildMultiXyChart(graphs[graph]);
-            }
-        });
-    });
-
-    
+    function resetZoom(id) {
+    // reset zoom
+    // @ts-ignore
+    window[id].resetZoom();
+  }
 
 </script>
+<div class="flex min-h-screen">
 
-<div class="pl-4 pr-4 md:pl-12 md:pr-12">
-    <figure class="highcharts-figure">
-        <div class="grid grid-cols-3 gap-4">
-            {#each Object.keys(graphs) as graph}
-                <div class="col-span-3 md:col-span-1">
-                    <div id='graph_{graph}'></div>
-                </div>
-            {/each}
-        </div>
-    </figure>
+  {#if graphs}
+  <div class="grid grid-cols-1 md:grid-cols-2 w-full bg-white px-16 py-4 gap-4">
+
+    {#each Array.from(Object.keys(graphs)) as key}
+
+      <div class="pt-2 pb-10 rounded-2xl max-h-[450px] bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+
+        <div class="flex justify-between">
+
+          <div class="text-primary-500 text-lg font-bold pl-4 pt-1 pb-2">{key}</div>
+
+          <div class="flex justify-end">
+
+            <button type="button" class="m-1 btn btn-sm bg-darkpurple text-white mr-2" on:click={() => resetZoom(key)}>
+              <Fa class="h-3" icon={faMagnifyingGlassMinus}/>
+              <header class="text-white text-xs">Reset Zoom</header>
+            </button>
+          </div>
+        </div>  
+        <RunGraphChart graph={graphs[key]} key={key} />
+      </div>
+      
+    {/each}
+
+  </div>
+  
+  {:else}
+    <div class="text-center text-gray-500">No graphs available</div>
+  {/if}
+
+
+
+
 </div>
