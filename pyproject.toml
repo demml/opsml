@@ -91,8 +91,8 @@ tf_onnx = [
     "opsml[onnx,onnxruntime]",
 ]
 sklearn_onnx = [
-    "skl2onnx~=1.15.0, !=1.17.0",
-    "onnxmltools~=1.11.1",
+    "skl2onnx==1.16.0",
+    "onnxmltools~=1.12",
     "opsml[onnx,onnxruntime]",
 ]
 torch_onnx = [
@@ -120,7 +120,7 @@ dev-dependencies = [
     "coverage[toml]~=6.5.0",
     "torch~=2.1.0",
     "torchvision~=0.16",
-    "lightgbm~=4.0",
+    "lightgbm>=4.0.0, <4.4.0",
     "xgboost~=1.7.1",
     "sentence-transformers~=3.0.1",
     "optimum>=1.21.4",
