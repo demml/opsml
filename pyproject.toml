@@ -142,7 +142,7 @@ dev-dependencies = [
     "pylint-pydantic~=0.2.4",
     "types-pyyaml~=6.0.12.12",
     "isort~=5.12.0",
-    "mkdocs-material~=9.1.7",
+    "mkdocs-material~=9.5",
     "mkdocstrings[python]~=0.25.0"
 ]
 
