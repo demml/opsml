@@ -126,7 +126,7 @@ dev-dependencies = [
     "optimum>=1.21.4",
     "tensorflow~=2.16.0; platform_system == 'Linux'",
     "tf-keras==2.16.0; platform_system == 'Linux'",
-    "transformers~=4.43.4",
+    "transformers>=4.41.0, <4.42.0",
     "lightning~=2.1.2",
     "pytest-rerunfailures~=13.0",
     "catboost~=1.2.2",
