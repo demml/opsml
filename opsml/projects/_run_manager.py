@@ -8,6 +8,7 @@ import concurrent
 import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 from queue import Empty, Queue
 from typing import Any, Dict, Optional, Union, cast
 
@@ -208,11 +209,41 @@ class _RunManager:
         self.thread_executor.submit(get_hw_metrics, interval, self.active_run, queue)
         self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue)
 
+    def _extract_code(
+        self,
+        filename: Path,
+        code_dir: Optional[Union[str, Path]] = None,
+    ) -> None:
+        """Extracts and saves current code executing in the project"""
+
+        assert self.active_run is not None, "active_run should not be None"
+        code_dir = Path(code_dir) if code_dir is not None else None
+
+        if code_dir is not None and code_dir.is_dir():
+            for _path in code_dir.rglob("*"):
+                if _path.is_dir():
+                    continue
+
+                self.active_run.log_artifact_from_file(
+                    name=_path.name,
+                    local_path=_path,
+                    artifact_path=f"artifacts/code/{_path.parent.as_posix()}",
+                )
+            return None
+
+        return self.active_run.log_artifact_from_file(
+            name=filename.name,
+            local_path=filename,
+            artifact_path="artifacts/code",
+        )
+
     def start_run(
         self,
+        filename: Path,
         run_name: Optional[str] = None,
         log_hardware: bool = False,
         hardware_interval: int = _DEFAULT_INTERVAL,
+        code_dir: Optional[Union[str, Path]] = None,
     ) -> ActiveRun:
         """
         Starts a project run
@@ -224,6 +255,12 @@ class _RunManager:
                 Log hardware metrics
             hardware_interval:
                 Interval to log hardware metrics
+            filename:
+                Filename of the script that called the run
+            code_dir:
+                Top-level directory containing code to be logged. If not provided,
+                the directory containing the current file will be used.
+
         """
 
         if self.active_run is not None:
@@ -244,6 +281,8 @@ class _RunManager:
 
         if log_hardware:
             self._log_hardware_metrics(hardware_interval)
+
+        self._extract_code(code_dir=code_dir, filename=filename)
 
         return self.active_run
 
