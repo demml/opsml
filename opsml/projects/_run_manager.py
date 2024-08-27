@@ -220,14 +220,14 @@ class _RunManager:
         code_dir = Path(code_dir) if code_dir is not None else None
 
         if code_dir is not None and code_dir.is_dir():
-            for p in code_dir.rglob("*"):
-                if p.is_dir():
+            for _path in code_dir.rglob("*"):
+                if _path.is_dir():
                     continue
 
                 self.active_run.log_artifact_from_file(
-                    name=p.name,
-                    local_path=p,
-                    artifact_path=f"artifacts/code/{p.parent.as_posix()}",
+                    name=_path.name,
+                    local_path=_path,
+                    artifact_path=f"artifacts/code/{_path.parent.as_posix()}",
                 )
             return None
 
@@ -236,16 +236,6 @@ class _RunManager:
             local_path=filename,
             artifact_path="artifacts/code",
         )
-
-        # Get the caller frame to determine the file that called the run
-        # need to back out of _run_manager.py and project.py
-
-        # Get the absolute path
-        # abs_path = os.path.abspath(caller_filename)
-
-        # print(abs_path)
-
-        return "code"
 
     def start_run(
         self,
