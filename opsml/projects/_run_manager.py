@@ -208,6 +208,12 @@ class _RunManager:
         self.thread_executor.submit(get_hw_metrics, interval, self.active_run, queue)
         self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue)
 
+    def _extract_code(self, dir: Optional[str] = None) -> str:
+        """Extracts and saves current code executing in the project"""
+        print(__file__)
+
+        return "code"
+
     def start_run(
         self,
         run_name: Optional[str] = None,
@@ -244,6 +250,8 @@ class _RunManager:
 
         if log_hardware:
             self._log_hardware_metrics(hardware_interval)
+
+        self._extract_code()
 
         return self.active_run
 
