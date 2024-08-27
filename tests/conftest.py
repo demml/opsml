@@ -240,7 +240,6 @@ def test_app() -> YieldFixture[TestClient]:
 
     opsml_app = OpsmlApp()
     with TestClient(opsml_app.get_app()) as tc:
-
         try:
             print(os.environ["OPSML_AUTH"])
             # set header if needed
@@ -297,7 +296,6 @@ def aws_storage_client(aws_s3_bucket: Path) -> client.S3StorageClient:
 
 
 def mock_registries(monkeypatch: pytest.MonkeyPatch, test_client: TestClient) -> CardRegistries:
-
     def callable_api() -> TestClient:
         return test_client
 
@@ -1481,11 +1479,14 @@ def huggingface_whisper() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]:
     # come up with some dummy test data to fake out training.
     data = torch.Tensor(joblib.load("tests/assets/whisper-data.joblib"))
 
-    yield HuggingFaceModel(
-        model=model,
-        sample_data=data,
-        task_type=HuggingFaceTask.TEXT_GENERATION.value,
-    ), TorchData(data=data)
+    yield (
+        HuggingFaceModel(
+            model=model,
+            sample_data=data,
+            task_type=HuggingFaceTask.TEXT_GENERATION.value,
+        ),
+        TorchData(data=data),
+    )
     cleanup()
 
 
@@ -1497,11 +1498,14 @@ def huggingface_openai_gpt() -> YieldFixture[Tuple[HuggingFaceModel, TorchData]]
     model = OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
     inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
 
-    yield HuggingFaceModel(
-        model=model,
-        sample_data=inputs,
-        task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
-    ), TorchData(data=inputs["input_ids"])
+    yield (
+        HuggingFaceModel(
+            model=model,
+            sample_data=inputs,
+            task_type=HuggingFaceTask.TEXT_CLASSIFICATION.value,
+        ),
+        TorchData(data=inputs["input_ids"]),
+    )
     cleanup()
 
 

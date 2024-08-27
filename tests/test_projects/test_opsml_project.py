@@ -42,7 +42,6 @@ def test_opsml_read_only(
 
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
     with OpsmlProject(info=info).run() as run:
-
         # Create metrics / params / cards
         run.log_metric(key="m1", value=1.1)
         run.log_metric(key="m2", value=1.2)

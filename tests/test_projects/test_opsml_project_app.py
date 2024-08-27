@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -6,19 +7,23 @@ from starlette.testclient import TestClient
 
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry.registry import CardRegistries
+from opsml.storage import client
 
 # test_app already performs a few tests with opsml project in client model
 # Adding additional tests here to avoid further cluttering test_app
 
 
-def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardRegistries) -> None:
+def test_opsml_project_id_creation(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    api_storage_client: client.StorageClientBase,
+) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
     project = OpsmlProject(info=info)
 
     with project.run() as run:
-
         run.log_metric(key="m1", value=1.1)
         run.log_metric(key="m2", value=1.2)
 
@@ -39,6 +44,8 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
         run.log_graph(name="graph", x=[1, 2, 3], y=[4, 5, 6], graph_style="scatter")
         nbr_metrics = len(run.metrics)
         info.run_id = run.run_id
+
+    assert api_storage_client.exists(Path(run.runcard.uri, "artifacts/code/test_opsml_project_app.py"))
 
     proj = OpsmlProject(info=info)
     runcard = proj.runcard
@@ -78,7 +85,30 @@ def test_opsml_project_id_creation(test_app: TestClient, api_registries: CardReg
     assert project.project_id == 1
 
 
-def test_opsml_project_hardware_metric(test_app: TestClient, api_registries: CardRegistries) -> None:
+def test_opsml_project_log_code_directory(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+    api_storage_client: client.StorageClientBase,
+) -> None:
+    """verify that we can read artifacts / metrics / cards without making a run
+    active."""
+    info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
+    project = OpsmlProject(info=info)
+
+    with project.run(log_hardware=True, hardware_interval=10, code_dir=Path("tests/test_projects")) as run:
+        # Create metrics / params / cards
+        run.log_metric(key="m1", value=1.1)
+        run.log_parameter(key="m1", value="apple")
+
+    assert api_storage_client.exists(
+        Path(run.runcard.uri, "artifacts/code/tests/test_projects/test_opsml_project_app.py")
+    )
+
+
+def test_opsml_project_hardware_metric(
+    test_app: TestClient,
+    api_registries: CardRegistries,
+) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
@@ -91,5 +121,6 @@ def test_opsml_project_hardware_metric(test_app: TestClient, api_registries: Car
         time.sleep(15)
 
     metrics = run.runcard.get_hardware_metrics()
+    assert metrics is not None
     assert len(metrics) == 1
     assert metrics[0]["run_uid"] == run.run_id
