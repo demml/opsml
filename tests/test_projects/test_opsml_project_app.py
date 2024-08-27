@@ -108,7 +108,6 @@ def test_opsml_project_log_code_directory(
 def test_opsml_project_hardware_metric(
     test_app: TestClient,
     api_registries: CardRegistries,
-    api_storage_client: client.StorageClientBase,
 ) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
@@ -122,5 +121,6 @@ def test_opsml_project_hardware_metric(
         time.sleep(15)
 
     metrics = run.runcard.get_hardware_metrics()
+    assert metrics is not None
     assert len(metrics) == 1
     assert metrics[0]["run_uid"] == run.run_id
