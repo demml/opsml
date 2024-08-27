@@ -5,7 +5,9 @@
 # LICENSE file in the root directory of this source tree.
 # pylint: disable=protected-access
 
+import inspect
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union, cast
 
 from opsml.cards import Card
@@ -124,6 +126,7 @@ class OpsmlProject:
         run_name: Optional[str] = None,
         log_hardware: bool = False,
         hardware_interval: int = _DEFAULT_INTERVAL,
+        code_dir: Optional[Union[str, Path]] = None,
     ) -> Iterator[ActiveRun]:
         """
         Starts a new run for the project
@@ -135,13 +138,21 @@ class OpsmlProject:
                 Whether to log hardware metrics
             hardware_interval:
                 Interval to log hardware metrics. Default is 30 seconds.
+            code_dir:
+                Top-level directory containing code to be logged. If not provided,
+                the directory containing the current file will be used.
         """
 
         try:
+            # get filename
+            # need to back out of project.py and contextlib.py
+            filename = Path(inspect.getframeinfo(inspect.currentframe().f_back.f_back).filename)  # type: ignore
             yield self._run_mgr.start_run(
                 run_name=run_name,
                 log_hardware=log_hardware,
                 hardware_interval=hardware_interval,
+                code_dir=code_dir,
+                filename=filename,
             )
 
         except ActiveRunException as error:
