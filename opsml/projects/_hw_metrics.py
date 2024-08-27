@@ -6,9 +6,10 @@
 
 import abc
 import os
+import platform
 import time
 from typing import Any, Dict, List
-import platform
+
 import psutil
 from pydantic import BaseModel
 

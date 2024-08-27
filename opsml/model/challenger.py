@@ -130,22 +130,12 @@ class ModelChallenger:
         if not champion_records:
             return None
 
-        # indicates challenger has been registered
-        if self._challenger.version is not None and len(champion_records) > 1:
-            # check for first champions model that has a non None runcard_uid
-            for record in champion_records:
-                if record.get("version") != self._challenger.version and record.get("runcard_uid") is not None:
-                    return record
-                else:
-                    logger.info("No previous version associated with a RunCard. Challenger wins")
-                    return None
+        for record in champion_records:
+            if record.get("runcard_uid") is not None and record.get("version") != self._challenger.version:
+                return record
 
-        # account for cases where challenger is only model in registry
-        champion_record = champion_records[0]
-        if champion_record.get("version") == self._challenger.version:
-            return None
-
-        return champion_record
+        logger.info("No previous version associated with a RunCard. Challenger wins")
+        return None
 
     def _get_runcard_metric(self, runcard_uid: str, metric_name: str) -> Optional[Metric]:
         """
@@ -239,16 +229,14 @@ class ModelChallenger:
         battle_reports = []
 
         for champion in champions:
-            champion_record = self._registries.model.list_cards(
-                info=champion,
-            )
+            champion_record = self._registries.model.list_cards(info=champion)
 
             if not bool(champion_record):
-                logger.error(f"Champion model does not exist. {champion}")
+                logger.error(f"Champion model does not exist. {champion.name} {champion.version}")
                 battle_reports.append(
                     BattleReport(
-                        champion_name=champion,
-                        champion_version="not found",
+                        champion_name=champion.name,
+                        champion_version="model not found",
                         challenger_win=True,
                     )
                 )
@@ -256,12 +244,13 @@ class ModelChallenger:
 
             champion_card = champion_record[0]
             runcard_uid = champion_card.get("runcard_uid")
+
             if runcard_uid is None:
-                logger.error(f"No RunCard associated with champion: {champion}")
+                logger.error(f"No RunCard associated with champion: {champion.name} {champion.version}")
                 battle_reports.append(
                     BattleReport(
-                        champion_name=champion,
-                        champion_version="not runcard",
+                        champion_name=champion.name,
+                        champion_version="no runcard",
                         challenger_win=True,
                     )
                 )
@@ -273,11 +262,11 @@ class ModelChallenger:
             )
 
             if champion_metric is None:
-                logger.error(f"No metric found in RunCard associated with champion: {champion}")
+                logger.error(f"No metric found in RunCard associated with champion: {champion.name} {champion.version}")
                 battle_reports.append(
                     BattleReport(
-                        champion_name=champion,
-                        champion_version="not found",
+                        champion_name=champion.name,
+                        champion_version="metric not found",
                         challenger_win=True,
                     )
                 )
@@ -339,7 +328,10 @@ class ModelChallenger:
             # get challenger metric
             if value is None:
                 if self._challenger.metadata.runcard_uid is not None:
-                    self.challenger_metric = self._get_runcard_metric(self._challenger.metadata.runcard_uid, metric_name=name)
+                    metric = self._get_runcard_metric(self._challenger.metadata.runcard_uid, metric_name=name)
+
+                    assert metric is not None, "Challenger metric not found"
+                    self.challenger_metric = metric
                 else:
                     raise ValueError("Challenger and champions must be associated with a registered RunCard")
             else:
