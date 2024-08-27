@@ -8,8 +8,9 @@ import abc
 import os
 import time
 from typing import Any, Dict, List
-
+import platform
 import psutil
+from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.types import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
@@ -299,3 +300,13 @@ class HardwareMetricsLogger:
         )
 
         return metrics
+
+
+class ComputeEnvironment(BaseModel):
+    cpu_count: int = psutil.cpu_count(logical=False)
+    memory: int = psutil.virtual_memory().total
+    system: str = platform.system()
+    release: str = platform.release()
+    architecture_bits: str = platform.architecture()[0]
+    python_version: str = platform.python_version()
+    python_compiler: str = platform.python_compiler()
