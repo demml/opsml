@@ -27,7 +27,7 @@ def put_hw_metrics(
     interval: int,
     run: "ActiveRun",
     queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
-) -> bool:
+) -> None:
     hw_logger = HardwareMetricsLogger(
         interval=interval,
         compute_environment=run.runcard.compute_environment,
@@ -69,8 +69,6 @@ def get_hw_metrics(
     """Pull hardware metrics from the queue and log them.
 
     Args:
-        interval:
-            Interval to log hardware metrics
         run:
             ActiveRun
         queue:
@@ -86,8 +84,6 @@ def get_hw_metrics(
 
         except Exception:  # pylint: disable=broad-except
             continue
-
-    return None
 
 
 class ActiveRunException(Exception): ...

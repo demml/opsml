@@ -252,8 +252,8 @@ class GPUMetricsLogger(BaseMetricsLogger):
         if gpu_count > 0:
             try:
                 NVMLHandler.init_nvml()
-            except NVMLError as e:
-                logger.error("Failed to initialize NVML: {}", e)
+            except NVMLError as error:
+                logger.error("Failed to initialize NVML: {}", error)
                 self.gpu_count = 0
 
         self.gpu_count = gpu_count
