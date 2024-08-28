@@ -23,7 +23,8 @@ dependencies = [
     "tenacity~=8.2.2",
     "zarr~=2.12.0",
     "bcrypt~=4.2",
-    "PyJWT~=2.8"
+    "PyJWT~=2.8",
+    "nvidia-ml-py>=12.560.30",
 ]
 
 [project.scripts]
@@ -109,9 +110,6 @@ all = [
     "opsml[tf_onnx]",
     "opsml[sklearn_onnx]",
     "opsml[torch_onnx]",
-]
-gpu = [
-    "nvidia-ml-py>=12.560.30",
 ]
 
 [tool.uv]

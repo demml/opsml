@@ -3,6 +3,8 @@ opsml_registries/
 opsml/api/
 test_scripts*
 tmp.db
+test.db
+opsml.db
 model_registry
 opsml_artifacts
 opsml/deploy/seldon/api_test.txt

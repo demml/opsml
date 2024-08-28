@@ -19,7 +19,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import TypeChecker
+from opsml.helpers.utils import ComputeEnvironment, TypeChecker
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import (
@@ -188,6 +188,7 @@ class RunCard(ArtifactCard):
     parameters: Params = {}
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
+    compute_environment: ComputeEnvironment = ComputeEnvironment()
     project: Optional[str] = None
 
     @model_validator(mode="before")

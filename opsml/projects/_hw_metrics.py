@@ -6,14 +6,13 @@
 
 import abc
 import os
-import platform
 import time
 from typing import Any, Dict, List
 
 import psutil
-from pydantic import BaseModel
 
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import ComputeEnvironment
 from opsml.types import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
 
 logger = ArtifactLogger.get_logger()
@@ -288,10 +287,11 @@ class NetworkMetricsLogger(BaseMetricsLogger):
 
 
 class HardwareMetricsLogger:
-    def __init__(self, interval: float = 15):
+    def __init__(self, compute_environment: ComputeEnvironment, interval: float = 15):
         self.cpu_logger = CPUMetricsLogger(interval, True, True)
         self.memory_logger = MemoryMetricsLogger(interval, False)
         self.network_logger = NetworkMetricsLogger(interval)
+        self.compute_environment = compute_environment
 
     def get_metrics(self) -> HardwareMetrics:
         metrics = HardwareMetrics(
@@ -301,13 +301,3 @@ class HardwareMetricsLogger:
         )
 
         return metrics
-
-
-class ComputeEnvironment(BaseModel):
-    cpu_count: int = psutil.cpu_count(logical=False)
-    memory: int = psutil.virtual_memory().total
-    system: str = platform.system()
-    release: str = platform.release()
-    architecture_bits: str = platform.architecture()[0]
-    python_version: str = platform.python_version()
-    python_compiler: str = platform.python_compiler()

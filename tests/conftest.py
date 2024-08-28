@@ -11,7 +11,7 @@ from typing import Any, Dict, Generator, Tuple, TypeVar, Union
 
 warnings.filterwarnings("ignore")
 
-LOCAL_DB_FILE_PATH = "tmp.db"
+LOCAL_DB_FILE_PATH = "test.db"
 LOCAL_TRACKING_URI = f"sqlite:///{LOCAL_DB_FILE_PATH}"
 LOCAL_STORAGE_URI = f"{os.getcwd()}/opsml_registries"
 
@@ -145,8 +145,10 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 def cleanup() -> None:
     """Removes temp files"""
 
-    if os.path.exists(LOCAL_DB_FILE_PATH):
-        os.remove(LOCAL_DB_FILE_PATH)
+    # if os.path.exists(LOCAL_DB_FILE_PATH):
+    # os.remove(LOCAL_DB_FILE_PATH)
+
+    Path(LOCAL_DB_FILE_PATH).unlink(missing_ok=True)
 
     # remove api mlrun path (will fail if not local)
     shutil.rmtree(OPSML_STORAGE_URI, ignore_errors=True)

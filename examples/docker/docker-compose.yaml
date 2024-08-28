@@ -1,4 +1,4 @@
-version: '3.5'
+version: "3.5"
 services:
   webserver:
     container_name: opsml-api-service
@@ -10,7 +10,7 @@ services:
       args:
         GOOGLE_ACCOUNT_JSON_BASE64: ${GOOGLE_ACCOUNT_JSON_BASE64} # example uses GCS backend with google service account
         OPSML_STORAGE_URI: ${OPSML_STORAGE_URI}
-        OPSML_TRACKING_URI: sqlite:///tmp.db
+        OPSML_TRACKING_URI: sqlite:///opsml.db
         APP_ENV: "development"
 
     ports:
