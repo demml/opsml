@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from semver import VersionInfo
@@ -12,6 +13,7 @@ from opsml.helpers.exceptions import CardDeleteError, VersionError
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.records import SaveRecord, registry_name_record_map
 from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
+from opsml.settings.config import config
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
@@ -31,6 +33,7 @@ class SQLRegistryBase:
         """
         self.storage_client = storage_client
         self._table_name = RegistryTableNames[registry_type.value.upper()].value
+        self._registry_type = registry_type
 
     @property
     def unique_repositories(self) -> Sequence[str]:
@@ -259,6 +262,43 @@ class SQLRegistryBase:
 
         self.add_and_commit(card=record.model_dump())
 
+    def _card_with_diff_uid_already_exists(self, card: Card) -> bool:
+        """Check if a card with a different uid already exists for a given name, repository and version
+
+        Args:
+            card:
+                Card to check
+
+        Returns:
+            boolean
+
+        """
+        # check new card does not overwrite existing name, repository and version with a different uid
+        _current_record = self.list_cards(name=card.name, repository=card.repository, version=card.version)
+        if _current_record:
+            if _current_record[0]["uid"] != card.uid:
+                return True
+
+        return False
+
+    def _cleanup_card_artifacts(self, record: Dict[str, Any], card: Card) -> None:
+        """Removes card artifacts from storage
+
+        Args:
+            card:
+                Card to remove
+        """
+        # when moving objects to a new uri, remove the previous uri and its contents
+        repository, name, version = record["repository"], record["name"], record["version"]
+
+        previous_uri = Path(
+            f"{config.storage_root}/{RegistryTableNames.from_str(card.card_type).value}/{repository}/{name}/v{version}"
+        )
+
+        if previous_uri != card.uri:
+            logger.info("Uri has changed. Removing previous uri {}", previous_uri)
+            self.storage_client.rm(previous_uri)
+
     def update_card(self, card: Card) -> None:
         """
         Updates a registry record.
@@ -270,11 +310,22 @@ class SQLRegistryBase:
         # checking card exists
         record = self.list_cards(uid=card.uid, limit=1)
         assert bool(record), "Card does not exist in registry. Please use register card first"
-        logger.info("Updating card {}/{} with version {}", card.repository, card.name, card.version)
-        save_card_artifacts(card=card)
-        save_record: SaveRecord = registry_name_record_map[card.card_type](**card.create_registry_record())
 
+        if self._card_with_diff_uid_already_exists(card):
+            logger.error(
+                "Card for {}/{}/{} already exists with a different uid", card.repository, card.name, card.version
+            )
+            raise ValueError(
+                f"Card for {card.repository}/{card.name}/{card.version} already exists with a different uid"
+            )
+
+        logger.info("Updating card {}/{} with version {}", card.repository, card.name, card.version)
+
+        save_card_artifacts(card=card)
+
+        save_record: SaveRecord = registry_name_record_map[card.card_type](**card.create_registry_record())
         self.update_card_record(card=save_record.model_dump())
+        self._cleanup_card_artifacts(record[0], card)
 
     def list_cards(
         self,
