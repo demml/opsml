@@ -31,7 +31,13 @@ from opsml.types.huggingface import (
     HuggingFaceORTModel,
     HuggingFaceTask,
 )
-from opsml.types.metrics import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
+from opsml.types.metrics import (
+    CPUMetrics,
+    GPUMetrics,
+    HardwareMetrics,
+    MemoryMetrics,
+    NetworkRates,
+)
 from opsml.types.model import (
     AVAILABLE_MODEL_TYPES,
     LIGHTGBM_SUPPORTED_MODEL_TYPES,
@@ -148,4 +154,5 @@ __all__ = [
     "NetworkRates",
     "MemoryMetrics",
     "CPUMetrics",
+    "GPUMetrics",
 ]

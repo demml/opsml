@@ -94,6 +94,7 @@ class RunMixin:
     pipelinecard_uid = Column("pipelinecard_uid", String(64))
     project = Column("project", String(64))
     artifact_uris = Column("artifact_uris", JSON)
+    compute_environment = Column("compute_environment", JSON)
 
 
 class RunSchema(Base, BaseMixin, RunMixin):
