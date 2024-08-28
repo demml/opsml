@@ -44,6 +44,7 @@ This toolkit empowers teams to maintain rigorous control over their ML projects,
 ## **Why OpsML?**
 
 OpsML addresses a critical gap in the ML ecosystem: the lack of a universal standard for artifact registration and governance. Our experience with various open-source and proprietary tools revealed a persistent need to integrate disparate systems for effective artifact management and deployment. This led to the development of OpsML, a unified framework designed to streamline ML operations.
+
 Key Features:
 
 - **Modular Architecture**: Seamlessly integrates into existing ML pipelines and workflows.
