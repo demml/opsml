@@ -7,13 +7,25 @@
 import abc
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import psutil
+from pynvml import (
+    NVMLError,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetMemoryInfo,
+    nvmlInit,
+)
 
 from opsml.helpers.logging import ArtifactLogger
 from opsml.helpers.utils import ComputeEnvironment
-from opsml.types import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
+from opsml.types import (
+    CPUMetrics,
+    GPUMetrics,
+    HardwareMetrics,
+    MemoryMetrics,
+    NetworkRates,
+)
 
 logger = ArtifactLogger.get_logger()
 
@@ -220,6 +232,80 @@ class MemoryMetricsLogger(BaseMetricsLogger):
         return "[sys.ram]"
 
 
+# GPU metrics
+class GPUMetricsLogger(BaseMetricsLogger):
+    """CPU metrics data logger. It logs CPU utilization and compute metrics."""
+
+    def __init__(
+        self,
+        initial_interval: float,
+        gpu_devices: List[str],
+        gpu_count: int,
+    ):
+        """Instantiates a new CPU metrics data logger.
+
+        Args:
+            initial_interval (float):
+                The initial interval in seconds between logging attempts.
+            gpu_devices (List[str]):
+                List of GPU devices to monitor.
+            gpu_count (int):
+                Number of GPUs to monitor.
+        """
+
+        if gpu_count > 0:
+            try:
+                nvmlInit()
+            except NVMLError as e:
+                logger.error("Failed to initialize NVML: {}", e)
+                gpu_count = 0
+
+        self.gpu_count = gpu_count
+        self.gpu_devices = gpu_devices
+        super().__init__(initial_interval)
+
+    def _get_metrics(self) -> GPUMetrics:
+        """Get CPU metrics.
+
+        Returns:
+            dict: A dictionary with CPU metrics.
+        """
+        gpu_total = 0
+        gpu_used = 0
+        gpu_per_core = []
+
+        for i in range(self.gpu_count):
+            handle = nvmlDeviceGetHandleByIndex(i)
+            info = nvmlDeviceGetMemoryInfo(handle)
+
+            total = info.total
+            used = info.used
+
+            gpu_total += total
+            gpu_used += used
+            gpu_per_core.append(used / total * 100)
+
+        gpu_utilization = gpu_used / gpu_total * 100
+        return GPUMetrics(
+            gpu_percent_utilization=gpu_utilization,
+            gpu_percent_per_core=gpu_per_core,
+        )
+
+    def get_metrics(self) -> Optional[GPUMetrics]:
+        """Get CPU metrics.
+
+        Returns:
+            dict: A dictionary with CPU metrics.
+        """
+        if self.gpu_count == 0:
+            return None
+        return self._get_metrics()
+
+    @property
+    def name(self) -> str:
+        return "[sys.gpu]"
+
+
 ## Network usage
 class NetworkMetricsLogger(BaseMetricsLogger):
     """Network rates probe for record received and sent bytes rates."""
@@ -292,12 +378,18 @@ class HardwareMetricsLogger:
         self.memory_logger = MemoryMetricsLogger(interval, False)
         self.network_logger = NetworkMetricsLogger(interval)
         self.compute_environment = compute_environment
+        self.gpu_logger = GPUMetricsLogger(
+            interval,
+            compute_environment.gpu_devices,
+            compute_environment.gpu_count,
+        )
 
     def get_metrics(self) -> HardwareMetrics:
         metrics = HardwareMetrics(
             cpu=self.cpu_logger.get_metrics(),
             memory=self.memory_logger.get_metrics(),
             network=self.network_logger.get_metrics(),
+            gpu=self.gpu_logger.get_metrics(),
         )
 
         return metrics

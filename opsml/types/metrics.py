@@ -6,11 +6,18 @@ from pydantic import BaseModel
 class CPUMetrics(BaseModel):
     """CPU metrics data model."""
 
-    cpu_percent_avg: float = 0.0
+    cpu_percent_utilization: float = 0.0
     cpu_percent_per_core: Optional[List[float]] = None
     compute_overall: Optional[float] = None
     compute_utilized: Optional[float] = None
     load_avg: float
+
+
+class GPUMetrics(BaseModel):
+    """GPU metrics data model."""
+
+    gpu_percent_utilization: float = 0.0
+    gpu_percent_per_core: Optional[List[float]] = None
 
 
 class MemoryMetrics(BaseModel):
@@ -37,3 +44,4 @@ class HardwareMetrics(BaseModel):
     cpu: CPUMetrics
     memory: MemoryMetrics
     network: NetworkRates
+    gpu: Optional[GPUMetrics] = None

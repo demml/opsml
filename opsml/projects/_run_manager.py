@@ -41,7 +41,7 @@ def put_hw_metrics(
     while run.active:  # producer function for hw output
         # failure should not stop the thread
 
-        time.sleep(3)
+        time.sleep(2)
         _current_time = time.time()
 
         # check if time to log
@@ -80,8 +80,6 @@ def get_hw_metrics(
             Queue[HardwareMetrics]
     """
     while run.active:  # consumer function for hw output
-        time.sleep(2)
-
         try:
             metrics = queue.get(timeout=1)
             run.runcard._registry.insert_hw_metrics([metrics])
@@ -91,6 +89,8 @@ def get_hw_metrics(
 
         except Exception:  # pylint: disable=broad-except
             continue
+
+    return None
 
 
 class ActiveRunException(Exception): ...
@@ -323,7 +323,18 @@ class _RunManager:
         # check if thread executor is still running
         if self.thread_executor is not None:
             # cancel futures
-            for future in self._hardware_futures:
-                future.cancel()
             self.thread_executor.shutdown(wait=False, cancel_futures=True)
+
+            self._hardware_futures[0].cancel()
+            self._hardware_futures[1].cancel()
+
+            try:
+                self._hardware_futures[0].result(timeout=1)
+                self._hardware_futures[1].result(timeout=1)
+            except Exception:
+                pass
+            finally:
+                self.thread_executor.shutdown(wait=False)
+                self.thread_executor = None
+                self._hardware_futures = []
             self._thread_executor = None
