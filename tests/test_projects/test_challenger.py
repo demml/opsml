@@ -1,4 +1,4 @@
-from typing import Tuple, cast
+from typing import Tuple
 
 import pytest
 
@@ -8,21 +8,20 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model import SklearnModel
 from opsml.model.challenger import ChallengeInputs, ModelChallenger
 from opsml.projects import OpsmlProject, ProjectInfo
-from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
 from opsml.types import CardInfo
 
 logger = ArtifactLogger.get_logger()
 
 data_info = CardInfo(
-    name="pipeline_data",
-    repository="mlops",
-    contact="mlops.com",
+    name="opsml_data",
+    repository="opsml",
+    contact="opsml",
 )
 model_info = CardInfo(
-    name="pipeline_model",
-    repository="mlops",
-    contact="mlops.com",
+    name="opsml_model",
+    repository="opsml",
+    contact="opsml",
 )
 
 
@@ -35,7 +34,6 @@ def test_challenger_no_previous_version(
 
     with OpsmlProject(info=info).run() as run:
         # Create metrics / params / cards
-        run = cast(ActiveRun, run)
         model, data = sklearn_pipeline
         data_card = DataCard(interface=data, info=data_info)
         run.register_card(card=data_card)
@@ -49,7 +47,11 @@ def test_challenger_no_previous_version(
         run.register_card(card=model_card)
 
     challenger = ModelChallenger(challenger=model_card)
-    battle_result = challenger.challenge_champion(metric_name="mape", metric_value=100, lower_is_better=True)
+    battle_result = challenger.challenge_champion(
+        metric_name="mape",
+        metric_value=100,
+        lower_is_better=True,
+    )
 
     assert battle_result["mape"][0].challenger_win
     assert battle_result["mape"][0].champion_name == "No model"
@@ -95,15 +97,50 @@ def test_challenger(
     assert battle_result["mape"][0].champion_version == "No version"
 
 
-def test_challenger_champion_list(
+def test_challenge_register_multiple(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
-    """Test ModelChallenger using champion list"""
+    """Test ModelChallenger using challenger and previous champion"""
+
     info = ProjectInfo(name="test", repository="test", contact="test")
+    for i in range(3):
+        with OpsmlProject(info=info).run() as run:
+            model, data = sklearn_pipeline
+            data_card = DataCard(interface=data, info=data_info)
+            run.register_card(card=data_card)
+            model_card = ModelCard(
+                interface=model,
+                info=model_info,
+                datacard_uid=data_card.uid,
+                to_onnx=True,
+            )
+
+            run.log_metric("mape", i)
+            run.register_card(card=model_card)
+
+    challenger = ModelChallenger(challenger=model_card)
+
+    battle_result = challenger.challenge_champion(
+        metric_name="mape",
+        lower_is_better=False,
+    )
+
+    assert battle_result["mape"][0].challenger_win == True
+    assert battle_result["mape"][0].champion_version == "1.1.0"
+
+    # register another model without a run
+    model_card = ModelCard(
+        interface=model,
+        info=model_info,
+        datacard_uid=data_card.uid,
+        to_onnx=True,
+    )
+    db_registries.model.register_card(model_card)
+    assert model_card.version == "1.3.0"
+
+    # run another run
     with OpsmlProject(info=info).run() as run:
-        # Create metrics / params / cards
-        run = cast(ActiveRun, run)
         model, data = sklearn_pipeline
         data_card = DataCard(interface=data, info=data_info)
         run.register_card(card=data_card)
@@ -113,55 +150,129 @@ def test_challenger_champion_list(
             datacard_uid=data_card.uid,
             to_onnx=True,
         )
-        run.log_metric("mape", 100)
+
+        run.log_metric("mape", i)
         run.register_card(card=model_card)
 
-    info = ProjectInfo(name="test", repository="test", contact="test")
-    proj = OpsmlProject(info=info)
-    modelcard = proj._run_mgr.registries.model.load_card(name="pipeline_model", version="1.0.0")
-    proj._run_mgr.registries.run.load_card(uid=modelcard.metadata.runcard_uid)
+    assert model_card.version == "1.4.0"
+    challenger = ModelChallenger(challenger=model_card)
 
-    challenger = ModelChallenger(challenger=modelcard)
-
-    model_info.version = "1.0.0"
-    champion_info = model_info
     battle_result = challenger.challenge_champion(
-        champions=[champion_info],
         metric_name="mape",
+        lower_is_better=False,
+    )
+
+    # should skip over version 1.3.0
+    assert battle_result["mape"][0].challenger_win == False
+    assert battle_result["mape"][0].champion_version == "1.2.0"
+
+
+def test_challenge_no_runs(
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[SklearnModel, PandasData],
+) -> None:
+    """Test ModelChallenger using challenger and previous champion"""
+
+    info = ProjectInfo(name="test", repository="test", contact="test")
+    model, data = sklearn_pipeline
+
+    # create models with no runs
+    for _ in range(3):
+        model_card = ModelCard(
+            interface=model,
+            info=model_info,
+            to_onnx=True,
+        )
+        db_registries.model.register_card(model_card)
+
+    with OpsmlProject(info=info).run() as run:
+        model, data = sklearn_pipeline
+        data_card = DataCard(interface=data, info=data_info)
+        run.register_card(card=data_card)
+        model_card = ModelCard(
+            interface=model,
+            info=model_info,
+            datacard_uid=data_card.uid,
+            to_onnx=True,
+        )
+
+        run.log_metric("mape", 10)
+        run.register_card(card=model_card)
+
+    challenger = ModelChallenger(challenger=model_card)
+
+    # this should skip over the models with no runs
+    battle_result = challenger.challenge_champion(
+        metric_name="mape",
+        lower_is_better=False,
+    )
+
+    assert battle_result["mape"][0].challenger_win == True
+    assert battle_result["mape"][0].champion_version == "No version"
+
+    # add champion with different metric
+    for i in range(2):
+        with OpsmlProject(info=info).run() as run:
+            model, data = sklearn_pipeline
+            data_card = DataCard(interface=data, info=data_info)
+            run.register_card(card=data_card)
+            model_card = ModelCard(
+                interface=model,
+                info=model_info,
+                datacard_uid=data_card.uid,
+                to_onnx=True,
+            )
+
+            run.log_metric("mae", i)
+            run.register_card(card=model_card)
+
+    # challenge champions
+    battle_result = challenger.challenge_champion(
+        champions=[
+            CardInfo(
+                name="opsml_model",
+                repository="opsml",
+                contact="opsml",
+                version="1.0.0",
+            ),
+            CardInfo(
+                name="opsml_model",
+                repository="opsml",
+                contact="opsml",
+                version="1.3.0",
+            ),
+            CardInfo(
+                name="opsml_not_exist",
+                repository="opsml",
+                contact="opsml",
+                version="1.3.0",
+            ),
+            CardInfo(
+                name="opsml_model",
+                repository="opsml",
+                contact="opsml",
+                version="1.4.0",
+            ),
+        ],
+        metric_name="mae",
         lower_is_better=True,
         metric_value=40,
     )
 
-    assert battle_result["mape"][0].challenger_win
-    assert battle_result["mape"][0].champion_version == "1.0.0"
+    assert battle_result["mae"][0].challenger_win == True
+    assert battle_result["mae"][0].champion_version == "no runcard"
 
-    # should fail (model version does not exist)
-    with pytest.raises(ValueError):
-        model_info.version = "2.0.0"
-        champion_info = model_info
-        battle_result = challenger.challenge_champion(
-            champions=[champion_info],
-            metric_name="mape",
-            lower_is_better=True,
-            metric_value=40,
-        )
+    assert battle_result["mae"][1].challenger_win == True
+    assert battle_result["mae"][1].champion_version == "metric not found"
 
-    with pytest.raises(ValueError):
-        challenger = ModelChallenger(challenger=modelcard)
-        challenger.challenger_metric
+    assert battle_result["mae"][2].challenger_win == True
+    assert battle_result["mae"][2].champion_version == "model not found"
 
-    # should fail. RunCard not registered yet
-    with pytest.raises(ValueError):
-        model_info.version = "2.0.0"
-        champion_info = model_info
-        battle_result = challenger.challenge_champion(
-            champions=[champion_info],
-            metric_name="mape",
-            lower_is_better=True,
-        )
+    assert battle_result["mae"][3].challenger_win == False
+    assert battle_result["mae"][3].champion_version == "1.4.0"
 
 
-def test_challenger_input_validation():
+def test_challenger_input_validation() -> None:
     ChallengeInputs(
         metric_name=["mae"],
         metric_value=[10],
