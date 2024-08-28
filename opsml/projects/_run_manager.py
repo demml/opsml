@@ -10,10 +10,11 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
+from opsml.helpers.utils import ComputeEnvironment
 from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
@@ -28,29 +29,36 @@ def put_hw_metrics(
     run: "ActiveRun",
     queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
 ) -> bool:
-    hw_logger = HardwareMetricsLogger(interval=interval)
+    hw_logger = HardwareMetricsLogger(
+        interval=interval,
+        compute_environment=run.runcard.compute_environment,
+    )
+
+    # first call will always be 0 (don't log)
+    hw_logger.get_metrics()
     _timekeeper = time.time()
 
     while run.active:  # producer function for hw output
         # failure should not stop the thread
-        try:
-            time.sleep(3)
 
-            # check if time to log
-            if time.time() - _timekeeper < interval:
+        time.sleep(3)
+        _current_time = time.time()
+
+        # check if time to log
+        if _current_time - _timekeeper >= interval:
+            try:
+                metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
+                    "metrics": hw_logger.get_metrics().model_dump(),
+                    "run_uid": run.run_id,
+                }
+
+                # add to the queue
+                queue.put(metrics, block=False)
+                _timekeeper = _current_time
+
+            except Exception as error:  # pylint: disable=broad-except
+                logger.error("Failed to log hardware metrics: {}", error)
                 continue
-
-            metrics: Dict[str, Union[str, datetime, Dict[str, Any]]] = {
-                "metrics": hw_logger.get_metrics().model_dump(),
-                "run_uid": run.run_id,
-            }
-
-            # add to the queue
-            queue.put(metrics, block=False)
-
-        except Exception as error:  # pylint: disable=broad-except
-            logger.error("Failed to log hardware metrics: {}", error)
-            continue
 
     logger.info("Hardware logger stopped")
 
@@ -58,7 +66,6 @@ def put_hw_metrics(
 
 
 def get_hw_metrics(
-    interval: int,
     run: "ActiveRun",
     queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]],
 ) -> None:
@@ -72,13 +79,8 @@ def get_hw_metrics(
         queue:
             Queue[HardwareMetrics]
     """
-    _timekeeper = time.time()
     while run.active:  # consumer function for hw output
         time.sleep(2)
-
-        # check if time to log
-        if time.time() - _timekeeper < interval:
-            continue
 
         try:
             metrics = queue.get(timeout=1)
@@ -87,8 +89,7 @@ def get_hw_metrics(
         except Empty:
             continue
 
-        except Exception as error:  # pylint: disable=broad-except
-            logger.error("Failed to log hardware metrics: {}", error)
+        except Exception:  # pylint: disable=broad-except
             continue
 
 
@@ -111,6 +112,7 @@ class _RunManager:
         self._project_info = project_info
         self.active_run: Optional[ActiveRun] = None
         self.registries = registries
+        self._hardware_futures: List[concurrent.futures.Future] = []
 
         run_id = project_info.run_id
         if run_id is not None:
@@ -184,8 +186,15 @@ class _RunManager:
         """Loads a RunCard or creates a new RunCard"""
 
         if self._run_exists:
-            runcard = self.registries.run.load_card(uid=self.run_id)
-            return cast(RunCard, runcard)
+            # Get compute environment
+            compute_env = ComputeEnvironment()
+
+            runcard = cast(RunCard, self.registries.run.load_card(uid=self.run_id))
+
+            # set compute environment for runcard. Even if updating, this will update the compute environment
+            # Logging is dependent on the compute environment, so this must be set
+            runcard.compute_environment = compute_env
+            return runcard
 
         return RunCard(
             name=run_name or self.run_id[:7],  # use short run_id if no name
@@ -206,8 +215,14 @@ class _RunManager:
         # run hardware logger in background thread
         queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
         self.thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        self.thread_executor.submit(get_hw_metrics, interval, self.active_run, queue)
-        self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue)
+
+        # submit futures for hardware logging
+        self._hardware_futures.append(
+            self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue),
+        )
+        self._hardware_futures.append(
+            self.thread_executor.submit(get_hw_metrics, self.active_run, queue),
+        )
 
     def _extract_code(
         self,
@@ -241,7 +256,7 @@ class _RunManager:
         self,
         filename: Path,
         run_name: Optional[str] = None,
-        log_hardware: bool = False,
+        log_hardware: bool = True,
         hardware_interval: int = _DEFAULT_INTERVAL,
         code_dir: Optional[Union[str, Path]] = None,
     ) -> ActiveRun:
@@ -307,5 +322,8 @@ class _RunManager:
 
         # check if thread executor is still running
         if self.thread_executor is not None:
+            # cancel futures
+            for future in self._hardware_futures:
+                future.cancel()
             self.thread_executor.shutdown(wait=False, cancel_futures=True)
             self._thread_executor = None
