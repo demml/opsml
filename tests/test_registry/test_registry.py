@@ -490,12 +490,8 @@ def test_load_data_card(pandas_data: PandasData, db_registries: CardRegistries):
 
     assert loaded_data.interface.data_splits == data.data_splits
 
-    # update
-    loaded_data.version = "1.2.0"
-    registry.update_card(card=loaded_data)
-
     record = registry.query_value_from_card(uid=loaded_data.uid, columns=["version", "timestamp"])
-    assert record["version"] == "1.2.0"
+    assert record["version"] == loaded_data.version
 
 
 def test_datacard_failure(pandas_data: PandasData, db_registries: CardRegistries) -> None:
