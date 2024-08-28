@@ -10,21 +10,17 @@ import time
 from typing import Any, Dict, List, Optional
 
 import psutil
-from pynvml import (
-    NVMLError,
-    nvmlDeviceGetHandleByIndex,
-    nvmlDeviceGetMemoryInfo,
-    nvmlInit,
-)
+from pynvml import NVMLError
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import ComputeEnvironment
 from opsml.types import (
+    ComputeEnvironment,
     CPUMetrics,
     GPUMetrics,
     HardwareMetrics,
     MemoryMetrics,
     NetworkRates,
+    NVMLHandler,
 )
 
 logger = ArtifactLogger.get_logger()
@@ -170,7 +166,7 @@ class CPUMetricsLogger(BaseMetricsLogger):
         result = {}
         if len(percents) > 0:
             avg_percent = sum(percents) / len(percents)
-            result["cpu_percent_avg"] = avg_percent
+            result["cpu_percent_utilization"] = avg_percent
 
             if self.include_compute_metrics:
                 result["compute_overall"] = round(avg_percent, 1)
@@ -255,10 +251,10 @@ class GPUMetricsLogger(BaseMetricsLogger):
 
         if gpu_count > 0:
             try:
-                nvmlInit()
+                NVMLHandler.init_nvml()
             except NVMLError as e:
                 logger.error("Failed to initialize NVML: {}", e)
-                gpu_count = 0
+                self.gpu_count = 0
 
         self.gpu_count = gpu_count
         self.gpu_devices = gpu_devices
@@ -275,12 +271,10 @@ class GPUMetricsLogger(BaseMetricsLogger):
         gpu_per_core = []
 
         for i in range(self.gpu_count):
-            handle = nvmlDeviceGetHandleByIndex(i)
-            info = nvmlDeviceGetMemoryInfo(handle)
-
+            handle = NVMLHandler.get_device_handle(i)
+            info = NVMLHandler.get_device_info(handle)
             total = info.total
             used = info.used
-
             gpu_total += total
             gpu_used += used
             gpu_per_core.append(used / total * 100)

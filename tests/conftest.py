@@ -195,6 +195,33 @@ def mock_gcp_vars(gcp_cred_path) -> Any:
 
 
 @pytest.fixture
+def mock_nvm_handler() -> Any:
+    with patch.multiple(
+        "opsml.types.hardware.NVMLHandler",
+        init_nvml=MagicMock(return_value=None),
+        get_device_handle=MagicMock(return_value=MagicMock()),
+        get_device_info=MagicMock(return_value=MagicMock(total=100, used=50)),
+        get_device_name=MagicMock(return_value="test"),
+        get_device_count=MagicMock(return_value=2),
+    ) as mock_handler:
+        yield mock_handler
+
+
+@pytest.fixture
+def mock_gcp_creds(mock_gcp_vars) -> Any:
+    creds = GcpCreds(
+        creds=mock_gcp_vars["gcp_creds"],
+        project=mock_gcp_vars["gcp_project"],
+    )
+
+    with patch.multiple(
+        "opsml.helpers.gcp_utils.GcpCredsSetter",
+        get_creds=MagicMock(return_value=creds),
+    ) as mock_gcp_creds:
+        yield mock_gcp_creds
+
+
+@pytest.fixture
 def mock_gcp_creds(mock_gcp_vars) -> Any:
     creds = GcpCreds(
         creds=mock_gcp_vars["gcp_creds"],
