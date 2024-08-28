@@ -110,6 +110,9 @@ all = [
     "opsml[sklearn_onnx]",
     "opsml[torch_onnx]",
 ]
+gpu = [
+    "nvidia-ml-py>=12.560.30",
+]
 
 [tool.uv]
 dev-dependencies = [
