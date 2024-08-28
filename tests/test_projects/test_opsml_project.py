@@ -16,7 +16,7 @@ from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
 
 
-def _test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
+def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     """Tests logging and retrieving artifacts"""
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
     with OpsmlProject(info=info).run() as run:
@@ -168,7 +168,7 @@ def _test_opsml_read_only(
         assert m in ["m1", "m2"]
 
 
-def _test_opsml_continue_run(db_registries: CardRegistries) -> None:
+def test_opsml_continue_run(db_registries: CardRegistries) -> None:
     """Verify a run con be continued"""
 
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
@@ -214,7 +214,7 @@ def _test_opsml_continue_run(db_registries: CardRegistries) -> None:
     assert runcard.contact == info.contact
 
 
-def _test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
+def test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
     """Verify starting another run inside another fails"""
 
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
@@ -229,7 +229,7 @@ def _test_opsml_fail_active_run(db_registries: CardRegistries) -> None:
                 pass
 
 
-def _test_run_fail(db_registries: CardRegistries) -> None:
+def test_run_fail(db_registries: CardRegistries) -> None:
     info = ProjectInfo(name="test-exp", repository="test", contact="user@test.com")
     with pytest.raises(AttributeError):
         with OpsmlProject(info).run(run_name="test") as run:
@@ -249,7 +249,7 @@ def _test_run_fail(db_registries: CardRegistries) -> None:
     assert len(cards) == 1
 
 
-def _test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
+def test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="list_runs", repository="test", contact="user@test.com")
@@ -264,7 +264,7 @@ def _test_opsml_project_list_runs(db_registries: CardRegistries) -> None:
     assert len(OpsmlProject(info=info).list_runs()) > 0
 
 
-def _test_project_card_info_env_var(
+def test_project_card_info_env_var(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
@@ -298,7 +298,7 @@ def _test_project_card_info_env_var(
         os.environ.pop(f"OPSML_RUNTIME_{key.upper()}", None)
 
 
-def _test_opsml_project_id_creation(db_registries: CardRegistries) -> None:
+def test_opsml_project_id_creation(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
     info = ProjectInfo(name="project1", repository="test", contact="user@test.com")
@@ -337,8 +337,6 @@ def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
         time.sleep(15)
-
-    time.sleep(5)
 
     metrics = run.runcard.get_hardware_metrics()
     assert len(metrics) == 1

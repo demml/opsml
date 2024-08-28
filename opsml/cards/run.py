@@ -19,7 +19,7 @@ from pydantic import ConfigDict, model_validator
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import ComputeEnvironment, TypeChecker
+from opsml.helpers.utils import TypeChecker
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import (
@@ -27,6 +27,7 @@ from opsml.types import (
     ArtifactUris,
     CardType,
     CommonKwargs,
+    ComputeEnvironment,
     GraphStyle,
     Metric,
     Metrics,

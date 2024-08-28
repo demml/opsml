@@ -14,12 +14,11 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.cards import RunCard
 from opsml.helpers.logging import ArtifactLogger
-from opsml.helpers.utils import ComputeEnvironment
 from opsml.projects._hw_metrics import HardwareMetricsLogger
 from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
-from opsml.types import CommonKwargs
+from opsml.types import CommonKwargs, ComputeEnvironment
 
 logger = ArtifactLogger.get_logger()
 
@@ -61,8 +60,6 @@ def put_hw_metrics(
                 continue
 
     logger.info("Hardware logger stopped")
-
-    return False
 
 
 def get_hw_metrics(
@@ -175,6 +172,8 @@ class _RunManager:
 
         # Create opsml active run
         runcard = self._load_runcard(run_name)
+
+        print(runcard.compute_environment)
 
         # create run_info
         run_info = RunInfo(run_id=self.run_id, run_name=runcard.name, runcard=runcard)
@@ -325,16 +324,13 @@ class _RunManager:
             # cancel futures
             self.thread_executor.shutdown(wait=False, cancel_futures=True)
 
-            self._hardware_futures[0].cancel()
-            self._hardware_futures[1].cancel()
+            for future in self._hardware_futures:
+                future.cancel()
+                try:
+                    future.result(timeout=1)
+                except Exception:  # pylint: disable=broad-except
+                    pass
 
-            try:
-                self._hardware_futures[0].result(timeout=1)
-                self._hardware_futures[1].result(timeout=1)
-            except Exception:
-                pass
-            finally:
-                self.thread_executor.shutdown(wait=False)
-                self.thread_executor = None
-                self._hardware_futures = []
-            self._thread_executor = None
+            self.thread_executor.shutdown(wait=False)
+            self.thread_executor = None
+            self._hardware_futures = []

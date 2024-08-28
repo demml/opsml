@@ -26,17 +26,20 @@ from opsml.types.extra import (
     Suffix,
     UriNames,
 )
-from opsml.types.huggingface import (
-    GENERATION_TYPES,
-    HuggingFaceORTModel,
-    HuggingFaceTask,
-)
-from opsml.types.metrics import (
+from opsml.types.hardware import (
+    ComputeEnvironment,
     CPUMetrics,
+    GPUDeviceInfo,
     GPUMetrics,
     HardwareMetrics,
     MemoryMetrics,
     NetworkRates,
+    NVMLHandler,
+)
+from opsml.types.huggingface import (
+    GENERATION_TYPES,
+    HuggingFaceORTModel,
+    HuggingFaceTask,
 )
 from opsml.types.model import (
     AVAILABLE_MODEL_TYPES,
@@ -155,4 +158,7 @@ __all__ = [
     "MemoryMetrics",
     "CPUMetrics",
     "GPUMetrics",
+    "GPUDeviceInfo",
+    "ComputeEnvironment",
+    "NVMLHandler",
 ]

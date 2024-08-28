@@ -7,7 +7,6 @@
 
 import importlib.util
 import os
-import platform
 import re
 import string
 import tempfile
@@ -15,17 +14,6 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator, List, Optional, Set, Type, Union
-
-import psutil
-from pydantic import BaseModel, model_validator
-from pynvml import (
-    NVMLError,
-    nvmlDeviceGetCount,
-    nvmlDeviceGetHandleByIndex,
-    nvmlDeviceGetMemoryInfo,
-    nvmlDeviceGetName,
-    nvmlInit,
-)
 
 from opsml.helpers import exceptions
 from opsml.helpers.logging import ArtifactLogger
@@ -330,43 +318,3 @@ def startup_import_error_message(err: Exception) -> None:
         style="bold red",
     )
     raise SystemExit(err)
-
-
-class ComputeEnvironment(BaseModel):
-    cpu_count: int = psutil.cpu_count(logical=False)
-    memory: int = psutil.virtual_memory().total
-    disk_space: int = psutil.disk_usage("/").total
-    system: str = platform.system()
-    release: str = platform.release()
-    architecture_bits: str = platform.architecture()[0]
-    python_version: str = platform.python_version()
-    python_compiler: str = platform.python_compiler()
-    gpu_count: int = 0
-    gpu_devices: List[str] = []
-    gpu_device_memory: Dict[str, float] = {}
-
-    @model_validator(mode="before")
-    @classmethod
-    def _check_for_gpu(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            nvmlInit()
-            gpu_devices = []
-            gpu_memory = {}
-            device_count = nvmlDeviceGetCount()
-
-            for i in range(device_count):
-                handle = nvmlDeviceGetHandleByIndex(i)
-                device_name = nvmlDeviceGetName(handle)
-                device_memory = nvmlDeviceGetMemoryInfo(handle).total
-
-                gpu_devices.append(device_name)
-                gpu_memory[device_name] = device_memory
-
-            values["gpu_count"] = device_count
-            values["gpu_devices"] = gpu_devices
-            values["gpu_device_memory"] = gpu_memory
-
-        except NVMLError as _:
-            pass
-
-        return values
