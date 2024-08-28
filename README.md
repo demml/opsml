@@ -62,7 +62,7 @@ Key Features:
 OpsML aims to be the common language for ML artifact management, reducing cognitive overhead and enabling teams to focus on model development and deployment rather than operational complexities.
 
 <sup>
-* OpsML is integrated with `Scouter` out of the box. However, a `Scouter` server instance is required to use this feature.
+* OpsML is integrated with <a href="https://github.com/demml/scouter">Scouter</a> out of the box. However, a Scouter server instance is required to use this feature.
 </sup>
 
 ## Incorporate into Existing Workflows
