@@ -25,6 +25,7 @@ dependencies = [
     "bcrypt~=4.2",
     "PyJWT~=2.8",
     "nvidia-ml-py>=12.560.30",
+    "pipdeptree>=2.23.1",
 ]
 
 [project.scripts]

@@ -112,7 +112,7 @@ class ComputeEnvironment(BaseModel):
 
             for i in range(device_count):
                 handle = NVMLHandler.get_device_handle(i)
-                device_name = NVMLHandler.get_device_name(handle)
+                device_name = f"{NVMLHandler.get_device_name(handle)}_{i}"
                 device_memory = NVMLHandler.get_device_info(handle).total
 
                 gpu_devices.append(device_name)

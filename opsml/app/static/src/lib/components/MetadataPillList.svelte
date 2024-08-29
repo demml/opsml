@@ -13,7 +13,7 @@
     <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
         <div class="flex flex-col">
             {#each uids as uid}
-              <div>
+              <div class="h-6 py-1">
                 <a href="/opsml/{type}/card?uid={uid}" class="badge border text-primary-500 bg-surface-100 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 overflow-auto">
                   {uid.slice(0, 7)}
                 </a>

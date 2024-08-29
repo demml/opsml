@@ -34,7 +34,7 @@
 
   <div class="flex flex-wrap bg-white min-h-screen mb-8">
 
-    <div class="w-full md:w-2/5 mt-4 ml-4 pl-2 md:ml-12">
+    <div class="w-full md:w-1/3 mt-4 ml-4 pl-2 md:ml-12">
       <div class="p-4">
         <Metadata 
           metadata={metadata} 

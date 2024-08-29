@@ -120,6 +120,13 @@
             </div>
           </Tab>
 
+          <Tab bind:group={tabSet} name="dependencies" value="dependencies" on:click={() => showTabContent("dependencies")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faCodeBranch} color="#4b3978"/>
+              <div class="font-semibold text-sm">Dependencies</div>
+            </div>
+          </Tab>
+
         </TabGroup>
 
     </div>
