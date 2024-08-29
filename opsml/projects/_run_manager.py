@@ -105,7 +105,7 @@ class _RunManager:
         self._project_info = project_info
         self.active_run: Optional[ActiveRun] = None
         self.registries = registries
-        self._hardware_futures: List[concurrent.futures.Future] = []
+        self._hardware_futures: List[Any] = []
 
         run_id = project_info.run_id
         if run_id is not None:
