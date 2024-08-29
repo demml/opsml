@@ -190,12 +190,10 @@
 
       {#each Object.keys(card.tags) as key}
 
-      <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
-        <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">{key}</div> 
-        <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
-          {card.tags[key]}
-        </div>
-      </div>
+      <MetadataPill 
+        title={key}
+        value={card.tags[key]}
+        colspan={undefined}/>
 
       {/each}
     </div>

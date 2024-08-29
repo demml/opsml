@@ -45,7 +45,7 @@
 
   {#if tableMetrics.length > 0 || parameters.length > 0}
 
-    <div class="flex flex-col w-full md:w-6/12 mt-5">
+    <div class="flex flex-col w-full md:w-7/12 mt-5">
 
       {#if metricNames.length > 0}
         <div class="pl-4 pr-4">

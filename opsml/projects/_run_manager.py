@@ -258,7 +258,6 @@ class _RunManager:
         common_python_run_args = ["", "uv run", "poetry run", "conda run", "pdm run", "python -m"]
         for run_arg in common_python_run_args:
             run_command = f"{run_arg} pipdeptree -f | sed 's/ //g' | sort -u"
-            print(run_command)
             try:
                 # log dependencies
                 dependencies: str = subprocess.check_output(run_command, shell=True).decode("utf-8")
@@ -275,7 +274,6 @@ class _RunManager:
 
                 return None
             except Exception as error:  # pylint: disable=broad-except
-                print(error)
                 continue
 
         logger.warning("Failed to log python dependencies. Continuing run")
