@@ -147,9 +147,9 @@
           <div class="px-2 rounded-l-lg text-darkpurple bg-primary-50 italic">Devices</div> 
           {#each metadata.compute_environment.gpu_devices as device, index}
             {#if index !== metadata.compute_environment.gpu_devices.length - 1}
-              <div class="px-2 border-l border-darkpurple text-darkpurple bg-surface-50 italic">{device}</div> 
+              <div class="px-2 border-l border-darkpurple text-darkpurple bg-surface-50">{device}</div> 
             {:else}
-              <div class="px-2 border-l border-darkpurple rounded-r-lg text-darkpurple bg-surface-50 italic">{device}</div> 
+              <div class="px-2 border-l border-darkpurple rounded-r-lg text-darkpurple bg-surface-50">{device}</div> 
             {/if}
           {/each}
         </div>
