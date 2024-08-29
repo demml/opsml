@@ -83,6 +83,20 @@ export interface Artifact {
   name: string;
 }
 
+export interface ComputeEnvironment {
+  cpu_count: number;
+  memory: number;
+  disk_space: number;
+  system: string;
+  release: string;
+  architecture_bits: string;
+  python_version: string;
+  python_compiler: string;
+  gpu_count: number;
+  gpu_devices: string[];
+  gpu_device_memory: Map<string, number>;
+}
+
 export interface RunCard {
   name: string;
   repository: string;
@@ -96,6 +110,7 @@ export interface RunCard {
   artifact_uris: Map<string, Artifact>;
   tags: Map<string, string | number>;
   project?: string;
+  compute_environment: ComputeEnvironment;
 }
 
 export interface CardResponse {

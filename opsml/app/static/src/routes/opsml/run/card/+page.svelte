@@ -34,7 +34,7 @@
 
   <div class="flex flex-wrap bg-white min-h-screen mb-8">
 
-    <div class="w-full md:w-1/3 mt-4 ml-4 pl-2 md:ml-12">
+    <div class="w-full md:w-2/5 mt-4 ml-4 pl-2 md:ml-12">
       <div class="p-4">
         <Metadata 
           metadata={metadata} 
@@ -45,7 +45,7 @@
 
   {#if tableMetrics.length > 0 || parameters.length > 0}
 
-    <div class="flex flex-col w-full md:w-7/12 mt-5">
+    <div class="flex flex-col w-full md:w-6/12 mt-5">
 
       {#if metricNames.length > 0}
         <div class="pl-4 pr-4">
