@@ -19,6 +19,8 @@ from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs, ComputeEnvironment
+import subprocess
+import tempfile
 
 logger = ArtifactLogger.get_logger()
 
@@ -247,6 +249,37 @@ class _RunManager:
             artifact_path="artifacts/code",
         )
 
+    def _log_dependencies(self) -> None:
+        """Logs dependencies"""
+
+        assert self.active_run is not None, "active_run should not be None"
+
+        # create python dependency tree using pipdeptree
+        common_python_run_args = ["", "uv run", "poetry run", "conda run", "pdm run", "python -m"]
+        for run_arg in common_python_run_args:
+            run_command = f"{run_arg} pipdeptree -f | sed 's/ //g' | sort -u"
+            print(run_command)
+            try:
+                # log dependencies
+                dependencies: str = subprocess.check_output(run_command, shell=True).decode("utf-8")
+                with tempfile.TemporaryDirectory() as tempdir:
+                    lpath = Path(tempdir) / f"requirements.txt"
+                    with open(lpath, "w") as file:
+                        file.write(dependencies)
+
+                    self.active_run.log_artifact_from_file(
+                        name="requirements.txt",
+                        local_path=lpath,
+                        artifact_path="artifacts",
+                    )
+
+                return None
+            except Exception as error:  # pylint: disable=broad-except
+                print(error)
+                continue
+
+        logger.warning("Failed to log python dependencies. Continuing run")
+
     def start_run(
         self,
         filename: Path,
@@ -291,6 +324,8 @@ class _RunManager:
 
         if log_hardware:
             self._log_hardware_metrics(hardware_interval)
+
+        self._log_dependencies()
 
         self._extract_code(code_dir=code_dir, filename=filename)
 

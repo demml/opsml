@@ -82,22 +82,22 @@
     <header class="pl-2 text-darkpurple text-lg font-bold">Compute</header>
   </div>
 
-  <div class="px-2 pb-2 mb-2 border-dashed border-2 border-gray-400 rounded-md shadow-inner">
-    
-    <header class="pl-2 text-darkpurple text-md font-semibold">System</header>
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-center gap-1">
+  <div class="px-2 pb-2 mb-2 shadow-md rounded-md">
+  
+      <header class="pl-1 text-darkpurple text-md font-semibold">System</header>
+      <div class="pl-2 flex-nowrap items-center space-1">
 
-      <MetadataPill title="CPU count" value={metadata.compute_environment.cpu_count} colspan={undefined}/>
-      <MetadataPill title="Memory" value={memory} colspan={undefined}/>
-      <MetadataPill title="Disk Space" value={disk_space} colspan="lg:col-span-2 xl:col-span-2"/>
+        <MetadataPill title="CPU count" value={metadata.compute_environment.cpu_count} colspan={undefined}/>
+        <MetadataPill title="Memory" value={memory} colspan={undefined}/>
+        <MetadataPill title="Disk Space" value={disk_space} colspan={undefined}/>
 
-    </div>
+      </div>
   </div>
 
-  <div class="px-2 pb-2 mb-2 border-dashed border-2 border-gray-400 rounded-md shadow-inner">
+  <div class="px-2 pb-2 mb-2 shadow-md rounded-md rounded-md">
     
-    <header class="pl-2 text-darkpurple text-md font-semibold">Architecture</header>
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3  items-center gap-1">
+    <header class="pl-1 text-darkpurple text-md font-semibold">Architecture</header>
+    <div class="pl-2 flex-nowrap items-center space-1">
 
       <MetadataPill title="System" value={metadata.compute_environment.system} colspan={undefined}/>
       <MetadataPill title="Release" value={metadata.compute_environment.release} colspan={undefined}/>
@@ -109,29 +109,29 @@
     </div>
   </div>
 
-  <div class="px-2 pb-2 mb-2 border-dashed border-2 border-gray-400 rounded-md shadow-inner">
+  <div class="px-2 pb-2 mb-2 shadow-md rounded-md rounded-md">
     
-    <header class="pl-2 text-darkpurple text-md font-semibold">Python</header>
-    <div class="grid grid-cols-1 lg:grid-cols-2 items-center gap-1 overflow-hidden">
+    <header class="pl-1 text-darkpurple text-md font-semibold">Python</header>
+    <div class="pl-2 flex-nowrap items-center space-1">
 
       <MetadataPill 
       title="Python" 
       value={metadata.compute_environment.python_version}
-      colspan="col-span-2"/>
+      colspan={undefined}/>
 
       <MetadataPill 
       title="Compiler" 
       value={metadata.compute_environment.python_compiler}
-      colspan="col-span-2"/>
+      colspan={undefined}/>
 
     </div>
   </div>
 
   {#if metadata.compute_environment.gpu_count > 0}
-    <div class="px-2 pb-2 mb-2 border-dashed border-2 border-gray-400 rounded-md shadow-inner">
+    <div class="px-2 pb-2 mb-2 shadow-md rounded-md rounded-md">
       
       <header class="pl-2 text-darkpurple text-md font-semibold">GPU</header>
-      <div class="grid grid-cols-1 lg:grid-cols-2 items-center gap-1 overflow-hidden">
+      <div class="flex-nowrap items-center gap-2">
 
         <MetadataPill 
         title="GPU count" 
@@ -142,6 +142,17 @@
         title="GPU memory" 
         value={getGpuMemory(metadata.compute_environment.gpu_device_memory)}
         colspan={undefined}/>
+
+        <div class="my-1 flex flex-row rounded-lg border border-darkpurple text-sm w-fit">
+          <div class="px-2 rounded-l-lg text-darkpurple bg-primary-50 italic">Devices</div> 
+          {#each metadata.compute_environment.gpu_devices as device, index}
+            {#if index !== metadata.compute_environment.gpu_devices.length - 1}
+              <div class="px-2 border-l border-darkpurple text-darkpurple bg-surface-50 italic">{device}</div> 
+            {:else}
+              <div class="px-2 border-l border-darkpurple rounded-r-lg text-darkpurple bg-surface-50 italic">{device}</div> 
+            {/if}
+          {/each}
+        </div>
 
       </div>
     </div>
@@ -191,4 +202,3 @@
   {/if}
 </div>
 
-  
