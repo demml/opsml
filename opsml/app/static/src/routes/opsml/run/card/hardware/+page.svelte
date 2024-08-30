@@ -122,7 +122,10 @@
   
         <div class="mb-8 grid grid-cols-1 gap-3">
           <h2 class="text-primary-500 font-bold">No Hardware Metrics</h2>
-          <p class="mb-1 text-primary-500 text-center">No hardware metrics found for this run</p>
+          <p class="mb-1 text-primary-500 text-center">
+            No hardware metrics found for this run.
+            This may be expected if using an older version of OpsML or logging was turned off for the run.
+          </p>
   
         </div>
         
