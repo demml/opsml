@@ -11,28 +11,49 @@ export const AppStore = persisted("AppStore", {
       registryStats: empty,
     },
     cardPage: {
-      compareData: empty,
-      compareSelectedMetrics: emptyList,
-      compareMetricsToPlot: emptyList,
-      compareCardsToCompare: emptyList,
-      compareTableMetrics: empty,
-      comparePlotSet: "bar",
-      compareFilteredMetrics: emptyList,
-      compareShowTable: false,
+      compare: {
+        Data: empty,
+        SelectedMetrics: emptyList,
+        MetricsToPlot: emptyList,
+        CardsToCompare: emptyList,
+        TableMetrics: empty,
+        PlotSet: "bar",
+        FilteredMetrics: emptyList,
+        ShowTable: false,
+      },
+      metric: {
+        Data: empty,
+        SelectedMetrics: emptyList,
+        MetricsToPlot: emptyList,
+        TableMetrics: empty,
+        PlotSet: "bar",
+        FilteredMetrics: emptyList,
+        ShowTable: false,
+      },
     },
   },
 });
 
 export function resetStoreCardPage() {
   AppStore.update((store) => {
-    store.runStore.cardPage.compareData = empty;
-    store.runStore.cardPage.compareSelectedMetrics = emptyList;
-    store.runStore.cardPage.compareMetricsToPlot = emptyList;
-    store.runStore.cardPage.compareCardsToCompare = emptyList;
-    store.runStore.cardPage.compareTableMetrics = empty;
-    store.runStore.cardPage.comparePlotSet = "bar";
-    store.runStore.cardPage.compareFilteredMetrics = emptyList;
-    store.runStore.cardPage.compareShowTable = false;
+    // compare tab
+    store.runStore.cardPage.compare.Data = empty;
+    store.runStore.cardPage.compare.SelectedMetrics = emptyList;
+    store.runStore.cardPage.compare.MetricsToPlot = emptyList;
+    store.runStore.cardPage.compare.CardsToCompare = emptyList;
+    store.runStore.cardPage.compare.TableMetrics = empty;
+    store.runStore.cardPage.compare.PlotSet = "bar";
+    store.runStore.cardPage.compare.FilteredMetrics = emptyList;
+    store.runStore.cardPage.compare.ShowTable = false;
+
+    // metric tab
+    store.runStore.cardPage.metric.Data = empty;
+    store.runStore.cardPage.metric.SelectedMetrics = emptyList;
+    store.runStore.cardPage.metric.MetricsToPlot = emptyList;
+    store.runStore.cardPage.metric.TableMetrics = empty;
+    store.runStore.cardPage.metric.PlotSet = "bar";
+    store.runStore.cardPage.metric.FilteredMetrics = emptyList;
+    store.runStore.cardPage.metric.ShowTable = false;
     return store;
   });
 }

@@ -51,9 +51,9 @@
         comparePageData = await loadComparePageData(data, url);
       };
 
-      if ($AppStore.runStore.cardPage.compareData === null) {
+      if ($AppStore.runStore.cardPage.compare.Data === null) {
         AppStore.update((store) => {
-          store.runStore.cardPage.compareData = comparePageData?.metricVizData;
+          store.runStore.cardPage.compare.Data = comparePageData?.metricVizData;
           return store;
         });
       }
