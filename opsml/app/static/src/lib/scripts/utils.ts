@@ -1059,7 +1059,7 @@ export async function getHardwareMetrics(
 
 export function parseHardwareMetrics(
   metrics: HardwareMetricRecord[]
-): Promise<ParsedHardwareMetrics> {
+): ParsedHardwareMetrics {
   const x: Date[] = [];
   const cpu_overall: number[] = [];
   const cpu_per_core: number[][] = [];
