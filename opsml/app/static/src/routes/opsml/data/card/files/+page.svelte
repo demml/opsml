@@ -45,7 +45,6 @@
   }
 
   function navigateBreadcrumb(index: number) {
-    console.log('index', index);
     if (index >= 3) {
       let subDir: string = displayPath.slice(3, index + 1).join('/');
       void goto(`/opsml/${registry}/card/files?name=${name}&repository=${repository}&version=${version}&subdir=${subDir}`);

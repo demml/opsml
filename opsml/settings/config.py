@@ -21,7 +21,7 @@ class OpsmlConfig(BaseSettings):
     app_env: str = "development"
 
     opsml_storage_uri: str = "./opsml_registries"
-    opsml_tracking_uri: str = "sqlite:///tmp.db"
+    opsml_tracking_uri: str = "sqlite:///opsml.db"
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"
     opsml_registry_path: str = "model_registry"

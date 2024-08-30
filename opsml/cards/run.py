@@ -27,6 +27,7 @@ from opsml.types import (
     ArtifactUris,
     CardType,
     CommonKwargs,
+    ComputeEnvironment,
     GraphStyle,
     Metric,
     Metrics,
@@ -188,6 +189,7 @@ class RunCard(ArtifactCard):
     parameters: Params = {}
     artifact_uris: ArtifactUris = {}
     tags: Dict[str, Union[str, int]] = {}
+    compute_environment: ComputeEnvironment = ComputeEnvironment()
     project: Optional[str] = None
 
     @model_validator(mode="before")

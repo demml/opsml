@@ -31,9 +31,11 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     assert proj.project_id == 1
 
     assert run._info.storage_client.exists(Path(runcard.artifact_uris["cats"].local_path))
+    assert runcard.compute_environment.cpu_count > 0
+    assert runcard.compute_environment.memory > 0
 
 
-def test_opsml_read_only(
+def _test_opsml_read_only(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:

@@ -85,7 +85,7 @@ If running `OpsML` as an all-in-one interface, this variable is required and wil
 
   - **Server setup with local storage and sqlite**:
     ```bash
-    export OPSML_TRACKING_URI="sqlite:///tmp.db"
+    export OPSML_TRACKING_URI="sqlite:///opsml.db"
     export OPSML_STORAGE_URI="./opsml_registries"
     ```
 

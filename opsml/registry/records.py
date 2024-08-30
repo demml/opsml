@@ -82,6 +82,7 @@ class RunRegistryRecord(SaveRecord):
     artifact_uris: Optional[Dict[str, Dict[str, str]]] = None
     tags: Dict[str, Union[str, int]]
     timestamp: int = Field(default_factory=get_timestamp)
+    compute_environment: Dict[str, Any] = {}
 
 
 class PipelineRegistryRecord(SaveRecord):
