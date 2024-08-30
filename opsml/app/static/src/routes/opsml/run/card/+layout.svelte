@@ -2,13 +2,13 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faFolderTree, faCodeBranch, faBolt } from '@fortawesome/free-solid-svg-icons'
+  import { faTag, faFolderTree, faBolt, faToolbox, faChartSimple } from '@fortawesome/free-solid-svg-icons'
 
 
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
 
   import { type Card, type RunCard } from "$lib/scripts/types";
-  import { goto, invalidateAll } from '$app/navigation';
+  import { goto } from '$app/navigation';
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
 
   /** @type {import('./$types').LayoutData} */
@@ -115,12 +115,22 @@
 
           <Tab bind:group={tabSet} name="graphs" value="graphs" on:click={() => showTabContent("graphs")}>
             <div class="flex flex-row  items-center">
-              <Fa class="h-4 mr-2" icon={faCodeBranch} color="#4b3978"/>
+              <Fa class="h-4 mr-2" icon={faChartSimple} color="#4b3978"/>
               <div class="font-semibold text-sm">Graphs</div>
             </div>
           </Tab>
 
+   
+          <Tab bind:group={tabSet} name="hardware" value="hardware" on:click={() => showTabContent("hardware")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faToolbox} color="#4b3978"/>
+              <div class="font-semibold text-sm">Hardware</div>
+            </div>
+          </Tab>
+   
+
         </TabGroup>
+      
 
     </div>
 

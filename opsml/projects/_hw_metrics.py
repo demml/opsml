@@ -344,8 +344,8 @@ class NetworkMetricsLogger(BaseMetricsLogger):
 
         self._save_current_state(
             time_now=now,
-            bytes_sent=bytes_sent_rate,
-            bytes_recv=bytes_recv_rate,
+            bytes_sent=counters.bytes_sent,
+            bytes_recv=counters.bytes_recv,
         )
 
         return NetworkRates(
