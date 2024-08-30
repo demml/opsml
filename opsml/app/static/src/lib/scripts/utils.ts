@@ -37,9 +37,12 @@ import {
   type FileViewResponse,
   type UserUpdated,
   type RunGraph,
+  type HardwareMetricsResponse,
+  type HardwareMetricRecord,
+  type ParsedHardwareMetrics,
+  type HardwareCharts,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import type { Chart } from "chart.js";
 
 export async function getRepos(registry: string) {
   const repos = await apiHandler.get(
@@ -889,7 +892,6 @@ export function createGroupedMetricBarVizData(
 ): ChartjsData {
   // x will be the metric names
   const datasets: ChartjsGroupedBarDataset[] = [];
-  let data;
 
   const colors = generateColors(metrics.size + 1, 0.2);
   const borders = generateColors(metrics.size + 1);
@@ -1040,4 +1042,293 @@ export function downloadTableMetricsToCSV(
   const csv: string = allRows.map((row) => row.join(",")).join("\n");
 
   downloadCSV(csv, "comparison_metrics");
+}
+
+export async function getHardwareMetrics(
+  run_uid: string
+): Promise<HardwareMetricsResponse> {
+  const metrics = await apiHandler.get(
+    `${CommonPaths.HARDWARE}?${new URLSearchParams({
+      run_uid: run_uid,
+    }).toString()}`
+  );
+
+  const response = (await metrics.json()) as HardwareMetricsResponse;
+  return response;
+}
+
+export function parseHardwareMetrics(
+  metrics: HardwareMetricRecord[]
+): Promise<ParsedHardwareMetrics> {
+  const x: Date[] = [];
+  const cpu_overall: number[] = [];
+  const cpu_per_core: number[][] = [];
+  const network_rx: number[] = [];
+  const network_tx: number[] = [];
+  const memory: number[] = [];
+  const gpu_overall: number[] = [];
+  const gpu_per_core: number[][] = [];
+
+  for (const metric of metrics) {
+    x.push(new Date(metric.created_at));
+
+    // handle cpu
+    cpu_overall.push(
+      Number(metric.metrics.cpu.cpu_percent_utilization.toFixed(2))
+    );
+
+    // handle cpu cores
+    if (metric.metrics.cpu.cpu_percent_per_core) {
+      const _cpu_per_core = metric.metrics.cpu.cpu_percent_per_core.map(
+        (core) => Number(core.toFixed(2))
+      );
+      cpu_per_core.push(_cpu_per_core);
+    }
+
+    // handle network
+    network_rx.push(
+      Number((metric.metrics.network.bytes_recv / 1024 ** 2).toFixed(2))
+    );
+    network_tx.push(
+      Number((metric.metrics.network.bytes_sent / 1024 ** 2).toFixed(2))
+    );
+
+    // handle memory
+    memory.push(Number(metric.metrics.memory.sys_ram_percent_used.toFixed(2)));
+
+    // handle gpu
+    if (metric.metrics.gpu) {
+      gpu_overall.push(
+        Number(metric.metrics.gpu.gpu_percent_utilization.toFixed(2))
+      );
+
+      // handle gpu cores
+      if (metric.metrics.gpu.gpu_percent_per_core) {
+        const _gpu_per_core = metric.metrics.gpu.gpu_percent_per_core.map(
+          (core) => Number(core.toFixed(2))
+        );
+        gpu_per_core.push(_gpu_per_core);
+      }
+    }
+  }
+
+  return {
+    x,
+    cpu_overall,
+    cpu_per_core,
+    network_rx,
+    network_tx,
+    memory,
+    gpu_overall,
+    gpu_per_core,
+  };
+}
+
+export function buildTimeChart(
+  x: Date[],
+  datasets: ChartjsLineDataset[],
+  x_label: string,
+  y_label: string,
+  showLegend: boolean = false
+): ChartjsData {
+  const grace = "0%";
+  let legend = {
+    display: false,
+  };
+
+  if (showLegend) {
+    legend = {
+      display: true,
+
+      // @ts-expect-error "ignore"
+      position: "bottom",
+    };
+  }
+
+  const zoomOptions = {
+    pan: {
+      enabled: true,
+      mode: "xy",
+      modifierKey: "ctrl",
+    },
+    zoom: {
+      mode: "xy",
+      drag: {
+        enabled: true,
+        borderColor: "rgb(54, 162, 235)",
+        borderWidth: 1,
+        backgroundColor: "rgba(54, 162, 235, 0.3)",
+      },
+    },
+  };
+
+  return {
+    type: "line",
+    data: {
+      labels: x,
+      datasets,
+    },
+    options: {
+      plugins: {
+        zoom: zoomOptions,
+        legend,
+      },
+      responsive: true,
+      onresize: handleResize,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: "time",
+          time: {
+            displayFormats: {
+              hour: "HH:mm",
+              minute: "HH:mm",
+              second: "HH:mm:ss",
+            },
+          },
+          title: { display: true, text: x_label },
+          ticks: {
+            maxTicksLimit: 30,
+          },
+        },
+        y: {
+          title: { display: true, text: y_label },
+          ticks: {
+            maxTicksLimit: 30,
+          },
+          grace,
+        },
+      },
+      layout: {
+        padding: 10,
+      },
+    },
+  };
+}
+
+export function createTimeSeriesChart(
+  x: Date[],
+  y: number[],
+  label: string,
+  y_label: string
+): ChartjsData {
+  const datasets: ChartjsLineDataset[] = [];
+  const borderColors = generateColors(3);
+  const backgroundColors = generateColors(3, 0.2);
+
+  datasets.push({
+    label,
+    data: y,
+    borderColor: borderColors[2],
+    backgroundColor: backgroundColors[2],
+    pointRadius: 2,
+    fill: true,
+    tension: 0.4,
+  });
+
+  return buildTimeChart(x, datasets, "Time", y_label, false);
+}
+
+export function createTimeSeriesGroupedChart(
+  x: Date[],
+  y: number[][],
+  labels: string[],
+  y_label: string
+): ChartjsData {
+  const datasets: ChartjsLineDataset[] = [];
+  const colors = generateColors(labels.length + 1);
+
+  labels.forEach((label, index) => {
+    datasets.push({
+      label,
+      data: y.map((row) => row[index]),
+      borderColor: colors[index + 1],
+      backgroundColor: colors[index + 1],
+      pointRadius: 2,
+      fill: false,
+      tension: 0.4,
+    });
+  });
+
+  return buildTimeChart(x, datasets, "Time", y_label, true);
+}
+
+export function createHardwareCharts(
+  metrics: ParsedHardwareMetrics
+): HardwareCharts {
+  const cpu_overall = createTimeSeriesChart(
+    metrics.x,
+    metrics.cpu_overall,
+    "CPU Utilization",
+    "% Utilization"
+  );
+
+  let cpu_per_core;
+  if (metrics.cpu_per_core.length > 0) {
+    cpu_per_core = createTimeSeriesGroupedChart(
+      metrics.x,
+      metrics.cpu_per_core,
+      Array.from({ length: metrics.cpu_per_core[0].length }, (_, i) => {
+        return `CPU Core ${i}`;
+      }),
+      "% Utilization"
+    );
+  }
+
+  const network_rx = createTimeSeriesChart(
+    metrics.x,
+    metrics.network_rx,
+    "Network RX",
+    "Bytes (MB)"
+  );
+
+  const network_tx = createTimeSeriesChart(
+    metrics.x,
+    metrics.network_tx,
+    "Network TX",
+    "Bytes (MB)"
+  );
+
+  const memory = createTimeSeriesChart(
+    metrics.x,
+    metrics.memory,
+    "Utilization (%)",
+    "Percentage"
+  );
+
+  let gpu_overall;
+  let gpu_per_core;
+  if (metrics.gpu_overall.length > 0) {
+    gpu_overall = createTimeSeriesChart(
+      metrics.x,
+      metrics.gpu_overall,
+      "GPU Utilization",
+      "Percentage"
+    );
+
+    gpu_per_core = createTimeSeriesGroupedChart(
+      metrics.x,
+      metrics.gpu_per_core,
+      Array.from({ length: metrics.gpu_per_core[0].length }, (_, i) => {
+        return `GPU Core ${i}`;
+      }),
+      "Percentage"
+    );
+  }
+
+  return {
+    cpu_overall,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    cpu_per_core,
+    network_rx,
+    network_tx,
+    memory,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    gpu_overall,
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    gpu_per_core,
+  };
 }

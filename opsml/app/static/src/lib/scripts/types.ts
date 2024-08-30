@@ -212,6 +212,7 @@ export enum CommonPaths {
   ROTATE_TOKEN = "/opsml/auth/token/rotate",
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
   ERROR = "/opsml/error/page",
+  HARDWARE = "/opsml/metrics/hardware",
 }
 
 export enum CommonErrors {
@@ -438,6 +439,8 @@ export interface ChartjsLineDataset {
   borderColor: string;
   backgroundColor: string;
   pointRadius?: number;
+  fill?: boolean;
+  tension?: number;
 }
 
 export interface ChartjsBarDataset {
@@ -498,4 +501,71 @@ export interface FileViewResponse {
 
 export interface UserUpdated {
   updated: boolean;
+}
+
+export interface CPUMetrics {
+  cpu_percent_utilization: number;
+  cpu_percent_per_core: number[] | undefined;
+  compute_overall: number | undefined;
+  compute_utilized: number | undefined;
+  load_avg: number;
+}
+
+export interface MemoryMetrics {
+  sys_ram_total: number;
+  sys_ram_used: number;
+  sys_ram_available: number;
+  sys_ram_percent_used: number;
+  sys_swap_total: number | undefined;
+  sys_swap_used: number | undefined;
+  sys_swap_free: number | undefined;
+  sys_swap_percent: number | undefined;
+}
+
+export interface NetworkMetrics {
+  bytes_recv: number;
+  bytes_sent: number;
+}
+
+export interface GPUMetrics {
+  gpu_percent_utilization: number;
+  gpu_percent_per_core: number[] | undefined;
+}
+
+export interface HardwareMetrics {
+  cpu: CPUMetrics;
+  memory: MemoryMetrics;
+  network: NetworkMetrics;
+  gpu: GPUMetrics | undefined;
+}
+
+export interface HardwareMetricRecord {
+  run_uid: string;
+  created_at: Date;
+  metrics: HardwareMetrics;
+}
+
+export interface HardwareMetricsResponse {
+  metrics: HardwareMetricRecord[];
+}
+
+export interface ParsedHardwareMetrics {
+  x: Date[];
+  cpu_overall: number[];
+  cpu_per_core: number[][];
+  network_rx: number[];
+  network_tx: number[];
+  memory: number[];
+  gpu_overall: number[];
+  gpu_per_core: number[][];
+}
+
+export interface HardwareCharts {
+  cpu_overall: ChartjsData;
+  cpu_per_core: ChartjsData | undefined;
+  memory: ChartjsData;
+  network_tx: ChartjsData;
+  network_rx: ChartjsData;
+  gpu_overall: ChartjsData | undefined;
+  gpu_per_core: ChartjsData | undefined;
 }
