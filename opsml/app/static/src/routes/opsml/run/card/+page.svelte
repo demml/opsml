@@ -1,79 +1,162 @@
 <script lang="ts">
 
-  import { type Card, type RunCard, type Parameter, type RunMetrics, type Metric } from "$lib/scripts/types";
-  import atomOneLight from "svelte-highlight/styles/atom-one-light";
-  import Datatable from '$lib/components/Datatable.svelte';
-  import Metadata from "$lib/card/run/Metadata.svelte";
+  import { TabGroup, Tab } from '@skeletonlabs/skeleton';
+  import Fa from 'svelte-fa'
+  import { faTag, faFolderTree, faBolt, faToolbox, faChartSimple } from '@fortawesome/free-solid-svg-icons'
 
+  import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
+
+  import { type Card, type CompareMetricPage, type RunCard } from "$lib/scripts/types";
+  import { goto } from '$app/navigation';
+  import atomOneLight from "svelte-highlight/styles/atom-one-light";
+  import RunHomePage from './home/RunHomePage.svelte';
+  import RunMetricPage from './metrics/RunMetricPage.svelte';
+  import RunComparePage from './metrics/compare/RunComparePage.svelte';
+  import { loadComparePageData } from './metrics/compare/util';
+  import { runStore } from './store'
+  import { onMount } from 'svelte';
 
   /** @type {import('./$types').LayoutData} */
-  export let data;
+	export let data;
 
+  let registry: string;
+  $: registry = data.registry;
+
+  let name: string;
+  $: name = data.name;
+
+  let repository: string;
+  $: repository = data.repository;
 
   let card: Card;
   $: card = data.card;
 
-  let metadata: RunCard;
-  $: metadata = data.metadata;
+  let tabSet: string;
+  $: tabSet = data.tabSet;
 
-  let metricNames: string[];
-  $: metricNames = data.metricNames;
-
-  let parameters: Parameter[];
-  $: parameters = data.parameters;
-
-  let tableMetrics: Metric[];
-  $: tableMetrics = data.tableMetrics;
-
+  let url: URL;
+  $: url = data.url;
   
-  </script>
+
+  let comparePageData: CompareMetricPage | undefined;
+  $: comparePageData = undefined;
+
+
+  async function navigateToFolder(value: string) {
+
+
+    if (value === 'compare') {
+      
+      if (!comparePageData) {
+        comparePageData = await loadComparePageData(data, url);
+      };
+
+      if ($runStore.compareData === null) {
+        runStore.update((store) => {
+          store.compareData = comparePageData?.metricVizData;
+          return store;
+        });
+      }
+    }
+
+    tabSet = value;
+    
+  }
+
+  onMount(() => {
+    // reset runStore
+    runStore.reset();
+    console.log($runStore.compareData);
+  });
+
+
+
+</script>
+
+<svelte:head>
+  {@html atomOneLight}
+</svelte:head>
+
+<div class="flex flex-1 flex-col">
+
+  <div class="pl-4 md:pl-20 pt-2 sm:pt-4 bg-slate-50 w-full border-b">
+    <h1 class="flex flex-row flex-wrap items-center text-lg">
+      <div class="group flex flex-none items-center">
+        <a class="font-semibold text-gray-800 hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
+        <div class="mx-0.5 text-gray-800">/</div>
+      </div>
+      <div class="font-bold text-primary-500">{name}</div>
+      <div class="pl-2">
+        <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={card.version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
+          <Fa class="h-4" icon={faTag} color="#4b3978"/>
+          <span class="text-primary-500">{card.version}</span>
+        </a>
+      </div>
+    </h1>
+
+    <div class="pt-1">
+      <TabGroup 
+        padding="px-3 py-2"
+        border=""
+        active='border-b-2 border-primary-500'
+        >
+          <Tab bind:group={tabSet} name="card" value="card" on:click={() => navigateToFolder("card")}>
+            <div class="flex flex-row items-center">
+              <img class="h-4" src={modelcard_circuit} alt="ModelCard Circuit" />
+              <div class="font-semibold text-sm">Card</div>
+            </div>
+          </Tab>
+
+          <Tab bind:group={tabSet} name="files" value="files" on:click={() => navigateToFolder("files")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faFolderTree} color="#4b3978"/>
+              <div class="font-semibold text-sm">Files</div>
+            </div>
+          </Tab>
   
-  <svelte:head>
-    {@html atomOneLight}
-  </svelte:head>
+          <Tab bind:group={tabSet} name="metrics" value="metrics" on:click={() => navigateToFolder("metrics")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faBolt} color="#4b3978"/>
+              <div class="font-semibold text-sm">Metrics</div>
+            </div>
+          </Tab>
 
-  <div class="flex flex-wrap bg-white min-h-screen mb-8">
+          <Tab bind:group={tabSet} name="compare" value="compare" on:click={() => navigateToFolder("compare")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faBolt} color="#4b3978"/>
+              <div class="font-semibold text-sm">Compare</div>
+            </div>
+          </Tab>
 
-    <div class="w-full md:w-1/3 mt-4 ml-4 pl-2 md:ml-12">
-      <div class="p-4">
-        <Metadata 
-          metadata={metadata} 
-          card={card} 
-        />
-      </div>
-    </div>
+          <Tab bind:group={tabSet} name="graphs" value="graphs" on:click={() => navigateToFolder("graphs")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faChartSimple} color="#4b3978"/>
+              <div class="font-semibold text-sm">Graphs</div>
+            </div>
+          </Tab>
 
-  {#if tableMetrics.length > 0 || parameters.length > 0}
+   
+          <Tab bind:group={tabSet} name="hardware" value="hardware" on:click={() => navigateToFolder("hardware")}>
+            <div class="flex flex-row  items-center">
+              <Fa class="h-4 mr-2" icon={faToolbox} color="#4b3978"/>
+              <div class="font-semibold text-sm">Hardware</div>
+            </div>
+          </Tab>
 
-    <div class="flex flex-col w-full md:w-7/12 mt-5">
-
-      {#if metricNames.length > 0}
-        <div class="pl-4 pr-4">
-          <Datatable 
-            data={tableMetrics}
-            forMetric={true}
-          />
-        </div>
-      {/if}
-
-      {#if parameters.length > 0}
-        <div class="pl-4 pr-4">
-          <Datatable 
-            data={parameters}
-            forMetric={false}
-            label="Parameters"
-          />
-        </div>
-      {/if}
+        </TabGroup>
 
     </div>
 
-  {:else}
-    <div class="flex flex-col w-full md:w-5/12 mt-5">
-      <div class="pl-4 pr-4">
-        <div class="text-lg font-bold mt-6">No metrics or parameters found</div>
-      </div>
-    </div>
+  </div>
+  {#if tabSet === "card"}
+    <RunHomePage {data}/>
+
+  {:else if tabSet === "metrics"}
+    <RunMetricPage {data}/>
+
+  {:else if tabSet === "compare"}
+    {#if comparePageData}
+      <RunComparePage data={comparePageData} />
+    {/if}
   {/if}
 </div>
-

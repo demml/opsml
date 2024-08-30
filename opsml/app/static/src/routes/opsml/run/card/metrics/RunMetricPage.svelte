@@ -10,7 +10,6 @@
   import { createMetricVizData, downloadMetricCSV } from "$lib/scripts/utils";
 
 
-  /** @type {import('./$types').LayoutData} */
   export let data;
 
   let metrics: RunMetrics;
@@ -87,6 +86,10 @@
 
   onMount(() => {
     selectedMetrics = metricNames;
+
+    if (!metricVizData) {
+      metricVizData = createMetricVizData(metrics, "bar");
+    }
   });
 
   async function changePlotType(type: string) {

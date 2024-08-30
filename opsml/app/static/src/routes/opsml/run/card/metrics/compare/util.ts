@@ -1,4 +1,3 @@
-import { d } from "svelte-highlight/languages";
 import {
   type CardRequest,
   type CardResponse,
@@ -9,24 +8,19 @@ import {
   type RunCard,
   type ChartjsData,
 } from "$lib/scripts/types";
-import { listCards } from "$lib/scripts/utils";
+import { createMetricVizData, listCards } from "$lib/scripts/utils";
 
-export const ssr = false;
-
-/** @type {import('./$types').PageLoad} */
-export async function load({ parent, url }) {
+export async function loadComparePageData(
+  data: any,
+  url: URL
+): Promise<CompareMetricPage> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-  const data = await parent();
 
-  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const name = url.searchParams.get("name") as string | undefined;
 
-  const repository = (url as URL).searchParams.get("repository") as
-    | string
-    | undefined;
+  const repository = url.searchParams.get("repository") as string | undefined;
 
-  const version = (url as URL).searchParams.get("version") as
-    | string
-    | undefined;
+  const version = url.searchParams.get("version") as string | undefined;
 
   // want to pull in all cards for this repository
   const cardReq: CardRequest = {
@@ -59,6 +53,12 @@ export async function load({ parent, url }) {
     referenceMetrics.set(metricName, metricValue);
   }
 
+  let metricVizData: ChartjsData | undefined = undefined;
+
+  if (Object.keys(data.metrics).length > 0) {
+    metricVizData = createMetricVizData(data.metrics, "bar");
+  }
+
   const comparePageData: CompareMetricPage = {
     cards: cardMap,
     name: name!,
@@ -79,7 +79,8 @@ export async function load({ parent, url }) {
     show: false,
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    metricVizData: data.metricVizData as ChartjsData | undefined,
+
+    metricVizData: metricVizData,
     referenceMetrics,
   };
 
