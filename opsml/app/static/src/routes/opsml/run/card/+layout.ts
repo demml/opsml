@@ -24,7 +24,6 @@ import {
   createMetricVizData,
   getHardwareMetrics,
   parseHardwareMetrics,
-  createTimeSeriesChart,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -109,15 +108,11 @@ export async function load({ fetch, params, url }) {
   let parsedMetrics: ParsedHardwareMetrics | undefined;
 
   if (tab === "hardware") {
-    const hardwareVizData = (await getHardwareMetrics(
-      runCard.uid
-    ));
+    const hardwareVizData = await getHardwareMetrics(runCard.uid);
 
     // process hardware metrics
     if (hardwareVizData.metrics.length > 0) {
-      parsedMetrics = (await parseHardwareMetrics(
-        hardwareVizData.metrics
-      ));
+      parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
     }
   }
 
