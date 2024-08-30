@@ -250,7 +250,10 @@ class _RunManager:
         )
 
     def _log_dependencies(self) -> None:
-        """Logs dependencies"""
+        """Helper method for logging the python dependencies of the current environment.
+        This method will attempt to log dependencies using a few known methods. If all methods fail,
+        it will log a warning and continue the run.
+        """
 
         assert self.active_run is not None, "active_run should not be None"
 
@@ -263,7 +266,7 @@ class _RunManager:
                 dependencies: str = subprocess.check_output(run_command, shell=True).decode("utf-8")
                 with tempfile.TemporaryDirectory() as tempdir:
                     lpath = Path(tempdir) / "requirements.txt"
-                    with open(lpath, "w") as file:
+                    with open(lpath, "w", encoding="utf-8") as file:
                         file.write(dependencies)
 
                     self.active_run.log_artifact_from_file(
@@ -277,6 +280,7 @@ class _RunManager:
                 continue
 
         logger.warning("Failed to log python dependencies. Continuing run")
+        return None
 
     def start_run(
         self,

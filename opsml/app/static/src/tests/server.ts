@@ -3,6 +3,7 @@ import { setupServer } from "msw/node";
 import { type Files, type ModelMetadata } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
 import { user } from "./constants";
+import { json } from "@sveltejs/kit";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -296,6 +297,103 @@ const handlers = [
   http.post("/opsml/auth/register", async ({ request, params, cookies }) => {
     return new HttpResponse("Registered", {
       status: 200,
+    });
+  }),
+
+  http.get("/opsml/metrics/hardware", async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      metrics: [
+        {
+          run_uid: "0a441b4ca2e444639182b72f0a52e17a",
+          created_at: "2024-08-29T00:59:45.652409",
+          metrics: {
+            cpu: {
+              cpu_percent_utilization: 27.61818181818182,
+              cpu_percent_per_core: [
+                45.1, 33.5, 25.6, 18.7, 15.1, 19.5, 31.4, 31.3, 28, 25.7, 29.9,
+              ],
+              compute_overall: 27.6,
+              compute_utilized: 0.1,
+              load_avg: 4.46142578125,
+            },
+            memory: {
+              sys_ram_total: 19327352832,
+              sys_ram_used: 13911949312,
+              sys_ram_available: 5415403520,
+              sys_ram_percent_used: 72,
+              sys_swap_total: null,
+              sys_swap_used: null,
+              sys_swap_free: null,
+              sys_swap_percent: null,
+            },
+            network: {
+              bytes_recv: 106805089.39456193,
+              bytes_sent: 205173711.53836402,
+            },
+            gpu: null,
+          },
+        },
+        {
+          run_uid: "0a441b4ca2e444639182b72f0a52e17a",
+          created_at: "2024-08-29T01:05:45.652409",
+          metrics: {
+            cpu: {
+              cpu_percent_utilization: 27.61818181818182,
+              cpu_percent_per_core: [
+                45.1, 33.5, 25.6, 18.7, 15.1, 19.5, 31.4, 31.3, 28, 25.7, 29.9,
+              ],
+              compute_overall: 27.6,
+              compute_utilized: 0.1,
+              load_avg: 4.46142578125,
+            },
+            memory: {
+              sys_ram_total: 19327352832,
+              sys_ram_used: 13911949312,
+              sys_ram_available: 5415403520,
+              sys_ram_percent_used: 72,
+              sys_swap_total: null,
+              sys_swap_used: null,
+              sys_swap_free: null,
+              sys_swap_percent: null,
+            },
+            network: {
+              bytes_recv: 106805089.39456193,
+              bytes_sent: 205173711.53836402,
+            },
+            gpu: null,
+          },
+        },
+        {
+          run_uid: "0a441b4ca2e444639182b72f0a52e17a",
+          created_at: "2024-08-29T01:10:45.652409",
+          metrics: {
+            cpu: {
+              cpu_percent_utilization: 27.61818181818182,
+              cpu_percent_per_core: [
+                45.1, 33.5, 25.6, 18.7, 15.1, 19.5, 31.4, 31.3, 28, 25.7, 29.9,
+              ],
+              compute_overall: 27.6,
+              compute_utilized: 0.1,
+              load_avg: 4.46142578125,
+            },
+            memory: {
+              sys_ram_total: 19327352832,
+              sys_ram_used: 13911949312,
+              sys_ram_available: 5415403520,
+              sys_ram_percent_used: 72,
+              sys_swap_total: null,
+              sys_swap_used: null,
+              sys_swap_free: null,
+              sys_swap_percent: null,
+            },
+            network: {
+              bytes_recv: 106805089.39456193,
+              bytes_sent: 205173711.53836402,
+            },
+            gpu: null,
+          },
+        },
+      ],
     });
   }),
 ];

@@ -5,13 +5,16 @@
 <script lang="ts">
 
   import TimeChartDiv from "$lib/card/run/TimeChartDiv.svelte";
-  import type { ParsedHardwareMetrics, HardwareCharts } from "$lib/scripts/types";
-  import { createHardwareCharts } from "$lib/scripts/utils";
+  import type { ParsedHardwareMetrics, HardwareCharts, RunCard } from "$lib/scripts/types";
+  import { createHardwareCharts, getHardwareMetrics, parseHardwareMetrics } from "$lib/scripts/utils";
   import { onMount } from "svelte";
   import logo from '$lib/images/opsml-logo.png';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
+
+  let runcard: RunCard;
+  $: runcard = data.metadata;
 
   let parsedMetrics: ParsedHardwareMetrics;
   $: parsedMetrics = data.parsedMetrics; 
@@ -25,6 +28,16 @@
     }
   });
 
+  async function refresh() {
+    let metrics = await getHardwareMetrics(runcard.uid);
+
+    if (metrics.metrics.length > 0) {
+      parsedMetrics = parseHardwareMetrics(metrics.metrics);
+      charts = createHardwareCharts(parsedMetrics);
+    }
+  
+  }
+
 
 </script>
 
@@ -35,7 +48,10 @@
   <div class="flex flex-col w-full">
     <div class="flex flex-col w-full">
       <div class="mx-10 pt-4 border-b-2 border-gray-400">
-        <header class="text-darkpurple text-lg font-bold">CPU Metrics</header>
+        <div class="flex flex-row items-center justify-between">
+          <header class="text-darkpurple text-lg font-bold">CPU Metrics</header>
+          <button type="button" class="btn btn-sm bg-darkpurple text-white justify-end mb-2" on:click={() => refresh()}>Refresh</button>
+        </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 w-full bg-white px-10 py-4 gap-4">
 
