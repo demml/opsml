@@ -5,6 +5,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import concurrent
+import subprocess
+import tempfile
 import time
 import uuid
 from datetime import datetime
@@ -19,8 +21,6 @@ from opsml.projects.active_run import ActiveRun, RunInfo
 from opsml.projects.types import _DEFAULT_INTERVAL, ProjectInfo, Tags
 from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs, ComputeEnvironment
-import subprocess
-import tempfile
 
 logger = ArtifactLogger.get_logger()
 
@@ -262,7 +262,7 @@ class _RunManager:
                 # log dependencies
                 dependencies: str = subprocess.check_output(run_command, shell=True).decode("utf-8")
                 with tempfile.TemporaryDirectory() as tempdir:
-                    lpath = Path(tempdir) / f"requirements.txt"
+                    lpath = Path(tempdir) / "requirements.txt"
                     with open(lpath, "w") as file:
                         file.write(dependencies)
 
@@ -273,7 +273,7 @@ class _RunManager:
                     )
 
                 return None
-            except Exception as error:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 continue
 
         logger.warning("Failed to log python dependencies. Continuing run")
