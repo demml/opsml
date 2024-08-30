@@ -11,7 +11,7 @@
   type registryPage,
 } from "$lib/scripts/types";
   import ArtifactSearch from '$lib/ArtifactSearch.svelte';
-
+  import { AppStore } from '$routes/store';
 
   /** @type {import('./$types').PageData} */
 	export let data;
@@ -19,20 +19,20 @@
   // reactive statements
   let artifactSearchTerm: string | undefined = undefined;
 
-  let repos: string[];
-  $: repos = data.args.repos;
-
   let searchTerm: string | undefined;
   $: searchTerm = data.args.searchTerm;
 
+  let repos: string[];
+  $: repos = data.args.repos;
+
   let selectedRepo: string | undefined;
-  $: selectedRepo = data.args.selectedRepo;
+  $: selectedRepo = $AppStore.runStore.homepage.selectedRepo;
 
   let registryPage: registryPage;
-  $: registryPage = data.args.registryPage;
+  $: registryPage = $AppStore.runStore.homepage.registryPage;
 
   let registryStats: registryStats;
-  $: registryStats = data.args.registryStats;
+  $: registryStats = $AppStore.runStore.homepage.registryStats;
 
   let activePage: number = 0;
   let filteredRepos: string[] = [];
@@ -44,24 +44,11 @@
   let paginationSettings = {
     page: 0,
     limit: 30,
-    size: data.args.registryStats.nbr_names,
+    size: $AppStore.runStore.homepage.registryStats.nbr_names,
     amounts: [],
   } satisfies PaginationSettings;
 
-
-
-  onMount(async () => {
-    if (selectedRepo) {
-      registryPage = await getRegistryPage(registry, undefined, selectedRepo, searchTerm, 0);
-      registryStats = await getRegistryStats(registry, selectedRepo);
-      
-      paginationSettings.page = 0;
-      paginationSettings.size = registryStats.nbr_names;
-    } 
     
-  });
-
-
 
 </script>
 

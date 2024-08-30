@@ -8,7 +8,7 @@
   import { getRunMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
-  import { runStore } from "../../store";
+  import { AppStore } from "$routes/store";
 
   export let data: CompareMetricPage;
 
@@ -19,25 +19,25 @@
   let compareMetrics = new Map<string, RunMetrics>();
   
   let tableMetrics: Map<string, TableMetric[]>;
-  $: tableMetrics = $runStore.compareTableMetrics;
+  $: tableMetrics = $AppStore.runStore.cardPage.compareTableMetrics;
 
   let card: RunCard;
   $: card = data.card;
 
   let plotSet: string;
-  $: plotSet = $runStore.comparePlotSet;
+  $: plotSet = $AppStore.runStore.cardPage.comparePlotSet;
 
   let filteredMetrics: string[];
-  $: filteredMetrics = $runStore.compareFilteredMetrics;
+  $: filteredMetrics = $AppStore.runStore.cardPage.compareFilteredMetrics;
 
   let metricNames: string[];
   $: metricNames = data.metricNames;
 
   let selectedMetrics: string[];
-  $: selectedMetrics = $runStore.compareSelectedMetrics;
+  $: selectedMetrics = $AppStore.runStore.cardPage.compareSelectedMetrics;
 
   let metricsToPlot: string[];
-  $: metricsToPlot = $runStore.compareMetricsToPlot;
+  $: metricsToPlot = $AppStore.runStore.cardPage.compareMetricsToPlot;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
@@ -49,13 +49,13 @@
   $: cards = data.cards;
 
   let cardsToCompare: string[];
-  $: cardsToCompare = $runStore.compareCardsToCompare;
+  $: cardsToCompare = $AppStore.runStore.cardPage.compareCardsToCompare;
 
   let metricVizData: ChartjsData | undefined;
-  $: metricVizData = $runStore.compareData;
+  $: metricVizData = $AppStore.runStore.cardPage.compareData;
 
   let showTable: boolean;
-  $: showTable = $runStore.compareShowTable;
+  $: showTable = $AppStore.runStore.cardPage.compareShowTable;
 
   let isOpen = true;
   let cardSelectAll: boolean = false;
@@ -111,15 +111,15 @@
     tableMetrics = metricsToTable(compareMetrics, metricsToPlot);
     showTable = true;
 
-    runStore.update((store) => {
-        store.compareData = metricVizData;
-        store.compareSelectedMetrics = selectedMetrics;
-        store.compareMetricsToPlot = metricsToPlot;
-        store.compareCardsToCompare = cardsToCompare;
-        store.compareTableMetrics = tableMetrics;
-        store.comparePlotSet = plotSet;
-        store.compareFilteredMetrics = filteredMetrics;
-        store.compareShowTable = showTable;
+    AppStore.update((store) => {
+        store.runStore.cardPage.compareData = metricVizData;
+        store.runStore.cardPage.compareSelectedMetrics = selectedMetrics;
+        store.runStore.cardPage.compareMetricsToPlot = metricsToPlot;
+        store.runStore.cardPage.compareCardsToCompare = cardsToCompare;
+        store.runStore.cardPage.compareTableMetrics = tableMetrics;
+        store.runStore.cardPage.comparePlotSet = plotSet;
+        store.runStore.cardPage.compareFilteredMetrics = filteredMetrics;
+        store.runStore.cardPage.compareShowTable = showTable;
         return store;
       })
   

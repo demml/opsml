@@ -15,19 +15,24 @@ import Fa from 'svelte-fa'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import PageCard from "$lib/PageCard.svelte";
 import { delay } from "$lib/scripts/utils";
+import { onMount } from 'svelte';
+import { get } from 'svelte/store';
+import { AppStore } from '$routes/store';
 
 
 
 export let tabSet: string;
 export let searchTerm: string | undefined;
 export let filteredRepos: string[];
-export let paginationSettings: PaginationSettings;
 export let repos: string[];
 export let selectedRepo: string | undefined;
 export let registryPage: registryPage;
 export let registryStats: registryStats;
 export let registry: string;
 export let artifactSearchTerm: string | undefined;
+
+
+export let paginationSettings: PaginationSettings;
 
 
 const searchRepos = () => {	
@@ -45,11 +50,25 @@ async function setActiveRepo( name: string) {
       selectedRepo = name;
     }
 
+
     registryPage = await getRegistryPage(registry, undefined, selectedRepo, undefined, 0);
     registryStats = await getRegistryStats(registry, selectedRepo);
 
     paginationSettings.page = 0;
     paginationSettings.size = registryStats.nbr_names;
+
+
+    if (registry == "run") {
+      AppStore.update((store) => {
+        store.runStore.homepage.selectedRepo = selectedRepo;
+        store.runStore.homepage.registryPage = registryPage;
+        store.runStore.homepage.registryStats = registryStats;
+        return store;
+      });
+    }
+
+    console.log(get(AppStore));
+
     }
 
 async function onPageChange(e: CustomEvent) {
@@ -69,6 +88,7 @@ const searchPage = async function () {
 
 
 }
+
 
 
 </script>
