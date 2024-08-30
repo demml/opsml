@@ -19,25 +19,25 @@
   let compareMetrics = new Map<string, RunMetrics>();
   
   let tableMetrics: Map<string, TableMetric[]>;
-  $: tableMetrics = $AppStore.runStore.cardPage.compareTableMetrics;
+  $: tableMetrics = $AppStore.runStore.cardPage.compare.TableMetrics;
 
   let card: RunCard;
   $: card = data.card;
 
   let plotSet: string;
-  $: plotSet = $AppStore.runStore.cardPage.comparePlotSet;
+  $: plotSet = $AppStore.runStore.cardPage.compare.PlotSet;
 
   let filteredMetrics: string[];
-  $: filteredMetrics = $AppStore.runStore.cardPage.compareFilteredMetrics;
+  $: filteredMetrics = $AppStore.runStore.cardPage.compare.FilteredMetrics;
 
   let metricNames: string[];
   $: metricNames = data.metricNames;
 
   let selectedMetrics: string[];
-  $: selectedMetrics = $AppStore.runStore.cardPage.compareSelectedMetrics;
+  $: selectedMetrics = $AppStore.runStore.cardPage.compare.SelectedMetrics;
 
   let metricsToPlot: string[];
-  $: metricsToPlot = $AppStore.runStore.cardPage.compareMetricsToPlot;
+  $: metricsToPlot = $AppStore.runStore.cardPage.compare.MetricsToPlot;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
@@ -49,13 +49,13 @@
   $: cards = data.cards;
 
   let cardsToCompare: string[];
-  $: cardsToCompare = $AppStore.runStore.cardPage.compareCardsToCompare;
+  $: cardsToCompare = $AppStore.runStore.cardPage.compare.CardsToCompare;
 
   let metricVizData: ChartjsData | undefined;
-  $: metricVizData = $AppStore.runStore.cardPage.compareData;
+  $: metricVizData = $AppStore.runStore.cardPage.compare.Data;
 
   let showTable: boolean;
-  $: showTable = $AppStore.runStore.cardPage.compareShowTable;
+  $: showTable = $AppStore.runStore.cardPage.compare.ShowTable;
 
   let isOpen = true;
   let cardSelectAll: boolean = false;
@@ -112,14 +112,14 @@
     showTable = true;
 
     AppStore.update((store) => {
-        store.runStore.cardPage.compareData = metricVizData;
-        store.runStore.cardPage.compareSelectedMetrics = selectedMetrics;
-        store.runStore.cardPage.compareMetricsToPlot = metricsToPlot;
-        store.runStore.cardPage.compareCardsToCompare = cardsToCompare;
-        store.runStore.cardPage.compareTableMetrics = tableMetrics;
-        store.runStore.cardPage.comparePlotSet = plotSet;
-        store.runStore.cardPage.compareFilteredMetrics = filteredMetrics;
-        store.runStore.cardPage.compareShowTable = showTable;
+        store.runStore.cardPage.compare.Data = metricVizData;
+        store.runStore.cardPage.compare.SelectedMetrics = selectedMetrics;
+        store.runStore.cardPage.compare.MetricsToPlot = metricsToPlot;
+        store.runStore.cardPage.compare.CardsToCompare = cardsToCompare;
+        store.runStore.cardPage.compare.TableMetrics = tableMetrics;
+        store.runStore.cardPage.compare.PlotSet = plotSet;
+        store.runStore.cardPage.compare.FilteredMetrics = filteredMetrics;
+        store.runStore.cardPage.compare.ShowTable = showTable;
         return store;
       })
   
