@@ -6,15 +6,22 @@
 
 import abc
 import os
-import platform
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import psutil
-from pydantic import BaseModel
+from pynvml import NVMLError
 
 from opsml.helpers.logging import ArtifactLogger
-from opsml.types import CPUMetrics, HardwareMetrics, MemoryMetrics, NetworkRates
+from opsml.types import (
+    ComputeEnvironment,
+    CPUMetrics,
+    GPUMetrics,
+    HardwareMetrics,
+    MemoryMetrics,
+    NetworkRates,
+    NVMLHandler,
+)
 
 logger = ArtifactLogger.get_logger()
 
@@ -159,7 +166,7 @@ class CPUMetricsLogger(BaseMetricsLogger):
         result = {}
         if len(percents) > 0:
             avg_percent = sum(percents) / len(percents)
-            result["cpu_percent_avg"] = avg_percent
+            result["cpu_percent_utilization"] = avg_percent
 
             if self.include_compute_metrics:
                 result["compute_overall"] = round(avg_percent, 1)
@@ -221,6 +228,78 @@ class MemoryMetricsLogger(BaseMetricsLogger):
         return "[sys.ram]"
 
 
+# GPU metrics
+class GPUMetricsLogger(BaseMetricsLogger):
+    """CPU metrics data logger. It logs CPU utilization and compute metrics."""
+
+    def __init__(
+        self,
+        initial_interval: float,
+        gpu_devices: List[str],
+        gpu_count: int,
+    ):
+        """Instantiates a new CPU metrics data logger.
+
+        Args:
+            initial_interval (float):
+                The initial interval in seconds between logging attempts.
+            gpu_devices (List[str]):
+                List of GPU devices to monitor.
+            gpu_count (int):
+                Number of GPUs to monitor.
+        """
+
+        if gpu_count > 0:
+            try:
+                NVMLHandler.init_nvml()
+            except NVMLError as error:
+                logger.error("Failed to initialize NVML: {}", error)
+                self.gpu_count = 0
+
+        self.gpu_count = gpu_count
+        self.gpu_devices = gpu_devices
+        super().__init__(initial_interval)
+
+    def _get_metrics(self) -> GPUMetrics:
+        """Get CPU metrics.
+
+        Returns:
+            dict: A dictionary with CPU metrics.
+        """
+        gpu_total = 0
+        gpu_used = 0
+        gpu_per_core = []
+
+        for i in range(self.gpu_count):
+            handle = NVMLHandler.get_device_handle(i)
+            info = NVMLHandler.get_device_info(handle)
+            total = info.total
+            used = info.used
+            gpu_total += total
+            gpu_used += used
+            gpu_per_core.append(used / total * 100)
+
+        gpu_utilization = gpu_used / gpu_total * 100
+        return GPUMetrics(
+            gpu_percent_utilization=gpu_utilization,
+            gpu_percent_per_core=gpu_per_core,
+        )
+
+    def get_metrics(self) -> Optional[GPUMetrics]:
+        """Get CPU metrics.
+
+        Returns:
+            dict: A dictionary with CPU metrics.
+        """
+        if self.gpu_count == 0:
+            return None
+        return self._get_metrics()
+
+    @property
+    def name(self) -> str:
+        return "[sys.gpu]"
+
+
 ## Network usage
 class NetworkMetricsLogger(BaseMetricsLogger):
     """Network rates probe for record received and sent bytes rates."""
@@ -265,8 +344,8 @@ class NetworkMetricsLogger(BaseMetricsLogger):
 
         self._save_current_state(
             time_now=now,
-            bytes_sent=bytes_sent_rate,
-            bytes_recv=bytes_recv_rate,
+            bytes_sent=counters.bytes_sent,
+            bytes_recv=counters.bytes_recv,
         )
 
         return NetworkRates(
@@ -288,26 +367,23 @@ class NetworkMetricsLogger(BaseMetricsLogger):
 
 
 class HardwareMetricsLogger:
-    def __init__(self, interval: float = 15):
+    def __init__(self, compute_environment: ComputeEnvironment, interval: float = 15):
         self.cpu_logger = CPUMetricsLogger(interval, True, True)
         self.memory_logger = MemoryMetricsLogger(interval, False)
         self.network_logger = NetworkMetricsLogger(interval)
+        self.compute_environment = compute_environment
+        self.gpu_logger = GPUMetricsLogger(
+            interval,
+            compute_environment.gpu_devices,
+            compute_environment.gpu_count,
+        )
 
     def get_metrics(self) -> HardwareMetrics:
         metrics = HardwareMetrics(
             cpu=self.cpu_logger.get_metrics(),
             memory=self.memory_logger.get_metrics(),
             network=self.network_logger.get_metrics(),
+            gpu=self.gpu_logger.get_metrics(),
         )
 
         return metrics
-
-
-class ComputeEnvironment(BaseModel):
-    cpu_count: int = psutil.cpu_count(logical=False)
-    memory: int = psutil.virtual_memory().total
-    system: str = platform.system()
-    release: str = platform.release()
-    architecture_bits: str = platform.architecture()[0]
-    python_version: str = platform.python_version()
-    python_compiler: str = platform.python_compiler()

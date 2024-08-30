@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 # running tests similar to opsml
 # just to make sure everything works
-DB_FILE_PATH = str(pathlib.Path.home().joinpath("tmp.db"))
+DB_FILE_PATH = str(pathlib.Path.home().joinpath("test.db"))
 SQL_PATH = f"sqlite:///{DB_FILE_PATH}"
 STORAGE_PATH = str(pathlib.Path.home().joinpath("opsml_registries"))
 

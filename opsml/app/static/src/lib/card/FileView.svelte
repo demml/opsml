@@ -12,9 +12,7 @@
   import { goto } from "$app/navigation";
 
   function formatJson(jsonString: string): string {
-    console.log(jsonString);
     let newJson = JSON.stringify(JSON.parse(jsonString), null, 2);
-    console.log(newJson);
     return newJson;
   }
 
@@ -101,7 +99,7 @@
                 <LineNumbers {highlighted} />
               </Highlight>
 
-        {:else if suffix === "sql"}
+        {:else if suffix === "sql" || suffix === "txt"}
       
           <Highlight language={sql}  code={content} let:highlighted>
             <LineNumbers {highlighted} />

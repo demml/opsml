@@ -256,11 +256,24 @@ export const sampleRunCard = {
   contact: "test",
   datacard_uids: ["test"],
   modelcard_uids: ["test"],
-  pipelinecard_uid: null,
+  pipelinecard_uid: undefined,
   parameters: runParams,
   artifact_uris: artifact_uris,
   tags: tags,
   project: "test",
+  compute_environment: {
+    cpu_count: 1,
+    memory: 1,
+    disk_space: 10,
+    system: "linux",
+    release: "1.20.0",
+    architecture_bits: "64",
+    python_version: "3.11.0",
+    python_compiler: "gcc",
+    gpu_count: 0,
+    gpu_devices: [],
+    gpu_device_memory: new Map(),
+  },
 };
 
 export const sampleMetrics = [

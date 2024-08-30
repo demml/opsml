@@ -11,7 +11,7 @@ from typing import Any, Dict, Generator, Tuple, TypeVar, Union
 
 warnings.filterwarnings("ignore")
 
-LOCAL_DB_FILE_PATH = "tmp.db"
+LOCAL_DB_FILE_PATH = "test.db"
 LOCAL_TRACKING_URI = f"sqlite:///{LOCAL_DB_FILE_PATH}"
 LOCAL_STORAGE_URI = f"{os.getcwd()}/opsml_registries"
 
@@ -145,8 +145,10 @@ EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 def cleanup() -> None:
     """Removes temp files"""
 
-    if os.path.exists(LOCAL_DB_FILE_PATH):
-        os.remove(LOCAL_DB_FILE_PATH)
+    # if os.path.exists(LOCAL_DB_FILE_PATH):
+    # os.remove(LOCAL_DB_FILE_PATH)
+
+    Path(LOCAL_DB_FILE_PATH).unlink(missing_ok=True)
 
     # remove api mlrun path (will fail if not local)
     shutil.rmtree(OPSML_STORAGE_URI, ignore_errors=True)
@@ -190,6 +192,33 @@ def mock_gcp_vars(gcp_cred_path) -> Any:
         "gcsfs_creds": creds,
     }
     return mock_vars
+
+
+@pytest.fixture
+def mock_nvm_handler() -> Any:
+    with patch.multiple(
+        "opsml.types.hardware.NVMLHandler",
+        init_nvml=MagicMock(return_value=None),
+        get_device_handle=MagicMock(return_value=MagicMock()),
+        get_device_info=MagicMock(return_value=MagicMock(total=100, used=50)),
+        get_device_name=MagicMock(return_value="test"),
+        get_device_count=MagicMock(return_value=2),
+    ) as mock_handler:
+        yield mock_handler
+
+
+@pytest.fixture
+def mock_gcp_creds(mock_gcp_vars) -> Any:
+    creds = GcpCreds(
+        creds=mock_gcp_vars["gcp_creds"],
+        project=mock_gcp_vars["gcp_project"],
+    )
+
+    with patch.multiple(
+        "opsml.helpers.gcp_utils.GcpCredsSetter",
+        get_creds=MagicMock(return_value=creds),
+    ) as mock_gcp_creds:
+        yield mock_gcp_creds
 
 
 @pytest.fixture

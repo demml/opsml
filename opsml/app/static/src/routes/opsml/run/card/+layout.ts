@@ -10,7 +10,9 @@ import {
   type RunMetrics,
   type ChartjsData,
   type TableMetric,
+  type ParsedHardwareMetrics,
   RegistryName,
+  type HardwareMetricsResponse,
 } from "$lib/scripts/types";
 
 import {
@@ -20,7 +22,8 @@ import {
   getRunMetricNames,
   getRunParameters,
   createMetricVizData,
-  metricsToTable,
+  getHardwareMetrics,
+  parseHardwareMetrics,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -101,6 +104,18 @@ export async function load({ fetch, params, url }) {
     // cardMap.set(selectedCard.name, metrics);
     // tableMetrics = metricsToTable(cardMap, metricNames.metric);
   }
+
+  let parsedMetrics: ParsedHardwareMetrics | undefined;
+
+  if (tab === "hardware") {
+    const hardwareVizData = await getHardwareMetrics(runCard.uid);
+
+    // process hardware metrics
+    if (hardwareVizData.metrics.length > 0) {
+      parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
+    }
+  }
+
   return {
     registry,
     repository: selectedCard.repository,
@@ -114,5 +129,6 @@ export async function load({ fetch, params, url }) {
     parameters: parameters.parameter,
     searchableMetrics,
     metricVizData,
+    parsedMetrics,
   };
 }

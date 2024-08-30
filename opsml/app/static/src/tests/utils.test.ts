@@ -451,3 +451,25 @@ it("createGroupMetricVizData", () => {
     pointRadius: 1,
   });
 });
+
+// test hardware metrics
+it("getHardwareMetrics", async () => {
+  const hardwareMetrics = await page.getHardwareMetrics("run_uid");
+  expect(hardwareMetrics.metrics.length).toEqual(3);
+
+  const parsedMetrics = page.parseHardwareMetrics(hardwareMetrics.metrics);
+  const hardwareCharts = page.createHardwareCharts(parsedMetrics);
+
+  expect(hardwareCharts.cpu_overall.data.datasets[0].data).toEqual([
+    27.62, 27.62, 27.62,
+  ]);
+
+  // cpu_per_core should not be none
+  if (!hardwareCharts.cpu_per_core) {
+    throw new Error("cpu_per_core should not be none");
+  }
+
+  expect(hardwareCharts.cpu_per_core.data.datasets[0].data).toEqual([
+    45.1, 45.1, 45.1,
+  ]);
+});
