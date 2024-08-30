@@ -8,31 +8,36 @@
   import { getRunMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
+  import { runStore } from "../../store";
 
-  /** @type {import('./$types').LayoutData} */
   export let data: CompareMetricPage;
 
   let searchTerm: string | undefined;
   $: searchTerm = undefined;
 
-  let filteredMetrics: string[] = [];
   let tabSet: string = "metrics";
-  let plotSet: string = "bar";
   let compareMetrics = new Map<string, RunMetrics>();
   
   let tableMetrics: Map<string, TableMetric[]>;
+  $: tableMetrics = $runStore.compareTableMetrics;
 
   let card: RunCard;
   $: card = data.card;
+
+  let plotSet: string;
+  $: plotSet = $runStore.comparePlotSet;
+
+  let filteredMetrics: string[];
+  $: filteredMetrics = $runStore.compareFilteredMetrics;
 
   let metricNames: string[];
   $: metricNames = data.metricNames;
 
   let selectedMetrics: string[];
-  $: selectedMetrics = [];
+  $: selectedMetrics = $runStore.compareSelectedMetrics;
 
   let metricsToPlot: string[];
-  $: metricsToPlot = [];
+  $: metricsToPlot = $runStore.compareMetricsToPlot;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
@@ -44,16 +49,20 @@
   $: cards = data.cards;
 
   let cardsToCompare: string[];
-  $: cardsToCompare = [];
+  $: cardsToCompare = $runStore.compareCardsToCompare;
 
-  let metricVizData: ChartjsData | undefined = data.metricVizData;
-  let showTable: boolean = false;
+  let metricVizData: ChartjsData | undefined;
+  $: metricVizData = $runStore.compareData;
+
+  let showTable: boolean;
+  $: showTable = $runStore.compareShowTable;
 
   let isOpen = true;
   let cardSelectAll: boolean = false;
 
   let referenceMetrics: Map<string, number>;
   $: referenceMetrics = data.referenceMetrics;
+
 
   function toggleSidebar() {
     isOpen = !isOpen;
@@ -99,12 +108,21 @@
       }
     }
     metricVizData = createGroupMetricVizData(compareMetrics, metricsToPlot, plotSet);
-
     tableMetrics = metricsToTable(compareMetrics, metricsToPlot);
-
     showTable = true;
 
-
+    runStore.update((store) => {
+        store.compareData = metricVizData;
+        store.compareSelectedMetrics = selectedMetrics;
+        store.compareMetricsToPlot = metricsToPlot;
+        store.compareCardsToCompare = cardsToCompare;
+        store.compareTableMetrics = tableMetrics;
+        store.comparePlotSet = plotSet;
+        store.compareFilteredMetrics = filteredMetrics;
+        store.compareShowTable = showTable;
+        return store;
+      })
+  
   }
 
   async function setComparedCards( cardName: string) {
@@ -171,7 +189,10 @@
 
 
   onMount(() => {
+
     selectedMetrics = metricNames;
+   
+
   });
 
   function downloadComparisonMetric(){

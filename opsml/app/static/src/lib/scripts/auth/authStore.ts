@@ -2,7 +2,6 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import { CommonPaths, type Token } from "$lib/scripts/types";
-import { r } from "svelte-highlight/languages";
 
 class AuthStore {
   constructor() {
