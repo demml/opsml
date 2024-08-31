@@ -17,6 +17,8 @@
 
   checkAuthstore(authStore, data.previousPath);
 
+  console.log("hello");
+
   
 </script>
 

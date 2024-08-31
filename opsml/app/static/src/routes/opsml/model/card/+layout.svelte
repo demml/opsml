@@ -39,6 +39,21 @@
 
   }
 
+  function getURL(value: string ) {
+    let baseURL: string = `/opsml/${registry}/card`;
+
+    if (value === 'card') {
+      return `${baseURL}?name=${name}&repository=${repository}&version=${version}`;
+    } else if (value === 'versions') {
+      return `${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${version}`;
+
+    }
+    else {
+      return `${baseURL}/${value}?name=${name}&repository=${repository}&version=${version}`;
+    }
+
+  }
+
 
 </script>
 
@@ -77,10 +92,10 @@
               <div class="font-semibold text-sm">Files</div>
             </div>
           </Tab>
-          <Tab bind:group={tabSet} name="metadata" value="metadata" on:click={() => showTabContent("metadata")}>
+          <Tab bind:group={tabSet} name="metadata" value="metadata">
             <div class="flex flex-row  items-center">
               <Fa class="h-4 mr-1" icon={faBolt} color="#4b3978"/>
-              <div class="font-semibold text-sm">Metadata</div>
+              <a href={getURL("metadata")} class="font-semibold text-sm">Metadata</a>
             </div>
           </Tab>
 
