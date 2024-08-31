@@ -1,17 +1,12 @@
 <script lang="ts">
 
-  import { onMount } from 'svelte';
-  import {
-  getRegistryPage,
-  getRegistryStats,
-} from "$lib/scripts/utils";
   import { type PaginationSettings } from '@skeletonlabs/skeleton';
   import {
   type registryStats,
   type registryPage,
 } from "$lib/scripts/types";
   import ArtifactSearch from '$lib/ArtifactSearch.svelte';
-  import { AppStore } from '$routes/store';
+  import { RunPageStore } from '$routes/store';
 
   /** @type {import('./$types').PageData} */
 	export let data;
@@ -26,13 +21,13 @@
   $: repos = data.args.repos;
 
   let selectedRepo: string | undefined;
-  $: selectedRepo = $AppStore.runStore.homepage.selectedRepo;
+  $: selectedRepo = $RunPageStore.selectedRepo;
 
   let registryPage: registryPage;
-  $: registryPage = $AppStore.runStore.homepage.registryPage;
+  $: registryPage = $RunPageStore.registryPage;
 
   let registryStats: registryStats;
-  $: registryStats = $AppStore.runStore.homepage.registryStats;
+  $: registryStats = $RunPageStore.registryStats;
 
   let activePage: number = 0;
   let filteredRepos: string[] = [];
@@ -44,7 +39,7 @@
   let paginationSettings = {
     page: 0,
     limit: 30,
-    size: $AppStore.runStore.homepage.registryStats.nbr_names,
+    size: $RunPageStore.registryStats.nbr_names,
     amounts: [],
   } satisfies PaginationSettings;
 
@@ -63,4 +58,5 @@
   registryStats={registryStats} 
   registry={registry} 
   artifactSearchTerm={artifactSearchTerm} 
+  pageStore={RunPageStore}
   />

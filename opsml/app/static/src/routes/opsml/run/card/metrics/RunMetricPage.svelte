@@ -8,6 +8,7 @@
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
   import { createMetricVizData, downloadMetricCSV } from "$lib/scripts/utils";
+  //import { AppStore } from "$routes/store";
 
 
   export let data;
@@ -21,21 +22,26 @@
   let searchTerm: string | undefined;
   $: searchTerm = undefined;
 
-  let filteredMetrics: string[] = [];
+  let filteredMetrics: string[];
+  $: filteredMetrics = [];
+
   let tabSet: string = "metrics";
   let plotSet: string = "bar";
 
   let selectedMetrics: string[];
-  $: selectedMetrics = [];
+  $: selectedMetrics = []
 
   let metricsToPlot: string[];
-  $: metricsToPlot = [];
+  $: metricsToPlot = []
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
 
-  let metricVizData: ChartjsData | undefined = data.metricVizData;
-  let tableMetrics: Metric[] = data.tableMetrics;
+  let metricVizData: ChartjsData | undefined;
+  $: metricVizData = data.metricVizData;
+
+  let tableMetrics: Metric[];
+  $: tableMetrics = data.tableMetrics;
 
   export let isOpen = true;
 
@@ -72,10 +78,16 @@
     } else {
       selectedMetrics = [...selectedMetrics, name];
     }
+
+    //AppStore.update((store) => {
+    //    store.runStore.cardPage.metric.SelectedMetrics = selectedMetrics;
+    //    return store;
+    //  });
   }
 
   function render_chart(type: string) {
     plotSet = type;
+
   }
 
   function resetZoom() {
@@ -89,6 +101,10 @@
 
     if (!metricVizData) {
       metricVizData = createMetricVizData(metrics, "bar");
+      //AppStore.update((store) => {
+      //  store.runStore.cardPage.metric.MetricData = metricVizData;
+      //  return store;
+      //});
     }
   });
 
@@ -116,6 +132,14 @@
   );
 
     metricVizData = createMetricVizData(newMetrics, plotSet);
+
+    //AppStore.update((store) => {
+    //    store.runStore.cardPage.metric.SelectedMetrics = selectedMetrics;
+    //    store.runStore.cardPage.metric.MetricsToPlot = metricsToPlot;
+    //    store.runStore.cardPage.metric.MetricData = metricVizData;
+    //    store.runStore.cardPage.metric.PlotSet = plotSet;
+    //    return store;
+    //  });
 
   }
 

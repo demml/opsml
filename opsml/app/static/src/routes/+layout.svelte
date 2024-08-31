@@ -16,6 +16,7 @@
   let authStore = data.authStore;
 
   checkAuthstore(authStore, data.previousPath);
+
   
 </script>
 
