@@ -100,9 +100,6 @@ export async function load({ fetch, params, url }) {
   if (tab === "metrics" || tab === "compare") {
     // create chartjs data
     metricVizData = createMetricVizData(metrics, "bar");
-    // let cardMap = new Map<string, RunMetrics>();
-    // cardMap.set(selectedCard.name, metrics);
-    // tableMetrics = metricsToTable(cardMap, metricNames.metric);
   }
 
   let parsedMetrics: ParsedHardwareMetrics | undefined;

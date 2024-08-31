@@ -7,14 +7,13 @@
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
 
   import { type Card, type CompareMetricPage } from "$lib/scripts/types";
-  import { goto } from '$app/navigation';
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
   import RunHomePage from './home/RunHomePage.svelte';
   import RunMetricPage from './metrics/RunMetricPage.svelte';
   import RunComparePage from './metrics/compare/RunComparePage.svelte';
   import { loadComparePageData } from './metrics/compare/util';
-  import { AppStore, empty, emptyList, resetStoreCardPage } from '$routes/store';
   import { onMount } from 'svelte';
+  import { resetRunCardStore } from '$routes/store';
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
@@ -51,12 +50,12 @@
         comparePageData = await loadComparePageData(data, url);
       };
 
-      if ($AppStore.runStore.cardPage.compare.Data === null) {
-        AppStore.update((store) => {
-          store.runStore.cardPage.compare.Data = comparePageData?.metricVizData;
-          return store;
-        });
-      }
+      //if (!$AppStore.compareMetricData) {
+      //  AppStore.update((store) => {
+      //    store.compareMetricData = comparePageData?.metricVizData;
+      //    return store;
+      //  });
+      //}
     }
 
     tabSet = value;
@@ -65,7 +64,7 @@
 
   onMount(() => {
     // reset runStore
-    resetStoreCardPage()
+    resetRunCardStore();
   });
 
 
