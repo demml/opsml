@@ -49,6 +49,8 @@ export async function load({ fetch, params, url }) {
   const cards: CardResponse = await listCards(cardReq);
   const selectedCard = cards.cards[0];
 
+  console.log("called load");
+
   return {
     registry,
     repository: metadata.model_repository,

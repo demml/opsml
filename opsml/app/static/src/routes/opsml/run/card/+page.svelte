@@ -14,6 +14,7 @@
   import { loadComparePageData } from './metrics/compare/util';
   import { onMount } from 'svelte';
   import { resetRunCardStore } from '$routes/store';
+  import { pushState } from '$app/navigation';
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
@@ -68,7 +69,23 @@
   });
 
 
+  function updateURL(value: string) {
+    let baseURL: string = `/opsml/${registry}/card`;
 
+    if (value === 'card') {
+      pushState(`${baseURL}?name=${name}&repository=${repository}&version=${card.version}`, {
+        tabSet: value
+      });
+    } else if (value === 'versions') {
+      pushState(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${card.version}`, {
+        tabSet: value
+      });
+    } else {
+      pushState(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`, {
+        tabSet: value
+      });
+    }
+  }
 </script>
 
 <svelte:head>
@@ -147,12 +164,15 @@
 
   </div>
   {#if tabSet === "card"}
+    {updateURL("card")}
     <RunHomePage {data}/>
 
   {:else if tabSet === "metrics"}
+    {updateURL("metrics")}
     <RunMetricPage {data}/>
 
   {:else if tabSet === "compare"}
+    {updateURL("compare")}
     {#if comparePageData}
       <RunComparePage data={comparePageData} />
     {/if}
