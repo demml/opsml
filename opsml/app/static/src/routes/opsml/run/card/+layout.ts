@@ -30,6 +30,8 @@ export async function load({ url }): Promise<RunPageReturn> {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
+
+  const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "run";
 
   /** get last path from url */
@@ -39,7 +41,8 @@ export async function load({ url }): Promise<RunPageReturn> {
     name,
     repository: repository!,
     registry_type: registry,
-    version: version!,
+    version: version,
+    uid,
   };
 
   // get card info

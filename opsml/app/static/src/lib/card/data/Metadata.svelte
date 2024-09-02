@@ -100,7 +100,7 @@
       <div class="inline-flex items-center overflow-hidden rounded-lg border border-darkpurple text-sm w-fit">
         <div class="border-r border-darkpurple px-2 text-darkpurple bg-primary-50 italic">RunCard</div> 
         <div class="flex px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-darkpurple">
-          <a href="/opsml/run/card?uid={card.runcard_uid}" class="text-darkpurple">
+          <a href="/opsml/run/card/home?uid={card.runcard_uid}" class="text-darkpurple">
             Link
           </a>
         </div>
