@@ -525,7 +525,7 @@ class QueryEngine:
                 ),
             )
 
-            stats = versions.filter(
+            stats = stats.filter(
                 or_(
                     table.name.like(f"%{search_term}%"),  # type: ignore
                     table.repository.like(f"%{search_term}%"),  # type: ignore
