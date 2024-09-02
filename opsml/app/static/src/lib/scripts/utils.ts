@@ -6,7 +6,6 @@ import {
   type Metrics,
   type MetricNames,
   type Parameters,
-  type Graph,
   type RunMetrics,
   type Message,
   type MessageThread,
@@ -966,7 +965,6 @@ export function createGroupedMetricLineVizData(
   }
 
   Array.from(runIdMetricMap.entries()).forEach(([key, value], index) => {
-    const color = colors[index + 1];
     const borderColor = borders[index + 1];
 
     Array.from(value.entries()).forEach(([metricName, metricData]) => {

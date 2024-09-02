@@ -1,18 +1,14 @@
 import {
-  type FileExists,
   type CardRequest,
   type CardResponse,
   type RunCard,
-  type MetricNames,
-  type Metrics,
   type Metric,
   type Parameters,
   type RunMetrics,
   type ChartjsData,
   type TableMetric,
-  type ParsedHardwareMetrics,
   RegistryName,
-  type HardwareMetricsResponse,
+  type RunPageReturn,
 } from "$lib/scripts/types";
 
 import {
@@ -21,9 +17,6 @@ import {
   getRunMetrics,
   getRunMetricNames,
   getRunParameters,
-  createMetricVizData,
-  getHardwareMetrics,
-  parseHardwareMetrics,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -32,7 +25,7 @@ export const prerender = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
 /** @type {import('./$types').LayoutLoad} */
-export async function load({ url }) {
+export async function load({ url }): Promise<RunPageReturn> {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
@@ -105,5 +98,6 @@ export async function load({ url }) {
     parameters: parameters.parameter,
     searchableMetrics,
     metricVizData,
+    parsedMetrics: undefined,
   };
 }
