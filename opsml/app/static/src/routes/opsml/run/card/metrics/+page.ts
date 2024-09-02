@@ -1,14 +1,4 @@
-import {
-  type CardRequest,
-  type CardResponse,
-  type CompareMetricPage,
-  CardRegistries,
-  type Card,
-  type RunMetrics,
-  type RunCard,
-  type ChartjsData,
-} from "$lib/scripts/types";
-import { listCards, createMetricVizData } from "$lib/scripts/utils";
+import { createMetricVizData } from "$lib/scripts/utils";
 
 export const ssr = false;
 

@@ -2,10 +2,12 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears} from '@fortawesome/free-solid-svg-icons'
+  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
-  import { type Card, type DataCardMetadata } from "$lib/scripts/types";
   import { goto } from '$app/navigation';
+  import type { Card, DataCardMetadata } from "$lib/scripts/types";
+
+
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
@@ -22,25 +24,20 @@
   let card: Card;
   $: card = data.card;
 
+  let tabSet: string;
+  $: tabSet = "home";
+
   let metadata: DataCardMetadata;
   $: metadata = data.metadata;
 
-  let tabSet: string;
-  $: tabSet = data.tabSet;
 
   async function showTabContent(value: string ) {
     let baseURL: string = `/opsml/${registry}/card`;
 
-    if (value === 'card') {
-      goto(`${baseURL}?name=${name}&repository=${repository}&version=${card.version}`);
-    } else if (value === 'versions') {
+    goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
 
-      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${card.version}`);
 
-    }
-    else {
-      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`);
-    }
+    tabSet = value;
 
   }
 
@@ -56,7 +53,7 @@
       </div>
       <div class="font-bold text-primary-500">{name}</div>
       <div class="pl-2">
-        <a href="/opsml/{registry}/card?name={name}&repository={repository}&version={card.version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
+        <a href="/opsml/{registry}/card/home?name={name}&repository={repository}&version={card.version}" class="badge h-7 border border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100">
           <Fa class="h-4" icon={faTag} color="#4b3978"/>
           <span class="text-primary-500">{card.version}</span>
         </a>
@@ -69,7 +66,7 @@
         border=""
         active='border-b-2 border-primary-500'
         >
-          <Tab bind:group={tabSet} name="card" value="card" on:click={() => showTabContent("card")}>
+          <Tab bind:group={tabSet} name="home" value="home" on:click={() => showTabContent("home")}>
             <div class="flex flex-row items-center">
               <img class="h-4" src={modelcard_circuit} alt="ModelCard Circuit" />
               <div class="font-semibold text-sm">Card</div>
