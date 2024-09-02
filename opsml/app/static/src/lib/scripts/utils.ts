@@ -1223,7 +1223,6 @@ export function createTimeSeriesChart(
     backgroundColor: backgroundColors[2],
     pointRadius: 2,
     fill: true,
-    tension: 0.4,
   });
 
   return buildTimeChart(x, datasets, "Time", y_label, false);
@@ -1246,7 +1245,6 @@ export function createTimeSeriesGroupedChart(
       backgroundColor: colors[index + 1],
       pointRadius: 2,
       fill: false,
-      tension: 0.4,
     });
   });
 
