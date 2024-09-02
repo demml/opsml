@@ -7,7 +7,6 @@ import {
   type RunMetrics,
   type ChartjsData,
   type TableMetric,
-  RegistryName,
   type RunPageReturn,
 } from "$lib/scripts/types";
 
@@ -21,8 +20,6 @@ import {
 
 export const ssr = false;
 export const prerender = false;
-
-const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
 /** @type {import('./$types').LayoutLoad} */
 export async function load({ url }): Promise<RunPageReturn> {
