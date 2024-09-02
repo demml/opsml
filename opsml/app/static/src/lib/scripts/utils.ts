@@ -941,7 +941,6 @@ export function createGroupedMetricLineVizData(
   const datasets: ChartjsLineDataset[] = [];
 
   let x: number[] | string[] = [];
-  const colors = generateColors(metrics.size + 1, 0.2);
   const borders = generateColors(metrics.size + 1);
   const runIdMetricMap = new Map<string, Map<string, number[]>>();
 

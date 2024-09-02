@@ -4,7 +4,7 @@ import { setupRegistryPage } from "$lib/scripts/utils";
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ url }) {
   const repository = (url as URL).searchParams.get("repository") as
     | string
     | undefined;

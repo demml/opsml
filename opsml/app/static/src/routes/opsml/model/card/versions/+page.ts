@@ -3,7 +3,7 @@ import { type CardRequest, type CardResponse } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ url }) {
   const registry = "model";
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
