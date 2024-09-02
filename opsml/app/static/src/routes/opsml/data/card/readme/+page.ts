@@ -1,4 +1,4 @@
-import { type FileExists, RegistryName, type Readme } from "$lib/scripts/types";
+import { RegistryName, type Readme } from "$lib/scripts/types";
 import { getReadme } from "$lib/scripts/utils";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;

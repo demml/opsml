@@ -1,4 +1,4 @@
-import { RegistryName, type FileSetup } from "$lib/scripts/types";
+import { RegistryName } from "$lib/scripts/types";
 import { setupFileAttr } from "$lib/scripts/filesystem.js";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;

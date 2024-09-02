@@ -1,10 +1,11 @@
 <script lang="ts">
 
-  import { type ModelMetadata , type Card } from "$lib/scripts/types";
+  import { type ModelMetadata , type Card, type RunCard } from "$lib/scripts/types";
   import icon from '$lib/images/opsml-green.ico'
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
   import CardHomepage from "$lib/card/CardHomepage.svelte";
   import Metadata from "$lib/card/model/Metadata.svelte";
+
 
 	/** @type {import('./$types').LayoutData} */
 	export let data;

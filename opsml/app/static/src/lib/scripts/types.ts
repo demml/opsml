@@ -569,3 +569,18 @@ export interface HardwareCharts {
   gpu_overall: ChartjsData | undefined;
   gpu_per_core: ChartjsData | undefined;
 }
+
+export interface RunPageReturn {
+  registry: string;
+  repository: string;
+  name: string;
+  card: Card;
+  metadata: RunCard;
+  metricNames: string[];
+  metrics: RunMetrics;
+  tableMetrics: Metric[];
+  parameters: Parameter[];
+  searchableMetrics: string[];
+  metricVizData: ChartjsData | undefined;
+  parsedMetrics: ParsedHardwareMetrics | undefined;
+}

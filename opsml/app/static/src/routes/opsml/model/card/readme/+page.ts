@@ -1,11 +1,8 @@
 import {
-  type FileExists,
   RegistryName,
-  CommonPaths,
   type Readme,
 } from "$lib/scripts/types";
 import { getReadme } from "$lib/scripts/utils";
-import { apiHandler } from "$lib/scripts/apiHandler";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
