@@ -40,7 +40,6 @@ export async function load({ url }) {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
-  const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "run";
 
   /** get last path from url */
@@ -51,15 +50,8 @@ export async function load({ url }) {
     name,
     repository: repository!,
     registry_type: registry,
+    version: version!,
   };
-
-  if (uid) {
-    cardReq.uid = uid;
-  }
-
-  if (version) {
-    cardReq.version = version;
-  }
 
   // get card info
   const cards: CardResponse = await listCards(cardReq);

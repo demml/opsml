@@ -37,7 +37,7 @@
 
 
   async function showTabContent(value: string ) {
-    let baseURL: string = `/opsml/${registry}/home`;
+    let baseURL: string = `/opsml/${registry}/card`;
 
     if (value === 'compare') {
       goto(`${baseURL}/metrics/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
