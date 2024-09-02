@@ -1,4 +1,4 @@
-type record = [string, string, number, number, number, number];
+type record = [string, string, string, number, number, number, number];
 
 export interface registryPage {
   page: record[];
