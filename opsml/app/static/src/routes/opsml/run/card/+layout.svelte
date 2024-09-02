@@ -33,7 +33,7 @@
   $: metadata = data.metadata;
 
   let tabSet: string;
-  $: tabSet = data.tabSet;
+  $: tabSet = "home";
 
 
   async function showTabContent(value: string ) {
@@ -45,6 +45,8 @@
     else {
       goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
     }
+
+    tabSet = value;
 
   }
 

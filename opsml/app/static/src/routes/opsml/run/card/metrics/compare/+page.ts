@@ -32,7 +32,6 @@ export async function load({ parent, url }) {
     repository: repository!,
     registry_type: CardRegistries.Run,
     limit: 50,
-    version: version,
   };
 
   const cards: CardResponse = await listCards(cardReq);
