@@ -8,19 +8,13 @@
   /** @type {import('./$types').PageData} */
   export let data;
 
-  let cards: CardResponse;
-  $: cards = data.cards;
+  let cards: CardResponse = data.cards;
 
-  let activePage: number = 0;
+  let registry: string = data.registry;
 
-  let registry: string;
-  $: registry = data.registry;
+  let repository: string= data.repository;
 
-  let repository: string;
-  $: repository = data.repository;
-
-  let name: string;
-  $: name = data.name;
+  let name: string = data.name;
 
   let artifactSearchTerm: string | undefined = undefined;
 

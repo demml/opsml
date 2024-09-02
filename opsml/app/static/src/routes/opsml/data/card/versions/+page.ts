@@ -1,19 +1,16 @@
-import { getRegistryPage } from "$lib/scripts/utils.js";
+import { getRegistryPage } from "$lib/scripts/utils";
 import { type CardRequest, type CardResponse } from "$lib/scripts/types";
 import { listCards } from "$lib/scripts/utils";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params, url }) {
+  const registry = "data";
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
     | undefined;
-  const registry = (url as URL).searchParams.get("registry") as
-    | string
-    | undefined;
-
   const registryPage = await getRegistryPage(
-    registry!,
+    registry,
     undefined,
     repository,
     name,
@@ -21,9 +18,9 @@ export async function load({ fetch, params, url }) {
   );
 
   const cardReq: CardRequest = {
-    repository: repository,
-    name: name,
-    registry_type: registry!,
+    name,
+    repository,
+    registry_type: registry,
     page: 0,
   };
 
@@ -31,7 +28,7 @@ export async function load({ fetch, params, url }) {
   const cards: CardResponse = await listCards(cardReq);
 
   return {
-    nbr_cards: registryPage.page[0][2],
+    nbr_cards: registryPage.page[0][3],
     name,
     repository,
     registry,
