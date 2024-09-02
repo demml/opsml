@@ -44,7 +44,6 @@ export async function load({ url }) {
 
   /** get last path from url */
   //const tab: string | undefined = (url as URL).pathname.split("/").pop();
-  const tab: string = "home";
 
   const cardReq: CardRequest = {
     name,
@@ -92,24 +91,24 @@ export async function load({ url }) {
   // check if "run/card/metrics" exists in url
   let metricVizData: ChartjsData | undefined;
 
-  if (tab === "metrics" || tab === "compare") {
-    // create chartjs data
-    metricVizData = createMetricVizData(metrics, "bar");
-    // let cardMap = new Map<string, RunMetrics>();
-    // cardMap.set(selectedCard.name, metrics);
-    // tableMetrics = metricsToTable(cardMap, metricNames.metric);
-  }
-
-  let parsedMetrics: ParsedHardwareMetrics | undefined;
-
-  if (tab === "hardware") {
-    const hardwareVizData = await getHardwareMetrics(runCard.uid);
-
-    // process hardware metrics
-    if (hardwareVizData.metrics.length > 0) {
-      parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
-    }
-  }
+  //if (tab === "metrics" || tab === "compare") {
+  //  // create chartjs data
+  //  metricVizData = createMetricVizData(metrics, "bar");
+  //  // let cardMap = new Map<string, RunMetrics>();
+  //  // cardMap.set(selectedCard.name, metrics);
+  //  // tableMetrics = metricsToTable(cardMap, metricNames.metric);
+  //}
+  //
+  //let parsedMetrics: ParsedHardwareMetrics | undefined;
+  //
+  //if (tab === "hardware") {
+  //  const hardwareVizData = await getHardwareMetrics(runCard.uid);
+  //
+  //  // process hardware metrics
+  //  if (hardwareVizData.metrics.length > 0) {
+  //    parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
+  //  }
+  //}
 
   console.log("loaded");
 
@@ -119,13 +118,11 @@ export async function load({ url }) {
     name: selectedCard.name,
     card: selectedCard,
     metadata: runCard,
-    tabSet: tab,
     metricNames: metricNames.metric,
     metrics,
     tableMetrics,
     parameters: parameters.parameter,
     searchableMetrics,
     metricVizData,
-    parsedMetrics,
   };
 }

@@ -10,7 +10,7 @@
   import { createMetricVizData, downloadMetricCSV } from "$lib/scripts/utils";
 
 
-  /** @type {import('./$types').LayoutData} */
+  /** @type {import('./$types').PageData} */
   export let data;
 
   let metrics: RunMetrics;
@@ -37,6 +37,8 @@
 
   let metricVizData: ChartjsData | undefined = data.metricVizData;
   let tableMetrics: Metric[] = data.tableMetrics;
+
+  
 
   export let isOpen = true;
 
