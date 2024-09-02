@@ -27,10 +27,12 @@ import {
 } from "$lib/scripts/utils";
 
 export const ssr = false;
+export const prerender = false;
+
 const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
-/** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+/** @type {import('./$types').LayoutLoad} */
+export async function load({ url }) {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
@@ -42,7 +44,8 @@ export async function load({ fetch, params, url }) {
   const registry = "run";
 
   /** get last path from url */
-  const tab: string | undefined = (url as URL).pathname.split("/").pop();
+  //const tab: string | undefined = (url as URL).pathname.split("/").pop();
+  const tab: string = "home";
 
   const cardReq: CardRequest = {
     name,
@@ -115,6 +118,8 @@ export async function load({ fetch, params, url }) {
       parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
     }
   }
+
+  console.log("loaded");
 
   return {
     registry,

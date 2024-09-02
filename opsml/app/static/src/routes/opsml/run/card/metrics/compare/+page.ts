@@ -1,4 +1,3 @@
-import { d } from "svelte-highlight/languages";
 import {
   type CardRequest,
   type CardResponse,

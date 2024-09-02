@@ -37,16 +37,9 @@
 
 
   async function showTabContent(value: string ) {
-    let baseURL: string = `/opsml/${registry}/card`;
+    let baseURL: string = `/opsml/${registry}/home`;
 
-    if (value === 'card') {
-      goto(
-        `${baseURL}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
-    } else if (value === 'versions') {
-
-      goto(`${baseURL}/${value}?name=${name}&repository=${repository}&registry=${registry}&version=${card.version}`,  { invalidateAll: false });
-
-    } else if (value === 'compare') {
+    if (value === 'compare') {
       goto(`${baseURL}/metrics/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
     }
     else {
@@ -85,7 +78,7 @@
         border=""
         active='border-b-2 border-primary-500'
         >
-          <Tab bind:group={tabSet} name="card" value="card" on:click={() => showTabContent("card")}>
+          <Tab bind:group={tabSet} name="home" value="home" on:click={() => showTabContent("home")}>
             <div class="flex flex-row items-center">
               <img class="h-4" src={modelcard_circuit} alt="ModelCard Circuit" />
               <div class="font-semibold text-sm">Card</div>
@@ -125,6 +118,14 @@
             <div class="flex flex-row  items-center">
               <Fa class="h-4 mr-2" icon={faToolbox} color="#4b3978"/>
               <div class="font-semibold text-sm">Hardware</div>
+            </div>
+          </Tab>
+
+
+          <Tab bind:group={tabSet} name="test" value="test" on:click={() => showTabContent("test")}>
+            <div class="flex flex-row items-center">
+              <img class="h-4" src={modelcard_circuit} alt="ModelCard Circuit" />
+              <div class="font-semibold text-sm">Test</div>
             </div>
           </Tab>
    
