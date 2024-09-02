@@ -21,9 +21,6 @@
   let card: Card;
   $: card = data.card;
 
-  let uid: string;
-  $: uid = card.uid;
-
   let registry: string;
   $: registry = data.registry
 
