@@ -91,25 +91,6 @@ export async function load({ url }) {
   // check if "run/card/metrics" exists in url
   let metricVizData: ChartjsData | undefined;
 
-  //if (tab === "metrics" || tab === "compare") {
-  //  // create chartjs data
-  //  metricVizData = createMetricVizData(metrics, "bar");
-  //  // let cardMap = new Map<string, RunMetrics>();
-  //  // cardMap.set(selectedCard.name, metrics);
-  //  // tableMetrics = metricsToTable(cardMap, metricNames.metric);
-  //}
-  //
-  //let parsedMetrics: ParsedHardwareMetrics | undefined;
-  //
-  //if (tab === "hardware") {
-  //  const hardwareVizData = await getHardwareMetrics(runCard.uid);
-  //
-  //  // process hardware metrics
-  //  if (hardwareVizData.metrics.length > 0) {
-  //    parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
-  //  }
-  //}
-
   console.log("loaded");
 
   return {
