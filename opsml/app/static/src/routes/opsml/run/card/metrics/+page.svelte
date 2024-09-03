@@ -8,6 +8,8 @@
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
   import { createMetricVizData, downloadMetricCSV } from "$lib/scripts/utils";
+  import { RunCardStore } from "$routes/store";
+  import { get } from 'svelte/store';
 
 
   /** @type {import('./$types').PageData} */
@@ -24,19 +26,22 @@
 
   let filteredMetrics: string[] = [];
   let tabSet: string = "metrics";
-  let plotSet: string = "bar";
+  let plotSet: string = $RunCardStore.PlotSet;
 
   let selectedMetrics: string[];
-  $: selectedMetrics = [];
+  $: selectedMetrics = $RunCardStore.SelectedMetrics;
 
   let metricsToPlot: string[];
-  $: metricsToPlot = [];
+  $: metricsToPlot = $RunCardStore.MetricsToPlot;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
 
-  let metricVizData: ChartjsData | undefined = data.metricVizData;
-  let tableMetrics: Metric[] = data.tableMetrics;
+  let metricVizData: ChartjsData | undefined;
+  $: metricVizData = $RunCardStore.MetricData;
+
+  let tableMetrics: Metric[];
+  $: tableMetrics = $RunCardStore.TableMetrics;
 
   
 
@@ -75,6 +80,7 @@
     } else {
       selectedMetrics = [...selectedMetrics, name];
     }
+
   }
 
   function render_chart(type: string) {
@@ -88,7 +94,13 @@
   }
 
   onMount(() => {
-    selectedMetrics = metricNames;
+
+    if (get(RunCardStore).SelectedMetrics.length === 0) {
+      RunCardStore.update((store) => {
+        store.SelectedMetrics = metricNames;
+        return store;
+      });
+    } 
   });
 
   async function changePlotType(type: string) {
@@ -115,6 +127,14 @@
   );
 
     metricVizData = createMetricVizData(newMetrics, plotSet);
+    RunCardStore.update((store) => {
+      store.MetricData = metricVizData;
+      store.PlotSet = plotSet;
+      store.MetricsToPlot = metricsToPlot;
+      store.FilteredMetrics = filteredMetrics;
+      store.SelectedMetrics = selectedMetrics;
+      return store;
+    });
 
   }
 

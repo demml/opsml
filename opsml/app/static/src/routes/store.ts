@@ -24,6 +24,13 @@ export const DataPageStore = persisted("DataPageStore", {
 });
 
 export const RunCardStore = persisted("RunCardStore", {
+  MetricData: empty,
+  SelectedMetrics: emptyList,
+  MetricsToPlot: emptyList,
+  TableMetrics: empty,
+  PlotSet: "bar",
+  FilteredMetrics: emptyList,
+  ShowTable: false,
   CompareMetricData: empty,
   CompareSelectedMetrics: emptyList,
   CompareMetricsToPlot: emptyList,
@@ -36,6 +43,13 @@ export const RunCardStore = persisted("RunCardStore", {
 
 export function resetRunCardStore() {
   RunCardStore.update((store) => {
+    store.MetricData = empty;
+    store.SelectedMetrics = emptyList;
+    store.MetricsToPlot = emptyList;
+    store.TableMetrics = empty;
+    store.PlotSet = "bar";
+    store.FilteredMetrics = emptyList;
+    store.ShowTable = false;
     store.CompareMetricData = empty;
     store.CompareSelectedMetrics = emptyList;
     store.CompareMetricsToPlot = emptyList;
