@@ -10,6 +10,7 @@
   type registryPage,
 } from "$lib/scripts/types";
   import ArtifactSearch from '$lib/ArtifactSearch.svelte';
+  import { DataPageStore } from '$routes/store';
 
   /** @type {import('./$types').PageData} */
 	export let data;
@@ -73,6 +74,7 @@
   registryStats={registryStats} 
   registry={registry} 
   artifactSearchTerm={artifactSearchTerm} 
+  pageStore={DataPageStore}
   />
 
 

@@ -15,6 +15,7 @@ import Fa from 'svelte-fa'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import PageCard from "$lib/PageCard.svelte";
 import { delay } from "$lib/scripts/utils";
+import { get } from 'svelte/store'
 
 
 
@@ -28,6 +29,7 @@ export let registryPage: registryPage;
 export let registryStats: registryStats;
 export let registry: string;
 export let artifactSearchTerm: string | undefined;
+export let pageStore;
 
 
 const searchRepos = () => {	
@@ -50,6 +52,14 @@ async function setActiveRepo( name: string) {
 
     paginationSettings.page = 0;
     paginationSettings.size = registryStats.nbr_names;
+
+    pageStore.update((store) => {
+        store.selectedRepo = selectedRepo;
+        store.registryPage = registryPage;
+        store.registryStats = registryStats;
+        return store;
+      });
+
     }
 
 async function onPageChange(e: CustomEvent) {
