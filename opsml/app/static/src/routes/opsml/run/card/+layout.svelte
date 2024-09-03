@@ -3,13 +3,14 @@
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
   import { faTag, faFolderTree, faBolt, faToolbox, faChartSimple } from '@fortawesome/free-solid-svg-icons'
-
+  import { page } from '$app/stores'; 
 
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
 
   import { type Card, type RunCard } from "$lib/scripts/types";
   import { goto } from '$app/navigation';
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
+  import { onMount } from 'svelte';
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
@@ -49,6 +50,27 @@
     tabSet = value;
 
   }
+
+  onMount(() => {
+    if ($page.url.pathname.includes("files")) {
+        tabSet = "files";
+    }
+    else if ($page.url.pathname.includes("metrics/compare")) {
+        tabSet = "compare";
+    }
+    else if ($page.url.pathname.includes("metrics")) {
+        tabSet = "metrics";
+    }
+    else if ($page.url.pathname.includes("graphs")) {
+        tabSet = "graphs";
+    }
+    else if ($page.url.pathname.includes("hardware")) {
+        tabSet = "hardware";
+    }
+    else {
+      tabSet = "home";
+    }
+  });
 
 
 </script>
