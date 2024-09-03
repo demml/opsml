@@ -6,6 +6,8 @@
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
   import { goto } from '$app/navigation';
   import type { Card } from "$lib/scripts/types";
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
 
 
@@ -40,6 +42,31 @@
     tabSet = value;
 
   }
+
+
+  onMount(() => {
+    if ($page.url.pathname.includes("files")) {
+        tabSet = "files";
+    }
+    else if ($page.url.pathname.includes("metadata")) {
+        tabSet = "metadata";
+    }
+    else if ($page.url.pathname.includes("versions")) {
+        tabSet = "versions";
+    }
+    else if ($page.url.pathname.includes("monitoring")) {
+        tabSet = "monitoring";
+    }
+    else if ($page.url.pathname.includes("settings")) {
+        tabSet = "settings";
+    }
+    else if ($page.url.pathname.includes("messages")) {
+        tabSet = "messages";
+    }
+    else {
+      tabSet = "home";
+    }
+  });
 
 
  
