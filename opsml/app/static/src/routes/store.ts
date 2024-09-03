@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any */
+
 import { persisted } from "svelte-persisted-store";
 
-export let empty: any = null;
-export let emptyList: string[] = [];
+export const empty: any = null;
+export const emptyList: string[] = [];
 
 export const RunPageStore = persisted("RunPageStore", {
   selectedRepo: empty,

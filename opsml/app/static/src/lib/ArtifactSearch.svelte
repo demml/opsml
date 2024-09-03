@@ -15,7 +15,6 @@ import Fa from 'svelte-fa'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import PageCard from "$lib/PageCard.svelte";
 import { delay } from "$lib/scripts/utils";
-import { get } from 'svelte/store'
 
 
 
