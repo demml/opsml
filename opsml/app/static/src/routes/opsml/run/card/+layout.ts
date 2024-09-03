@@ -1,18 +1,13 @@
 import {
-  type FileExists,
   type CardRequest,
   type CardResponse,
   type RunCard,
-  type MetricNames,
-  type Metrics,
   type Metric,
   type Parameters,
   type RunMetrics,
   type ChartjsData,
   type TableMetric,
-  type ParsedHardwareMetrics,
-  RegistryName,
-  type HardwareMetricsResponse,
+  type RunPageReturn,
 } from "$lib/scripts/types";
 
 import {
@@ -21,16 +16,12 @@ import {
   getRunMetrics,
   getRunMetricNames,
   getRunParameters,
-  createMetricVizData,
-  getHardwareMetrics,
-  parseHardwareMetrics,
 } from "$lib/scripts/utils";
 
 export const ssr = false;
-const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
-/** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+/** @type {import('./$types').LayoutLoad} */
+export async function load({ url }): Promise<RunPageReturn> {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
@@ -38,25 +29,20 @@ export async function load({ fetch, params, url }) {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
+
   const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "run";
 
   /** get last path from url */
-  const tab: string | undefined = (url as URL).pathname.split("/").pop();
+  //const tab: string | undefined = (url as URL).pathname.split("/").pop();
 
   const cardReq: CardRequest = {
     name,
     repository: repository!,
     registry_type: registry,
+    version: version,
+    uid,
   };
-
-  if (uid) {
-    cardReq.uid = uid;
-  }
-
-  if (version) {
-    cardReq.version = version;
-  }
 
   // get card info
   const cards: CardResponse = await listCards(cardReq);
@@ -97,24 +83,7 @@ export async function load({ fetch, params, url }) {
   // check if "run/card/metrics" exists in url
   let metricVizData: ChartjsData | undefined;
 
-  if (tab === "metrics" || tab === "compare") {
-    // create chartjs data
-    metricVizData = createMetricVizData(metrics, "bar");
-    // let cardMap = new Map<string, RunMetrics>();
-    // cardMap.set(selectedCard.name, metrics);
-    // tableMetrics = metricsToTable(cardMap, metricNames.metric);
-  }
-
-  let parsedMetrics: ParsedHardwareMetrics | undefined;
-
-  if (tab === "hardware") {
-    const hardwareVizData = await getHardwareMetrics(runCard.uid);
-
-    // process hardware metrics
-    if (hardwareVizData.metrics.length > 0) {
-      parsedMetrics = parseHardwareMetrics(hardwareVizData.metrics);
-    }
-  }
+  console.log("loaded");
 
   return {
     registry,
@@ -122,13 +91,12 @@ export async function load({ fetch, params, url }) {
     name: selectedCard.name,
     card: selectedCard,
     metadata: runCard,
-    tabSet: tab,
     metricNames: metricNames.metric,
     metrics,
     tableMetrics,
     parameters: parameters.parameter,
     searchableMetrics,
     metricVizData,
-    parsedMetrics,
+    parsedMetrics: undefined,
   };
 }

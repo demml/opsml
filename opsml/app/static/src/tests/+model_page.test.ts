@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, it } from "vitest";
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
 import ModelPage from "../routes/opsml/model/+page.svelte";
-import ModelCardPage from "../routes/opsml/model/card/+page.svelte";
+import ModelCardPage from "../routes/opsml/model/card/home/+page.svelte";
 import ModelCardFiles from "../routes/opsml/model/card/files/+page.svelte";
 import ModelCardMetadata from "../routes/opsml/model/card/metadata/+page.svelte";
 import Versions from "../routes/opsml/model/card/versions/+page.svelte";

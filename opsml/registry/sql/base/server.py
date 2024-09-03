@@ -91,7 +91,7 @@ class ServerRegistry(SQLRegistryBase):
         page: int,
         repository: Optional[str] = None,
         search_term: Optional[str] = None,
-    ) -> List[Tuple[Union[str, int], ...]]:
+    ) -> List[List[Union[str, int]]]:
         """Query page from Card Database
         Args:
             sort_by:
@@ -107,7 +107,7 @@ class ServerRegistry(SQLRegistryBase):
             List of tuples
         """
         return cast(
-            List[Tuple[Union[str, int], ...]],
+            List[List[Union[str, int]]],
             self.engine.query_page(
                 table=self._table,
                 repository=repository,

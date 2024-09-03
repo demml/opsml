@@ -97,7 +97,7 @@ def test_register_data(
 
     # test ui routes for cards
     response = test_app.get(
-        f"/opsml/data/card?name={datacard.name}&repository={datacard.repository}&version={datacard.version}&uid={datacard.uid}"
+        f"/opsml/data/card/home?name={datacard.name}&repository={datacard.repository}&version={datacard.version}&uid={datacard.uid}"
     )
     assert response.status_code == 200
 

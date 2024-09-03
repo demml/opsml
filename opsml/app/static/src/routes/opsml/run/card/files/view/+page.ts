@@ -6,7 +6,7 @@ import { RegistryName } from "$lib/scripts/types";
 const opsmlRoot: string = `opsml-root:/${RegistryName.Run}`;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ url }) {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string

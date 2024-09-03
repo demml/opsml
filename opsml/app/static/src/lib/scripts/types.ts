@@ -1,4 +1,4 @@
-type record = [string, string, number, number, number, number];
+type record = [string, string, string, number, number, number, number];
 
 export interface registryPage {
   page: record[];
@@ -568,4 +568,19 @@ export interface HardwareCharts {
   network_rx: ChartjsData;
   gpu_overall: ChartjsData | undefined;
   gpu_per_core: ChartjsData | undefined;
+}
+
+export interface RunPageReturn {
+  registry: string;
+  repository: string;
+  name: string;
+  card: Card;
+  metadata: RunCard;
+  metricNames: string[];
+  metrics: RunMetrics;
+  tableMetrics: Metric[];
+  parameters: Parameter[];
+  searchableMetrics: string[];
+  metricVizData: ChartjsData | undefined;
+  parsedMetrics: ParsedHardwareMetrics | undefined;
 }

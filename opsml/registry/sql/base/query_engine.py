@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from enum import Enum
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Union, cast
 
-from sqlalchemy import Integer
+from sqlalchemy import Integer, and_
 from sqlalchemy import cast as sql_cast
 from sqlalchemy import func as sqa_func
 from sqlalchemy import insert, select, text
@@ -506,7 +506,20 @@ class QueryEngine:
             Tuple of card summary
         """
 
-        subquery = select(
+        versions = select(
+            table.repository,
+            table.name,
+            table.version,
+            sqa_func.row_number()
+            .over(
+                partition_by=(table.repository, table.name),  # type: ignore
+                order_by=table.timestamp.desc(),  # type: ignore
+            )
+            .label("row_number"),
+        )
+
+        #### get summary stats for repo/name
+        stats = select(
             table.repository,
             table.name,
             sqa_func.count(distinct(table.version)).label("versions"),  # type:ignore
@@ -515,30 +528,68 @@ class QueryEngine:
         ).group_by(table.repository, table.name)
 
         if repository is not None:
-            subquery = subquery.filter(table.repository == repository)
+            versions = versions.filter(table.repository == repository)
+            stats = stats.filter(table.repository == repository)
 
         if search_term:
-            subquery = subquery.filter(
+            versions = versions.filter(
                 or_(
                     table.name.like(f"%{search_term}%"),  # type: ignore
                     table.repository.like(f"%{search_term}%"),  # type: ignore
                 ),
             )
-        subquery = subquery.subquery()
 
-        subquery2 = select(subquery, (sqa_func.row_number().over(order_by=sort_by)).label("row_number")).subquery()
+            stats = stats.filter(
+                or_(
+                    table.name.like(f"%{search_term}%"),  # type: ignore
+                    table.repository.like(f"%{search_term}%"),  # type: ignore
+                ),
+            )
+
+        filtered_versions = (
+            select(
+                versions.c.repository,
+                versions.c.name,
+                versions.c.version,
+                versions.c.row_number,
+            )
+            .filter(versions.c.row_number == 1)
+            .subquery()
+        )
+
+        joined = (
+            select(
+                stats.c.repository,
+                stats.c.name,
+                filtered_versions.c.version,
+                stats.c.versions,
+                stats.c.updated_at,
+                stats.c.created_at,
+                sqa_func.row_number().over(order_by=sort_by).label("row_number"),
+            )
+            .join(
+                filtered_versions,
+                and_(
+                    stats.c.repository == filtered_versions.c.repository,
+                    stats.c.name == filtered_versions.c.name,
+                ),
+            )
+            .subquery()
+        )
 
         lower_bound = page * 30
         upper_bound = lower_bound + 30
 
-        query = (
-            select(subquery2)
-            .filter(subquery2.c.row_number.between(lower_bound, upper_bound))
-            .order_by(text("updated_at desc"))
+        combined_query = (
+            select(joined)
+            .filter(joined.c.row_number.between(lower_bound, upper_bound))
+            .order_by(
+                joined.c.updated_at.desc(),
+            )
         )
 
         with self.session() as sess:
-            records = sess.execute(query).all()
+            records = sess.execute(combined_query).all()
 
         return records
 

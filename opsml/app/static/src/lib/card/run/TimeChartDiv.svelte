@@ -64,7 +64,7 @@
     chart.update();
 
     // @ts-ignore
-    window.metricChart = chart;
+    window[id] = chart;
 
     }
 

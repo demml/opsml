@@ -1,17 +1,13 @@
-import { goTop } from "$lib/scripts/utils";
 import { CommonPaths, type User, type UserUpdated } from "$lib/scripts/types";
 import { checkUser } from "$lib/scripts/auth/auth_routes";
 import type { UserExistsResponse } from "$lib/scripts/types";
 import {
-  type securityQuestionResponse,
   CommonErrors,
-  type PasswordStrength,
 } from "$lib/scripts/types";
 import {
   getSecurityQuestion,
   generateTempToken,
 } from "$lib/scripts/auth/auth_routes";
-import { authStore } from "$lib/scripts/auth/authStore";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
 export interface SecurityReturn {

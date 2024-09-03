@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fastapi import File, Form, UploadFile
 from pydantic import (
@@ -84,7 +84,7 @@ class PutFileRequest(BaseModel):
 
 
 class RegistryQuery(BaseModel):
-    page: List[Tuple[Union[str, int], ...]]
+    page: List[List[Union[str, int]]]
 
 
 class ListCardRequest(BaseModel):
