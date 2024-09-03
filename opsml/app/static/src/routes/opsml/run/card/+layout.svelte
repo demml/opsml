@@ -11,6 +11,7 @@
   import { goto } from '$app/navigation';
   import atomOneLight from "svelte-highlight/styles/atom-one-light";
   import { onMount } from 'svelte';
+  import { resetRunCardStore, RunCardStore } from '$routes/store';
 
   /** @type {import('./$types').LayoutData} */
 	export let data;
