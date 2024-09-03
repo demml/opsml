@@ -3,7 +3,7 @@ import { render } from "@testing-library/svelte";
 import { afterAll, afterEach, beforeAll, it } from "vitest";
 import * as utils from "../lib/scripts/utils";
 import RunPage from "../routes/opsml/run/+page.svelte";
-import RunCardPage from "../routes/opsml/run/card/+page.svelte";
+import RunCardPage from "../routes/opsml/run/card/home/+page.svelte";
 import RunCardMetricPage from "../routes/opsml/run/card/metrics/+page.svelte";
 import RunCardCompareMetricPage from "../routes/opsml/run/card/metrics/compare/+page.svelte";
 import RunCardFilesPage from "../routes/opsml/run/card/files/+page.svelte";
