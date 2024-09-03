@@ -2,7 +2,7 @@ import type {
   ParsedHardwareMetrics,
   Card,
   RunPageReturn,
-} from "$lib/scripts/types.js";
+} from "$lib/scripts/types";
 import { getHardwareMetrics, parseHardwareMetrics } from "$lib/scripts/utils";
 
 export const ssr = false;

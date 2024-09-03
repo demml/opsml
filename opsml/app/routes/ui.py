@@ -58,18 +58,20 @@ async def opsml_(request: Request, path: str) -> HTMLResponse:
         raise error
 
 
-@router.get("/opsml/{path}/card")
-async def opsml_card(
+@router.get("/opsml/{path}/card/{subpath:path}")
+async def opsml_card_homepage(
     request: Request,
     path: str,
+    subpath: str,
     name: str,
     repository: str,
     version: Optional[str] = None,
     uid: Optional[str] = None,
 ) -> HTMLResponse:
     try:
+        print(f"site/opsml/{path}/card/{subpath}.html")
         return templates.TemplateResponse(
-            f"site/opsml/{path}/card.html",
+            f"site/opsml/{path}/card/{subpath}.html",
             {
                 "request": request,
                 "name": name,

@@ -19,7 +19,6 @@ import {
 } from "$lib/scripts/utils";
 
 export const ssr = false;
-export const prerender = false;
 
 /** @type {import('./$types').LayoutLoad} */
 export async function load({ url }): Promise<RunPageReturn> {
