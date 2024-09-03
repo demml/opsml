@@ -17,6 +17,10 @@ export default {
       precompress: false,
       strict: true,
     }),
+    alias: {
+      $routes: "./src/routes",
+      "$routes/*": "./src/routes/*",
+    },
   },
   preprocess: vitePreprocess(),
   vitePlugin: { exclude: ["./node_modules", "./.svelte-kit", "./.svelte"] },
