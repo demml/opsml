@@ -13,6 +13,7 @@ import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 import { type Files } from "$lib/scripts/types";
 import { calculateTimeBetween } from "$lib/scripts/utils";
 import { sampleCard, sampleModelMetadata } from "./constants";
+import { ModelPageStore } from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -55,6 +56,13 @@ it("render span", () => {
 });
 
 it("render model page", () => {
+  ModelPageStore.update((store) => {
+    store.selectedRepo = "test";
+    store.registryStats = { nbr_names: 1, nbr_versions: 1, nbr_repos: 1 };
+    store.registryPage = { page: ["test", "test", 10, 120, 110, 10] };
+    return store;
+  });
+
   const data = {
     args: {
       repos: ["test"],

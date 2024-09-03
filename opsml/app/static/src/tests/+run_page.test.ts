@@ -15,6 +15,7 @@ import {
   sampleCards,
   sampleFiles,
 } from "./constants";
+import { RunPageStore, ModelPageStore, DataPageStore } from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -22,6 +23,14 @@ afterAll(() => server.close());
 
 it("render runPage", async () => {
   const registryPage = await utils.setupRegistryPage("model");
+
+  RunPageStore.update((store) => {
+    store.selectedRepo = "model";
+    store.registryStats = registryPage.registryStats;
+    store.registryPage = registryPage.registryPage;
+    return store;
+  });
+
   const data = {
     args: {
       repos: ["model"],
