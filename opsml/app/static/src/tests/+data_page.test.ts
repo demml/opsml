@@ -3,7 +3,7 @@ import { render } from "@testing-library/svelte";
 import { afterAll, afterEach, beforeAll, it } from "vitest";
 
 import DataPage from "../routes/opsml/data/+page.svelte";
-import DataCardPage from "../routes/opsml/data/card/+page.svelte";
+import DataCardPage from "../routes/opsml/data/card/home/+page.svelte";
 import DataCardFiles from "../routes/opsml/data/card/files/+page.svelte";
 import DataCardSplits from "../routes/opsml/data/card/splits/+page.svelte";
 import DataVersionPage from "../routes/opsml/data/card/versions/+page.svelte";
@@ -11,7 +11,6 @@ import DataSqlPage from "../routes/opsml/data/card/sql/+page.svelte";
 
 import * as utils from "../lib/scripts/utils";
 import { sampleCard, sampleDataMetadata, sampleFiles } from "./constants";
-import { registry } from "chart.js";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
