@@ -110,28 +110,34 @@ You can now log into the `OpsML` server and see your recent run and associated m
         show_source: true
         heading_level: 3
 
-::: opsml.types.metrics.HardwareMetrics
+::: opsml.types.hardware.HardwareMetrics
     options:
         show_root_heading: true
         show_source: true
         heading_level: 3
 
-::: opsml.types.metrics.CPUMetrics
+::: opsml.types.hardware.CPUMetrics
     options:
         show_root_heading: true
         show_source: true
         heading_level: 3
 
-::: opsml.types.metrics.MemoryMetrics
+::: opsml.types.hardware.MemoryMetrics
     options:
         show_root_heading: true
         show_source: true
         heading_level: 3
 
-::: opsml.types.metrics.NetworkRates
+::: opsml.types.hardware.NetworkRates
     options:
         show_root_heading: true
         show_source: true
         heading_level: 3
 
+
+::: opsml.types.hardware.GPUMetrics
+    options:
+        show_root_heading: true
+        show_source: true
+        heading_level: 3
 
