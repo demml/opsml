@@ -12,7 +12,7 @@ export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').LayoutLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ url }) {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string

@@ -6,7 +6,6 @@ import {
   type Metrics,
   type MetricNames,
   type Parameters,
-  type Graph,
   type RunMetrics,
   type Message,
   type MessageThread,
@@ -942,7 +941,6 @@ export function createGroupedMetricLineVizData(
   const datasets: ChartjsLineDataset[] = [];
 
   let x: number[] | string[] = [];
-  const colors = generateColors(metrics.size + 1, 0.2);
   const borders = generateColors(metrics.size + 1);
   const runIdMetricMap = new Map<string, Map<string, number[]>>();
 
@@ -966,7 +964,6 @@ export function createGroupedMetricLineVizData(
   }
 
   Array.from(runIdMetricMap.entries()).forEach(([key, value], index) => {
-    const color = colors[index + 1];
     const borderColor = borders[index + 1];
 
     Array.from(value.entries()).forEach(([metricName, metricData]) => {
@@ -1223,7 +1220,6 @@ export function createTimeSeriesChart(
     backgroundColor: backgroundColors[2],
     pointRadius: 2,
     fill: true,
-    tension: 0.4,
   });
 
   return buildTimeChart(x, datasets, "Time", y_label, false);
@@ -1246,7 +1242,6 @@ export function createTimeSeriesGroupedChart(
       backgroundColor: colors[index + 1],
       pointRadius: 2,
       fill: false,
-      tension: 0.4,
     });
   });
 

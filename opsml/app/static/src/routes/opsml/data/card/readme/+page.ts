@@ -1,14 +1,18 @@
-import { type FileExists, RegistryName, type Readme } from "$lib/scripts/types";
+import { RegistryName, type Readme } from "$lib/scripts/types";
 import { getReadme } from "$lib/scripts/utils";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
-  const name: string = (url as URL).searchParams.get("name");
-  const repository: string = (url as URL).searchParams.get("repository");
-  const version: string = (url as URL).searchParams.get("version");
-  let status: string = (url as URL).searchParams.get("status");
+export async function load({ url }) {
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  let status = (url as URL).searchParams.get("status") as string | undefined;
 
   status = "edit";
   let content: string = "";

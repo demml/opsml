@@ -78,7 +78,7 @@
     };
     toastStore.trigger(t);
 
-    goto(`/opsml/${registry}/card?name=${name}&repository=${repository}&version=${version}`);
+    goto(`/opsml/${registry}/card/home/?name=${name}&repository=${repository}&version=${version}`);
   }
 
   onMount(() => {

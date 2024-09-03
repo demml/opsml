@@ -12,6 +12,7 @@
 } from "$lib/scripts/types";
   import ArtifactSearch from '$lib/ArtifactSearch.svelte';
 
+
   /** @type {import('./$types').PageData} */
 	export let data;
 
@@ -48,9 +49,11 @@
   } satisfies PaginationSettings;
 
 
+
   onMount(async () => {
     if (selectedRepo) {
       registryPage = await getRegistryPage(registry, undefined, selectedRepo, searchTerm, 0);
+      console.log(registryPage);
       registryStats = await getRegistryStats(registry, selectedRepo);
       
       paginationSettings.page = 0;

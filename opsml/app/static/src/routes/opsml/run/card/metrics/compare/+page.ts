@@ -1,4 +1,3 @@
-import { d } from "svelte-highlight/languages";
 import {
   type CardRequest,
   type CardResponse,
@@ -14,7 +13,7 @@ import { listCards } from "$lib/scripts/utils";
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ parent, url }) {
+export async function load({ parent, url }): Promise<CompareMetricPage> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const data = await parent();
 
@@ -33,7 +32,6 @@ export async function load({ parent, url }) {
     repository: repository!,
     registry_type: CardRegistries.Run,
     limit: 50,
-    version: version,
   };
 
   const cards: CardResponse = await listCards(cardReq);

@@ -1,11 +1,6 @@
 import { apiHandler } from "$lib/scripts/apiHandler";
 import { CommonPaths } from "$lib/scripts/types";
 
-interface CardRequest {
-  registry_type: string;
-  limit: number;
-}
-
 interface CardJson {
   date: string;
   app_env: string;

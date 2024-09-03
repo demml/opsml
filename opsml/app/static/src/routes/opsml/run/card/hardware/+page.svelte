@@ -10,7 +10,7 @@
   import { onMount } from "svelte";
   import logo from '$lib/images/opsml-logo.png';
 
-  /** @type {import('./$types').LayoutData} */
+  /** @type {import('./$types').PageData} */
   export let data;
 
   let runcard: RunCard;

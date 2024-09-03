@@ -149,8 +149,9 @@ const searchPage = async function () {
         <PageCard 
           repository={item[0]}
           name={item[1]}
-          nbr_versions={item[2]}
-          updated_at={item[3]}
+          version={item[2]}
+          nbr_versions={item[3]}
+          updated_at={item[4]}
           registry={registry}
         />
       {/each}

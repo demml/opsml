@@ -1,10 +1,10 @@
-import { RegistryName, type FileSetup } from "$lib/scripts/types";
+import { RegistryName } from "$lib/scripts/types";
 import { setupFileAttr } from "$lib/scripts/filesystem.js";
 
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ fetch, params, url }) {
+export async function load({ url }) {
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string

@@ -2,9 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import {
-  expect, test, afterAll, afterEach, beforeAll, it,
-} from "vitest";
+import { expect, afterAll, afterEach, beforeAll, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import * as page from "./homepage";
@@ -13,13 +11,15 @@ const server = setupServer(
   // Describe network behavior with request handlers.
   // Tip: move the handlers into their own module and
   // import it across your browser and Node.js setups!
-  http.post("/opsml/cards/list", ({ request, params, cookies }) => HttpResponse.json({
-    cards: [
-      {
-        uid: "f8dd058f-9006-4174-8d49-e3086bc39c21",
-      },
-    ],
-  })),
+  http.post("/opsml/cards/list", () =>
+    HttpResponse.json({
+      cards: [
+        {
+          uid: "f8dd058f-9006-4174-8d49-e3086bc39c21",
+        },
+      ],
+    })
+  )
 );
 
 // Enable request interception.
