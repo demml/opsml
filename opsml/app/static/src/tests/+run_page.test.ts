@@ -7,6 +7,8 @@ import RunCardPage from "../routes/opsml/run/card/home/+page.svelte";
 import RunCardMetricPage from "../routes/opsml/run/card/metrics/+page.svelte";
 import RunCardCompareMetricPage from "../routes/opsml/run/card/metrics/compare/+page.svelte";
 import RunCardFilesPage from "../routes/opsml/run/card/files/+page.svelte";
+import RunCardHardWare from "../routes/opsml/run/card/hardware/+page.svelte";
+import RunCardGraphs from "../routes/opsml/run/card/graphs/+page.svelte";
 import {
   sampleRunCard,
   sampleParameters,
@@ -15,6 +17,7 @@ import {
   sampleCards,
   sampleFiles,
 } from "./constants";
+import { RunPageStore, RunCardStore } from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -22,6 +25,14 @@ afterAll(() => server.close());
 
 it("render runPage", async () => {
   const registryPage = await utils.setupRegistryPage("model");
+
+  RunPageStore.update((store) => {
+    store.selectedRepo = "model";
+    store.registryStats = registryPage.registryStats;
+    store.registryPage = registryPage.registryPage;
+    return store;
+  });
+
   const data = {
     args: {
       repos: ["model"],
@@ -67,6 +78,13 @@ it("render runCardPage", async () => {
 
 it("render runCardMetricPage", () => {
   const metricViz = utils.createMetricVizData(sampleRunMetics, "bar");
+
+  RunCardStore.update((store) => {
+    store.MetricData = metricViz;
+    store.TableMetrics = sampleMetrics;
+    return store;
+  });
+
   const data = {
     metrics: sampleRunMetics,
     metricNames: ["accuracy"],
@@ -117,4 +135,52 @@ it("render RunCardFiles", async () => {
   };
 
   render(RunCardFilesPage, { data });
+});
+
+it("render RunCardHardware", async () => {
+  const data = {
+    metadata: sampleRunCard,
+  };
+
+  render(RunCardHardWare, { data });
+});
+
+it("render RunCardHardware with hardware", async () => {
+  const data = {
+    metadata: sampleRunCard,
+  };
+
+  const hardwareMetrics = await utils.getHardwareMetrics("run_uid");
+  const parsedMetrics = utils.parseHardwareMetrics(hardwareMetrics.metrics);
+  const charts = utils.createHardwareCharts(parsedMetrics);
+
+  RunCardStore.update((store) => {
+    store.HardwareMetrics = parsedMetrics;
+    store.HardwareCharts = charts;
+    return store;
+  });
+
+  render(RunCardHardWare, { data });
+  expect(document.getElementById("renderedChart")).toBeTruthy();
+});
+
+it("render RunGraphs", async () => {
+  const graphs = await utils.getRunGraphs("name", "repository", "version");
+
+  RunCardStore.update((store) => {
+    store.Graphs = graphs;
+    return store;
+  });
+
+  render(RunCardGraphs);
+  expect(document.getElementById("renderGraphs")).toBeTruthy();
+});
+
+it("render no RunGraphs", async () => {
+  RunCardStore.update((store) => {
+    store.Graphs = undefined;
+    return store;
+  });
+  render(RunCardGraphs);
+  expect(document.getElementById("notRendered")).toBeTruthy();
 });

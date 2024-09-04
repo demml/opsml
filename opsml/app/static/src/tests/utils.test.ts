@@ -8,6 +8,7 @@ import {
 } from "$lib/scripts/types";
 import { server } from "./server";
 import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
+import { graphs } from "./graphs";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -472,4 +473,9 @@ it("getHardwareMetrics", async () => {
   expect(hardwareCharts.cpu_per_core.data.datasets[0].data).toEqual([
     45.1, 45.1, 45.1,
   ]);
+});
+
+it("getGraphs", async () => {
+  const _graphs = await page.getRunGraphs("repo", "name", "version");
+  expect(_graphs).toEqual(graphs);
 });

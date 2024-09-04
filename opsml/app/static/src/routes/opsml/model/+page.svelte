@@ -11,6 +11,7 @@
   type registryPage,
 } from "$lib/scripts/types";
   import ArtifactSearch from '$lib/ArtifactSearch.svelte';
+  import { ModelPageStore } from '$routes/store';
 
 
   /** @type {import('./$types').PageData} */
@@ -26,15 +27,15 @@
   $: searchTerm = data.args.searchTerm;
 
   let selectedRepo: string | undefined;
-  $: selectedRepo = data.args.selectedRepo;
+  $: selectedRepo = $ModelPageStore.selectedRepo;
 
   let registryPage: registryPage;
-  $: registryPage = data.args.registryPage;
+  $: registryPage = $ModelPageStore.registryPage;
 
   let registryStats: registryStats;
-  $: registryStats = data.args.registryStats;
+  $: registryStats = $ModelPageStore.registryStats;
 
-  let activePage: number = 0;
+
   let filteredRepos: string[] = [];
   let tabSet: string = "repos";
 
@@ -44,7 +45,7 @@
   let paginationSettings = {
     page: 0,
     limit: 30,
-    size: data.args.registryStats.nbr_names,
+    size: $ModelPageStore.registryStats.nbr_names,
     amounts: [],
   } satisfies PaginationSettings;
 
@@ -77,4 +78,5 @@
   registryStats={registryStats} 
   registry={registry} 
   artifactSearchTerm={artifactSearchTerm} 
+  pageStore={ModelPageStore}
   />

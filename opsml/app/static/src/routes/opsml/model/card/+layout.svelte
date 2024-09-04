@@ -10,7 +10,6 @@
   import { page } from '$app/stores';
 
 
-
   /** @type {import('./$types').LayoutData} */
 	export let data;
 

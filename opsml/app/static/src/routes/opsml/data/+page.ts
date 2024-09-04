@@ -1,5 +1,7 @@
 import { type registryPageReturn } from "$lib/scripts/types";
 import { setupRegistryPage } from "$lib/scripts/utils";
+import { DataPageStore } from "$routes/store";
+import { get } from "svelte/store";
 
 export const ssr = false;
 
@@ -12,6 +14,15 @@ export async function load({ url }) {
   const registry: string = "data";
 
   const page: registryPageReturn = await setupRegistryPage(registry);
+
+  if (!get(DataPageStore).selectedRepo) {
+    DataPageStore.update((store) => {
+      store.selectedRepo = repository;
+      store.registryStats = page.registryStats;
+      store.registryPage = page.registryPage;
+      return store;
+    });
+  }
 
   return {
     args: {

@@ -17,6 +17,7 @@ import {
   getRunMetricNames,
   getRunParameters,
 } from "$lib/scripts/utils";
+import { RunCardStore } from "$routes/store.js";
 
 export const ssr = false;
 
@@ -35,6 +36,7 @@ export async function load({ url }): Promise<RunPageReturn> {
 
   /** get last path from url */
   //const tab: string | undefined = (url as URL).pathname.split("/").pop();
+  RunCardStore.reset();
 
   const cardReq: CardRequest = {
     name,

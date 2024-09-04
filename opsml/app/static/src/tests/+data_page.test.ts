@@ -11,6 +11,7 @@ import DataSqlPage from "../routes/opsml/data/card/sql/+page.svelte";
 
 import * as utils from "../lib/scripts/utils";
 import { sampleCard, sampleDataMetadata, sampleFiles } from "./constants";
+import { DataPageStore } from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -18,6 +19,14 @@ afterAll(() => server.close());
 
 it("render dataPage", async () => {
   const registryPage = await utils.setupRegistryPage("model");
+
+  DataPageStore.update((store) => {
+    store.selectedRepo = "data";
+    store.registryStats = registryPage.registryStats;
+    store.registryPage = registryPage.registryPage;
+    return store;
+  });
+
   const data = {
     args: {
       repos: ["data"],

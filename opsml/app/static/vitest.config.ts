@@ -18,6 +18,7 @@ export default defineConfig({
     alias: {
       $lib: path.resolve(__dirname, "./src/lib"),
       $app: path.resolve(__dirname, "__mocks__/app"),
+      $routes: path.resolve(__dirname, "./src/routes"),
     },
   },
 });
