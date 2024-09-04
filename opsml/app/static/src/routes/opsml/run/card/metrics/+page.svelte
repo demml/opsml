@@ -43,7 +43,6 @@
   let tableMetrics: Metric[];
   $: tableMetrics = $RunCardStore.TableMetrics;
 
-  
 
   export let isOpen = true;
 

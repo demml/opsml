@@ -7,9 +7,8 @@
   import { faCheck, faDownload, faMagnifyingGlassMinus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons'
   import { getRunMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
-  import { onMount } from "svelte";
   import { RunCardStore } from "$routes/store";
-  import { get } from 'svelte/store';
+
 
   /** @type {import('./$types').LayoutData} */
   export let data: CompareMetricPage;
@@ -302,8 +301,9 @@
       <div class="px-2 text-darkpurple bg-primary-50 italic text-xs">select all</div> 
       </div>
 
+      <div class="max-h-[700px]">
       {#each [...cards.values()] as card}
-        <div class="inline-flex items-center overflow-hidden rounded-lg border border-dashed border-darkpurple text-xs w-fit my-1">
+        <div class="inline-flex items-center overflow-scroll rounded-lg border border-dashed border-darkpurple text-xs w-fit my-1">
           <div>
             <label class="flex items-center p-1 ">
               
@@ -333,6 +333,7 @@
         </div>
 
       {/each}
+      </div>
       
     </div>
 
