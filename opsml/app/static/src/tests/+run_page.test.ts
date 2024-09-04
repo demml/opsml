@@ -15,7 +15,12 @@ import {
   sampleCards,
   sampleFiles,
 } from "./constants";
-import { RunPageStore, ModelPageStore, DataPageStore } from "$routes/store";
+import {
+  RunPageStore,
+  ModelPageStore,
+  DataPageStore,
+  RunCardStore,
+} from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -76,6 +81,13 @@ it("render runCardPage", async () => {
 
 it("render runCardMetricPage", () => {
   const metricViz = utils.createMetricVizData(sampleRunMetics, "bar");
+
+  RunCardStore.update((store) => {
+    store.MetricData = metricViz;
+    store.TableMetrics = sampleMetrics;
+    return store;
+  });
+
   const data = {
     metrics: sampleRunMetics,
     metricNames: ["accuracy"],
