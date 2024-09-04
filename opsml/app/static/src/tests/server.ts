@@ -2,8 +2,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { type Files, type ModelMetadata } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
-import { user } from "./constants";
-import { json } from "@sveltejs/kit";
+import { graphs } from "./graphs";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -395,6 +394,10 @@ const handlers = [
         },
       ],
     });
+  }),
+
+  http.get("/opsml/runs/graphs", async ({ request, params, cookies }) => {
+    return HttpResponse.json(graphs);
   }),
 ];
 

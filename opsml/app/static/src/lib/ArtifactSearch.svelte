@@ -28,6 +28,7 @@ export let registryPage: registryPage;
 export let registryStats: registryStats;
 export let registry: string;
 export let artifactSearchTerm: string | undefined;
+export let pageStore;
 
 
 const searchRepos = () => {	
@@ -50,6 +51,14 @@ async function setActiveRepo( name: string) {
 
     paginationSettings.page = 0;
     paginationSettings.size = registryStats.nbr_names;
+
+    pageStore.update((store) => {
+        store.selectedRepo = selectedRepo;
+        store.registryPage = registryPage;
+        store.registryStats = registryStats;
+        return store;
+      });
+
     }
 
 async function onPageChange(e: CustomEvent) {

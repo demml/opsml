@@ -1,5 +1,7 @@
 import { type RunGraph } from "$lib/scripts/types";
 import { getRunGraphs } from "$lib/scripts/utils";
+import { RunCardStore } from "$routes/store";
+import { get } from "svelte/store";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
@@ -12,13 +14,17 @@ export async function load({ url }) {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
-  const graphs: Map<string, RunGraph> = await getRunGraphs(
-    repository!,
-    name!,
-    version!
-  );
 
-  return {
-    graphs,
-  };
+  if (!get(RunCardStore).Graphs) {
+    const graphs: Map<string, RunGraph> = await getRunGraphs(
+      repository!,
+      name!,
+      version!
+    );
+
+    RunCardStore.update((store) => {
+      store.Graphs = graphs;
+      return store;
+    });
+  }
 }

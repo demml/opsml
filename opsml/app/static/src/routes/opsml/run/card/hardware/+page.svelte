@@ -9,6 +9,7 @@
   import { createHardwareCharts, getHardwareMetrics, parseHardwareMetrics } from "$lib/scripts/utils";
   import { onMount } from "svelte";
   import logo from '$lib/images/opsml-logo.png';
+  import { RunCardStore } from "$routes/store";
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -17,10 +18,10 @@
   $: runcard = data.metadata;
 
   let parsedMetrics: ParsedHardwareMetrics;
-  $: parsedMetrics = data.parsedMetrics; 
+  $: parsedMetrics = $RunCardStore.HardwareMetrics;
 
   let charts: HardwareCharts | undefined;
-  $: charts = undefined;
+  $: charts = $RunCardStore.HardwareCharts;
 
   onMount (() => {
     if (parsedMetrics) {
@@ -34,6 +35,12 @@
     if (metrics.metrics.length > 0) {
       parsedMetrics = parseHardwareMetrics(metrics.metrics);
       charts = createHardwareCharts(parsedMetrics);
+
+      RunCardStore.update((store) => {
+        store.HardwareMetrics = parsedMetrics;
+        return store;
+      });
+
     }
   
   }
@@ -42,7 +49,7 @@
 </script>
 
 {#if charts}
-<div class="flex min-h-screen">
+<div class="flex min-h-screen" id="renderedChart">
 
 
   <div class="flex flex-col w-full">
@@ -112,7 +119,7 @@
   
 
   {:else}
-  <div class="flex min-h-screen min-h-screen flex flex-col md:grid md:space-y-0 w-full h-full md:grid-cols-12 md:flex-1 md:grid-rows-full space-y-4 md:gap-6 max-w-full max-h-full bg-white">
+  <div class="flex min-h-screen min-h-screen flex flex-col md:grid md:space-y-0 w-full h-full md:grid-cols-12 md:flex-1 md:grid-rows-full space-y-4 md:gap-6 max-w-full max-h-full bg-white" id="notLoaded">
     <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 items-center">
   
       <div class="z-10 mx-auto rounded-2xl bg-slate-100 border shadow p-4 md:w-96 md:px-5">
