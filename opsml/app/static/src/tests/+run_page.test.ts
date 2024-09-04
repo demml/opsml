@@ -7,6 +7,7 @@ import RunCardPage from "../routes/opsml/run/card/home/+page.svelte";
 import RunCardMetricPage from "../routes/opsml/run/card/metrics/+page.svelte";
 import RunCardCompareMetricPage from "../routes/opsml/run/card/metrics/compare/+page.svelte";
 import RunCardFilesPage from "../routes/opsml/run/card/files/+page.svelte";
+import RunCardHardWare from "../routes/opsml/run/card/hardware/+page.svelte";
 import {
   sampleRunCard,
   sampleParameters,
@@ -15,12 +16,7 @@ import {
   sampleCards,
   sampleFiles,
 } from "./constants";
-import {
-  RunPageStore,
-  ModelPageStore,
-  DataPageStore,
-  RunCardStore,
-} from "$routes/store";
+import { RunPageStore, RunCardStore } from "$routes/store";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -138,4 +134,31 @@ it("render RunCardFiles", async () => {
   };
 
   render(RunCardFilesPage, { data });
+});
+
+it("render RunCardHardware", async () => {
+  const data = {
+    metadata: sampleRunCard,
+  };
+
+  render(RunCardHardWare, { data });
+});
+
+it("render RunCardHardware with hardware", async () => {
+  const data = {
+    metadata: sampleRunCard,
+  };
+
+  const hardwareMetrics = await utils.getHardwareMetrics("run_uid");
+  const parsedMetrics = utils.parseHardwareMetrics(hardwareMetrics.metrics);
+  const charts = utils.createHardwareCharts(parsedMetrics);
+
+  RunCardStore.update((store) => {
+    store.HardwareMetrics = parsedMetrics;
+    store.HardwareCharts = charts;
+    return store;
+  });
+
+  render(RunCardHardWare, { data });
+  expect(document.getElementById("renderedChart")).toBeTruthy();
 });
