@@ -8,6 +8,8 @@
   import { getRunMetrics, metricsToTable, downloadTableMetricsToCSV, createGroupMetricVizData } from "$lib/scripts/utils";
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import { onMount } from "svelte";
+  import { RunCardStore } from "$routes/store";
+  import { get } from 'svelte/store';
 
   /** @type {import('./$types').LayoutData} */
   export let data: CompareMetricPage;
@@ -15,12 +17,18 @@
   let searchTerm: string | undefined;
   $: searchTerm = undefined;
 
-  let filteredMetrics: string[] = [];
+  let filteredMetrics: string[];
+  $: filteredMetrics = $RunCardStore.FilteredMetrics;
+
   let tabSet: string = "metrics";
-  let plotSet: string = "bar";
+
+  let plotSet: string;
+  $: plotSet = $RunCardStore.ComparePlotSet;
+
   let compareMetrics = new Map<string, RunMetrics>();
   
   let tableMetrics: Map<string, TableMetric[]>;
+  $: tableMetrics = $RunCardStore.CompareTableMetrics;
 
   let card: RunCard;
   $: card = data.card;
@@ -29,10 +37,10 @@
   $: metricNames = data.metricNames;
 
   let selectedMetrics: string[];
-  $: selectedMetrics = [];
+  $: selectedMetrics = $RunCardStore.CompareSelectedMetrics;
 
   let metricsToPlot: string[];
-  $: metricsToPlot = [];
+  $: metricsToPlot = $RunCardStore.CompareMetricsToPlot;
 
   let searchableMetrics: string[];
   $: searchableMetrics = data.searchableMetrics;
@@ -44,10 +52,13 @@
   $: cards = data.cards;
 
   let cardsToCompare: string[];
-  $: cardsToCompare = [];
+  $: cardsToCompare = $RunCardStore.CompareCardsToCompare;
 
-  let metricVizData: ChartjsData | undefined = data.metricVizData;
-  let showTable: boolean = false;
+  let metricVizData: ChartjsData | undefined;
+  $: metricVizData = $RunCardStore.CompareMetricData;
+
+  let showTable: boolean;
+  $: showTable = $RunCardStore.CompareShowTable;
 
   let isOpen = true;
   let cardSelectAll: boolean = false;
@@ -99,12 +110,21 @@
       }
     }
     metricVizData = createGroupMetricVizData(compareMetrics, metricsToPlot, plotSet);
-
     tableMetrics = metricsToTable(compareMetrics, metricsToPlot);
-
     showTable = true;
 
 
+    RunCardStore.update((store) => {
+      store.CompareMetricData = metricVizData;
+      store.ComparePlotSet = plotSet;
+      store.CompareMetricsToPlot = metricsToPlot;
+      store.CompareTableMetrics = tableMetrics;
+      store.CompareSelectedMetrics = selectedMetrics;
+      store.CompareCardsToCompare = cardsToCompare;
+      store.CompareFilteredMetrics = filteredMetrics;
+      store.CompareShowTable = showTable;
+      return store;
+    });
   }
 
   async function setComparedCards( cardName: string) {
@@ -169,10 +189,6 @@
     }
   }
 
-
-  onMount(() => {
-    selectedMetrics = metricNames;
-  });
 
   function downloadComparisonMetric(){
     if (tableMetrics.size == 0) {
