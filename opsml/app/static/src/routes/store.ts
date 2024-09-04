@@ -39,6 +39,9 @@ export const RunCardStore = persisted("RunCardStore", {
   ComparePlotSet: "bar",
   CompareFilteredMetrics: emptyList,
   CompareShowTable: false,
+  Graphs: empty,
+  HardwareMetrics: empty,
+  HardwareCharts: empty,
 });
 
 export function resetRunCardStore() {

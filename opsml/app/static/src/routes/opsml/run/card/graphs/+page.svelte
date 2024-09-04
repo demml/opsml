@@ -2,7 +2,8 @@
     import {type RunGraph} from "$lib/scripts/types";
     import RunGraphChart from "$lib/card/run/RunGraph.svelte";
     import Fa from 'svelte-fa'
-    import { faArrowsRotate, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
+    import { faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
+    import { RunCardStore } from "$routes/store";
 
     //import { buildXyChart, buildMultiXyChart} from "$lib/scripts/charts";
 
@@ -11,11 +12,8 @@
     // import Highcharts from 'highcharts/highstock';
 
  
-    /** @type {import('./$types').LayoutData} */
-    export let data;
-
     let graphs: Map<string, RunGraph> | undefined;
-    $: graphs = data.graphs
+    $: graphs = $RunCardStore.Graphs;
 
     function resetZoom(id) {
     // reset zoom
