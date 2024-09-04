@@ -8,6 +8,7 @@ import RunCardMetricPage from "../routes/opsml/run/card/metrics/+page.svelte";
 import RunCardCompareMetricPage from "../routes/opsml/run/card/metrics/compare/+page.svelte";
 import RunCardFilesPage from "../routes/opsml/run/card/files/+page.svelte";
 import RunCardHardWare from "../routes/opsml/run/card/hardware/+page.svelte";
+import RunCardGraphs from "../routes/opsml/run/card/graphs/+page.svelte";
 import {
   sampleRunCard,
   sampleParameters,
@@ -161,4 +162,25 @@ it("render RunCardHardware with hardware", async () => {
 
   render(RunCardHardWare, { data });
   expect(document.getElementById("renderedChart")).toBeTruthy();
+});
+
+it("render RunGraphs", async () => {
+  const graphs = await utils.getRunGraphs("name", "repository", "version");
+
+  RunCardStore.update((store) => {
+    store.Graphs = graphs;
+    return store;
+  });
+
+  render(RunCardGraphs);
+  expect(document.getElementById("renderGraphs")).toBeTruthy();
+});
+
+it("render no RunGraphs", async () => {
+  RunCardStore.update((store) => {
+    store.Graphs = undefined;
+    return store;
+  });
+  render(RunCardGraphs);
+  expect(document.getElementById("notRendered")).toBeTruthy();
 });
