@@ -170,7 +170,7 @@ class DataInterface(BaseModel):
         profiler = DataProfiler()
 
         if self.data_profile is None:
-            self.data_profile = profiler.create_profile_report(self.data, bin_size, features)
+            self.data_profile = profiler.create_profile_report(self.data, bin_size)
             return self.data_profile
 
         logger.info("Data profile already exists")
