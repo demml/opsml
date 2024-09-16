@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, cast, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from uuid import UUID
 
 import joblib
@@ -9,8 +9,10 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from numpy.typing import NDArray
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from scouter import DriftConfig, Drifter, DriftProfile
+
 from opsml.data import DataInterface
 from opsml.helpers.utils import get_class_name
 from opsml.types import (
@@ -21,7 +23,6 @@ from opsml.types import (
     OnnxModel,
     Suffix,
 )
-from scouter import Drifter, DriftConfig, DriftProfile
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:

@@ -943,9 +943,7 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
         transformers=[("cat", categorical_transformer, cat_cols)],
         remainder="passthrough",
     )
-    pipe = Pipeline(
-        [("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))]
-    )
+    pipe = Pipeline([("preprocess", preprocessor), ("rf", lgb.LGBMRegressor(n_estimators=3, max_depth=3, num_leaves=5))])
     pipe.fit(train_data, data["y"])
     sql_logic = {"test": "SELECT * FROM TEST_TABLE"}
 
@@ -1158,7 +1156,7 @@ def random_forest_classifier(example_dataframe):
 
     yield SklearnModel(
         model=reg,
-        sample_data=X_train[:100],
+        sample_data=X_train,
         task_type="classification",
         preprocessor=StandardScaler(),
     )
@@ -2355,9 +2353,7 @@ def stacking_classifier():
         ("rf", ensemble.RandomForestClassifier(n_estimators=10, random_state=42)),
         ("svr", make_pipeline(StandardScaler(), linear_model.LogisticRegression(max_iter=5))),
     ]
-    reg = ensemble.StackingClassifier(
-        estimators=estimators, final_estimator=linear_model.LogisticRegression(max_iter=5)
-    )
+    reg = ensemble.StackingClassifier(estimators=estimators, final_estimator=linear_model.LogisticRegression(max_iter=5))
     reg.fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
