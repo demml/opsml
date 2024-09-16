@@ -411,6 +411,7 @@ class ModelCardSaver(CardSaver):
             return
 
         assert self.card.interface.drift_profile is not None, "Drift Profile must be set on Model Interface"
+
         # update drift profile repository, name and version
         self.card.interface.drift_profile.config.repository = self.card.repository
         self.card.interface.drift_profile.config.name = self.card.name
@@ -568,7 +569,9 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 

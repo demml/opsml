@@ -405,6 +405,7 @@ class ApiStorageClient(StorageClientBase):
             password=settings.opsml_password,
             use_auth=settings.opsml_auth,
             token=settings.opsml_prod_token,
+            path_prefix=config.opsml_client_path_prefix,
         )
 
     def get(self, rpath: Path, lpath: Path, recursive: bool = True) -> None:

@@ -11,8 +11,6 @@ from typing import Any, Dict, Optional, cast
 import httpx
 from tenacity import retry, stop_after_attempt
 
-from opsml.settings.config import config
-
 # httpx outputs a lot of logs
 logging.getLogger("httpx").propagate = False
 
@@ -66,7 +64,7 @@ class ApiClient:
         password: Optional[str],
         use_auth: bool,
         token: Optional[str],
-        path_prefix: str = PATH_PREFIX,
+        path_prefix: str,
     ):
         """Instantiates Api client for interacting with opsml server
 
@@ -91,7 +89,7 @@ class ApiClient:
                 username is not None and password is not None
             ), "Username and password must be provided when using authentication"
             self._requires_auth = True
-            self.form_data = {"username": config.opsml_username, "password": config.opsml_password}
+            self.form_data = {"username": username, "password": password}
             self.refresh_token()
 
         self.client.timeout = _TIMEOUT_CONFIG
