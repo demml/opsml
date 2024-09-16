@@ -404,6 +404,21 @@ class ModelCardSaver(CardSaver):
         with save_path.open("w", encoding="utf-8") as file_:
             json.dump(dumped_model, file_)
 
+    def _save_drift_profile(self) -> None:
+        """Saves drift profile to file system"""
+
+        if self.card.interface.drift_profile is None:
+            return
+
+        assert self.card.interface.drift_profile is not None, "Drift Profile must be set on Model Interface"
+        # update drift profile repository, name and version
+        self.card.interface.drift_profile.config.repository = self.card.repository
+        self.card.interface.drift_profile.config.name = self.card.name
+        self.card.interface.drift_profile.config.version = self.card.version
+
+        save_path = Path(self.lpath / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+        self.card.interface.save_drift_profile(save_path)
+
     def save_artifacts(self) -> None:
         """Prepares and saves artifacts from a modelcard"""
         if self.card.interface is None:
@@ -417,6 +432,7 @@ class ModelCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
 
+            self._save_drift_profile()
             self._save_model()
             self._save_preprocessor()
             self._save_onnx_model()
@@ -552,9 +568,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
