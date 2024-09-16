@@ -387,7 +387,15 @@ class ModelCardSaver(CardSaver):
 
         dumped_model = self.card.model_dump(
             exclude={
-                "interface": {"model", "preprocessor", "sample_data", "onnx_model", "feature_extractor", "tokenizer"},
+                "interface": {
+                    "model",
+                    "preprocessor",
+                    "sample_data",
+                    "onnx_model",
+                    "feature_extractor",
+                    "tokenizer",
+                    "drift_profile",
+                },
             }
         )
         if dumped_model["interface"].get("onnx_args") is not None:
@@ -412,11 +420,14 @@ class ModelCardSaver(CardSaver):
 
         assert self.card.interface.drift_profile is not None, "Drift Profile must be set on Model Interface"
 
-        # update drift profile repository, name and version
-        self.card.interface.drift_profile.config.repository = self.card.repository
-        self.card.interface.drift_profile.config.name = self.card.name
-        self.card.interface.drift_profile.config.version = self.card.version
+        # update config with model name, repository and version
+        config = self.card.interface.drift_profile.config
+        config.name = self.card.name
+        config.repository = self.card.repository
+        config.version = self.card.version
 
+        # update drift profile repository, name and version
+        self.card.interface.drift_profile.config = config
         save_path = Path(self.lpath / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
         self.card.interface.save_drift_profile(save_path)
 
@@ -569,9 +580,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
