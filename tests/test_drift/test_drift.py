@@ -1,8 +1,13 @@
 # type: ignore
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 from scouter import DriftConfig, DriftProfile
+
 from opsml import SklearnModel
 from opsml.helpers.data import create_fake_data
+from opsml.types import SaveName
 
 
 def test_scouter(
@@ -30,3 +35,19 @@ def test_scouter(
         assert model.drift_profile.features[col].three_ucl is not None
 
     assert model.drift_profile.config.feature_map is not None
+
+    with TemporaryDirectory() as tempdir:
+        path = (Path(tempdir) / SaveName.DRIFT_PROFILE.value).with_suffix(".json")
+
+        model.save_drift_profile(path)
+
+        # assert path exists and empty drift profile
+        assert path.exists()
+        model.drift_profile = None
+        assert model.drift_profile is None
+
+        model.load_drift_profile(path)
+        assert model.drift_profile is not None
+
+        # load again
+        model.load_drift_profile(path)

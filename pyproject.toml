@@ -18,7 +18,7 @@ dependencies = [
     "pyyaml~=6.0.1",
     "rich~=13.3.5",
     "rusty-logger~=0.3.0",
-    "scouter-ml==0.2.5",
+    "scouter-ml==0.3.0rc1",
     "semver~=2.13.0",
     "tenacity~=8.2.2",
     "zarr~=2.12.0",

@@ -84,6 +84,7 @@ class SaveName(str, Enum):
     GRAPHS = "graphs"
     ONNX_CONFIG = "onnx-config"
     DATASET = "dataset"
+    DRIFT_PROFILE = "drift-profile"
 
 
 @unique
