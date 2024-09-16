@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+from scouter import DriftProfile
 from semver import VersionInfo
 
 from opsml.cards import Card
@@ -16,6 +17,8 @@ from opsml.registry.semver import CardVersion, SemVerUtils, VersionType
 from opsml.settings.config import config
 from opsml.storage.card_saver import save_card_artifacts
 from opsml.storage.client import StorageClient
+from opsml.storage.scouter import SCOUTER_CLIENT as scouter_client
+from opsml.storage.scouter import ScouterClient
 from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import CommonKwargs
 
@@ -34,6 +37,7 @@ class SQLRegistryBase:
         self.storage_client = storage_client
         self._table_name = RegistryTableNames[registry_type.value.upper()].value
         self._registry_type = registry_type
+        self._scouter_client = scouter_client
 
     @property
     def unique_repositories(self) -> Sequence[str]:
@@ -44,6 +48,21 @@ class SQLRegistryBase:
 
     def query_stats(self, search_term: Optional[str]) -> Dict[str, int]:
         raise NotImplementedError
+
+    @property
+    def scouter_client(self) -> Optional[ScouterClient]:
+        return self._scouter_client
+
+    def _insert_drift_profile(self, drift_profile: DriftProfile) -> None:
+        """Insert drift profile into scouter server
+
+        Args:
+            drift_profile:
+                drift profile
+        """
+
+        if self.scouter_client is not None:
+            self.scouter_client.insert_drift_profile(drift_profile=drift_profile)
 
     def query_page(
         self,

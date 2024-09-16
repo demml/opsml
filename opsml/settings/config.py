@@ -25,6 +25,7 @@ class OpsmlConfig(BaseSettings):
     opsml_prod_token: str = "staging"
     opsml_proxy_root: str = "opsml-root:/"
     opsml_registry_path: str = "model_registry"
+    opsml_client_path_prefix: str = "opsml"
     opsml_testing: bool = bool(0)
     download_chunk_size: int = 31457280  # 30MB
     upload_chunk_size: int = 31457280  # 30MB
@@ -39,6 +40,13 @@ class OpsmlConfig(BaseSettings):
     # API client username / password
     opsml_username: Optional[str] = None
     opsml_password: Optional[str] = None
+
+    # scouter settings
+    scouter_server_uri: Optional[str] = None
+    scouter_username: Optional[str] = None
+    scouter_password: Optional[str] = None
+    scouter_path_prefix: str = "scouter"
+    scouter_auth: bool = False
 
     # Auth
     opsml_auth: bool = False

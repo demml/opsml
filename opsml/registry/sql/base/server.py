@@ -356,9 +356,9 @@ class ServerModelCardRegistry(ServerRegistry):
             )
 
         else:
-            model_card = cast(ModelCard, card)
+            card = cast(ModelCard, card)
 
-            if model_card.to_onnx:
+            if card.to_onnx:
                 if not check_package_exists("onnx"):
                     raise ModuleNotFoundError(
                         """To convert a model to onnx, please install onnx via one of the extras
@@ -366,8 +366,8 @@ class ServerModelCardRegistry(ServerRegistry):
                         """
                     )
 
-            if model_card.datacard_uid is not None:
-                self._validate_datacard_uid(uid=model_card.datacard_uid)
+            if card.datacard_uid is not None:
+                self._validate_datacard_uid(uid=card.datacard_uid)
 
             super().register_card(
                 card=card,
@@ -375,6 +375,13 @@ class ServerModelCardRegistry(ServerRegistry):
                 pre_tag=pre_tag,
                 build_tag=build_tag,
             )
+
+            # write profile to scouter
+            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+                try:
+                    self._insert_drift_profile(drift_profile=card.interface.drift_profile)
+                except Exception as exc:  # pylint: disable=broad-except
+                    logger.error(f"Failed to insert drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:
