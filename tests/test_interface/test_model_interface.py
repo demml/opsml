@@ -40,7 +40,6 @@ def test_torch_interface(deeplabv3_resnet50: TorchModel) -> None:
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.LightningModule]) -> None:
-
     light_model, model = lightning_regression
     assert isinstance(light_model.sample_data, TorchData)
     assert light_model.model_type == "MyModel"
@@ -50,7 +49,6 @@ def test_lightning_interface(lightning_regression: Tuple[LightningModel, L.Light
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
 def test_hf_model_interface(huggingface_bart: HuggingFaceModel) -> None:
-
     assert huggingface_bart.model_type == "BartModel"
     assert huggingface_bart.model_class == "transformers"
     assert huggingface_bart.task_type == "feature-extraction"
