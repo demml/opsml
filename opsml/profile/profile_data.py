@@ -25,8 +25,6 @@ class DataProfiler:
                 data to profile
             bin_size:
                 number of bins for histograms. Default is 20
-            features:
-                Optional list of features to profile
 
         Returns:
             `DataProfile`
@@ -47,4 +45,4 @@ class DataProfiler:
             `DataProfile`
         """
 
-        return DataProfile.load_from_json(data)
+        return DataProfile.model_validate_json(data)
