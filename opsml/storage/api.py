@@ -50,7 +50,7 @@ class ApiRoutes:
     TOKEN = "auth/token"
     HW_METRICS = "metrics/hardware"
     PARAMETERS = "parameters"
-    DRIFT_PROFILE = "profile"
+    DRIFT_PROFILE = "drift/profile"
 
 
 api_routes = ApiRoutes()
