@@ -35,11 +35,10 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
-from opsml.types import RegistryTableNames, RegistryType
-from opsml.types.extra import Message, User
 from opsml.storage.scouter import SCOUTER_CLIENT as scouter_client
 from opsml.storage.scouter import ScouterClient
-from scouter import DriftProfile
+from opsml.types import RegistryTableNames, RegistryType
+from opsml.types.extra import Message, User
 
 logger = ArtifactLogger.get_logger()
 
@@ -398,7 +397,9 @@ class ServerModelCardRegistry(ServerRegistry):
             # write profile to scouter
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
-                    self._insert_drift_profile(drift_profile=card.interface.drift_profile)
+                    self.insert_drift_profile(
+                        drift_profile=card.interface.drift_profile.model_dump_json(),
+                    )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
 
@@ -412,7 +413,9 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
+    def get_metric(
+        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
+    ) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
