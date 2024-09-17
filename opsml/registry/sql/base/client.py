@@ -262,7 +262,7 @@ class ClientModelCardRegistry(ClientRegistry):
     def insert_drift_profile(self, drift_profile: str) -> None:
         self._session.request(
             route=api_routes.DRIFT_PROFILE,
-            request_type=RequestType.PUT,
+            request_type=RequestType.POST,
             json={"profile": drift_profile},
         )
 

@@ -394,6 +394,8 @@ class ServerModelCardRegistry(ServerRegistry):
                 build_tag=build_tag,
             )
 
+            print(config.scouter_server_uri)
+
             # write profile to scouter
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
