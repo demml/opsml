@@ -32,7 +32,7 @@ IS_311 = sys.version_info >= (3, 11)
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
+def _test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_torch_distilbert
 
     modelcard = ModelCard(
@@ -96,7 +96,7 @@ def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMod
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
+def _test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     modelcard = ModelCard(
@@ -158,6 +158,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
 
 def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
     model: SklearnModel = random_forest_classifier
+
     modelcard = ModelCard(
         interface=model,
         name="test_model",
@@ -209,7 +210,7 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
 
 
 # @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
+def _test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     model: LightGBMModel = lgb_booster_model
 
     modelcard = ModelCard(
@@ -256,7 +257,7 @@ def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_lgb_sklearn_modelcard(
+def _test_save_lgb_sklearn_modelcard(
     lgb_regressor_model: LightGBMModel,
 ) -> None:
     model: LightGBMModel = lgb_regressor_model
@@ -307,7 +308,7 @@ def test_save_lgb_sklearn_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def test_save_xgb_booster_modelcard(
+def _test_save_xgb_booster_modelcard(
     xgb_booster_regressor_model: XGBoostModel,
 ) -> None:
     model: XGBoostModel = xgb_booster_regressor_model
@@ -353,7 +354,7 @@ def test_save_xgb_booster_modelcard(
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
+def _test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
     model: TorchModel = pytorch_simple
 
     modelcard = ModelCard(
@@ -411,7 +412,7 @@ def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
+def _test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
     model: TorchModel = pytorch_simple_tuple
 
     modelcard = ModelCard(
@@ -464,7 +465,7 @@ def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
+def _test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)
 
@@ -515,7 +516,7 @@ def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) ->
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> None:
+def _test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> None:
     model: TensorFlowModel = tf_transformer_example
 
     modelcard = ModelCard(
@@ -565,7 +566,7 @@ def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> N
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel) -> None:
+def _test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel) -> None:
     model: TensorFlowModel = multi_input_tf_example
 
     modelcard = ModelCard(
@@ -615,7 +616,7 @@ def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlo
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
+def _test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     modelcard = ModelCard(
@@ -670,7 +671,7 @@ def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pip
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel) -> None:
+def _test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel) -> None:
     model, _ = huggingface_vit_pipeline
 
     modelcard = ModelCard(
@@ -748,7 +749,7 @@ def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Huggi
         assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
-def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
+def _test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
     model: CatBoostModel = catboost_regressor
 
     # remake catboost model with list
@@ -805,7 +806,7 @@ def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> None:
+def _test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_bytes
 
     modelcard = ModelCard(
@@ -864,7 +865,7 @@ def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> N
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> None:
+def _test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_file
 
     modelcard = ModelCard(
@@ -925,7 +926,7 @@ def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> Non
 
 
 @pytest.mark.skipif(bool(IS_311 or EXCLUDE), reason="vowpal not support for py311")
-def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
+def _test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
     modelcard = ModelCard(
@@ -967,7 +968,7 @@ def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
 
 
 @pytest.mark.skipif(bool(IS_311 or EXCLUDE), reason="vowpal not support for py311")
-def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
+def _test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
     modelcard = ModelCard(

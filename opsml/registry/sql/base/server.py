@@ -35,6 +35,8 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
+from opsml.storage.scouter import SCOUTER_CLIENT as scouter_client
+from opsml.storage.scouter import ScouterClient
 from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import Message, User
 
@@ -59,6 +61,7 @@ class ServerRegistry(SQLRegistryBase):
 
         self.engine = get_query_engine(db_engine=db_initializer.engine, registry_type=registry_type)
         self._table = SQLTableGetter.get_table(table_name=self.table_name)
+        self._scouter_client = scouter_client
 
     @property
     def registry_type(self) -> RegistryType:
@@ -70,9 +73,24 @@ class ServerRegistry(SQLRegistryBase):
         raise NotImplementedError
 
     @property
+    def scouter_client(self) -> Optional[ScouterClient]:
+        return self._scouter_client
+
+    @property
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
+
+    def insert_drift_profile(self, drift_profile: str) -> None:
+        """Insert drift profile into scouter server
+
+        Args:
+            drift_profile:
+                drift profile
+        """
+
+        if self.scouter_client is not None:
+            self.scouter_client.insert_drift_profile(drift_profile=drift_profile)
 
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
@@ -356,9 +374,9 @@ class ServerModelCardRegistry(ServerRegistry):
             )
 
         else:
-            model_card = cast(ModelCard, card)
+            card = cast(ModelCard, card)
 
-            if model_card.to_onnx:
+            if card.to_onnx:
                 if not check_package_exists("onnx"):
                     raise ModuleNotFoundError(
                         """To convert a model to onnx, please install onnx via one of the extras
@@ -366,8 +384,8 @@ class ServerModelCardRegistry(ServerRegistry):
                         """
                     )
 
-            if model_card.datacard_uid is not None:
-                self._validate_datacard_uid(uid=model_card.datacard_uid)
+            if card.datacard_uid is not None:
+                self._validate_datacard_uid(uid=card.datacard_uid)
 
             super().register_card(
                 card=card,
@@ -375,6 +393,17 @@ class ServerModelCardRegistry(ServerRegistry):
                 pre_tag=pre_tag,
                 build_tag=build_tag,
             )
+
+            print(config.scouter_server_uri)
+
+            # write profile to scouter
+            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+                try:
+                    self.insert_drift_profile(
+                        drift_profile=card.interface.drift_profile.model_dump_json(),
+                    )
+                except Exception as exc:  # pylint: disable=broad-except
+                    logger.error(f"Failed to insert drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:

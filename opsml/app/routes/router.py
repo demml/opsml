@@ -11,6 +11,7 @@ from opsml.app.routes import (
     auth,
     cards,
     data,
+    drift,
     files,
     healthcheck,
     metrics,
@@ -37,6 +38,7 @@ def build_router(dependencies: Optional[Sequence[Any]] = None) -> APIRouter:
     api_router.include_router(parameters.router, tags=["parameters"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(runs.router, tags=["runs"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(ui.router, tags=["ui"], dependencies=dependencies)
+    api_router.include_router(drift.router, tags=["drift"], prefix="/opsml", dependencies=dependencies)
     api_router.include_router(auth.router, tags=["auth"], prefix="/opsml")
 
     return api_router

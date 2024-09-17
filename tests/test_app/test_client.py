@@ -1,8 +1,10 @@
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Tuple, cast
+from unittest import mock
 
 import pytest
+from scouter import DriftConfig
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
@@ -265,8 +267,8 @@ def test_runcard(
     # Load the card and verify artifacts / metrics
     loaded_card: RunCard = registry.load_card(uid=run.uid)
     assert loaded_card.uid == run.uid
-    assert loaded_card.get_metric("test_metric")[0].value == 10  # type: ignore
-    assert loaded_card.get_metric("test_metric2")[0].value == 20  # type: ignore
+    assert loaded_card.get_metric("test_metric")[0].value == 10
+    assert loaded_card.get_metric("test_metric2")[0].value == 20
     loaded_card.load_artifacts()
 
 
@@ -538,3 +540,43 @@ def test_register_vit(
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(""))
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_model_registry_scouter(
+    mock_request: mock.MagicMock,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+    api_registries: CardRegistries,
+) -> None:
+    mock_request.return_value = None
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    model, data = linear_regression
+
+    datacard = DataCard(
+        interface=data,
+        name="scouter_test",
+        repository="mlops",
+        contact="mlops.com",
+    )
+
+    data_registry.register_card(card=datacard)
+
+    drift_config = DriftConfig()
+    model.create_drift_profile(data.data, drift_config)
+
+    modelcard = ModelCard(
+        interface=model,
+        name="pipeline_model",
+        repository="mlops",
+        contact="mlops.com",
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+    )
+
+    model_registry.register_card(card=modelcard)
+
+    assert modelcard.interface.drift_profile is not None
+    assert modelcard.interface.drift_profile.config.name == modelcard.name
+    assert mock_request.called

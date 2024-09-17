@@ -125,6 +125,7 @@ notebooks/
 .test_local.py
 lightning_logs/
 node_modules/
+target/
 
 # git
 **/*.orig

@@ -19,6 +19,7 @@ from opsml.helpers.utils import check_package_exists
 from opsml.registry.semver import CardVersion, VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
+from opsml.settings.config import config
 from opsml.storage.api import RequestType, api_routes
 from opsml.storage.client import ApiStorageClient, StorageClient
 from opsml.types import RegistryType
@@ -258,6 +259,13 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
+    def insert_drift_profile(self, drift_profile: str) -> None:
+        self._session.request(
+            route=api_routes.DRIFT_PROFILE,
+            request_type=RequestType.POST,
+            json={"profile": drift_profile},
+        )
+
     def register_card(
         self,
         card: Card,
@@ -292,9 +300,9 @@ class ClientModelCardRegistry(ClientRegistry):
             )
 
         else:
-            model_card = cast(ModelCard, card)
+            card = cast(ModelCard, card)
 
-            if model_card.to_onnx:
+            if card.to_onnx:
                 if not check_package_exists("onnx"):
                     raise ModuleNotFoundError(
                         """To convert a model to onnx, please install onnx via one of the extras
@@ -302,8 +310,8 @@ class ClientModelCardRegistry(ClientRegistry):
                         """
                     )
 
-            if model_card.datacard_uid is not None:
-                self._validate_datacard_uid(uid=model_card.datacard_uid)
+            if card.datacard_uid is not None:
+                self._validate_datacard_uid(uid=card.datacard_uid)
 
             super().register_card(
                 card=card,
@@ -311,6 +319,13 @@ class ClientModelCardRegistry(ClientRegistry):
                 pre_tag=pre_tag,
                 build_tag=build_tag,
             )
+
+            # write profile to scouter
+            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+                try:
+                    self.insert_drift_profile(drift_profile=card.interface.drift_profile.model_dump_json())
+                except Exception as exc:  # pylint: disable=broad-except
+                    logger.error(f"Failed to insert drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:

@@ -144,7 +144,7 @@ class DataInterface(BaseModel):
                 Pathlib object
         """
 
-        profile = DataProfile.load_from_json(path.read_text(encoding="utf-8"))
+        profile = DataProfile.model_validate_json(path.read_text(encoding="utf-8"))
         self.data_profile = profile
 
     def save_data_profile(self, path: Path) -> None:
@@ -170,7 +170,7 @@ class DataInterface(BaseModel):
         profiler = DataProfiler()
 
         if self.data_profile is None:
-            self.data_profile = profiler.create_profile_report(self.data, bin_size, features)
+            self.data_profile = profiler.create_profile_report(self.data, bin_size)
             return self.data_profile
 
         logger.info("Data profile already exists")
