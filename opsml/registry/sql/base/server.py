@@ -37,6 +37,9 @@ from opsml.settings.config import config
 from opsml.storage.client import StorageClient
 from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import Message, User
+from opsml.storage.scouter import SCOUTER_CLIENT as scouter_client
+from opsml.storage.scouter import ScouterClient
+from scouter import DriftProfile
 
 logger = ArtifactLogger.get_logger()
 
@@ -59,6 +62,7 @@ class ServerRegistry(SQLRegistryBase):
 
         self.engine = get_query_engine(db_engine=db_initializer.engine, registry_type=registry_type)
         self._table = SQLTableGetter.get_table(table_name=self.table_name)
+        self._scouter_client = scouter_client
 
     @property
     def registry_type(self) -> RegistryType:
@@ -70,9 +74,24 @@ class ServerRegistry(SQLRegistryBase):
         raise NotImplementedError
 
     @property
+    def scouter_client(self) -> Optional[ScouterClient]:
+        return self._scouter_client
+
+    @property
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
+
+    def insert_drift_profile(self, drift_profile: str) -> None:
+        """Insert drift profile into scouter server
+
+        Args:
+            drift_profile:
+                drift profile
+        """
+
+        if self.scouter_client is not None:
+            self.scouter_client.insert_drift_profile(drift_profile=drift_profile)
 
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
@@ -393,9 +412,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
