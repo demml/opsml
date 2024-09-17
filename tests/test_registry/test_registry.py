@@ -12,6 +12,7 @@ import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
+from scouter import DriftConfig
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -30,7 +31,6 @@ from opsml.data import (
     PolarsData,
     SqlData,
 )
-from scouter import DriftConfig
 from opsml.helpers.exceptions import VersionError
 from opsml.model import ModelInterface, SklearnModel
 from opsml.registry import CardRegistries
