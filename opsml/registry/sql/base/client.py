@@ -8,7 +8,7 @@
 import textwrap
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
-
+from scouter import DriftProfile
 import pandas as pd
 
 from opsml.cards import Card, ModelCard
@@ -258,6 +258,13 @@ class ClientModelCardRegistry(ClientRegistry):
         exists = self.check_uid(uid=uid, registry_type=RegistryType.DATA)
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
+
+    def insert_drift_profile(self, drift_profile: DriftProfile) -> None:
+        self._session.request(
+            route=api_routes.METRICS,
+            request_type=RequestType.PUT,
+            json={"profile": drift_profile.model_dump_json()},
+        )
 
     def register_card(
         self,
