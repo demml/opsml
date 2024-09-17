@@ -26,6 +26,7 @@ os.environ["APP_ENV"] = "development"
 os.environ["OPSML_PROD_TOKEN"] = "test-token"
 os.environ["OPSML_TRACKING_URI"] = OPSML_TRACKING_URI
 os.environ["OPSML_STORAGE_URI"] = OPSML_STORAGE_URI
+os.environ["SCOUTER_SERVER_URI"] = "http://testserver"
 
 import datetime
 import shutil
@@ -354,9 +355,11 @@ def api_registries(monkeypatch: pytest.MonkeyPatch, test_app: TestClient) -> Yie
 
 
 @pytest.fixture
-def db_registries() -> YieldFixture[CardRegistries]:
+def db_registries(monkeypatch: pytest.MonkeyPatch) -> YieldFixture[CardRegistries]:
     """Returns CardRegistries configured with a local client."""
     cleanup()
+
+    monkeypatch.setattr(config, "scouter_server_uri", "http://testserver")
 
     # CardRegistries rely on global storage state - so set it to local.
     client.storage_client = client.get_storage_client(

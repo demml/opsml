@@ -11,6 +11,7 @@ from opsml.app.routes import (
     auth,
     cards,
     data,
+    drift,
     files,
     healthcheck,
     metrics,
@@ -20,7 +21,6 @@ from opsml.app.routes import (
     registry,
     runs,
     ui,
-    drift,
 )
 
 

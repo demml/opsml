@@ -6,6 +6,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Tuple
+from unittest import mock
 
 import joblib
 import pandas as pd
@@ -885,10 +886,14 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
     assert cards[1]["name"] == "test1"
 
 
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
 def test_model_registry_scouter(
+    mock_request: mock.MagicMock,
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ) -> None:
+    mock_request.return_value = None
+
     # create data card
     data_registry = db_registries.data
     model, data = sklearn_pipeline
@@ -919,3 +924,4 @@ def test_model_registry_scouter(
 
     assert model_card.interface.drift_profile is not None
     assert model_card.interface.drift_profile.config.name == model_card.name
+    assert mock_request.called
