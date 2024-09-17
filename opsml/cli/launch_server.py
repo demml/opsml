@@ -1,7 +1,7 @@
 import argparse
 
 
-def launch_uvicorn_app(login: bool = False, port: int = 8888) -> None:
+def launch_uvicorn_app(port: int = 8888) -> None:
     """
     Launches a Uvicorn Opsml server
 
@@ -21,8 +21,7 @@ def launch_uvicorn_app(login: bool = False, port: int = 8888) -> None:
 
 def cli() -> None:
     parser = argparse.ArgumentParser(description="Launch opsml server")
-    parser.add_argument("--login", type=bool, default=False, help="whether to use login credentials")
     parser.add_argument("--port", type=int, default=8888, help="port to use for opsml server")
     args = parser.parse_args()
 
-    launch_uvicorn_app(login=args.login, port=args.port)
+    launch_uvicorn_app(port=args.port)

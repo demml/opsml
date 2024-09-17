@@ -29,6 +29,7 @@ dependencies = [
 ]
 
 [project.scripts]
+opsml-example-workflow = 'opsml.cli.example_workflow:cli'
 opsml-uvicorn-server = 'opsml.cli.launch_server:cli'
 
 [project.optional-dependencies]
