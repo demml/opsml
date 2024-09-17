@@ -8,15 +8,16 @@ from fastapi import APIRouter, HTTPException, Request, status
 
 from opsml.app.routes.pydantic_models import DriftProfileRequest, Success
 from opsml.helpers.logging import ArtifactLogger
-from opsml.registry.sql.base.server import ServerModelCardRegistry
+from opsml.storage.scouter import ScouterClient
+from typing import cast
 
 logger = ArtifactLogger.get_logger()
 
 router = APIRouter()
 
 
-@router.post("/drift/profile", name="metric_put", response_model=Success)
-def insert_metric(request: Request, payload: DriftProfileRequest) -> Success:
+@router.post("/drift/profile", name="insert_drift_profile", response_model=Success)
+def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
     """Uploads drift profile to scouter-server
 
     Args:
@@ -29,13 +30,51 @@ def insert_metric(request: Request, payload: DriftProfileRequest) -> Success:
         200
     """
 
-    model_reg: ServerModelCardRegistry = request.app.state.registries.model._registry
+    client: ScouterClient = request.app.state.scouter_client
 
     try:
-        model_reg.insert_drift_profile(payload.profile)
+        client.insert_drift_profile(payload.profile)
         return Success()
     except Exception as error:
-        logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
-        ) from error
+        logger.error(f"Failed to insert drift profile: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+
+
+@router.get("/drift/profile", name="get_profile", response_model=str)
+def get_profile(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+) -> str:
+    """Uploads drift profile to scouter-server
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+
+    Returns:
+        DriftProfile string
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        response = client.get_drift_profile(repository, name, version)
+
+        print(response)
+        profile = response.get("data")
+
+        if profile is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drift profile not found")
+
+        return cast(str, profile)
+    except Exception as error:
+        logger.error(f"Failed to get drift profile: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
