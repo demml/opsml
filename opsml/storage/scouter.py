@@ -2,6 +2,7 @@ import json
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
+from scouter import DriftProfile
 
 
 class ScouterClient(ApiClient):
@@ -13,7 +14,33 @@ class ScouterClient(ApiClient):
                 Drift profile to insert
         """
         profile = json.loads(drift_profile)
-        self.request(route="/profile", request_type=RequestType.POST, json=profile)
+        self.request(route="profile", request_type=RequestType.POST, json=profile)
+
+    def get_drift_profile(self, repository: str, name: str, version: str) -> DriftProfile:
+        """Get drift profile from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+
+        Returns:
+            Drift profile
+        """
+        response = self.request(
+            route="profile",
+            request_type=RequestType.GET,
+            params={
+                "repository": repository,
+                "name": name,
+                "version": version,
+            },
+        )
+
+        return DriftProfile(**response["data"])
 
 
 SCOUTER_CLIENT = None
