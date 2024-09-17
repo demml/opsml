@@ -171,8 +171,6 @@ class _RunManager:
         # Create opsml active run
         runcard = self._load_runcard(run_name)
 
-        print(runcard.compute_environment)
-
         # create run_info
         run_info = RunInfo(run_id=self.run_id, run_name=runcard.name, runcard=runcard)
 
