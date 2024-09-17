@@ -36,4 +36,6 @@ def insert_metric(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert metrics: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error

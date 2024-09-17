@@ -8,7 +8,7 @@
 import textwrap
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
-from scouter import DriftProfile
+
 import pandas as pd
 
 from opsml.cards import Card, ModelCard
@@ -259,11 +259,11 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
-    def insert_drift_profile(self, drift_profile: DriftProfile) -> None:
+    def insert_drift_profile(self, drift_profile: str) -> None:
         self._session.request(
-            route=api_routes.METRICS,
+            route=api_routes.DRIFT_PROFILE,
             request_type=RequestType.PUT,
-            json={"profile": drift_profile.model_dump_json()},
+            json={"profile": drift_profile},
         )
 
     def register_card(
@@ -323,7 +323,7 @@ class ClientModelCardRegistry(ClientRegistry):
             # write profile to scouter
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
-                    self._insert_drift_profile(drift_profile=card.interface.drift_profile)
+                    self.insert_drift_profile(drift_profile=card.interface.drift_profile.model_dump_json())
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
 
