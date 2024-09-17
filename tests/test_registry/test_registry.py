@@ -6,12 +6,14 @@ import time
 import uuid
 from pathlib import Path
 from typing import Tuple
+from unittest import mock
 
 import joblib
 import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
+from scouter import DriftConfig
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -882,3 +884,44 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
     cards = registry.list_cards(sort_by_timestamp=True)
     assert cards[0]["name"] == "test2"
     assert cards[1]["name"] == "test1"
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_model_registry_scouter(
+    mock_request: mock.MagicMock,
+    db_registries: CardRegistries,
+    sklearn_pipeline: Tuple[ModelInterface, DataInterface],
+) -> None:
+    mock_request.return_value = None
+
+    # create data card
+    data_registry = db_registries.data
+    model, data = sklearn_pipeline
+
+    data_card = DataCard(
+        interface=data,
+        name="pipeline_data",
+        repository="mlops",
+        contact="mlops.com",
+    )
+    data_registry.register_card(card=data_card)
+
+    drift_config = DriftConfig()
+    model.create_drift_profile(data.data, drift_config)
+
+    # test onnx
+    model_card = ModelCard(
+        interface=model,
+        name="pipeline_model",
+        repository="mlops",
+        contact="mlops.com",
+        datacard_uid=data_card.uid,
+        to_onnx=True,
+    )
+
+    model_registry = db_registries.model
+    model_registry.register_card(card=model_card)
+
+    assert model_card.interface.drift_profile is not None
+    assert model_card.interface.drift_profile.config.name == model_card.name
+    assert mock_request.called

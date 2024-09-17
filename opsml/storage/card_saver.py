@@ -387,7 +387,15 @@ class ModelCardSaver(CardSaver):
 
         dumped_model = self.card.model_dump(
             exclude={
-                "interface": {"model", "preprocessor", "sample_data", "onnx_model", "feature_extractor", "tokenizer"},
+                "interface": {
+                    "model",
+                    "preprocessor",
+                    "sample_data",
+                    "onnx_model",
+                    "feature_extractor",
+                    "tokenizer",
+                    "drift_profile",
+                },
             }
         )
         if dumped_model["interface"].get("onnx_args") is not None:
@@ -404,6 +412,25 @@ class ModelCardSaver(CardSaver):
         with save_path.open("w", encoding="utf-8") as file_:
             json.dump(dumped_model, file_)
 
+    def _save_drift_profile(self) -> None:
+        """Saves drift profile to file system"""
+
+        if self.card.interface.drift_profile is None:
+            return
+
+        assert self.card.interface.drift_profile is not None, "Drift Profile must be set on Model Interface"
+
+        # update config with model name, repository and version
+        self.card.interface.drift_profile.update_config_args(
+            name=self.card.name,
+            repository=self.card.repository,
+            version=self.card.version,
+        )
+
+        # update drift profile repository, name and version
+        save_path = Path(self.lpath / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+        self.card.interface.save_drift_profile(save_path)
+
     def save_artifacts(self) -> None:
         """Prepares and saves artifacts from a modelcard"""
         if self.card.interface is None:
@@ -417,6 +444,7 @@ class ModelCardSaver(CardSaver):
             self.card_uris.lpath = Path(tmp_dir)
             self.card_uris.rpath = self.card.uri
 
+            self._save_drift_profile()
             self._save_model()
             self._save_preprocessor()
             self._save_onnx_model()

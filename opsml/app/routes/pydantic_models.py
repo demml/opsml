@@ -517,3 +517,7 @@ class SecurityQuestionResponse(BaseModel):
 class TempRequest(BaseModel):
     username: str
     answer: str
+
+
+class DriftProfileRequest(BaseModel):
+    profile: str

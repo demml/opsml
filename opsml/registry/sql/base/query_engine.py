@@ -506,6 +506,7 @@ class QueryEngine:
             Tuple of card summary
         """
 
+        ## build versions
         versions = select(
             table.repository,
             table.name,
@@ -545,6 +546,9 @@ class QueryEngine:
                     table.repository.like(f"%{search_term}%"),  # type: ignore
                 ),
             )
+
+        versions = versions.subquery()
+        stats = stats.subquery()
 
         filtered_versions = (
             select(
