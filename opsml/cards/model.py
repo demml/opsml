@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from pydantic import ConfigDict, SerializeAsAny, field_validator
+from scouter import DriftProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
@@ -211,6 +212,12 @@ class ModelCard(ArtifactCard):
         from opsml.storage.card_loader import ModelCardLoader
 
         return ModelCardLoader(self).load_model_metadata()
+
+    @property
+    def drift_profile(self) -> Optional[DriftProfile]:
+        """Loads drift profile from scouter server"""
+
+        return self.interface.drift_profile
 
     @property
     def card_type(self) -> str:
