@@ -77,6 +77,8 @@ class ScouterClient(ApiClient):
                 Time window
             max_data_points:
                 Maximum data points
+            feature:
+                Feature to get drift values for
 
         Returns:
             Drift values
