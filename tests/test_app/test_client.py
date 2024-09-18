@@ -282,7 +282,9 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
+    assert api_storage_client.exists(
+        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
+    )
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
@@ -720,13 +722,14 @@ def test_model_registry_scouter_update(
     loaded_card.load_drift_profile()
 
     # update profile
-    profile.update_config_args(name="new_name")
-    loaded_card.interface.drift_profile = profile
+    profile.update_config_args(sample_size=10)
+    assert profile.config.sample_size == 10
 
+    loaded_card.interface.drift_profile = profile
     model_registry.update_card(card=loaded_card)
 
     load_card_updated: ModelCard = model_registry.load_card(uid=loaded_card.uid)
     profile = load_card_updated.load_drift_profile()
     assert profile is not None
 
-    assert profile.config.name == "new_name"
+    assert profile.config.sample_size == 10
