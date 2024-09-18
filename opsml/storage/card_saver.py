@@ -409,7 +409,7 @@ class ModelCardSaver(CardSaver):
 
             # load json
             existing_metadata = ModelMetadata.model_validate_json(
-                json.loads(local_path.read_text("utf-8")),
+                local_path.read_text("utf-8"),
             ).model_dump()
 
         model_metadata = self._get_model_metadata(existing_metadata)

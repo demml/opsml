@@ -6,6 +6,16 @@ from opsml.storage.api import ApiClient, RequestType
 
 
 class ScouterClient(ApiClient):
+    def healthcheck(self) -> bool:
+        """Checks if scouter server is up
+
+        Returns:
+            True if server is up, False otherwise
+        """
+        response = self.request(route="healthcheck", request_type=RequestType.GET)
+
+        return cast(str, response["message"].lower()) == "alive"
+
     def insert_drift_profile(self, drift_profile: str) -> None:
         """Inserts drift profile into scouter server
 

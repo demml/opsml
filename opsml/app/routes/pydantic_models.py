@@ -520,6 +520,10 @@ class TempRequest(BaseModel):
     answer: str
 
 
+class ScouterHealthCheckResponse(BaseModel):
+    running: bool
+
+
 class DriftProfileRequest(BaseModel):
     profile: str
 
@@ -529,6 +533,7 @@ class DriftProfileUpdateRequest(BaseModel):
     name: str
     version: str
     profile: str
+    save: bool = False
 
 
 class GetDriftProfileResponse(BaseModel):
