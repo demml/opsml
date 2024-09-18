@@ -45,6 +45,30 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
+@router.put("/drift/profile", name="update_drift_profile", response_model=Success)
+def update_profile(request: Request, payload: DriftProfileRequest) -> Success:
+    """Uploads drift profile to scouter-server
+
+    Args:
+        request:
+            FastAPI request object
+        payload:
+            DriftProfileRequest
+
+    Returns:
+        200
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        client.update_drift_profile(payload.profile)
+        return Success()
+    except Exception as error:
+        logger.error(f"Failed to insert drift profile: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+
+
 @router.get("/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
 def get_profile(
     request: Request,

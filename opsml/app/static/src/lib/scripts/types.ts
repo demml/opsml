@@ -213,6 +213,7 @@ export enum CommonPaths {
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
   ERROR = "/opsml/error/page",
   HARDWARE = "/opsml/metrics/hardware",
+  DRIFT_PROFILE = "/opsml/drift/profile",
 }
 
 export enum CommonErrors {
@@ -583,4 +584,67 @@ export interface RunPageReturn {
   searchableMetrics: string[];
   metricVizData: ChartjsData | undefined;
   parsedMetrics: ParsedHardwareMetrics | undefined;
+}
+
+export interface FeatureDriftProfile {
+  id: string;
+  center: number;
+  one_ucl: number;
+  one_lcl: number;
+  two_ucl: number;
+  two_lcl: number;
+  three_ucl: number;
+  three_lcl: number;
+  timestamp: number;
+}
+
+export interface FeatureMap {
+  features: Record<string, Record<string, number>>;
+}
+
+export interface ProcessAlertRule {
+  rule: string;
+  zones_to_monitor: string[];
+}
+
+export interface PercentageAlertRule {
+  rule: number;
+}
+
+export interface AlertRule {
+  process: ProcessAlertRule | undefined;
+  percentage: PercentageAlertRule | undefined;
+}
+
+export interface AlertConfig {
+  alert_dispatch_type: string;
+  alert_rule: AlertRule;
+  schedule: string;
+  features_to_monitor: string[];
+  alert_kwargs: Record<string, string | number>;
+}
+
+export interface DriftConfig {
+  sample_size: number;
+  sample: boolean;
+  name: string;
+  repository: string;
+  version: string;
+  feature_map: FeatureMap | undefined;
+  targets: string[];
+  alert_config: AlertConfig;
+}
+
+export interface DriftProfile {
+  features: Record<string, FeatureDriftProfile>;
+  config: DriftConfig;
+  scouter_version: string;
+}
+
+export interface DriftProfileResponse {
+  profile: DriftProfile | undefined;
+}
+
+export interface SuccessResponse {
+  completed: boolean;
 }
