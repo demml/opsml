@@ -282,9 +282,7 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(
-        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    )
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
@@ -579,4 +577,30 @@ def test_model_registry_scouter(
 
     assert modelcard.interface.drift_profile is not None
     assert modelcard.interface.drift_profile.config.name == modelcard.name
+    assert mock_request.called
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_get_profile_success(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {"status": "success", "profile": {"name": "model"}}
+    response = test_app.get(
+        "/opsml/drift/profile",
+        params={"repository": "mlops", "name": "model", "version": "0.1.0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["profile"]["name"] == "model"
+    assert mock_request.called
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_get_profile_error(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {"status": "error"}
+    response = test_app.get(
+        "/opsml/drift/profile",
+        params={"repository": "mlops", "name": "model", "version": "0.1.0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["profile"] is None
     assert mock_request.called
