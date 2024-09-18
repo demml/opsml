@@ -92,6 +92,13 @@ class ServerRegistry(SQLRegistryBase):
         if self.scouter_client is not None:
             self.scouter_client.insert_drift_profile(drift_profile=drift_profile)
 
+    def update_drift_profile(
+        self,
+        drift_profile: str,
+    ) -> None:
+        if self.scouter_client is not None:
+            self.scouter_client.update_drift_profile(drift_profile=drift_profile)
+
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
         Args:
@@ -394,8 +401,6 @@ class ServerModelCardRegistry(ServerRegistry):
                 build_tag=build_tag,
             )
 
-            print(config.scouter_server_uri)
-
             # write profile to scouter
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
@@ -404,6 +409,31 @@ class ServerModelCardRegistry(ServerRegistry):
                     )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
+
+    def update_card(self, card: Card) -> None:
+        """
+        Update an artifact card based on current registry
+
+        Args:
+            card:
+                Card to register
+        """
+
+        card = cast(ModelCard, card)
+
+        if card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=card.datacard_uid)
+
+        super().update_card(card)
+
+        # write profile to scouter
+        if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+            try:
+                self.update_drift_profile(
+                    drift_profile=card.interface.drift_profile.model_dump_json(),
+                )
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.error(f"Failed to update drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:
@@ -415,9 +445,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
