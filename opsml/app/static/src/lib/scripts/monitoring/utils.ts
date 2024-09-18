@@ -10,14 +10,14 @@ import { apiHandler } from "$lib/scripts/apiHandler";
 /// @param repository - repository of the model
 /// @param version - version of the model
 export async function getDriftProfile(
-  name: string,
   repository: string,
+  name: string,
   version: string
 ): Promise<DriftProfileResponse> {
   const profile_response = await apiHandler.get(
     `${CommonPaths.DRIFT_PROFILE}?${new URLSearchParams({
-      name: name,
       repository: repository,
+      name: name,
       version: version,
     }).toString()}`
   );
@@ -29,9 +29,9 @@ export async function getDriftProfile(
 /// Update drift profile
 /// @param profile - drift profile
 export async function updateDriftProfile(
-  name: string,
   repository: string,
   version: string,
+  name: string,
   profile: string
 ): Promise<SuccessResponse> {
   let body = {
@@ -41,10 +41,7 @@ export async function updateDriftProfile(
     profile: profile,
   };
 
-  const update_response = await apiHandler.post(
-    CommonPaths.DRIFT_PROFILE,
-    body
-  );
+  const update_response = await apiHandler.put(CommonPaths.DRIFT_PROFILE, body);
 
   const response = (await update_response.json()) as SuccessResponse;
   return response;

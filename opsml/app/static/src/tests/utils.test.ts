@@ -7,8 +7,15 @@ import {
   type ChartjsData,
 } from "$lib/scripts/types";
 import { server } from "./server";
-import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
+import {
+  metricsForTable,
+  user,
+  sampleRunMetics,
+  barData,
+  driftProfile,
+} from "./constants";
 import { graphs } from "./graphs";
+import * as monitoring from "../lib/scripts/monitoring/utils";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -478,4 +485,19 @@ it("getHardwareMetrics", async () => {
 it("getGraphs", async () => {
   const _graphs = await page.getRunGraphs("repo", "name", "version");
   expect(_graphs).toEqual(graphs);
+});
+
+it("getDriftProfile", async () => {
+  const _profile = await monitoring.getDriftProfile("repo", "name", "version");
+  expect(_profile.profile).toEqual(driftProfile);
+});
+
+it("UpdateDriftProfile", async () => {
+  const response = await monitoring.updateDriftProfile(
+    "repo",
+    "name",
+    "version",
+    "profile"
+  );
+  expect(response.complete).toEqual(true);
 });
