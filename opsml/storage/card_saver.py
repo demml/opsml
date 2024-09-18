@@ -336,8 +336,7 @@ class ModelCardSaver(CardSaver):
             model_interface=self.card.interface.name() or existing_metadata.get("model_interface"),
             onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value) or existing_metadata.get("onnx_uri"),
             onnx_version=onnx_version or existing_metadata.get("onnx_version"),
-            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value)
-            or existing_metadata.get("model_uri"),
+            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value) or existing_metadata.get("model_uri"),
             model_version=self.card.version or existing_metadata.get("model_version"),
             model_repository=self.card.repository or existing_metadata.get("model_repository"),
             data_schema=self.card.metadata.data_schema or existing_metadata.get("data_schema"),
@@ -349,8 +348,10 @@ class ModelCardSaver(CardSaver):
 
         # add extra uris
         if self.card_uris.preprocessor_uri is not None:
-            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value)
-            metadata.preprocessor_name = self.card.interface.preprocessor_name  # type: ignore
+            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value) or existing_metadata.get(
+                "preprocessor_uri"
+            )
+            metadata.preprocessor_name = self.card.interface.preprocessor_name or existing_metadata.get("preprocessor_name")  # type: ignore
 
         # add huggingface specific uris
         if isinstance(self.card.interface, HuggingFaceModel):
@@ -361,21 +362,31 @@ class ModelCardSaver(CardSaver):
                     "quantize": self.card.interface.onnx_args.quantize,
                     "ort_type": self.card.interface.onnx_args.ort_type,
                     "provider": self.card.interface.onnx_args.provider,
-                }
+                } or existing_metadata.get("onnx_args")
 
             if self.card_uris.quantized_model_uri is not None:
-                metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
+                metadata.quantized_model_uri = self.card_uris.resolve_path(
+                    UriNames.QUANTIZED_MODEL_URI.value
+                ) or existing_metadata.get("quantized_model_uri")
 
             if self.card_uris.tokenizer_uri is not None:
-                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value)
-                metadata.tokenizer_name = self.card.interface.tokenizer_name
+                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value) or existing_metadata.get(
+                    "tokenizer_uri"
+                )
+                metadata.tokenizer_name = self.card.interface.tokenizer_name or existing_metadata.get("tokenizer_name")
 
             if self.card_uris.feature_extractor_uri is not None:
-                metadata.feature_extractor_uri = self.card_uris.resolve_path(UriNames.FEATURE_EXTRACTOR_URI.value)
-                metadata.feature_extractor_name = self.card.interface.feature_extractor_name
+                metadata.feature_extractor_uri = self.card_uris.resolve_path(
+                    UriNames.FEATURE_EXTRACTOR_URI.value
+                ) or existing_metadata.get("feature_extractor_uri")
+                metadata.feature_extractor_name = self.card.interface.feature_extractor_name or existing_metadata.get(
+                    "feature_extractor_name"
+                )
 
             if self.card_uris.onnx_config_uri is not None:
-                metadata.onnx_config_uri = self.card_uris.resolve_path(UriNames.ONNX_CONFIG_URI.value)
+                metadata.onnx_config_uri = self.card_uris.resolve_path(UriNames.ONNX_CONFIG_URI.value) or existing_metadata.get(
+                    "onnx_config_uri"
+                )
 
         return metadata
 
@@ -384,9 +395,7 @@ class ModelCardSaver(CardSaver):
 
         # check if model metadata already exists (for updating cards)
         existing_metadata = {}
-        exists = client.storage_client.exists(
-            (self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
-        )
+        exists = client.storage_client.exists((self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value))
 
         if exists:
             existing_path = Path(self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
@@ -603,9 +612,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
