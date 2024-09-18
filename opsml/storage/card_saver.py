@@ -6,7 +6,7 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import joblib
 import yaml
@@ -67,6 +67,7 @@ class CardUris(BaseModel):
     tokenizer_uri: Optional[Path] = None
     feature_extractor_uri: Optional[Path] = None
     onnx_config_uri: Optional[Path] = None
+    drift_profile_uri: Optional[Path] = None
 
     lpath: Optional[Path] = None
     rpath: Optional[Path] = None
@@ -320,7 +321,7 @@ class ModelCardSaver(CardSaver):
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = save_path
 
-    def _get_model_metadata(self) -> ModelMetadata:
+    def _get_model_metadata(self, existing_metadata: Dict[str, Any]) -> ModelMetadata:
         """Create Onnx Model from trained model"""
         if self.card.interface.onnx_model is not None:
             onnx_version = self.card.interface.onnx_model.onnx_version
@@ -329,17 +330,21 @@ class ModelCardSaver(CardSaver):
 
         # base metadata
         metadata = ModelMetadata(
-            model_name=self.card.name,
-            model_class=self.card.interface.model_class,
-            model_type=self.card.interface.model_type,
-            model_interface=self.card.interface.name(),
-            onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
-            onnx_version=onnx_version,
-            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
-            model_version=self.card.version,
-            model_repository=self.card.repository,
-            data_schema=self.card.metadata.data_schema,
-            sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
+            model_name=self.card.name or existing_metadata.get("model_name"),
+            model_class=self.card.interface.model_class or existing_metadata.get("model_class"),
+            model_type=self.card.interface.model_type or existing_metadata.get("model_type"),
+            model_interface=self.card.interface.name() or existing_metadata.get("model_interface"),
+            onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value) or existing_metadata.get("onnx_uri"),
+            onnx_version=onnx_version or existing_metadata.get("onnx_version"),
+            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value)
+            or existing_metadata.get("model_uri"),
+            model_version=self.card.version or existing_metadata.get("model_version"),
+            model_repository=self.card.repository or existing_metadata.get("model_repository"),
+            data_schema=self.card.metadata.data_schema or existing_metadata.get("data_schema"),
+            sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value)
+            or existing_metadata.get("sample_data_uri"),
+            drift_profile_uri=self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value)
+            or existing_metadata.get("drift_profile_uri"),
         )
 
         # add extra uris
@@ -376,7 +381,24 @@ class ModelCardSaver(CardSaver):
 
     def _save_metadata(self) -> None:
         """Saves Model metadata"""
-        model_metadata = self._get_model_metadata()
+
+        # check if model metadata already exists (for updating cards)
+        existing_metadata = {}
+        exists = client.storage_client.exists(
+            (self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+        )
+
+        if exists:
+            existing_path = Path(self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            local_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            client.storage_client.get(existing_path, local_path)
+
+            # load json
+            existing_metadata = ModelMetadata.model_validate_json(
+                json.loads(local_path.read_text("utf-8")),
+            ).model_dump()
+
+        model_metadata = self._get_model_metadata(existing_metadata)
 
         # save model metadata to json
         save_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
@@ -430,6 +452,7 @@ class ModelCardSaver(CardSaver):
         # update drift profile repository, name and version
         save_path = Path(self.lpath / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
         self.card.interface.save_drift_profile(save_path)
+        self.card_uris.drift_profile_uri = save_path
 
     def save_artifacts(self) -> None:
         """Prepares and saves artifacts from a modelcard"""

@@ -26,6 +26,7 @@ class UriNames(str, Enum):
     DATACARD_URI = "datacard_uri"
     PROFILE_URI = "profile_uri"
     PROFILE_HTML_URI = "profile_html_uri"
+    DRIFT_PROFILE_URI = "drift_profile_uri"
     RUNCARD_URI = "runcard_uri"
     ARTIFACT_URIS = "artifact_uris"
     QUANTIZED_MODEL_URI = "quantized_model_uri"
