@@ -220,5 +220,15 @@ class ModelCard(ArtifactCard):
         return self.interface.drift_profile
 
     @property
+    def load_drift_profile(self) -> Optional[DriftProfile]:
+        """Loads drift profile from scouter server"""
+
+        from opsml.storage.card_loader import ModelCardLoader
+
+        ModelCardLoader(self).load_drift_profile()
+
+        return self.drift_profile
+
+    @property
     def card_type(self) -> str:
         return CardType.MODELCARD.value
