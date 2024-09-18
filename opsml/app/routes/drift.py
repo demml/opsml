@@ -7,7 +7,12 @@
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.pydantic_models import DriftProfileRequest, Success, GetDriftProfileResponse, DriftResponse
+from opsml.app.routes.pydantic_models import (
+    DriftProfileRequest,
+    DriftResponse,
+    GetDriftProfileResponse,
+    Success,
+)
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.scouter import ScouterClient
 
@@ -37,7 +42,9 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error
 
 
 @router.get("/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
@@ -70,7 +77,9 @@ def get_profile(
         return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile"
+        ) from error
 
 
 @router.get("/drift/values", name="get_drift", response_model=DriftResponse)
@@ -112,4 +121,6 @@ def get_drift_values(
         return DriftResponse(**values)
     except Exception as error:
         logger.error(f"Failed to get drift values: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values"
+        ) from error

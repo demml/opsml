@@ -6,7 +6,15 @@ import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer, field_validator, model_validator, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    FieldSerializationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
@@ -184,7 +192,9 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
+    onnx: bool = Field(
+        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
+    )
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
