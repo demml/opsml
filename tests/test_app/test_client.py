@@ -692,6 +692,7 @@ def test_model_registry_scouter_update(
 
     # load the card
     loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
+    loaded_card.load_model()
 
     assert loaded_card.interface.drift_profile is None
 
@@ -702,3 +703,9 @@ def test_model_registry_scouter_update(
 
     # load drift profile again, this escape early since it's already loaded
     loaded_card.load_drift_profile()
+
+    # update profile
+    profile.update_config_args(name="new_name")
+    loaded_card.interface.drift_profile = profile
+
+    model_registry.update_card(card=loaded_card)
