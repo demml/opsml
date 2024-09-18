@@ -12,9 +12,16 @@ from opsml.app.routes.pydantic_models import (
     DriftResponse,
     GetDriftProfileResponse,
     Success,
+    DriftProfileUpdateRequest,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.scouter import ScouterClient
+from opsml.storage.client import StorageClientBase
+from opsml.types import RegistryTableNames, SaveName, Suffix
+from pathlib import Path
+from scouter import DriftProfile
+from tempfile import TemporaryDirectory
+
 
 logger = ArtifactLogger.get_logger()
 
@@ -46,7 +53,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
 
 
 @router.put("/drift/profile", name="update_drift_profile", response_model=Success)
-def update_profile(request: Request, payload: DriftProfileRequest) -> Success:
+def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Success:
     """Uploads drift profile to scouter-server
 
     Args:
@@ -60,9 +67,27 @@ def update_profile(request: Request, payload: DriftProfileRequest) -> Success:
     """
 
     client: ScouterClient = request.app.state.scouter_client
+    storage_root: str = request.app.state.storage_root
+    storage_client: StorageClientBase = request.app.state.storage_client
 
     try:
+        profile = DriftProfile.model_validate_json(payload.profile)
         client.update_drift_profile(payload.profile)
+
+        save_path = Path(
+            storage_root,
+            RegistryTableNames.MODEL.value,
+            payload.repository,
+            payload.name,
+            f"v{payload.version}",
+            SaveName.DRIFT_PROFILE.value,
+        ).with_suffix(Suffix.JSON.value)
+
+        with TemporaryDirectory() as tempdir:
+            temp_path = (Path(tempdir) / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+            profile.save_to_json(temp_path)
+            storage_client.put(temp_path, save_path)
+
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
