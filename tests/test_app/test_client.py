@@ -669,7 +669,7 @@ def test_get_drift_values(
 
 @mock.patch("opsml.storage.scouter.ScouterClient.request")
 @mock.patch("opsml.registry.sql.base.client.ClientRegistry.scouter_server_available")
-def _test_model_registry_scouter_update(
+def test_model_registry_scouter_update(
     server: mock.MagicMock,
     mock_request: mock.MagicMock,
     linear_regression: Tuple[SklearnModel, NumpyData],
