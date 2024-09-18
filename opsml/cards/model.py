@@ -219,9 +219,8 @@ class ModelCard(ArtifactCard):
 
         return self.interface.drift_profile
 
-    @property
     def load_drift_profile(self) -> Optional[DriftProfile]:
-        """Loads drift profile from scouter server"""
+        """Loads drift profile from model registry"""
 
         from opsml.storage.card_loader import ModelCardLoader
 
