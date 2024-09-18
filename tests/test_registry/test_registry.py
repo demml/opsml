@@ -925,3 +925,12 @@ def test_model_registry_scouter(
     assert model_card.interface.drift_profile is not None
     assert model_card.interface.drift_profile.config.name == model_card.name
     assert mock_request.called
+
+    # test update
+    model_card.interface.drift_profile.update_config_args(sample_size=10)
+    model_registry.update_card(card=model_card)
+
+    # test load card
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
+    loaded_card.load_drift_profile()
+    assert loaded_card.interface.drift_profile.config.sample_size == 10
