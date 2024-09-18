@@ -45,6 +45,45 @@ class ScouterClient(ApiClient):
 
         return cast(Dict[str, Any], response["profile"])
 
+    def get_drift_values(
+        self,
+        repository: str,
+        name: str,
+        version: str,
+        time_window: str,
+        max_data_points: int,
+    ) -> Dict[str, Any]:
+        """Get drift values from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+            time_window:
+                Time window
+            max_data_points:
+                Maximum data points
+
+        Returns:
+            Drift values
+        """
+        response = self.request(
+            route="drift",
+            request_type=RequestType.GET,
+            params={
+                "repository": repository,
+                "name": name,
+                "version": version,
+                "time_window": time_window,
+                "max_data_points": max_data_points,
+            },
+        )
+
+        return cast(Dict[str, Any], response["data"])
+
 
 SCOUTER_CLIENT = None
 if config.scouter_server_uri is not None:

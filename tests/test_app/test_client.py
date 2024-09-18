@@ -604,3 +604,36 @@ def test_get_profile_error(mock_request: mock.MagicMock, test_app: TestClient) -
     assert response.status_code == 200
     assert response.json()["profile"] is None
     assert mock_request.called
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_get_drift_values(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {
+        "data": {
+            "features": {
+                "col_1": {
+                    "created_at": [
+                        "2024-09-18T06:43:12",
+                    ],
+                    "values": [
+                        -0.8606220085107592,
+                    ],
+                },
+            }
+        },
+        "status": "success",
+    }
+    response = test_app.get(
+        "/opsml/drift/values",
+        params={
+            "repository": "mlops",
+            "name": "model",
+            "version": "0.1.0",
+            "time_window": "2day",
+            "max_data_points": 10,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["features"]["col_1"]["values"][0] == -0.8606220085107592
+    assert mock_request.called
