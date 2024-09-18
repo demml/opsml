@@ -15,8 +15,8 @@ from opsml.registry.backend import _set_registry
 from opsml.registry.registry import CardRegistries
 from opsml.settings.config import config
 from opsml.storage import client
-from opsml.types import RegistryType
 from opsml.storage.scouter import SCOUTER_CLIENT
+from opsml.types import RegistryType
 
 logger = ArtifactLogger.get_logger()
 

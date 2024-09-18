@@ -132,9 +132,6 @@ class ApiClient:
             url = f"{self._base_url}/{route}"
             response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
 
-            print(url)
-            print(response)
-
             if response.status_code == 200:
                 return cast(Dict[str, Any], response.json())
 

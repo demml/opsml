@@ -4,12 +4,12 @@
 
 # pylint: disable=protected-access
 
+
 from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.pydantic_models import DriftProfileRequest, Success
+from opsml.app.routes.pydantic_models import DriftProfileRequest, Success, GetDriftProfileResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.scouter import ScouterClient
-from typing import cast
 
 logger = ArtifactLogger.get_logger()
 
@@ -40,13 +40,13 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
-@router.get("/drift/profile", name="get_profile", response_model=str)
+@router.get("/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
 def get_profile(
     request: Request,
     repository: str,
     name: str,
     version: str,
-) -> str:
+) -> GetDriftProfileResponse:
     """Uploads drift profile to scouter-server
 
     Args:
@@ -66,15 +66,8 @@ def get_profile(
     client: ScouterClient = request.app.state.scouter_client
 
     try:
-        response = client.get_drift_profile(repository, name, version)
-
-        print(response)
-        profile = response.get("data")
-
-        if profile is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Drift profile not found")
-
-        return cast(str, profile)
+        profile = client.get_drift_profile(repository, name, version)
+        return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
