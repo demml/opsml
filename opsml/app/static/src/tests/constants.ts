@@ -398,3 +398,42 @@ export const sampleCardVersions = {
     ],
   },
 };
+
+export const driftProfile = {
+  features: {
+    col1: {
+      id: "col1",
+      center: 0.0,
+      one_ucl: 0.0,
+      one_lcl: 0.0,
+      two_ucl: 0.0,
+      two_lcl: 0.0,
+      three_ucl: 0.0,
+      three_lcl: 0.0,
+      timestamp: "2024-08-29T01:10:45.652409",
+    },
+  },
+  config: {
+    sample_size: 100,
+    sample: true,
+    name: "test",
+    repository: "test",
+    version: "1.0.0",
+    feature_map: undefined,
+    targets: [],
+    alert_config: {
+      alert_dispatch_type: "Console",
+      alert_rule: {
+        process: {
+          rule: "8 8 8 8 8 8 8 8",
+          zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
+        },
+        percentage: undefined,
+      },
+      schedule: "0 0 0 0 0 0 0 0",
+      features_to_monitor: ["col1"],
+      alert_kwargs: {},
+    },
+  },
+  scouter_version: "1.0.0",
+};

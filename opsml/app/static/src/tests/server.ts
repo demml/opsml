@@ -3,6 +3,7 @@ import { setupServer } from "msw/node";
 import { type Files, type ModelMetadata } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
 import { graphs } from "./graphs";
+import { profile } from "svelte-highlight/languages";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -399,6 +400,61 @@ const handlers = [
   http.get("/opsml/runs/graphs", async ({ request, params, cookies }) => {
     return HttpResponse.json(graphs);
   }),
+
+  http.get(
+    "/opsml/scouter/drift/profile",
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json({
+        profile: {
+          features: {
+            col1: {
+              id: "col1",
+              center: 0.0,
+              one_ucl: 0.0,
+              one_lcl: 0.0,
+              two_ucl: 0.0,
+              two_lcl: 0.0,
+              three_ucl: 0.0,
+              three_lcl: 0.0,
+              timestamp: "2024-08-29T01:10:45.652409",
+            },
+          },
+          config: {
+            sample_size: 100,
+            sample: true,
+            name: "test",
+            repository: "test",
+            version: "1.0.0",
+            feature_map: undefined,
+            targets: [],
+            alert_config: {
+              alert_dispatch_type: "Console",
+              alert_rule: {
+                process: {
+                  rule: "8 8 8 8 8 8 8 8",
+                  zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
+                },
+                percentage: undefined,
+              },
+              schedule: "0 0 0 0 0 0 0 0",
+              features_to_monitor: ["col1"],
+              alert_kwargs: {},
+            },
+          },
+          scouter_version: "1.0.0",
+        },
+      });
+    }
+  ),
+
+  http.put(
+    "/opsml/scouter/drift/profile",
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json({
+        complete: true,
+      });
+    }
+  ),
 ];
 
 export const server = setupServer(...handlers);

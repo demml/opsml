@@ -213,7 +213,7 @@ export enum CommonPaths {
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
   ERROR = "/opsml/error/page",
   HARDWARE = "/opsml/metrics/hardware",
-  DRIFT_PROFILE = "/opsml/drift/profile",
+  DRIFT_PROFILE = "/opsml/scouter/drift/profile",
 }
 
 export enum CommonErrors {
@@ -595,7 +595,7 @@ export interface FeatureDriftProfile {
   two_lcl: number;
   three_ucl: number;
   three_lcl: number;
-  timestamp: number;
+  timestamp: string;
 }
 
 export interface FeatureMap {
@@ -646,5 +646,5 @@ export interface DriftProfileResponse {
 }
 
 export interface SuccessResponse {
-  completed: boolean;
+  complete: boolean;
 }
