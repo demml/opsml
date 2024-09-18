@@ -455,6 +455,59 @@ const handlers = [
       });
     }
   ),
+
+  http.get(
+    "/opsml/scouter/drift/values",
+    async ({ request, params, cookies }) => {
+      const url = new URL(request.url);
+      const feature = url.searchParams.get("feature")!;
+
+      // check if feature is undefined
+      if (feature === undefined) {
+        return HttpResponse.json({
+          data: {
+            features: {
+              all_features: {
+                created_at: [
+                  "2024-09-18T01:12:00",
+                  "2024-09-18T01:26:24",
+                  "2024-09-18T01:40:48",
+                  "2024-09-18T01:55:12",
+                  "2024-09-18T02:09:36",
+                ],
+                values: [
+                  1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+                  0.44125417583912063, -0.6577854789448841,
+                ],
+              },
+            },
+          },
+          status: "success",
+        });
+      } else {
+        return HttpResponse.json({
+          data: {
+            features: {
+              col_1: {
+                created_at: [
+                  "2024-09-18T01:12:00",
+                  "2024-09-18T01:26:24",
+                  "2024-09-18T01:40:48",
+                  "2024-09-18T01:55:12",
+                  "2024-09-18T02:09:36",
+                ],
+                values: [
+                  1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+                  0.44125417583912063, -0.6577854789448841,
+                ],
+              },
+            },
+          },
+          status: "success",
+        });
+      }
+    }
+  ),
 ];
 
 export const server = setupServer(...handlers);
