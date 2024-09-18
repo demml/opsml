@@ -50,7 +50,7 @@ def check_server(
         return ScouterHealthCheckResponse(
             running=client.healthcheck(),
         )
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         logger.error(f"Scouter server healthcheck failed: {error}")
         return ScouterHealthCheckResponse(
             running=False,

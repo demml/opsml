@@ -381,7 +381,7 @@ class ClientModelCardRegistry(ClientRegistry):
                     save=False,  # this would already have been saved during the update
                     drift_profile=card.interface.drift_profile.model_dump_json(),
                 )
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-except
                 logger.error(f"Failed to update drift profile: {exc}")
 
     @staticmethod
