@@ -102,6 +102,10 @@ def get_drift_values(
             Model name
         version:
             Model version
+        time_window:
+            Time window
+        max_data_points:
+            Maximum data points
 
     Returns:
         DriftProfile string
