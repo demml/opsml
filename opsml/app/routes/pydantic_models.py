@@ -6,14 +6,7 @@ import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import File, Form, UploadFile
-from pydantic import (
-    BaseModel,
-    Field,
-    FieldSerializationInfo,
-    field_serializer,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer, field_validator, model_validator, ConfigDict
 
 from opsml.cards.audit import AuditSections
 from opsml.model.challenger import BattleReport
@@ -523,3 +516,16 @@ class DriftProfileRequest(BaseModel):
 
 class GetDriftProfileResponse(BaseModel):
     profile: Optional[Dict[str, Any]]
+
+
+class DriftFeature(BaseModel):
+    created_at: List[str]
+    values: List[float]
+
+
+class DriftResponse(BaseModel):
+    features: Dict[str, DriftFeature]
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )

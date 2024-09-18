@@ -7,7 +7,7 @@
 
 from fastapi import APIRouter, HTTPException, Request, status
 
-from opsml.app.routes.pydantic_models import DriftProfileRequest, Success, GetDriftProfileResponse
+from opsml.app.routes.pydantic_models import DriftProfileRequest, Success, GetDriftProfileResponse, DriftResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.scouter import ScouterClient
 
@@ -71,3 +71,45 @@ def get_profile(
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
+
+
+@router.get("/drift/values", name="get_drift", response_model=DriftResponse)
+def get_drift_values(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+    time_window: str,
+    max_data_points: int,
+) -> DriftResponse:
+    """Uploads drift profile to scouter-server
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+
+    Returns:
+        DriftProfile string
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.get_drift_values(
+            repository,
+            name,
+            version,
+            time_window,
+            max_data_points,
+        )
+
+        return DriftResponse(**values)
+    except Exception as error:
+        logger.error(f"Failed to get drift values: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
