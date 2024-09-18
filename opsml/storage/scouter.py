@@ -52,6 +52,7 @@ class ScouterClient(ApiClient):
         version: str,
         time_window: str,
         max_data_points: int,
+        feature: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Get drift values from scouter server
 
@@ -70,17 +71,18 @@ class ScouterClient(ApiClient):
         Returns:
             Drift values
         """
-        response = self.request(
-            route="drift",
-            request_type=RequestType.GET,
-            params={
-                "repository": repository,
-                "name": name,
-                "version": version,
-                "time_window": time_window,
-                "max_data_points": max_data_points,
-            },
-        )
+        params = {
+            "repository": repository,
+            "name": name,
+            "version": version,
+            "time_window": time_window,
+            "max_data_points": max_data_points,
+        }
+
+        if feature:
+            params["feature"] = feature
+
+        response = self.request(route="drift", request_type=RequestType.GET, params=params)
 
         return cast(Dict[str, Any], response["data"])
 
