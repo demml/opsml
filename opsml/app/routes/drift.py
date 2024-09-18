@@ -17,6 +17,7 @@ from opsml.app.routes.pydantic_models import (
     DriftProfileUpdateRequest,
     DriftResponse,
     GetDriftProfileResponse,
+    ScouterHealthCheckResponse,
     Success,
 )
 from opsml.helpers.logging import ArtifactLogger
@@ -29,7 +30,34 @@ logger = ArtifactLogger.get_logger()
 router = APIRouter()
 
 
-@router.post("/drift/profile", name="insert_drift_profile", response_model=Success)
+@router.get("/scouter/healthcheck", name="scouter server status", response_model=ScouterHealthCheckResponse)
+def check_server(
+    request: Request,
+) -> ScouterHealthCheckResponse:
+    """Checks if scouter-server is running
+
+    Args:
+        request:
+            FastAPI request object
+
+    Returns:
+        bool
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        return ScouterHealthCheckResponse(
+            running=client.healthcheck(),
+        )
+    except Exception as error:
+        logger.error(f"Scouter server healthcheck failed: {error}")
+        return ScouterHealthCheckResponse(
+            running=False,
+        )
+
+
+@router.post("/scouter/drift/profile", name="insert_drift_profile", response_model=Success)
 def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
     """Uploads drift profile to scouter-server
 
@@ -43,9 +71,8 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         200
     """
 
-    client: ScouterClient = request.app.state.scouter_client
-
     try:
+        client: ScouterClient = request.app.state.scouter_client
         client.insert_drift_profile(payload.profile)
         return Success()
     except Exception as error:
@@ -55,7 +82,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         ) from error
 
 
-@router.put("/drift/profile", name="update_drift_profile", response_model=Success)
+@router.put("/scouter/drift/profile", name="update_drift_profile", response_model=Success)
 def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Success:
     """Updates a drift profile to scouter-server as well as modelcard storage
 
@@ -77,19 +104,22 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
         profile = DriftProfile.model_validate_json(payload.profile)
         client.update_drift_profile(payload.profile)
 
-        save_path = Path(
-            storage_root,
-            RegistryTableNames.MODEL.value,
-            payload.repository,
-            payload.name,
-            f"v{payload.version}",
-            SaveName.DRIFT_PROFILE.value,
-        ).with_suffix(Suffix.JSON.value)
+        # this route is only used for updating the drift profile from the UI
+        # Updating cards and profiles should be done via update_card
+        if payload.save:
+            save_path = Path(
+                storage_root,
+                RegistryTableNames.MODEL.value,
+                payload.repository,
+                payload.name,
+                f"v{payload.version}",
+                SaveName.DRIFT_PROFILE.value,
+            ).with_suffix(Suffix.JSON.value)
 
-        with TemporaryDirectory() as tempdir:
-            temp_path = (Path(tempdir) / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
-            profile.save_to_json(temp_path)
-            storage_client.put(temp_path, save_path)
+            with TemporaryDirectory() as tempdir:
+                temp_path = (Path(tempdir) / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+                profile.save_to_json(temp_path)
+                storage_client.put(temp_path, save_path)
 
         return Success()
     except Exception as error:
@@ -99,7 +129,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
         ) from error
 
 
-@router.get("/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
+@router.get("/scouter/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
 def get_profile(
     request: Request,
     repository: str,
@@ -134,7 +164,7 @@ def get_profile(
         ) from error
 
 
-@router.get("/drift/values", name="get_drift", response_model=DriftResponse)
+@router.get("/scouter/drift/values", name="get_drift", response_model=DriftResponse)
 def get_drift_values(
     request: Request,
     repository: str,

@@ -19,7 +19,6 @@ from opsml.helpers.utils import check_package_exists
 from opsml.registry.semver import CardVersion, VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
-from opsml.settings.config import config
 from opsml.storage.api import RequestType, api_routes
 from opsml.storage.client import ApiStorageClient, StorageClient
 from opsml.types import RegistryType
@@ -48,6 +47,16 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         return cast(str, data["table_name"])
+
+    @property
+    def scouter_server_available(self) -> bool:
+        """Check if scouter server is available"""
+        data = self._session.request(
+            route=api_routes.SCOUTER_HEALTHCHECK,
+            request_type=RequestType.GET,
+        )
+
+        return bool(data.get("running"))
 
     @property
     def registry_type(self) -> RegistryType:
@@ -261,9 +270,29 @@ class ClientModelCardRegistry(ClientRegistry):
 
     def insert_drift_profile(self, drift_profile: str) -> None:
         self._session.request(
-            route=api_routes.DRIFT_PROFILE,
+            route=api_routes.SCOUTER_DRIFT_PROFILE,
             request_type=RequestType.POST,
             json={"profile": drift_profile},
+        )
+
+    def update_drift_profile(
+        self,
+        name: str,
+        repository: str,
+        version: str,
+        save: bool,
+        drift_profile: str,
+    ) -> None:
+        self._session.request(
+            route=api_routes.SCOUTER_DRIFT_PROFILE,
+            request_type=RequestType.PUT,
+            json={
+                "name": name,
+                "repository": repository,
+                "version": version,
+                "save": save,
+                "profile": drift_profile,
+            },
         )
 
     def register_card(
@@ -321,11 +350,39 @@ class ClientModelCardRegistry(ClientRegistry):
             )
 
             # write profile to scouter
-            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+            if card.interface.drift_profile and self.scouter_server_available:
                 try:
                     self.insert_drift_profile(drift_profile=card.interface.drift_profile.model_dump_json())
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
+
+    def update_card(self, card: Card) -> None:
+        """
+        Update an artifact card based on current registry
+
+        Args:
+            card:
+                Card to register
+        """
+        card = cast(ModelCard, card)
+
+        if card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=card.datacard_uid)
+
+        super().update_card(card)
+
+        # write profile to scouter
+        if card.interface.drift_profile and self.scouter_server_available:
+            try:
+                self.update_drift_profile(
+                    name=card.name,
+                    repository=card.repository,
+                    version=card.version,
+                    save=False,  # this would already have been saved during the update
+                    drift_profile=card.interface.drift_profile.model_dump_json(),
+                )
+            except Exception as exc:
+                logger.error(f"Failed to update drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:
