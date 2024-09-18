@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, cast, Optional
+from typing import Any, Dict, Optional, cast
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
