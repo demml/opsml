@@ -463,11 +463,11 @@ const handlers = [
       const feature = url.searchParams.get("feature")!;
 
       // check if feature is undefined
-      if (feature === undefined) {
+      if (feature) {
         return HttpResponse.json({
           data: {
             features: {
-              all_features: {
+              col_1: {
                 created_at: [
                   "2024-09-18T01:12:00",
                   "2024-09-18T01:26:24",
@@ -488,7 +488,7 @@ const handlers = [
         return HttpResponse.json({
           data: {
             features: {
-              col_1: {
+              all_features: {
                 created_at: [
                   "2024-09-18T01:12:00",
                   "2024-09-18T01:26:24",
