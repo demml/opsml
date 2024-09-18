@@ -13,6 +13,8 @@ import {
   sampleRunMetics,
   barData,
   driftProfile,
+  allFeatureDriftValues,
+  featureDriftValues,
 } from "./constants";
 import { graphs } from "./graphs";
 import * as monitoring from "../lib/scripts/monitoring/utils";
@@ -500,4 +502,15 @@ it("UpdateDriftProfile", async () => {
     "profile"
   );
   expect(response.complete).toEqual(true);
+});
+
+it("GetFeatureValues", async () => {
+  const all_features_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100
+  );
+  expect(all_features_response).toEqual(allFeatureDriftValues);
 });

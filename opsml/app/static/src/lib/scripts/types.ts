@@ -214,6 +214,7 @@ export enum CommonPaths {
   ERROR = "/opsml/error/page",
   HARDWARE = "/opsml/metrics/hardware",
   DRIFT_PROFILE = "/opsml/scouter/drift/profile",
+  DRIFT_VALUES = "/opsml/scouter/drift/values",
 }
 
 export enum CommonErrors {
@@ -647,4 +648,18 @@ export interface DriftProfileResponse {
 
 export interface SuccessResponse {
   complete: boolean;
+}
+
+export interface DriftValues {
+  created_at: string[];
+  values: number[];
+}
+
+export interface FeatureDriftValues {
+  features: Record<string, DriftValues>;
+}
+
+export interface FeatureDriftValuesResponse {
+  data: FeatureDriftValues;
+  status: string;
 }
