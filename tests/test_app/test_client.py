@@ -282,9 +282,7 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(
-        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    )
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
@@ -638,4 +636,19 @@ def test_get_drift_values(mock_request: mock.MagicMock, test_app: TestClient) ->
 
     assert response.status_code == 200
     assert response.json()["features"]["col_1"]["values"][0] == -0.8606220085107592
+    assert mock_request.called
+
+    response = test_app.get(
+        "/opsml/drift/values",
+        params={
+            "repository": "mlops",
+            "name": "model",
+            "version": "0.1.0",
+            "time_window": "2day",
+            "max_data_points": 10,
+            "feature": "col_1",
+        },
+    )
+
+    assert response.status_code == 200
     assert mock_request.called
