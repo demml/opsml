@@ -513,4 +513,14 @@ it("GetFeatureValues", async () => {
     100
   );
   expect(all_features_response).toEqual(allFeatureDriftValues);
+
+  const feature_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "col1"
+  );
+  expect(feature_response).toEqual(featureDriftValues);
 });
