@@ -282,15 +282,14 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(
-        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    )
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
 
     loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
     loaded_card.load_model()
+    loaded_card.load_drift_profile()  # this should escape early
     assert loaded_card.model is not None
     assert loaded_card.sample_data is not None
 
@@ -654,3 +653,52 @@ def test_get_drift_values(mock_request: mock.MagicMock, test_app: TestClient) ->
 
     assert response.status_code == 200
     assert mock_request.called
+
+
+@mock.patch("opsml.storage.scouter.ScouterClient.request")
+def test_model_registry_scouter_update(
+    mock_request: mock.MagicMock,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+    api_registries: CardRegistries,
+) -> None:
+    mock_request.return_value = None
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    model, data = linear_regression
+
+    datacard = DataCard(
+        interface=data,
+        name="scouter_test",
+        repository="mlops",
+        contact="mlops.com",
+    )
+
+    data_registry.register_card(card=datacard)
+
+    drift_config = DriftConfig()
+    model.create_drift_profile(data.data, drift_config)
+
+    modelcard = ModelCard(
+        interface=model,
+        name="pipeline_model",
+        repository="mlops",
+        contact="mlops.com",
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+    )
+
+    model_registry.register_card(card=modelcard)
+
+    # load the card
+    loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
+
+    assert loaded_card.interface.drift_profile is None
+
+    # load drift profile
+    profile = loaded_card.load_drift_profile()
+    assert profile is not None
+    assert profile.config.name == modelcard.name
+
+    # load drift profile again, this escape early since it's already loaded
+    loaded_card.load_drift_profile()
