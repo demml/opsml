@@ -1,8 +1,8 @@
 import json
+from typing import Any, Dict, cast, Optional
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
-from scouter import DriftProfile
 
 
 class ScouterClient(ApiClient):
@@ -16,7 +16,7 @@ class ScouterClient(ApiClient):
         profile = json.loads(drift_profile)
         self.request(route="profile", request_type=RequestType.POST, json=profile)
 
-    def get_drift_profile(self, repository: str, name: str, version: str) -> DriftProfile:
+    def get_drift_profile(self, repository: str, name: str, version: str) -> Optional[Dict[str, Any]]:
         """Get drift profile from scouter server
 
         Args:
@@ -40,7 +40,10 @@ class ScouterClient(ApiClient):
             },
         )
 
-        return DriftProfile(**response["data"])
+        if response["status"] == "error":
+            return None
+
+        return cast(Dict[str, Any], response["profile"])
 
 
 SCOUTER_CLIENT = None
