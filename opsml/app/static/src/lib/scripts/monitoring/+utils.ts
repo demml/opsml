@@ -29,9 +29,15 @@ export async function getDriftProfile(
 /// Update drift profile
 /// @param profile - drift profile
 export async function updateDriftProfile(
+  name: string,
+  repository: string,
+  version: string,
   profile: string
 ): Promise<SuccessResponse> {
   let body = {
+    name: name,
+    repository: repository,
+    version: version,
     profile: profile,
   };
 
