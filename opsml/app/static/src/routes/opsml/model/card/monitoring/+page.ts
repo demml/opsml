@@ -7,5 +7,4 @@ export async function load({ url }) {
   const version = (url as URL).searchParams.get("version") as
     | string
     | undefined;
-  let status = (url as URL).searchParams.get("status") as string | undefined;
 }

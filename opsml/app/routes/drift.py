@@ -5,23 +5,24 @@
 # pylint: disable=protected-access
 
 
-from fastapi import APIRouter, HTTPException, Request, status
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Request, status
+from scouter import DriftProfile
+
 from opsml.app.routes.pydantic_models import (
     DriftProfileRequest,
+    DriftProfileUpdateRequest,
     DriftResponse,
     GetDriftProfileResponse,
     Success,
-    DriftProfileUpdateRequest,
 )
 from opsml.helpers.logging import ArtifactLogger
-from opsml.storage.scouter import ScouterClient
 from opsml.storage.client import StorageClientBase
+from opsml.storage.scouter import ScouterClient
 from opsml.types import RegistryTableNames, SaveName, Suffix
-from pathlib import Path
-from scouter import DriftProfile
-from tempfile import TemporaryDirectory
-
 
 logger = ArtifactLogger.get_logger()
 
@@ -49,12 +50,14 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error
 
 
 @router.put("/drift/profile", name="update_drift_profile", response_model=Success)
 def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Success:
-    """Uploads drift profile to scouter-server
+    """Updates a drift profile to scouter-server as well as modelcard storage
 
     Args:
         request:
@@ -91,7 +94,9 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error
 
 
 @router.get("/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
@@ -124,7 +129,9 @@ def get_profile(
         return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile"
+        ) from error
 
 
 @router.get("/drift/values", name="get_drift", response_model=DriftResponse)
@@ -172,4 +179,6 @@ def get_drift_values(
         return DriftResponse(**values)
     except Exception as error:
         logger.error(f"Failed to get drift values: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values"
+        ) from error
