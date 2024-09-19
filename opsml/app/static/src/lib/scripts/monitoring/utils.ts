@@ -140,7 +140,6 @@ export function createDriftViz(
         data: values,
         borderColor: "rgba(0, 0, 0, 1)",
         backgroundColor: "rgba(0, 0, 0, 1)",
-        pointRadius: 2,
       },
     ],
   };
