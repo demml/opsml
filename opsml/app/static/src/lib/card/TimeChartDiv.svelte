@@ -13,6 +13,7 @@
   export let options;
   export let id;
   export let maxHeight = "max-h-[450px]";
+  export let minHeight: string = "min-h-[250px]";
   
 	let ctx;
 	let chartCanvas;
@@ -74,7 +75,7 @@
 
 </script>
 
-<div class="pt-2 pb-10 rounded-2xl {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+<div class="pt-2 pb-10 rounded-2xl {minHeight} {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
 
   <div class="flex justify-between">
 

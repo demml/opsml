@@ -13,6 +13,7 @@ import {
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
+  console.log("monitoring page load");
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
@@ -51,14 +52,16 @@ export async function load({ url }) {
     );
 
     return {
-      repository,
-      name,
-      version,
+      repository: "ml-platform-1",
+      name: "model-1",
+      version: "0.1.0",
       driftProfile: profile,
       targetFeature,
       features,
       featureValues,
       driftVizData,
+      timeWindow: TimeWindow.TwentyFourHours,
+      max_data_points: 1000,
     };
   } else {
     return {
