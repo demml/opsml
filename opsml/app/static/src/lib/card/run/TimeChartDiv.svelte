@@ -5,12 +5,14 @@
   import Chart from 'chart.js/auto';
 	import { onMount } from 'svelte';
   import zoomPlugin from 'chartjs-plugin-zoom';
+  import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
 
 
   export let data;
   export let options;
   export let id;
+  export let maxHeight = "max-h-[450px]";
   
 	let ctx;
 	let chartCanvas;
@@ -24,6 +26,7 @@
   }
 
   Chart.register(zoomPlugin);
+  Chart.register(annotationPlugin);
 
 	onMount(() => {
      
@@ -71,7 +74,7 @@
 
 </script>
 
-<div class="pt-2 pb-10 rounded-2xl max-h-[450px] bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+<div class="pt-2 pb-10 rounded-2xl {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
 
   <div class="flex justify-between">
 
