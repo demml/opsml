@@ -109,12 +109,10 @@ export function createDriftViz(
 ): ChartjsData {
   let labels = driftValues.created_at.map((date) => new Date(date));
   let values = driftValues.values;
-  let label = "Feature drift for " + feature.id;
-  let grace = "0%";
-
+  let label = feature.id;
+  let grace = "10%";
   let legend = {
-    display: true,
-    position: "bottom",
+    display: false,
   };
 
   const zoomOptions = {
@@ -142,7 +140,7 @@ export function createDriftViz(
         data: values,
         borderColor: "rgba(0, 0, 0, 1)",
         backgroundColor: "rgba(0, 0, 0, 1)",
-        pointRadius: 1,
+        pointRadius: 2,
       },
     ],
   };
@@ -161,7 +159,7 @@ export function createDriftViz(
               type: "box",
               yMin: feature.one_ucl,
               yMax: feature.two_ucl,
-              backgroundColor: "rgba(249, 179, 93, 0.25)",
+              backgroundColor: "rgba(75, 57, 120, 0.1)",
               borderWidth: 0,
             },
             LowerOneTwo: {
@@ -169,7 +167,7 @@ export function createDriftViz(
               type: "box",
               yMin: feature.two_lcl,
               yMax: feature.one_lcl,
-              backgroundColor: "rgba(249, 179, 93, 0.25)",
+              backgroundColor: "rgba(75, 57, 120, 0.1)",
               borderWidth: 0,
             },
             UpperTwoThree: {
@@ -177,7 +175,7 @@ export function createDriftViz(
               type: "box",
               yMin: feature.two_ucl,
               yMax: feature.three_ucl,
-              backgroundColor: "rgba(249, 179, 93, 0.50)",
+              backgroundColor: "rgba(75, 57, 120, 0.25)",
               borderWidth: 0,
             },
             LowerTwoThree: {
@@ -185,22 +183,128 @@ export function createDriftViz(
               type: "box",
               yMin: feature.three_lcl,
               yMax: feature.two_lcl,
-              backgroundColor: "rgba(249, 179, 93, 0.50)",
+              backgroundColor: "rgba(75, 57, 120, 0.25)",
               borderWidth: 0,
             },
             UpperOutOfBounds: {
               drawTime: "beforeDatasetsDraw",
               type: "box",
               yMin: feature.three_ucl,
-              backgroundColor: "rgba(245, 77, 85, 0.50)",
+              backgroundColor: "rgba(75, 57, 120, 0.50)",
               borderWidth: 0,
             },
             LowerOutOfBounds: {
               drawTime: "beforeDatasetsDraw",
               type: "box",
               yMax: feature.three_lcl,
-              backgroundColor: "rgba(245, 77, 85, 0.50)",
+              backgroundColor: "rgba(75, 57, 120, 0.50)",
               borderWidth: 0,
+            },
+            center: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.center,
+              yMax: feature.center,
+              borderColor: "rgba(4, 205, 155, 1)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "center",
+                position: "end",
+                backgroundColor: "rgba(4, 205, 155, 1)",
+              },
+            },
+            zone1U: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.one_ucl,
+              yMax: feature.one_ucl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 1",
+                position: "end",
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
+            },
+            zone1L: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.one_lcl,
+              yMax: feature.one_lcl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 1",
+                position: "end",
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
+            },
+            zone2U: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.two_ucl,
+              yMax: feature.two_ucl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 2",
+                position: "end",
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
+            },
+            zone2L: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.two_lcl,
+              yMax: feature.two_lcl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 2",
+                position: "end",
+                fontSize: 2,
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
+            },
+            zone3U: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.three_ucl,
+              yMax: feature.three_ucl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 3",
+                position: "end",
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
+            },
+            zone3L: {
+              type: "line",
+              drawTime: "beforeDatasetsDraw",
+              yMin: feature.three_lcl,
+              yMax: feature.three_lcl,
+              borderColor: "rgba(0, 0, 0, 0.25)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                display: true,
+                content: "Zone 3",
+                position: "end",
+                backgroundColor: "rgba(75, 57, 120, 0.5)",
+              },
             },
           },
         },
@@ -210,9 +314,18 @@ export function createDriftViz(
       maintainAspectRatio: false,
       scales: {
         x: {
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
           type: "time",
           time: {
             displayFormats: {
+              year: "YYYY",
+              day: "DD-MM-YYYY",
               hour: "HH:mm",
               minute: "HH:mm",
               second: "HH:mm:ss",
@@ -224,11 +337,18 @@ export function createDriftViz(
           },
         },
         y: {
+          grace: grace,
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
           title: { display: true, text: "Feature Values" },
           ticks: {
             maxTicksLimit: 30,
           },
-          grace,
         },
       },
       layout: {

@@ -46,7 +46,7 @@
         data={driftVizData.data}
         id={vizId}
         options={driftVizData.options}
-        maxHeight={"max-h-[650px]"}
+        maxHeight={"max-h-[500px]"}
       />
     {:else}
       <div class="flex justify-center items-center h-3/5">
