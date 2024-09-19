@@ -63,6 +63,7 @@
 		"@popperjs/core": "^2.11.8",
 		"chart.js": "^4.4.3",
 		"chartjs-adapter-date-fns": "^3.0.0",
+		"chartjs-plugin-annotation": "^3.0.1",
 		"chartjs-plugin-zoom": "^2.0.1",
 		"codemirror": "^6.0.1",
 		"date-fns": "^3.6.0",

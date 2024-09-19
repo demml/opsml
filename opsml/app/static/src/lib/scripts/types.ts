@@ -225,6 +225,19 @@ export enum CommonErrors {
   INCORRECT_ANSWER = "Incorrect answer",
 }
 
+export enum TimeWindow {
+  FiveMinutes = "5minute",
+  FifteenMinutes = "15minute",
+  ThirtyMinutes = "30minute",
+  OneHour = "1hour",
+  ThreeHours = "3hour",
+  SixHours = "6hour",
+  TwelveHours = "12hour",
+  TwentyFourHours = "24hour",
+  TwoDays = "2day",
+  FiveDays = "5day",
+}
+
 export interface FileExists {
   exists: boolean;
 }
@@ -662,4 +675,11 @@ export interface FeatureDriftValues {
 export interface FeatureDriftValuesResponse {
   data: FeatureDriftValues;
   status: string;
+}
+
+export interface MonitoringPageReturn {
+  repository: string;
+  name: string;
+  version: string;
+  profile: DriftProfile | undefined;
 }
