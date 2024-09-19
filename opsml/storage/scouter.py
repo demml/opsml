@@ -5,6 +5,13 @@ from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
 
 
+class ScouterRoutes:
+    DRIFT = "drift"
+    FEATURE_DISTRIBUTION = "feature/distribution"
+    HEALTHCHECK = "healthcheck"
+    PROFILE = "profile"
+
+
 class ScouterClient(ApiClient):
     def healthcheck(self) -> bool:
         """Checks if scouter server is up
@@ -12,7 +19,7 @@ class ScouterClient(ApiClient):
         Returns:
             True if server is up, False otherwise
         """
-        response = self.request(route="healthcheck", request_type=RequestType.GET)
+        response = self.request(route=ScouterRoutes.HEALTHCHECK, request_type=RequestType.GET)
 
         return cast(str, response["message"].lower()) == "alive"
 
@@ -24,7 +31,7 @@ class ScouterClient(ApiClient):
                 Drift profile to insert
         """
         profile = json.loads(drift_profile)
-        self.request(route="profile", request_type=RequestType.POST, json=profile)
+        self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.POST, json=profile)
 
     def get_drift_profile(self, repository: str, name: str, version: str) -> Optional[Dict[str, Any]]:
         """Get drift profile from scouter server
@@ -41,7 +48,7 @@ class ScouterClient(ApiClient):
             Drift profile
         """
         response = self.request(
-            route="profile",
+            route=ScouterRoutes.PROFILE,
             request_type=RequestType.GET,
             params={
                 "repository": repository,
@@ -63,7 +70,7 @@ class ScouterClient(ApiClient):
                 Drift profile to insert
         """
         profile = json.loads(drift_profile)
-        self.request(route="profile", request_type=RequestType.PUT, json=profile)
+        self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=profile)
 
     def get_drift_values(
         self,
@@ -104,7 +111,52 @@ class ScouterClient(ApiClient):
         if feature:
             params["feature"] = feature
 
-        response = self.request(route="drift", request_type=RequestType.GET, params=params)
+        response = self.request(route=ScouterRoutes.DRIFT, request_type=RequestType.GET, params=params)
+
+        return cast(Dict[str, Any], response["data"])
+
+    def get_feature_distribution(
+        self,
+        repository: str,
+        name: str,
+        version: str,
+        time_window: str,
+        max_data_points: int,
+        feature: str,
+    ) -> Dict[str, Any]:
+        """Get feature distribution from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+            time_window:
+                Time window
+            max_data_points:
+                Maximum data points
+            feature:
+                Feature to get drift values for
+
+        Returns:
+            Drift values
+        """
+        params = {
+            "repository": repository,
+            "name": name,
+            "version": version,
+            "time_window": time_window,
+            "max_data_points": max_data_points,
+            "feature": feature,
+        }
+
+        response = self.request(
+            route=ScouterRoutes.FEATURE_DISTRIBUTION,
+            request_type=RequestType.GET,
+            params=params,
+        )
 
         return cast(Dict[str, Any], response["data"])
 

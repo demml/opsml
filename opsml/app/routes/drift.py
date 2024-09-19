@@ -19,6 +19,7 @@ from opsml.app.routes.pydantic_models import (
     GetDriftProfileResponse,
     ScouterHealthCheckResponse,
     Success,
+    FeatureDistribution,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -77,9 +78,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
 @router.put("/scouter/drift/profile", name="update_drift_profile", response_model=Success)
@@ -124,9 +123,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
 @router.get("/scouter/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
@@ -159,9 +156,7 @@ def get_profile(
         return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
 
 
 @router.get("/scouter/drift/values", name="get_drift", response_model=DriftResponse)
@@ -211,6 +206,57 @@ def get_drift_values(
         return DriftResponse(**values)
     except Exception as error:
         logger.error(f"Failed to get drift values: {error}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
+
+
+@router.get("/scouter/feature/distribution", name="feature distribution", response_model=FeatureDistribution)
+def get_feature_distribution(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+    time_window: str,
+    max_data_points: int,
+    feature: str,
+) -> FeatureDistribution:
+    """Gets feature distribution from scouter-server. This is a UI only route
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+        time_window:
+            Time window
+        max_data_points:
+            Maximum data points
+        feature:
+            Feature to get drift values for
+
+    Returns:
+        DriftProfile string
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.get_feature_distribution(
+            repository,
+            name,
+            version,
+            time_window,
+            max_data_points,
+            feature,
+        )
+
+        return FeatureDistribution(**values)
+    except Exception as error:
+        logger.error(f"Failed to calculate feature distribution: {error}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to calculate feature distribution",
         ) from error

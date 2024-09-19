@@ -192,9 +192,7 @@ class RegisterModelRequest(BaseModel):
                     * "1.1.1" = registers 1.1.1 at "1.1.1"
                 """,
     )
-    onnx: bool = Field(
-        True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True."
-    )
+    onnx: bool = Field(True, description="Flag indicating if the onnx or non-onnx model should be registered. Default True.")
     ignore_release_candidate: bool = Field(True, description="Flag indicating if release candidates should be ignored.")
 
 
@@ -551,3 +549,29 @@ class DriftResponse(BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
     )
+
+
+class FeatureDistribution(BaseModel):
+    name: str
+    repository: str
+    version: str
+    percentile_10: float
+    percentile_20: float
+    percentile_30: float
+    percentile_40: float
+    percentile_50: float
+    percentile_60: float
+    percentile_70: float
+    percentile_80: float
+    percentile_90: float
+    percentile_100: float
+    val_10: float
+    val_20: float
+    val_30: float
+    val_40: float
+    val_50: float
+    val_60: float
+    val_70: float
+    val_80: float
+    val_90: float
+    val_100: float

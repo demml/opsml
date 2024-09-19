@@ -23,7 +23,8 @@ class ModelLoader:
             interface:
                 ModelInterface for the model
             path:
-                Directory path to the model artifacts
+                Directory path to the model artifacts. This is expected to be
+                a local path on disk.
         """
 
         self.path = path

@@ -1,10 +1,10 @@
 <script lang="ts">
 
   import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues } from "$lib/scripts/types";
+  import { getFeatureDriftValues, createDriftViz } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
   import { onMount } from 'svelte';
-  import TimeChartDiv from "$lib/card/run/TimeChartDiv.svelte";
-
+  import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -24,35 +24,90 @@
   let driftVizData: ChartjsData;
   $: driftVizData = data.driftVizData;
 
+  let timeWindow: string;
+  $: timeWindow = data.timeWindow;
+
+  let max_data_points: number;
+  $: max_data_points = data.max_data_points;
+
+  let name: string;
+  $: name = data.name;
+
+  let repository: string;
+  $: repository = data.repository;
+
+  let version: string;
+  $: version = data.version;
+
 
 
   let vizId: string;
   $: vizId = "Drift values for " + targetFeature.id;
 
+  function resetZoom(id) {
+      // reset zoom
+      // @ts-ignore
+      window[id].resetZoom();
+    }
+
+  async function updateFeatureValues(feature:string) {
+
+    console.log(feature);
+    if (feature === targetFeature.id) {
+      return;
+    }
+
+    featureValues = await getFeatureDriftValues(repository, name, version, timeWindow, max_data_points, feature);
+    targetFeature = driftProfile.features[feature];
+    driftVizData = createDriftViz(featureValues.features[feature], targetFeature);
+
+  }
+
   onMount (() => {
-    console.log(featureValues);
-    console.log(targetFeature);
+    console.log("loaded");
   });
 
 </script>
 
 {#if driftProfile}
-<div class="min-h-screen">
-  
+<div class="flex min-h-screen">
 
-  <div class="flex flex-col w-full">
+
+  
+  <div class="flex-col py-4 px-8 w-full bg-white">
+
+
+    <!-- Feature header -->
+    <div class="flex flex-row items-center">
+      <div class="m-1 text-darkpurple font-bold">Features:</div>
+      <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
+        {#each features as feature}
+          {#if feature === targetFeature.id}
+            <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+              <div class="text-white text-xs font-bold hover:text-darkpurple">{feature}</div>
+            </button>
+          {:else}
+            <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+              <div class="text-darkpurple text-xs font-bold">{feature}</div>
+            </button>
+          {/if}
+        {/each}
+      </div>
+    </div>
+  
     {#if driftVizData}
-      <TimeChartDiv
-        data={driftVizData.data}
-        id={vizId}
-        options={driftVizData.options}
-        maxHeight={"max-h-[500px]"}
-      />
+        <TimeChartDiv
+          data={driftVizData.data}
+          id={vizId}
+          options={driftVizData.options}
+          minHeight="min-h-[450px]"
+        />
     {:else}
       <div class="flex justify-center items-center h-3/5">
         <p class="text-gray-400">No feature values found for the current time period</p>
       </div>
     {/if}
+
   </div>
 
 </div>
