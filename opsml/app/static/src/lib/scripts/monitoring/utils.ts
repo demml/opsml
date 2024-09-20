@@ -12,7 +12,7 @@ import {
   TimeWindow,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import { d } from "svelte-highlight/languages";
+import { c, d } from "svelte-highlight/languages";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -122,6 +122,8 @@ export async function getFeatureDriftValues(
   if (feature) {
     params["feature"] = feature;
   }
+
+  console.log(params);
 
   const values_response = await apiHandler.get(
     `${CommonPaths.DRIFT_VALUES}?${new URLSearchParams(params).toString()}`

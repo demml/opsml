@@ -57,34 +57,35 @@
     };
   }
 
-function checkScreenSize() {
+async function checkScreenSize() {
 
   if (window.innerWidth < 640) { // Check if screen width is less than 768px
-
-    // Call your function for small screen size
-    console.log("small screen");
+    max_data_points = 100;
 
   } else if (window.innerWidth < 768) { // Check if screen width is greater than or equal to 768px and less than 1024px
 
-    // Call your function for medium screen size
-    console.log("medium screen");
+    max_data_points = 250;
 
   } else if (window.innerWidth < 1024) {
-    console.log("large screen");
+    max_data_points = 1000;
   
   } else if (window.innerWidth < 1280) {
-    console.log("xl screen");
+    max_data_points = 2500;
     
   } else if (window.innerWidth < 1536) {
-    console.log("2xl screen");
+    max_data_points = 5000;
 
   } else { // Check if screen width is greater than or equal to 1024px
     // Call your function for large screen size
-    console.log("large screen");
+    max_data_points = 5000;
   }
+  let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+
+  driftVizData = rebuiltViz[0];
+  featureDistVizData = rebuiltViz[1];
+
 }
 
-window.addEventListener('resize', debounce(checkScreenSize, 400)); 
 
 
 
@@ -122,6 +123,7 @@ checkScreenSize();
 
   onMount (() => {
     console.log("loaded");
+    window.addEventListener('resize', debounce(checkScreenSize, 400)); 
   });
 
 </script>
