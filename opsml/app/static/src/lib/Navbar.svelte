@@ -53,12 +53,30 @@
     
   }
 
-
   let hamburger;
   let hamburgerOptions;
+  let isOptionsVisible = false;
+
+  function toggleOptions() {
+    isOptionsVisible = !isOptionsVisible;
+    hamburgerOptions.style.display = isOptionsVisible ? 'block' : 'none';
+  }
+
+  function closeOptions() {
+    isOptionsVisible = false;
+    hamburgerOptions.style.display = 'none';
+  }
+
+  function navigateToPath(name: string) {
+    let path = `/opsml/${name}`
+    closeOptions();
+    goto(path);
+  }
+
 
   function handleClickOutside(event) {
     if (
+      isOptionsVisible &&
       hamburger &&
       hamburgerOptions &&
       !hamburger.contains(event.target) &&
@@ -151,7 +169,7 @@
 
         <li>
           <div class="relative-group">
-            <button id="hamburger" bind:this={hamburger} type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
+            <button id="hamburger" bind:this={hamburger} on:click={toggleOptions} type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
               <span class="sr-only">Open main menu</span>
               <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
                   <path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
@@ -163,10 +181,11 @@
                 <nav class="list-nav">
                   <ul>
                     {#each names as name}
+
                       <li>
-                        <a href='/opsml/{name.replace(/s$/, '').toLowerCase()}'>
+                        <button on:click={() => navigateToPath(name.replace(/s$/, '').toLowerCase())}>
                           <span class="flex-auto">{name}</span>
-                        </a>
+                        </button>
                       </li>
                     {/each}
                 </nav>
