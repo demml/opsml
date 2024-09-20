@@ -1,9 +1,9 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { type Files, type ModelMetadata } from "$lib/scripts/types";
+import { type ModelMetadata, CommonPaths } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
 import { graphs } from "./graphs";
-import { profile } from "svelte-highlight/languages";
+import { exampleFeatureDistribution } from "./constants";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -456,56 +456,61 @@ const handlers = [
     }
   ),
 
-  http.get(
-    "/opsml/scouter/drift/values",
-    async ({ request, params, cookies }) => {
-      const url = new URL(request.url);
-      const feature = url.searchParams.get("feature")!;
+  http.get(CommonPaths.DRIFT_VALUES, async ({ request, params, cookies }) => {
+    const url = new URL(request.url);
+    const feature = url.searchParams.get("feature")!;
+    console.log(feature);
 
-      // check if feature is undefined
-      if (feature) {
+    // check if feature is undefined
+    if (feature) {
+      if (feature === "col1") {
         return HttpResponse.json({
-          data: {
-            features: {
-              col_1: {
-                created_at: [
-                  "2024-09-18T01:12:00",
-                  "2024-09-18T01:26:24",
-                  "2024-09-18T01:40:48",
-                  "2024-09-18T01:55:12",
-                  "2024-09-18T02:09:36",
-                ],
-                values: [
-                  1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
-                  0.44125417583912063, -0.6577854789448841,
-                ],
-              },
+          features: {
+            col_1: {
+              created_at: [
+                "2024-09-18T01:12:00",
+                "2024-09-18T01:26:24",
+                "2024-09-18T01:40:48",
+                "2024-09-18T01:55:12",
+                "2024-09-18T02:09:36",
+              ],
+              values: [
+                1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+                0.44125417583912063, -0.6577854789448841,
+              ],
             },
           },
-          status: "success",
         });
       } else {
         return HttpResponse.json({
-          data: {
-            features: {
-              all_features: {
-                created_at: [
-                  "2024-09-18T01:12:00",
-                  "2024-09-18T01:26:24",
-                  "2024-09-18T01:40:48",
-                  "2024-09-18T01:55:12",
-                  "2024-09-18T02:09:36",
-                ],
-                values: [
-                  1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
-                  0.44125417583912063, -0.6577854789448841,
-                ],
-              },
-            },
-          },
-          status: "success",
+          features: {},
         });
       }
+    } else {
+      return HttpResponse.json({
+        features: {
+          all_features: {
+            created_at: [
+              "2024-09-18T01:12:00",
+              "2024-09-18T01:26:24",
+              "2024-09-18T01:40:48",
+              "2024-09-18T01:55:12",
+              "2024-09-18T02:09:36",
+            ],
+            values: [
+              1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+              0.44125417583912063, -0.6577854789448841,
+            ],
+          },
+        },
+      });
+    }
+  }),
+
+  http.get(
+    CommonPaths.FEATURE_DISTRIBUTION,
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json(exampleFeatureDistribution);
     }
   ),
 ];
