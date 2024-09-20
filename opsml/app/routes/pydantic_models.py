@@ -555,23 +555,23 @@ class FeatureDistribution(BaseModel):
     name: str
     repository: str
     version: str
-    percentile_10: float
-    percentile_20: float
-    percentile_30: float
-    percentile_40: float
-    percentile_50: float
-    percentile_60: float
-    percentile_70: float
-    percentile_80: float
-    percentile_90: float
-    percentile_100: float
-    val_10: float
-    val_20: float
-    val_30: float
-    val_40: float
-    val_50: float
-    val_60: float
-    val_70: float
-    val_80: float
-    val_90: float
-    val_100: float
+    percentile_10: float = 0.0
+    percentile_20: float = 0.0
+    percentile_30: float = 0.0
+    percentile_40: float = 0.0
+    percentile_50: float = 0.0
+    percentile_60: float = 0.0
+    percentile_70: float = 0.0
+    percentile_80: float = 0.0
+    percentile_90: float = 0.0
+    percentile_100: float = 0.0
+    val_10: float = 0.0
+    val_20: float = 0.0
+    val_30: float = 0.0
+    val_40: float = 0.0
+    val_50: float = 0.0
+    val_60: float = 0.0
+    val_70: float = 0.0
+    val_80: float = 0.0
+    val_90: float = 0.0
+    val_100: float = 0.0

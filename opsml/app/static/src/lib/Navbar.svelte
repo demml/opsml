@@ -55,14 +55,39 @@
   onMount(() => {
     // @ts-ignore
     window.jq = js;
-
     // @ts-ignore
     window.jq("#hamburger").click(() => {
 
       // @ts-ignore
       window.jq("#hamburger-options").toggle();
     });
+
+    
   });
+
+  let hamburger;
+  let hamburgerOptions;
+  
+  function handleClickOutside(event) {
+    if (
+      hamburger &&
+      hamburgerOptions &&
+      !hamburger.contains(event.target) &&
+      !hamburgerOptions.contains(event.target)
+    ) {
+      hamburgerOptions.style.display = 'none';
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener('click', handleClickOutside);
+  });
+
+  onDestroy(() => {
+    document.removeEventListener('click', handleClickOutside);
+  });
+
+
 
   const names = ["Models", "Data", "Runs", "Services"];
 

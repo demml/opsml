@@ -9,8 +9,10 @@ import {
   type ChartjsData,
   type FeatureDistribution,
   type TimestampData,
+  TimeWindow,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import { d } from "svelte-highlight/languages";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -26,6 +28,31 @@ export function generateTimestampsAndZeros(x: number): TimestampData {
   const zeros: number[] = new Array(30).fill(0);
 
   return { timestamps, zeros };
+}
+
+export function createTimeWindowTimestamps(timeWindow: string): TimestampData {
+  switch (timeWindow) {
+    case TimeWindow.FiveMinutes:
+      return generateTimestampsAndZeros(5);
+    case TimeWindow.FifteenMinutes:
+      return generateTimestampsAndZeros(15);
+    case TimeWindow.ThirtyMinutes:
+      return generateTimestampsAndZeros(30);
+    case TimeWindow.OneHour:
+      return generateTimestampsAndZeros(60);
+    case TimeWindow.SixHours:
+      return generateTimestampsAndZeros(360);
+    case TimeWindow.TwelveHours:
+      return generateTimestampsAndZeros(720);
+    case TimeWindow.TwentyFourHours:
+      return generateTimestampsAndZeros(1440);
+    case TimeWindow.TwoDays:
+      return generateTimestampsAndZeros(2880);
+    case TimeWindow.FiveDays:
+      return generateTimestampsAndZeros(7200);
+  }
+
+  return generateTimestampsAndZeros(5);
 }
 
 /// Get drift profile
@@ -101,6 +128,17 @@ export async function getFeatureDriftValues(
   );
 
   const response = (await values_response.json()) as FeatureDriftValues;
+
+  // check if feature is available
+  if (Object.keys(response.features).length === 0) {
+    let createdData = createTimeWindowTimestamps(time_window);
+    response.features = {
+      [feature!]: {
+        created_at: createdData.timestamps,
+        values: createdData.zeros,
+      },
+    };
+  }
 
   return response;
 }
@@ -466,8 +504,6 @@ export function buildFeatureDistributionViz(
     datasets: [currDataset, refDataset],
   };
 
-  console.log(data);
-
   return {
     type: "bar",
     data: data,
@@ -532,7 +568,7 @@ export async function rebuildDriftViz(
   max_data_points: number,
   feature: string,
   featureProfile: FeatureDriftProfile
-): Promise<ChartjsData> {
+): Promise<[ChartjsData, ChartjsData]> {
   let featureValues = await getFeatureDriftValues(
     repository,
     name,
@@ -542,5 +578,20 @@ export async function rebuildDriftViz(
     feature
   );
 
-  return createDriftViz(featureValues.features[feature], featureProfile);
+  let featureDriftViz = createDriftViz(
+    featureValues.features[feature],
+    featureProfile
+  );
+
+  let featureDistViz = await createFeatureDistributionViz(
+    repository,
+    name,
+    version,
+    feature,
+    timeWindow,
+    max_data_points,
+    featureProfile
+  );
+
+  return [featureDriftViz, featureDistViz];
 }

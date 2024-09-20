@@ -53,7 +53,7 @@ export async function load({ url }) {
       targetFeature
     );
 
-    let featureDistributionViz = (await createFeatureDistributionViz(
+    let featureDistVizData = (await createFeatureDistributionViz(
       "ml-platform-1",
       "model-1",
       "0.1.0",
@@ -74,7 +74,7 @@ export async function load({ url }) {
       driftVizData,
       timeWindow: TimeWindow.TwentyFourHours,
       max_data_points: 1000,
-      featureDistributionViz,
+      featureDistVizData,
     };
   } else {
     return {

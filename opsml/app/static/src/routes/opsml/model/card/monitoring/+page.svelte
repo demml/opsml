@@ -7,7 +7,7 @@
   import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import scouter_logo from '$lib/images/scouter.svg';
-  import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
+
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -21,14 +21,11 @@
   let features: string[];
   $: features = data.features;
 
-  let featureValues: FeatureDriftValues;
-  $: featureValues = data.featureValues;
-
   let driftVizData: ChartjsData;
   $: driftVizData = data.driftVizData;
 
-  let featureDistributionViz: ChartjsData;
-  $: featureDistributionViz = data.featureDistributionViz;
+  let featureDistVizData: ChartjsData;
+  $: featureDistVizData = data.featureDistVizData;
 
   let timeWindow: string;
   $: timeWindow = data.timeWindow;
@@ -104,16 +101,18 @@ checkScreenSize();
     if (feature === targetFeature.id) {
       return;
     }
-    driftVizData = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+
+    targetFeature = driftProfile.features[feature];
+    let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+
+    driftVizData = rebuiltViz[0];
+    featureDistVizData = rebuiltViz[1];
 
   }
 
-  async function updateTimeWindow(timeWindow: string) {
-    timeWindow = timeWindow;
-
-    console.log(generateTimestampsAndZeros(5));
-
-    driftVizData = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+  async function updateTimeWindow(newTimeWindow: string) {
+    timeWindow = newTimeWindow;
+    //[driftVizData, featureDistVizData] = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
     }
 
   
@@ -140,19 +139,9 @@ checkScreenSize();
       </div>
     
       <div class="flex justify-end">
-  
-        <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary">
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FiveMinutes} on:click={() => updateTimeWindow(TimeWindow.FiveMinutes)}>{TimeWindow.FiveMinutes}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FifteenMinutes} on:click={() => updateTimeWindow(TimeWindow.FifteenMinutes)}>{TimeWindow.FifteenMinutes}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.ThirtyMinutes} on:click={() => updateTimeWindow(TimeWindow.ThirtyMinutes)}>{TimeWindow.ThirtyMinutes}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.OneHour} on:click={() => updateTimeWindow(TimeWindow.OneHour)}>{TimeWindow.OneHour}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.ThreeHours} on:click={() => updateTimeWindow(TimeWindow.ThreeHours)}>{TimeWindow.ThreeHours}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.SixHours} on:click={() => updateTimeWindow(TimeWindow.SixHours)}>{TimeWindow.SixHours}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwelveHours} on:click={() => updateTimeWindow(TimeWindow.TwelveHours)}>{TimeWindow.TwelveHours}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwentyFourHours} on:click={() => updateTimeWindow(TimeWindow.TwentyFourHours)}>{TimeWindow.TwentyFourHours}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwoDays} on:click={() => updateTimeWindow(TimeWindow.TwoDays)}>{TimeWindow.TwoDays}</RadioItem>
-          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FiveDays} on:click={() => updateTimeWindow(TimeWindow.FiveDays)}>{TimeWindow.FiveDays}</RadioItem>
-        </RadioGroup>
+
+   
+
       </div>
     </div> 
 
@@ -195,9 +184,9 @@ checkScreenSize();
             <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
             <div class="px-2 min-h-[200px]">
               <IndividualChart
-                data={featureDistributionViz.data}
+                data={featureDistVizData.data}
                 type="bar"
-                options={featureDistributionViz.options}
+                options={featureDistVizData.options}
                 id="featureChart"
                 />
             </div>

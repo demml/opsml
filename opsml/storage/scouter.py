@@ -152,13 +152,17 @@ class ScouterClient(ApiClient):
             "feature": feature,
         }
 
-        response = self.request(
-            route=ScouterRoutes.FEATURE_DISTRIBUTION,
-            request_type=RequestType.GET,
-            params=params,
-        )
+        try:
+            response = self.request(
+                route=ScouterRoutes.FEATURE_DISTRIBUTION,
+                request_type=RequestType.GET,
+                params=params,
+            )
 
-        return cast(Dict[str, Any], response["data"])
+            return cast(Dict[str, Any], response["data"])
+
+        except Exception:
+            return {}
 
 
 SCOUTER_CLIENT = None
