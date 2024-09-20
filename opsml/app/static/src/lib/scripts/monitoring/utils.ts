@@ -123,8 +123,6 @@ export async function getFeatureDriftValues(
     params["feature"] = feature;
   }
 
-  console.log(params);
-
   const values_response = await apiHandler.get(
     `${CommonPaths.DRIFT_VALUES}?${new URLSearchParams(params).toString()}`
   );

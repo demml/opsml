@@ -15,6 +15,7 @@ import {
   driftProfile,
   allFeatureDriftValues,
   featureDriftValues,
+  exampleFeatureDistribution,
 } from "./constants";
 import { graphs } from "./graphs";
 import * as monitoring from "../lib/scripts/monitoring/utils";
@@ -492,6 +493,9 @@ it("getGraphs", async () => {
 it("getDriftProfile", async () => {
   const _profile = await monitoring.getDriftProfile("repo", "name", "version");
   expect(_profile.profile).toEqual(driftProfile);
+  let featureProfile = monitoring.getFeatureProfile("col1", _profile.profile!);
+
+  expect(featureProfile.center).toEqual(0);
 });
 
 it("UpdateDriftProfile", async () => {
@@ -523,4 +527,29 @@ it("GetFeatureValues", async () => {
     "col1"
   );
   expect(feature_response).toEqual(featureDriftValues);
+
+  const no_feature_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "no"
+  );
+  let numVals = no_feature_response.features["no"].values.length;
+  let numDates = no_feature_response.features["no"].created_at.length;
+  expect(numVals).toEqual(30);
+  expect(numDates).toEqual(30);
+});
+
+it("GetFeatureDistributionValues", async () => {
+  const featureDistResponse = await monitoring.getFeatureDistributionValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "feature"
+  );
+  expect(featureDistResponse).toEqual(exampleFeatureDistribution);
 });
