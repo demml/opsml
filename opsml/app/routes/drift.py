@@ -253,6 +253,11 @@ def get_feature_distribution(
             feature,
         )
 
+        if not values:
+            values["name"] = name
+            values["repository"] = repository
+            values["version"] = version
+
         return FeatureDistribution(**values)
     except Exception as error:
         logger.error(f"Failed to calculate feature distribution: {error}")
