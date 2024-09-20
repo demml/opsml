@@ -7,9 +7,26 @@ import {
   type FeatureDriftProfile,
   type DriftValues,
   type ChartjsData,
+  type FeatureDistribution,
+  type TimestampData,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import { draw } from "svelte/transition";
+
+export function generateTimestampsAndZeros(x: number): TimestampData {
+  const now: Date = new Date();
+  const pastTime: Date = new Date(now.getTime() - x * 60 * 1000);
+  const interval: number = (now.getTime() - pastTime.getTime()) / 29; // 29 intervals for 30 timestamps
+
+  const timestamps: string[] = [];
+  for (let i = 0; i < 30; i++) {
+    const timestamp: Date = new Date(pastTime.getTime() + i * interval);
+    timestamps.push(timestamp.toISOString());
+  }
+
+  const zeros: number[] = new Array(30).fill(0);
+
+  return { timestamps, zeros };
+}
 
 /// Get drift profile
 /// @param name - name of the model
@@ -84,6 +101,40 @@ export async function getFeatureDriftValues(
   );
 
   const response = (await values_response.json()) as FeatureDriftValues;
+
+  return response;
+}
+
+// get feature distribution
+/// @param repository - repository of the model
+/// @param name - name of the model
+/// @param version - version of the model
+/// @param time_window - time window for values
+/// @param feature - feature to filter for
+export async function getFeatureDistributionValues(
+  repository: string,
+  name: string,
+  version: string,
+  time_window: string,
+  max_data_points: number,
+  feature: string
+): Promise<FeatureDistribution> {
+  let params = {
+    repository: repository,
+    name: name,
+    version: version,
+    time_window: time_window,
+    max_data_points: max_data_points.toString(),
+    feature: feature,
+  };
+
+  const values_response = await apiHandler.get(
+    `${CommonPaths.FEATURE_DISTRIBUTION}?${new URLSearchParams(
+      params
+    ).toString()}`
+  );
+
+  const response = (await values_response.json()) as FeatureDistribution;
 
   return response;
 }
@@ -357,4 +408,139 @@ export function createDriftViz(
       },
     },
   };
+}
+
+export function buildFeatureDistributionViz(
+  featureValues: FeatureDistribution,
+  feature: FeatureDriftProfile
+): ChartjsData {
+  let refData = [
+    { x: feature.three_lcl, y: 0.01 },
+    { x: feature.two_lcl, y: 0.049 },
+    { x: feature.one_lcl, y: 0.25 },
+    { x: feature.center, y: 0.4 },
+    { x: feature.one_ucl, y: 0.25 },
+    { x: feature.two_ucl, y: 0.049 },
+    { x: feature.three_ucl, y: 0.01 },
+  ];
+
+  let currData = [
+    { x: featureValues.percentile_10, y: featureValues.val_10 },
+    { x: featureValues.percentile_20, y: featureValues.val_20 },
+    { x: featureValues.percentile_30, y: featureValues.val_30 },
+    { x: featureValues.percentile_40, y: featureValues.val_40 },
+    { x: featureValues.percentile_50, y: featureValues.val_50 },
+    { x: featureValues.percentile_60, y: featureValues.val_60 },
+    { x: featureValues.percentile_70, y: featureValues.val_70 },
+    { x: featureValues.percentile_80, y: featureValues.val_80 },
+    { x: featureValues.percentile_90, y: featureValues.val_90 },
+    { x: featureValues.percentile_100, y: featureValues.val_100 },
+  ];
+
+  let refDataset = {
+    type: "line",
+    data: refData,
+    borderColor: "rgba(4, 205, 155, 1)",
+    backgroundColor: "rgba(4, 205, 155, 0.2)",
+    borderWidth: 2,
+    pointRadius: 0,
+    tension: 0.4,
+    fill: true,
+    label: "Reference",
+    order: 1,
+  };
+
+  let currDataset = {
+    type: "line",
+    data: currData,
+    backgroundColor: "rgba(75, 57, 120, 0.5)",
+    borderColor: "rgba(75, 57, 120, 1)",
+    pointRadius: 0,
+    borderWidth: 2,
+    tension: 0.4,
+    fill: true,
+    label: "Current",
+  };
+
+  let data = {
+    datasets: [currDataset, refDataset],
+  };
+
+  console.log(data);
+
+  return {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
+          type: "linear",
+        },
+        y: {
+          grace: "10%",
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
+          ticks: {
+            maxTicksLimit: 30,
+          },
+          beginAtZero: true,
+        },
+      },
+    },
+  };
+}
+
+export async function createFeatureDistributionViz(
+  repository: string,
+  name: string,
+  version: string,
+  feature: string,
+  time_window: string,
+  max_data_points: number,
+  feature_profile: FeatureDriftProfile
+): Promise<ChartjsData> {
+  const featureValues = await getFeatureDistributionValues(
+    repository,
+    name,
+    version,
+    time_window,
+    max_data_points,
+    feature
+  );
+  return buildFeatureDistributionViz(featureValues, feature_profile);
+}
+
+export async function rebuildDriftViz(
+  repository: string,
+  name: string,
+  version: string,
+  timeWindow: string,
+  max_data_points: number,
+  feature: string,
+  featureProfile: FeatureDriftProfile
+): Promise<ChartjsData> {
+  let featureValues = await getFeatureDriftValues(
+    repository,
+    name,
+    version,
+    timeWindow,
+    max_data_points,
+    feature
+  );
+
+  return createDriftViz(featureValues.features[feature], featureProfile);
 }

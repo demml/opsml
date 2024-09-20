@@ -1,10 +1,13 @@
 <script lang="ts">
 
-  import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues } from "$lib/scripts/types";
-  import { getFeatureDriftValues, createDriftViz } from "$lib/scripts/monitoring/utils";
+  import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues, TimeWindow  } from "$lib/scripts/types";
+  import { getFeatureDriftValues, createDriftViz, rebuildDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
   import { onMount } from 'svelte';
   import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
+  import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
+  import scouter_logo from '$lib/images/scouter.svg';
+  import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -24,6 +27,9 @@
   let driftVizData: ChartjsData;
   $: driftVizData = data.driftVizData;
 
+  let featureDistributionViz: ChartjsData;
+  $: featureDistributionViz = data.featureDistributionViz;
+
   let timeWindow: string;
   $: timeWindow = data.timeWindow;
 
@@ -40,9 +46,52 @@
   $: version = data.version;
 
 
-
   let vizId: string;
   $: vizId = "Drift values for " + targetFeature.id;
+
+  function debounce(func, time) {
+    var time = time || 100; // 100 by default if no param
+    var timer;
+    return function(event){
+        if(timer) clearTimeout(timer);
+        timer = setTimeout(func, time, event);
+    };
+  }
+
+function checkScreenSize() {
+
+  if (window.innerWidth < 640) { // Check if screen width is less than 768px
+
+    // Call your function for small screen size
+    console.log("small screen");
+
+  } else if (window.innerWidth < 768) { // Check if screen width is greater than or equal to 768px and less than 1024px
+
+    // Call your function for medium screen size
+    console.log("medium screen");
+
+  } else if (window.innerWidth < 1024) {
+    console.log("large screen");
+  
+  } else if (window.innerWidth < 1280) {
+    console.log("xl screen");
+    
+  } else if (window.innerWidth < 1536) {
+    console.log("2xl screen");
+
+  } else { // Check if screen width is greater than or equal to 1024px
+    // Call your function for large screen size
+    console.log("large screen");
+  }
+}
+
+window.addEventListener('resize', debounce(checkScreenSize, 400)); 
+
+
+
+// Initial check on page load
+
+checkScreenSize(); 
 
   function resetZoom(id) {
       // reset zoom
@@ -52,16 +101,22 @@
 
   async function updateFeatureValues(feature:string) {
 
-    console.log(feature);
     if (feature === targetFeature.id) {
       return;
     }
-
-    featureValues = await getFeatureDriftValues(repository, name, version, timeWindow, max_data_points, feature);
-    targetFeature = driftProfile.features[feature];
-    driftVizData = createDriftViz(featureValues.features[feature], targetFeature);
+    driftVizData = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
 
   }
+
+  async function updateTimeWindow(timeWindow: string) {
+    timeWindow = timeWindow;
+
+    console.log(generateTimestampsAndZeros(5));
+
+    driftVizData = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+    }
+
+  
 
   onMount (() => {
     console.log("loaded");
@@ -73,8 +128,33 @@
 <div class="flex min-h-screen">
 
 
+
   
-  <div class="flex-col py-4 px-8 w-full bg-white">
+  <div class="flex-col pt-4 px-8 w-full bg-white">
+
+    <div class="flex justify-between">
+
+      <div class="flex justify-between">
+        <img alt="Scouter logo" class="h-9 mx-1 self-center" src={scouter_logo}>
+        <div class="text-primary-500 text-xl font-bold py-1 self-center">Model Monitoring</div>
+      </div>
+    
+      <div class="flex justify-end">
+  
+        <RadioGroup active="variant-filled-primary" hover="hover:variant-soft-primary">
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FiveMinutes} on:click={() => updateTimeWindow(TimeWindow.FiveMinutes)}>{TimeWindow.FiveMinutes}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FifteenMinutes} on:click={() => updateTimeWindow(TimeWindow.FifteenMinutes)}>{TimeWindow.FifteenMinutes}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.ThirtyMinutes} on:click={() => updateTimeWindow(TimeWindow.ThirtyMinutes)}>{TimeWindow.ThirtyMinutes}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.OneHour} on:click={() => updateTimeWindow(TimeWindow.OneHour)}>{TimeWindow.OneHour}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.ThreeHours} on:click={() => updateTimeWindow(TimeWindow.ThreeHours)}>{TimeWindow.ThreeHours}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.SixHours} on:click={() => updateTimeWindow(TimeWindow.SixHours)}>{TimeWindow.SixHours}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwelveHours} on:click={() => updateTimeWindow(TimeWindow.TwelveHours)}>{TimeWindow.TwelveHours}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwentyFourHours} on:click={() => updateTimeWindow(TimeWindow.TwentyFourHours)}>{TimeWindow.TwentyFourHours}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.TwoDays} on:click={() => updateTimeWindow(TimeWindow.TwoDays)}>{TimeWindow.TwoDays}</RadioItem>
+          <RadioItem bind:group={timeWindow} name="justify" value={TimeWindow.FiveDays} on:click={() => updateTimeWindow(TimeWindow.FiveDays)}>{TimeWindow.FiveDays}</RadioItem>
+        </RadioGroup>
+      </div>
+    </div> 
 
 
     <!-- Feature header -->
@@ -107,6 +187,26 @@
         <p class="text-gray-400">No feature values found for the current time period</p>
       </div>
     {/if}
+    <div class="pt-2">
+      <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
+        <div class="col-span-2 lg:col-span-4 min-h-[250px]  max-h-[250px] rounded-2xl border border-2 border-primary-500">01</div>
+        <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500">
+          <div class="flex flex-col">
+            <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
+            <div class="px-2 min-h-[200px]">
+              <IndividualChart
+                data={featureDistributionViz.data}
+                type="bar"
+                options={featureDistributionViz.options}
+                id="featureChart"
+                />
+            </div>
+          </div>
+        </div>
+      </div>
+
+  
+    </div>
 
   </div>
 
