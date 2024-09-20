@@ -7,6 +7,7 @@
   import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
   import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import scouter_logo from '$lib/images/scouter.svg';
+  import Dropdown from "$lib/components/Dropdown.svelte";
 
 
   /** @type {import('./$types').LayoutData} */
@@ -42,9 +43,10 @@
   let version: string;
   $: version = data.version;
 
-
   let vizId: string;
   $: vizId = "Drift values for " + targetFeature.id;
+
+  let timeWindows: string[] = Object.values(TimeWindow);
 
   function debounce(func, time) {
     var time = time || 100; // 100 by default if no param
@@ -110,12 +112,13 @@ checkScreenSize();
 
   }
 
-  async function updateTimeWindow(newTimeWindow: string) {
-    timeWindow = newTimeWindow;
-    //[driftVizData, featureDistVizData] = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
-    }
 
-  
+  async function handleTimeWindowChange(event) {
+    timeWindow = event.detail.selected;
+    let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+    driftVizData = rebuiltViz[0];
+    featureDistVizData = rebuiltViz[1];
+  }
 
   onMount (() => {
     console.log("loaded");
@@ -138,9 +141,13 @@ checkScreenSize();
         <div class="text-primary-500 text-xl font-bold py-1 self-center">Model Monitoring</div>
       </div>
     
-      <div class="flex justify-end">
+      <div class="flex justify-end pr-8">
 
-   
+        <Dropdown 
+        items={timeWindows}
+        header={timeWindow}
+        on:change={handleTimeWindowChange}
+        />
 
       </div>
     </div> 

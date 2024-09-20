@@ -2,7 +2,7 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears} from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
   import { goto } from '$app/navigation';
   import type { Card, DataCardMetadata } from "$lib/scripts/types";
