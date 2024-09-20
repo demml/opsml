@@ -6,6 +6,7 @@
 	export let data;
   export let type;
   export let options;
+  export let id: string;
   
 	let ctx;
 	let chartCanvas;
@@ -55,4 +56,4 @@
 
 </script>
 
-<canvas bind:this={chartCanvas} id="metricChart"></canvas>
+<canvas bind:this={chartCanvas} id={id}></canvas>

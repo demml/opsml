@@ -2,6 +2,7 @@ import {
   getDriftProfile,
   getFeatureDriftValues,
   createDriftViz,
+  createFeatureDistributionViz,
 } from "$lib/scripts/monitoring/utils";
 import {
   type MonitoringPageReturn,
@@ -9,6 +10,7 @@ import {
   type FeatureDriftProfile,
   type FeatureDriftValues,
   TimeWindow,
+  type ChartjsData,
 } from "$lib/scripts/types";
 
 /** @type {import('./$types').PageLoad} */
@@ -51,6 +53,16 @@ export async function load({ url }) {
       targetFeature
     );
 
+    let featureDistributionViz = (await createFeatureDistributionViz(
+      "ml-platform-1",
+      "model-1",
+      "0.1.0",
+      targetFeature.id,
+      TimeWindow.TwentyFourHours,
+      1000,
+      targetFeature
+    )) as ChartjsData;
+
     return {
       repository: "ml-platform-1",
       name: "model-1",
@@ -62,6 +74,7 @@ export async function load({ url }) {
       driftVizData,
       timeWindow: TimeWindow.TwentyFourHours,
       max_data_points: 1000,
+      featureDistributionViz,
     };
   } else {
     return {

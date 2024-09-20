@@ -215,6 +215,7 @@ export enum CommonPaths {
   HARDWARE = "/opsml/metrics/hardware",
   DRIFT_PROFILE = "/opsml/scouter/drift/profile",
   DRIFT_VALUES = "/opsml/scouter/drift/values",
+  FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
 }
 
 export enum CommonErrors {
@@ -682,4 +683,35 @@ export interface MonitoringPageReturn {
   name: string;
   version: string;
   profile: DriftProfile | undefined;
+}
+
+export interface FeatureDistribution {
+  name: string;
+  repository: string;
+  version: string;
+  percentile_10: number;
+  percentile_20: number;
+  percentile_30: number;
+  percentile_40: number;
+  percentile_50: number;
+  percentile_60: number;
+  percentile_70: number;
+  percentile_80: number;
+  percentile_90: number;
+  percentile_100: number;
+  val_10: number;
+  val_20: number;
+  val_30: number;
+  val_40: number;
+  val_50: number;
+  val_60: number;
+  val_70: number;
+  val_80: number;
+  val_90: number;
+  val_100: number;
+}
+
+export interface TimestampData {
+  timestamps: string[];
+  zeros: number[];
 }
