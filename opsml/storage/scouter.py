@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, cast, List
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
@@ -10,6 +10,7 @@ class ScouterRoutes:
     FEATURE_DISTRIBUTION = "feature/distribution"
     HEALTHCHECK = "healthcheck"
     PROFILE = "profile"
+    ALERTS = "alerts"
 
 
 class ScouterClient(ApiClient):
@@ -163,6 +164,35 @@ class ScouterClient(ApiClient):
 
         except Exception:
             return {}
+
+    def get_monitoring_alerts(self, repository: str, name: str, version: str) -> List[Dict[str, Any]]:
+        """Get monitoring alerts from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+
+        Returns:
+            Monitoring alerts
+        """
+
+        params = {"repository": repository, "name": name, "version": version}
+
+        try:
+            response = self.request(
+                route=ScouterRoutes.ALERTS,
+                request_type=RequestType.GET,
+                params=params,
+            )
+
+            return cast(List[Dict[str, Any]], response["data"])
+
+        except Exception:
+            return []
 
 
 SCOUTER_CLIENT = None
