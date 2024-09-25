@@ -20,6 +20,7 @@ from opsml.app.routes.pydantic_models import (
     GetDriftProfileResponse,
     ScouterHealthCheckResponse,
     Success,
+    MonitorAlerts,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -238,7 +239,7 @@ def get_feature_distribution(
             Feature to get drift values for
 
     Returns:
-        DriftProfile string
+        FeatureDistribution
     """
 
     client: ScouterClient = request.app.state.scouter_client
@@ -264,4 +265,41 @@ def get_feature_distribution(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to calculate feature distribution",
+        ) from error
+
+
+@router.get("/scouter/alerts", name="monitoring alerts", response_model=MonitorAlerts)
+def get_monitoring_alerts(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+) -> MonitorAlerts:
+    """Gets monitoring alerts from the scouter-server. This is a UI only route
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+
+    Returns:
+        DriftProfile string
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.get_monitoring_alerts(repository, name, version)
+
+        return MonitorAlerts(alerts=values)
+    except Exception as error:
+        logger.error(f"Failed to retrieve alerts: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve alerts",
         ) from error
