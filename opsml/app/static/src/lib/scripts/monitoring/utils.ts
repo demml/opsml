@@ -596,7 +596,12 @@ export async function rebuildDriftViz(
   return [featureDriftViz, featureDistViz];
 }
 
-export async function getAlertData(
+/// get alerts from scouter-server for a model
+/// @param repository - repository of the model
+/// @param name - name of the model
+/// @param version - version of the model
+/// @returns MonitorAlerts
+export async function getMonitorAlertData(
   repository: string,
   name: string,
   version: string
