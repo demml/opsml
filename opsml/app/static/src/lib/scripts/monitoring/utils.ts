@@ -9,10 +9,10 @@ import {
   type ChartjsData,
   type FeatureDistribution,
   type TimestampData,
+  type MonitorAlerts,
   TimeWindow,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import { c, d } from "svelte-highlight/languages";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -594,4 +594,21 @@ export async function rebuildDriftViz(
   );
 
   return [featureDriftViz, featureDistViz];
+}
+
+export async function getAlertData(
+  repository: string,
+  name: string,
+  version: string
+): Promise<MonitorAlerts> {
+  const profile_response = await apiHandler.get(
+    `${CommonPaths.MONITOR_ALERTS}?${new URLSearchParams({
+      repository: repository,
+      name: name,
+      version: version,
+    }).toString()}`
+  );
+
+  const response = (await profile_response.json()) as MonitorAlerts;
+  return response;
 }

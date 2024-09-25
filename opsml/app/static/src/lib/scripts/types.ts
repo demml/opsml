@@ -216,6 +216,7 @@ export enum CommonPaths {
   DRIFT_PROFILE = "/opsml/scouter/drift/profile",
   DRIFT_VALUES = "/opsml/scouter/drift/values",
   FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
+  MONITOR_ALERTS = "/opsml/scouter/alerts",
 }
 
 export enum CommonErrors {
@@ -714,4 +715,19 @@ export interface FeatureDistribution {
 export interface TimestampData {
   timestamps: string[];
   zeros: number[];
+}
+
+export interface MonitorAlert {
+  created_at: string;
+  name: string;
+  repository: string;
+  version: string;
+  feature: string;
+  alert: Record<string, string>;
+  status: string;
+  id: string;
+}
+
+export interface MonitorAlerts {
+  alerts: MonitorAlert[];
 }
