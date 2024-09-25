@@ -1,5 +1,6 @@
 <script lang="ts">
     import { type DriftConfig, type AlertConfig } from "$lib/scripts/types";
+    
     export let showProfile = false;
 
     async function handleUpdate() {
