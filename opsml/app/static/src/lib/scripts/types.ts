@@ -723,7 +723,7 @@ export interface MonitorAlert {
   repository: string;
   version: string;
   feature: string;
-  alert: Record<string, string>;
+  alerts: Record<string, string>;
   status: string;
   id: string;
 }

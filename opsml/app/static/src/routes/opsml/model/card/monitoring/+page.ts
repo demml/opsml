@@ -3,14 +3,15 @@ import {
   getFeatureDriftValues,
   createDriftViz,
   createFeatureDistributionViz,
+  getMonitorAlertData,
 } from "$lib/scripts/monitoring/utils";
 import {
-  type MonitoringPageReturn,
   type DriftProfile,
   type FeatureDriftProfile,
   type FeatureDriftValues,
   TimeWindow,
   type ChartjsData,
+  type MonitorAlerts,
 } from "$lib/scripts/types";
 
 /** @type {import('./$types').PageLoad} */
@@ -63,6 +64,12 @@ export async function load({ url }) {
       targetFeature
     )) as ChartjsData;
 
+    let alerts = (await getMonitorAlertData(
+      "ml-platform-1",
+      "model-1",
+      "0.1.0"
+    )) as MonitorAlerts;
+
     return {
       repository: "ml-platform-1",
       name: "model-1",
@@ -75,6 +82,8 @@ export async function load({ url }) {
       timeWindow: TimeWindow.TwentyFourHours,
       max_data_points: 1000,
       featureDistVizData,
+      alerts,
+      showProfile: false,
     };
   } else {
     return {

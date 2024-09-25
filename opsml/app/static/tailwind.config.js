@@ -22,6 +22,7 @@ const config = {
     extend: {
       colors: {
         darkpurple: "#4b3978",
+        scouter_red: "#f54d55",
       },
     },
   },
