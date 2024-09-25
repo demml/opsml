@@ -122,7 +122,6 @@ checkScreenSize();
   }
 
   onMount (() => {
-    console.log("loaded");
     window.addEventListener('resize', debounce(checkScreenSize, 400)); 
   });
 
