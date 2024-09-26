@@ -1,6 +1,6 @@
 <script lang="ts">
 
-  import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts  } from "$lib/scripts/types";
+  import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
   import { getFeatureDriftValues, createDriftViz, rebuildDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
   import { onMount } from 'svelte';
@@ -9,14 +9,14 @@
   import scouter_logo from '$lib/images/scouter.svg';
   import Dropdown from "$lib/components/Dropdown.svelte";
   import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
-  import Profile from "$lib/card/monitoring/Profile.svelte";
+  import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
 
 
   /** @type {import('./$types').LayoutData} */
   export let data;
 
-  let driftProfile: DriftProfile;
-  $: driftProfile = data.driftProfile;
+  let driftProfiles: Map<ProfileType, DriftProfile>;
+  $: driftProfiles = data.driftProfiles;
 
   let targetFeature:FeatureDriftProfile;
   $: targetFeature = data.targetFeature;
@@ -53,6 +53,9 @@
 
   let showProfile: boolean;
   $: showProfile = data.showProfile;
+
+  let profileType: ProfileType;
+  $: profileType = data.profileType;
 
   let timeWindows: string[] = Object.values(TimeWindow);
 
@@ -117,7 +120,7 @@ checkScreenSize();
       return;
     }
 
-    targetFeature = driftProfile.features[feature];
+    targetFeature = driftProfiles[profileType].features[feature];
     let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
 
     driftVizData = rebuiltViz[0];
@@ -140,8 +143,8 @@ checkScreenSize();
 </script>
 
 <main>
-  {#if driftProfile}
-  <div class="flex min-h-screen">
+  {#if driftProfiles}
+  <div class="flex min-h-screen mb-4">
 
     <div class="flex-col pt-4 px-8 w-full bg-white">
 
@@ -198,7 +201,7 @@ checkScreenSize();
             data={driftVizData.data}
             id={vizId}
             options={driftVizData.options}
-            minHeight="min-h-[550px]"
+            minHeight="min-h-[350px] lg:min-h-[500px]"
           />
       {:else}
         <div class="flex justify-center items-center h-4/5">
@@ -207,12 +210,12 @@ checkScreenSize();
       {/if}
       <div class="pt-2">
         <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
-          <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4">
+          <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
 
               <AlertDiv alerts={alerts} />
         
           </div>
-          <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500">
+          <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500 shadow-md">
             <div class="flex flex-col">
               <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
               <div class="px-2 min-h-[200px]">
@@ -256,6 +259,18 @@ checkScreenSize();
   </div>
   {/if}
   {#if showProfile}
-    <Profile {showProfile} />
+
+  
+    {#if profileType === ProfileType.SPC}
+  
+      <SPCProfile 
+        showProfile={showProfile} 
+        repository={repository}
+        name={name}
+        version={version}
+        driftConfig={driftProfiles[profileType].config}
+        />
+    
+    {/if}
   {/if}
 </main>

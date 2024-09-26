@@ -183,6 +183,11 @@ export enum RegistryName {
   Run = "OPSML_RUN_REGISTRY",
 }
 
+export enum ProfileType {
+  SPC = "SPC",
+  PSI = "PSI",
+}
+
 export enum CommonPaths {
   HOME = "/opsml",
   LOGIN = "/opsml/auth/login",
