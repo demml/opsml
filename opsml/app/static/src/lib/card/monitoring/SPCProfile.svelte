@@ -1,6 +1,5 @@
 <script lang="ts">
     import { type DriftConfig, type AlertConfig } from "$lib/scripts/types";
-  import { aL } from "vitest/dist/reporters-yx5ZTtEV.js";
 
     export let showProfile = false;
     export let repository: string;
@@ -19,7 +18,7 @@
 
 
     let alert_kwargs: Record<string, any> | string;
-    $: alert_kwargs =  alertConfig.alert_kwargs;
+    $: alert_kwargs =  JSON.stringify(alertConfig.alert_kwargs, null, 2);
 
     let dispatch_type = alertConfig.alert_dispatch_type
     let targets = driftConfig.targets;
@@ -37,14 +36,11 @@
 
       }
 
-      // check if Alert Kwargs is an empty string
-      if (typeof alert_kwargs === 'string' && alert_kwargs === '') {
-        alert_kwargs = {};
-      } else {
-        alert_kwargs = JSON.parse(alert_kwargs as string);
-        console.log(alert_kwargs);
+      // if alert_kwargs is a string, parse it to JSON
+      if (typeof alert_kwargs === 'string') {
+        alert_kwargs = JSON.parse(alert_kwargs);
       }
-    
+
 
       let updatedDriftConfig = {
         sample: sample,
@@ -63,6 +59,9 @@
       }
 
       console.log(updatedDriftConfig);
+
+      // alert_kwargs back to json
+      alert_kwargs = JSON.stringify(alert_kwargs, null, 2);
 
     }
   </script>
@@ -151,9 +150,9 @@
             <textarea
               class="textarea rounded-lg bg-slate-200 hover:bg-slate-100"
               rows="4"
-              placeholder={JSON.stringify(alert_kwargs)}
               bind:value={alert_kwargs}
-            ></textarea>
+              
+            />
           </label>
 
           
