@@ -24,7 +24,7 @@
 
 </script>
 
-    <table class="table-compact table-hover text-xs text-center min-w-full">
+    <table class="table-compact table-cell-fit table-hover text-xs text-center min-w-full">
       <thead class="bg-primary-200 sticky top-0">
         <tr>
           <th class="text-sm text-center py-2">Created At</th>
@@ -46,7 +46,7 @@
             <td class="text-sm">
               <button
                 type="button"
-                class="btn bg-blue-500 text-white bg-scouter_red hover:bg-secondary-700"
+                class="badge text-white bg-scouter_red hover:bg-secondary-700"
                 on:click={() => acknowledgeAlert(alert.id)}
                 on:mouseenter={() => handleMouseEnter(alert.id)}
                 on:mouseleave={handleMouseLeave}

@@ -1,11 +1,13 @@
 <script lang="ts">
     import { type DriftConfig, type AlertConfig } from "$lib/scripts/types";
+    import { createEventDispatcher } from 'svelte';
 
     export let showProfile = false;
     export let repository: string;
     export let name: string;
     export let version: string;
     export let driftConfig: DriftConfig;
+    const dispatch = createEventDispatcher();
 
 
     let alertConfig: AlertConfig = driftConfig.alert_config;
@@ -26,6 +28,8 @@
     let sample_size = driftConfig.sample_size;
 
     async function handleUpdate() {
+
+      console.log('Updating drift config');
 
       // check if Zone to monitor is a string
       if (typeof zones_to_monitor === 'string') {
@@ -56,14 +60,18 @@
           },
           alert_kwargs: alert_kwargs
         }
-      }
+      };
 
-      console.log(updatedDriftConfig);
-
-      // alert_kwargs back to json
-      alert_kwargs = JSON.stringify(alert_kwargs, null, 2);
+      showProfile = false;
+      dispatch('update', { showProfile,  updatedDriftConfig});
 
     }
+
+    function handleHide() {
+    showProfile = false;
+    dispatch('hide', { showProfile });
+  }
+
   </script>
 
 <style>
@@ -79,7 +87,7 @@
   <!-- Profile content goes here -->
   <section class="border-gray-100 col-span-full flex-1 items-center">
     
-    <form class="z-10 mx-auto rounded-xl border-2 border-primary-500 bg-slate-100 border shadow p-4 md:w-96 md:px-5" on:submit|preventDefault={handleUpdate}>
+    <form class="z-10 mx-auto rounded-xl border-2 border-primary-500 bg-slate-100 border shadow p-4 md:w-96 md:px-5">
       <h1 class="pt-1 text-center text-lg font-bold text-primary-500">DriftConfig</h1>
       <p class="mb-1 text-gray-500 text-xs text-center">Current drift configuration using statistical process control</p>
 
@@ -161,8 +169,11 @@
         </div>
       </div>
 
-      <div class="grid justify-items-center">
-        <button type="submit" class="btn bg-primary-500 text-white rounded-lg md:w-72 justify-self-center mb-2">
+      <div class="grid grid-cols-2 gap-2 py-2">
+        <button type="button" class="btn bg-primary-500 text-white rounded-lg" on:click={handleHide}>
+          <span>Hide</span>
+        </button>
+        <button type="button" class="btn bg-primary-500 text-white rounded-lg" on:click={handleUpdate}>
           <span>Update</span>
         </button>
       </div>
