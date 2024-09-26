@@ -224,21 +224,19 @@ function toggleProfile() {
         </div>
       {/if}
       <div class="pt-2">
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-1 content-center">
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
 
-          {#if alerts.alerts.length === 0}
-          <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
-            No Alerts Found!
-          </div>
-          {:else}
             <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
 
-                <AlertDiv alerts={alerts} 
-                on:switchFeature={handleFeatureUpdate}
-                />
+             
+              <AlertDiv alerts={alerts} 
+              on:switchFeature={handleFeatureUpdate}
+              />
+         
+
           
             </div>
-          {/if}
+        
           <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500 shadow-md">
             <div class="flex flex-col">
               <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
