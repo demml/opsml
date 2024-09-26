@@ -179,9 +179,16 @@ checkScreenSize();
       <div class="flex flex-row items-center">
         <div class="m-1 text-darkpurple font-bold">Drift Configuration:</div>
           <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
-            <button type="button" class="m-1 border border-darkpurple btn btn-sm variant-soft-primary hover:bg-primary-400" on:click={toggleProfile}>
-              <div class="text-white text-xs font-bold hover:text-darkpurple">Show</div>
-            </button>
+
+            {#if showProfile}
+              <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={toggleProfile}>
+                <div class="text-white text-xs font-bold hover:text-darkpurple">Hide</div>
+              </button>
+            {:else}
+              <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={toggleProfile}>
+                <div class="text-darkpurple text-xs font-bold">Show</div>
+              </button>
+            {/if}
           </div>
       </div>
       
