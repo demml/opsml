@@ -165,7 +165,7 @@ class ScouterClient(ApiClient):
         except Exception:
             return {}
 
-    def get_monitoring_alerts(self, repository: str, name: str, version: str) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:
@@ -180,7 +180,13 @@ class ScouterClient(ApiClient):
             Monitoring alerts
         """
 
-        params = {"repository": repository, "name": name, "version": version}
+        params = {
+            "repository": repository,
+            "name": name,
+            "version": version,
+            "active": active,
+            "limit": limit,
+        }
 
         try:
             response = self.request(
@@ -193,6 +199,35 @@ class ScouterClient(ApiClient):
 
         except Exception:
             return []
+
+    def update_monitoring_alerts(self, id: int, status: str) -> Dict[str, str]:
+        """Get monitoring alerts from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+
+        Returns:
+            Monitoring alerts
+        """
+
+        data = {"id": id, "status": status}
+
+        try:
+            response = self.request(
+                route=ScouterRoutes.ALERTS,
+                request_type=RequestType.PUT,
+                json=data,
+            )
+
+            return cast(Dict[str, str], response)
+
+        except Exception:
+            return {"message": "Failed to update monitoring alert", "status": "error"}
 
 
 SCOUTER_CLIENT = None

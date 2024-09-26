@@ -11,7 +11,9 @@
   function acknowledgeAlert(alertId: string) {
     // Implement the logic to acknowledge the alert
     alerts.alerts = alerts.alerts.filter(alert => alert.id !== alertId);
-    console.log(`Acknowledged alert with ID: ${alertId}`);
+    
+
+    // update alerts
   };
 
   let hoveredAlertId: string | null = null;
