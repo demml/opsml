@@ -102,12 +102,6 @@ function toggleProfile() {
 }
 
 
-
-
-// Initial check on page load
-
-checkScreenSize(); 
-
   function resetZoom(id) {
       // reset zoom
       // @ts-ignore

@@ -11,10 +11,17 @@
 
   async function acknowledgeAlert(alertId: number) {
     // Implement the logic to acknowledge the alert
-    alerts.alerts = alerts.alerts.filter(alert => alert.id !== alertId);
     
     // update alerts
     let response = await updateMonitorAlert(alertId, AlertStatus.ACKNOWLEDGED) as UpdateAlert;
+
+    if (response.status === "success") {
+      // update alerts
+      alerts.alerts = alerts.alerts.filter(alert => alert.id !== alertId);
+    } else {
+      console.log('Failed to acknowledge alert');
+    }
+    
   };
 
   let hoveredAlertId: number | null = null;
