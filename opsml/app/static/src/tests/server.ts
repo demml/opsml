@@ -3,7 +3,11 @@ import { setupServer } from "msw/node";
 import { type ModelMetadata, CommonPaths } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
 import { graphs } from "./graphs";
-import { exampleFeatureDistribution } from "./constants";
+import {
+  exampleFeatureDistribution,
+  exampleAlerts,
+  exampleUpdateAlert,
+} from "./constants";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -513,6 +517,13 @@ const handlers = [
       return HttpResponse.json(exampleFeatureDistribution);
     }
   ),
+
+  http.get(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
+    return HttpResponse.json(exampleAlerts);
+  }),
+  http.put(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
+    return HttpResponse.json(exampleUpdateAlert);
+  }),
 ];
 
 export const server = setupServer(...handlers);

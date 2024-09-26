@@ -6,6 +6,9 @@ import {
   type Parameter,
   type ModelMetadata,
   type DataCardMetadata,
+  type MonitorAlert,
+  type MonitorAlerts,
+  type UpdateAlert,
 } from "$lib/scripts/types";
 
 export const user: User = {
@@ -498,4 +501,28 @@ export const exampleFeatureDistribution = {
   val_80: 0.0,
   val_90: 0.0,
   val_100: 0.0,
+};
+
+// Example usage
+export const exampleAlert: MonitorAlert = {
+  created_at: "2023-10-01T12:34:56Z",
+  name: "Example Alert",
+  repository: "example-repo",
+  version: "1.0.0",
+  feature: "example-feature",
+  alerts: {
+    alert1: "Description of alert 1",
+    alert2: "Description of alert 2",
+  },
+  status: "active",
+  id: 1,
+};
+
+export const exampleAlerts: MonitorAlerts = {
+  alerts: [exampleAlert],
+};
+
+export const exampleUpdateAlert: UpdateAlert = {
+  message: "Example message",
+  status: "success",
 };

@@ -16,6 +16,8 @@ import {
   allFeatureDriftValues,
   featureDriftValues,
   exampleFeatureDistribution,
+  exampleAlerts,
+  exampleUpdateAlert,
 } from "./constants";
 import { graphs } from "./graphs";
 import * as monitoring from "../lib/scripts/monitoring/utils";
@@ -552,4 +554,14 @@ it("GetFeatureDistributionValues", async () => {
     "feature"
   );
   expect(featureDistResponse).toEqual(exampleFeatureDistribution);
+});
+
+it("GetMonitorAlerts", async () => {
+  const alerts = await monitoring.getMonitorAlerts("repo", "name", "version");
+  expect(alerts).toEqual(exampleAlerts);
+});
+
+it("UpdateMonitorAlerts", async () => {
+  const response = await monitoring.updateMonitorAlert(0, "acknowledged");
+  expect(response).toEqual(exampleUpdateAlert);
 });
