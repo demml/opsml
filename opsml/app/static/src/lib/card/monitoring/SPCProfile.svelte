@@ -1,5 +1,6 @@
 <script lang="ts">
     import { type DriftConfig, type AlertConfig } from "$lib/scripts/types";
+  import { aL } from "vitest/dist/reporters-yx5ZTtEV.js";
 
     export let showProfile = false;
     export let repository: string;
@@ -148,9 +149,9 @@
           <label class="text-primary-500">Alert Kwargs
             <p class="mb-1 text-gray-500 text-xs">Dispatch-specific kwargs in key:value mapping</p>
             <textarea
-              class="input rounded-lg bg-slate-200 hover:bg-slate-100"
+              class="textarea rounded-lg bg-slate-200 hover:bg-slate-100"
               rows="4"
-              placeholder=""
+              placeholder={alert_kwargs}
               bind:value={alert_kwargs}
             ></textarea>
           </label>
