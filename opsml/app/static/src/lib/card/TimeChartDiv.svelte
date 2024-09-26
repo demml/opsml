@@ -33,6 +33,7 @@
      
 		  ctx = chartCanvas.getContext('2d');
 		  chart = new Chart(ctx, {
+        // @ts-ignore
 				type: type,
 				data: data,
         options: options
@@ -56,6 +57,8 @@
       chart.destroy();
       ctx = chartCanvas.getContext('2d');
       chart = new Chart(ctx, {
+
+        // @ts-ignore
         type: type,
         data: data,
         options: options
