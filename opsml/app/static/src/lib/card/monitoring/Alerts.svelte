@@ -42,10 +42,6 @@
 
 
 </script>
-
-    {#if alerts.alerts.length === 0}
-      <div class="text-center text-sm text-gray-500">No alerts to display</div>
-    {:else}
       <table class="table-compact table-cell-fit table-hover text-xs text-center min-w-full">
         <thead class="bg-primary-200 sticky top-0">
           <tr>
@@ -80,4 +76,3 @@
           {/each}
         </tbody>
       </table>
-    {/if}
