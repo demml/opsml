@@ -22,6 +22,7 @@ from opsml.app.routes.pydantic_models import (
     Success,
     MonitorAlerts,
     UpdateAlert,
+    UpdateAlertRequest,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -311,8 +312,7 @@ def get_monitoring_alerts(
 @router.put("/scouter/alerts", name="monitoring alerts", response_model=UpdateAlert)
 def update_monitoring_alerts(
     request: Request,
-    id: int,
-    status: str,
+    payload: UpdateAlertRequest,
 ) -> UpdateAlert:
     """Gets monitoring alerts from the scouter-server. This is a UI only route
 
@@ -331,7 +331,7 @@ def update_monitoring_alerts(
     client: ScouterClient = request.app.state.scouter_client
 
     try:
-        values = client.update_monitoring_alerts(id, status)
+        values = client.update_monitoring_alerts(payload.id, payload.status)
 
         return UpdateAlert(**values)
     except Exception as error:

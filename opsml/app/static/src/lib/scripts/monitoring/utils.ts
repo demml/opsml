@@ -625,9 +625,14 @@ export async function updateMonitorAlert(
   id: number,
   status: string
 ): Promise<UpdateAlert> {
+  let body = {
+    id: id,
+    status: status,
+  };
+
   const profile_response = await apiHandler.put(
-    `${CommonPaths.MONITOR_ALERTS}`,
-    { id: id, status: status }
+    CommonPaths.MONITOR_ALERTS,
+    body
   );
 
   const response = (await profile_response.json()) as UpdateAlert;
