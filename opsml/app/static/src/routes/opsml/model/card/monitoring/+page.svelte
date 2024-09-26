@@ -146,7 +146,7 @@ checkScreenSize();
   {#if driftProfiles}
   <div class="flex min-h-screen mb-4">
 
-    <div class="flex-col pt-4 px-8 w-full bg-white">
+    <div class="flex-col pt-4 px-16 w-full bg-white">
 
       <div class="flex justify-between">
 
