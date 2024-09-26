@@ -149,6 +149,11 @@ checkScreenSize();
     showProfile = event.detail.showProfile;
   }
 
+  function handleFeatureUpdate(event) {
+  
+    updateFeatureValues(event.detail.feature);
+  }
+
 </script>
 
 <main>
@@ -228,7 +233,9 @@ checkScreenSize();
         <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
           <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
 
-              <AlertDiv alerts={alerts} />
+              <AlertDiv alerts={alerts} 
+              on:switchFeature={handleFeatureUpdate}
+              />
         
           </div>
           <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500 shadow-md">
