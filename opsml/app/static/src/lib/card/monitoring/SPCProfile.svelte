@@ -151,7 +151,7 @@
             <textarea
               class="textarea rounded-lg bg-slate-200 hover:bg-slate-100"
               rows="4"
-              placeholder={alert_kwargs}
+              placeholder={JSON.stringify(alert_kwargs)}
               bind:value={alert_kwargs}
             ></textarea>
           </label>
