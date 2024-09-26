@@ -12,11 +12,11 @@ import {
   TimeWindow,
   type ChartjsData,
   type MonitorAlerts,
+  ProfileType,
 } from "$lib/scripts/types";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
-  console.log("monitoring page load");
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string
@@ -25,11 +25,15 @@ export async function load({ url }) {
     | string
     | undefined;
 
-  const profile = (await getDriftProfile("ml-platform-1", "model-1", "0.1.0"))
-    .profile as DriftProfile | undefined;
+  let profiles: Map<ProfileType, DriftProfile> = new Map();
+
+  profiles[ProfileType.SPC] = (
+    await getDriftProfile("ml-platform-1", "model-1", "0.1.0")
+  ).profile as DriftProfile | undefined;
 
   // check if drift profile exists
-  if (profile) {
+  if (profiles) {
+    let profile = profiles[ProfileType.SPC];
     const features = Object.keys(profile.features);
 
     // get first feature as target feature
@@ -74,7 +78,7 @@ export async function load({ url }) {
       repository: "ml-platform-1",
       name: "model-1",
       version: "0.1.0",
-      driftProfile: profile,
+      driftProfiles: profiles,
       targetFeature,
       features,
       featureValues,
@@ -84,13 +88,14 @@ export async function load({ url }) {
       featureDistVizData,
       alerts,
       showProfile: false,
+      profileType: ProfileType.SPC,
     };
   } else {
     return {
       repository,
       name,
       version,
-      driftProfile: null,
+      driftProfiles: null,
     };
   }
 }
