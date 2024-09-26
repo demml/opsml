@@ -1,9 +1,12 @@
 <script lang="ts">
 
   import { type MonitorAlerts  } from "$lib/scripts/types";
+  import { createEventDispatcher } from 'svelte';
+  import { d } from "svelte-highlight/languages";
 
 
   export let alerts: MonitorAlerts;
+  const dispatch = createEventDispatcher();
 
   function acknowledgeAlert(alertId: string) {
     // Implement the logic to acknowledge the alert
@@ -19,6 +22,10 @@
 
   function handleMouseLeave() {
     hoveredAlertId = null;
+  }
+
+  function switchFeature(feature: string) {
+    dispatch('switchFeature', {feature});
   }
 
 
@@ -40,7 +47,7 @@
           <tr class="even:bg-gray-100">
             <td class="text-sm">{alert.created_at}</td>
             <td class="text-sm">{alert.id}</td>
-            <td class="text-sm"><span class="badge variant-soft-primary">{alert.feature}</span></td>
+            <td class="text-sm"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
             <td class="text-sm">{alert.alerts["kind"]}</td>
             <td class="text-sm">{alert.alerts["zone"]}</td>
             <td class="text-sm">
