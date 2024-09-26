@@ -227,6 +227,7 @@ export enum CommonPaths {
   DRIFT_VALUES = "/opsml/scouter/drift/values",
   FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
   MONITOR_ALERTS = "/opsml/scouter/alerts",
+  MONITOR_ALERT_METRICS = "/opsml/scouter/alerts/metrics",
 }
 
 export enum CommonErrors {
@@ -745,4 +746,11 @@ export interface MonitorAlerts {
 export interface UpdateAlert {
   status: string;
   message: string;
+}
+
+export interface AlertMetrics {
+  created_at: string[];
+  acknowledged: number[];
+  active: number[];
+  alert_count: number[];
 }

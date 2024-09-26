@@ -12,6 +12,7 @@ import {
   type MonitorAlerts,
   TimeWindow,
   type UpdateAlert,
+  type AlertMetrics,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -636,5 +637,37 @@ export async function updateMonitorAlert(
   );
 
   const response = (await profile_response.json()) as UpdateAlert;
+  return response;
+}
+
+/// get alerts metrics from scouter-server for a model
+/// @param repository - repository of the model
+/// @param name - name of the model
+/// @param version - version of the model
+/// @param time_window - time window for values
+/// @param max_data_points - maximum number of data points
+export async function getAlertMetrics(
+  repository: string,
+  name: string,
+  version: string,
+  time_window: string,
+  max_data_points: number
+): Promise<AlertMetrics> {
+  let params = {
+    repository: repository,
+    name: name,
+    version: version,
+    time_window: time_window,
+    max_data_points: max_data_points.toString(),
+  };
+
+  const values_response = await apiHandler.get(
+    `${CommonPaths.MONITOR_ALERT_METRICS}?${new URLSearchParams(
+      params
+    ).toString()}`
+  );
+
+  const response = (await values_response.json()) as AlertMetrics;
+
   return response;
 }
