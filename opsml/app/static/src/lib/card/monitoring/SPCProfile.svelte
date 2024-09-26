@@ -150,6 +150,7 @@
             <textarea
               class="input rounded-lg bg-slate-200 hover:bg-slate-100"
               rows="4"
+              placeholder=""
               bind:value={alert_kwargs}
             ></textarea>
           </label>
