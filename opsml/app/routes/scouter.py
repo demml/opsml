@@ -21,6 +21,7 @@ from opsml.app.routes.pydantic_models import (
     ScouterHealthCheckResponse,
     Success,
     MonitorAlerts,
+    UpdateAlert,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -274,6 +275,8 @@ def get_monitoring_alerts(
     repository: str,
     name: str,
     version: str,
+    active: bool,
+    limit: int,
 ) -> MonitorAlerts:
     """Gets monitoring alerts from the scouter-server. This is a UI only route
 
@@ -294,7 +297,7 @@ def get_monitoring_alerts(
     client: ScouterClient = request.app.state.scouter_client
 
     try:
-        values = client.get_monitoring_alerts(repository, name, version)
+        values = client.get_monitoring_alerts(repository, name, version, active, limit)
 
         return MonitorAlerts(alerts=values)
     except Exception as error:
@@ -302,4 +305,38 @@ def get_monitoring_alerts(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve alerts",
+        ) from error
+
+
+@router.put("/scouter/alerts", name="monitoring alerts", response_model=UpdateAlert)
+def update_monitoring_alerts(
+    request: Request,
+    id: int,
+    status: str,
+) -> UpdateAlert:
+    """Gets monitoring alerts from the scouter-server. This is a UI only route
+
+    Args:
+        request:
+            FastAPI request object
+        id:
+            Alert id
+        status:
+            Alert status
+
+    Returns:
+        UpdateAlert
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.update_monitoring_alerts(id, status)
+
+        return UpdateAlert(**values)
+    except Exception as error:
+        logger.error(f"Failed to update alert: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update alert",
         ) from error

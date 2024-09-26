@@ -590,3 +590,8 @@ class MonitorAlert(BaseModel):
 
 class MonitorAlerts(BaseModel):
     alerts: List[MonitorAlert]
+
+
+class UpdateAlert(BaseModel):
+    status: str
+    message: str
