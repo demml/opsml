@@ -140,13 +140,22 @@ checkScreenSize();
     window.addEventListener('resize', debounce(checkScreenSize, 400)); 
   });
 
+  function handleUpdate(event) {
+    showProfile = event.detail.showProfile;
+    driftProfiles[profileType].config = event.detail.updatedDriftConfig;
+  }
+
+  function handleHide(event) {
+    showProfile = event.detail.showProfile;
+  }
+
 </script>
 
 <main>
   {#if driftProfiles}
   <div class="flex min-h-screen mb-4">
 
-    <div class="flex-col pt-4 px-16 w-full bg-white">
+    <div class="flex-col pt-4 px-8 lg:px-24 w-full bg-white">
 
       <div class="flex justify-between">
 
@@ -269,6 +278,8 @@ checkScreenSize();
         name={name}
         version={version}
         driftConfig={driftProfiles[profileType].config}
+        on:update={handleUpdate}
+        on:hide={handleHide}
         />
     
     {/if}
