@@ -27,7 +27,7 @@
             {#if cards.modelcards.length > 0}
               {#each cards.modelcards as modelcard}
                 <Card
-                  hoverColor="hover:text-primary-500 dark:hover:text-primary-500"
+                  hoverColor="hover:text-primary-500 hover:bg-slate-100"
                   hoverBorderColor="hover:border-primary-500"
                   repository= {modelcard.repository}
                   name= {modelcard.name}

@@ -21,7 +21,7 @@
     } else {
       console.log('Failed to acknowledge alert');
     }
-    
+
   };
 
   let hoveredAlertId: number | null = null;
@@ -39,39 +39,45 @@
   }
 
 
+
+
 </script>
 
-    <table class="table-compact table-cell-fit table-hover text-xs text-center min-w-full">
-      <thead class="bg-primary-200 sticky top-0">
-        <tr>
-          <th class="text-sm text-center py-2">Created At</th>
-          <th class="text-sm text-center py-2">ID</th>
-          <th class="text-sm text-center py-2">Feature</th>
-          <th class="text-sm text-center py-2">Kind</th>
-          <th class="text-sm text-center py-2">Zone</th>
-          <th class="text-sm text-center py-2">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each alerts.alerts as alert}
-          <tr class="even:bg-gray-100">
-            <td class="text-sm">{alert.created_at}</td>
-            <td class="text-sm">{alert.id}</td>
-            <td class="text-sm"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
-            <td class="text-sm">{alert.alerts["kind"]}</td>
-            <td class="text-sm">{alert.alerts["zone"]}</td>
-            <td class="text-sm">
-              <button
-                type="button"
-                class="badge text-white bg-scouter_red hover:bg-secondary-700"
-                on:click={() => acknowledgeAlert(alert.id)}
-                on:mouseenter={() => handleMouseEnter(alert.id)}
-                on:mouseleave={handleMouseLeave}
-              >
-              {hoveredAlertId === alert.id ? 'Ack' : 'Active'}
-              </button>
-            </td>
+    {#if alerts.alerts.length === 0}
+      <div class="text-center text-sm text-gray-500">No alerts to display</div>
+    {:else}
+      <table class="table-compact table-cell-fit table-hover text-xs text-center min-w-full">
+        <thead class="bg-primary-200 sticky top-0">
+          <tr>
+            <th class="text-sm text-center py-2">Created At</th>
+            <th class="text-sm text-center py-2">ID</th>
+            <th class="text-sm text-center py-2">Feature</th>
+            <th class="text-sm text-center py-2">Kind</th>
+            <th class="text-sm text-center py-2">Zone</th>
+            <th class="text-sm text-center py-2">Status</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each alerts.alerts as alert}
+            <tr class="even:bg-gray-100">
+              <td class="text-sm">{alert.created_at}</td>
+              <td class="text-sm">{alert.id}</td>
+              <td class="text-sm"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
+              <td class="text-sm">{alert.alerts["kind"]}</td>
+              <td class="text-sm">{alert.alerts["zone"]}</td>
+              <td class="text-sm">
+                <button
+                  type="button"
+                  class="badge text-white bg-scouter_red hover:bg-secondary-700"
+                  on:click={() => acknowledgeAlert(alert.id)}
+                  on:mouseenter={() => handleMouseEnter(alert.id)}
+                  on:mouseleave={handleMouseLeave}
+                >
+                {hoveredAlertId === alert.id ? 'Ack' : 'Active'}
+                </button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
