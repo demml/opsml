@@ -42,6 +42,21 @@
 
 
 </script>
+
+
+<style>
+  .center-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%; /* Ensure the parent div takes up the full height */
+  }
+</style>
+
+
+      {#if alerts.alerts.length === 0}
+        <div class="center-content text-center text-gray-500 self-center text-2xl text-secondary-600 font-bold">No alerts to display</div>
+      {:else}
       <table class="table-compact table-cell-fit table-hover text-xs text-center min-w-full">
         <thead class="bg-primary-200 sticky top-0">
           <tr>
@@ -76,3 +91,4 @@
           {/each}
         </tbody>
       </table>
+      {/if}
