@@ -11,6 +11,7 @@ import {
   type TimestampData,
   type MonitorAlerts,
   TimeWindow,
+  type UpdateAlert,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
@@ -601,7 +602,7 @@ export async function rebuildDriftViz(
 /// @param name - name of the model
 /// @param version - version of the model
 /// @returns MonitorAlerts
-export async function getMonitorAlertData(
+export async function getMonitorAlerts(
   repository: string,
   name: string,
   version: string
@@ -611,9 +612,24 @@ export async function getMonitorAlertData(
       repository: repository,
       name: name,
       version: version,
+      active: "true",
+      limit: "50",
     }).toString()}`
   );
 
   const response = (await profile_response.json()) as MonitorAlerts;
+  return response;
+}
+
+export async function updateMonitorAlert(
+  id: number,
+  status: string
+): Promise<UpdateAlert> {
+  const profile_response = await apiHandler.put(
+    `${CommonPaths.MONITOR_ALERTS}`,
+    { id: id, status: status }
+  );
+
+  const response = (await profile_response.json()) as UpdateAlert;
   return response;
 }

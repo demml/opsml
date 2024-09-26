@@ -3,7 +3,7 @@ import {
   getFeatureDriftValues,
   createDriftViz,
   createFeatureDistributionViz,
-  getMonitorAlertData,
+  getMonitorAlerts,
 } from "$lib/scripts/monitoring/utils";
 import {
   type DriftProfile,
@@ -68,7 +68,7 @@ export async function load({ url }) {
       targetFeature
     )) as ChartjsData;
 
-    let alerts = (await getMonitorAlertData(
+    let alerts = (await getMonitorAlerts(
       "ml-platform-1",
       "model-1",
       "0.1.0"
