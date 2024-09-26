@@ -1,24 +1,25 @@
 <script lang="ts">
 
-  import { type MonitorAlerts  } from "$lib/scripts/types";
+  import { type MonitorAlerts, AlertStatus, type UpdateAlert  } from "$lib/scripts/types";
   import { createEventDispatcher } from 'svelte';
-  import { d } from "svelte-highlight/languages";
+  import { updateMonitorAlert } from "$lib/scripts/monitoring/utils";
+
 
 
   export let alerts: MonitorAlerts;
   const dispatch = createEventDispatcher();
 
-  function acknowledgeAlert(alertId: string) {
+  async function acknowledgeAlert(alertId: number) {
     // Implement the logic to acknowledge the alert
     alerts.alerts = alerts.alerts.filter(alert => alert.id !== alertId);
     
-
     // update alerts
+    let response = await updateMonitorAlert(alertId, AlertStatus.ACKNOWLEDGED) as UpdateAlert;
   };
 
-  let hoveredAlertId: string | null = null;
+  let hoveredAlertId: number | null = null;
 
-  function handleMouseEnter(alertId: string) {
+  function handleMouseEnter(alertId: number) {
     hoveredAlertId = alertId;
   }
 

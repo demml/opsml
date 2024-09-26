@@ -188,6 +188,11 @@ export enum ProfileType {
   PSI = "PSI",
 }
 
+export enum AlertStatus {
+  ACTIVE = "active",
+  ACKNOWLEDGED = "acknowledged",
+}
+
 export enum CommonPaths {
   HOME = "/opsml",
   LOGIN = "/opsml/auth/login",
@@ -730,9 +735,14 @@ export interface MonitorAlert {
   feature: string;
   alerts: Record<string, string>;
   status: string;
-  id: string;
+  id: number;
 }
 
 export interface MonitorAlerts {
   alerts: MonitorAlert[];
+}
+
+export interface UpdateAlert {
+  status: string;
+  message: string;
 }
