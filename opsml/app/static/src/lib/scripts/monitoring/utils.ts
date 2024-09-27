@@ -671,3 +671,121 @@ export async function getAlertMetrics(
 
   return response;
 }
+
+export async function createAlertMetricViz(
+  alertMetrics: AlertMetrics
+): Promise<ChartjsData> {
+  let labels = alertMetrics.created_at.map((date) => new Date(date));
+  let active = alertMetrics.active;
+  let counts = alertMetrics.alert_count;
+  let acknowledged = alertMetrics.acknowledged;
+
+  let grace = "10%";
+  let legend = {
+    display: false,
+  };
+
+  let data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Count",
+        data: counts,
+        borderColor: "rgba(0, 0, 0, 1)",
+        backgroundColor: "rgba(0, 0, 0, 1)",
+        pointRadius: 0,
+        tension: 0.1,
+      },
+      {
+        label: "Active",
+        data: active,
+        borderColor: "rgba(4, 205, 155, 1)",
+        backgroundColor: "rgba(4, 205, 155, 1)",
+        pointRadius: 0,
+        tension: 0.1,
+      },
+      {
+        label: "Acknowledged",
+        data: acknowledged,
+        borderColor: "rgba(75, 57, 120, 1)",
+        backgroundColor: "rgba(75, 57, 120, 1)",
+        pointRadius: 0,
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const zoomOptions = {
+    pan: {
+      enabled: true,
+      mode: "xy",
+      modifierKey: "ctrl",
+    },
+    zoom: {
+      mode: "xy",
+      drag: {
+        enabled: true,
+        borderColor: "rgb(54, 162, 235)",
+        borderWidth: 1,
+        backgroundColor: "rgba(54, 162, 235, 0.3)",
+      },
+    },
+  };
+
+  return {
+    type: "line",
+    data: data,
+    options: {
+      plugins: {
+        zoom: zoomOptions,
+        legend,
+        annotation: {},
+      },
+      responsive: true,
+      onresize: handleResize,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
+          type: "time",
+          time: {
+            displayFormats: {
+              year: "YYYY",
+              day: "DD-MM-YYYY",
+              hour: "HH:mm",
+              minute: "HH:mm",
+              second: "HH:mm:ss",
+            },
+          },
+          title: { display: true, text: "Time" },
+          ticks: {
+            maxTicksLimit: 30,
+          },
+        },
+        y: {
+          grace: grace,
+          border: {
+            width: 2,
+            color: "rgba(0, 0, 0, 1)",
+          },
+          grid: {
+            display: false,
+          },
+          title: { display: true, text: "Alert Metrics" },
+          ticks: {
+            maxTicksLimit: 30,
+          },
+        },
+      },
+      layout: {
+        padding: 10,
+      },
+    },
+  };
+}
