@@ -11,7 +11,8 @@
   import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
   import SpcStats from "$lib/card/monitoring/SPCStats.svelte";
-
+  import Fa from 'svelte-fa';
+  import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -161,7 +162,7 @@ function toggleProfile() {
   {#if driftProfiles}
   <div class="flex min-h-screen overflow-x-scroll bg-white">
   
-      <div class="flex-col pt-4 w-full px-8">
+      <div class="flex-col pt-4 w-full px-12">
         <div class="flex justify-between">
           <div class="flex justify-between">
             <img alt="Scouter logo" class="h-9 mx-1 self-center" src={scouter_logo}>
@@ -224,13 +225,10 @@ function toggleProfile() {
             />
           </div>
           <div class="col-span-1">
-
             <SpcStats
               feature_profile={targetFeature}
               featureDistVizData={featureDistVizData}
             />
-
-  
           </div>
         </div>
         {:else}
@@ -238,11 +236,82 @@ function toggleProfile() {
             <p class="text-gray-400">No feature values found for the current time period</p>
           </div>
         {/if}
+
+        <div class="flex flex-col pt-2">
+          <div class="text-primary-500 text-2xl font-bold pt-2 pb-1">Alerts</div>
+          <div class="border border-2 border-primary-500 w-full mb-2"></div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-1">
+            <div class="lg:mr-2 lg:col-span-2">
+              <div class="flex flex-row items-center">
+                <Fa icon={faTriangleExclamation} size="lg" color="#f54d55"/>
+                <header class="pl-2 text-secondary-600 text-lg font-bold">Alert History</header>
+              </div>
+              {#if alertMetricVizData}
+                <TimeChartDiv
+                  data={alertMetricVizData.data}
+                  id={alertMeticsId}
+                  options={alertMetricVizData.options}
+                  minHeight="min-h-[200px] lg:min-h-[250px]"
+                />
+              {:else}
+                <div class="flex justify-center items-center h-4/5">
+                  <p class="text-gray-400">No feature values found for the current time period</p>
+                </div>
+              {/if}
+            </div>
+            <div>
+              <div class="flex flex-row items-center">
+                <Fa icon={faTriangleExclamation} size="lg" color="#f54d55"/>
+                <header class="pl-2 text-secondary-600 text-lg font-bold">Active Alerts</header>
+              </div>
+              <div id="table" class="col-span-1 min-h-[250px] max-h-[450px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
+                <AlertDiv alerts={alerts} on:switchFeature={handleFeatureUpdate}/>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
 
  
-  
+  {:else}
+    <div class="flex min-h-screen min-h-screen flex flex-col md:grid md:space-y-0 w-full h-full md:grid-cols-12 md:flex-1 md:grid-rows-full space-y-4 md:gap-6 max-w-full max-h-full bg-white" id="notLoaded">
+      <section class="pt-24 border-gray-100 col-span-full flex-1 pb-16 items-center">
+
+        <div class="z-10 mx-auto rounded-2xl bg-slate-100 border shadow p-4 md:w-96 md:px-5">
+
+          <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
+          <h1 class="pt-1 text-center text-3xl font-bold text-error-500">Oops!</h1>
+
+          <div class="mb-8 grid grid-cols-1 gap-3">
+            <h2 class="text-primary-500 font-bold">No Drift Profile Detected</h2>
+            <p class="mb-1 text-primary-500 text-center">
+              A drift profile was not detected for this model
+              If you'd like to enable monitoring, create a drift profile for this model.
+            </p>
+
+          </div>
+          
+        </div>
+      </section>
+    </div>
   {/if}
+  {#if showProfile}
+  
+    
+      {#if profileType === ProfileType.SPC}
+    
+        <SPCProfile 
+          showProfile={showProfile} 
+          repository={repository}
+          name={name}
+          version={version}
+          driftConfig={driftProfiles[profileType].config}
+          on:update={handleUpdate}
+          on:hide={handleHide}
+          />
+      
+      {/if}
+    {/if}
 </main>

@@ -71,15 +71,15 @@
         <tbody>
           {#each alerts.alerts as alert}
             <tr class="even:bg-gray-100">
-              <td class="text-sm">{alert.created_at}</td>
-              <td class="text-sm">{alert.id}</td>
-              <td class="text-sm"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
-              <td class="text-sm">{alert.alerts["kind"]}</td>
-              <td class="text-sm">{alert.alerts["zone"]}</td>
-              <td class="text-sm">
+              <td class="text-xs">{alert.created_at}</td>
+              <td class="text-xs">{alert.id}</td>
+              <td class="text-xs"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
+              <td class="text-xs">{alert.alerts["kind"]}</td>
+              <td class="text-xs">{alert.alerts["zone"]}</td>
+              <td class="text-xs">
                 <button
                   type="button"
-                  class="badge text-white bg-scouter_red hover:bg-secondary-700"
+                  class="badge text-xs text-white bg-scouter_red hover:bg-secondary-700"
                   on:click={() => acknowledgeAlert(alert.id)}
                   on:mouseenter={() => handleMouseEnter(alert.id)}
                   on:mouseleave={handleMouseLeave}
