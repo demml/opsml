@@ -24,12 +24,12 @@
     <div class="flex flex-col space-y-1">
 
       <div class="rounded-lg border-2 border-darkpurple px-4 shadow-md shadow-primary-500 lg:mt-2 mb-2 pb-2 overflow-x-scroll bg-white">
-        <div class="min-h-[250px] max-h-[225px] lg:mt-2">
+        <div class="max-h-[180px] min-h-[180px]">
           <div class="flex flex-row items-center border-b-2 border-gray-400">
             <Fa icon={faComputer} color="#04cd9b"/>
             <header class="pl-2 text-darkpurple text-lg font-bold">Feature Distribution</header>
           </div>
-          <div class="min-h-[200px]">
+          <div class="min-h-[150px]">
             <IndividualChart
               data={featureDistVizData.data}
               type="bar"
