@@ -5,6 +5,7 @@ import {
   createFeatureDistributionViz,
   getMonitorAlerts,
   getAlertMetrics,
+  createAlertMetricViz,
 } from "$lib/scripts/monitoring/utils";
 import {
   type DriftProfile,
@@ -84,7 +85,7 @@ export async function load({ url }) {
       1000
     )) as AlertMetrics;
 
-    console.log(alertMetrics);
+    let alertMetricVizData = createAlertMetricViz(alertMetrics);
 
     return {
       repository: "ml-platform-1",
@@ -101,6 +102,7 @@ export async function load({ url }) {
       alerts,
       showProfile: false,
       profileType: ProfileType.SPC,
+      alertMetricVizData,
     };
   } else {
     return {

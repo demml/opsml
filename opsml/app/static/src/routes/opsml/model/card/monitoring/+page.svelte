@@ -30,6 +30,9 @@
   let featureDistVizData: ChartjsData;
   $: featureDistVizData = data.featureDistVizData;
 
+  let alertMetricVizData: ChartjsData;
+  $: alertMetricVizData = data.alertMetricVizData;
+
   let timeWindow: string;
   $: timeWindow = data.timeWindow;
 
@@ -45,8 +48,11 @@
   let version: string;
   $: version = data.version;
 
-  let vizId: string;
-  $: vizId = "Drift values for " + targetFeature.id;
+  let driftVizId: string;
+  $: driftVizId = "Drift values for " + targetFeature.id;
+
+  let alertMeticsId: string;
+  $: alertMeticsId = 'Alert Metrics';
 
   let alerts: MonitorAlerts;
   $: alerts = data.alerts;
@@ -196,64 +202,79 @@ function toggleProfile() {
       <!-- Feature header -->
       <div class="flex flex-row items-center">
         <div class="m-1 text-darkpurple font-bold">Features:</div>
-        <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
-          {#each features as feature}
-            {#if feature === targetFeature.id}
-              <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
-                <div class="text-white text-xs font-bold hover:text-darkpurple">{feature}</div>
-              </button>
-            {:else}
-              <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
-                <div class="text-darkpurple text-xs font-bold">{feature}</div>
-              </button>
-            {/if}
-          {/each}
+          <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
+            {#each features as feature}
+              {#if feature === targetFeature.id}
+                <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+                  <div class="text-white text-xs font-bold hover:text-darkpurple">{feature}</div>
+                </button>
+              {:else}
+                <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+                  <div class="text-darkpurple text-xs font-bold">{feature}</div>
+                </button>
+              {/if}
+            {/each}
+          </div>
         </div>
-      </div>
     
       {#if driftVizData}
-          <TimeChartDiv
-            data={driftVizData.data}
-            id={vizId}
-            options={driftVizData.options}
-            minHeight="min-h-[350px] lg:min-h-[500px]"
-          />
+        <TimeChartDiv
+          data={driftVizData.data}
+          id={driftVizId}
+          options={driftVizData.options}
+          minHeight="min-h-[350px] lg:min-h-[500px]"
+        />
       {:else}
         <div class="flex justify-center items-center h-4/5">
           <p class="text-gray-400">No feature values found for the current time period</p>
         </div>
       {/if}
-      <div class="pt-2">
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
+        <div class="pt-2">
+          <div class="grid grid-cols-2 lg:grid-cols-6 gap-1">
 
-            <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
+              <div id="table" class="col-span-2 lg:col-span-4 min-h-[250px] max-h-[650px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
 
-             
-              <AlertDiv alerts={alerts} 
-              on:switchFeature={handleFeatureUpdate}
-              />
-         
-
+              
+                <AlertDiv alerts={alerts} 
+                on:switchFeature={handleFeatureUpdate}
+                />
           
-            </div>
-        
-          <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500 shadow-md">
-            <div class="flex flex-col">
-              <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
-              <div class="px-2 min-h-[200px]">
-                <IndividualChart
-                  data={featureDistVizData.data}
-                  type="bar"
-                  options={featureDistVizData.options}
-                  id="featureChart"
-                  />
+
+            
+              </div>
+          
+            <div class="col-span-2 lg:col-span-2  min-h-[250px] max-h-[250px] rounded-2xl border border-2 border-primary-500 shadow-md">
+              <div class="flex flex-col">
+                <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
+                <div class="px-2 min-h-[200px]">
+                  <IndividualChart
+                    data={featureDistVizData.data}
+                    type="bar"
+                    options={featureDistVizData.options}
+                    id="featureChart"
+                    />
+                </div>
               </div>
             </div>
           </div>
+
+      
         </div>
 
-    
-      </div>
+      {#if alertMetricVizData}
+        <TimeChartDiv
+          data={alertMetricVizData.data}
+          id={alertMeticsId}
+          options={alertMetricVizData.options}
+          minHeight="min-h-[350px] lg:min-h-[500px]"
+        />
+      {:else}
+        <div class="flex justify-center items-center h-4/5">
+          <p class="text-gray-400">No feature values found for the current time period</p>
+        </div>
+      {/if}
+
+      
 
     </div>
 
