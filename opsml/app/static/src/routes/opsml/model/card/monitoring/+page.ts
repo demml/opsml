@@ -4,6 +4,7 @@ import {
   createDriftViz,
   createFeatureDistributionViz,
   getMonitorAlerts,
+  getAlertMetrics,
 } from "$lib/scripts/monitoring/utils";
 import {
   type DriftProfile,
@@ -12,6 +13,7 @@ import {
   TimeWindow,
   type ChartjsData,
   type MonitorAlerts,
+  type AlertMetrics,
   ProfileType,
 } from "$lib/scripts/types";
 
@@ -73,6 +75,16 @@ export async function load({ url }) {
       "model-1",
       "0.1.0"
     )) as MonitorAlerts;
+
+    let alertMetrics = (await getAlertMetrics(
+      "ml-platform-1",
+      "model-1",
+      "0.1.0",
+      TimeWindow.TwentyFourHours,
+      1000
+    )) as AlertMetrics;
+
+    console.log(alertMetrics);
 
     return {
       repository: "ml-platform-1",

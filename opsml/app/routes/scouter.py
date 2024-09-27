@@ -365,7 +365,7 @@ def get_alert_metrics(
             Model version
 
     Returns:
-        DriftProfile string
+        AlertMetrics
     """
 
     client: ScouterClient = request.app.state.scouter_client
