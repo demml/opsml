@@ -49,10 +49,10 @@
   
     
   <div class="relative inline-block justify-center" bind:this={dropdownRef}>
-    <div class="flex flex-row items-center justify-center border border-darkpurple bg-surface-100 hover:variant-soft-primary rounded w-28 h-8 px-2">
+    <button on:click={toggleDropdown} class="flex flex-row items-center justify-center border border-darkpurple bg-surface-100 hover:variant-soft-primary rounded w-28 h-8 px-2">
       <Fa class="h-4 mr-2" icon={faClock} color="#4b3978"/>
-      <button class="text-darkpurple text-sm font-bold" on:click={toggleDropdown}>{header}</button>
-    </div>
+      <div class="text-darkpurple text-sm font-bold" >{header}</div>
+      </button>
     {#if isOpen}
       <div class="absolute border border-darkpurple bg-surface-100 rounded shadow-lg text-sm w-24">
         {#each items as item}
