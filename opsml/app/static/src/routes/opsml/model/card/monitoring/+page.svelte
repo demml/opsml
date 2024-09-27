@@ -266,7 +266,7 @@ function toggleProfile() {
           data={alertMetricVizData.data}
           id={alertMeticsId}
           options={alertMetricVizData.options}
-          minHeight="min-h-[350px] lg:min-h-[500px]"
+          minHeight="min-h-[200px] lg:min-h-[250px]"
         />
       {:else}
         <div class="flex justify-center items-center h-4/5">

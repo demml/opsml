@@ -85,7 +85,9 @@ export async function load({ url }) {
       1000
     )) as AlertMetrics;
 
-    let alertMetricVizData = createAlertMetricViz(alertMetrics);
+    let alertMetricVizData = (await createAlertMetricViz(
+      alertMetrics
+    )) as ChartjsData;
 
     return {
       repository: "ml-platform-1",
