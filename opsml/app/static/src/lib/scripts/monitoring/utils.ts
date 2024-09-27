@@ -1,7 +1,7 @@
 import {
   type DriftProfileResponse,
   CommonPaths,
-  type SuccessResponse,
+  type UpdateProfileResponse,
   type FeatureDriftValues,
   type DriftProfile,
   type FeatureDriftProfile,
@@ -85,7 +85,7 @@ export async function updateDriftProfile(
   version: string,
   name: string,
   profile: string
-): Promise<SuccessResponse> {
+): Promise<UpdateProfileResponse> {
   let body = {
     name: name,
     repository: repository,
@@ -95,7 +95,7 @@ export async function updateDriftProfile(
 
   const update_response = await apiHandler.put(CommonPaths.DRIFT_PROFILE, body);
 
-  const response = (await update_response.json()) as SuccessResponse;
+  const response = (await update_response.json()) as UpdateProfileResponse;
   return response;
 }
 

@@ -50,7 +50,7 @@ it("render Scouter Monitoring Page", () => {
     repository: "ml-platform-1",
     version: "0.1.0",
     alerts: exampleAlerts,
-    showProfile: false,
+    showConfig: false,
     profileType: "SPC",
   };
   render(MonitoringPage, { data });

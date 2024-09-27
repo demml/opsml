@@ -54,8 +54,8 @@
   let alerts: MonitorAlerts;
   $: alerts = data.alerts;
 
-  let showProfile: boolean;
-  $: showProfile = data.showProfile;
+  let showConfig: boolean;
+  $: showConfig = data.showConfig;
 
   let profileType: ProfileType;
   $: profileType = data.profileType;
@@ -102,7 +102,7 @@
   }
   
   function toggleProfile() {
-    showProfile = !showProfile;
+    showConfig = !showConfig;
   }
   
   
@@ -141,12 +141,12 @@
     });
   
     function handleUpdate(event) {
-      showProfile = event.detail.showProfile;
+      showConfig = event.detail.showConfig;
       driftProfiles[profileType].config = event.detail.updatedDriftConfig;
     }
   
     function handleHide(event) {
-      showProfile = event.detail.showProfile;
+      showConfig = event.detail.showConfig;
     }
   
     function handleFeatureUpdate(event) {
@@ -183,7 +183,7 @@
         <div class="flex flex-row items-center">
           <div class="m-1 text-darkpurple font-bold">Drift Configuration:</div>
             <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
-              {#if showProfile}
+              {#if showConfig}
                 <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={toggleProfile}>
                   <div class="text-white text-xs font-bold hover:text-darkpurple">Hide</div>
                 </button>
@@ -229,14 +229,15 @@
         />
       </div>  
 
-      {#if showProfile}
+      {#if showConfig}
         {#if profileType === ProfileType.SPC}
           <SPCProfile 
-            showProfile={showProfile} 
+            showConfig={showConfig} 
             repository={repository}
             name={name}
             version={version}
             driftConfig={driftProfiles[profileType].config}
+            driftProfile={driftProfiles[profileType]}
             on:update={handleUpdate}
             on:hide={handleHide}
             />

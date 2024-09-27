@@ -24,6 +24,7 @@ from opsml.app.routes.pydantic_models import (
     UpdateAlert,
     UpdateAlertRequest,
     AlertMetrics,
+    ProfileUpdateResponse,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -85,8 +86,8 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
-@router.put("/scouter/drift/profile", name="update_drift_profile", response_model=Success)
-def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Success:
+@router.put("/scouter/drift/profile", name="update_drift_profile", response_model=ProfileUpdateResponse)
+def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> ProfileUpdateResponse:
     """Updates a drift profile to scouter-server as well as modelcard storage
 
     Args:
@@ -105,7 +106,13 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
 
     try:
         profile = DriftProfile.model_validate_json(payload.profile)
-        client.update_drift_profile(payload.profile)
+        response = client.update_drift_profile(payload.profile)
+
+        if response["status"] == "error":
+            return ProfileUpdateResponse(
+                complete=False,
+                message=response["message"],
+            )
 
         # this route is only used for updating the drift profile from the UI
         # Updating cards and profiles should be done via update_card
@@ -124,7 +131,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Succ
                 profile.save_to_json(temp_path)
                 storage_client.put(temp_path, save_path)
 
-        return Success()
+        return ProfileUpdateResponse()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error

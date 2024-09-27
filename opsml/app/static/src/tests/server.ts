@@ -441,7 +441,6 @@ const handlers = [
                 percentage: undefined,
               },
               schedule: "0 0 0 0 0 0 0 0",
-              features_to_monitor: ["col1"],
               alert_kwargs: {},
             },
           },
@@ -451,14 +450,12 @@ const handlers = [
     }
   ),
 
-  http.put(
-    "/opsml/scouter/drift/profile",
-    async ({ request, params, cookies }) => {
-      return HttpResponse.json({
-        complete: true,
-      });
-    }
-  ),
+  http.put(CommonPaths.DRIFT_PROFILE, async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      complete: true,
+      message: "Drift profile updated",
+    });
+  }),
 
   http.get(CommonPaths.DRIFT_VALUES, async ({ request, params, cookies }) => {
     const url = new URL(request.url);
