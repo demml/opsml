@@ -26,6 +26,11 @@ class Success(BaseModel):
     complete: bool = True
 
 
+class ProfileUpdateResponse(BaseModel):
+    complete: bool = True
+    message: str = "Profile updated successfully"
+
+
 class HealthCheckResult(BaseModel):
     is_alive: bool
 

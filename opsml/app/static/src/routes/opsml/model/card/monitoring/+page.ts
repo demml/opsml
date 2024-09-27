@@ -102,7 +102,7 @@ export async function load({ url }) {
       max_data_points: 1000,
       featureDistVizData,
       alerts,
-      showProfile: false,
+      showConfig: false,
       profileType: ProfileType.SPC,
       alertMetricVizData,
     };

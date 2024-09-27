@@ -64,7 +64,7 @@ class ScouterClient(ApiClient):
 
         return cast(Dict[str, Any], response["profile"])
 
-    def update_drift_profile(self, drift_profile: str) -> None:
+    def update_drift_profile(self, drift_profile: str) -> Dict[str, str]:
         """Updates drift profile into scouter server
 
         Args:
@@ -72,7 +72,7 @@ class ScouterClient(ApiClient):
                 Drift profile to insert
         """
         profile = json.loads(drift_profile)
-        self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=profile)
+        return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=profile)
 
     def get_drift_values(
         self,

@@ -1,12 +1,14 @@
 <script lang="ts">
-    import { type DriftConfig, type AlertConfig } from "$lib/scripts/types";
+    import { updateDriftProfile } from "$lib/scripts/monitoring/utils";
+    import { type DriftConfig, type AlertConfig, type DriftProfile } from "$lib/scripts/types";
     import { createEventDispatcher } from 'svelte';
 
-    export let showProfile = false;
+    export let showConfig = false;
     export let repository: string;
     export let name: string;
     export let version: string;
     export let driftConfig: DriftConfig;
+    export let driftProfile: DriftProfile;
     const dispatch = createEventDispatcher();
 
 
@@ -23,6 +25,7 @@
     $: alert_kwargs =  JSON.stringify(alertConfig.alert_kwargs, null, 2);
 
     let dispatch_type = alertConfig.alert_dispatch_type
+    let schedule = alertConfig.schedule;
     let targets = driftConfig.targets;
     let sample = driftConfig.sample;
     let sample_size = driftConfig.sample_size;
@@ -53,29 +56,48 @@
 
 
       let updatedDriftConfig = {
+        name: name,
+        repository: repository,
+        version: version,
         sample: sample,
+        feature_map: driftConfig.feature_map,
         sample_size: sample_size,
         targets: targets,
         alert_config: {
+          dispatch_type: dispatch_type,
+          schedule: schedule,
           alert_dispatch_type: dispatch_type,
           alert_rule: {
             process: {
-              rule: process_rule,
+              rule: process_rule!,
               zones_to_monitor: zones_to_monitor
-            }
+            },
+            percentage: undefined,
           },
-          alert_kwargs: alert_kwargs
+          alert_kwargs: alert_kwargs as Record<string, number>
         }
       };
 
-      showProfile = false;
-      dispatch('update', { showProfile,  updatedDriftConfig});
+      showConfig = false;
+      dispatch('update', { showConfig,  updatedDriftConfig});
+
+      driftProfile.config = updatedDriftConfig;
+
+      //serialize the updated drift profile
+  
+      let updated = await updateDriftProfile(name, repository, version, JSON.stringify(driftProfile, null, 2));
+
+      if (updated.complete) {
+        console.log('Drift profile updated successfully');
+      } else {
+        console.log('Failed to update drift profile');
+      }
 
     }
 
     function handleHide() {
-    showProfile = false;
-    dispatch('hide', { showProfile });
+    showConfig = false;
+    dispatch('hide', { showConfig });
   }
 
   </script>
@@ -89,7 +111,7 @@
 </style>
   
 
-<div class={`fixed top-10 bottom-10 right-4 h-auto rounded-2xl transition-transform duration-300 ease-in-out z-50 ${showProfile ? 'translate-x-0' : 'translate-x-full'}`}>
+<div class={`fixed top-10 bottom-10 right-4 h-auto rounded-2xl transition-transform duration-300 ease-in-out z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`}>
   <!-- Profile content goes here -->
   <section class="border-gray-100 col-span-full flex-1 items-center">
     

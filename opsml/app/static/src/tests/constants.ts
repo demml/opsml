@@ -434,7 +434,6 @@ export const driftProfile = {
         percentage: undefined,
       },
       schedule: "0 0 0 0 0 0 0 0",
-      features_to_monitor: ["col1"],
       alert_kwargs: {},
     },
   },
