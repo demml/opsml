@@ -40,7 +40,7 @@
         </div>
       </div>
 
-      <div class="rounded-lg border-2 border-darkpurple px-4 shadow-md shadow-primary-500 mb-2 pb-2 overflow-x-scroll bg-white">
+      <div class="rounded-lg border-2 border-darkpurple px-4 shadow-md shadow-primary-500 mb-2 pb-2 overflow-x-scroll bg-white w-auto">
         <div>
           <div class="flex flex-row items-center border-b-2 border-gray-400 mb-2">
             <Fa icon={faComputer} color="#04cd9b"/>
