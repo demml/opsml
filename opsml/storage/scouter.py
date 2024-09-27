@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional, cast, List
+from typing import Any, Dict, Optional, cast, List, Union
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
@@ -11,6 +11,7 @@ class ScouterRoutes:
     HEALTHCHECK = "healthcheck"
     PROFILE = "profile"
     ALERTS = "alerts"
+    ALERT_METRICS = "alerts/metrics"
 
 
 class ScouterClient(ApiClient):
@@ -228,6 +229,57 @@ class ScouterClient(ApiClient):
 
         except Exception:
             return {"message": "Failed to update monitoring alert", "status": "error"}
+
+    def get_alert_metrics(
+        self,
+        repository: str,
+        name: str,
+        version: str,
+        time_window: str,
+        max_data_points: int,
+    ) -> Dict[str, Union[List[str], List[int]]]:
+        """Get monitoring alerts from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+            time_window:
+                Time window
+            max_data_points:
+                Maximum data points
+
+        Returns:
+            Alert metrics is a given time period
+        """
+
+        params = {
+            "repository": repository,
+            "name": name,
+            "version": version,
+            "time_window": time_window,
+            "max_data_points": max_data_points,
+        }
+
+        try:
+            response = self.request(
+                route=ScouterRoutes.ALERT_METRICS,
+                request_type=RequestType.GET,
+                params=params,
+            )
+
+            return cast(Dict[str, Union[List[str], List[int]]], response["data"])
+
+        except Exception:
+            return {
+                "created_at": [],
+                "alert_count": [],
+                "active": [],
+                "acknowledged": [],
+            }
 
 
 SCOUTER_CLIENT = None
