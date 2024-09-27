@@ -14,7 +14,7 @@
     let process_rule = alertConfig.alert_rule?.process?.rule;
 
     let zones_to_monitor: string[];
-
+    
     // default to empty array
     $: zones_to_monitor = alertConfig.alert_rule?.process?.zones_to_monitor || [];
 
@@ -43,6 +43,12 @@
       // if alert_kwargs is a string, parse it to JSON
       if (typeof alert_kwargs === 'string') {
         alert_kwargs = JSON.parse(alert_kwargs);
+      }
+
+      // check targets 
+      if (typeof targets === 'string') {
+        let targetsList = targets as string;
+        targets = targetsList.split(',');
       }
 
 
