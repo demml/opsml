@@ -789,3 +789,21 @@ export async function createAlertMetricViz(
     },
   };
 }
+
+export async function rebuildAlertMetricViz(
+  repository: string,
+  name: string,
+  version: string,
+  timeWindow: string,
+  max_data_points: number
+): Promise<ChartjsData> {
+  let alertMetrics = await getAlertMetrics(
+    repository,
+    name,
+    version,
+    timeWindow,
+    max_data_points
+  );
+
+  return createAlertMetricViz(alertMetrics);
+}
