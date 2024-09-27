@@ -87,14 +87,14 @@
   <!-- Profile content goes here -->
   <section class="border-gray-100 col-span-full flex-1 items-center">
     
-    <form class="z-10 mx-auto rounded-xl border-2 border-primary-500 bg-slate-100 border shadow p-4 md:w-96 md:px-5">
+    <form class="z-10 mx-auto rounded-xl border-2 border-primary-500 bg-white border shadow p-4 md:w-96 md:px-5">
       <h1 class="pt-1 text-center text-lg font-bold text-primary-500">DriftConfig</h1>
       <p class="mb-1 text-gray-500 text-xs text-center">Current drift configuration using statistical process control</p>
 
       <div class="grid grid-cols-3 my-2 items-center gap-2">
-        <div class="badge variant-soft-primary">{repository}</div>
-        <div class="badge variant-soft-primary">{name}</div>
-        <div class="badge variant-soft-primary">{version}</div>
+        <div class="badge variant-soft-secondary">{repository}</div>
+        <div class="badge variant-soft-secondary">{name}</div>
+        <div class="badge variant-soft-secondary">{version}</div>
 
       </div>
 

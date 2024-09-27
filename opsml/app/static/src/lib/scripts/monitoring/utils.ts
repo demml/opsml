@@ -570,7 +570,7 @@ export async function rebuildDriftViz(
   max_data_points: number,
   feature: string,
   featureProfile: FeatureDriftProfile
-): Promise<[ChartjsData, ChartjsData]> {
+): Promise<[ChartjsData, ChartjsData, ChartjsData]> {
   let featureValues = await getFeatureDriftValues(
     repository,
     name,
@@ -595,7 +595,17 @@ export async function rebuildDriftViz(
     featureProfile
   );
 
-  return [featureDriftViz, featureDistViz];
+  let alertMetrics = await getAlertMetrics(
+    repository,
+    name,
+    version,
+    timeWindow,
+    max_data_points
+  );
+
+  let alertMetricViz = await createAlertMetricViz(alertMetrics);
+
+  return [featureDriftViz, featureDistViz, alertMetricViz];
 }
 
 /// get alerts from scouter-server for a model

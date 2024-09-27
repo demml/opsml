@@ -51,12 +51,6 @@
   let version: string;
   $: version = data.version;
 
-  let driftVizId: string;
-  $: driftVizId = "Drift values for " + targetFeature.id;
-
-  let alertMeticsId: string;
-  $: alertMeticsId = 'Alert Metrics';
-
   let alerts: MonitorAlerts;
   $: alerts = data.alerts;
 
@@ -103,6 +97,7 @@
   
     driftVizData = rebuiltViz[0];
     featureDistVizData = rebuiltViz[1];
+    alertMetricVizData = rebuiltViz[2];
   
   }
   
@@ -128,6 +123,7 @@
   
       driftVizData = rebuiltViz[0];
       featureDistVizData = rebuiltViz[1];
+      alertMetricVizData = rebuiltViz[2];
   
     }
   
@@ -137,6 +133,7 @@
       let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
       driftVizData = rebuiltViz[0];
       featureDistVizData = rebuiltViz[1];
+      alertMetricVizData = rebuiltViz[2];
     }
   
     onMount (() => {
