@@ -103,7 +103,7 @@
                   <Fa icon={faTriangleExclamation} size="lg" color="#f54d55"/>
                   <header class="pl-2 text-secondary-600 text-lg font-bold">Active Alerts</header>
                 </div>
-                <div id="table" class="col-span-1 min-h-[250px] max-h-[450px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
+                <div id="table" class="col-span-1 min-h-[300px] max-h-[300px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md">
                   <AlertDiv alerts={alerts} on:switchFeature={handleFeatureUpdate}/>
                 </div>
               </div>
