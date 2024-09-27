@@ -23,7 +23,7 @@
     
     <div class="flex flex-col space-y-1">
 
-      <div class="rounded-lg border-2 border-darkpurple px-4 shadow-md shadow-primary-500 mt-2 mb-2 pb-2 overflow-x-scroll bg-white">
+      <div class="rounded-lg border-2 border-darkpurple px-4 shadow-md shadow-primary-500 lg:mt-2 mb-2 pb-2 overflow-x-scroll bg-white">
         <div class="min-h-[250px] max-h-[225px] lg:mt-2">
           <div class="flex flex-row items-center border-b-2 border-gray-400">
             <Fa icon={faComputer} color="#04cd9b"/>
