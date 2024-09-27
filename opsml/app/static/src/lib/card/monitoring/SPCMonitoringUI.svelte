@@ -1,15 +1,9 @@
 <script lang="ts">
 
-    import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
-    import { getFeatureDriftValues, createDriftViz, rebuildDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
-    import logo from '$lib/images/opsml-green.ico';
-    import { onMount } from 'svelte';
+    import { type ChartjsData, type DriftProfile, type FeatureDriftProfile,  type MonitorAlerts , ProfileType } from "$lib/scripts/types";
+    import { rebuildDriftViz } from "$lib/scripts/monitoring/utils";
     import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
-    import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
-    import scouter_logo from '$lib/images/scouter.svg';
-    import Dropdown from "$lib/components/Dropdown.svelte";
     import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
-    import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
     import SpcStats from "$lib/card/monitoring/SPCStats.svelte";
     import Fa from 'svelte-fa';
     import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
@@ -95,7 +89,8 @@
                     data={alertMetricVizData.data}
                     id={alertMeticsId}
                     options={alertMetricVizData.options}
-                    minHeight="min-h-[200px] lg:min-h-[250px]"
+                    minHeight="min-h-[300px]"
+                    maxHeight="max-h-[300px]"
                   />
                 {:else}
                   <div class="flex justify-center items-center h-4/5">
