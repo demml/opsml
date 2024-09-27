@@ -9,6 +9,12 @@
   export let alerts: MonitorAlerts;
   const dispatch = createEventDispatcher();
 
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const formattedDate = date.toISOString().split('.')[0];
+    return formattedDate;
+  }
+
   async function acknowledgeAlert(alertId: number) {
     // Implement the logic to acknowledge the alert
     
@@ -71,7 +77,7 @@
         <tbody>
           {#each alerts.alerts as alert}
             <tr class="even:bg-gray-100">
-              <td class="text-xs">{alert.created_at}</td>
+              <td class="text-xs">{formatDate(alert.created_at)}</td>
               <td class="text-xs">{alert.id}</td>
               <td class="text-xs"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
               <td class="text-xs">{alert.alerts["kind"]}</td>
