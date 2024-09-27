@@ -677,8 +677,10 @@ export async function createAlertMetricViz(
 ): Promise<ChartjsData> {
   let labels = alertMetrics.created_at.map((date) => new Date(date));
   let active = alertMetrics.active;
-  let counts = alertMetrics.alert_count;
   let acknowledged = alertMetrics.acknowledged;
+
+  console.log(active);
+  console.log(acknowledged);
 
   let grace = "10%";
   let legend = {
@@ -689,28 +691,18 @@ export async function createAlertMetricViz(
     labels: labels,
     datasets: [
       {
-        label: "Count",
-        data: counts,
-        borderColor: "rgba(0, 0, 0, 1)",
-        backgroundColor: "rgba(0, 0, 0, 1)",
-        pointRadius: 0,
-        tension: 0.1,
-      },
-      {
         label: "Active",
         data: active,
-        borderColor: "rgba(4, 205, 155, 1)",
-        backgroundColor: "rgba(4, 205, 155, 1)",
-        pointRadius: 0,
-        tension: 0.1,
+        borderWidth: 1,
+        borderColor: "rgba(245, 77, 85, 1)",
+        backgroundColor: "rgba(245, 77, 85, 0.4)",
       },
       {
         label: "Acknowledged",
         data: acknowledged,
-        borderColor: "rgba(75, 57, 120, 1)",
-        backgroundColor: "rgba(75, 57, 120, 1)",
-        pointRadius: 0,
-        tension: 0.1,
+        borderWidth: 1,
+        borderColor: "rgba(4, 205, 155, 1)",
+        backgroundColor: "rgba(4, 205, 155, 0.4)",
       },
     ],
   };
@@ -733,7 +725,7 @@ export async function createAlertMetricViz(
   };
 
   return {
-    type: "line",
+    type: "bar",
     data: data,
     options: {
       plugins: {
@@ -746,6 +738,7 @@ export async function createAlertMetricViz(
       maintainAspectRatio: false,
       scales: {
         x: {
+          stacked: true,
           border: {
             width: 2,
             color: "rgba(0, 0, 0, 1)",
@@ -769,6 +762,7 @@ export async function createAlertMetricViz(
           },
         },
         y: {
+          stacked: true,
           grace: grace,
           border: {
             width: 2,
