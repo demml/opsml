@@ -224,27 +224,13 @@ function toggleProfile() {
             />
           </div>
           <div class="col-span-1">
-            <div class="grid grid-rows-1 lg:grid-rows-2 gap-y-1">
-              <div class="min-h-[250px] max-h-[225px] rounded-2xl border border-2 border-primary-500 shadow-md lg:mt-2">
-                <div class="flex flex-col">
-                  <div class="text-primary-500 text-lg font-bold pl-2 ">Feature Distribution</div>
-                  <div class="min-h-[200px]">
-                    <IndividualChart
-                      data={featureDistVizData.data}
-                      type="bar"
-                      options={featureDistVizData.options}
-                      id="featureChart"
-                      />
-                  </div>
-                </div>
-              </div>
-              <div class="rounded-2xl border border-2 border-primary-500 shadow-md max-h-[225px]">
-                <div id="table" class="overflow-y-auto rounded-2xl">
-                  <SpcStats feature_profile={targetFeature} />
-                </div>
-              
-              </div>
-            </div>
+
+            <SpcStats
+              feature_profile={targetFeature}
+              featureDistVizData={featureDistVizData}
+            />
+
+  
           </div>
         </div>
         {:else}
