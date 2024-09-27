@@ -14,7 +14,7 @@
     let process_rule = alertConfig.alert_rule?.process?.rule;
 
     let zones_to_monitor: string[];
-    
+
     // default to empty array
     $: zones_to_monitor = alertConfig.alert_rule?.process?.zones_to_monitor || [];
 
@@ -106,8 +106,6 @@
 
       <div class="scrollable-container">
         <div class="mb-4">
-
-          <p class="mb-1 text-gray-500 text-xs text-center">Drift Config</p>
 
           <label class="text-primary-500">Sample
             <input
