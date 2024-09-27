@@ -14,11 +14,11 @@
   export let id;
   export let maxHeight = "max-h-[450px]";
   export let minHeight: string = "min-h-[250px]";
+  export let type = 'line';
   
 	let ctx;
 	let chartCanvas;
   let chart;
-  let type = 'line';
 
   function resetZoom(id) {
     // reset zoom

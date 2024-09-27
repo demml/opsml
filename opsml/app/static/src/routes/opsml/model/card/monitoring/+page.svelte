@@ -84,20 +84,20 @@
   
     } else if (window.innerWidth < 768) { // Check if screen width is greater than or equal to 768px and less than 1024px
   
-      max_data_points = 250;
+      max_data_points = 200;
   
     } else if (window.innerWidth < 1024) {
-      max_data_points = 1000;
+      max_data_points = 400;
     
     } else if (window.innerWidth < 1280) {
-      max_data_points = 2500;
+      max_data_points = 600;
       
     } else if (window.innerWidth < 1536) {
-      max_data_points = 5000;
+      max_data_points = 800;
   
     } else { // Check if screen width is greater than or equal to 1024px
       // Call your function for large screen size
-      max_data_points = 5000;
+      max_data_points = 1000;
     }
     let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
   
