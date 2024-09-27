@@ -71,8 +71,6 @@
                   <div class="px-2 border-l border-darkpurple text-scouter_red bg-surface-50">{three_lcl_rounded}</div> 
                   <div class="px-2 border-l border-darkpurple rounded-r-lg text-secondary-500 bg-surface-50">{three_ucl_rounded}</div> 
             </div>
-
-          
           </div>
         </div>
       </div>
