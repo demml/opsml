@@ -600,3 +600,10 @@ class UpdateAlertRequest(BaseModel):
 class UpdateAlert(BaseModel):
     status: str
     message: str
+
+
+class AlertMetrics(BaseModel):
+    created_at: List[str]
+    alert_count: List[int]
+    active: List[int]
+    acknowledged: List[int]

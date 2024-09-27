@@ -23,6 +23,7 @@ from opsml.app.routes.pydantic_models import (
     MonitorAlerts,
     UpdateAlert,
     UpdateAlertRequest,
+    AlertMetrics,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -339,4 +340,43 @@ def update_monitoring_alerts(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update alert",
+        ) from error
+
+
+@router.get("/scouter/alerts/metrics", name="monitoring alert metrics", response_model=AlertMetrics)
+def get_alert_metrics(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+    time_window: str,
+    max_data_points: int,
+) -> AlertMetrics:
+    """Gets monitoring alerts from the scouter-server. This is a UI only route
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+
+    Returns:
+        DriftProfile string
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.get_alert_metrics(repository, name, version, time_window, max_data_points)
+
+        return AlertMetrics(**values)
+    except Exception as error:
+        logger.error(f"Failed to retrieve alert metrics: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve alert metrics",
         ) from error
