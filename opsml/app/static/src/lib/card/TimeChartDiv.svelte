@@ -78,7 +78,7 @@
 
 </script>
 
-<div class="pt-2 pb-10 rounded-2xl {minHeight} {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md">
+<div class="pt-2 pb-10 rounded-2xl {minHeight} {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md shadow-primary-500">
 
   <div class="flex justify-between">
 
