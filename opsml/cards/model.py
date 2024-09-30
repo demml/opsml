@@ -3,11 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 from pydantic import ConfigDict, SerializeAsAny, field_validator
-from scouter import DriftProfile
+from scouter import SpcDriftProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
@@ -214,12 +214,12 @@ class ModelCard(ArtifactCard):
         return ModelCardLoader(self).load_model_metadata()
 
     @property
-    def drift_profile(self) -> Optional[DriftProfile]:
+    def drift_profile(self) -> Optional[Union[SpcDriftProfile]]:
         """Loads drift profile from scouter server"""
 
         return self.interface.drift_profile
 
-    def load_drift_profile(self) -> Optional[DriftProfile]:
+    def load_drift_profile(self) -> Optional[Union[SpcDriftProfile]]:
         """Loads drift profile from model registry"""
 
         from opsml.storage.card_loader import ModelCardLoader
