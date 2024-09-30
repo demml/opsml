@@ -11,7 +11,7 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-from scouter import DriftConfig, Drifter, DriftProfile
+from scouter import Drifter, SpcDriftConfig, SpcDriftProfile
 
 from opsml.data import DataInterface
 from opsml.helpers.utils import get_class_name
@@ -117,7 +117,7 @@ class ModelInterface(BaseModel):
     modelcard_uid: str = ""
     feature_map: Dict[str, Feature] = {}
     sample_data_interface_type: str = CommonKwargs.UNDEFINED.value
-    drift_profile: Optional[DriftProfile] = None
+    drift_profile: Optional[Union[SpcDriftProfile]] = None
 
     model_config = ConfigDict(
         protected_namespaces=("protect_",),
@@ -347,8 +347,8 @@ class ModelInterface(BaseModel):
     def create_drift_profile(
         self,
         data: Union[pl.DataFrame, pd.DataFrame, NDArray[Any], pa.Table],
-        drift_config: DriftConfig,
-    ) -> DriftProfile:
+        drift_config: Union[SpcDriftConfig],
+    ) -> Union[SpcDriftProfile]:
         """Create a drift profile from data to use for model monitoring.
 
         Args:
@@ -364,11 +364,8 @@ class ModelInterface(BaseModel):
         if self.drift_profile is not None:
             return self.drift_profile
 
-        drifter = Drifter()
-        profile = drifter.create_drift_profile(
-            data=data,
-            drift_config=drift_config,
-        )
+        drifter = Drifter(drift_config.drift_type)
+        profile = drifter.create_drift_profile(data=data, config=drift_config)
         self.drift_profile = profile
 
         return profile
@@ -378,7 +375,7 @@ class ModelInterface(BaseModel):
         assert self.drift_profile is not None, "No drift profile detected in interface"
         self.drift_profile.save_to_json(path)
 
-    def load_drift_profile(self, path: Path) -> Optional[DriftProfile]:
+    def load_drift_profile(self, path: Path) -> Optional[Union[SpcDriftProfile]]:
         """Load drift profile from path
 
         Args:
@@ -389,7 +386,7 @@ class ModelInterface(BaseModel):
             return None
 
         with open(path, "r", encoding="utf-8") as file:
-            self.drift_profile = DriftProfile.model_validate_json(file.read())
+            self.drift_profile = SpcDriftProfile.model_validate_json(file.read())
 
         return self.drift_profile
 

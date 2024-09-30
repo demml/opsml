@@ -689,9 +689,6 @@ export async function createAlertMetricViz(
   let active = alertMetrics.active;
   let acknowledged = alertMetrics.acknowledged;
 
-  console.log(active);
-  console.log(acknowledged);
-
   let grace = "10%";
   let legend = {
     display: false,
