@@ -1,7 +1,13 @@
 <script lang="ts">
     import { updateDriftProfile } from "$lib/scripts/monitoring/utils";
-    import { type DriftConfig, type AlertConfig, type DriftProfile } from "$lib/scripts/types";
+    import { type DriftConfig, type AlertConfig, type DriftProfile, type UpdateProfileResponse } from "$lib/scripts/types";
     import { createEventDispatcher } from 'svelte';
+    import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+
+
+    // toast
+    const toastStore = getToastStore();
+
 
     export let showConfig = false;
     export let repository: string;
@@ -9,7 +15,14 @@
     export let version: string;
     export let driftConfig: DriftConfig;
     export let driftProfile: DriftProfile;
+
     const dispatch = createEventDispatcher();
+
+    let message = "Drift Profile Configuration Updated";
+
+    const t: ToastSettings = {
+      message: message,
+    };
 
 
     let alertConfig: AlertConfig = driftConfig.alert_config;
@@ -21,10 +34,12 @@
     $: zones_to_monitor = alertConfig.alert_rule?.process?.zones_to_monitor || [];
 
 
+
     let alert_kwargs: Record<string, any> | string;
     $: alert_kwargs =  JSON.stringify(alertConfig.alert_kwargs, null, 2);
 
     let dispatch_type = alertConfig.alert_dispatch_type
+    let features_to_monitor = alertConfig.features_to_monitor;
     let schedule = alertConfig.schedule;
     let targets = driftConfig.targets;
     let sample = driftConfig.sample;
@@ -39,7 +54,7 @@
 
         // cast to type string 
         let zones = zones_to_monitor as string;
-        zones_to_monitor = zones.split(',');
+        zones_to_monitor = zones.split(',').map(target => target.trim());
 
       }
 
@@ -51,7 +66,14 @@
       // check targets 
       if (typeof targets === 'string') {
         let targetsList = targets as string;
-        targets = targetsList.split(',');
+        targets = targetsList.split(',').map(target => target.trim());
+      }
+
+      console.log(features_to_monitor);
+      // check if features to monitor is a string and split it
+      if (typeof features_to_monitor === 'string') {
+        let features = features_to_monitor as string;
+        features_to_monitor = features.split(',').map(target => target.trim());
       }
 
 
@@ -64,6 +86,7 @@
         sample_size: sample_size,
         targets: targets,
         alert_config: {
+          features_to_monitor: features_to_monitor,
           dispatch_type: dispatch_type,
           schedule: schedule,
           alert_dispatch_type: dispatch_type,
@@ -83,15 +106,17 @@
 
       driftProfile.config = updatedDriftConfig;
 
+      console.log('Updated drift profile', driftProfile);
+
       //serialize the updated drift profile
   
-      let updated = await updateDriftProfile(name, repository, version, JSON.stringify(driftProfile, null, 2));
+      let updated: UpdateProfileResponse = await updateDriftProfile(name, repository, version, JSON.stringify(driftProfile, null, 2));
 
-      if (updated.complete) {
-        console.log('Drift profile updated successfully');
-      } else {
-        console.log('Failed to update drift profile');
-      }
+      if (!updated.complete) {
+        message = "Failed to update drift profile configuration";
+      } 
+
+      toastStore.trigger(t);
 
     }
 
@@ -160,6 +185,22 @@
               class="input rounded-lg bg-slate-200 hover:bg-slate-100"
               type="text" 
               bind:value={dispatch_type}
+            />
+          </label>
+
+          <label class="text-primary-500">Schedule
+            <input
+              class="input rounded-lg bg-slate-200 hover:bg-slate-100"
+              type="text" 
+              bind:value={schedule}
+            />
+          </label>
+
+          <label class="text-primary-500">Features to Monitor
+            <input
+              class="input rounded-lg bg-slate-200 hover:bg-slate-100"
+              type="text" 
+              bind:value={features_to_monitor}
             />
           </label>
 

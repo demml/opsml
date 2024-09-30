@@ -647,6 +647,7 @@ export interface AlertConfig {
   alert_dispatch_type: string;
   alert_rule: AlertRule;
   schedule: string;
+  features_to_monitor: string[];
   alert_kwargs: Record<string, string | number>;
 }
 

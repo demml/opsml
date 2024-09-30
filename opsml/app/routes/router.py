@@ -11,7 +11,6 @@ from opsml.app.routes import (
     auth,
     cards,
     data,
-    scouter,
     files,
     healthcheck,
     metrics,
@@ -20,6 +19,7 @@ from opsml.app.routes import (
     projects,
     registry,
     runs,
+    scouter,
     ui,
 )
 

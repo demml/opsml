@@ -460,7 +460,6 @@ const handlers = [
   http.get(CommonPaths.DRIFT_VALUES, async ({ request, params, cookies }) => {
     const url = new URL(request.url);
     const feature = url.searchParams.get("feature")!;
-    console.log(feature);
 
     // check if feature is undefined
     if (feature) {

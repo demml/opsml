@@ -25,7 +25,7 @@ dependencies = [
     "PyJWT~=2.8",
     "nvidia-ml-py>=12.560.30",
     "pipdeptree>=2.23.1",
-    "scouter-ml==0.3.0rc4",
+    "scouter-ml==0.3.0rc6",
 ]
 
 [project.scripts]
