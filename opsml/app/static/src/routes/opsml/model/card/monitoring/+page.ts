@@ -48,9 +48,9 @@ export async function load({ url }) {
     }
 
     let featureValues = (await getFeatureDriftValues(
-      "ml-platform-1",
-      "model-1",
-      "0.1.0",
+      repository!,
+      name!,
+      version!,
       TimeWindow.TwentyFourHours,
       1000,
       targetFeature.id
@@ -62,9 +62,9 @@ export async function load({ url }) {
     );
 
     let featureDistVizData = (await createFeatureDistributionViz(
-      "ml-platform-1",
-      "model-1",
-      "0.1.0",
+      repository!,
+      name!,
+      version!,
       targetFeature.id,
       TimeWindow.TwentyFourHours,
       1000,
@@ -72,15 +72,15 @@ export async function load({ url }) {
     )) as ChartjsData;
 
     let alerts = (await getMonitorAlerts(
-      "ml-platform-1",
-      "model-1",
-      "0.1.0"
+      repository!,
+      name!,
+      version!
     )) as MonitorAlerts;
 
     let alertMetrics = (await getAlertMetrics(
-      "ml-platform-1",
-      "model-1",
-      "0.1.0",
+      repository!,
+      name!,
+      version!,
       TimeWindow.TwentyFourHours,
       1000
     )) as AlertMetrics;
@@ -90,9 +90,9 @@ export async function load({ url }) {
     )) as ChartjsData;
 
     return {
-      repository: "ml-platform-1",
-      name: "model-1",
-      version: "0.1.0",
+      repository,
+      name,
+      version,
       driftProfiles: profiles,
       targetFeature,
       features,

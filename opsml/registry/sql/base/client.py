@@ -10,7 +10,7 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import pandas as pd
-
+from scouter import DriftType
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.exceptions import CardDeleteError
@@ -268,11 +268,14 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
-    def insert_drift_profile(self, drift_profile: str) -> None:
+    def insert_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
         self._session.request(
             route=api_routes.SCOUTER_DRIFT_PROFILE,
             request_type=RequestType.POST,
-            json={"profile": drift_profile},
+            json={
+                "profile": drift_profile,
+                "drift_type": drift_type.value,
+            },
         )
 
     def update_drift_profile(
@@ -282,6 +285,7 @@ class ClientModelCardRegistry(ClientRegistry):
         version: str,
         save: bool,
         drift_profile: str,
+        drift_type: DriftType,
     ) -> None:
         self._session.request(
             route=api_routes.SCOUTER_DRIFT_PROFILE,
@@ -292,6 +296,7 @@ class ClientModelCardRegistry(ClientRegistry):
                 "version": version,
                 "save": save,
                 "profile": drift_profile,
+                "drift_type": drift_type.value,
             },
         )
 
@@ -352,7 +357,10 @@ class ClientModelCardRegistry(ClientRegistry):
             # write profile to scouter
             if card.interface.drift_profile and self.scouter_server_available:
                 try:
-                    self.insert_drift_profile(drift_profile=card.interface.drift_profile.model_dump_json())
+                    self.insert_drift_profile(
+                        drift_profile=card.interface.drift_profile.model_dump_json(),
+                        drift_type=card.interface.drift_profile.config.drift_type,
+                    )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
 
@@ -380,6 +388,7 @@ class ClientModelCardRegistry(ClientRegistry):
                     version=card.version,
                     save=False,  # this would already have been saved during the update
                     drift_profile=card.interface.drift_profile.model_dump_json(),
+                    drift_type=card.interface.drift_profile.config.drift_type,
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 logger.error(f"Failed to update drift profile: {exc}")
