@@ -312,8 +312,12 @@ class SQLRegistryBase:
         assert bool(record), "Card does not exist in registry. Please use register card first"
 
         if self._card_with_diff_uid_already_exists(card):
-            logger.error("Card for {}/{}/{} already exists with a different uid", card.repository, card.name, card.version)
-            raise ValueError(f"Card for {card.repository}/{card.name}/{card.version} already exists with a different uid")
+            logger.error(
+                "Card for {}/{}/{} already exists with a different uid", card.repository, card.name, card.version
+            )
+            raise ValueError(
+                f"Card for {card.repository}/{card.name}/{card.version} already exists with a different uid"
+            )
 
         logger.info("Updating card {}/{}/{}", card.repository, card.name, card.version)
 

@@ -8,7 +8,8 @@
 import json
 from pathlib import Path
 from typing import Any, Optional, Union
-from scouter import SpcDriftProfile, DriftType
+
+from scouter import DriftType, SpcDriftProfile
 
 from opsml.model import HuggingFaceModel, ModelInterface
 from opsml.types import HuggingFaceOnnxArgs, ModelMetadata, OnnxModel, SaveName, Suffix
