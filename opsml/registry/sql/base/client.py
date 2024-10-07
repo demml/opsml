@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import pandas as pd
 from scouter import DriftType
+
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.exceptions import CardDeleteError
