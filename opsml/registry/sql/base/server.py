@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import bcrypt
 import jwt
-
+from scouter import DriftType, SpcDriftProfile
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -81,7 +81,7 @@ class ServerRegistry(SQLRegistryBase):
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
 
-    def insert_drift_profile(self, drift_profile: str) -> None:
+    def insert_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: DriftType) -> None:
         """Insert drift profile into scouter server
 
         Args:
@@ -90,14 +90,17 @@ class ServerRegistry(SQLRegistryBase):
         """
 
         if self.scouter_client is not None:
-            self.scouter_client.insert_drift_profile(drift_profile=drift_profile)
+            self.scouter_client.insert_drift_profile(
+                drift_profile=drift_profile,
+                drift_type=drift_type,
+            )
 
-    def update_drift_profile(
-        self,
-        drift_profile: str,
-    ) -> None:
+    def update_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: DriftType) -> None:
         if self.scouter_client is not None:
-            self.scouter_client.update_drift_profile(drift_profile=drift_profile)
+            self.scouter_client.update_drift_profile(
+                drift_profile=drift_profile,
+                drift_type=drift_type,
+            )
 
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
@@ -405,7 +408,8 @@ class ServerModelCardRegistry(ServerRegistry):
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
                     self.insert_drift_profile(
-                        drift_profile=card.interface.drift_profile.model_dump_json(),
+                        drift_profile=card.interface.drift_profile,
+                        drift_type=card.interface.drift_profile.config.drift_type,
                     )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
@@ -430,7 +434,8 @@ class ServerModelCardRegistry(ServerRegistry):
         if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
             try:
                 self.update_drift_profile(
-                    drift_profile=card.interface.drift_profile.model_dump_json(),
+                    drift_profile=card.interface.drift_profile,
+                    drift_type=card.interface.drift_profile.config.drift_type,
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 logger.error(f"Failed to update drift profile: {exc}")
@@ -445,9 +450,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:

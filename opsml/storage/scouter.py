@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional, Union, cast
-
+from scouter import SpcDriftProfile
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
 
@@ -25,15 +25,15 @@ class ScouterClient(ApiClient):
 
         return cast(str, response["message"].lower()) == "alive"
 
-    def insert_drift_profile(self, drift_profile: str) -> None:
+    def insert_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: str) -> None:
         """Inserts drift profile into scouter server
 
         Args:
             drift_profile:
                 Drift profile to insert
         """
-        profile = json.loads(drift_profile)
-        self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.POST, json=profile)
+        data = {"profile": drift_profile.model_dump(), "drift_type": drift_type}
+        self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.POST, json=data)
 
     def get_drift_profile(self, repository: str, name: str, version: str) -> Optional[Dict[str, Any]]:
         """Get drift profile from scouter server
@@ -64,15 +64,15 @@ class ScouterClient(ApiClient):
 
         return cast(Dict[str, Any], response["profile"])
 
-    def update_drift_profile(self, drift_profile: str) -> Dict[str, str]:
+    def update_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: str) -> Dict[str, str]:
         """Updates drift profile into scouter server
 
         Args:
             drift_profile:
                 Drift profile to insert
         """
-        profile = json.loads(drift_profile)
-        return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=profile)
+        data = {"profile": drift_profile.model_dump(), "drift_type": drift_type.value}
+        return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=data)
 
     def get_drift_values(
         self,
@@ -166,9 +166,7 @@ class ScouterClient(ApiClient):
         except Exception:
             return {}
 
-    def get_monitoring_alerts(
-        self, repository: str, name: str, version: str, active: bool, limit: int
-    ) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:

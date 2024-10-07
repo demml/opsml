@@ -50,7 +50,7 @@ class ApiRoutes:
     TOKEN = "auth/token"
     HW_METRICS = "metrics/hardware"
     PARAMETERS = "parameters"
-    SCOUTER_DRIFT_PROFILE = "/scouter/drift/profile"
+    SCOUTER_DRIFT_PROFILE = "scouter/drift/profile"
     SCOUTER_HEALTHCHECK = "scouter/healthcheck"
 
 
