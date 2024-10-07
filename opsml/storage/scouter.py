@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional, Union, cast
 
-
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
 
@@ -32,11 +31,10 @@ class ScouterClient(ApiClient):
         Args:
             drift_profile:
                 Drift profile to insert
+            drift_type:
+                Drift type
         """
         data = {"profile": json.loads(drift_profile), "drift_type": drift_type}
-        print()
-        print(data)
-        print()
         self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.POST, json=data)
 
     def get_drift_profile(self, repository: str, name: str, version: str) -> Optional[Dict[str, Any]]:
@@ -74,6 +72,8 @@ class ScouterClient(ApiClient):
         Args:
             drift_profile:
                 Drift profile to insert
+            drift_type:
+                Drift type
         """
         data = {"profile": json.loads(drift_profile), "drift_type": drift_type.value}
         return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=data)
@@ -167,7 +167,7 @@ class ScouterClient(ApiClient):
 
             return cast(Dict[str, Any], response["data"])
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return {}
 
     def get_monitoring_alerts(
@@ -182,6 +182,10 @@ class ScouterClient(ApiClient):
                 Model name
             version:
                 Model version
+            active:
+                Active alerts
+            limit:
+                Maximum number of alerts to return
 
         Returns:
             Monitoring alerts
@@ -204,25 +208,23 @@ class ScouterClient(ApiClient):
 
             return cast(List[Dict[str, Any]], response["data"])
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return []
 
-    def update_monitoring_alerts(self, id: int, status: str) -> Dict[str, str]:
+    def update_monitoring_alerts(self, id_num: int, status: str) -> Dict[str, str]:
         """Get monitoring alerts from scouter server
 
         Args:
-            repository:
-                Model repository
-            name:
-                Model name
-            version:
-                Model version
+            id:
+                Monitoring alert id
+            status:
+                Status of monitoring alert
 
         Returns:
             Monitoring alerts
         """
 
-        data = {"id": id, "status": status}
+        data = {"id": id_num, "status": status}
 
         try:
             response = self.request(
@@ -233,7 +235,7 @@ class ScouterClient(ApiClient):
 
             return cast(Dict[str, str], response)
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return {"message": "Failed to update monitoring alert", "status": "error"}
 
     def get_alert_metrics(
@@ -279,7 +281,7 @@ class ScouterClient(ApiClient):
 
             return cast(Dict[str, Union[List[str], List[int]]], response["data"])
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return {
                 "created_at": [],
                 "alert_count": [],
