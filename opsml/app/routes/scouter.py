@@ -383,6 +383,10 @@ def get_alert_metrics(
             Model name
         version:
             Model version
+        time_window:
+            Time window
+        max_data_points:
+            Maximum data points
 
     Returns:
         AlertMetrics

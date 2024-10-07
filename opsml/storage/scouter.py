@@ -215,7 +215,7 @@ class ScouterClient(ApiClient):
         """Get monitoring alerts from scouter server
 
         Args:
-            id:
+            id_num:
                 Monitoring alert id
             status:
                 Status of monitoring alert
