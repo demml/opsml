@@ -39,15 +39,13 @@ class ModelLoader:
         if not hasattr(self.metadata, "drift"):
             return None
 
-        drift_type: str = self.metadata.drift.type
+        drift_type: str = self.metadata.drift["drift_type"]
         drift_profile_path = (self.path / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
 
         # load drift profile json to string
         with drift_profile_path.open("r") as file_:
-            drift_profile = json.load(file_)
-
-        if drift_type == DriftType.SPC.value:
-            return SpcDriftProfile.model_validate_json(drift_profile)
+            if drift_type == DriftType.SPC.value:
+                return SpcDriftProfile.model_validate_json(file_.read())
 
         raise ValueError(f"Drift type {drift_type} not supported")
 
