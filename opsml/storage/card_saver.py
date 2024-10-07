@@ -328,6 +328,23 @@ class ModelCardSaver(CardSaver):
         else:
             onnx_version = None
 
+        # logic for drift
+        drift = None
+
+        if self.card.interface.drift_profile is not None:
+            existing_drift = existing_metadata.get("drift")
+            existing_drift_profile_uri = None
+            existing_drift_type = None
+
+            if existing_drift is not None:
+                existing_drift_profile_uri = existing_drift.get("drift_profile_uri")
+                existing_drift_type = existing_drift.get("drift_type")
+
+            drift = {
+                "drift_profile_uri": self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value) or existing_drift_profile_uri,
+                "drift_type": self.card.interface.drift_profile.config.drift_type.value or existing_drift_type,
+            }
+
         # base metadata
         metadata = ModelMetadata(
             model_name=self.card.name or existing_metadata.get("model_name"),
@@ -336,22 +353,22 @@ class ModelCardSaver(CardSaver):
             model_interface=self.card.interface.name() or existing_metadata.get("model_interface"),
             onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value) or existing_metadata.get("onnx_uri"),
             onnx_version=onnx_version or existing_metadata.get("onnx_version"),
-            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value)
-            or existing_metadata.get("model_uri"),
+            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value) or existing_metadata.get("model_uri"),
             model_version=self.card.version or existing_metadata.get("model_version"),
             model_repository=self.card.repository or existing_metadata.get("model_repository"),
             data_schema=self.card.metadata.data_schema or existing_metadata.get("data_schema"),
             sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value)
             or existing_metadata.get("sample_data_uri"),
-            drift_profile_uri=self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value)
-            or existing_metadata.get("drift_profile_uri"),
         )
+
+        if drift is not None:
+            metadata.drift = drift
 
         # add extra uris
         if self.card_uris.preprocessor_uri is not None:
-            metadata.preprocessor_uri = self.card_uris.resolve_path(
-                UriNames.PREPROCESSOR_URI.value
-            ) or existing_metadata.get("preprocessor_uri")
+            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value) or existing_metadata.get(
+                "preprocessor_uri"
+            )
             metadata.preprocessor_name = self.card.interface.preprocessor_name or existing_metadata.get(  # type: ignore
                 "preprocessor_name",
             )
@@ -373,9 +390,9 @@ class ModelCardSaver(CardSaver):
                 ) or existing_metadata.get("quantized_model_uri")
 
             if self.card_uris.tokenizer_uri is not None:
-                metadata.tokenizer_uri = self.card_uris.resolve_path(
-                    UriNames.TOKENIZER_URI.value
-                ) or existing_metadata.get("tokenizer_uri")
+                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value) or existing_metadata.get(
+                    "tokenizer_uri"
+                )
                 metadata.tokenizer_name = self.card.interface.tokenizer_name or existing_metadata.get("tokenizer_name")
 
             if self.card_uris.feature_extractor_uri is not None:
@@ -387,9 +404,9 @@ class ModelCardSaver(CardSaver):
                 )
 
             if self.card_uris.onnx_config_uri is not None:
-                metadata.onnx_config_uri = self.card_uris.resolve_path(
-                    UriNames.ONNX_CONFIG_URI.value
-                ) or existing_metadata.get("onnx_config_uri")
+                metadata.onnx_config_uri = self.card_uris.resolve_path(UriNames.ONNX_CONFIG_URI.value) or existing_metadata.get(
+                    "onnx_config_uri"
+                )
 
         return metadata
 
@@ -398,9 +415,7 @@ class ModelCardSaver(CardSaver):
 
         # check if model metadata already exists (for updating cards)
         existing_metadata = {}
-        exists = client.storage_client.exists(
-            (self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
-        )
+        exists = client.storage_client.exists((self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value))
 
         if exists:
             existing_path = Path(self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
@@ -617,9 +632,7 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(
-        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
-    )
+    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
 
     saver = card_saver(card=card)
 
