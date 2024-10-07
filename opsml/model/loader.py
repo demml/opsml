@@ -7,7 +7,8 @@
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
+from scouter import SpcDriftProfile, DriftType
 
 from opsml.model import HuggingFaceModel, ModelInterface
 from opsml.types import HuggingFaceOnnxArgs, ModelMetadata, OnnxModel, SaveName, Suffix
@@ -30,6 +31,24 @@ class ModelLoader:
         self.path = path
         self.metadata = self._load_metadata()
         self.interface = self._load_interface()
+        self.drift_profile = self._load_drift_profile()
+
+    def _load_drift_profile(self) -> Optional[Union[SpcDriftProfile]]:
+        """Load drift profile from disk"""
+        if not hasattr(self.metadata, "drift"):
+            return None
+
+        drift_type: str = self.metadata.drift.type
+        drift_profile_path = (self.path / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+
+        # load drift profile json to string
+        with drift_profile_path.open("r") as file_:
+            drift_profile = json.load(file_)
+
+        if drift_type == DriftType.SPC.value:
+            return SpcDriftProfile.model_validate_json(drift_profile)
+
+        raise ValueError(f"Drift type {drift_type} not supported")
 
     def _load_interface(self) -> ModelInterface:
         """Loads a ModelInterface from disk using metadata
