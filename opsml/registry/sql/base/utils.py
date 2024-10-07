@@ -15,6 +15,8 @@ def log_card_change(func: Callable[..., Any]) -> Callable[..., Any]:
         repository = str(card.get("repository"))
         name = str(card.get("name"))
         version = str(card.get("version"))
-        logger.info("{}: {}/{}/{} {}", self.table_name, repository, name, version, state)  # pylint: disable=protected-access
+        logger.info(
+            "{}: {}/{}/{} {}", self.table_name, repository, name, version, state
+        )  # pylint: disable=protected-access
 
     return wrapper
