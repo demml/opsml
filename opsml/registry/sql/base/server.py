@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import bcrypt
 import jwt
-from scouter import DriftType, SpcDriftProfile
+from scouter import DriftType
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -81,7 +81,7 @@ class ServerRegistry(SQLRegistryBase):
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
 
-    def insert_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: DriftType) -> None:
+    def insert_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
         """Insert drift profile into scouter server
 
         Args:
@@ -95,7 +95,7 @@ class ServerRegistry(SQLRegistryBase):
                 drift_type=drift_type,
             )
 
-    def update_drift_profile(self, drift_profile: Union[SpcDriftProfile], drift_type: DriftType) -> None:
+    def update_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
         if self.scouter_client is not None:
             self.scouter_client.update_drift_profile(
                 drift_profile=drift_profile,
@@ -408,7 +408,7 @@ class ServerModelCardRegistry(ServerRegistry):
             if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
                 try:
                     self.insert_drift_profile(
-                        drift_profile=card.interface.drift_profile,
+                        drift_profile=card.interface.drift_profile.model_dump_json(),
                         drift_type=card.interface.drift_profile.config.drift_type,
                     )
                 except Exception as exc:  # pylint: disable=broad-except
@@ -434,7 +434,7 @@ class ServerModelCardRegistry(ServerRegistry):
         if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
             try:
                 self.update_drift_profile(
-                    drift_profile=card.interface.drift_profile,
+                    drift_profile=card.interface.drift_profile.model_dump_json(),
                     drift_type=card.interface.drift_profile.config.drift_type,
                 )
             except Exception as exc:  # pylint: disable=broad-except

@@ -76,7 +76,6 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
     Returns:
         200
     """
-
     try:
         client: ScouterClient = request.app.state.scouter_client
         client.insert_drift_profile(payload.profile, payload.drift_type)
