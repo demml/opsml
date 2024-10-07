@@ -88,6 +88,8 @@ class ServerRegistry(SQLRegistryBase):
         Args:
             drift_profile:
                 drift profile
+            drift_type:
+                drift type
         """
 
         if self.scouter_client is not None:

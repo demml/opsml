@@ -309,6 +309,10 @@ def get_monitoring_alerts(
             Model name
         version:
             Model version
+        active:
+            Active alerts
+        limit:
+            Limit of alerts to retrieve
 
     Returns:
         DriftProfile string
@@ -338,10 +342,8 @@ def update_monitoring_alerts(
     Args:
         request:
             FastAPI request object
-        id:
-            Alert id
-        status:
-            Alert status
+        payload:
+            UpdateAlertRequest
 
     Returns:
         UpdateAlert
