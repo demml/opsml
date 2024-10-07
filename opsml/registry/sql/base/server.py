@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 import bcrypt
 import jwt
 from scouter import DriftType
+
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
 from opsml.helpers.logging import ArtifactLogger
@@ -450,7 +451,9 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
+    def get_metric(
+        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
+    ) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:

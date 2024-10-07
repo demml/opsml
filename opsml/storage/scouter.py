@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional, Union, cast
-from scouter import SpcDriftProfile
+
+
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
 
@@ -169,7 +170,9 @@ class ScouterClient(ApiClient):
         except Exception:
             return {}
 
-    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(
+        self, repository: str, name: str, version: str, active: bool, limit: int
+    ) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:
