@@ -528,14 +528,14 @@ class ScouterHealthCheckResponse(BaseModel):
 
 class DriftProfileRequest(BaseModel):
     drift_type: str
-    profile: str
+    profile: Dict[str, Any]
 
 
 class DriftProfileUpdateRequest(BaseModel):
     repository: str
     name: str
     version: str
-    profile: str
+    profile: Dict[str, Any]
     save: bool = False
     drift_type: str
 
