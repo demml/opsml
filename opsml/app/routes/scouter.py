@@ -110,7 +110,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Prof
 
         # need to validate the profile before updating
 
-        response = client.update_drift_profile(payload.profile, payload.drift_type)
+        response = client.update_drift_profile(payload)
 
         if response["status"] == "error":
             return ProfileUpdateResponse(
@@ -345,7 +345,7 @@ def update_monitoring_alerts(
     client: ScouterClient = request.app.state.scouter_client
 
     try:
-        values = client.update_monitoring_alerts(payload.id, payload.status)
+        values = client.update_monitoring_alerts(payload)
 
         return UpdateAlert(**values)
     except Exception as error:
