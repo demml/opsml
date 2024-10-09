@@ -13,7 +13,7 @@ import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from scouter import DriftConfig
+from opsml.scouter import SpcDriftConfig
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -886,12 +886,15 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
     assert cards[1]["name"] == "test1"
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
 def test_model_registry_scouter(
+    server: mock.MagicMock,
     mock_request: mock.MagicMock,
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ) -> None:
+    server.return_value = True
     mock_request.return_value = None
 
     # create data card
@@ -906,8 +909,7 @@ def test_model_registry_scouter(
     )
     data_registry.register_card(card=data_card)
 
-    drift_config = DriftConfig()
-    model.create_drift_profile(data.data, drift_config)
+    model.create_drift_profile(data.data, SpcDriftConfig())
 
     # test onnx
     model_card = ModelCard(

@@ -730,4 +730,3 @@ def test_model_registry_scouter_update(
     assert profile is not None
 
     assert profile.config.sample_size == 10
-    a
