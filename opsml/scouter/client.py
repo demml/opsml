@@ -82,7 +82,7 @@ class ScouterApiClient:
                 "name": name,
                 "repository": repository,
                 "version": version,
-                "active": status,
+                "status": status,
             },
         )
 
