@@ -1,11 +1,8 @@
-import pytest
-from typing import Generator, Any
 from unittest import mock
-from opsml.scouter import DriftType
-from opsml.storage.api import RequestType, api_routes
-from opsml.scouter.client import ScouterApiClient
-from starlette.testclient import TestClient
+
+
 from opsml.registry import CardRegistries
+from opsml.scouter.client import ScouterApiClient
 
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.healthcheck")
@@ -19,7 +16,9 @@ def test_healthcheck(server: mock.MagicMock, mock_request: mock.MagicMock, api_r
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.update_drift_profile_status")
 @mock.patch("opsml.scouter.integration.ScouterClient.server_running")
-def test_update_profile_status(server: mock.MagicMock, mock_request: mock.MagicMock, api_registries: CardRegistries) -> None:
+def test_update_profile_status(
+    server: mock.MagicMock, mock_request: mock.MagicMock, api_registries: CardRegistries
+) -> None:
     server.return_value = True
     mock_request.return_value = {"status": "success", "message": "Profile updated"}
     client = ScouterApiClient()

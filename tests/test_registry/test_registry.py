@@ -13,7 +13,6 @@ import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from opsml.scouter import SpcDriftConfig
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -38,6 +37,7 @@ from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
+from opsml.scouter import SpcDriftConfig
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS, OPSML_TRACKING_URI
 
 

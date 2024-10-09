@@ -105,4 +105,4 @@ class UpdateProfileStatus(BaseModel):
     name: str
     repository: str
     version: str
-    status: bool
+    active: bool
