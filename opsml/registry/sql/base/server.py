@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import bcrypt
 import jwt
-from scouter import DriftType
 
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
@@ -36,8 +35,7 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
-from opsml.scouter.client import SCOUTER_CLIENT as scouter_client
-from opsml.scouter.client import ScouterClient
+from opsml.scouter.integration import ScouterClient
 from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import Message, User
 
@@ -62,7 +60,7 @@ class ServerRegistry(SQLRegistryBase):
 
         self.engine = get_query_engine(db_engine=db_initializer.engine, registry_type=registry_type)
         self._table = SQLTableGetter.get_table(table_name=self.table_name)
-        self._scouter_client = scouter_client
+        self._scouter_client = ScouterClient()
 
     @property
     def registry_type(self) -> RegistryType:
@@ -74,36 +72,9 @@ class ServerRegistry(SQLRegistryBase):
         raise NotImplementedError
 
     @property
-    def scouter_client(self) -> Optional[ScouterClient]:
-        return self._scouter_client
-
-    @property
     def unique_repositories(self) -> Sequence[str]:
         """Returns a list of unique repositories"""
         return self.engine.get_unique_repositories(table=self._table)
-
-    def insert_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
-        """Insert drift profile into scouter server
-
-        Args:
-            drift_profile:
-                drift profile
-            drift_type:
-                drift type
-        """
-
-        if self.scouter_client is not None:
-            self.scouter_client.insert_drift_profile(
-                drift_profile=drift_profile,
-                drift_type=drift_type,
-            )
-
-    def update_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
-        if self.scouter_client is not None:
-            self.scouter_client.update_drift_profile(
-                drift_profile=drift_profile,
-                drift_type=drift_type,
-            )
 
     def query_stats(self, search_term: Optional[str] = None) -> Dict[str, int]:
         """Query stats from Card Database
@@ -408,9 +379,9 @@ class ServerModelCardRegistry(ServerRegistry):
             )
 
             # write profile to scouter
-            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+            if card.interface.drift_profile is not None and self._scouter_client.server_running is not None:
                 try:
-                    self.insert_drift_profile(
+                    self._scouter_client.insert_drift_profile(
                         drift_profile=card.interface.drift_profile.model_dump_json(),
                         drift_type=card.interface.drift_profile.config.drift_type,
                     )
@@ -434,9 +405,12 @@ class ServerModelCardRegistry(ServerRegistry):
         super().update_card(card)
 
         # write profile to scouter
-        if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+        if card.interface.drift_profile is not None and self._scouter_client.server_running is not None:
             try:
-                self.update_drift_profile(
+                self._scouter_client.update_drift_profile(
+                    repository=card.repository,
+                    name=card.name,
+                    version=card.version,
                     drift_profile=card.interface.drift_profile.model_dump_json(),
                     drift_type=card.interface.drift_profile.config.drift_type,
                 )
