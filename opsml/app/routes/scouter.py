@@ -25,7 +25,6 @@ from opsml.types.scouter import (
     Success,
     UpdateAlert,
     UpdateAlertRequest,
-    ProfileStatusUpdate,
     UpdateProfileStatus,
 )
 from opsml.helpers.logging import ArtifactLogger
@@ -80,7 +79,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
     """
     try:
         client: ScouterClient = request.app.state.scouter_client
-        client.insert_drift_profile(payload.profile, payload.drift_type)
+        client.insert_drift_profile(payload)
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")

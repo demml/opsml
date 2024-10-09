@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
-from opsml.types.scouter import UpdateProfileStatus
+from opsml.types.scouter import UpdateProfileStatus, DriftProfileRequest
 
 
 class ScouterRoutes:
@@ -27,7 +27,7 @@ class ScouterClient(ApiClient):
 
         return cast(str, response["message"].lower()) == "alive"
 
-    def insert_drift_profile(self, drift_profile: str, drift_type: str) -> None:
+    def insert_drift_profile(self, request: DriftProfileRequest) -> None:
         """Inserts drift profile into scouter server
 
         Args:
@@ -36,7 +36,7 @@ class ScouterClient(ApiClient):
             drift_type:
                 Drift type
         """
-        data = {"profile": json.loads(drift_profile), "drift_type": drift_type}
+        data = {"profile": json.loads(request.drift_profile), "drift_type": request.drift_type}
         self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.POST, json=data)
 
     def get_drift_profile(self, repository: str, name: str, version: str) -> Optional[Dict[str, Any]]:
