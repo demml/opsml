@@ -52,6 +52,7 @@ class ApiRoutes:
     PARAMETERS = "parameters"
     SCOUTER_DRIFT_PROFILE = "scouter/drift/profile"
     SCOUTER_HEALTHCHECK = "scouter/healthcheck"
+    SCOUTER_DRIFT_PROFILE_STATUS = "scouter/profile/status"
 
 
 api_routes = ApiRoutes()

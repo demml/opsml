@@ -36,8 +36,8 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.registry.sql.connectors.connector import DefaultConnector
 from opsml.settings.config import config
 from opsml.storage.client import StorageClient
-from opsml.storage.scouter import SCOUTER_CLIENT as scouter_client
-from opsml.storage.scouter import ScouterClient
+from opsml.scouter.client import SCOUTER_CLIENT as scouter_client
+from opsml.scouter.client import ScouterClient
 from opsml.types import RegistryTableNames, RegistryType
 from opsml.types.extra import Message, User
 
@@ -453,9 +453,7 @@ class ServerRunCardRegistry(ServerRegistry):
     def registry_type(self) -> RegistryType:
         return RegistryType.RUN
 
-    def get_metric(
-        self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def get_metric(self, run_uid: str, name: Optional[List[str]] = None, names_only: bool = False) -> List[Dict[str, Any]]:
         """Get metric from run card
 
         Args:
