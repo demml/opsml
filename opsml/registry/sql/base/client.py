@@ -19,10 +19,10 @@ from opsml.helpers.utils import check_package_exists
 from opsml.registry.semver import CardVersion, VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
+from opsml.scouter.integration import ScouterClient
 from opsml.storage.api import RequestType, api_routes
 from opsml.storage.client import ApiStorageClient, StorageClient
 from opsml.types import RegistryType
-from opsml.scouter.integration import ScouterClient
 
 logger = ArtifactLogger.get_logger()
 

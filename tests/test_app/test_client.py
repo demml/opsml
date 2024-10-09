@@ -4,7 +4,6 @@ from typing import Any, Dict, Tuple, cast
 from unittest import mock
 
 import pytest
-from opsml.scouter import SpcDriftConfig
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
@@ -20,6 +19,7 @@ from opsml.cards import (
 from opsml.data import NumpyData, PandasData, TorchData
 from opsml.model import HuggingFaceModel, SklearnModel
 from opsml.registry import CardRegistries, CardRegistry
+from opsml.scouter import SpcDriftConfig
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.api import ApiRoutes
@@ -282,7 +282,9 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
+    assert api_storage_client.exists(
+        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
+    )
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))

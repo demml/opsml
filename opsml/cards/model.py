@@ -2,17 +2,25 @@
 # Copyright (c) 2024-current Demml, Inc.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from uuid import UUID
-import json
+
 from pydantic import ConfigDict, SerializeAsAny, field_validator
 from scouter import SpcDriftProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
-from opsml.types import CardType, ModelCardMetadata, ModelMetadata, OnnxModel, SaveName, Suffix
+from opsml.types import (
+    CardType,
+    ModelCardMetadata,
+    ModelMetadata,
+    OnnxModel,
+    SaveName,
+    Suffix,
+)
 
 logger = ArtifactLogger.get_logger()
 
