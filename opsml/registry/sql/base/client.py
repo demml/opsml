@@ -10,7 +10,6 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import pandas as pd
-from scouter import DriftType
 
 from opsml.cards import Card, ModelCard
 from opsml.cards.project import ProjectCard
@@ -23,6 +22,7 @@ from opsml.registry.sql.base.utils import log_card_change
 from opsml.storage.api import RequestType, api_routes
 from opsml.storage.client import ApiStorageClient, StorageClient
 from opsml.types import RegistryType
+from opsml.scouter.integration import ScouterClient
 
 logger = ArtifactLogger.get_logger()
 
@@ -37,6 +37,7 @@ class ClientRegistry(SQLRegistryBase):
 
         self._session = storage_client.api_client
         self._registry_type = registry_type
+        self._scouter_client = ScouterClient()
 
     @cached_property
     def table_name(self) -> str:
@@ -48,16 +49,6 @@ class ClientRegistry(SQLRegistryBase):
         )
 
         return cast(str, data["table_name"])
-
-    @property
-    def scouter_server_available(self) -> bool:
-        """Check if scouter server is available"""
-        data = self._session.request(
-            route=api_routes.SCOUTER_HEALTHCHECK,
-            request_type=RequestType.GET,
-        )
-
-        return bool(data.get("running"))
 
     @property
     def registry_type(self) -> RegistryType:
@@ -269,38 +260,6 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
-    def insert_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:
-        self._session.request(
-            route=api_routes.SCOUTER_DRIFT_PROFILE,
-            request_type=RequestType.POST,
-            json={
-                "profile": drift_profile,
-                "drift_type": drift_type.value,
-            },
-        )
-
-    def update_drift_profile(
-        self,
-        name: str,
-        repository: str,
-        version: str,
-        save: bool,
-        drift_profile: str,
-        drift_type: DriftType,
-    ) -> None:
-        self._session.request(
-            route=api_routes.SCOUTER_DRIFT_PROFILE,
-            request_type=RequestType.PUT,
-            json={
-                "name": name,
-                "repository": repository,
-                "version": version,
-                "save": save,
-                "profile": drift_profile,
-                "drift_type": drift_type.value,
-            },
-        )
-
     def register_card(
         self,
         card: Card,
@@ -356,9 +315,9 @@ class ClientModelCardRegistry(ClientRegistry):
             )
 
             # write profile to scouter
-            if card.interface.drift_profile and self.scouter_server_available:
+            if card.interface.drift_profile and self._scouter_client.server_running:
                 try:
-                    self.insert_drift_profile(
+                    self._scouter_client.insert_drift_profile(
                         drift_profile=card.interface.drift_profile.model_dump_json(),
                         drift_type=card.interface.drift_profile.config.drift_type,
                     )
@@ -381,13 +340,12 @@ class ClientModelCardRegistry(ClientRegistry):
         super().update_card(card)
 
         # write profile to scouter
-        if card.interface.drift_profile and self.scouter_server_available:
+        if card.interface.drift_profile and self._scouter_client.server_running:
             try:
-                self.update_drift_profile(
-                    name=card.name,
+                self._scouter_client.update_drift_profile(
                     repository=card.repository,
+                    name=card.name,
                     version=card.version,
-                    save=False,  # this would already have been saved during the update
                     drift_profile=card.interface.drift_profile.model_dump_json(),
                     drift_type=card.interface.drift_profile.config.drift_type,
                 )
