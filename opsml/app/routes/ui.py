@@ -67,7 +67,6 @@ async def opsml_card_homepage(
     uid: Optional[str] = None,
 ) -> HTMLResponse:
     try:
-        print(f"site/opsml/{path}/card/{subpath}.html")
         return templates.TemplateResponse(
             name=f"site/opsml/{path}/card/{subpath}.html",
             request=request,

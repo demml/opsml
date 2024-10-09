@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
+from opsml.types.scouter import UpdateProfileStatus
 
 
 class ScouterRoutes:
@@ -10,6 +11,7 @@ class ScouterRoutes:
     FEATURE_DISTRIBUTION = "feature/distribution"
     HEALTHCHECK = "healthcheck"
     PROFILE = "profile"
+    PROFILE_STATUS = "profile/status"
     ALERTS = "alerts"
     ALERT_METRICS = "alerts/metrics"
 
@@ -64,7 +66,7 @@ class ScouterClient(ApiClient):
         if response["status"] == "error":
             return None
 
-        return cast(Dict[str, Any], response["profile"])
+        return cast(Dict[str, Any], response["data"])
 
     def update_drift_profile(self, drift_profile: str, drift_type: str) -> Dict[str, str]:
         """Updates drift profile into scouter server
@@ -77,6 +79,19 @@ class ScouterClient(ApiClient):
         """
         data = {"profile": json.loads(drift_profile), "drift_type": drift_type.value}
         return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=data)
+
+    def update_drift_profile_status(self, update_request: UpdateProfileStatus) -> Dict[str, str]:
+        """Updates drift profile status into scouter server
+
+        Args:
+            update_request:
+                UpdateProfileStatus object
+        """
+        return self.request(
+            route=ScouterRoutes.PROFILE_STATUS,
+            request_type=RequestType.PUT,
+            json=update_request.model_dump(),
+        )
 
     def get_drift_values(
         self,
@@ -170,9 +185,7 @@ class ScouterClient(ApiClient):
         except Exception:  # pylint: disable=broad-except
             return {}
 
-    def get_monitoring_alerts(
-        self, repository: str, name: str, version: str, active: bool, limit: int
-    ) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:

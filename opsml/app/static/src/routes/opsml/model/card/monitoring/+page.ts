@@ -1,15 +1,15 @@
 import {
   getDriftProfile,
   getFeatureDriftValues,
-  createDriftViz,
-  createFeatureDistributionViz,
+  createSpcDriftViz,
+  createSpcFeatureDistributionViz,
   getMonitorAlerts,
   getAlertMetrics,
   createAlertMetricViz,
 } from "$lib/scripts/monitoring/utils";
 import {
-  type DriftProfile,
-  type FeatureDriftProfile,
+  type SpcDriftProfile,
+  type SpcFeatureDriftProfile,
   type FeatureDriftValues,
   TimeWindow,
   type ChartjsData,
@@ -28,11 +28,13 @@ export async function load({ url }) {
     | string
     | undefined;
 
-  let profiles: Map<ProfileType, DriftProfile> = new Map();
+  let profiles: Map<ProfileType, SpcDriftProfile> = new Map();
 
   profiles[ProfileType.SPC] = (
-    await getDriftProfile("ml-platform-1", "model-1", "0.1.0")
-  ).profile as DriftProfile | undefined;
+    await getDriftProfile(repository!, name!, version!)
+  ).profile as SpcDriftProfile | undefined;
+
+  console.log(profiles);
 
   // check if drift profile exists
   if (profiles) {
@@ -40,7 +42,7 @@ export async function load({ url }) {
     const features = Object.keys(profile.features);
 
     // get first feature as target feature
-    let targetFeature: FeatureDriftProfile = profile.features[features[0]];
+    let targetFeature: SpcFeatureDriftProfile = profile.features[features[0]];
 
     // change target feature if targets are available
     if (profile.config.targets.length > 0) {
@@ -56,12 +58,12 @@ export async function load({ url }) {
       targetFeature.id
     )) as FeatureDriftValues;
 
-    let driftVizData = createDriftViz(
+    let driftVizData = createSpcDriftViz(
       featureValues.features[targetFeature.id],
       targetFeature
     );
 
-    let featureDistVizData = (await createFeatureDistributionViz(
+    let featureDistVizData = (await createSpcFeatureDistributionViz(
       repository!,
       name!,
       version!,
