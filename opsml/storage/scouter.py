@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 from opsml.settings.config import config
 from opsml.storage.api import ApiClient, RequestType
-from opsml.types.scouter import UpdateProfileStatus, DriftProfileRequest
+from opsml.types.scouter import UpdateProfileStatus, DriftProfileRequest, DriftProfileUpdateRequest, UpdateAlertRequest
 
 
 class ScouterRoutes:
@@ -68,7 +68,7 @@ class ScouterClient(ApiClient):
 
         return cast(Dict[str, Any], response["data"])
 
-    def update_drift_profile(self, drift_profile: str, drift_type: str) -> Dict[str, str]:
+    def update_drift_profile(self, request: DriftProfileUpdateRequest) -> Dict[str, str]:
         """Updates drift profile into scouter server
 
         Args:
@@ -77,7 +77,7 @@ class ScouterClient(ApiClient):
             drift_type:
                 Drift type
         """
-        data = {"profile": json.loads(drift_profile), "drift_type": drift_type.value}
+        data = {"profile": json.loads(request.profile), "drift_type": request.drift_type}
         return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=data)
 
     def update_drift_profile_status(self, update_request: UpdateProfileStatus) -> Dict[str, str]:
@@ -224,7 +224,7 @@ class ScouterClient(ApiClient):
         except Exception:  # pylint: disable=broad-except
             return []
 
-    def update_monitoring_alerts(self, id_num: int, status: str) -> Dict[str, str]:
+    def update_monitoring_alerts(self, request: UpdateAlertRequest) -> Dict[str, str]:
         """Get monitoring alerts from scouter server
 
         Args:
@@ -237,13 +237,11 @@ class ScouterClient(ApiClient):
             Monitoring alerts
         """
 
-        data = {"id": id_num, "status": status}
-
         try:
             response = self.request(
                 route=ScouterRoutes.ALERTS,
                 request_type=RequestType.PUT,
-                json=data,
+                json=request.model_dump(),
             )
 
             return cast(Dict[str, str], response)
