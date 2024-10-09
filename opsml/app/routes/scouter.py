@@ -12,7 +12,9 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
 
-from opsml.app.routes.pydantic_models import (
+from opsml.helpers.logging import ArtifactLogger
+from opsml.scouter.server import ScouterServerClient
+from opsml.scouter.types import (
     AlertMetrics,
     DriftProfileRequest,
     DriftProfileUpdateRequest,
@@ -27,8 +29,6 @@ from opsml.app.routes.pydantic_models import (
     UpdateAlertRequest,
     UpdateProfileStatus,
 )
-from opsml.helpers.logging import ArtifactLogger
-from opsml.scouter.server import ScouterServerClient
 from opsml.storage.client import StorageClientBase
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
@@ -77,9 +77,14 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
     Returns:
         200
     """
+
     try:
+        drift_type = DriftType.from_value(payload.drift_type)
         client: ScouterServerClient = request.app.state.scouter_client
-        client.insert_drift_profile(payload)
+        client.insert_drift_profile(
+            drift_profile=payload.profile,
+            drift_type=drift_type,
+        )
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
@@ -105,14 +110,20 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Prof
     client: ScouterServerClient = request.app.state.scouter_client
     storage_root: str = request.app.state.storage_root
     storage_client: StorageClientBase = request.app.state.storage_client
-
+    drift_type = DriftType.from_value(payload.drift_type)
     try:
-        if payload.drift_type == DriftType.SPC:
+        if drift_type == DriftType.SPC:
             profile = SpcDriftProfile.model_validate_json(payload.profile)
 
         # need to validate the profile before updating
-
-        response = client.update_drift_profile(payload)
+        response = client.update_drift_profile(
+            repository=payload.repository,
+            name=payload.name,
+            version=payload.version,
+            drift_profile=payload.profile,
+            drift_type=DriftType.from_str(payload.drift_type),
+            save=payload.save,
+        )
 
         if response["status"] == "error":
             return ProfileUpdateResponse(
@@ -353,7 +364,10 @@ def update_monitoring_alerts(
     client: ScouterServerClient = request.app.state.scouter_client
 
     try:
-        values = client.update_monitoring_alerts(payload)
+        values = client.update_monitoring_alerts(
+            id_num=payload.id,
+            status=payload.status,
+        )
 
         return UpdateAlert(**values)
     except Exception as error:
@@ -427,7 +441,12 @@ def update_profile_status(
     client: ScouterServerClient = request.app.state.scouter_client
 
     try:
-        values = client.update_drift_profile_status(payload)
+        values = client.update_drift_profile_status(
+            repository=payload.repository,
+            name=payload.name,
+            version=payload.version,
+            status=payload.st,
+        )
 
         return UpdateAlert(**values)
     except Exception as error:

@@ -94,7 +94,6 @@ class ScouterServerClient(ApiClient):
             save:
                 Save flag
         """
-        save  # unused arg to avoid linting error and maintain compatibility with the ApiClient
         logger.info("Updating scouter server drift profile for {}/{}/{}", repository, name, version)
 
         data = {"profile": json.loads(drift_profile), "drift_type": drift_type.value}
@@ -104,8 +103,14 @@ class ScouterServerClient(ApiClient):
         """Updates drift profile status into scouter server
 
         Args:
-            update_request:
-                UpdateProfileStatus object
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+            status:
+                Status to update
         """
         return self.request(
             route=ScouterRoutes.PROFILE_STATUS,
