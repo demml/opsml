@@ -3,7 +3,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from scouter import SpcDriftConfig, SpcDriftProfile
+from opsml.scouter import SpcDriftConfig, SpcDriftProfile
 
 from opsml import SklearnModel
 from opsml.helpers.data import create_fake_data

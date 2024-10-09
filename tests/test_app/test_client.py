@@ -4,7 +4,7 @@ from typing import Any, Dict, Tuple, cast
 from unittest import mock
 
 import pytest
-from scouter import DriftConfig
+from opsml.scouter import SpcDriftConfig
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
@@ -282,9 +282,7 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(
-        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    )
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
@@ -543,7 +541,7 @@ def test_register_vit(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(""))
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_model_registry_scouter(
     mock_request: mock.MagicMock,
     linear_regression: Tuple[SklearnModel, NumpyData],
@@ -563,9 +561,7 @@ def test_model_registry_scouter(
     )
 
     data_registry.register_card(card=datacard)
-
-    drift_config = DriftConfig()
-    model.create_drift_profile(data.data, drift_config)
+    model.create_drift_profile(data.data, SpcDriftConfig())
 
     modelcard = ModelCard(
         interface=model,
@@ -583,7 +579,7 @@ def test_model_registry_scouter(
     assert mock_request.called
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_get_profile_success(mock_request: mock.MagicMock, test_app: TestClient) -> None:
     mock_request.return_value = {"status": "success", "profile": {"name": "model"}}
     response = test_app.get(
@@ -596,7 +592,7 @@ def test_get_profile_success(mock_request: mock.MagicMock, test_app: TestClient)
     assert mock_request.called
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_scouter_healthcheck(mock_request: mock.MagicMock, test_app: TestClient) -> None:
     mock_request.return_value = {"status": "success", "message": "Alive"}
     response = test_app.get("/opsml/scouter/healthcheck")
@@ -605,7 +601,7 @@ def test_scouter_healthcheck(mock_request: mock.MagicMock, test_app: TestClient)
     assert response.json()["running"]
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_get_profile_error(mock_request: mock.MagicMock, test_app: TestClient) -> None:
     mock_request.return_value = {"status": "error"}
     response = test_app.get(
@@ -618,7 +614,7 @@ def test_get_profile_error(mock_request: mock.MagicMock, test_app: TestClient) -
     assert mock_request.called
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_get_drift_values(
     mock_request: mock.MagicMock,
     test_app: TestClient,
@@ -669,8 +665,8 @@ def test_get_drift_values(
     assert mock_request.called
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
-@mock.patch("opsml.registry.sql.base.client.ClientRegistry.scouter_server_available")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient._scouter_set")
 def test_model_registry_scouter_update(
     server: mock.MagicMock,
     mock_request: mock.MagicMock,
@@ -692,9 +688,7 @@ def test_model_registry_scouter_update(
     )
 
     data_registry.register_card(card=datacard)
-
-    drift_config = DriftConfig()
-    model.create_drift_profile(data.data, drift_config)
+    model.create_drift_profile(data.data, SpcDriftConfig())
 
     modelcard = ModelCard(
         interface=model,
