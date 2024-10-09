@@ -42,6 +42,10 @@ class ModelLoader:
         drift_type: str = self.metadata.drift["drift_type"]
         drift_profile_path = (self.path / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
 
+        # check if path exists
+        if not drift_profile_path.exists():
+            return None
+
         # load drift profile json to string
         with drift_profile_path.open("r") as file_:
             if drift_type == DriftType.SPC.value:

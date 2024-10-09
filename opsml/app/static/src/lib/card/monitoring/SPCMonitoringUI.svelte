@@ -1,7 +1,7 @@
 <script lang="ts">
 
-    import { type ChartjsData, type DriftProfile, type FeatureDriftProfile,  type MonitorAlerts , ProfileType } from "$lib/scripts/types";
-    import { rebuildDriftViz } from "$lib/scripts/monitoring/utils";
+    import { type ChartjsData, type SpcDriftProfile, type SpcFeatureDriftProfile,  type MonitorAlerts , ProfileType } from "$lib/scripts/types";
+    import { rebuildSpcDriftViz } from "$lib/scripts/monitoring/utils";
     import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
     import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
     import SpcStats from "$lib/card/monitoring/SPCStats.svelte";
@@ -9,8 +9,8 @@
     import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
   
 
-    export let driftProfiles: Map<ProfileType, DriftProfile>;
-    export let targetFeature:FeatureDriftProfile;
+    export let driftProfiles: Map<ProfileType, SpcDriftProfile>;
+    export let targetFeature:SpcFeatureDriftProfile;
     export let driftVizData: ChartjsData;
     export let featureDistVizData: ChartjsData;
     export let alertMetricVizData: ChartjsData;
@@ -36,7 +36,7 @@
       }
   
       targetFeature = driftProfiles[profileType].features[feature];
-      let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+      let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
   
       driftVizData = rebuiltViz[0];
       featureDistVizData = rebuiltViz[1];

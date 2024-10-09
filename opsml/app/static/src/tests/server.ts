@@ -432,16 +432,13 @@ const handlers = [
             feature_map: undefined,
             targets: [],
             alert_config: {
-              alert_dispatch_type: "Console",
-              alert_rule: {
-                process: {
-                  rule: "8 8 8 8 8 8 8 8",
-                  zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
-                },
-                percentage: undefined,
+              dispatch_type: "Console",
+              rule: {
+                rule: "8 8 8 8 8 8 8 8",
+                zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
               },
               schedule: "0 0 0 0 0 0 0 0",
-              alert_kwargs: {},
+              dispatch_kwargs: {},
             },
           },
           scouter_version: "1.0.0",

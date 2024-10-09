@@ -613,7 +613,7 @@ export interface RunPageReturn {
   parsedMetrics: ParsedHardwareMetrics | undefined;
 }
 
-export interface FeatureDriftProfile {
+export interface SpcFeatureDriftProfile {
   id: string;
   center: number;
   one_ucl: number;
@@ -629,47 +629,39 @@ export interface FeatureMap {
   features: Record<string, Record<string, number>>;
 }
 
-export interface ProcessAlertRule {
+export interface SpcAlertRule {
   rule: string;
   zones_to_monitor: string[];
 }
 
-export interface PercentageAlertRule {
-  rule: number;
-}
-
-export interface AlertRule {
-  process: ProcessAlertRule | undefined;
-  percentage: PercentageAlertRule | undefined;
-}
-
-export interface AlertConfig {
-  alert_dispatch_type: string;
-  alert_rule: AlertRule;
+export interface SpcAlertConfig {
+  dispatch_type: string;
+  rule: SpcAlertRule;
   schedule: string;
   features_to_monitor: string[];
-  alert_kwargs: Record<string, string | number>;
+  dispatch_kwargs: Record<string, string | number>;
 }
 
-export interface DriftConfig {
+export interface SpcDriftConfig {
   sample_size: number;
   sample: boolean;
-  name: string;
   repository: string;
+  name: string;
   version: string;
+  alert_config: SpcAlertConfig;
   feature_map: FeatureMap | undefined;
   targets: string[];
-  alert_config: AlertConfig;
+  drift_type: string;
 }
 
-export interface DriftProfile {
-  features: Record<string, FeatureDriftProfile>;
-  config: DriftConfig;
+export interface SpcDriftProfile {
+  features: Record<string, SpcFeatureDriftProfile>;
+  config: SpcDriftConfig;
   scouter_version: string;
 }
 
 export interface DriftProfileResponse {
-  profile: DriftProfile | undefined;
+  profile: SpcDriftProfile | undefined;
 }
 
 export interface UpdateProfileResponse {
@@ -695,10 +687,10 @@ export interface MonitoringPageReturn {
   repository: string;
   name: string;
   version: string;
-  profile: DriftProfile | undefined;
+  profile: SpcDriftProfile | undefined;
 }
 
-export interface FeatureDistribution {
+export interface SpcFeatureDistribution {
   name: string;
   repository: string;
   version: string;

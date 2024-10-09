@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
 
-from opsml.app.routes.pydantic_models import (
+from opsml.types.scouter import (
     AlertMetrics,
     DriftProfileRequest,
     DriftProfileUpdateRequest,
@@ -25,6 +25,8 @@ from opsml.app.routes.pydantic_models import (
     Success,
     UpdateAlert,
     UpdateAlertRequest,
+    ProfileStatusUpdate,
+    UpdateProfileStatus,
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
@@ -82,9 +84,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
 @router.put("/scouter/drift/profile", name="update_drift_profile", response_model=ProfileUpdateResponse)
@@ -139,9 +139,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Prof
         return ProfileUpdateResponse()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
 
 
 @router.get("/scouter/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
@@ -174,9 +172,7 @@ def get_profile(
         return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
 
 
 @router.get("/scouter/drift/values", name="get_drift", response_model=DriftResponse)
@@ -226,9 +222,7 @@ def get_drift_values(
         return DriftResponse(**values)
     except Exception as error:
         logger.error(f"Failed to get drift values: {error}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values"
-        ) from error
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
 
 
 @router.get("/scouter/feature/distribution", name="feature distribution", response_model=FeatureDistribution)
@@ -403,4 +397,35 @@ def get_alert_metrics(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve alert metrics",
+        ) from error
+
+
+@router.put("/scouter/profile/status", name="profile status", response_model=UpdateAlert)
+def update_profile_status(
+    request: Request,
+    payload: UpdateProfileStatus,
+) -> UpdateAlert:
+    """Updates the status of a profile
+
+    Args:
+        request:
+            FastAPI request object
+        payload:
+            UpdateAlertRequest
+
+    Returns:
+        UpdateAlert
+    """
+
+    client: ScouterClient = request.app.state.scouter_client
+
+    try:
+        values = client.update_drift_profile_status(payload)
+
+        return UpdateAlert(**values)
+    except Exception as error:
+        logger.error(f"Failed to update alert: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update alert",
         ) from error

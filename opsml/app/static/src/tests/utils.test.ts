@@ -12,7 +12,7 @@ import {
   user,
   sampleRunMetics,
   barData,
-  driftProfile,
+  SpcDriftProfile,
   allFeatureDriftValues,
   featureDriftValues,
   exampleFeatureDistribution,
@@ -494,8 +494,11 @@ it("getGraphs", async () => {
 
 it("getDriftProfile", async () => {
   const _profile = await monitoring.getDriftProfile("repo", "name", "version");
-  expect(_profile.profile).toEqual(driftProfile);
-  let featureProfile = monitoring.getFeatureProfile("col1", _profile.profile!);
+  expect(_profile.profile).toEqual(SpcDriftProfile);
+  let featureProfile = monitoring.getSpcFeatureProfile(
+    "col1",
+    _profile.profile!
+  );
 
   expect(featureProfile.center).toEqual(0);
 });
@@ -545,7 +548,7 @@ it("GetFeatureValues", async () => {
 });
 
 it("GetFeatureDistributionValues", async () => {
-  const featureDistResponse = await monitoring.getFeatureDistributionValues(
+  const featureDistResponse = await monitoring.getSpcFeatureDistributionValues(
     "repo",
     "name",
     "version",

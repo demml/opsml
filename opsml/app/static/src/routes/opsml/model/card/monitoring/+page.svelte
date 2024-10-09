@@ -1,7 +1,7 @@
 <script lang="ts">
 
-  import { type ChartjsData, type DriftProfile, type FeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
-  import { getFeatureDriftValues, createDriftViz, rebuildDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
+  import { type ChartjsData, type SpcDriftProfile, type SpcFeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
+  import { getFeatureDriftValues, createSpcDriftViz, rebuildSpcDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
   import { onMount } from 'svelte';
   import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
@@ -18,10 +18,10 @@
   /** @type {import('./$types').LayoutData} */
   export let data;
 
-  let driftProfiles: Map<ProfileType, DriftProfile>;
+  let driftProfiles: Map<ProfileType, SpcDriftProfile>;
   $: driftProfiles = data.driftProfiles;
 
-  let targetFeature:FeatureDriftProfile;
+  let targetFeature: SpcFeatureDriftProfile;
   $: targetFeature = data.targetFeature;
 
   let features: string[];
@@ -93,7 +93,7 @@
       // Call your function for large screen size
       max_data_points = 1000;
     }
-    let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+    let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
   
     driftVizData = rebuiltViz[0];
     featureDistVizData = rebuiltViz[1];
@@ -119,7 +119,7 @@
       }
   
       targetFeature = driftProfiles[profileType].features[feature];
-      let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+      let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
   
       driftVizData = rebuiltViz[0];
       featureDistVizData = rebuiltViz[1];
@@ -130,7 +130,7 @@
   
     async function handleTimeWindowChange(event) {
       timeWindow = event.detail.selected;
-      let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+      let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
       driftVizData = rebuiltViz[0];
       featureDistVizData = rebuiltViz[1];
       alertMetricVizData = rebuiltViz[2];

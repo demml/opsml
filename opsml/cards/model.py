@@ -5,14 +5,14 @@
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from uuid import UUID
-
+import json
 from pydantic import ConfigDict, SerializeAsAny, field_validator
 from scouter import SpcDriftProfile
 
 from opsml.cards.base import ArtifactCard
 from opsml.helpers.logging import ArtifactLogger
 from opsml.model.interfaces.base import ModelInterface
-from opsml.types import CardType, ModelCardMetadata, ModelMetadata, OnnxModel
+from opsml.types import CardType, ModelCardMetadata, ModelMetadata, OnnxModel, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
 
@@ -98,6 +98,50 @@ class ModelCard(ArtifactCard):
         from opsml.storage.card_loader import ModelCardLoader
 
         ModelCardLoader(self).load_model(load_preprocessor, **kwargs)
+
+    def download_drift_profile(self, path: Path) -> None:
+        """Downloads drift profile to path
+
+        Args:
+            path:
+                Path to download drift profile
+        """
+
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        elif not path.is_dir():
+            raise ValueError(f"The path {path} exists but is not a directory.")
+
+        profile = self.load_drift_profile()
+
+        if profile is None:
+            logger.info("No drift profile found")
+            return
+
+        write_path = (path / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+
+        profile.save_to_json(write_path)
+
+    def download_model_metadata(self, path: Path) -> None:
+        """Downloads model metadata to path
+
+        Args:
+            path:
+                Path to download model metadata. Should be a directory path
+        """
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        elif not path.is_dir():
+            raise ValueError(f"The path {path} exists but is not a directory.")
+
+        metadata = self.model_metadata
+        metadata = metadata.model_dump_json()
+
+        write_path = (path / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+
+        # write json
+        with write_path.open("w", encoding="utf-8") as file_:
+            json.dump(metadata, file_)
 
     def download_model(
         self,

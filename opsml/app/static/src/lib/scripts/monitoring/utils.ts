@@ -3,11 +3,11 @@ import {
   CommonPaths,
   type UpdateProfileResponse,
   type FeatureDriftValues,
-  type DriftProfile,
-  type FeatureDriftProfile,
+  type SpcDriftProfile,
+  type SpcFeatureDriftProfile,
   type DriftValues,
   type ChartjsData,
-  type FeatureDistribution,
+  type SpcFeatureDistribution,
   type TimestampData,
   type MonitorAlerts,
   TimeWindow,
@@ -151,14 +151,14 @@ export async function getFeatureDriftValues(
 /// @param version - version of the model
 /// @param time_window - time window for values
 /// @param feature - feature to filter for
-export async function getFeatureDistributionValues(
+export async function getSpcFeatureDistributionValues(
   repository: string,
   name: string,
   version: string,
   time_window: string,
   max_data_points: number,
   feature: string
-): Promise<FeatureDistribution> {
+): Promise<SpcFeatureDistribution> {
   let params = {
     repository: repository,
     name: name,
@@ -174,7 +174,7 @@ export async function getFeatureDistributionValues(
     ).toString()}`
   );
 
-  const response = (await values_response.json()) as FeatureDistribution;
+  const response = (await values_response.json()) as SpcFeatureDistribution;
 
   return response;
 }
@@ -182,10 +182,10 @@ export async function getFeatureDistributionValues(
 /// get feature boundaries
 /// @param feature - name of the feature
 /// @param profile - drift profile
-export function getFeatureProfile(
+export function getSpcFeatureProfile(
   feature: string,
-  drift_profile: DriftProfile
-): FeatureDriftProfile {
+  drift_profile: SpcDriftProfile
+): SpcFeatureDriftProfile {
   return drift_profile.features[feature];
 }
 
@@ -194,9 +194,9 @@ export const handleResize = (chart) => {
   chart.resize();
 };
 
-export function createDriftViz(
+export function createSpcDriftViz(
   driftValues: DriftValues,
-  feature: FeatureDriftProfile
+  feature: SpcFeatureDriftProfile
 ): ChartjsData {
   let labels = driftValues.created_at.map((date) => new Date(date));
   let values = driftValues.values;
@@ -450,9 +450,9 @@ export function createDriftViz(
   };
 }
 
-export function buildFeatureDistributionViz(
-  featureValues: FeatureDistribution,
-  feature: FeatureDriftProfile
+export function buildSpcFeatureDistributionViz(
+  featureValues: SpcFeatureDistribution,
+  feature: SpcFeatureDriftProfile
 ): ChartjsData {
   let refData = [
     { x: feature.three_lcl, y: 0.01 },
@@ -542,16 +542,16 @@ export function buildFeatureDistributionViz(
   };
 }
 
-export async function createFeatureDistributionViz(
+export async function createSpcFeatureDistributionViz(
   repository: string,
   name: string,
   version: string,
   feature: string,
   time_window: string,
   max_data_points: number,
-  feature_profile: FeatureDriftProfile
+  feature_profile: SpcFeatureDriftProfile
 ): Promise<ChartjsData> {
-  const featureValues = await getFeatureDistributionValues(
+  const featureValues = await getSpcFeatureDistributionValues(
     repository,
     name,
     version,
@@ -559,17 +559,19 @@ export async function createFeatureDistributionViz(
     max_data_points,
     feature
   );
-  return buildFeatureDistributionViz(featureValues, feature_profile);
+  console.log(time_window, max_data_points, feature);
+  console.log(featureValues);
+  return buildSpcFeatureDistributionViz(featureValues, feature_profile);
 }
 
-export async function rebuildDriftViz(
+export async function rebuildSpcDriftViz(
   repository: string,
   name: string,
   version: string,
   timeWindow: string,
   max_data_points: number,
   feature: string,
-  featureProfile: FeatureDriftProfile
+  featureProfile: SpcFeatureDriftProfile
 ): Promise<[ChartjsData, ChartjsData, ChartjsData]> {
   let featureValues = await getFeatureDriftValues(
     repository,
@@ -580,12 +582,12 @@ export async function rebuildDriftViz(
     feature
   );
 
-  let featureDriftViz = createDriftViz(
+  let featureDriftViz = createSpcDriftViz(
     featureValues.features[feature],
     featureProfile
   );
 
-  let featureDistViz = await createFeatureDistributionViz(
+  let featureDistViz = await createSpcFeatureDistributionViz(
     repository,
     name,
     version,
