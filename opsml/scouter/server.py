@@ -60,6 +60,7 @@ class ScouterServerClient(ApiClient):
         Returns:
             Drift profile
         """
+
         response = self.request(
             route=ScouterRoutes.PROFILE,
             request_type=RequestType.GET,

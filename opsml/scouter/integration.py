@@ -43,13 +43,19 @@ class ScouterClient:
         return self._client
 
     def healthcheck(self) -> bool:
-        """Checks if scouter server is up
+        """Checks if scouter server is up. Will return False if scouter is not running or the healthcheck fails
 
         Returns:
             True if server is up, False otherwise
         """
         assert self._client is not None
-        return self._client.healthcheck()
+
+        try:
+            return self._client.healthcheck()
+
+        # silent failure is scouter is not running
+        except Exception:
+            return False
 
     def update_profile_status(self, repository: str, name: str, version: str, status: bool) -> None:
         """Sets the profile to active
@@ -81,6 +87,7 @@ class ScouterClient:
             drift_type:
                 Drift type
         """
+
         self._scouter_client.insert_drift_profile(
             drift_profile=drift_profile,
             drift_type=drift_type,

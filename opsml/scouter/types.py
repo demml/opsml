@@ -3,6 +3,11 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
+class ProfileUpdateResponse(BaseModel):
+    complete: bool = True
+    message: str = "Profile updated successfully"
+
+
 class ScouterHealthCheckResponse(BaseModel):
     running: bool
 

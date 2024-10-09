@@ -12,6 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
 
+from opsml.app.routes.pydantic_models import Success
 from opsml.helpers.logging import ArtifactLogger
 from opsml.scouter.server import ScouterServerClient
 from opsml.scouter.types import (
@@ -24,7 +25,6 @@ from opsml.scouter.types import (
     MonitorAlerts,
     ProfileUpdateResponse,
     ScouterHealthCheckResponse,
-    Success,
     UpdateAlert,
     UpdateAlertRequest,
     UpdateProfileStatus,
