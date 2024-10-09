@@ -38,7 +38,6 @@ class ClientRegistry(SQLRegistryBase):
         self._session = storage_client.api_client
         self._registry_type = registry_type
         self._scouter_client = ScouterClient()
-        print(self._scouter_client._scouter_client)
 
     @cached_property
     def table_name(self) -> str:
