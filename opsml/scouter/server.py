@@ -100,7 +100,7 @@ class ScouterServerClient(ApiClient):
         data = {"profile": json.loads(drift_profile), "drift_type": drift_type.value}
         return self.request(route=ScouterRoutes.PROFILE, request_type=RequestType.PUT, json=data)
 
-    def update_drift_profile_status(self, repository: str, name: str, version: str, status: bool) -> Dict[str, str]:
+    def update_drift_profile_status(self, repository: str, name: str, version: str, active: bool) -> Dict[str, str]:
         """Updates drift profile status into scouter server
 
         Args:
@@ -120,7 +120,7 @@ class ScouterServerClient(ApiClient):
                 "repository": repository,
                 "name": name,
                 "version": version,
-                "status": status,
+                "active": active,
             },
         )
 

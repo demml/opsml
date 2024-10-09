@@ -57,7 +57,7 @@ class ScouterClient:
         except Exception:
             return False
 
-    def update_profile_status(self, repository: str, name: str, version: str, status: bool) -> None:
+    def update_profile_status(self, repository: str, name: str, version: str, active: bool) -> None:
         """Sets the profile to active
 
         Args:
@@ -67,7 +67,7 @@ class ScouterClient:
                 Model name
             version:
                 Model version
-            status:
+            active:
                 Status to set
         """
 
@@ -75,7 +75,7 @@ class ScouterClient:
             repository=repository,
             name=name,
             version=version,
-            status=status,
+            active=active,
         )
 
     def insert_drift_profile(self, drift_profile: str, drift_type: DriftType) -> None:

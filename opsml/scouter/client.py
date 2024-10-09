@@ -61,7 +61,7 @@ class ScouterApiClient:
             },
         )
 
-    def update_drift_profile_status(self, repository: str, name: str, version: str, status: bool) -> Dict[str, str]:
+    def update_drift_profile_status(self, repository: str, name: str, version: str, active: bool) -> Dict[str, str]:
         """Updates drift profile status into scouter server
 
         Args:
@@ -82,7 +82,7 @@ class ScouterApiClient:
                 "name": name,
                 "repository": repository,
                 "version": version,
-                "status": status,
+                "active": active,
             },
         )
 
