@@ -544,11 +544,14 @@ def test_register_vit(
 
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
 def test_model_registry_scouter(
+    server: mock.MagicMock,
     mock_request: mock.MagicMock,
     linear_regression: Tuple[SklearnModel, NumpyData],
     api_registries: CardRegistries,
 ) -> None:
+    server.return_value = True
     mock_request.return_value = None
 
     data_registry = api_registries.data
@@ -583,7 +586,7 @@ def test_model_registry_scouter(
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.request")
 def test_get_profile_success(mock_request: mock.MagicMock, test_app: TestClient) -> None:
-    mock_request.return_value = {"status": "success", "profile": {"name": "model"}}
+    mock_request.return_value = {"status": "success", "data": {"name": "model"}}
     response = test_app.get(
         "/opsml/scouter/drift/profile",
         params={"repository": "mlops", "name": "model", "version": "0.1.0"},
@@ -668,7 +671,7 @@ def test_get_drift_values(
 
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.request")
-@mock.patch("opsml.scouter.integration.ScouterClient._scouter_set")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
 def test_model_registry_scouter_update(
     server: mock.MagicMock,
     mock_request: mock.MagicMock,
