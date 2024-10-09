@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
 
-from opsml.types.scouter import (
+from opsml.app.routes.pydantic_models import (
     AlertMetrics,
     DriftProfileRequest,
     DriftProfileUpdateRequest,
@@ -29,7 +29,7 @@ from opsml.types.scouter import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.storage.client import StorageClientBase
-from opsml.storage.scouter import ScouterClient
+from opsml.scouter.server import ScouterServerClient
 from opsml.types import RegistryTableNames, SaveName, Suffix
 
 logger = ArtifactLogger.get_logger()
@@ -51,7 +51,7 @@ def check_server(
         bool
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         return ScouterHealthCheckResponse(
@@ -78,7 +78,7 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         200
     """
     try:
-        client: ScouterClient = request.app.state.scouter_client
+        client: ScouterServerClient = request.app.state.scouter_client
         client.insert_drift_profile(payload)
         return Success()
     except Exception as error:
@@ -100,7 +100,7 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Prof
         200
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
     storage_root: str = request.app.state.storage_root
     storage_client: StorageClientBase = request.app.state.storage_client
 
@@ -164,7 +164,7 @@ def get_profile(
         DriftProfile string
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         profile = client.get_drift_profile(repository, name, version)
@@ -206,7 +206,7 @@ def get_drift_values(
         DriftProfile string
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.get_drift_values(
@@ -256,7 +256,7 @@ def get_feature_distribution(
         FeatureDistribution
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.get_feature_distribution(
@@ -311,7 +311,7 @@ def get_monitoring_alerts(
         DriftProfile string
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.get_monitoring_alerts(repository, name, version, active, limit)
@@ -342,7 +342,7 @@ def update_monitoring_alerts(
         UpdateAlert
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.update_monitoring_alerts(payload)
@@ -385,7 +385,7 @@ def get_alert_metrics(
         AlertMetrics
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.get_alert_metrics(repository, name, version, time_window, max_data_points)
@@ -416,7 +416,7 @@ def update_profile_status(
         UpdateAlert
     """
 
-    client: ScouterClient = request.app.state.scouter_client
+    client: ScouterServerClient = request.app.state.scouter_client
 
     try:
         values = client.update_drift_profile_status(payload)
