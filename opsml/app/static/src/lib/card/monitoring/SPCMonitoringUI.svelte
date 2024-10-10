@@ -79,7 +79,7 @@
                 <header class="pl-2 text-secondary-600 text-lg font-bold">Alert History</header>
               </div>
               {#if monitorVizData.alertMetricVizData}
-                <TimeChartDiv
+                <SpcTimeChartDiv
                   data={monitorVizData.alertMetricVizData.data}
                   id={alertMeticsId}
                   options={monitorVizData.alertMetricVizData.options}
