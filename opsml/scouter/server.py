@@ -216,9 +216,7 @@ class ScouterServerClient(ApiClient):
         except Exception:  # pylint: disable=broad-except
             return {}
 
-    def get_monitoring_alerts(
-        self, repository: str, name: str, version: str, active: bool, limit: int
-    ) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:
@@ -336,6 +334,7 @@ class ScouterServerClient(ApiClient):
 
 SCOUTER_SERVER_CLIENT = None
 if config.scouter_server_uri is not None:
+    logger.info("Initializing Scouter Server Client")
     SCOUTER_SERVER_CLIENT = ScouterServerClient(
         base_url=config.scouter_server_uri,
         username=config.scouter_username,
@@ -344,3 +343,4 @@ if config.scouter_server_uri is not None:
         token=None,
         path_prefix=config.scouter_path_prefix,
     )
+    logger.info("Scouter Server Client Initialized")

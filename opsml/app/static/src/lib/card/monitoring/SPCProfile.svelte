@@ -1,6 +1,6 @@
 <script lang="ts">
     import { updateDriftProfile } from "$lib/scripts/monitoring/utils";
-    import { type DriftConfig, type AlertConfig, type DriftProfile, type UpdateProfileResponse } from "$lib/scripts/types";
+    import { type SpcDriftConfig, type SpcAlertConfig, type SpcDriftProfile, type UpdateProfileResponse } from "$lib/scripts/types";
     import { createEventDispatcher } from 'svelte';
     import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
 
@@ -13,8 +13,8 @@
     export let repository: string;
     export let name: string;
     export let version: string;
-    export let driftConfig: DriftConfig;
-    export let driftProfile: DriftProfile;
+    export let driftConfig: SpcDriftConfig;
+    export let driftProfile: SpcDriftProfile;
 
     const dispatch = createEventDispatcher();
 
@@ -25,20 +25,20 @@
     };
 
 
-    let alertConfig: AlertConfig = driftConfig.alert_config;
-    let process_rule = alertConfig.alert_rule?.process?.rule;
+    let alertConfig: SpcAlertConfig = driftConfig.alert_config;
+    let process_rule = alertConfig.rule.rule;
 
     let zones_to_monitor: string[];
 
     // default to empty array
-    $: zones_to_monitor = alertConfig.alert_rule?.process?.zones_to_monitor || [];
+    $: zones_to_monitor = alertConfig.rule.zones_to_monitor || [];
 
 
 
     let alert_kwargs: Record<string, any> | string;
-    $: alert_kwargs =  JSON.stringify(alertConfig.alert_kwargs, null, 2);
+    $: alert_kwargs =  JSON.stringify(alertConfig.dispatch_kwargs, null, 2);
 
-    let dispatch_type = alertConfig.alert_dispatch_type
+    let dispatch_type = alertConfig.dispatch_type
     let features_to_monitor = alertConfig.features_to_monitor;
     let schedule = alertConfig.schedule;
     let targets = driftConfig.targets;
@@ -77,7 +77,7 @@
       }
 
 
-      let updatedDriftConfig = {
+      let updatedDriftConfig:  SpcDriftConfig = {
         name: name,
         repository: repository,
         version: version,
@@ -86,19 +86,19 @@
         sample_size: sample_size,
         targets: targets,
         alert_config: {
+          
           features_to_monitor: features_to_monitor,
           dispatch_type: dispatch_type,
           schedule: schedule,
-          alert_dispatch_type: dispatch_type,
-          alert_rule: {
-            process: {
-              rule: process_rule!,
-              zones_to_monitor: zones_to_monitor
-            },
-            percentage: undefined,
-          },
-          alert_kwargs: alert_kwargs as Record<string, number>
-        }
+          rule: {
+            rule: process_rule!,
+            zones_to_monitor: zones_to_monitor
+        },
+          dispatch_kwargs: alert_kwargs as Record<string, number>
+        },
+
+        drift_type: driftConfig.drift_type,
+    
       };
 
       showConfig = false;

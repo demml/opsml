@@ -1,19 +1,14 @@
 <script lang="ts">
 
   import { type ChartjsData, type SpcDriftProfile, type SpcFeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
-  import { getFeatureDriftValues, createSpcDriftViz, rebuildSpcDriftViz, generateTimestampsAndZeros } from "$lib/scripts/monitoring/utils";
+  import  {type MonitoringVizData} from "$lib/scripts/monitoring/types";
+  import { rebuildSpcDriftViz } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
   import { onMount } from 'svelte';
-  import TimeChartDiv from '$lib/card/TimeChartDiv.svelte';
-  import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
   import scouter_logo from '$lib/images/scouter.svg';
   import Dropdown from "$lib/components/Dropdown.svelte";
-  import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
-  import SpcStats from "$lib/card/monitoring/SPCStats.svelte";
-  import Fa from 'svelte-fa';
-  import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-  import SpcMonitoringUi from "$lib/card/monitoring/SPCMonitoringUI.svelte";
+  import Test from "$lib/card/monitoring/Test.svelte";
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -27,14 +22,8 @@
   let features: string[];
   $: features = data.features;
 
-  let driftVizData: ChartjsData;
-  $: driftVizData = data.driftVizData;
-
-  let featureDistVizData: ChartjsData;
-  $: featureDistVizData = data.featureDistVizData;
-
-  let alertMetricVizData: ChartjsData;
-  $: alertMetricVizData = data.alertMetricVizData;
+  let monitorVizData: MonitoringVizData;
+  $: monitorVizData = data.monitorVizData;
 
   let timeWindow: string;
   $: timeWindow = data.timeWindow;
@@ -93,11 +82,9 @@
       // Call your function for large screen size
       max_data_points = 1000;
     }
-    let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
-  
-    driftVizData = rebuiltViz[0];
-    featureDistVizData = rebuiltViz[1];
-    alertMetricVizData = rebuiltViz[2];
+
+    console.log("screen change");
+    monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
   
   }
   
@@ -113,27 +100,27 @@
       }
   
     async function updateFeatureValues(feature:string) {
+
+      console.log("Update Feature");
   
       if (feature === targetFeature.id) {
         return;
       }
   
       targetFeature = driftProfiles[profileType].features[feature];
-      let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+      monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
+      //let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
   
-      driftVizData = rebuiltViz[0];
-      featureDistVizData = rebuiltViz[1];
-      alertMetricVizData = rebuiltViz[2];
+      //driftVizData = rebuiltViz[0];
+      //featureDistVizData = rebuiltViz[1];
+      //alertMetricVizData = rebuiltViz[2];
   
     }
   
   
     async function handleTimeWindowChange(event) {
       timeWindow = event.detail.selected;
-      let rebuiltViz = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
-      driftVizData = rebuiltViz[0];
-      featureDistVizData = rebuiltViz[1];
-      alertMetricVizData = rebuiltViz[2];
+      monitorVizData  = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
     }
   
     onMount (() => {
@@ -147,11 +134,6 @@
   
     function handleHide(event) {
       showConfig = event.detail.showConfig;
-    }
-  
-    function handleFeatureUpdate(event) {
-    
-      updateFeatureValues(event.detail.feature);
     }
 
   
@@ -213,11 +195,10 @@
           </div>
         </div>
 
-        <SpcMonitoringUi
+        <Test
           {driftProfiles}
           {targetFeature}
-          {driftVizData}
-          {featureDistVizData}
+          {monitorVizData}
           {alerts}
           {profileType}
           {timeWindow}
@@ -225,7 +206,6 @@
           {name}
           {repository}
           {version}
-          {alertMetricVizData}
         />
       </div>  
 

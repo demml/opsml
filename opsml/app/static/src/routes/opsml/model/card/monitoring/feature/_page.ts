@@ -17,6 +17,7 @@ import {
   type AlertMetrics,
   ProfileType,
 } from "$lib/scripts/types";
+import { type MonitoringVizData } from "$lib/scripts/monitoring/types";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
@@ -33,8 +34,6 @@ export async function load({ url }) {
   profiles[ProfileType.SPC] = (
     await getDriftProfile(repository!, name!, version!)
   ).profile as SpcDriftProfile | undefined;
-
-  console.log(profiles);
 
   // check if drift profile exists
   if (profiles) {
@@ -91,6 +90,12 @@ export async function load({ url }) {
       alertMetrics
     )) as ChartjsData;
 
+    let vizData: MonitoringVizData = {
+      driftVizData,
+      featureDistVizData,
+      alertMetricVizData,
+    };
+
     return {
       repository,
       name,
@@ -99,14 +104,12 @@ export async function load({ url }) {
       targetFeature,
       features,
       featureValues,
-      driftVizData,
       timeWindow: TimeWindow.TwentyFourHours,
       max_data_points: 1000,
-      featureDistVizData,
       alerts,
       showConfig: false,
       profileType: ProfileType.SPC,
-      alertMetricVizData,
+      monitorVizData: vizData,
     };
   } else {
     return {

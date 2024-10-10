@@ -15,6 +15,7 @@ import {
   type AlertMetrics,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
+import { type MonitoringVizData } from "$lib/scripts/monitoring/types";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -559,8 +560,6 @@ export async function createSpcFeatureDistributionViz(
     max_data_points,
     feature
   );
-  console.log(time_window, max_data_points, feature);
-  console.log(featureValues);
   return buildSpcFeatureDistributionViz(featureValues, feature_profile);
 }
 
@@ -572,7 +571,7 @@ export async function rebuildSpcDriftViz(
   max_data_points: number,
   feature: string,
   featureProfile: SpcFeatureDriftProfile
-): Promise<[ChartjsData, ChartjsData, ChartjsData]> {
+): Promise<MonitoringVizData> {
   let featureValues = await getFeatureDriftValues(
     repository,
     name,
@@ -607,7 +606,13 @@ export async function rebuildSpcDriftViz(
 
   let alertMetricViz = await createAlertMetricViz(alertMetrics);
 
-  return [featureDriftViz, featureDistViz, alertMetricViz];
+  let monitorVizData: MonitoringVizData = {
+    driftVizData: featureDriftViz,
+    featureDistVizData: featureDistViz,
+    alertMetricVizData: alertMetricViz,
+  };
+
+  return monitorVizData;
 }
 
 /// get alerts from scouter-server for a model

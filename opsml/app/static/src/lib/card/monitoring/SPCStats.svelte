@@ -1,11 +1,11 @@
 <script lang="ts">
 
-    import { type FeatureDriftProfile, type ChartjsData} from "$lib/scripts/types";
+    import { type SpcFeatureDriftProfile, type ChartjsData} from "$lib/scripts/types";
     import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
     import Fa from 'svelte-fa';
     import { faComputer } from '@fortawesome/free-solid-svg-icons';
 
-    export let feature_profile: FeatureDriftProfile;
+    export let feature_profile: SpcFeatureDriftProfile;
     export let featureDistVizData: ChartjsData;
 
 

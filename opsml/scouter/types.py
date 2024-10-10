@@ -75,7 +75,7 @@ class MonitorAlert(BaseModel):
     repository: str
     version: str
     feature: str
-    alerts: Dict[str, str]
+    alert: Dict[str, str]
     status: str
     id: int
 
