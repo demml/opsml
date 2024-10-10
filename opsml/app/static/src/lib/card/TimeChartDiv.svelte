@@ -30,22 +30,12 @@
   Chart.register(annotationPlugin);
 
 	onMount(() => {
-     
-		  ctx = chartCanvas.getContext('2d');
-		  chart = new Chart(ctx, {
-        // @ts-ignore
-				type: type,
-				data: data,
-        options: options
-
-
-		});
-
-    // @ts-ignore
-    window[id] = chart;
+    createChart();
     
     return () => {
-      chart.destroy();
+      if (chart) {
+        chart.destroy();
+      }
     };
 
 	});
@@ -54,6 +44,8 @@
 
     //check if chart.type is not undefined
     if (chart.type) {
+      // log chart id
+      console.log('Updating chart with id: ', id);
       chart.destroy();
       ctx = chartCanvas.getContext('2d');
       chart = new Chart(ctx, {
@@ -74,6 +66,21 @@
     window[id] = chart;
 
     }
+
+    function createChart() {
+    // log chart id
+    console.log('Creating chart with id: ', id);
+    ctx = chartCanvas.getContext('2d');
+    chart = new Chart(ctx, {
+      // @ts-ignore
+      type: type,
+      data: data,
+      options: options
+    });
+
+    // @ts-ignore
+    window[id] = chart;
+  }
 
 
 </script>

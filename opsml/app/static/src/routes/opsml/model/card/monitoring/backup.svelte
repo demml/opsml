@@ -10,6 +10,7 @@
     import Dropdown from "$lib/components/Dropdown.svelte";
     import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
     import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
+    import { goto } from '$app/navigation';
   
   
     /** @type {import('./$types').LayoutData} */
@@ -114,18 +115,13 @@
         window[id].resetZoom();
       }
   
-    async function updateFeatureValues(feature:string) {
+    async function navigateToFeature(feature:string) {
   
-      if (feature === targetFeature.id) {
-        return;
-      }
-  
-      targetFeature = driftProfiles[profileType].features[feature];
-      let rebuiltViz = await rebuildDriftViz(repository, name, version, timeWindow, max_data_points, feature, targetFeature);
-  
-      driftVizData = rebuiltViz[0];
-      featureDistVizData = rebuiltViz[1];
-  
+      // navigate to feature page
+      console.log("navigate to feature page");
+      let baseURL: string = `/opsml/model/card/monitoring/feature`;
+      goto(`${baseURL}?name=${name}&repository=${repository}&version=${version}&feature=${feature}&type=${profileType}`,  { invalidateAll: false });
+
     }
   
   
@@ -150,8 +146,7 @@
     }
   
     function handleFeatureUpdate(event) {
-    
-      updateFeatureValues(event.detail.feature);
+      navigateToFeature(event.detail.feature);
     }
   
   </script>
@@ -206,11 +201,11 @@
               <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
                 {#each features as feature}
                   {#if feature === targetFeature.id}
-                    <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+                    <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={() => navigateToFeature(feature)}>
                       <div class="text-white text-xs font-bold hover:text-darkpurple">{feature}</div>
                     </button>
                   {:else}
-                    <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={() => updateFeatureValues(feature)}>
+                    <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={() => navigateToFeature(feature)}>
                       <div class="text-darkpurple text-xs font-bold">{feature}</div>
                     </button>
                   {/if}

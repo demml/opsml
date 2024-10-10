@@ -80,8 +80,8 @@
               <td class="text-xs">{formatDate(alert.created_at)}</td>
               <td class="text-xs">{alert.id}</td>
               <td class="text-xs"><button type="button" class="badge variant-soft-primary" on:click={() => switchFeature(alert.feature)}>{alert.feature}</button></td>
-              <td class="text-xs">{alert.alerts["kind"]}</td>
-              <td class="text-xs">{alert.alerts["zone"]}</td>
+              <td class="text-xs">{alert.alert["kind"]}</td>
+              <td class="text-xs">{alert.alert["zone"]}</td>
               <td class="text-xs">
                 <button
                   type="button"

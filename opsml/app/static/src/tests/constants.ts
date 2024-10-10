@@ -506,7 +506,7 @@ export const exampleAlert: MonitorAlert = {
   repository: "example-repo",
   version: "1.0.0",
   feature: "example-feature",
-  alerts: {
+  alert: {
     alert1: "Description of alert 1",
     alert2: "Description of alert 2",
   },

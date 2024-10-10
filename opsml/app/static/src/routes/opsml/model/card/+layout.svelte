@@ -54,7 +54,7 @@
         tabSet = "versions";
     }
     else if ($page.url.pathname.includes("monitoring")) {
-        tabSet = "monitoring";
+        tabSet = "monitoring/feature";
     }
     else if ($page.url.pathname.includes("settings")) {
         tabSet = "settings";
@@ -121,7 +121,7 @@
             </div>
           </Tab>
 
-          <Tab bind:group={tabSet} name="monitoring" value="monitoring" on:click={() => showTabContent("monitoring")}>
+          <Tab bind:group={tabSet} name="monitoring" value="monitoring" on:click={() => showTabContent("monitoring/feature")}>
             <div class="flex flex-row  items-center">
               <Fa class="h-4 mr-1" icon={faMagnifyingGlass} color="#4b3978"/>
               <div class="font-semibold text-sm">Monitoring</div>
