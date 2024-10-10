@@ -5,17 +5,20 @@
   import Chart from 'chart.js/auto';
 	import { onMount } from 'svelte';
   import zoomPlugin from 'chartjs-plugin-zoom';
+  import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
 
 
   export let data;
   export let options;
   export let id;
+  export let maxHeight = "max-h-[450px]";
+  export let minHeight: string = "min-h-[250px]";
+  export let type = 'line';
   
 	let ctx;
 	let chartCanvas;
   let chart;
-  let type = 'line';
 
   function resetZoom(id) {
     // reset zoom
@@ -24,23 +27,15 @@
   }
 
   Chart.register(zoomPlugin);
+  Chart.register(annotationPlugin);
 
 	onMount(() => {
-     
-		  ctx = chartCanvas.getContext('2d');
-		  chart = new Chart(ctx, {
-				type: type,
-				data: data,
-        options: options
-
-
-		});
-
-    // @ts-ignore
-    window[id] = chart;
+    createChart();
     
     return () => {
-      chart.destroy();
+      if (chart) {
+        chart.destroy();
+      }
     };
 
 	});
@@ -49,9 +44,13 @@
 
     //check if chart.type is not undefined
     if (chart.type) {
+      // log chart id
+      console.log('Updating chart with id: ', id);
       chart.destroy();
       ctx = chartCanvas.getContext('2d');
       chart = new Chart(ctx, {
+
+        // @ts-ignore
         type: type,
         data: data,
         options: options
@@ -68,10 +67,25 @@
 
     }
 
+    function createChart() {
+    // log chart id
+    console.log('Creating chart with id: ', id);
+    ctx = chartCanvas.getContext('2d');
+    chart = new Chart(ctx, {
+      // @ts-ignore
+      type: type,
+      data: data,
+      options: options
+    });
+
+    // @ts-ignore
+    window[id] = chart;
+  }
+
 
 </script>
 
-<div class="pt-2 pb-10 rounded-2xl max-h-[450px] bg-surface-50 border-2 border-primary-500 shadow-md hover:border-secondary-500">
+<div class="pt-2 pb-10 rounded-2xl {minHeight} {maxHeight} bg-surface-50 border-2 border-primary-500 shadow-md shadow-primary-500">
 
   <div class="flex justify-between">
 

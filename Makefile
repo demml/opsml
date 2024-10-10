@@ -167,3 +167,11 @@ generate.docs:
 	-o ./docs/docs/api --docformat google
 	pip uninstall pdoc -y
 
+
+
+.PHONY: dev.scouter.reload
+dev.scouter.reload:
+	@echo "Reloading scouter"
+	-uv remove scouter-ml 
+	$(eval WHL_FILE=$(shell find ./test_scripts/dist -name "*.whl" | head -n 1))
+	uv add $(WHL_FILE)

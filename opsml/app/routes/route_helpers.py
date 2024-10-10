@@ -86,9 +86,9 @@ class AuditRouteHelper(RouteHelper):
 
         """
         return templates.TemplateResponse(
-            "include/audit/audit.html",
-            {
-                "request": request,
+            request=request,
+            name="include/audit/audit.html",
+            context={
                 "repositories": request.app.state.registries.model._registry.unique_repositories,
                 "models": None,
                 "selected_repository": None,
@@ -110,9 +110,9 @@ class AuditRouteHelper(RouteHelper):
         repositories = request.app.state.registries.model._registry.unique_repositories
         model_names = request.app.state.registries.model._registry.get_unique_card_names(repository=repository)
         return templates.TemplateResponse(
-            "include/audit/audit.html",
-            {
-                "request": request,
+            name="include/audit/audit.html",
+            request=request,
+            context={
                 "repositories": repositories,
                 "selected_repository": repository,
                 "models": model_names,

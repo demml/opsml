@@ -254,6 +254,7 @@
               data={metricVizData.data}
               type={plotSet}
               options={metricVizData.options}
+              id="metricChart"
             />
           {:else}
             <div class="flex justify-center items-center h-3/5">

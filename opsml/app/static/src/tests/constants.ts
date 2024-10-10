@@ -6,6 +6,9 @@ import {
   type Parameter,
   type ModelMetadata,
   type DataCardMetadata,
+  type MonitorAlert,
+  type MonitorAlerts,
+  type UpdateAlert,
 } from "$lib/scripts/types";
 
 export const user: User = {
@@ -397,4 +400,125 @@ export const sampleCardVersions = {
       },
     ],
   },
+};
+
+export const SpcDriftProfile = {
+  features: {
+    col1: {
+      id: "col1",
+      center: 0.0,
+      one_ucl: 0.0,
+      one_lcl: 0.0,
+      two_ucl: 0.0,
+      two_lcl: 0.0,
+      three_ucl: 0.0,
+      three_lcl: 0.0,
+      timestamp: "2024-08-29T01:10:45.652409",
+    },
+  },
+  config: {
+    sample_size: 100,
+    sample: true,
+    name: "test",
+    repository: "test",
+    version: "1.0.0",
+    feature_map: undefined,
+    targets: [],
+    alert_config: {
+      dispatch_type: "Console",
+      rule: {
+        rule: "8 8 8 8 8 8 8 8",
+        zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
+      },
+      schedule: "0 0 0 0 0 0 0 0",
+      dispatch_kwargs: {},
+    },
+  },
+  scouter_version: "1.0.0",
+};
+
+export const featureDriftValues = {
+  features: {
+    col_1: {
+      created_at: [
+        "2024-09-18T01:12:00",
+        "2024-09-18T01:26:24",
+        "2024-09-18T01:40:48",
+        "2024-09-18T01:55:12",
+        "2024-09-18T02:09:36",
+      ],
+      values: [
+        1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+        0.44125417583912063, -0.6577854789448841,
+      ],
+    },
+  },
+};
+
+export const allFeatureDriftValues = {
+  features: {
+    all_features: {
+      created_at: [
+        "2024-09-18T01:12:00",
+        "2024-09-18T01:26:24",
+        "2024-09-18T01:40:48",
+        "2024-09-18T01:55:12",
+        "2024-09-18T02:09:36",
+      ],
+      values: [
+        1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+        0.44125417583912063, -0.6577854789448841,
+      ],
+    },
+  },
+};
+
+export const exampleFeatureDistribution = {
+  name: "test",
+  repository: "test",
+  version: "1.0.0",
+  percentile_10: 0.0,
+  percentile_20: 0.0,
+  percentile_30: 0.0,
+  percentile_40: 0.0,
+  percentile_50: 0.0,
+  percentile_60: 0.0,
+  percentile_70: 0.0,
+  percentile_80: 0.0,
+  percentile_90: 0.0,
+  percentile_100: 0.0,
+  val_10: 0.0,
+  val_20: 0.0,
+  val_30: 0.0,
+  val_40: 0.0,
+  val_50: 0.0,
+  val_60: 0.0,
+  val_70: 0.0,
+  val_80: 0.0,
+  val_90: 0.0,
+  val_100: 0.0,
+};
+
+// Example usage
+export const exampleAlert: MonitorAlert = {
+  created_at: "2023-10-01T12:34:56Z",
+  name: "Example Alert",
+  repository: "example-repo",
+  version: "1.0.0",
+  feature: "example-feature",
+  alert: {
+    alert1: "Description of alert 1",
+    alert2: "Description of alert 2",
+  },
+  status: "active",
+  id: 1,
+};
+
+export const exampleAlerts: MonitorAlerts = {
+  alerts: [exampleAlert],
+};
+
+export const exampleUpdateAlert: UpdateAlert = {
+  message: "Example message",
+  status: "success",
 };

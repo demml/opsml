@@ -1,5 +1,6 @@
 import adapter from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { preprocessMeltUI, sequence } from "@melt-ui/pp";
 
 export default {
   kit: {
@@ -22,6 +23,6 @@ export default {
       "$routes/*": "./src/routes/*",
     },
   },
-  preprocess: vitePreprocess(),
+  preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
   vitePlugin: { exclude: ["./node_modules", "./.svelte-kit", "./.svelte"] },
 };

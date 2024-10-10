@@ -80,6 +80,7 @@ def get_hw_metrics(
         try:
             metrics = queue.get(timeout=1)
             run.runcard._registry.insert_hw_metrics([metrics])
+            queue.task_done()
 
         except Empty:
             continue
@@ -170,8 +171,6 @@ class _RunManager:
 
         # Create opsml active run
         runcard = self._load_runcard(run_name)
-
-        print(runcard.compute_environment)
 
         # create run_info
         run_info = RunInfo(run_id=self.run_id, run_name=runcard.name, runcard=runcard)

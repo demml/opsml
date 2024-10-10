@@ -4,7 +4,7 @@
 
 <script lang="ts">
 
-  import TimeChartDiv from "$lib/card/run/TimeChartDiv.svelte";
+  import TimeChartDiv from "$lib/card/TimeChartDiv.svelte";
   import type { ParsedHardwareMetrics, HardwareCharts, RunCard } from "$lib/scripts/types";
   import { createHardwareCharts, getHardwareMetrics, parseHardwareMetrics } from "$lib/scripts/utils";
   import { onMount } from "svelte";

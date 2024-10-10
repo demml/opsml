@@ -751,6 +751,22 @@ class ModelCardLoader(CardLoader):
         # download metadata
         self.download(lpath, rpath, SaveName.MODEL_METADATA.value, Suffix.JSON.value)
 
+    def load_drift_profile(self) -> None:
+        """Load drift profile to interface"""
+
+        if self.card.interface.drift_profile is not None:
+            logger.info("Drift profile already loaded")
+            return
+
+        rpath = Path(self.card.uri, SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
+        if not self.storage_client.exists(rpath):
+            return
+
+        with self._load_object(SaveName.DRIFT_PROFILE.value, Suffix.JSON.value) as lpath:
+            self.card.interface.load_drift_profile(lpath)
+
+        return
+
     @staticmethod
     def validate(card_type: str) -> bool:
         return CardType.MODELCARD.value in card_type
