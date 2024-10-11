@@ -118,7 +118,7 @@ class ObservabilityMetric(BaseModel):
 
 
 class ObservabilityMetrics(BaseModel):
-    metrics: List[ObservabilityMetric]
+    metrics: List[Optional[ObservabilityMetric]]
 
 
 class UpdateProfileStatus(BaseModel):

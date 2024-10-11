@@ -7,7 +7,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, List
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
