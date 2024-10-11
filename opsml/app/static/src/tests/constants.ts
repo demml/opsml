@@ -526,8 +526,7 @@ export const exampleUpdateAlert: UpdateAlert = {
 };
 
 export const exampleObservabilityMetrics = {
-  status: "success",
-  data: [
+  metrics: [
     {
       route_name: "test",
       created_aty: ["2023-10-01T12:34:56Z"],

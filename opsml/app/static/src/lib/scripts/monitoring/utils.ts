@@ -17,7 +17,7 @@ import {
 import { apiHandler } from "$lib/scripts/apiHandler";
 import {
   type MonitoringVizData,
-  type ObservabilityMetric,
+  type ObservabilityMetrics,
 } from "$lib/scripts/monitoring/types";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
@@ -816,7 +816,7 @@ export async function getObservabilityMetrics(
   version: string,
   time_window: string,
   max_data_points: number
-): Promise<ObservabilityMetric[]> {
+): Promise<ObservabilityMetrics> {
   const params = {
     repository: repository,
     name: name,
@@ -832,13 +832,6 @@ export async function getObservabilityMetrics(
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const response = (await values_response.json()) as Map<
-    string,
-    ObservabilityMetric[]
-  >;
-
-  // extras "data" key to the response
-  const metrics = response["data"] as ObservabilityMetric[];
-
-  return metrics;
+  const response = (await values_response.json()) as ObservabilityMetrics;
+  return response;
 }
