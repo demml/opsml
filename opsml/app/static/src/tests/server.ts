@@ -8,6 +8,7 @@ import {
   exampleAlerts,
   exampleUpdateAlert,
   exampleObservabilityMetrics,
+  exampleAlertMetrics,
 } from "./constants";
 
 const handlers = [
@@ -518,6 +519,17 @@ const handlers = [
   http.put(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
     return HttpResponse.json(exampleUpdateAlert);
   }),
+
+  http.get(
+    CommonPaths.MONITOR_ALERT_METRICS,
+    async ({ request, params, cookies }) => {
+      let response = {
+        status: "success",
+        data: exampleAlertMetrics,
+      };
+      return HttpResponse.json(response);
+    }
+  ),
 
   http.get(
     CommonPaths.OBSERVABILITY_METRICS,

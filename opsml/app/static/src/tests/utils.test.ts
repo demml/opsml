@@ -19,6 +19,7 @@ import {
   exampleAlerts,
   exampleUpdateAlert,
   exampleObservabilityMetrics,
+  exampleAlertMetrics,
 } from "./constants";
 import { graphs } from "./graphs";
 import * as monitoring from "../lib/scripts/monitoring/utils";
@@ -568,6 +569,17 @@ it("GetMonitorAlerts", async () => {
 it("UpdateMonitorAlerts", async () => {
   const response = await monitoring.updateMonitorAlert(0, "acknowledged");
   expect(response).toEqual(exampleUpdateAlert);
+});
+
+it("GetAlertMetrics", async () => {
+  const alertMetrics = await monitoring.getAlertMetrics(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100
+  );
+  expect(alertMetrics).toEqual(exampleAlertMetrics);
 });
 
 it("GetObservabilityMetrics", async () => {
