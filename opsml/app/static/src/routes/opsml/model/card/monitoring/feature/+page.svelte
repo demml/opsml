@@ -48,7 +48,7 @@
         maxDataPoints
       );
 
-      let alertMetricViz = await createAlertMetricViz(alertMetrics);
+      let alertMetricViz = createAlertMetricViz(alertMetrics);
       alertMetricVizData = alertMetricViz;
     }
 

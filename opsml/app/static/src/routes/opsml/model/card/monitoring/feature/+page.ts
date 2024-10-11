@@ -1,21 +1,12 @@
 import {
-  getDriftProfile,
   getFeatureDriftValues,
   createSpcDriftViz,
   createSpcFeatureDistributionViz,
-  getMonitorAlerts,
-  getAlertMetrics,
-  createAlertMetricViz,
 } from "$lib/scripts/monitoring/utils";
 import {
-  type SpcDriftProfile,
   type SpcFeatureDriftProfile,
-  type FeatureDriftValues,
-  TimeWindow,
-  type ChartjsData,
-  type MonitorAlerts,
-  type AlertMetrics,
   ProfileType,
+  type SpcDriftProfile,
 } from "$lib/scripts/types";
 import {
   type MonitoringVizData,
@@ -30,31 +21,31 @@ export async function load({ parent }) {
 
   const profiles = parentData.driftProfiles;
   const profileType: ProfileType = parentData.type;
-  const feature = parentData.feature;
+  const feature = parentData.feature as string;
   const timeWindow = parentData.timeWindow;
   const repository = parentData.repository;
   const name = parentData.name;
   const version = parentData.version;
   const max_data_points = parentData.max_data_points;
 
-  let profile = profiles[profileType];
-  let targetFeature: SpcFeatureDriftProfile = profile.features[feature];
+  const profile = profiles[profileType] as SpcDriftProfile;
+  const targetFeature: SpcFeatureDriftProfile = profile.features[feature];
 
-  let featureValues = (await getFeatureDriftValues(
+  const featureValues = await getFeatureDriftValues(
     repository,
     name,
     version,
     timeWindow,
     max_data_points,
     targetFeature.id
-  )) as FeatureDriftValues;
+  );
 
-  let driftVizData = createSpcDriftViz(
+  const driftVizData = createSpcDriftViz(
     featureValues.features[targetFeature.id],
     targetFeature
   );
 
-  let featureDistVizData = (await createSpcFeatureDistributionViz(
+  const featureDistVizData = await createSpcFeatureDistributionViz(
     repository,
     name,
     version,
@@ -62,19 +53,19 @@ export async function load({ parent }) {
     timeWindow,
     max_data_points,
     targetFeature
-  )) as ChartjsData;
+  );
 
-  let vizData: MonitoringVizData = {
+  const vizData: MonitoringVizData = {
     driftVizData,
     featureDistVizData,
   };
 
-  let monitorData: MonitorData = {
+  const monitorData: MonitorData = {
     vizData,
     feature: targetFeature,
   };
 
-  let returnData = {
+  const returnData = {
     ...parentData,
     driftProfiles: profiles,
     targetFeature,
