@@ -35,7 +35,7 @@ export async function load({ parent }) {
   const repository = parentData.repository;
   const name = parentData.name;
   const version = parentData.version;
-  const max_data_points = 1000;
+  const max_data_points = parentData.max_data_points;
 
   let profile = profiles[profileType];
   let targetFeature: SpcFeatureDriftProfile = profile.features[feature];
@@ -74,24 +74,6 @@ export async function load({ parent }) {
     feature: targetFeature,
   };
 
-  let alerts = (await getMonitorAlerts(
-    repository!,
-    name!,
-    version!
-  )) as MonitorAlerts;
-
-  let alertMetrics = (await getAlertMetrics(
-    repository!,
-    name!,
-    version!,
-    timeWindow,
-    max_data_points
-  )) as AlertMetrics;
-
-  let alertMetricVizData = (await createAlertMetricViz(
-    alertMetrics
-  )) as ChartjsData;
-
   let returnData = {
     ...parentData,
     driftProfiles: profiles,
@@ -99,8 +81,6 @@ export async function load({ parent }) {
     timeWindow: timeWindow,
     max_data_points: max_data_points,
     monitorData,
-    alerts,
-    alertMetricVizData,
   };
 
   return returnData;

@@ -39,7 +39,6 @@
 
   let timeWindows: string[] = Object.values(TimeWindow);
 
-
   async function navigate() {
     let baseURL: string = `/opsml/model/card/monitoring/feature`;
     goto(`${baseURL}?name=${name}&repository=${repository}&version=${version}&feature=${targetFeature}&type=${profileType}&time=${timeWindow}`,  { invalidateAll: false, noScroll: true });

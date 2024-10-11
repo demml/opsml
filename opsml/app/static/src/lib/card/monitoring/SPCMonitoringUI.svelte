@@ -11,6 +11,14 @@
   let driftVizId: string;
   $: driftVizId = "Drift values for " + monitorData.feature.id;
 
+  let feature: SpcFeatureDriftProfile;
+  $: feature = monitorData.feature;
+
+  let vizData: MonitoringVizData;
+  $: vizData = monitorData.vizData;
+
+
+
 
 </script>
 
@@ -18,9 +26,9 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-y-1 lg:gap-x-2">
     <div class="col-span-2 xl:col-span-3">
       <SpcTimeChartDiv
-        data={monitorData.vizData.driftVizData.data}
+        data={vizData.driftVizData.data}
         id={driftVizId}
-        options={monitorData.vizData.driftVizData.options}
+        options={vizData.driftVizData.options}
         minHeight="min-h-[400px]"
         maxHeight="max-h-[400px]"
       />
@@ -28,9 +36,8 @@
     </div>
     <div class="col-span-1">
       <SpcStats
-        feature_profile={monitorData.feature}
-        featureDistVizData={monitorData.vizData.featureDistVizData}
-        id={monitorData.feature.id}
+        feature_profile={feature}
+        featureDistVizData={vizData.featureDistVizData}
       />
     </div>
   </div>

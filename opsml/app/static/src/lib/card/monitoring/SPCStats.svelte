@@ -8,20 +8,30 @@
 
     export let feature_profile: SpcFeatureDriftProfile;
     export let featureDistVizData: ChartjsData;
-    export let id: string;
-
-    onMount(() => {
-      console.log(id);
-    });
 
 
-    let center_rounded = feature_profile.center.toFixed(2);
-    let one_lcl_rounded = feature_profile.one_lcl.toFixed(2);
-    let one_ucl_rounded = feature_profile.one_ucl.toFixed(2);
-    let two_lcl_rounded = feature_profile.two_lcl.toFixed(2);
-    let two_ucl_rounded = feature_profile.two_ucl.toFixed(2);
-    let three_lcl_rounded = feature_profile.three_lcl.toFixed(2);
-    let three_ucl_rounded = feature_profile.three_ucl.toFixed(2);
+    let center_rounded: string;
+    $: center_rounded = feature_profile.center.toFixed(2);
+
+    let one_lcl_rounded: string;
+    $: one_lcl_rounded = feature_profile.one_lcl.toFixed(2);
+
+    let one_ucl_rounded: string;
+    $: one_ucl_rounded = feature_profile.one_ucl.toFixed(2);
+
+    let two_lcl_rounded: string;
+    $: two_lcl_rounded = feature_profile.two_lcl.toFixed(2);
+
+    let two_ucl_rounded: string;
+    $: two_ucl_rounded = feature_profile.two_ucl.toFixed(2);
+
+    let three_lcl_rounded: string;
+    $: three_lcl_rounded = feature_profile.three_lcl.toFixed(2);
+
+    let three_ucl_rounded: string;
+    $: three_ucl_rounded = feature_profile.three_ucl.toFixed(2);
+
+
 
   </script>
 
@@ -33,7 +43,7 @@
         <div class="max-h-[180px] min-h-[180px]">
           <div class="flex flex-row items-center border-b-2 border-gray-400">
             <Fa icon={faComputer} color="#04cd9b"/>
-            <header class="pl-2 text-darkpurple text-lg font-bold">Feature Distribution {id}</header>
+            <header class="pl-2 text-darkpurple text-lg font-bold">Feature Distribution</header>
           </div>
           <div class="min-h-[150px]">
             <IndividualChart
