@@ -21,6 +21,7 @@ class ScouterRoutes:
     PROFILE_STATUS = "profile/status"
     ALERTS = "alerts"
     ALERT_METRICS = "alerts/metrics"
+    OBSERVABILITY_METRICS = "observability/metrics"
 
 
 class ScouterServerClient(ApiClient):
@@ -330,6 +331,52 @@ class ScouterServerClient(ApiClient):
                 "active": [],
                 "acknowledged": [],
             }
+
+    def get_observability_metrics(
+        self,
+        repository: str,
+        name: str,
+        version: str,
+        time_window: str,
+        max_data_points: int,
+    ) -> List[Dict[str, Any]]:
+        """Get monitoring observability metrics from scouter server
+
+        Args:
+            repository:
+                Model repository
+            name:
+                Model name
+            version:
+                Model version
+            time_window:
+                Time window
+            max_data_points:
+                Maximum data points
+
+        Returns:
+            Alert metrics is a given time period
+        """
+
+        params = {
+            "repository": repository,
+            "name": name,
+            "version": version,
+            "time_window": time_window,
+            "max_data_points": max_data_points,
+        }
+
+        try:
+            response = self.request(
+                route=ScouterRoutes.OBSERVABILITY_METRICS,
+                request_type=RequestType.GET,
+                params=params,
+            )
+
+            return cast(List[Dict[str, Any]], response["data"])
+
+        except Exception:  # pylint: disable=broad-except
+            return []
 
 
 SCOUTER_SERVER_CLIENT = None

@@ -7,7 +7,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import APIRouter, HTTPException, Request, status
 from scouter import DriftType, SpcDriftProfile
@@ -28,6 +28,7 @@ from opsml.scouter.types import (
     UpdateAlert,
     UpdateAlertRequest,
     UpdateProfileStatus,
+    ObservabilityMetrics,
 )
 from opsml.storage.client import StorageClientBase
 from opsml.types import RegistryTableNames, SaveName, Suffix
@@ -445,4 +446,46 @@ def update_profile_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update alert",
+        ) from error
+
+
+@router.get("/scouter/observability/metrics", name="monitoring observability metrics", response_model=ObservabilityMetrics)
+def get_observability_metrics(
+    request: Request,
+    repository: str,
+    name: str,
+    version: str,
+    time_window: str,
+    max_data_points: int,
+) -> ObservabilityMetrics:
+    """Gets monitoring observability metrics from the scouter-server. This is a UI only route
+
+    Args:
+        request:
+            FastAPI request object
+        repository:
+            Model repository
+        name:
+            Model name
+        version:
+            Model version
+        time_window:
+            Time window
+        max_data_points:
+            Maximum data points
+
+    Returns:
+        AlertMetrics
+    """
+
+    client: ScouterServerClient = request.app.state.scouter_client
+
+    try:
+        values = client.get_observability_metrics(repository, name, version, time_window, max_data_points)
+        return ObservabilityMetrics(metrics=values)
+    except Exception as error:
+        logger.error(f"Failed to retrieve alert metrics: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve alert metrics",
         ) from error
