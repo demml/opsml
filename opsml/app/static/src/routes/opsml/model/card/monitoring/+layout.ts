@@ -65,8 +65,6 @@ export async function load({ url }) {
 
     const alertMetricVizData = createAlertMetricViz(alertMetrics);
 
-    console.log("hello");
-
     return {
       repository: repository,
       name: name,

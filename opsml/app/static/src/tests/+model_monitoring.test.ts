@@ -7,20 +7,24 @@ import {
 } from "./constants";
 import {
   type DriftValues,
+  ProfileType,
   type SpcFeatureDriftProfile,
   TimeWindow,
+  type AlertMetrics,
 } from "$lib/scripts/types";
 import MonitoringPage from "../routes/opsml/model/card/monitoring/feature/+page.svelte";
 import {
+  createAlertMetricViz,
   createSpcDriftViz,
   createSpcFeatureDistributionViz,
 } from "$lib/scripts/monitoring/utils";
+import type { MonitorData } from "$lib/scripts/monitoring/types";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-it("render Scouter Monitoring Page", () => {
+it("render Scouter Monitoring Page", async () => {
   let driftprofiles = new Map();
   driftprofiles["SPC"] = SpcDriftProfile;
 
@@ -32,7 +36,7 @@ it("render Scouter Monitoring Page", () => {
   let featureProfile: SpcFeatureDriftProfile = SpcDriftProfile.features["col1"];
 
   let driftVizData = createSpcDriftViz(driftValues, featureProfile);
-  let featureDistVizData = createSpcFeatureDistributionViz(
+  let featureDistVizData = await createSpcFeatureDistributionViz(
     "repository",
     "model",
     "0.1.0",
@@ -42,21 +46,39 @@ it("render Scouter Monitoring Page", () => {
     featureProfile
   );
 
-  const data = {
-    driftprofiles: driftprofiles,
-    targetFeature:
-      SpcDriftProfile.features[Object.keys(SpcDriftProfile.features)[0]],
-    features: Object.keys(SpcDriftProfile.features),
+  let alertMetrics: AlertMetrics = {
+    created_at: ["2021-08-10T00:00:00Z"],
+    acknowledged: [0],
+    active: [0],
+    alert_count: [0],
+  };
+
+  let alertMetricVizData = createAlertMetricViz(alertMetrics);
+
+  let vizData = {
     driftVizData: driftVizData,
     featureDistVizData: featureDistVizData,
-    timeWindow: TimeWindow.TwentyFourHours,
-    max_data_points: 1000,
+  };
+
+  let monitorData: MonitorData = {
+    vizData,
+    feature: SpcDriftProfile.features["col1"],
+  };
+
+  const data = {
     name: "model-1",
     repository: "ml-platform-1",
     version: "0.1.0",
-    alerts: exampleAlerts,
+    feature: "col1",
+    type: ProfileType.SPC,
+    driftprofiles,
     showConfig: false,
-    profileType: "SPC",
+    timeWindow: "24h",
+    alerts: exampleAlerts,
+    alertMetricVizData,
+    max_data_points: 1000,
+    targetFeature: SpcDriftProfile.features["col1"],
+    monitorData,
   };
   render(MonitoringPage, { data });
 });
