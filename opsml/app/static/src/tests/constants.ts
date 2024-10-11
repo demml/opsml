@@ -9,6 +9,7 @@ import {
   type MonitorAlert,
   type MonitorAlerts,
   type UpdateAlert,
+  type AlertMetrics,
 } from "$lib/scripts/types";
 import { error } from "jquery";
 
@@ -556,4 +557,11 @@ export const exampleObservabilityMetrics = {
       status_counts: [{ "200": 10 }],
     },
   ],
+};
+
+export const exampleAlertMetrics: AlertMetrics = {
+  created_at: ["2023-10-01T12:34:56Z"],
+  acknowledged: [1],
+  active: [1],
+  alert_count: [1],
 };
