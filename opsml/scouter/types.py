@@ -101,6 +101,26 @@ class AlertMetrics(BaseModel):
     acknowledged: List[int]
 
 
+class ObservabilityMetric(BaseModel):
+    route_name: str
+    created_at: List[str]
+    total_request_count: int
+    total_error_count: int
+    p5: List[float]
+    p25: List[float]
+    p50: List[float]
+    p95: List[float]
+    p99: List[float]
+    request_count: List[int]
+    error_count: List[int]
+    error_latency: List[float]
+    status_counts: List[Dict[str, int]]
+
+
+class ObservabilityMetrics(BaseModel):
+    metrics: List[ObservabilityMetric]
+
+
 class UpdateProfileStatus(BaseModel):
     name: str
     repository: str
