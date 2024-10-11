@@ -4,6 +4,7 @@ import {
   createAlertMetricViz,
   getMonitorAlerts,
 } from "$lib/scripts/monitoring/utils";
+import { getScreenSize } from "$lib/scripts/utils";
 import {
   type SpcDriftProfile,
   ProfileType,
@@ -27,7 +28,7 @@ export async function load({ url }) {
   let feature = (url as URL).searchParams.get("feature") as string | undefined;
   let type = (url as URL).searchParams.get("type") as string | undefined;
   let timeWindow = (url as URL).searchParams.get("time") as string | undefined;
-  let max_data_points = 1000;
+  let max_data_points = getScreenSize();
 
   timeWindow = timeWindow || TimeWindow.TwentyFourHours;
   let profiles: Map<ProfileType, SpcDriftProfile> = new Map();
@@ -55,6 +56,26 @@ export async function load({ url }) {
       type = ProfileType.SPC;
     }
 
+    let alerts = (await getMonitorAlerts(
+      repository!,
+      name!,
+      version!
+    )) as MonitorAlerts;
+
+    let alertMetrics = (await getAlertMetrics(
+      repository!,
+      name!,
+      version!,
+      timeWindow,
+      max_data_points
+    )) as AlertMetrics;
+
+    let alertMetricVizData = (await createAlertMetricViz(
+      alertMetrics
+    )) as ChartjsData;
+
+    console.log("hello");
+
     return {
       repository: repository,
       name: name,
@@ -65,6 +86,9 @@ export async function load({ url }) {
       driftProfiles: profiles,
       showConfig: false,
       timeWindow: timeWindow,
+      alerts: alerts,
+      alertMetricVizData: alertMetricVizData,
+      max_data_points: max_data_points,
     };
   }
   return {
@@ -76,5 +100,6 @@ export async function load({ url }) {
     driftProfiles: profiles,
     showConfig: false,
     timeWindow: timeWindow,
+    max_data_points: max_data_points,
   };
 }

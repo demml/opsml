@@ -1,13 +1,30 @@
 <script lang="ts">
 
-  import {  type MonitorAlerts, type ChartjsData } from "$lib/scripts/types";
+  import {  ProfileType, type MonitorAlerts, type ChartjsData } from "$lib/scripts/types";
+  import { getAlertMetrics, createAlertMetricViz } from "$lib/scripts/monitoring/utils";
   import SpcTimeChartDiv from '$lib/card/monitoring/SpcTimeChart.svelte';
   import AlertDiv from "$lib/card/monitoring/Alerts.svelte";
   import Fa from 'svelte-fa';
   import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+  import { goto } from "$app/navigation";
 
   export let alertMetricVizData: ChartjsData;
   export let alerts: MonitorAlerts;
+  export let repository: string;
+  export let name: string;
+  export let version: string;
+  export let timeWindow: string;
+
+  let baseURL: string = `/opsml/model/card/monitoring/feature`;
+
+
+  function handleSwitchFeature(event) {
+    const { feature } = event.detail;
+    goto(`${baseURL}?name=${name}&repository=${repository}&version=${version}&feature=${feature}&type=${ProfileType.SPC}&time=${timeWindow}`,  { invalidateAll: false, noScroll: true });
+
+
+    // Add your logic to handle the feature switch here
+  }
 
 </script>
 
@@ -41,7 +58,7 @@
           <header class="pl-2 text-secondary-600 text-lg font-bold">Active Alerts</header>
         </div>
         <div id="table" class="col-span-1 min-h-[300px] max-h-[300px] rounded-2xl border border-2 border-primary-500 overflow-y-auto mb-4 shadow-md shadow-primary-500">
-          <AlertDiv alerts={alerts}/>
+          <AlertDiv alerts={alerts} on:switchFeature={handleSwitchFeature}/>
         </div>
       </div>
     </div>

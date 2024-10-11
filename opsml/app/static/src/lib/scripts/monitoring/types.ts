@@ -23,4 +23,5 @@ export interface MonitoringLayoutPage {
   driftProfiles: Map<string, any>;
   showConfig: boolean;
   timeWindow: string;
+  max_data_points: number;
 }

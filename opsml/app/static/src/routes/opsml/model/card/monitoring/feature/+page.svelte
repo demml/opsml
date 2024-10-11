@@ -1,7 +1,8 @@
 
 <script lang="ts">
-    import { type SpcFeatureDriftProfile, type MonitorAlerts , ProfileType, type ChartjsData } from "$lib/scripts/types";
-    import  {type MonitorData, type MonitoringVizData} from "$lib/scripts/monitoring/types";
+    import { type MonitorAlerts , ProfileType, type ChartjsData } from "$lib/scripts/types";
+    import  {type MonitorData } from "$lib/scripts/monitoring/types";
+    import { getScreenSize } from "$lib/scripts/utils";
     import { rebuildSpcDriftViz , getAlertMetrics, createAlertMetricViz} from "$lib/scripts/monitoring/utils";
     import { onMount } from 'svelte';
     import SpcMonitorUI from "$lib/card/monitoring/SpcMonitoringUI.svelte";
@@ -39,50 +40,26 @@
 
 
     async function reloadAlerts(maxDataPoints) {
-        let alertMetrics = await getAlertMetrics(
-          repository,
-          name,
-          version,
-          timeWindow,
-          maxDataPoints
-        );
+      let alertMetrics = await getAlertMetrics(
+        repository,
+        name,
+        version,
+        timeWindow,
+        maxDataPoints
+      );
 
-        let alertMetricViz = await createAlertMetricViz(alertMetrics);
-        alertMetricVizData = alertMetricViz;
-      }
-
+      let alertMetricViz = await createAlertMetricViz(alertMetrics);
+      alertMetricVizData = alertMetricViz;
+    }
 
     async function checkScreenSize() {
-  
-      if (window.innerWidth < 640) { // Check if screen width is less than 768px
-        max_data_points = 100;
-
-      } else if (window.innerWidth < 768) { // Check if screen width is greater than or equal to 768px and less than 1024px
-
-        max_data_points = 200;
-
-      } else if (window.innerWidth < 1024) {
-        max_data_points = 400;
-      
-      } else if (window.innerWidth < 1280) {
-        max_data_points = 600;
-        
-      } else if (window.innerWidth < 1536) {
-        max_data_points = 800;
-
-      } else { // Check if screen width is greater than or equal to 1024px
-        // Call your function for large screen size
-        max_data_points = 1000;
-      }
-      
-      //await navigate();
+      max_data_points = getScreenSize();
      let  monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, monitorData.feature.id, monitorData.feature);
 
       monitorData = {
         vizData: monitorVizData,
         feature: monitorData.feature,
       };
-
       await reloadAlerts(max_data_points);
 
     }
@@ -114,7 +91,14 @@
 
 
 <SpcMonitorUI {monitorData} />
-<SpcAlertUI {alerts} {alertMetricVizData} />
+<SpcAlertUI 
+          {alerts} 
+          {alertMetricVizData} 
+          {repository} 
+          {name} 
+          {version} 
+          {timeWindow}
+        />
 
 
 
