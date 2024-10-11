@@ -30,12 +30,6 @@ export async function load({ url }) {
   let max_data_points = 1000;
 
   timeWindow = timeWindow || TimeWindow.TwentyFourHours;
-
-  // log values
-  console.log("feature: ", feature);
-  console.log("type: ", type);
-  console.log("timeWindow: ", timeWindow);
-
   let profiles: Map<ProfileType, SpcDriftProfile> = new Map();
 
   profiles[ProfileType.SPC] = (
@@ -61,24 +55,6 @@ export async function load({ url }) {
       type = ProfileType.SPC;
     }
 
-    let alerts = (await getMonitorAlerts(
-      repository!,
-      name!,
-      version!
-    )) as MonitorAlerts;
-
-    let alertMetrics = (await getAlertMetrics(
-      repository!,
-      name!,
-      version!,
-      timeWindow,
-      max_data_points
-    )) as AlertMetrics;
-
-    let alertMetricVizData = (await createAlertMetricViz(
-      alertMetrics
-    )) as ChartjsData;
-
     return {
       repository: repository,
       name: name,
@@ -89,8 +65,6 @@ export async function load({ url }) {
       driftProfiles: profiles,
       showConfig: false,
       timeWindow: timeWindow,
-      alertMetricVizData: alertMetricVizData,
-      alerts: alerts,
     };
   }
   return {

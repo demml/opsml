@@ -20,20 +20,21 @@ import {
 import {
   type MonitoringVizData,
   type MonitoringLayoutPage,
+  type MonitorData,
 } from "$lib/scripts/monitoring/types";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ parent }) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  const data = (await parent()) as MonitoringLayoutPage;
+  const parentData = (await parent()) as MonitoringLayoutPage;
 
-  const profiles = data.driftProfiles;
-  const profileType: ProfileType = data.type;
-  const feature = data.feature!;
-  const timeWindow = data.timeWindow;
-  const repository = data.repository;
-  const name = data.name;
-  const version = data.version;
+  const profiles = parentData.driftProfiles;
+  const profileType: ProfileType = parentData.type;
+  const feature = parentData.feature;
+  const timeWindow = parentData.timeWindow;
+  const repository = parentData.repository;
+  const name = parentData.name;
+  const version = parentData.version;
   const max_data_points = 1000;
 
   let profile = profiles[profileType];
@@ -68,13 +69,38 @@ export async function load({ parent }) {
     featureDistVizData,
   };
 
+  let monitorData: MonitorData = {
+    vizData,
+    feature: targetFeature,
+  };
+
+  let alerts = (await getMonitorAlerts(
+    repository!,
+    name!,
+    version!
+  )) as MonitorAlerts;
+
+  let alertMetrics = (await getAlertMetrics(
+    repository!,
+    name!,
+    version!,
+    timeWindow,
+    max_data_points
+  )) as AlertMetrics;
+
+  let alertMetricVizData = (await createAlertMetricViz(
+    alertMetrics
+  )) as ChartjsData;
+
   let returnData = {
-    ...data,
+    ...parentData,
     driftProfiles: profiles,
     targetFeature,
     timeWindow: timeWindow,
     max_data_points: max_data_points,
-    monitorVizData: vizData,
+    monitorData,
+    alerts,
+    alertMetricVizData,
   };
 
   return returnData;

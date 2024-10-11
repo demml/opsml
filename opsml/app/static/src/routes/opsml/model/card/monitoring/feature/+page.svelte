@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { type SpcFeatureDriftProfile, type MonitorAlerts , ProfileType, type ChartjsData } from "$lib/scripts/types";
-    import  {type MonitoringVizData} from "$lib/scripts/monitoring/types";
+    import  {type MonitorData, type MonitoringVizData} from "$lib/scripts/monitoring/types";
     import { rebuildSpcDriftViz , getAlertMetrics, createAlertMetricViz} from "$lib/scripts/monitoring/utils";
     import { onMount } from 'svelte';
     import SpcMonitorUI from "$lib/card/monitoring/SpcMonitoringUI.svelte";
@@ -10,11 +10,8 @@
     /** @type {import('./$types').PageData} */
     export let data;
 
-    let targetFeature: SpcFeatureDriftProfile;
-    $: targetFeature = data.targetFeature;
-
-    let monitorVizData: MonitoringVizData;
-    $: monitorVizData = data.monitorVizData;
+    let monitorData: MonitorData;
+    $: monitorData = data.monitorData;
 
     let max_data_points: number;
     $: max_data_points = data.max_data_points;
@@ -35,14 +32,13 @@
     $: timeWindow = data.timeWindow;
 
     let alerts: MonitorAlerts;
-    alerts = data.alerts;
+    $: alerts = data.alerts;
 
     let alertMetricVizData: ChartjsData;
-    alertMetricVizData = data.alertMetricVizData;
+    $: alertMetricVizData = data.alertMetricVizData;
 
 
     async function reloadAlerts(maxDataPoints) {
-        console.log(maxDataPoints);
         let alertMetrics = await getAlertMetrics(
           repository,
           name,
@@ -80,7 +76,13 @@
       }
       
       //await navigate();
-      monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+     let  monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, monitorData.feature.id, monitorData.feature);
+
+      monitorData = {
+        vizData: monitorVizData,
+        feature: monitorData.feature,
+      };
+
       await reloadAlerts(max_data_points);
 
     }
@@ -111,7 +113,7 @@
 </script>
 
 
-<SpcMonitorUI {targetFeature} {monitorVizData} />
+<SpcMonitorUI {monitorData} />
 <SpcAlertUI {alerts} {alertMetricVizData} />
 
 
