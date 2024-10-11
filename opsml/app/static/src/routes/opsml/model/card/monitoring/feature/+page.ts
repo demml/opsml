@@ -63,28 +63,9 @@ export async function load({ parent }) {
     targetFeature
   )) as ChartjsData;
 
-  let alerts = (await getMonitorAlerts(
-    repository,
-    name,
-    version
-  )) as MonitorAlerts;
-
-  let alertMetrics = (await getAlertMetrics(
-    repository,
-    name,
-    version,
-    timeWindow,
-    max_data_points
-  )) as AlertMetrics;
-
-  let alertMetricVizData = (await createAlertMetricViz(
-    alertMetrics
-  )) as ChartjsData;
-
   let vizData: MonitoringVizData = {
     driftVizData,
     featureDistVizData,
-    alertMetricVizData,
   };
 
   let returnData = {
@@ -93,7 +74,6 @@ export async function load({ parent }) {
     targetFeature,
     timeWindow: timeWindow,
     max_data_points: max_data_points,
-    alerts,
     monitorVizData: vizData,
   };
 
