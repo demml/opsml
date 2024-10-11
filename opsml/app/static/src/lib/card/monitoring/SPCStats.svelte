@@ -4,9 +4,15 @@
     import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
     import Fa from 'svelte-fa';
     import { faComputer } from '@fortawesome/free-solid-svg-icons';
+    import { onMount } from "svelte";
 
     export let feature_profile: SpcFeatureDriftProfile;
     export let featureDistVizData: ChartjsData;
+    export let id: string;
+
+    onMount(() => {
+      console.log(id);
+    });
 
 
     let center_rounded = feature_profile.center.toFixed(2);
@@ -27,7 +33,7 @@
         <div class="max-h-[180px] min-h-[180px]">
           <div class="flex flex-row items-center border-b-2 border-gray-400">
             <Fa icon={faComputer} color="#04cd9b"/>
-            <header class="pl-2 text-darkpurple text-lg font-bold">Feature Distribution</header>
+            <header class="pl-2 text-darkpurple text-lg font-bold">Feature Distribution {id}</header>
           </div>
           <div class="min-h-[150px]">
             <IndividualChart

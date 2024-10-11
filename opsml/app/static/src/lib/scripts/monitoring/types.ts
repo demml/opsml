@@ -1,8 +1,17 @@
-import type { ChartjsData, ProfileType } from "$lib/scripts/types";
+import type {
+  ChartjsData,
+  ProfileType,
+  SpcFeatureDriftProfile,
+} from "$lib/scripts/types";
 
 export interface MonitoringVizData {
   driftVizData: ChartjsData;
   featureDistVizData: ChartjsData;
+}
+
+export interface MonitorData {
+  vizData: MonitoringVizData;
+  feature: SpcFeatureDriftProfile;
 }
 
 export interface MonitoringLayoutPage {

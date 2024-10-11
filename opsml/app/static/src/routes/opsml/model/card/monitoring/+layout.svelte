@@ -1,14 +1,11 @@
 <script lang="ts">
 
-  import { type SpcDriftProfile, TimeWindow, ProfileType, type MonitorAlerts, type ChartjsData } from "$lib/scripts/types";
-  import { getAlertMetrics, createAlertMetricViz } from "$lib/scripts/monitoring/utils";
+  import { type SpcDriftProfile, TimeWindow, ProfileType } from "$lib/scripts/types";
   import logo from '$lib/images/opsml-green.ico';
   import scouter_logo from '$lib/images/scouter.svg';
   import Dropdown from "$lib/components/Dropdown.svelte";
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
   import { goto } from '$app/navigation';
-  import SpcAlertUI from "$lib/card/monitoring/SpcAlertUI.svelte";
-  import { onMount } from 'svelte';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
