@@ -3,6 +3,9 @@ import {
   getAlertMetrics,
   createAlertMetricViz,
   getMonitorAlerts,
+  getObservabilityMetrics,
+  createObservabilityViz,
+  type RouteVizData,
 } from "$lib/scripts/monitoring/utils";
 import { getScreenSize } from "$lib/scripts/utils";
 import {
@@ -65,6 +68,19 @@ export async function load({ url }) {
 
     const alertMetricVizData = createAlertMetricViz(alertMetrics);
 
+    const observabilityMetrics = await getObservabilityMetrics(
+      repository!,
+      name!,
+      version!,
+      timeWindow,
+      max_data_points
+    );
+
+    let routeViz: RouteVizData[] = [];
+    if (observabilityMetrics.metrics.length > 0) {
+      routeViz = createObservabilityViz(observabilityMetrics);
+    }
+
     return {
       repository: repository,
       name: name,
@@ -78,6 +94,7 @@ export async function load({ url }) {
       alerts: alerts,
       alertMetricVizData: alertMetricVizData,
       max_data_points: max_data_points,
+      routeViz,
     };
   }
   return {

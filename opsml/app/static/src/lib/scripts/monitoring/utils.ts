@@ -835,3 +835,144 @@ export async function getObservabilityMetrics(
   const response = (await values_response.json()) as ObservabilityMetrics;
   return response;
 }
+
+export interface RouteVizData {
+  route_name: string;
+  requests_per_sec: number;
+  errors: number;
+  requestViz: ChartjsData;
+  latencyViz: ChartjsData;
+}
+
+function buildChart(
+  label: string[],
+  labels: Date[],
+  values: number[][]
+): ChartjsData {
+  const grace = "10%";
+  const legend = {
+    display: false,
+  };
+
+  const zoomOptions = {
+    pan: {
+      enabled: true,
+      mode: "xy",
+      modifierKey: "ctrl",
+    },
+    zoom: {
+      mode: "xy",
+      drag: {
+        enabled: true,
+        borderColor: "rgb(54, 162, 235)",
+        borderWidth: 1,
+        backgroundColor: "rgba(54, 162, 235, 0.3)",
+      },
+    },
+  };
+
+  // add eslint ignore
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  let datasets: any[] = [];
+
+  for (let i = 0; i < values.length; i++) {
+    datasets.push({
+      label: label[i],
+      data: values[i],
+      borderColor: "rgba(0, 0, 0, 1)",
+      backgroundColor: "rgba(0, 0, 0, 1)",
+      pointRadius: 0,
+      tension: 0.1,
+    });
+  }
+
+  const graphData = {
+    labels: labels,
+    datasets: datasets,
+  };
+
+  return {
+    type: "line",
+    data: graphData,
+    options: {
+      plugins: {
+        zoom: zoomOptions,
+        legend,
+        responsive: true,
+        onresize: handleResize,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            border: {
+              width: 2,
+              color: "rgba(0, 0, 0, 1)",
+            },
+            grid: {
+              display: false,
+            },
+            type: "time",
+            time: {
+              displayFormats: {
+                year: "YYYY",
+                day: "DD-MM-YYYY",
+                hour: "HH:mm",
+                minute: "HH:mm",
+                second: "HH:mm:ss",
+              },
+            },
+            title: { display: true, text: "Time" },
+            ticks: {
+              maxTicksLimit: 30,
+            },
+          },
+          y: {
+            grace: grace,
+            border: {
+              width: 2,
+              color: "rgba(0, 0, 0, 1)",
+            },
+            grid: {
+              display: false,
+            },
+            title: { display: true, text: "Feature Values" },
+            ticks: {
+              maxTicksLimit: 30,
+            },
+          },
+        },
+        layout: {
+          padding: 10,
+        },
+      },
+    },
+  };
+}
+
+export function createObservabilityViz(
+  metrics: ObservabilityMetrics
+): RouteVizData[] {
+  const routeVizData: RouteVizData[] = [];
+
+  // iterate over each
+  metrics.metrics.forEach((metric) => {
+    let labels = metric.created_at.map((date) => new Date(date));
+    let requests = metric.request_per_sec;
+
+    let p50 = metric.p50;
+    let p99 = metric.p99;
+
+    // build request chart
+    let requestVizData = buildChart(["Requests per sec"], labels, [requests]);
+    let latencyVizData = buildChart(["P50", "P99"], labels, [p50, p99]);
+
+    routeVizData.push({
+      route_name: metric.route_name,
+      requests_per_sec: metric.total_request_per_sec,
+      errors: metric.total_error_count,
+      requestViz: requestVizData, // build
+      latencyViz: latencyVizData,
+    });
+  });
+
+  return routeVizData;
+}

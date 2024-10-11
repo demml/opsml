@@ -6,6 +6,7 @@
   import Dropdown from "$lib/components/Dropdown.svelte";
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
   import { goto } from '$app/navigation';
+  import type { RouteVizData } from "$lib/scripts/monitoring/utils";
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -36,6 +37,9 @@
 
   let profileType: ProfileType;
   $: profileType = data.type;
+
+  let routeViz: RouteVizData[];
+  $: routeViz = data.routeViz;
 
   let timeWindows: string[] = Object.values(TimeWindow);
 
