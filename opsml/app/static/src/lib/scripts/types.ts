@@ -228,6 +228,7 @@ export enum CommonPaths {
   FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
   MONITOR_ALERTS = "/opsml/scouter/alerts",
   MONITOR_ALERT_METRICS = "/opsml/scouter/alerts/metrics",
+  OBSERVABILITY_METRICS = "/opsml/scouter/observability/metrics",
 }
 
 export enum CommonErrors {
