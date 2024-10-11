@@ -523,11 +523,7 @@ const handlers = [
   http.get(
     CommonPaths.MONITOR_ALERT_METRICS,
     async ({ request, params, cookies }) => {
-      let response = {
-        status: "success",
-        data: exampleAlertMetrics,
-      };
-      return HttpResponse.json(response);
+      return HttpResponse.json(exampleAlertMetrics);
     }
   ),
 
