@@ -590,5 +590,5 @@ it("GetObservabilityMetrics", async () => {
     "2day",
     100
   );
-  expect(metrics).toEqual(exampleObservabilityMetrics.data);
+  expect(metrics).toEqual(exampleObservabilityMetrics);
 });
