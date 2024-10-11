@@ -1,15 +1,14 @@
 <script lang="ts">
 
-  import { type ChartjsData, type SpcDriftProfile, type SpcFeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
-  import  {type MonitoringVizData} from "$lib/scripts/monitoring/types";
-  import { rebuildSpcDriftViz } from "$lib/scripts/monitoring/utils";
+  import { type SpcDriftProfile, TimeWindow, ProfileType, type MonitorAlerts, type ChartjsData } from "$lib/scripts/types";
+  import { getAlertMetrics, createAlertMetricViz } from "$lib/scripts/monitoring/utils";
   import logo from '$lib/images/opsml-green.ico';
-  import { onMount } from 'svelte';
   import scouter_logo from '$lib/images/scouter.svg';
   import Dropdown from "$lib/components/Dropdown.svelte";
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
-  import Test from "$lib/card/monitoring/Test.svelte";
   import { goto } from '$app/navigation';
+  import SpcAlertUI from "$lib/card/monitoring/SpcAlertUI.svelte";
+  import { onMount } from 'svelte';
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -41,6 +40,9 @@
   let profileType: ProfileType;
   $: profileType = data.type;
 
+  let max_data_points: number;
+  $: max_data_points = data.max_data_points;
+
   let timeWindows: string[] = Object.values(TimeWindow);
 
 
@@ -70,14 +72,14 @@ async function updateFeatureValues(feature:string) {
 
 }
 
-  function handleUpdate(event) {
-      showConfig = event.detail.showConfig;
-      driftProfiles[profileType].config = event.detail.updatedDriftConfig;
-    }
-  
-  function handleHide(event) {
+function handleUpdate(event) {
     showConfig = event.detail.showConfig;
+    driftProfiles[profileType].config = event.detail.updatedDriftConfig;
   }
+
+function handleHide(event) {
+  showConfig = event.detail.showConfig;
+}
 
 
 </script>

@@ -596,20 +596,9 @@ export async function rebuildSpcDriftViz(
     featureProfile
   );
 
-  let alertMetrics = await getAlertMetrics(
-    repository,
-    name,
-    version,
-    timeWindow,
-    max_data_points
-  );
-
-  let alertMetricViz = await createAlertMetricViz(alertMetrics);
-
   let monitorVizData: MonitoringVizData = {
     driftVizData: featureDriftViz,
     featureDistVizData: featureDistViz,
-    alertMetricVizData: alertMetricViz,
   };
 
   return monitorVizData;

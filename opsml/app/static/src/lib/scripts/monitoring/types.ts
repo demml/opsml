@@ -3,7 +3,6 @@ import type { ChartjsData, ProfileType } from "$lib/scripts/types";
 export interface MonitoringVizData {
   driftVizData: ChartjsData;
   featureDistVizData: ChartjsData;
-  alertMetricVizData: ChartjsData;
 }
 
 export interface MonitoringLayoutPage {

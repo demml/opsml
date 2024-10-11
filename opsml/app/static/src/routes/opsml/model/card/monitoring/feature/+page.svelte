@@ -1,23 +1,14 @@
 
 <script lang="ts">
-    import { type ChartjsData, type SpcDriftProfile, type SpcFeatureDriftProfile, type FeatureDriftValues, TimeWindow, type MonitorAlerts , ProfileType } from "$lib/scripts/types";
+    import { type SpcFeatureDriftProfile, type MonitorAlerts , ProfileType, type ChartjsData } from "$lib/scripts/types";
     import  {type MonitoringVizData} from "$lib/scripts/monitoring/types";
-    import { rebuildSpcDriftViz } from "$lib/scripts/monitoring/utils";
-    import logo from '$lib/images/opsml-green.ico';
+    import { rebuildSpcDriftViz , getAlertMetrics, createAlertMetricViz} from "$lib/scripts/monitoring/utils";
     import { onMount } from 'svelte';
-    import scouter_logo from '$lib/images/scouter.svg';
-    import Dropdown from "$lib/components/Dropdown.svelte";
-    import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
-    import Test from "$lib/card/monitoring/Test.svelte";
-    import { goto } from '$app/navigation';
-
+    import SpcMonitorUI from "$lib/card/monitoring/SpcMonitoringUI.svelte";
+    import SpcAlertUI from "$lib/card/monitoring/SpcAlertUI.svelte";
 
     /** @type {import('./$types').PageData} */
     export let data;
-
-
-    let driftProfiles: Map<ProfileType, SpcDriftProfile>;
-    $: driftProfiles = data.driftProfiles;
 
     let targetFeature: SpcFeatureDriftProfile;
     $: targetFeature = data.targetFeature;
@@ -37,14 +28,32 @@
     let version: string;
     $: version = data.version;
 
-    let alerts: MonitorAlerts;
-    $: alerts = data.alerts;
-
     let profileType: ProfileType;
     $: profileType = data.type;
 
     let timeWindow: string;
     $: timeWindow = data.timeWindow;
+
+    let alerts: MonitorAlerts;
+    alerts = data.alerts;
+
+    let alertMetricVizData: ChartjsData;
+    alertMetricVizData = data.alertMetricVizData;
+
+
+    async function reloadAlerts(maxDataPoints) {
+        console.log(maxDataPoints);
+        let alertMetrics = await getAlertMetrics(
+          repository,
+          name,
+          version,
+          timeWindow,
+          maxDataPoints
+        );
+
+        let alertMetricViz = await createAlertMetricViz(alertMetrics);
+        alertMetricVizData = alertMetricViz;
+      }
 
 
     async function checkScreenSize() {
@@ -72,6 +81,7 @@
       
       //await navigate();
       monitorVizData = await rebuildSpcDriftViz(repository, name, version, timeWindow, max_data_points, targetFeature.id, targetFeature);
+      await reloadAlerts(max_data_points);
 
     }
 
@@ -101,18 +111,8 @@
 </script>
 
 
-<Test
-    {driftProfiles}
-    {targetFeature}
-    {monitorVizData}
-    {alerts}
-    {profileType}
-    {timeWindow}
-    {max_data_points}
-    {name}
-    {repository}
-    {version}
-/>
+<SpcMonitorUI {targetFeature} {monitorVizData} />
+<SpcAlertUI {alerts} {alertMetricVizData} />
 
 
 

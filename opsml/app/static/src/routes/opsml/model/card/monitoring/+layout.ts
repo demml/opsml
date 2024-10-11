@@ -1,8 +1,16 @@
-import { getDriftProfile } from "$lib/scripts/monitoring/utils";
+import {
+  getDriftProfile,
+  getAlertMetrics,
+  createAlertMetricViz,
+  getMonitorAlerts,
+} from "$lib/scripts/monitoring/utils";
 import {
   type SpcDriftProfile,
   ProfileType,
   TimeWindow,
+  type AlertMetrics,
+  type ChartjsData,
+  type MonitorAlerts,
 } from "$lib/scripts/types";
 
 export const ssr = false;
@@ -19,6 +27,9 @@ export async function load({ url }) {
   let feature = (url as URL).searchParams.get("feature") as string | undefined;
   let type = (url as URL).searchParams.get("type") as string | undefined;
   let timeWindow = (url as URL).searchParams.get("time") as string | undefined;
+  let max_data_points = 1000;
+
+  timeWindow = timeWindow || TimeWindow.TwentyFourHours;
 
   // log values
   console.log("feature: ", feature);
@@ -50,6 +61,24 @@ export async function load({ url }) {
       type = ProfileType.SPC;
     }
 
+    let alerts = (await getMonitorAlerts(
+      repository!,
+      name!,
+      version!
+    )) as MonitorAlerts;
+
+    let alertMetrics = (await getAlertMetrics(
+      repository!,
+      name!,
+      version!,
+      timeWindow,
+      max_data_points
+    )) as AlertMetrics;
+
+    let alertMetricVizData = (await createAlertMetricViz(
+      alertMetrics
+    )) as ChartjsData;
+
     return {
       repository: repository,
       name: name,
@@ -59,7 +88,9 @@ export async function load({ url }) {
       type: type,
       driftProfiles: profiles,
       showConfig: false,
-      timeWindow: timeWindow || TimeWindow.TwentyFourHours,
+      timeWindow: timeWindow,
+      alertMetricVizData: alertMetricVizData,
+      alerts: alerts,
     };
   }
   return {
@@ -70,6 +101,6 @@ export async function load({ url }) {
     type: ProfileType.SPC,
     driftProfiles: profiles,
     showConfig: false,
-    timeWindow: TimeWindow.TwentyFourHours,
+    timeWindow: timeWindow,
   };
 }
