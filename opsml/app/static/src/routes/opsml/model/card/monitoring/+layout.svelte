@@ -7,6 +7,7 @@
   import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
   import { goto } from '$app/navigation';
   import type { RouteVizData } from "$lib/scripts/monitoring/utils";
+  import Observability from "$lib/card/monitoring/Observability.svelte";
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -137,6 +138,10 @@ function handleHide(event) {
         </div>
 
         <slot></slot>
+
+        {#if routeViz}
+        <Observability routeViz={routeViz} />
+        {/if}
 
       </div>  
 
