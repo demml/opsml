@@ -680,12 +680,9 @@ export async function getAlertMetrics(
     ).toString()}`
   );
 
-  const response = (await values_response.json()) as Record<
-    string,
-    AlertMetrics
-  >;
+  const response = (await values_response.json()) as AlertMetrics;
 
-  return response["data"];
+  return response;
 }
 
 export function createAlertMetricViz(alertMetrics: AlertMetrics): ChartjsData {
