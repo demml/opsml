@@ -23,10 +23,10 @@
   driftProfiles = data.driftProfiles;
 
   let targetFeature: string;
-  targetFeature = data.feature;
+  $: targetFeature = data.feature;
 
   let features: string[];
-  features = data.features;
+  $: features = data.features;
 
   let showConfig: boolean;
   $: showConfig = data.showConfig;
@@ -36,9 +36,6 @@
 
   let profileType: ProfileType;
   $: profileType = data.type;
-
-  let max_data_points: number;
-  $: max_data_points = data.max_data_points;
 
   let timeWindows: string[] = Object.values(TimeWindow);
 
