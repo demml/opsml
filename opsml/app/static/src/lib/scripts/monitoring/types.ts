@@ -31,14 +31,17 @@ export interface MonitoringLayoutPage {
 export interface ObservabilityMetric {
   route_name: string;
   created_at: string[];
+  total_request_per_sec: number;
+  total_error_per_sec: number;
   total_request_count: number;
   total_error_count: number;
   p5: number[];
+  p25: number[];
   p50: number[];
   p95: number[];
   p99: number[];
-  request_count: number[];
-  error_count: number[];
+  request_per_sec: number[];
+  error_per_sec: number[];
   error_latency: number[];
   status_counts: Record<string, number>[];
 }
