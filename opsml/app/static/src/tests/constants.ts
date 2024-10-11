@@ -10,6 +10,7 @@ import {
   type MonitorAlerts,
   type UpdateAlert,
 } from "$lib/scripts/types";
+import { error } from "jquery";
 
 export const user: User = {
   username: "test",
@@ -521,4 +522,38 @@ export const exampleAlerts: MonitorAlerts = {
 export const exampleUpdateAlert: UpdateAlert = {
   message: "Example message",
   status: "success",
+};
+
+export const exampleObservabilityMetrics = {
+  status: "success",
+  data: [
+    {
+      route_name: "test",
+      created_aty: ["2023-10-01T12:34:56Z"],
+      total_request_count: 100,
+      total_error_count: 10,
+      p5: [1],
+      p50: [1],
+      p95: [2],
+      p99: [3],
+      request_count: [10],
+      error_count: [1],
+      error_latency: [1],
+      status_counts: [{ "200": 10 }],
+    },
+    {
+      route_name: "test2",
+      created_aty: ["2023-10-01T12:34:56Z"],
+      total_request_count: 100,
+      total_error_count: 10,
+      p5: [1],
+      p50: [1],
+      p95: [2],
+      p99: [3],
+      request_count: [10],
+      error_count: [1],
+      error_latency: [1],
+      status_counts: [{ "200": 10 }],
+    },
+  ],
 };

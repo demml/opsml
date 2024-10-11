@@ -15,7 +15,10 @@ import {
   type AlertMetrics,
 } from "$lib/scripts/types";
 import { apiHandler } from "$lib/scripts/apiHandler";
-import { type MonitoringVizData } from "$lib/scripts/monitoring/types";
+import {
+  type MonitoringVizData,
+  type ObservabilityMetric,
+} from "$lib/scripts/monitoring/types";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -28,12 +31,15 @@ export function generateTimestampsAndZeros(x: number): TimestampData {
     timestamps.push(timestamp.toISOString());
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const zeros: number[] = new Array(30).fill(0);
 
   return { timestamps, zeros };
 }
 
-export function createTimeWindowTimestamps(timeWindow: string): TimestampData {
+export function createTimeWindowTimestamps(
+  timeWindow: TimeWindow
+): TimestampData {
   switch (timeWindow) {
     case TimeWindow.FiveMinutes:
       return generateTimestampsAndZeros(5);
@@ -87,7 +93,7 @@ export async function updateDriftProfile(
   name: string,
   profile: string
 ): Promise<UpdateProfileResponse> {
-  let body = {
+  const body = {
     name: name,
     repository: repository,
     version: version,
@@ -114,7 +120,7 @@ export async function getFeatureDriftValues(
   max_data_points: number,
   feature?: string
 ): Promise<FeatureDriftValues> {
-  let params = {
+  const params = {
     repository: repository,
     name: name,
     version: version,
@@ -134,7 +140,8 @@ export async function getFeatureDriftValues(
 
   // check if feature is available
   if (Object.keys(response.features).length === 0) {
-    let createdData = createTimeWindowTimestamps(time_window);
+    const window = TimeWindow[time_window] as TimeWindow;
+    const createdData = createTimeWindowTimestamps(window);
     response.features = {
       [feature!]: {
         created_at: createdData.timestamps,
@@ -160,7 +167,7 @@ export async function getSpcFeatureDistributionValues(
   max_data_points: number,
   feature: string
 ): Promise<SpcFeatureDistribution> {
-  let params = {
+  const params = {
     repository: repository,
     name: name,
     version: version,
@@ -199,11 +206,11 @@ export function createSpcDriftViz(
   driftValues: DriftValues,
   feature: SpcFeatureDriftProfile
 ): ChartjsData {
-  let labels = driftValues.created_at.map((date) => new Date(date));
-  let values = driftValues.values;
-  let label = feature.id;
-  let grace = "10%";
-  let legend = {
+  const labels = driftValues.created_at.map((date) => new Date(date));
+  const values = driftValues.values;
+  const label = feature.id;
+  const grace = "10%";
+  const legend = {
     display: false,
   };
 
@@ -224,7 +231,7 @@ export function createSpcDriftViz(
     },
   };
 
-  let data = {
+  const data = {
     labels: labels,
     datasets: [
       {
@@ -455,7 +462,7 @@ export function buildSpcFeatureDistributionViz(
   featureValues: SpcFeatureDistribution,
   feature: SpcFeatureDriftProfile
 ): ChartjsData {
-  let refData = [
+  const refData = [
     { x: feature.three_lcl, y: 0.01 },
     { x: feature.two_lcl, y: 0.049 },
     { x: feature.one_lcl, y: 0.25 },
@@ -465,7 +472,7 @@ export function buildSpcFeatureDistributionViz(
     { x: feature.three_ucl, y: 0.01 },
   ];
 
-  let currData = [
+  const currData = [
     { x: featureValues.percentile_10, y: featureValues.val_10 },
     { x: featureValues.percentile_20, y: featureValues.val_20 },
     { x: featureValues.percentile_30, y: featureValues.val_30 },
@@ -478,7 +485,7 @@ export function buildSpcFeatureDistributionViz(
     { x: featureValues.percentile_100, y: featureValues.val_100 },
   ];
 
-  let refDataset = {
+  const refDataset = {
     type: "line",
     data: refData,
     borderColor: "rgba(4, 205, 155, 1)",
@@ -491,7 +498,7 @@ export function buildSpcFeatureDistributionViz(
     order: 1,
   };
 
-  let currDataset = {
+  const currDataset = {
     type: "line",
     data: currData,
     backgroundColor: "rgba(75, 57, 120, 0.5)",
@@ -503,7 +510,7 @@ export function buildSpcFeatureDistributionViz(
     label: "Current",
   };
 
-  let data = {
+  const data = {
     datasets: [currDataset, refDataset],
   };
 
@@ -572,7 +579,7 @@ export async function rebuildSpcDriftViz(
   feature: string,
   featureProfile: SpcFeatureDriftProfile
 ): Promise<MonitoringVizData> {
-  let featureValues = await getFeatureDriftValues(
+  const featureValues = await getFeatureDriftValues(
     repository,
     name,
     version,
@@ -581,12 +588,12 @@ export async function rebuildSpcDriftViz(
     feature
   );
 
-  let featureDriftViz = createSpcDriftViz(
+  const featureDriftViz = createSpcDriftViz(
     featureValues.features[feature],
     featureProfile
   );
 
-  let featureDistViz = await createSpcFeatureDistributionViz(
+  const featureDistViz = await createSpcFeatureDistributionViz(
     repository,
     name,
     version,
@@ -596,7 +603,7 @@ export async function rebuildSpcDriftViz(
     featureProfile
   );
 
-  let monitorVizData: MonitoringVizData = {
+  const monitorVizData: MonitoringVizData = {
     driftVizData: featureDriftViz,
     featureDistVizData: featureDistViz,
   };
@@ -632,7 +639,7 @@ export async function updateMonitorAlert(
   id: number,
   status: string
 ): Promise<UpdateAlert> {
-  let body = {
+  const body = {
     id: id,
     status: status,
   };
@@ -659,7 +666,7 @@ export async function getAlertMetrics(
   time_window: string,
   max_data_points: number
 ): Promise<AlertMetrics> {
-  let params = {
+  const params = {
     repository: repository,
     name: name,
     version: version,
@@ -678,19 +685,17 @@ export async function getAlertMetrics(
   return response;
 }
 
-export async function createAlertMetricViz(
-  alertMetrics: AlertMetrics
-): Promise<ChartjsData> {
-  let labels = alertMetrics.created_at.map((date) => new Date(date));
-  let active = alertMetrics.active;
-  let acknowledged = alertMetrics.acknowledged;
+export function createAlertMetricViz(alertMetrics: AlertMetrics): ChartjsData {
+  const labels = alertMetrics.created_at.map((date) => new Date(date));
+  const active = alertMetrics.active;
+  const acknowledged = alertMetrics.acknowledged;
 
-  let grace = "10%";
-  let legend = {
+  const grace = "10%";
+  const legend = {
     display: false,
   };
 
-  let data = {
+  const data = {
     labels: labels,
     datasets: [
       {
@@ -794,7 +799,7 @@ export async function rebuildAlertMetricViz(
   timeWindow: string,
   max_data_points: number
 ): Promise<ChartjsData> {
-  let alertMetrics = await getAlertMetrics(
+  const alertMetrics = await getAlertMetrics(
     repository,
     name,
     version,
@@ -811,8 +816,8 @@ export async function getObservabilityMetrics(
   version: string,
   time_window: string,
   max_data_points: number
-): Promise<AlertMetrics> {
-  let params = {
+): Promise<ObservabilityMetric[]> {
+  const params = {
     repository: repository,
     name: name,
     version: version,
@@ -826,7 +831,14 @@ export async function getObservabilityMetrics(
     ).toString()}`
   );
 
-  const response = (await values_response.json()) as AlertMetrics;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const response = (await values_response.json()) as Map<
+    string,
+    ObservabilityMetric[]
+  >;
 
-  return response;
+  // extras "data" key to the response
+  const metrics = response["data"] as ObservabilityMetric[];
+
+  return metrics;
 }

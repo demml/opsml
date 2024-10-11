@@ -7,6 +7,7 @@ import {
   exampleFeatureDistribution,
   exampleAlerts,
   exampleUpdateAlert,
+  exampleObservabilityMetrics,
 } from "./constants";
 
 const handlers = [
@@ -517,6 +518,13 @@ const handlers = [
   http.put(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
     return HttpResponse.json(exampleUpdateAlert);
   }),
+
+  http.get(
+    CommonPaths.OBSERVABILITY_METRICS,
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json(exampleObservabilityMetrics);
+    }
+  ),
 ];
 
 export const server = setupServer(...handlers);

@@ -10,7 +10,7 @@ import {
   type SpcFeatureDriftProfile,
   TimeWindow,
 } from "$lib/scripts/types";
-import MonitoringPage from "../routes/opsml/model/card/monitoring/+page.svelte";
+import MonitoringPage from "../routes/opsml/model/card/monitoring/feature/+page.svelte";
 import {
   createSpcDriftViz,
   createSpcFeatureDistributionViz,
