@@ -3,6 +3,7 @@
     import Fa from 'svelte-fa'
     import { faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
     import Chart from 'chart.js/auto';
+    import { Filler } from 'chart.js';
     import { onMount, onDestroy } from 'svelte';
     import zoomPlugin from 'chartjs-plugin-zoom';
     import annotationPlugin from 'chartjs-plugin-annotation';
@@ -28,6 +29,7 @@
   
     Chart.register(zoomPlugin);
     Chart.register(annotationPlugin);
+    Chart.register(Filler);
   
     onMount(() => {
         createChart();

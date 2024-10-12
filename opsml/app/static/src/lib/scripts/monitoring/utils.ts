@@ -19,6 +19,7 @@ import {
   type MonitoringVizData,
   type ObservabilityMetrics,
 } from "$lib/scripts/monitoring/types";
+import { Chart, ChartData, type ChartOptions } from "chart.js";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
@@ -879,10 +880,11 @@ function buildChart(
     datasets.push({
       label: label[i],
       data: values[i],
-      borderColor: "rgba(0, 0, 0, 1)",
-      backgroundColor: "rgba(0, 0, 0, 1)",
+      borderColor: "rgba(4, 205, 155, 0.8)",
+      backgroundColor: "rgba(4, 205, 155, 0.2)",
+      fill: true,
       pointRadius: 0,
-      tension: 0.1,
+      tension: 0.2,
     });
   }
 
@@ -891,60 +893,61 @@ function buildChart(
     datasets: datasets,
   };
 
-  return {
-    type: "line",
-    data: graphData,
-    options: {
-      plugins: {
-        zoom: zoomOptions,
-        legend,
-        responsive: true,
-        onresize: handleResize,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            border: {
-              width: 2,
-              color: "rgba(0, 0, 0, 1)",
-            },
-            grid: {
-              display: false,
-            },
-            type: "time",
-            time: {
-              displayFormats: {
-                year: "YYYY",
-                day: "DD-MM-YYYY",
-                hour: "HH:mm",
-                minute: "HH:mm",
-                second: "HH:mm:ss",
-              },
-            },
-            title: { display: true, text: "Time" },
-            ticks: {
-              maxTicksLimit: 30,
-            },
-          },
-          y: {
-            grace: grace,
-            border: {
-              width: 2,
-              color: "rgba(0, 0, 0, 1)",
-            },
-            grid: {
-              display: false,
-            },
-            title: { display: true, text: "Feature Values" },
-            ticks: {
-              maxTicksLimit: 30,
-            },
+  const options: ChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      zoom: zoomOptions,
+      legend,
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          displayFormats: {
+            year: "YYYY",
+            day: "DD-MM-YYYY",
+            hour: "HH:mm",
+            minute: "HH:mm",
+            second: "HH:mm:ss",
           },
         },
-        layout: {
-          padding: 10,
+        title: { display: true, text: "Time" },
+        ticks: {
+          maxTicksLimit: 30,
+        },
+        grid: {
+          display: false,
+        },
+        border: {
+          width: 2,
+          color: "rgba(0, 0, 0, 1)",
+        },
+      },
+      y: {
+        grace: grace,
+        title: { display: true, text: "Feature Values" },
+        ticks: {
+          maxTicksLimit: 30,
+        },
+        grid: {
+          display: false,
+        },
+        border: {
+          width: 2,
+          color: "rgba(0, 0, 0, 1)",
         },
       },
     },
+    layout: {
+      padding: 10,
+    },
+  };
+
+  return {
+    type: "line",
+    data: graphData,
+    options: options,
   };
 }
 
