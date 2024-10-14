@@ -40,7 +40,10 @@
   $: profileType = data.type;
 
   let routeViz: RouteVizData[];
-  $: routeViz = data.routeViz;
+  routeViz = data.routeViz;
+
+  let max_data_points: number;
+  max_data_points = data.max_data_points;
 
   let timeWindows: string[] = Object.values(TimeWindow);
 
@@ -140,7 +143,14 @@ function handleHide(event) {
         <slot></slot>
 
         {#if routeViz}
-        <Observability routeViz={routeViz} />
+        <Observability 
+          routeViz={routeViz} 
+          repository={repository}
+          name={name}
+          version={version}
+          timeWindow={timeWindow}
+          max_data_points={max_data_points}
+          />
         {/if}
 
       </div>  
