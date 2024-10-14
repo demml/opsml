@@ -104,8 +104,6 @@ class AlertMetrics(BaseModel):
 class ObservabilityMetric(BaseModel):
     route_name: str
     created_at: List[str]
-    total_request_per_sec: float
-    total_error_per_sec: float
     total_request_count: int
     total_error_count: int
     p5: List[float]

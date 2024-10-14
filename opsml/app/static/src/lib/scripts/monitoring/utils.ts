@@ -818,12 +818,15 @@ export async function getObservabilityMetrics(
   time_window: string,
   max_data_points: number
 ): Promise<ObservabilityMetrics> {
+  // get min of time window and 400
+
+  let max_points = Math.min(max_data_points, 400);
   const params = {
     repository: repository,
     name: name,
     version: version,
     time_window: time_window,
-    max_data_points: max_data_points.toString(),
+    max_data_points: max_points.toString(),
   };
 
   const values_response = await apiHandler.get(
@@ -834,6 +837,7 @@ export async function getObservabilityMetrics(
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const response = (await values_response.json()) as ObservabilityMetrics;
+
   return response;
 }
 
@@ -906,7 +910,7 @@ function buildChart(
         time: {
           displayFormats: {
             year: "YYYY",
-            day: "DD-MM-YYYY",
+            day: "dd-MM-yyyy",
             hour: "HH:mm",
             minute: "HH:mm",
             second: "HH:mm:ss",
@@ -970,7 +974,7 @@ export function createObservabilityViz(
 
     routeVizData.push({
       route_name: metric.route_name,
-      requests_per_sec: metric.total_request_per_sec,
+      requests_per_sec: metric.total_request_count,
       errors: metric.total_error_count,
       requestViz: requestVizData, // build
       latencyViz: latencyVizData,

@@ -80,7 +80,6 @@ export async function load({ url }) {
     if (observabilityMetrics.metrics.length > 0) {
       routeViz = createObservabilityViz(observabilityMetrics);
     }
-    console.log(routeViz[0].requestViz.options);
 
     return {
       repository: repository,
