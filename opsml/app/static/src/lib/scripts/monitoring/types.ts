@@ -31,8 +31,6 @@ export interface MonitoringLayoutPage {
 export interface ObservabilityMetric {
   route_name: string;
   created_at: string[];
-  total_request_per_sec: number;
-  total_error_per_sec: number;
   total_request_count: number;
   total_error_count: number;
   p5: number[];
