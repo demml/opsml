@@ -19,7 +19,7 @@ import {
   type MonitoringVizData,
   type ObservabilityMetrics,
 } from "$lib/scripts/monitoring/types";
-import { Chart, ChartData, type ChartOptions } from "chart.js";
+import { type ChartOptions } from "chart.js";
 
 export function generateTimestampsAndZeros(x: number): TimestampData {
   const now: Date = new Date();
