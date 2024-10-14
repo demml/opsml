@@ -14,6 +14,7 @@
   export let name: string;
   export let version: string;
   export let timeWindow: string;
+  export let max_data_points: number;
 
   let baseURL: string = `/opsml/model/card/monitoring/feature`;
 
@@ -25,6 +26,16 @@
 
     // Add your logic to handle the feature switch here
   }
+
+  function refresh() {
+    getAlertMetrics(repository, name, version, timeWindow, max_data_points).then((data) => {
+      if (data) {
+        alertMetricVizData = createAlertMetricViz(data);
+      }
+    });
+  }
+
+  $: timeWindow, refresh();
 
 </script>
 

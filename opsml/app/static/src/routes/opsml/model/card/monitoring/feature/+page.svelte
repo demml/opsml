@@ -36,7 +36,7 @@
     $: alerts = data.alerts;
 
     let alertMetricVizData: ChartjsData;
-    $: alertMetricVizData = data.alertMetricVizData;
+    alertMetricVizData = data.alertMetricVizData;
 
 
     async function reloadAlerts(maxDataPoints) {
@@ -98,6 +98,7 @@
           {name} 
           {version} 
           {timeWindow}
+          {max_data_points}
         />
 
 
