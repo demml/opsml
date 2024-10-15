@@ -93,12 +93,16 @@ class DataCard(ArtifactCard):
 
         DataCardLoader(self).load_data(**kwargs)
 
-    def create_data_profile(self, bin_size: int = 20, features: Optional[List[str]] = None) -> Optional[DataProfile]:
+    def create_data_profile(self, bin_size: int = 20) -> Optional[DataProfile]:
         """
         Create data profile for the current data card
+
+        Args:
+            bin_size:
+                Number of bins for histograms. Default is 20
         """
         if isinstance(self.interface, DataInterface):
-            return self.interface.create_data_profile(bin_size=bin_size, features=features)
+            return self.interface.create_data_profile(bin_size=bin_size)
 
         logger.warning("Data profile is only supported for DataInterface subclasses. You have a Dataset subclass.")
         return None
@@ -153,9 +157,7 @@ class DataCard(ArtifactCard):
     @property
     def data(self) -> Any:
         """Returns data"""
-        assert isinstance(
-            self.interface, DataInterface
-        ), "Data attribute is only supported for DataInterface subclasses"
+        assert isinstance(self.interface, DataInterface), "Data attribute is only supported for DataInterface subclasses"
         return self.interface.data
 
     @property
