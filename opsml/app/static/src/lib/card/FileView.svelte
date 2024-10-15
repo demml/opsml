@@ -7,7 +7,7 @@
   import python from "svelte-highlight/languages/python";
   import yaml from "svelte-highlight/languages/yaml";
   import sql from "svelte-highlight/languages/sql";
-  import atomOneLight from "svelte-highlight/styles/atom-one-light";
+  import intellijLight from "svelte-highlight/styles/intellij-light";
   import Markdown from "$lib/card/Markdown.svelte";
   import { goto } from "$app/navigation";
 
@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-  {@html atomOneLight}
+  {@html intellijLight}
 </svelte:head>
 
 <div class="flex items-center justify-center py-8 text-sm">

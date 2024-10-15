@@ -5,6 +5,7 @@ import Fa from 'svelte-fa'
 import { faTag, faSquareCheck, faFileContract, faCircleInfo, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Highlight from "svelte-highlight";
 import json from "svelte-highlight/languages/json";
+import intellijLight from "svelte-highlight/styles/intellij-light";
 
 import CodeModal from '$lib/components/CodeModal.svelte';
 import { loadModal } from "$lib";
@@ -36,6 +37,10 @@ async function showModal() {
 
 
 </script>
+
+<svelte:head>
+  {@html intellijLight }
+</svelte:head>
 
 <div class="rounded-lg border-2 border-darkpurple p-4 shadow-md shadow-primary-500 mb-2 overflow-x-scroll bg-white">
   <div class="flex flex-row justify-between mb-2 items-center border-b-2 border-gray-400">
