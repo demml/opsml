@@ -128,7 +128,7 @@
             </Tab>
           {/if}
 
-          {#if metadata.sql_logic}
+          {#if metadata.has_profile}
             <Tab bind:group={tabSet} name="sql" value="sql" on:click={() => showTabContent("profile")}>
               <div class="flex flex-row  items-center">
                 <Fa class="h-4 mr-2" icon={faRectangleList} color="#4b3978"/>

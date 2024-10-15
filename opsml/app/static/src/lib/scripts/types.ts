@@ -175,6 +175,7 @@ export interface DataCardMetadata {
   data_splits?: string;
   feature_map?: string;
   sql_logic: Map<string, string> | undefined;
+  has_profile: boolean;
 }
 
 export enum RegistryName {
