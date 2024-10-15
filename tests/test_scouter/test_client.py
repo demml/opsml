@@ -1,6 +1,5 @@
 from unittest import mock
 
-
 from opsml.registry import CardRegistries
 from opsml.scouter.client import ScouterApiClient
 
