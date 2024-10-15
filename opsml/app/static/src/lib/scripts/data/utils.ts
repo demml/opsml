@@ -10,7 +10,7 @@ export async function getDataProfile(
   name,
   version
 ): Promise<FileView> {
-  const filePath: string = `opsml-root:/${RegistryName.Data}/${repository}/${name}/${version}/${SaveName.DataProfile}`;
+  const filePath: string = `opsml-root:/${RegistryName.Data}/${repository}/${name}/v${version}/${SaveName.DataProfile}`;
 
   const viewData = await apiHandler.get(
     `${CommonPaths.FILES_VIEW}?${new URLSearchParams({
