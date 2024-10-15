@@ -43,6 +43,7 @@ class DataInterface(BaseModel):
     feature_map: Dict[str, Feature] = {}
     feature_descriptions: Dict[str, str] = {}
     sql_logic: Dict[str, str] = {}
+    has_profile: bool = False
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -107,6 +108,7 @@ class DataInterface(BaseModel):
     def _check_profile(cls, profile: Optional[DataProfile]) -> Optional[DataProfile]:
         if profile is not None:
             assert isinstance(profile, DataProfile)
+            cls.has_profile = True
         return profile
 
     def save_data(self, path: Path) -> None:
@@ -169,6 +171,7 @@ class DataInterface(BaseModel):
 
         if self.data_profile is None:
             self.data_profile = profiler.create_profile_report(self.data, bin_size)
+            self.has_profile = True
             return self.data_profile
 
         logger.info("Data profile already exists")

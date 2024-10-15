@@ -183,6 +183,10 @@ export enum RegistryName {
   Run = "OPSML_RUN_REGISTRY",
 }
 
+export enum SaveName {
+  DataProfile = "data-profile.json",
+}
+
 export enum ProfileType {
   SPC = "SPC",
   PSI = "PSI",
