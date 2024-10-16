@@ -56,11 +56,13 @@ export function createCategoricalWordVizData(wordStats: WordStats): {
 export function createWordViz(x: string[], y: number[]): ChartjsData {
   let datasets = [
     {
-      backgroundColor: "rgba(4, 205, 155, 0.2)",
+      backgroundColor: "rgba(75, 57, 120, 0.5)",
+      borderColor: "rgba(75, 57, 120, 1)",
+      borderWidth: 2,
       data: y,
       datalabels: {
-        align: "end",
-        anchor: "start",
+        align: "start",
+        anchor: "end",
       },
     },
   ];
@@ -73,7 +75,9 @@ export function createWordViz(x: string[], y: number[]): ChartjsData {
         font: {
           weight: "bold",
         },
-        formatter: Math.round,
+        formatter: function (value, context) {
+          return value.toFixed(3);
+        },
       },
     },
     responsive: true,
@@ -128,7 +132,9 @@ export function createWordViz(x: string[], y: number[]): ChartjsData {
 export function createHistViz(data: Histogram): ChartjsData {
   let datasets = [
     {
-      backgroundColor: "rgba(4, 205, 155, 0.2)",
+      backgroundColor: "rgba(75, 57, 120, 0.5)",
+      borderColor: "rgba(75, 57, 120, 1)",
+      borderWidth: 2,
       data: data.bin_counts,
     },
   ];

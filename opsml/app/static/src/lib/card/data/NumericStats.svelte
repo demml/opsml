@@ -2,18 +2,23 @@
     import type { NumericStats } from "$lib/scripts/data/types";
     import {createHistViz} from "$lib/scripts/data/utils";
     import HistViz from "./HistViz.svelte";
-    import { onMount } from "svelte";
     import type { ChartjsData } from "$lib/scripts/types";
+  import { onMount } from "svelte";
   
     export let numericStats: NumericStats;
     export let timestamp: string;
     export let name: string;
-    export let vizData: ChartjsData;
+    
+    let vizData: ChartjsData;
   
     export function createDateFromTimestamp(timestamp: string): string {
         const date = new Date(timestamp);
         return date.toDateString();
     }
+
+    onMount(() => {
+        vizData = createHistViz(numericStats.histogram);
+    });
   
   
   </script>

@@ -3,7 +3,6 @@
     import StringStatsDiv from "./StringStats.svelte";
     import NumericStats from "./NumericStats.svelte";
     import { Accordion, AccordionItem } from '@skeletonlabs/skeleton';
-    import {createHistViz} from "$lib/scripts/data/utils";
     export let profile: DataProfile;
     export let featureNames: string[];
 
@@ -40,12 +39,7 @@
               {/if}
             {:else}
               {#if feature.numeric_stats}
-                <NumericStats 
-                  numericStats={feature.numeric_stats} 
-                  timestamp={feature.timestamp} 
-                  name={name} 
-                  vizData={createHistViz(feature.numeric_stats.histogram)}
-                  />
+                <NumericStats numericStats={feature.numeric_stats} timestamp={feature.timestamp} name={name} />
               {/if}
             
             {/if}
