@@ -43,11 +43,7 @@
 
     }
 
-    $: if (chart && data) {
-      chart.destroy();
-      createChart();
-    }
-
+  
   </script>
   
   <div class="h-40 mb-5">
