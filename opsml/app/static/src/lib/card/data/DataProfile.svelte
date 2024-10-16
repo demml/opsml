@@ -23,9 +23,9 @@
               </div>
 
               {#if !feature.numeric_stats}
-                <div class="badge variant-soft-primary">Categorical</div>
+                <div class="badge variant-soft-secondary">Categorical</div>
               {:else}
-                <div class="badge variant-soft-primary">Numeric</div>
+                <div class="badge variant-soft-secondary">Numeric</div>
               {/if}
             </div>
           </svelte:fragment>
