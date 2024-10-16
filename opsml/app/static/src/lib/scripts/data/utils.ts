@@ -5,7 +5,11 @@ import {
   RegistryName,
   SaveName,
 } from "$lib/scripts/types";
-import { type DataProfile, type WordStats } from "$lib/scripts/data/types";
+import {
+  type DataProfile,
+  type WordStats,
+  type Histogram,
+} from "$lib/scripts/data/types";
 import { type ChartjsData } from "$lib/scripts/types";
 import { zoomOptions, grace, legend, handleResize } from "$lib/scripts/chart";
 export async function getDataProfile(
@@ -111,6 +115,70 @@ export function createWordViz(x: string[], y: number[]): ChartjsData {
 
   const graphData = {
     labels: x,
+    datasets: datasets,
+  };
+
+  return {
+    type: "bar",
+    data: graphData,
+    options: options,
+  };
+}
+
+export function createHistViz(data: Histogram): ChartjsData {
+  let datasets = [
+    {
+      backgroundColor: "rgba(4, 205, 155, 0.2)",
+      data: data.bin_counts,
+    },
+  ];
+
+  let options = {
+    plugins: {
+      legend,
+    },
+    responsive: true,
+    onresize: handleResize,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        border: {
+          width: 2,
+          color: "rgba(0, 0, 0, 1)",
+        },
+        grid: {
+          display: false,
+        },
+        title: { display: true, text: "Bins" },
+        ticks: {
+          maxTicksLimit: 30,
+          callback: function (value) {
+            return value.toFixed(2);
+          },
+        },
+      },
+      y: {
+        grace: grace,
+        border: {
+          width: 2,
+          color: "rgba(0, 0, 0, 1)",
+        },
+        grid: {
+          display: false,
+        },
+        title: { display: true, text: "Distribution" },
+        ticks: {
+          maxTicksLimit: 30,
+        },
+      },
+    },
+    layout: {
+      padding: 5,
+    },
+  };
+
+  const graphData = {
+    labels: data.bins,
     datasets: datasets,
   };
 
