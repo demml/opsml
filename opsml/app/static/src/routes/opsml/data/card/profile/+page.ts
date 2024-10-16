@@ -1,4 +1,5 @@
 import { getDataProfile } from "$lib/scripts/data/utils";
+import { type DataProfile } from "$lib/scripts/data/types";
 
 export async function load({ url }) {
   const name = (url as URL).searchParams.get("name") as string | undefined;
@@ -11,5 +12,13 @@ export async function load({ url }) {
 
   const profile = await getDataProfile(repository!, name!, version!);
 
-  console.log(profile);
+  function getFeatureNames(profile: DataProfile): string[] {
+    // get keys of profile object
+    return Object.keys(profile.features);
+  }
+
+  return {
+    profile,
+    featureNames: getFeatureNames(profile),
+  };
 }
