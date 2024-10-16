@@ -8,19 +8,13 @@
     export let numericStats: NumericStats;
     export let timestamp: string;
     export let name: string;
-  
-    let vizData: ChartjsData;
-    $: vizData = vizData;
+    export let vizData: ChartjsData;
   
     export function createDateFromTimestamp(timestamp: string): string {
         const date = new Date(timestamp);
         return date.toDateString();
     }
   
-    onMount(() => {
-        vizData  = createHistViz(numericStats.histogram);
-        console.log(vizData);
-    });
   
   </script>
   <div class="overflow-x-auto">

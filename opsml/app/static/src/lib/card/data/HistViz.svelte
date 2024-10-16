@@ -3,6 +3,7 @@
     import Chart from 'chart.js/auto';
     import { Filler } from 'chart.js';
     import { onMount, onDestroy } from 'svelte';
+    import ChartDataLabels from 'chartjs-plugin-datalabels';
 
     export let data;
     export let options;
@@ -14,35 +15,20 @@
   
 
     Chart.register(Filler);
+    Chart.unregister(ChartDataLabels);
   
     onMount(() => {
-        createChart();
+      ctx = chartCanvas.getContext('2d');
+      chart = new Chart(ctx, {
+        // @ts-ignore
+        type: type,
+        data: data,
+        options: options
+      });
         
-        return () => {
-        if (chart) {
-            chart.destroy();
-            }
-        };
     });
-
-    onDestroy(() => {
-      if (chart) {
-        chart.destroy();
-      }
-    });
-
   
-    function createChart() {
-    ctx = chartCanvas.getContext('2d');
-    chart = new Chart(ctx, {
-      // @ts-ignore
-      type: type,
-      data: data,
-      options: options
-    });
-
-    }
-
+  
   
   </script>
   

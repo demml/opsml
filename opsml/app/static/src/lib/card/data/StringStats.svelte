@@ -10,7 +10,6 @@
   export let name: string;
 
   let vizData: ChartjsData;
-  $: vizData = vizData;
 
   export function createDateFromTimestamp(timestamp: string): string {
       const date = new Date(timestamp);
