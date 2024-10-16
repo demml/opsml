@@ -2,7 +2,7 @@
 <script lang="ts">
     import Chart from 'chart.js/auto';
     import { Filler } from 'chart.js';
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import ChartDataLabels from 'chartjs-plugin-datalabels';
 
     export let data;

@@ -20,38 +20,18 @@
     Chart.register(Filler);
   
     onMount(() => {
-        createChart();
-        
-        return () => {
-        if (chart) {
-            chart.destroy();
-            }
-        };
+        ctx = chartCanvas.getContext('2d');
+        chart = new Chart(ctx, {
+        // @ts-ignore
+        type: type,
+        data: data,
+        options: options,
+        plugins: [ChartDataLabels],
+        });
+
     });
 
-    onDestroy(() => {
-      if (chart) {
-        chart.destroy();
-      }
-    });
-
-  
-    function createChart() {
-    ctx = chartCanvas.getContext('2d');
-    chart = new Chart(ctx, {
-      // @ts-ignore
-      type: type,
-      data: data,
-      options: options,
-      plugins: [ChartDataLabels],
-    });
-
-    }
-
-    $: if (chart && data) {
-      chart.destroy();
-      createChart();
-    }
+   
 
   </script>
   
