@@ -1,9 +1,75 @@
-<script lang="ts">
 
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import type { DataProfile } from "$lib/scripts/data/types";
+  import DataProfileDiv from "$lib/card/data/DataProfile.svelte";
+  import { Autocomplete, popup  } from '@skeletonlabs/skeleton';
+  import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
+
+  /** @type {import('./$types').PageData} */
+  export let data;
+
+  let profile: DataProfile;
+  $: profile = data.profile;
+
+  let featureNames: string[];
+  featureNames = data.featureNames;
+
+  type FlavorOption = AutocompleteOption<string, { healthy: boolean }>;
+
+  function getFlavorOptions(): FlavorOption[] {
+    return featureNames.map((featureName) => {
+      return { label: featureName, value: featureName, keywords: featureName, meta: { healthy: false } };
+    });
+  }
+
+  let flavorOptions: FlavorOption[] = getFlavorOptions();
+
+  let popupSettings: PopupSettings = {
+    event: 'focus-click',
+    target: 'popupAutocomplete',
+    placement: 'bottom',
+  };
+
+  let inputPopupDemo: string = '';
+
+
+  function onPopupDemoSelect(event: CustomEvent<FlavorOption>): void {
+		inputPopupDemo = event.detail.label;
+	}
 
 </script>
 
 
-<div>
-    Hello
+<div class="flex min-h-screen overflow-x-scroll bg-white">
+
+    <div class="flex flex-col pt-4 w-full px-12 md:px-48">
+
+      <div class="grid grid-cols-1 md:grid-cols-2">
+        <div class="text-primary-500 text-xl font-bold py-1">Data Profile</div>
+        <div class="py-1">
+          <input
+            class="input autocomplete text-sm h-7 bg-white w-full max-w-sm"
+            type="search"
+            name="autocomplete-search"
+            bind:value={inputPopupDemo}
+            placeholder="Feature"
+            use:popup={popupSettings}
+            />
+          <div data-popup="popupAutocomplete" class="card w-48 focus:outline-primary-500 bg-white overflow-y-auto overflow-x-auto max-h-48 border border-gray-200/70 text-sm text-primary-500" tabindex="-1">
+            <Autocomplete
+              bind:input={inputPopupDemo}
+              on:selection={onPopupDemoSelect}
+              options={flavorOptions}
+            />
+          </div>
+        </div>
+      </div>
+
+      <DataProfileDiv 
+        profile={profile}
+        featureNames = {featureNames}
+        />
+
+    </div>
 </div>

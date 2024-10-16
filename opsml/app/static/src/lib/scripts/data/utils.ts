@@ -5,11 +5,12 @@ import {
   RegistryName,
   SaveName,
 } from "$lib/scripts/types";
+import { type DataProfile } from "$lib/scripts/data/types";
 export async function getDataProfile(
   repository,
   name,
   version
-): Promise<FileView> {
+): Promise<DataProfile> {
   const filePath: string = `opsml-root:/${RegistryName.Data}/${repository}/${name}/v${version}/${SaveName.DataProfile}`;
 
   const viewData = await apiHandler.get(
@@ -19,6 +20,9 @@ export async function getDataProfile(
   );
 
   const view = (await viewData.json()) as FileView;
+  let content: string = view.content.content!;
 
-  return view;
+  let profile: DataProfile = JSON.parse(content);
+
+  return profile;
 }
