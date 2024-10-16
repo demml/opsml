@@ -31,16 +31,18 @@
     placement: 'bottom',
   };
 
-  let inputPopupDemo: string = '';
+  let selected: string = '';
 
 
-  function onPopupDemoSelect(event: CustomEvent<FlavorOption>): void {
-		inputPopupDemo = event.detail.label;
-    const element = document.getElementById(inputPopupDemo);
+  function onSearchSelect(event: CustomEvent<FlavorOption>): void {
+		selected = event.detail.label;
+    const element = document.getElementById(selected);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-    }
 	}
+}
+
+  
 
 </script>
 
@@ -56,14 +58,14 @@
             class="input autocomplete text-sm h-7 bg-white w-full max-w-sm"
             type="search"
             name="autocomplete-search"
-            bind:value={inputPopupDemo}
+            bind:value={selected}
             placeholder="Feature"
             use:popup={popupSettings}
             />
           <div data-popup="popupAutocomplete" class="card w-48 focus:outline-primary-500 bg-white overflow-y-auto overflow-x-auto max-h-48 border border-gray-200/70 text-sm text-primary-500" tabindex="-1">
             <Autocomplete
-              bind:input={inputPopupDemo}
-              on:selection={onPopupDemoSelect}
+              bind:input={selected}
+              on:selection={onSearchSelect}
               options={flavorOptions}
             />
           </div>
@@ -73,7 +75,7 @@
       <DataProfileDiv 
         profile={profile}
         featureNames = {featureNames}
-        />
+      />
 
     </div>
 </div>

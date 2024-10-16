@@ -3,10 +3,7 @@
     import Chart from 'chart.js/auto';
     import { Filler } from 'chart.js';
     import { onMount, onDestroy } from 'svelte';
-    import ChartDataLabels from 'chartjs-plugin-datalabels';
-    import 'chartjs-adapter-date-fns';
-  
-  
+
     export let data;
     export let options;
     export let type = 'bar';
@@ -15,8 +12,7 @@
     let chartCanvas;
     let chart;
   
-  
-    Chart.register(ChartDataLabels);
+
     Chart.register(Filler);
   
     onMount(() => {
@@ -42,8 +38,7 @@
       // @ts-ignore
       type: type,
       data: data,
-      options: options,
-      plugins: [ChartDataLabels],
+      options: options
     });
 
     }
@@ -56,6 +51,6 @@
   </script>
   
   <div class="h-40 mb-5">
-    <div class="text-primary-500 font-bold pb-1">Word Statistics</div> 
+    <div class="text-primary-500 font-bold pb-1">Distribution</div> 
     <canvas bind:this={chartCanvas}></canvas>
   </div>

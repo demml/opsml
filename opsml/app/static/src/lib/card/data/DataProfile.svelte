@@ -1,6 +1,7 @@
 <script lang="ts">
     import { type DataProfile, type FeatureProfile } from "$lib/scripts/data/types";
     import StringStatsDiv from "./StringStats.svelte";
+    import NumericStats from "./NumericStats.svelte";
     import { Accordion, AccordionItem } from '@skeletonlabs/skeleton';
 
     export let profile: DataProfile;
@@ -32,11 +33,16 @@
 
           <svelte:fragment slot="content">
        
-          <div class="min-h-40 max-h-48 mb-5">
+          <div class="h-48">
             {#if !feature.numeric_stats}
               {#if feature.string_stats}
                 <StringStatsDiv stringStats={feature.string_stats} timestamp={feature.timestamp} name={name} />
               {/if}
+            {:else}
+              {#if feature.numeric_stats}
+                <NumericStats numericStats={feature.numeric_stats} timestamp={feature.timestamp} name={name} />
+              {/if}
+            
             {/if}
           </div>
         
