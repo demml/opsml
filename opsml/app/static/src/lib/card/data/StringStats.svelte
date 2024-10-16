@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { StringStats } from "$lib/scripts/data/types";
+    import {createCategoricalWordVizData} from "$lib/scripts/data/utils";
+  import { onMount } from "svelte";
 
     export let stringStats: StringStats;
     export let timestamp: string;
@@ -8,9 +10,18 @@
         const date = new Date(timestamp);
         return date.toDateString();
     }
-</script>
 
-<div class="grid grid-cols-4 gap-4 min-w-2/3">
+    onMount(() => {
+        let x,y,percent = createCategoricalWordVizData(stringStats.word_stats);
+
+        console.log(x);
+        console.log(y);
+        console.log(percent);
+    });
+
+</script>
+<div class="overflow-x-auto">
+<div class="grid grid-cols-4 gap-4 min-w-max">
 
     <div>
       <div class="px-2 text-darkpurple font-bold">Overview</div>
@@ -67,11 +78,12 @@
     </div>
 
 
-  <div>
+  <div class="col-span-2">
       <!-- Additional content for the third column -->
   </div>
 
   <div>
       <!-- Additional content for the fourth column -->
   </div>
+</div>
 </div>
