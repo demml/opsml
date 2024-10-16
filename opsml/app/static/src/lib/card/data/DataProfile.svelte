@@ -15,7 +15,7 @@
     {#each featureNames as name}
         {@const feature = profile.features[name]}
 
-        <AccordionItem class="bg-surface-50 rounded-lg border border-2 border-primary-500">
+        <AccordionItem class="bg-surface-50 rounded-lg border border-2 border-primary-500" id={name}>
           <svelte:fragment slot="summary">
             <div class="flex mb-1">
               <div>

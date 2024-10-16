@@ -36,6 +36,10 @@
 
   function onPopupDemoSelect(event: CustomEvent<FlavorOption>): void {
 		inputPopupDemo = event.detail.label;
+    const element = document.getElementById(inputPopupDemo);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
 	}
 
 </script>
