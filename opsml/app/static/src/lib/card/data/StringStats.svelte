@@ -90,9 +90,5 @@
     {/if}
   </div>
   </div>
-
-  <div>
-      <!-- Additional content for the fourth column -->
-  </div>
   </div>
 </div>
