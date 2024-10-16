@@ -1,35 +1,37 @@
 <script lang="ts">
-    import type { StringStats } from "$lib/scripts/data/types";
-    import {createCategoricalWordVizData} from "$lib/scripts/data/utils";
+  import type { StringStats } from "$lib/scripts/data/types";
+  import {createCategoricalWordVizData, createWordViz} from "$lib/scripts/data/utils";
+  import WordViz from "$lib/card/data/WordViz.svelte";
   import { onMount } from "svelte";
+  import type { ChartjsData } from "$lib/scripts/types";
 
-    export let stringStats: StringStats;
-    export let timestamp: string;
+  export let stringStats: StringStats;
+  export let timestamp: string;
+  export let name: string;
 
-    export function createDateFromTimestamp(timestamp: string): string {
-        const date = new Date(timestamp);
-        return date.toDateString();
-    }
+  let vizData: ChartjsData;
+  $: vizData = vizData;
 
-    onMount(() => {
-        let x,y,percent = createCategoricalWordVizData(stringStats.word_stats);
+  export function createDateFromTimestamp(timestamp: string): string {
+      const date = new Date(timestamp);
+      return date.toDateString();
+  }
 
-        console.log(x);
-        console.log(y);
-        console.log(percent);
-    });
+  onMount(() => {
+      let data  = createCategoricalWordVizData(stringStats.word_stats);
+      vizData = createWordViz(data.x, data.y);
+  });
 
 </script>
 <div class="overflow-x-auto">
-<div class="grid grid-cols-4 gap-4 min-w-max">
-
-    <div>
+<div class="grid grid-cols-5 gap-x-2 min-w-max">
+    <div class="content-center">
       <div class="px-2 text-darkpurple font-bold">Overview</div>
       <div class="flex flex-col">
         <div class="inline-flex items-center overflow-hidden w-fit">
           <div class="px-2 text-sm font-semibold">Name</div>
           <div class="flex text-sm px-1.5 text-gray-800">
-              Name
+              {name}
           </div>
         </div>
         <div class="inline-flex items-center overflow-hidden w-fit">
@@ -47,7 +49,7 @@
       </div>
     </div>
 
-    <div class="border-l border-gray-300">
+    <div class="border-l border-gray-300 content-center">
       <div class="px-2 text-darkpurple font-bold">Character Statistics</div>
       <div class="flex flex-col">
           <div class="inline-flex items-center overflow-hidden w-fit">
@@ -78,12 +80,19 @@
     </div>
 
 
-  <div class="col-span-2">
-      <!-- Additional content for the third column -->
+  <div class="col-span-3 content-center border-l border-gray-300">
+    <div class="pl-1">
+    {#if vizData}
+      <WordViz 
+       data={vizData.data}
+       options={vizData.options}
+      />
+    {/if}
+  </div>
   </div>
 
   <div>
       <!-- Additional content for the fourth column -->
   </div>
-</div>
+  </div>
 </div>

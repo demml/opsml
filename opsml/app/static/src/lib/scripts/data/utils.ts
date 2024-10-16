@@ -49,7 +49,7 @@ export function createCategoricalWordVizData(wordStats: WordStats): {
   return { x, y };
 }
 
-export function createNumericWordViz(x: string[], y: number[]): ChartjsData {
+export function createWordViz(x: string[], y: number[]): ChartjsData {
   let datasets = [
     {
       backgroundColor: "rgba(4, 205, 155, 0.2)",
@@ -63,7 +63,6 @@ export function createNumericWordViz(x: string[], y: number[]): ChartjsData {
 
   let options = {
     plugins: {
-      zoom: zoomOptions,
       legend,
       datalabels: {
         color: "white",
@@ -106,7 +105,7 @@ export function createNumericWordViz(x: string[], y: number[]): ChartjsData {
       },
     },
     layout: {
-      padding: 10,
+      padding: 5,
     },
   };
 
