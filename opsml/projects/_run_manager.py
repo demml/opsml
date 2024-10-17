@@ -4,9 +4,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import concurrent
 import subprocess
 import tempfile
+import threading
 import time
 import uuid
 from datetime import datetime
@@ -108,7 +108,7 @@ class _RunManager:
         self._project_info = project_info
         self.active_run: Optional[ActiveRun] = None
         self.registries = registries
-        self._hardware_futures: List[Any] = []
+        self._hardware_futures: List[threading.Thread] = []
 
         run_id = project_info.run_id
         if run_id is not None:
@@ -119,16 +119,6 @@ class _RunManager:
         else:
             self.run_id = None
             self._run_exists = False
-
-        self._thread_executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
-
-    @property
-    def thread_executor(self) -> Optional[concurrent.futures.ThreadPoolExecutor]:
-        return self._thread_executor
-
-    @thread_executor.setter
-    def thread_executor(self, value: concurrent.futures.ThreadPoolExecutor) -> None:
-        self._thread_executor = value
 
     @property
     def project_id(self) -> int:
@@ -210,15 +200,23 @@ class _RunManager:
 
         # run hardware logger in background thread
         queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
-        self.thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
-        # submit futures for hardware logging
         self._hardware_futures.append(
-            self.thread_executor.submit(put_hw_metrics, interval, self.active_run, queue),
+            threading.Thread(
+                target=put_hw_metrics,
+                kwargs={"interval": interval, "run": self.active_run, "queue": queue},
+            )
         )
         self._hardware_futures.append(
-            self.thread_executor.submit(get_hw_metrics, self.active_run, queue),
+            threading.Thread(
+                target=get_hw_metrics,
+                kwargs={"run": self.active_run, "queue": queue},
+            )
         )
+
+        for future in self._hardware_futures:
+            future.daemon = True
+            future.start()
 
     def _extract_code(
         self,
@@ -352,17 +350,8 @@ class _RunManager:
         self._run_exists = False
 
         # check if thread executor is still running
-        if self.thread_executor is not None:
-            # cancel futures
-            self.thread_executor.shutdown(wait=False, cancel_futures=True)
-
+        if self._hardware_futures:
             for future in self._hardware_futures:
-                future.cancel()
-                try:
-                    future.result(timeout=1)
-                except Exception:  # pylint: disable=broad-except
-                    pass
+                future.join()
 
-            self.thread_executor.shutdown(wait=False)
-            self.thread_executor = None
             self._hardware_futures = []

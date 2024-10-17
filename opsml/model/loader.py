@@ -48,7 +48,7 @@ class ModelLoader:
 
         # load drift profile json to string
         with drift_profile_path.open("r") as file_:
-            if drift_type == DriftType.SPC.value:
+            if drift_type == DriftType.SPC.value:  # type: ignore
                 return SpcDriftProfile.model_validate_json(file_.read())
 
         raise ValueError(f"Drift type {drift_type} not supported")

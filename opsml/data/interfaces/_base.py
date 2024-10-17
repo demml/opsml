@@ -159,18 +159,24 @@ class DataInterface(BaseModel):
         assert self.data_profile is not None, "No data profile detected in interface"
         self.data_profile.save_to_json(path)
 
-    def create_data_profile(self, bin_size: int = 20) -> DataProfile:
+    def create_data_profile(self, bin_size: int = 20, compute_correlations: bool = False) -> DataProfile:
         """Creates a data profile report
 
         Args:
             bin_size:
                 number of bins for histograms. Default is 20
+            compute_correlations:
+                whether to compute correlations. Default is False
 
         """
         profiler = DataProfiler()
 
         if self.data_profile is None:
-            self.data_profile = profiler.create_profile_report(self.data, bin_size)
+            self.data_profile = profiler.create_profile_report(
+                self.data,
+                bin_size,
+                compute_correlations,
+            )
             self.has_profile = True
             return self.data_profile
 

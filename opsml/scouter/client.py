@@ -71,8 +71,8 @@ class ScouterApiClient:
                 Model name
             version:
                 Model version
-            status:
-                Status to update
+            active:
+                Active status
         """
 
         return self._client.request(

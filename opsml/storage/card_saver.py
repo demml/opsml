@@ -341,24 +341,24 @@ class ModelCardSaver(CardSaver):
                 existing_drift_type = existing_drift.get("drift_type")
 
             drift = {
-                "drift_profile_uri": self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value) or existing_drift_profile_uri,
-                "drift_type": self.card.interface.drift_profile.config.drift_type.value or existing_drift_type,
+                "drift_profile_uri": existing_drift_profile_uri or self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value),
+                "drift_type": existing_drift_type or self.card.interface.drift_profile.config.drift_type.value,
             }
 
         # base metadata
         metadata = ModelMetadata(
-            model_name=self.card.name or existing_metadata.get("model_name"),
-            model_class=self.card.interface.model_class or existing_metadata.get("model_class"),
-            model_type=self.card.interface.model_type or existing_metadata.get("model_type"),
-            model_interface=self.card.interface.name() or existing_metadata.get("model_interface"),
-            onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value) or existing_metadata.get("onnx_uri"),
-            onnx_version=onnx_version or existing_metadata.get("onnx_version"),
-            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value) or existing_metadata.get("model_uri"),
-            model_version=self.card.version or existing_metadata.get("model_version"),
-            model_repository=self.card.repository or existing_metadata.get("model_repository"),
-            data_schema=self.card.metadata.data_schema or existing_metadata.get("data_schema"),
-            sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value)
-            or existing_metadata.get("sample_data_uri"),
+            model_name=existing_metadata.get("model_name") or self.card.name,
+            model_class=existing_metadata.get("model_class") or self.card.interface.model_class,
+            model_type=existing_metadata.get("model_type") or self.card.interface.model_type,
+            model_interface=existing_metadata.get("model_interface") or self.card.interface.name(),
+            onnx_uri=existing_metadata.get("onnx_uri") or self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
+            onnx_version=existing_metadata.get("onnx_version") or onnx_version,
+            model_uri=existing_metadata.get("model_uri") or self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
+            model_version=existing_metadata.get("model_version") or self.card.version,
+            model_repository=existing_metadata.get("model_repository") or self.card.repository,
+            data_schema=existing_metadata.get("data_schema") or self.card.metadata.data_schema,
+            sample_data_uri=existing_metadata.get("sample_data_uri")
+            or self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )
 
         if drift is not None:
@@ -366,11 +366,14 @@ class ModelCardSaver(CardSaver):
 
         # add extra uris
         if self.card_uris.preprocessor_uri is not None:
-            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value) or existing_metadata.get(
-                "preprocessor_uri"
+            metadata.preprocessor_uri = existing_metadata.get("preprocessor_uri") or self.card_uris.resolve_path(
+                UriNames.PREPROCESSOR_URI.value
             )
-            metadata.preprocessor_name = self.card.interface.preprocessor_name or existing_metadata.get(  # type: ignore
-                "preprocessor_name",
+            metadata.preprocessor_name = (
+                existing_metadata.get(
+                    "preprocessor_name",
+                )
+                or self.card.interface.preprocessor_name
             )
 
         # add huggingface specific uris
@@ -378,34 +381,34 @@ class ModelCardSaver(CardSaver):
             metadata.task_type = self.card.interface.task_type
 
             if self.card.interface.onnx_args is not None:
-                metadata.onnx_args = {
+                metadata.onnx_args = existing_metadata.get("onnx_args") or {
                     "quantize": self.card.interface.onnx_args.quantize,
                     "ort_type": self.card.interface.onnx_args.ort_type,
                     "provider": self.card.interface.onnx_args.provider,
-                } or existing_metadata.get("onnx_args")
+                }
 
             if self.card_uris.quantized_model_uri is not None:
-                metadata.quantized_model_uri = self.card_uris.resolve_path(
+                metadata.quantized_model_uri = existing_metadata.get("quantized_model_uri") or self.card_uris.resolve_path(
                     UriNames.QUANTIZED_MODEL_URI.value
-                ) or existing_metadata.get("quantized_model_uri")
+                )
 
             if self.card_uris.tokenizer_uri is not None:
-                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value) or existing_metadata.get(
-                    "tokenizer_uri"
+                metadata.tokenizer_uri = existing_metadata.get("tokenizer_uri") or self.card_uris.resolve_path(
+                    UriNames.TOKENIZER_URI.value
                 )
-                metadata.tokenizer_name = self.card.interface.tokenizer_name or existing_metadata.get("tokenizer_name")
+                metadata.tokenizer_name = existing_metadata.get("tokenizer_name") or self.card.interface.tokenizer_name
 
             if self.card_uris.feature_extractor_uri is not None:
-                metadata.feature_extractor_uri = self.card_uris.resolve_path(
+                metadata.feature_extractor_uri = existing_metadata.get("feature_extractor_uri") or self.card_uris.resolve_path(
                     UriNames.FEATURE_EXTRACTOR_URI.value
-                ) or existing_metadata.get("feature_extractor_uri")
-                metadata.feature_extractor_name = self.card.interface.feature_extractor_name or existing_metadata.get(
-                    "feature_extractor_name"
+                )
+                metadata.feature_extractor_name = (
+                    existing_metadata.get("feature_extractor_name") or self.card.interface.feature_extractor_name
                 )
 
             if self.card_uris.onnx_config_uri is not None:
-                metadata.onnx_config_uri = self.card_uris.resolve_path(UriNames.ONNX_CONFIG_URI.value) or existing_metadata.get(
-                    "onnx_config_uri"
+                metadata.onnx_config_uri = existing_metadata.get("onnx_config_uri") or self.card_uris.resolve_path(
+                    UriNames.ONNX_CONFIG_URI.value
                 )
 
         return metadata

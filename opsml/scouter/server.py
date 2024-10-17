@@ -111,8 +111,8 @@ class ScouterServerClient(ApiClient):
                 Model name
             version:
                 Model version
-            status:
-                Status to update
+            active:
+                whether the profile is active or not
         """
         return self.request(
             route=ScouterRoutes.PROFILE_STATUS,
