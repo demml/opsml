@@ -4525,7 +4525,7 @@ dependencies = [
     { name = "rusty-logger" },
 ]
 wheels = [
-    { filename = "scouter_ml-0.3.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:0126de86bc0dbe5cf4def66360d1df5904f6700fc1bba86fafea03361c224b0e" },
+    { filename = "scouter_ml-0.3.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c3acd2d1eb068161ca6c5753e35ec5ffbd75f6cb6cef95d8d8d8d9a6ba99edc3" },
 ]
 
 [package.metadata]

@@ -53,7 +53,11 @@ export function createCategoricalWordVizData(wordStats: WordStats): {
   return { x, y };
 }
 
-export function createWordViz(x: string[], y: number[]): ChartjsData {
+export function createBarViz(
+  x: string[],
+  y: number[],
+  xTitle: string
+): ChartjsData {
   let datasets = [
     {
       backgroundColor: "rgba(75, 57, 120, 0.5)",
@@ -92,7 +96,7 @@ export function createWordViz(x: string[], y: number[]): ChartjsData {
         grid: {
           display: false,
         },
-        title: { display: true, text: "Words" },
+        title: { display: true, text: xTitle },
         ticks: {
           maxTicksLimit: 30,
         },
