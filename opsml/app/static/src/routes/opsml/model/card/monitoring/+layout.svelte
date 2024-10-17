@@ -8,6 +8,9 @@
   import { goto } from '$app/navigation';
   import type { RouteVizData } from "$lib/scripts/monitoring/utils";
   import Observability from "$lib/card/monitoring/Observability.svelte";
+  import { Autocomplete, popup  } from '@skeletonlabs/skeleton';
+  import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
+  import { onMount } from "svelte";
 
   /** @type {import('./$types').LayoutData} */
   export let data;
@@ -62,25 +65,51 @@
     showConfig = !showConfig;
   }
 
-async function updateFeatureValues(feature:string) {
+  async function updateFeatureValues(event: CustomEvent<FlavorOption>) {
+    let feature = event.detail.label;
 
-  if (feature === targetFeature) {
-    return;
+    if (feature === targetFeature) {
+      return;
+    }
+
+    targetFeature = feature;
+    await navigate();
+
   }
 
-  targetFeature = feature;
-  await navigate();
+  function handleUpdate(event) {
+      showConfig = event.detail.showConfig;
+      driftProfiles[profileType].config = event.detail.updatedDriftConfig;
+    }
 
-}
-
-function handleUpdate(event) {
+  function handleHide(event) {
     showConfig = event.detail.showConfig;
-    driftProfiles[profileType].config = event.detail.updatedDriftConfig;
   }
 
-function handleHide(event) {
-  showConfig = event.detail.showConfig;
-}
+  type FlavorOption = AutocompleteOption<string, { healthy: boolean }>;
+
+  function getFlavorOptions(): FlavorOption[] {
+    return features.map((featureName) => {
+      return { label: featureName, value: featureName, keywords: featureName, meta: { healthy: false } };
+    });
+  }
+
+
+  let popupSettings: PopupSettings = {
+    event: 'focus-click',
+    target: 'popupAutocomplete',
+    placement: 'bottom',
+  };
+
+  let flavorOptions: FlavorOption[]
+
+  onMount(() => {
+    flavorOptions= getFlavorOptions();
+  });
+  
+
+
+  let selected: string = targetFeature;
 
 
 </script>
@@ -125,18 +154,22 @@ function handleHide(event) {
         <!-- Feature header -->
         <div class="flex flex-row items-center overflow-auto">
           <div class="m-1 text-darkpurple font-bold">Features:</div>
-            <div class="flex flex-row flex-nowrap overflow-auto p-1 items-center">
-              {#each features as feature}
-                {#if feature === targetFeature}
-                  <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-primary-400 hover:variant-soft-primary" on:click={(event) => { event.preventDefault(); updateFeatureValues(feature); }}>
-                    <div class="text-white text-xs font-bold hover:text-darkpurple">{feature}</div>
-                  </button>
-                {:else}
-                  <button type="button" class="m-1 border border-darkpurple btn btn-sm bg-surface-100 hover:variant-soft-primary" on:click={(event) => { event.preventDefault(); updateFeatureValues(feature); }}>
-                    <div class="text-darkpurple text-xs font-bold">{feature}</div>
-                  </button>
-                {/if}
-              {/each}
+          <div class="py-1">
+            <input
+              class="input autocomplete text-sm h-7 bg-white w-full max-w-sm"
+              type="search"
+              name="autocomplete-search"
+              bind:value={selected}
+              placeholder={targetFeature}
+              use:popup={popupSettings}
+              />
+            <div data-popup="popupAutocomplete" class="card w-48 focus:outline-primary-500 bg-white overflow-y-auto overflow-x-auto max-h-48 border border-gray-200/70 text-sm text-primary-500" tabindex="-1">
+              <Autocomplete
+                bind:input={selected}
+                on:selection={updateFeatureValues}
+                options={flavorOptions}
+              />
+            </div>
           </div>
         </div>
 
