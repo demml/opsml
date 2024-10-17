@@ -54,7 +54,7 @@ class ScouterClient:
             return self._client.healthcheck()
 
         # silent failure is scouter is not running
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def update_profile_status(self, repository: str, name: str, version: str, active: bool) -> None:
