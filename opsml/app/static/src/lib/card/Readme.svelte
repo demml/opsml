@@ -8,7 +8,7 @@
   import { Compartment } from '@codemirror/state'
   import { editorTheme } from '$lib/scripts/editor_theme'
   import { onMount } from 'svelte';
-  import atomOneLight from "svelte-highlight/styles/atom-one-light";
+  import intellijLight from "svelte-highlight/styles/intellij-light";
   import Markdown from "$lib/card/Markdown.svelte";
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
@@ -102,7 +102,7 @@
 </script>
 
 <svelte:head>
-  {@html atomOneLight}
+  {@html intellijLight}
 </svelte:head>
 
 <div class="flex items-center justify-center pt-8">

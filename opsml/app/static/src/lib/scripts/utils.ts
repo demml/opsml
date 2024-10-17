@@ -1327,3 +1327,19 @@ export function createHardwareCharts(
     gpu_per_core,
   };
 }
+
+export function getScreenSize(): number {
+  if (window.innerWidth < 640) {
+    return 100;
+  } else if (window.innerWidth < 768) {
+    return 200;
+  } else if (window.innerWidth < 1024) {
+    return 400;
+  } else if (window.innerWidth < 1280) {
+    return 600;
+  } else if (window.innerWidth < 1536) {
+    return 800;
+  } else {
+    return 1000;
+  }
+}

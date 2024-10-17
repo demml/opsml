@@ -16,6 +16,7 @@ class DataProfiler:
     def create_profile_report(
         data: Union[pd.DataFrame, pl.DataFrame],
         bin_size: int = 20,
+        compute_correlations: bool = False,
     ) -> DataProfile:
         """
         Creates a `scouter` data profile report
@@ -25,13 +26,19 @@ class DataProfiler:
                 data to profile
             bin_size:
                 number of bins for histograms. Default is 20
+            compute_correlations:
+                whether to compute correlations. Default is False
 
         Returns:
             `DataProfile`
         """
         profiler = Profiler()
 
-        return profiler.create_data_profile(data=data, bin_size=bin_size)
+        return profiler.create_data_profile(
+            data=data,
+            bin_size=bin_size,
+            compute_correlations=compute_correlations,
+        )
 
     @staticmethod
     def load_profile(data: str) -> DataProfile:

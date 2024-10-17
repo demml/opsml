@@ -5,7 +5,7 @@
   import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
   import { goto } from '$app/navigation';
-  import type { Card } from "$lib/scripts/types";
+  import type { Card, ModelMetadata } from "$lib/scripts/types";
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
 
@@ -31,6 +31,9 @@
   let tabSet: string;
   $: tabSet = "home";
 
+  let metadata: ModelMetadata;
+  $: metadata = data.metadata;
+
 
   async function showTabContent(value: string ) {
     let baseURL: string = `/opsml/${registry}/card`;
@@ -54,7 +57,7 @@
         tabSet = "versions";
     }
     else if ($page.url.pathname.includes("monitoring")) {
-        tabSet = "monitoring";
+        tabSet = "monitoring/feature";
     }
     else if ($page.url.pathname.includes("settings")) {
         tabSet = "settings";
@@ -121,26 +124,24 @@
             </div>
           </Tab>
 
-          <Tab bind:group={tabSet} name="monitoring" value="monitoring" on:click={() => showTabContent("monitoring")}>
-            <div class="flex flex-row  items-center">
-              <Fa class="h-4 mr-1" icon={faMagnifyingGlass} color="#4b3978"/>
-              <div class="font-semibold text-sm">Monitoring</div>
-            </div>
-          </Tab>
+          {#if metadata.drift}
+            {#if metadata.drift.drift_profile_uri}
+              <Tab bind:group={tabSet} name="monitoring" value="monitoring" on:click={() => showTabContent("monitoring/feature")}>
+                <div class="flex flex-row  items-center">
+                  <Fa class="h-4 mr-1" icon={faMagnifyingGlass} color="#4b3978"/>
+                  <div class="font-semibold text-sm">Monitoring</div>
+                </div>
+              </Tab>
+            {/if}
+          {/if}
 
-          <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("settings")}>
-            <div class="flex flex-row  items-center">
-              <Fa class="h-4 mr-1" icon={faGears} color="#4b3978"/>
-              <div class="font-semibold text-sm">Settings</div>
-            </div>
-          </Tab>
 
-          <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("messages")}>
-            <div class="flex flex-row  items-center">
-              <Fa class="h-4 mr-1" icon={faGears} color="#4b3978"/>
-              <div class="font-semibold text-sm">Messages/Notes</div>
-            </div>
-          </Tab>
+          <!-- <Tab bind:group={tabSet} name="settings" value="settings" on:click={() => showTabContent("messages")}>-->
+          <!--   <div class="flex flex-row  items-center">-->
+          <!--     <Fa class="h-4 mr-1" icon={faGears} color="#4b3978"/>-->
+          <!--     <div class="font-semibold text-sm">Messages/Notes</div>-->
+          <!--   </div>-->
+          <!-- </Tab>-->
 
         </TabGroup>
 

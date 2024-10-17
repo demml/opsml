@@ -7,8 +7,22 @@ import {
   type ChartjsData,
 } from "$lib/scripts/types";
 import { server } from "./server";
-import { metricsForTable, user, sampleRunMetics, barData } from "./constants";
+import {
+  metricsForTable,
+  user,
+  sampleRunMetics,
+  barData,
+  SpcDriftProfile,
+  allFeatureDriftValues,
+  featureDriftValues,
+  exampleFeatureDistribution,
+  exampleAlerts,
+  exampleUpdateAlert,
+  exampleObservabilityMetrics,
+  exampleAlertMetrics,
+} from "./constants";
 import { graphs } from "./graphs";
+import * as monitoring from "../lib/scripts/monitoring/utils";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -478,4 +492,103 @@ it("getHardwareMetrics", async () => {
 it("getGraphs", async () => {
   const _graphs = await page.getRunGraphs("repo", "name", "version");
   expect(_graphs).toEqual(graphs);
+});
+
+it("getDriftProfile", async () => {
+  const _profile = await monitoring.getDriftProfile("repo", "name", "version");
+  expect(_profile.profile).toEqual(SpcDriftProfile);
+  let featureProfile = monitoring.getSpcFeatureProfile(
+    "col1",
+    _profile.profile!
+  );
+
+  expect(featureProfile.center).toEqual(0);
+});
+
+it("UpdateDriftProfile", async () => {
+  const response = await monitoring.updateDriftProfile(
+    "repo",
+    "name",
+    "version",
+    "profile"
+  );
+  expect(response.complete).toEqual(true);
+});
+
+it("GetFeatureValues", async () => {
+  const all_features_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100
+  );
+  expect(all_features_response).toEqual(allFeatureDriftValues);
+
+  const feature_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "col1"
+  );
+  expect(feature_response).toEqual(featureDriftValues);
+
+  const no_feature_response = await monitoring.getFeatureDriftValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "no"
+  );
+  let numVals = no_feature_response.features["no"].values.length;
+  let numDates = no_feature_response.features["no"].created_at.length;
+  expect(numVals).toEqual(30);
+  expect(numDates).toEqual(30);
+});
+
+it("GetFeatureDistributionValues", async () => {
+  const featureDistResponse = await monitoring.getSpcFeatureDistributionValues(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100,
+    "feature"
+  );
+  expect(featureDistResponse).toEqual(exampleFeatureDistribution);
+});
+
+it("GetMonitorAlerts", async () => {
+  const alerts = await monitoring.getMonitorAlerts("repo", "name", "version");
+  expect(alerts).toEqual(exampleAlerts);
+});
+
+it("UpdateMonitorAlerts", async () => {
+  const response = await monitoring.updateMonitorAlert(0, "acknowledged");
+  expect(response).toEqual(exampleUpdateAlert);
+});
+
+it("GetAlertMetrics", async () => {
+  const alertMetrics = await monitoring.getAlertMetrics(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100
+  );
+  expect(alertMetrics).toEqual(exampleAlertMetrics);
+});
+
+it("GetObservabilityMetrics", async () => {
+  const metrics = await monitoring.getObservabilityMetrics(
+    "repo",
+    "name",
+    "version",
+    "2day",
+    100
+  );
+  expect(metrics).toEqual(exampleObservabilityMetrics);
 });

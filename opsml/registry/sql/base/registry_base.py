@@ -319,7 +319,7 @@ class SQLRegistryBase:
                 f"Card for {card.repository}/{card.name}/{card.version} already exists with a different uid"
             )
 
-        logger.info("Updating card {}/{} with version {}", card.repository, card.name, card.version)
+        logger.info("Updating card {}/{}/{}", card.repository, card.name, card.version)
 
         save_card_artifacts(card=card)
 

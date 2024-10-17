@@ -12,8 +12,11 @@ def log_card_change(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
         card, state = func(self, *args, **kwargs)
+        repository = str(card.get("repository"))
         name = str(card.get("name"))
         version = str(card.get("version"))
-        logger.info("{}: {}, version:{} {}", self.table_name, name, version, state)  # pylint: disable=protected-access
+        logger.info(
+            "{}: {}/{}/{} {}", self.table_name, repository, name, version, state
+        )  # pylint: disable=protected-access
 
     return wrapper

@@ -53,7 +53,6 @@
   onMount(async () => {
     if (selectedRepo) {
       registryPage = await getRegistryPage(registry, undefined, selectedRepo, searchTerm, 0);
-      console.log(registryPage);
       registryStats = await getRegistryStats(registry, selectedRepo);
       
       paginationSettings.page = 0;
