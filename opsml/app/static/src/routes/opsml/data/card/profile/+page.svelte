@@ -1,6 +1,5 @@
 
 <script lang="ts">
-  import { onMount } from 'svelte';
   import type { DataProfile } from "$lib/scripts/data/types";
   import DataProfileDiv from "$lib/card/data/DataProfile.svelte";
   import { Autocomplete, popup  } from '@skeletonlabs/skeleton';

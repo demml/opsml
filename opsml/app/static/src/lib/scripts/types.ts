@@ -136,6 +136,11 @@ export interface DataSchema {
   onnx_version?: string;
 }
 
+export interface Drift {
+  drift_profile_uri: string;
+  drift_type: string;
+}
+
 export interface ModelMetadata {
   model_name: string;
   model_class: string;
@@ -158,6 +163,7 @@ export interface ModelMetadata {
   uid: string;
   task_type?: string;
   onnx_args?: Map<string, string | boolean>;
+  drift: Drift | undefined;
 }
 
 export interface DataSplit {
