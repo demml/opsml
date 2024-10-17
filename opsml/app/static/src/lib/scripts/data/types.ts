@@ -47,6 +47,7 @@ export interface FeatureProfile {
   numeric_stats: NumericStats | undefined;
   string_stats: StringStats | undefined;
   timestamp: string;
+  correlations: Record<string, number> | undefined;
 }
 
 export interface DataProfile {

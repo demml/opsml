@@ -2,7 +2,7 @@
 <script lang="ts">
     import Chart from 'chart.js/auto';
     import { Filler } from 'chart.js';
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import ChartDataLabels from 'chartjs-plugin-datalabels';
     import 'chartjs-adapter-date-fns';
   
@@ -16,7 +16,7 @@
     let chart;
   
   
-    Chart.register(ChartDataLabels);
+    Chart.unregister(ChartDataLabels);
     Chart.register(Filler);
   
     onMount(() => {
@@ -26,7 +26,6 @@
         type: type,
         data: data,
         options: options,
-        plugins: [ChartDataLabels],
         });
 
     });
@@ -35,7 +34,7 @@
 
   </script>
   
-  <div class="h-48 mb-5">
-    <div class="text-primary-500 font-bold pb-1">Word Statistics</div> 
+  <div class="h-48 mb-5 min-w-full">
+    <div class="text-primary-500 font-bold pb-1">Feature Correlation</div> 
     <canvas bind:this={chartCanvas}></canvas>
   </div>
