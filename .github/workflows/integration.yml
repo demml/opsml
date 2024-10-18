@@ -45,7 +45,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -104,7 +104,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build
 
       - name: "Az CLI login"
         uses: azure/login@v2
@@ -160,7 +160,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build
 
       # identity token doesn't work with python storage client and pre-signed urls
       #- name: "Authenticate with Google Cloud"

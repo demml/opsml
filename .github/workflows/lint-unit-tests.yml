@@ -39,7 +39,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build 
           pnpm run test
 
       - name: Set up uv
@@ -85,7 +85,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build 
           pnpm run test
 
       - name: Set up uv
@@ -138,7 +138,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build 
           pnpm run test
 
       - name: Set up uv
@@ -204,7 +204,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build 
           pnpm run test
 
       - name: Set up uv
@@ -258,7 +258,7 @@ jobs:
         run: |
           cd opsml/app/static
           pnpm install
-          pnpm run build --if-present
+          pnpm run build 
           pnpm run test
 
       - name: Set up uv
