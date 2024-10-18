@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
-
+import tempfile
 from opsml.cards import (
     AuditCard,
     DataCard,
@@ -555,6 +555,20 @@ def test_model_registry_scouter(
     assert modelcard.interface.drift_profile is not None
     assert modelcard.interface.drift_profile.config.name == modelcard.name
     assert mock_request.called
+
+    # create temporary directory to write to
+    with tempfile.TemporaryDirectory() as tempdir:
+        temp_path = Path(tempdir)
+        modelcard.download_drift_profile(temp_path)
+
+        assert (temp_path / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value).exists()
+        assert modelcard.interface.drift_profile is not None
+
+        modelcard.download_model_metadata(temp_path)
+
+        assert (temp_path / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
+
+    #
 
 
 @mock.patch("opsml.scouter.server.ScouterServerClient.request")
