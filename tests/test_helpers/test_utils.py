@@ -9,7 +9,7 @@ from opsml.storage.client import StorageClient
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="No wn_32 test")
-def test_local_paths(tmp_path: Path, local_storage_client: StorageClient):
+def test_local_paths(tmp_path: Path, local_storage_client: StorageClient) -> None:
     FILENAME = "example.csv"
     file_path = utils.FileUtils.find_filepath(name=FILENAME)
 
