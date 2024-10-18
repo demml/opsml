@@ -820,7 +820,7 @@ export async function getObservabilityMetrics(
 ): Promise<ObservabilityMetrics> {
   // get min of time window and 400
 
-  let max_points = Math.min(max_data_points, 400);
+  const max_points = Math.min(max_data_points, 400);
   const params = {
     repository: repository,
     name: name,
@@ -835,7 +835,6 @@ export async function getObservabilityMetrics(
     ).toString()}`
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const response = (await values_response.json()) as ObservabilityMetrics;
 
   return response;
@@ -877,8 +876,8 @@ function buildChart(
   };
 
   // add eslint ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  let datasets: any[] = [];
+
+  const datasets: Record<string, string | boolean | number | number[]>[] = [];
 
   for (let i = 0; i < values.length; i++) {
     datasets.push({
@@ -962,15 +961,15 @@ export function createObservabilityViz(
 
   // iterate over each
   metrics.metrics.forEach((metric) => {
-    let labels = metric.created_at.map((date) => new Date(date));
-    let requests = metric.request_per_sec;
+    const labels = metric.created_at.map((date) => new Date(date));
+    const requests = metric.request_per_sec;
 
-    let p50 = metric.p50;
-    let p99 = metric.p99;
+    const p50 = metric.p50;
+    const p99 = metric.p99;
 
     // build request chart
-    let requestVizData = buildChart(["Requests per sec"], labels, [requests]);
-    let latencyVizData = buildChart(["P50", "P99"], labels, [p50, p99]);
+    const requestVizData = buildChart(["Requests per sec"], labels, [requests]);
+    const latencyVizData = buildChart(["P50", "P99"], labels, [p50, p99]);
 
     routeVizData.push({
       route_name: metric.route_name,

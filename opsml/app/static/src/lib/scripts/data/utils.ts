@@ -11,7 +11,7 @@ import {
   type Histogram,
 } from "$lib/scripts/data/types";
 import { type ChartjsData } from "$lib/scripts/types";
-import { zoomOptions, grace, legend, handleResize } from "$lib/scripts/chart";
+import { grace, legend, handleResize } from "$lib/scripts/chart";
 export async function getDataProfile(
   repository,
   name,
@@ -26,9 +26,9 @@ export async function getDataProfile(
   );
 
   const view = (await viewData.json()) as FileView;
-  let content: string = view.content.content!;
+  const content: string = view.content.content!;
 
-  let profile: DataProfile = JSON.parse(content);
+  const profile = JSON.parse(content) as DataProfile;
 
   return profile;
 }
@@ -37,8 +37,8 @@ export function createCategoricalWordVizData(wordStats: WordStats): {
   x: string[];
   y: number[];
 } {
-  let words = wordStats.words;
-  let entries = Object.entries(words).map(([key, stats]) => ({
+  const words = wordStats.words;
+  const entries = Object.entries(words).map(([key, stats]) => ({
     key,
     percent: stats.percent,
   }));
@@ -47,8 +47,8 @@ export function createCategoricalWordVizData(wordStats: WordStats): {
   entries.sort((a, b) => b.percent - a.percent);
 
   // Unpack sorted entries into x, y, and percentage
-  let x = entries.map((entry) => entry.key);
-  let y = entries.map((entry) => entry.percent);
+  const x = entries.map((entry) => entry.key);
+  const y = entries.map((entry) => entry.percent);
 
   return { x, y };
 }
@@ -58,7 +58,7 @@ export function createBarViz(
   y: number[],
   xTitle: string
 ): ChartjsData {
-  let datasets = [
+  const datasets = [
     {
       backgroundColor: "rgba(75, 57, 120, 0.5)",
       borderColor: "rgba(75, 57, 120, 1)",
@@ -71,7 +71,7 @@ export function createBarViz(
     },
   ];
 
-  let options = {
+  const options = {
     plugins: {
       legend,
       datalabels: {
@@ -79,7 +79,7 @@ export function createBarViz(
         font: {
           weight: "bold",
         },
-        formatter: function (value, context) {
+        formatter: function (value: number, _context): string {
           return value.toFixed(3);
         },
       },
@@ -134,7 +134,7 @@ export function createBarViz(
 }
 
 export function createHistViz(data: Histogram): ChartjsData {
-  let datasets = [
+  const datasets = [
     {
       backgroundColor: "rgba(75, 57, 120, 0.5)",
       borderColor: "rgba(75, 57, 120, 1)",
@@ -143,7 +143,7 @@ export function createHistViz(data: Histogram): ChartjsData {
     },
   ];
 
-  let options = {
+  const options = {
     plugins: {
       legend,
     },
@@ -162,7 +162,7 @@ export function createHistViz(data: Histogram): ChartjsData {
         title: { display: true, text: "Bins" },
         ticks: {
           maxTicksLimit: 30,
-          callback: function (value) {
+          callback: function (value: number): string {
             return value.toFixed(2);
           },
         },
