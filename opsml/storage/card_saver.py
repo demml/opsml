@@ -6,7 +6,7 @@ import json
 import tempfile
 from functools import cached_property
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import joblib
 import yaml
@@ -67,6 +67,7 @@ class CardUris(BaseModel):
     tokenizer_uri: Optional[Path] = None
     feature_extractor_uri: Optional[Path] = None
     onnx_config_uri: Optional[Path] = None
+    drift_profile_uri: Optional[Path] = None
 
     lpath: Optional[Path] = None
     rpath: Optional[Path] = None
@@ -320,63 +321,120 @@ class ModelCardSaver(CardSaver):
         self.card.metadata.data_schema = metadata.data_schema
         self.card_uris.onnx_model_uri = save_path
 
-    def _get_model_metadata(self) -> ModelMetadata:
+    def _get_model_metadata(self, existing_metadata: Dict[str, Any]) -> ModelMetadata:
         """Create Onnx Model from trained model"""
         if self.card.interface.onnx_model is not None:
             onnx_version = self.card.interface.onnx_model.onnx_version
         else:
             onnx_version = None
 
+        # logic for drift
+        drift = None
+
+        if self.card.interface.drift_profile is not None:
+            existing_drift = existing_metadata.get("drift")
+            existing_drift_profile_uri = None
+            existing_drift_type = None
+
+            if existing_drift is not None:
+                existing_drift_profile_uri = existing_drift.get("drift_profile_uri")
+                existing_drift_type = existing_drift.get("drift_type")
+
+            drift = {
+                "drift_profile_uri": existing_drift_profile_uri
+                or self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value),
+                "drift_type": existing_drift_type or self.card.interface.drift_profile.config.drift_type.value,
+            }
+
         # base metadata
         metadata = ModelMetadata(
-            model_name=self.card.name,
-            model_class=self.card.interface.model_class,
-            model_type=self.card.interface.model_type,
-            model_interface=self.card.interface.name(),
-            onnx_uri=self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
-            onnx_version=onnx_version,
-            model_uri=self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
-            model_version=self.card.version,
-            model_repository=self.card.repository,
-            data_schema=self.card.metadata.data_schema,
-            sample_data_uri=self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
+            model_name=existing_metadata.get("model_name") or self.card.name,
+            model_class=existing_metadata.get("model_class") or self.card.interface.model_class,
+            model_type=existing_metadata.get("model_type") or self.card.interface.model_type,
+            model_interface=existing_metadata.get("model_interface") or self.card.interface.name(),
+            onnx_uri=existing_metadata.get("onnx_uri") or self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
+            onnx_version=existing_metadata.get("onnx_version") or onnx_version,
+            model_uri=existing_metadata.get("model_uri")
+            or self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
+            model_version=existing_metadata.get("model_version") or self.card.version,
+            model_repository=existing_metadata.get("model_repository") or self.card.repository,
+            data_schema=existing_metadata.get("data_schema") or self.card.metadata.data_schema,
+            sample_data_uri=existing_metadata.get("sample_data_uri")
+            or self.card_uris.resolve_path(UriNames.SAMPLE_DATA_URI.value),
         )
+
+        if drift is not None:
+            metadata.drift = drift
 
         # add extra uris
         if self.card_uris.preprocessor_uri is not None:
-            metadata.preprocessor_uri = self.card_uris.resolve_path(UriNames.PREPROCESSOR_URI.value)
-            metadata.preprocessor_name = self.card.interface.preprocessor_name  # type: ignore
+            metadata.preprocessor_uri = existing_metadata.get("preprocessor_uri") or self.card_uris.resolve_path(
+                UriNames.PREPROCESSOR_URI.value
+            )
+            metadata.preprocessor_name = (
+                existing_metadata.get(
+                    "preprocessor_name",
+                )
+                or self.card.interface.preprocessor_name
+            )
 
         # add huggingface specific uris
         if isinstance(self.card.interface, HuggingFaceModel):
             metadata.task_type = self.card.interface.task_type
 
             if self.card.interface.onnx_args is not None:
-                metadata.onnx_args = {
+                metadata.onnx_args = existing_metadata.get("onnx_args") or {
                     "quantize": self.card.interface.onnx_args.quantize,
                     "ort_type": self.card.interface.onnx_args.ort_type,
                     "provider": self.card.interface.onnx_args.provider,
                 }
 
             if self.card_uris.quantized_model_uri is not None:
-                metadata.quantized_model_uri = self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
+                metadata.quantized_model_uri = existing_metadata.get(
+                    "quantized_model_uri"
+                ) or self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
 
             if self.card_uris.tokenizer_uri is not None:
-                metadata.tokenizer_uri = self.card_uris.resolve_path(UriNames.TOKENIZER_URI.value)
-                metadata.tokenizer_name = self.card.interface.tokenizer_name
+                metadata.tokenizer_uri = existing_metadata.get("tokenizer_uri") or self.card_uris.resolve_path(
+                    UriNames.TOKENIZER_URI.value
+                )
+                metadata.tokenizer_name = existing_metadata.get("tokenizer_name") or self.card.interface.tokenizer_name
 
             if self.card_uris.feature_extractor_uri is not None:
-                metadata.feature_extractor_uri = self.card_uris.resolve_path(UriNames.FEATURE_EXTRACTOR_URI.value)
-                metadata.feature_extractor_name = self.card.interface.feature_extractor_name
+                metadata.feature_extractor_uri = existing_metadata.get(
+                    "feature_extractor_uri"
+                ) or self.card_uris.resolve_path(UriNames.FEATURE_EXTRACTOR_URI.value)
+                metadata.feature_extractor_name = (
+                    existing_metadata.get("feature_extractor_name") or self.card.interface.feature_extractor_name
+                )
 
             if self.card_uris.onnx_config_uri is not None:
-                metadata.onnx_config_uri = self.card_uris.resolve_path(UriNames.ONNX_CONFIG_URI.value)
+                metadata.onnx_config_uri = existing_metadata.get("onnx_config_uri") or self.card_uris.resolve_path(
+                    UriNames.ONNX_CONFIG_URI.value
+                )
 
         return metadata
 
     def _save_metadata(self) -> None:
         """Saves Model metadata"""
-        model_metadata = self._get_model_metadata()
+
+        # check if model metadata already exists (for updating cards)
+        existing_metadata = {}
+        exists = client.storage_client.exists(
+            (self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+        )
+
+        if exists:
+            existing_path = Path(self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            local_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+            client.storage_client.get(existing_path, local_path)
+
+            # load json
+            existing_metadata = ModelMetadata.model_validate_json(
+                local_path.read_text("utf-8"),
+            ).model_dump()
+
+        model_metadata = self._get_model_metadata(existing_metadata)
 
         # save model metadata to json
         save_path = Path(self.lpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
@@ -430,6 +488,7 @@ class ModelCardSaver(CardSaver):
         # update drift profile repository, name and version
         save_path = Path(self.lpath / SaveName.DRIFT_PROFILE.value).with_suffix(Suffix.JSON.value)
         self.card.interface.save_drift_profile(save_path)
+        self.card_uris.drift_profile_uri = save_path
 
     def save_artifacts(self) -> None:
         """Prepares and saves artifacts from a modelcard"""

@@ -360,6 +360,7 @@ class DataCardMetadata(BaseModel):
     data_splits: Optional[str] = None
     sql_logic: Optional[Dict[str, str]] = None
     feature_map: Optional[str] = None
+    has_profile: bool = False
 
 
 def form_body(cls: Any) -> Any:
@@ -517,7 +518,3 @@ class SecurityQuestionResponse(BaseModel):
 class TempRequest(BaseModel):
     username: str
     answer: str
-
-
-class DriftProfileRequest(BaseModel):
-    profile: str

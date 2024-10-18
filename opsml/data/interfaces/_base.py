@@ -43,6 +43,7 @@ class DataInterface(BaseModel):
     feature_map: Dict[str, Feature] = {}
     feature_descriptions: Dict[str, str] = {}
     sql_logic: Dict[str, str] = {}
+    has_profile: bool = False
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -107,6 +108,7 @@ class DataInterface(BaseModel):
     def _check_profile(cls, profile: Optional[DataProfile]) -> Optional[DataProfile]:
         if profile is not None:
             assert isinstance(profile, DataProfile)
+            cls.has_profile = True
         return profile
 
     def save_data(self, path: Path) -> None:
@@ -157,20 +159,25 @@ class DataInterface(BaseModel):
         assert self.data_profile is not None, "No data profile detected in interface"
         self.data_profile.save_to_json(path)
 
-    def create_data_profile(self, bin_size: int = 20, features: Optional[List[str]] = None) -> DataProfile:
+    def create_data_profile(self, bin_size: int = 20, compute_correlations: bool = False) -> DataProfile:
         """Creates a data profile report
 
         Args:
             bin_size:
                 number of bins for histograms. Default is 20
-            features:
-                Optional list of features to profile
+            compute_correlations:
+                whether to compute correlations. Default is False
 
         """
         profiler = DataProfiler()
 
         if self.data_profile is None:
-            self.data_profile = profiler.create_profile_report(self.data, bin_size)
+            self.data_profile = profiler.create_profile_report(
+                self.data,
+                bin_size,
+                compute_correlations,
+            )
+            self.has_profile = True
             return self.data_profile
 
         logger.info("Data profile already exists")

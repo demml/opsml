@@ -70,6 +70,7 @@ def get_data_card(request: Request, payload: CardRequest) -> DataCardMetadata:
     data_splits = None
     sql_logic = None
     feature_map = None
+    has_profile = False
 
     if isinstance(card.interface, DataInterface):
         # if data_splits are not None, convert to json string
@@ -82,6 +83,7 @@ def get_data_card(request: Request, payload: CardRequest) -> DataCardMetadata:
             feature_map = json.dumps(feature_map, indent=4)
 
         sql_logic = card.interface.sql_logic
+        has_profile = card.interface.has_profile
 
     return DataCardMetadata(
         name=card.name,
@@ -93,4 +95,5 @@ def get_data_card(request: Request, payload: CardRequest) -> DataCardMetadata:
         data_splits=data_splits,
         feature_map=feature_map,
         sql_logic=sql_logic,
+        has_profile=has_profile,
     )

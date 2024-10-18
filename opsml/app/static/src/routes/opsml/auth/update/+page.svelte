@@ -9,7 +9,6 @@
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
-  import { apiHandler } from "$lib/scripts/apiHandler";
 
 
     // toast

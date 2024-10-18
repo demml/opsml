@@ -6,7 +6,23 @@ import {
   type Parameter,
   type ModelMetadata,
   type DataCardMetadata,
+  type MonitorAlert,
+  type MonitorAlerts,
+  type UpdateAlert,
+  type AlertMetrics,
 } from "$lib/scripts/types";
+
+import {
+  type DataProfile,
+  type FeatureProfile,
+  type NumericStats,
+  type Distinct,
+  type Quantiles,
+  type Histogram,
+  type WordStats,
+  type CharStats,
+  type StringStats,
+} from "$lib/scripts/data/types";
 
 export const user: User = {
   username: "test",
@@ -341,6 +357,7 @@ export const sampleModelMetadata: ModelMetadata = {
     onnx_version: "test",
   },
   uid: "test",
+  drift: undefined,
 };
 
 export const sampleDataMetadata: DataCardMetadata = {
@@ -353,6 +370,7 @@ export const sampleDataMetadata: DataCardMetadata = {
   data_splits: JSON.stringify({ test: 0.2, train: 0.8 }),
   feature_map: JSON.stringify({ test: 0.2, train: 0.8 }),
   sql_logic: new Map(),
+  has_profile: true,
 };
 
 export const sampleFiles = {
@@ -396,5 +414,233 @@ export const sampleCardVersions = {
         runcard_uid: "test",
       },
     ],
+  },
+};
+
+export const SpcDriftProfile = {
+  features: {
+    col1: {
+      id: "col1",
+      center: 0.0,
+      one_ucl: 0.0,
+      one_lcl: 0.0,
+      two_ucl: 0.0,
+      two_lcl: 0.0,
+      three_ucl: 0.0,
+      three_lcl: 0.0,
+      timestamp: "2024-08-29T01:10:45.652409",
+    },
+  },
+  config: {
+    sample_size: 100,
+    sample: true,
+    name: "test",
+    repository: "test",
+    version: "1.0.0",
+    feature_map: undefined,
+    targets: [],
+    alert_config: {
+      dispatch_type: "Console",
+      rule: {
+        rule: "8 8 8 8 8 8 8 8",
+        zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
+      },
+      schedule: "0 0 0 0 0 0 0 0",
+      dispatch_kwargs: {},
+    },
+  },
+  scouter_version: "1.0.0",
+};
+
+export const featureDriftValues = {
+  features: {
+    col_1: {
+      created_at: [
+        "2024-09-18T01:12:00",
+        "2024-09-18T01:26:24",
+        "2024-09-18T01:40:48",
+        "2024-09-18T01:55:12",
+        "2024-09-18T02:09:36",
+      ],
+      values: [
+        1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+        0.44125417583912063, -0.6577854789448841,
+      ],
+    },
+  },
+};
+
+export const allFeatureDriftValues = {
+  features: {
+    all_features: {
+      created_at: [
+        "2024-09-18T01:12:00",
+        "2024-09-18T01:26:24",
+        "2024-09-18T01:40:48",
+        "2024-09-18T01:55:12",
+        "2024-09-18T02:09:36",
+      ],
+      values: [
+        1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+        0.44125417583912063, -0.6577854789448841,
+      ],
+    },
+  },
+};
+
+export const exampleFeatureDistribution = {
+  name: "test",
+  repository: "test",
+  version: "1.0.0",
+  percentile_10: 0.0,
+  percentile_20: 0.0,
+  percentile_30: 0.0,
+  percentile_40: 0.0,
+  percentile_50: 0.0,
+  percentile_60: 0.0,
+  percentile_70: 0.0,
+  percentile_80: 0.0,
+  percentile_90: 0.0,
+  percentile_100: 0.0,
+  val_10: 0.0,
+  val_20: 0.0,
+  val_30: 0.0,
+  val_40: 0.0,
+  val_50: 0.0,
+  val_60: 0.0,
+  val_70: 0.0,
+  val_80: 0.0,
+  val_90: 0.0,
+  val_100: 0.0,
+};
+
+// Example usage
+export const exampleAlert: MonitorAlert = {
+  created_at: "2023-10-01T12:34:56Z",
+  name: "Example Alert",
+  repository: "example-repo",
+  version: "1.0.0",
+  feature: "example-feature",
+  alert: {
+    alert1: "Description of alert 1",
+    alert2: "Description of alert 2",
+  },
+  status: "active",
+  id: 1,
+};
+
+export const exampleAlerts: MonitorAlerts = {
+  alerts: [exampleAlert],
+};
+
+export const exampleUpdateAlert: UpdateAlert = {
+  message: "Example message",
+  status: "success",
+};
+
+export const exampleObservabilityMetrics = {
+  metrics: [
+    {
+      route_name: "test",
+      created_aty: ["2023-10-01T12:34:56Z"],
+      total_request_count: 100,
+      total_error_count: 10,
+      p5: [1],
+      p50: [1],
+      p95: [2],
+      p99: [3],
+      request_count: [10],
+      error_count: [1],
+      error_latency: [1],
+      status_counts: [{ "200": 10 }],
+    },
+    {
+      route_name: "test2",
+      created_aty: ["2023-10-01T12:34:56Z"],
+      total_request_count: 100,
+      total_error_count: 10,
+      p5: [1],
+      p50: [1],
+      p95: [2],
+      p99: [3],
+      request_count: [10],
+      error_count: [1],
+      error_latency: [1],
+      status_counts: [{ "200": 10 }],
+    },
+  ],
+};
+
+export const exampleAlertMetrics: AlertMetrics = {
+  created_at: ["2023-10-01T12:34:56Z"],
+  acknowledged: [1],
+  active: [1],
+  alert_count: [1],
+};
+
+const exampleDistinct: Distinct = {
+  count: 0,
+  percent: 0,
+};
+
+const exampleQuantiles: Quantiles = {
+  q25: 0,
+  q50: 0,
+  q75: 0,
+  q99: 0,
+};
+
+const exampleHistogram: Histogram = {
+  bins: [0],
+  bin_counts: [0],
+};
+
+const exampleWordStats: WordStats = {
+  words: {},
+};
+
+const exampleCharStats: CharStats = {
+  min_length: 0,
+  max_length: 0,
+  median_length: 0,
+  mean_length: 0,
+};
+
+const exampleStringStats: StringStats = {
+  distinct: exampleDistinct,
+  char_stats: exampleCharStats,
+  word_stats: exampleWordStats,
+};
+
+const exampleNumericStats: NumericStats = {
+  mean: 0.0,
+  stddev: 0.0,
+  min: 0.0,
+  max: 0.0,
+  distinct: exampleDistinct,
+  quantiles: exampleQuantiles,
+  histogram: exampleHistogram,
+};
+
+const exampleFeatureProfileNum: FeatureProfile = {
+  id: "col1",
+  numeric_stats: exampleNumericStats,
+  string_stats: undefined,
+  timestamp: "2024-08-29T01:10:45.652409",
+  correlations: { col2: 0.0 },
+};
+
+const exampleFeatureProfileString: FeatureProfile = {
+  id: "col1",
+  numeric_stats: undefined,
+  string_stats: exampleStringStats,
+  timestamp: "2024-08-29T01:10:45.652409",
+  correlations: { col2: 0.0 },
+};
+
+export const exampleDataProfile: DataProfile = {
+  features: {
+    col1: exampleFeatureProfileNum,
+    col2: exampleFeatureProfileString,
   },
 };

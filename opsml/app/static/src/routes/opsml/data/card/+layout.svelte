@@ -2,7 +2,7 @@
 
   import { TabGroup, Tab } from '@skeletonlabs/skeleton';
   import Fa from 'svelte-fa'
-  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+  import { faTag, faFolderTree, faCodeBranch, faBolt, faGears, faRectangleList} from '@fortawesome/free-solid-svg-icons'
   import modelcard_circuit from '$lib/images/modelcard-circuit.svg'
   import { goto } from '$app/navigation';
   import type { Card, DataCardMetadata } from "$lib/scripts/types";
@@ -54,7 +54,10 @@
         tabSet = "versions";
     }
     else if ($page.url.pathname.includes("sql")) {
-        tabSet = "monitoring";
+        tabSet = "sql";
+    }
+    else if ($page.url.pathname.includes("profile")) {
+        tabSet = "profile";
     }
     else {
       tabSet = "home";
@@ -121,6 +124,15 @@
               <div class="flex flex-row  items-center">
                 <Fa class="h-4 mr-2" icon={faGears} color="#4b3978"/>
                 <div class="font-semibold text-sm">SQL</div>
+              </div>
+            </Tab>
+          {/if}
+
+          {#if metadata.has_profile}
+            <Tab bind:group={tabSet} name="sql" value="sql" on:click={() => showTabContent("profile")}>
+              <div class="flex flex-row  items-center">
+                <Fa class="h-4 mr-2" icon={faRectangleList} color="#4b3978"/>
+                <div class="font-semibold text-sm">Profile</div>
               </div>
             </Tab>
           {/if}

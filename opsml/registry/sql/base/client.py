@@ -19,7 +19,7 @@ from opsml.helpers.utils import check_package_exists
 from opsml.registry.semver import CardVersion, VersionType
 from opsml.registry.sql.base.registry_base import SQLRegistryBase
 from opsml.registry.sql.base.utils import log_card_change
-from opsml.settings.config import config
+from opsml.scouter.integration import ScouterClient
 from opsml.storage.api import RequestType, api_routes
 from opsml.storage.client import ApiStorageClient, StorageClient
 from opsml.types import RegistryType
@@ -37,6 +37,7 @@ class ClientRegistry(SQLRegistryBase):
 
         self._session = storage_client.api_client
         self._registry_type = registry_type
+        self._scouter_client = ScouterClient()
 
     @cached_property
     def table_name(self) -> str:
@@ -259,13 +260,6 @@ class ClientModelCardRegistry(ClientRegistry):
         if not exists:
             raise ValueError("ModelCard must be associated with a valid DataCard uid")
 
-    def insert_drift_profile(self, drift_profile: str) -> None:
-        self._session.request(
-            route=api_routes.DRIFT_PROFILE,
-            request_type=RequestType.POST,
-            json={"profile": drift_profile},
-        )
-
     def register_card(
         self,
         card: Card,
@@ -321,11 +315,42 @@ class ClientModelCardRegistry(ClientRegistry):
             )
 
             # write profile to scouter
-            if card.interface.drift_profile is not None and config.scouter_server_uri is not None:
+            if card.interface.drift_profile and self._scouter_client.server_running:
                 try:
-                    self.insert_drift_profile(drift_profile=card.interface.drift_profile.model_dump_json())
+                    self._scouter_client.insert_drift_profile(
+                        drift_profile=card.interface.drift_profile.model_dump_json(),
+                        drift_type=card.interface.drift_profile.config.drift_type,
+                    )
                 except Exception as exc:  # pylint: disable=broad-except
                     logger.error(f"Failed to insert drift profile: {exc}")
+
+    def update_card(self, card: Card) -> None:
+        """
+        Update an artifact card based on current registry
+
+        Args:
+            card:
+                Card to register
+        """
+        card = cast(ModelCard, card)
+
+        if card.datacard_uid is not None:
+            self._validate_datacard_uid(uid=card.datacard_uid)
+
+        super().update_card(card)
+
+        # write profile to scouter
+        if card.interface.drift_profile and self._scouter_client.server_running:
+            try:
+                self._scouter_client.update_drift_profile(
+                    repository=card.repository,
+                    name=card.name,
+                    version=card.version,
+                    drift_profile=card.interface.drift_profile.model_dump_json(),
+                    drift_type=card.interface.drift_profile.config.drift_type,
+                )
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.error(f"Failed to update drift profile: {exc}")
 
     @staticmethod
     def validate(registry_name: str) -> bool:
