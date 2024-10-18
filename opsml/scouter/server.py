@@ -217,9 +217,7 @@ class ScouterServerClient(ApiClient):
         except Exception:  # pylint: disable=broad-except
             return {}
 
-    def get_monitoring_alerts(
-        self, repository: str, name: str, version: str, active: bool, limit: int
-    ) -> List[Dict[str, Any]]:
+    def get_monitoring_alerts(self, repository: str, name: str, version: str, active: bool, limit: int) -> List[Dict[str, Any]]:
         """Get monitoring alerts from scouter server
 
         Args:
