@@ -113,32 +113,6 @@ def query_registry_stats(
         ) from error
 
 
-@router.get("/cards/names", response_model=NamesResponse, name="names")
-def card_names(
-    request: Request,
-    registry_type: str,
-    repository: Optional[str] = None,
-) -> NamesResponse:
-    """Get all names associated with a registry
-
-    Args:
-        request:
-            FastAPI request object
-        registry_type:
-            Type of registry
-        repository:
-            repository to filter names by
-
-    Returns:
-        `NamesResponse`
-    """
-
-    registry: CardRegistry = getattr(request.app.state.registries, registry_type)
-    names = registry._registry.get_unique_card_names(repository=repository)
-
-    return NamesResponse(names=names)
-
-
 @router.get("/cards/registry/query/page", response_model=RegistryQuery, name="registry_page")
 def query_registry_page(
     request: Request,
