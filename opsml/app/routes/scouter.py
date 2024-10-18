@@ -88,7 +88,9 @@ def insert_profile(request: Request, payload: DriftProfileRequest) -> Success:
         return Success()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error
 
 
 @router.put("/scouter/drift/profile", name="update_drift_profile", response_model=ProfileUpdateResponse)
@@ -149,7 +151,9 @@ def update_profile(request: Request, payload: DriftProfileUpdateRequest) -> Prof
         return ProfileUpdateResponse()
     except Exception as error:
         logger.error(f"Failed to insert drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to insert drift profile"
+        ) from error
 
 
 @router.get("/scouter/drift/profile", name="get_profile", response_model=GetDriftProfileResponse)
@@ -182,7 +186,9 @@ def get_profile(
         return GetDriftProfileResponse(profile=profile)
     except Exception as error:
         logger.error(f"Failed to get drift profile: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift profile"
+        ) from error
 
 
 @router.get("/scouter/drift/values", name="get_drift", response_model=DriftResponse)
@@ -232,7 +238,9 @@ def get_drift_values(
         return DriftResponse(**values)
     except Exception as error:
         logger.error(f"Failed to get drift values: {error}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values") from error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get drift values"
+        ) from error
 
 
 @router.get("/scouter/feature/distribution", name="feature distribution", response_model=FeatureDistribution)
@@ -449,7 +457,9 @@ def update_profile_status(
         ) from error
 
 
-@router.get("/scouter/observability/metrics", name="monitoring observability metrics", response_model=ObservabilityMetrics)
+@router.get(
+    "/scouter/observability/metrics", name="monitoring observability metrics", response_model=ObservabilityMetrics
+)
 def get_observability_metrics(
     request: Request,
     repository: str,
