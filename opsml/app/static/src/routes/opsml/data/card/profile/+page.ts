@@ -18,7 +18,7 @@ export async function load({ url }) {
   }
 
   return {
-    profile,
+    profile: profile,
     featureNames: getFeatureNames(profile),
   };
 }

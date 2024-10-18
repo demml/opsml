@@ -4,6 +4,7 @@
   import DataProfileDiv from "$lib/card/data/DataProfile.svelte";
   import { Autocomplete, popup  } from '@skeletonlabs/skeleton';
   import type { AutocompleteOption, PopupSettings } from '@skeletonlabs/skeleton';
+  import { onMount } from 'svelte';
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -22,16 +23,20 @@
     });
   }
 
-  let flavorOptions: FlavorOption[] = getFlavorOptions();
+  
 
   let popupSettings: PopupSettings = {
-    event: 'focus-click',
-    target: 'popupAutocomplete',
-    placement: 'bottom',
-  };
+      event: 'focus-click',
+      target: 'popupAutocomplete',
+      placement: 'bottom',
+    };
+  let flavorOptions: FlavorOption[]
+
+  onMount(() => {
+    flavorOptions= getFlavorOptions();
+  });
 
   let selected: string = '';
-
 
   function onSearchSelect(event: CustomEvent<FlavorOption>): void {
 		selected = event.detail.label;
