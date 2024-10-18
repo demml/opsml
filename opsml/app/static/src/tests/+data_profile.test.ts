@@ -18,7 +18,7 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-it("render Data Profile Page", async () => {
+it("render Data Profile", async () => {
   let featureNames = Object.keys(exampleDataProfile.features);
   let profile = exampleDataProfile;
 
