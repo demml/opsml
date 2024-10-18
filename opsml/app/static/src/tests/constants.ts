@@ -11,7 +11,18 @@ import {
   type UpdateAlert,
   type AlertMetrics,
 } from "$lib/scripts/types";
-import { error } from "jquery";
+
+import {
+  type DataProfile,
+  type FeatureProfile,
+  type NumericStats,
+  type Distinct,
+  type Quantiles,
+  type Histogram,
+  type WordStats,
+  type CharStats,
+  type StringStats,
+} from "$lib/scripts/data/types";
 
 export const user: User = {
   username: "test",
@@ -346,6 +357,7 @@ export const sampleModelMetadata: ModelMetadata = {
     onnx_version: "test",
   },
   uid: "test",
+  drift: undefined,
 };
 
 export const sampleDataMetadata: DataCardMetadata = {
@@ -358,6 +370,7 @@ export const sampleDataMetadata: DataCardMetadata = {
   data_splits: JSON.stringify({ test: 0.2, train: 0.8 }),
   feature_map: JSON.stringify({ test: 0.2, train: 0.8 }),
   sql_logic: new Map(),
+  has_profile: true,
 };
 
 export const sampleFiles = {
@@ -563,4 +576,71 @@ export const exampleAlertMetrics: AlertMetrics = {
   acknowledged: [1],
   active: [1],
   alert_count: [1],
+};
+
+const exampleDistinct: Distinct = {
+  count: 0,
+  percent: 0,
+};
+
+const exampleQuantiles: Quantiles = {
+  q25: 0,
+  q50: 0,
+  q75: 0,
+  q99: 0,
+};
+
+const exampleHistogram: Histogram = {
+  bins: [0],
+  bin_counts: [0],
+};
+
+const exampleWordStats: WordStats = {
+  words: {},
+};
+
+const exampleCharStats: CharStats = {
+  min_length: 0,
+  max_length: 0,
+  median_length: 0,
+  mean_length: 0,
+};
+
+const exampleStringStats: StringStats = {
+  distinct: exampleDistinct,
+  char_stats: exampleCharStats,
+  word_stats: exampleWordStats,
+};
+
+const exampleNumericStats: NumericStats = {
+  mean: 0.0,
+  stddev: 0.0,
+  min: 0.0,
+  max: 0.0,
+  distinct: exampleDistinct,
+  quantiles: exampleQuantiles,
+  histogram: exampleHistogram,
+};
+
+const exampleFeatureProfileNum: FeatureProfile = {
+  id: "col1",
+  numeric_stats: exampleNumericStats,
+  string_stats: undefined,
+  timestamp: "2024-08-29T01:10:45.652409",
+  correlations: { col2: 0.0 },
+};
+
+const exampleFeatureProfileString: FeatureProfile = {
+  id: "col1",
+  numeric_stats: undefined,
+  string_stats: exampleStringStats,
+  timestamp: "2024-08-29T01:10:45.652409",
+  correlations: { col2: 0.0 },
+};
+
+export const exampleDataProfile: DataProfile = {
+  features: {
+    col1: exampleFeatureProfileNum,
+    col2: exampleFeatureProfileString,
+  },
 };
