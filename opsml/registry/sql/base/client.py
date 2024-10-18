@@ -70,30 +70,6 @@ class ClientRegistry(SQLRegistryBase):
 
         return cast(List[str], data["repositories"])
 
-    def get_unique_card_names(self, repository: Optional[str] = None) -> List[str]:
-        """Returns a list of unique card names
-
-        Args:
-            repository:
-                Repository to filter by
-
-        Returns:
-            List of unique card names
-        """
-
-        params = {"registry_type": self.registry_type.value}
-
-        if repository is not None:
-            params["repository"] = repository
-
-        data = self._session.request(
-            route=api_routes.NAME_CARDS,
-            request_type=RequestType.GET,
-            params=params,
-        )
-
-        return cast(List[str], data["names"])
-
     def check_uid(self, uid: str, registry_type: RegistryType) -> bool:
         data = self._session.request(
             route=api_routes.CHECK_UID,

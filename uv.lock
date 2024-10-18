@@ -3041,7 +3041,7 @@ requires-dist = [
     { name = "s3fs", marker = "extra == 'aws-mysql'", specifier = "~=2024.2.0" },
     { name = "s3fs", marker = "extra == 'aws-postgres'", specifier = "~=2024.2.0" },
     { name = "s3fs", marker = "extra == 's3'", specifier = "~=2024.2.0" },
-    { name = "scouter-ml" },
+    { name = "scouter-ml", specifier = ">=0.3.2" },
     { name = "semver", specifier = "~=2.13.0" },
     { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = "==1.16.0" },
     { name = "sqlalchemy", extras = ["mypy"], marker = "extra == 'server'", specifier = "~=2.0" },

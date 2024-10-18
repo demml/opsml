@@ -424,22 +424,6 @@ class QueryEngine:
         with self.session() as sess:
             return sess.scalars(query).all()
 
-    def get_unique_card_names(self, repository: Optional[str], table: CardSQLTable) -> Sequence[str]:
-        """Returns a list of unique card names"""
-        query = select(table.name)  # type:ignore[call-overload]
-
-        if repository is not None:
-            query = (
-                query.filter(table.repository == repository)
-                .distinct()
-                .order_by(table.name.asc())  # type:ignore[union-attr]
-            )  #
-        else:
-            query = query.distinct()
-
-        with self.session() as sess:
-            return sess.scalars(query).all()
-
     def query_stats(
         self,
         table: CardSQLTable,

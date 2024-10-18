@@ -119,17 +119,6 @@ class ServerRegistry(SQLRegistryBase):
             ),
         )
 
-    def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
-        """Returns a list of unique card names
-        Args:
-            repository:
-                repository to filter by
-        Returns:
-            List of unique card names
-        """
-
-        return self.engine.get_unique_card_names(table=self._table, repository=repository)
-
     def _get_versions_from_db(self, name: str, repository: str, version_to_search: Optional[str] = None) -> List[str]:
         """Query versions from Card Database
 

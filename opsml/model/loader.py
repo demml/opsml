@@ -189,6 +189,9 @@ class ModelLoader:
                 Additional onnx args needed to load the model
 
         """
+
+        print()
+        print(self.interface.model_type)
         if isinstance(self.interface, HuggingFaceModel):
             self.interface.onnx_args = onnx_args
             self._load_huggingface_onnx_model(load_quantized)

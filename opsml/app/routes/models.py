@@ -7,11 +7,9 @@
 import json
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
 from fastapi import APIRouter, Body, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from opsml.app.routes.pydantic_models import (
     CardRequest,
@@ -21,8 +19,6 @@ from opsml.app.routes.pydantic_models import (
     MetricResponse,
     RegisterModelRequest,
 )
-from opsml.app.routes.route_helpers import ModelRouteHelper
-from opsml.app.routes.utils import error_to_500
 from opsml.cards.model import ModelCard
 from opsml.cards.run import RunCard
 from opsml.helpers.logging import ArtifactLogger
@@ -33,62 +29,7 @@ from opsml.types import CardInfo, ModelMetadata, RegistryTableNames, SaveName, S
 
 logger = ArtifactLogger.get_logger()
 
-# Constants
-TEMPLATE_PATH = Path(__file__).parents[1] / "templates"
-templates = Jinja2Templates(directory=TEMPLATE_PATH)
-
-model_route_helper = ModelRouteHelper()
 router = APIRouter()
-
-
-@router.get("/models/list/", response_class=HTMLResponse)
-@error_to_500
-async def model_list_homepage(request: Request, repository: Optional[str] = None) -> HTMLResponse:
-    """UI home for listing models in model registry
-    Args:
-        request:
-            The incoming HTTP request.
-        repository:
-            The repository to query
-    Returns:
-        200 if the request is successful. The body will contain a JSON string
-        with the list of models.
-    """
-    return model_route_helper.get_homepage(request=request, repository=repository)
-
-
-@router.get("/models/versions/", response_class=HTMLResponse)
-@error_to_500
-async def model_versions_page(
-    request: Request,
-    model: Optional[str] = None,
-    version: Optional[str] = None,
-    uid: Optional[str] = None,
-) -> HTMLResponse:
-    if model is None and uid is None:
-        return RedirectResponse(url="/opsml/models/list/")  # type: ignore
-
-    registry: CardRegistry = request.app.state.registries.model
-
-    if uid is not None:
-        selected_model = registry.list_cards(uid=uid)
-        model = model or selected_model[0]["name"]
-        version = version or selected_model[0]["version"]
-
-    versions = registry.list_cards(name=model, limit=50)
-
-    metadata = post_model_metadata(
-        request=request,
-        payload=CardRequest(uid=uid, name=model, version=version),
-    )
-
-    return model_route_helper.get_versions_page(
-        request=request,
-        name=cast(str, model),
-        version=version,
-        versions=versions,
-        metadata=metadata,
-    )
 
 
 @router.post("/models/register", name="model_register")

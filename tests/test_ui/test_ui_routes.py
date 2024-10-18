@@ -71,7 +71,6 @@ def test_ui_datacard_route(
     test_app: TestClient,
     populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
 ) -> None:
-
     modelcard, datacard, _ = populate_model_data_for_route
 
     # force error
@@ -92,7 +91,6 @@ def test_ui_list_files(
     test_app: TestClient,
     populate_model_data_for_route: Tuple[ModelCard, DataCard, AuditCard],
 ) -> None:
-
     modelcard, datacard, _ = populate_model_data_for_route
 
     # test info

@@ -14,7 +14,6 @@ from fastapi.templating import Jinja2Templates
 from opsml import DataInterface
 from opsml.app.routes.files import download_artifacts_ui, download_file
 from opsml.app.routes.pydantic_models import CardRequest, DataCardMetadata
-from opsml.app.routes.route_helpers import DataRouteHelper
 from opsml.cards.data import DataCard
 from opsml.registry.registry import CardRegistry
 from opsml.types import SaveName
@@ -27,7 +26,6 @@ templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
-data_route_helper = DataRouteHelper()
 router = APIRouter()
 
 

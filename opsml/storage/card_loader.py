@@ -495,7 +495,6 @@ class ModelCardLoader(CardLoader):
             rpath:
                 Remote path to load file
         """
-
         if isinstance(self.card.interface, HuggingFaceModel):
             assert lpath is not None and rpath is not None
             self._load_huggingface_preprocessors(lpath, rpath)
@@ -632,6 +631,7 @@ class ModelCardLoader(CardLoader):
 
             if load_preprocessor:
                 self.load_preprocessor(lpath, rpath)
+
             self._load_sample_data(lpath, rpath)
             self._load_model(lpath, rpath, **kwargs)
 
