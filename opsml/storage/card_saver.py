@@ -341,7 +341,8 @@ class ModelCardSaver(CardSaver):
                 existing_drift_type = existing_drift.get("drift_type")
 
             drift = {
-                "drift_profile_uri": existing_drift_profile_uri or self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value),
+                "drift_profile_uri": existing_drift_profile_uri
+                or self.card_uris.resolve_path(UriNames.DRIFT_PROFILE_URI.value),
                 "drift_type": existing_drift_type or self.card.interface.drift_profile.config.drift_type.value,
             }
 
@@ -353,7 +354,8 @@ class ModelCardSaver(CardSaver):
             model_interface=existing_metadata.get("model_interface") or self.card.interface.name(),
             onnx_uri=existing_metadata.get("onnx_uri") or self.card_uris.resolve_path(UriNames.ONNX_MODEL_URI.value),
             onnx_version=existing_metadata.get("onnx_version") or onnx_version,
-            model_uri=existing_metadata.get("model_uri") or self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
+            model_uri=existing_metadata.get("model_uri")
+            or self.card_uris.resolve_path(UriNames.TRAINED_MODEL_URI.value),
             model_version=existing_metadata.get("model_version") or self.card.version,
             model_repository=existing_metadata.get("model_repository") or self.card.repository,
             data_schema=existing_metadata.get("data_schema") or self.card.metadata.data_schema,
@@ -388,9 +390,9 @@ class ModelCardSaver(CardSaver):
                 }
 
             if self.card_uris.quantized_model_uri is not None:
-                metadata.quantized_model_uri = existing_metadata.get("quantized_model_uri") or self.card_uris.resolve_path(
-                    UriNames.QUANTIZED_MODEL_URI.value
-                )
+                metadata.quantized_model_uri = existing_metadata.get(
+                    "quantized_model_uri"
+                ) or self.card_uris.resolve_path(UriNames.QUANTIZED_MODEL_URI.value)
 
             if self.card_uris.tokenizer_uri is not None:
                 metadata.tokenizer_uri = existing_metadata.get("tokenizer_uri") or self.card_uris.resolve_path(
@@ -399,9 +401,9 @@ class ModelCardSaver(CardSaver):
                 metadata.tokenizer_name = existing_metadata.get("tokenizer_name") or self.card.interface.tokenizer_name
 
             if self.card_uris.feature_extractor_uri is not None:
-                metadata.feature_extractor_uri = existing_metadata.get("feature_extractor_uri") or self.card_uris.resolve_path(
-                    UriNames.FEATURE_EXTRACTOR_URI.value
-                )
+                metadata.feature_extractor_uri = existing_metadata.get(
+                    "feature_extractor_uri"
+                ) or self.card_uris.resolve_path(UriNames.FEATURE_EXTRACTOR_URI.value)
                 metadata.feature_extractor_name = (
                     existing_metadata.get("feature_extractor_name") or self.card.interface.feature_extractor_name
                 )
@@ -418,7 +420,9 @@ class ModelCardSaver(CardSaver):
 
         # check if model metadata already exists (for updating cards)
         existing_metadata = {}
-        exists = client.storage_client.exists((self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value))
+        exists = client.storage_client.exists(
+            (self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
+        )
 
         if exists:
             existing_path = Path(self.rpath / SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value)
@@ -635,7 +639,9 @@ def save_card_artifacts(card: Card) -> None:
 
     """
 
-    card_saver = next(card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type))
+    card_saver = next(
+        card_saver for card_saver in CardSaver.__subclasses__() if card_saver.validate(card_type=card.card_type)
+    )
 
     saver = card_saver(card=card)
 
