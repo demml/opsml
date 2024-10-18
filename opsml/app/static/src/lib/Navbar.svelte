@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import js from "jquery";
   import logo from "$lib/images/opsml_word.png";
   import { page } from "$app/stores";
@@ -10,6 +10,7 @@
   import { goto } from "$app/navigation";
   import Fa from 'svelte-fa'
   import { faUser } from '@fortawesome/free-solid-svg-icons'
+  import { browser } from '$app/environment';
 
   export let needAuth: boolean;
   export let loggedIn: string;
@@ -52,19 +53,55 @@
     
   }
 
+  let hamburger;
+  let hamburgerOptions;
+  let isOptionsVisible = false;
+
+  function toggleOptions() {
+    isOptionsVisible = !isOptionsVisible;
+    hamburgerOptions.style.display = isOptionsVisible ? 'block' : 'none';
+  }
+
+  function closeOptions() {
+    isOptionsVisible = false;
+    hamburgerOptions.style.display = 'none';
+  }
+
+  function navigateToPath(name: string) {
+    let path = `/opsml/${name}`
+    closeOptions();
+    goto(path);
+  }
+
+
+  function handleClickOutside(event) {
+    if (
+      isOptionsVisible &&
+      hamburger &&
+      hamburgerOptions &&
+      !hamburger.contains(event.target) &&
+      !hamburgerOptions.contains(event.target)
+    ) {
+      hamburgerOptions.style.display = 'none';
+    }
+  }
+
+
   onMount(() => {
-    // @ts-ignore
-    window.jq = js;
+    if (browser) {
+      document.addEventListener('click', handleClickOutside);
+    }
 
-    // @ts-ignore
-    window.jq("#hamburger").click(() => {
-
-      // @ts-ignore
-      window.jq("#hamburger-options").toggle();
-    });
   });
 
-  const names = ["Models", "Data", "Runs", "Services"];
+  onDestroy(() => {
+    if (browser) {
+      document.removeEventListener('click', handleClickOutside);
+    }
+  });
+
+
+  const names = ["Models", "Data", "Runs"];
 
   if (needAuth) {
     popupMessage = "Login to access OpsML features";
@@ -132,22 +169,23 @@
 
         <li>
           <div class="relative-group">
-            <button id="hamburger" type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
+            <button id="hamburger" bind:this={hamburger} on:click={toggleOptions} type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
               <span class="sr-only">Open main menu</span>
               <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
                   <path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
               </svg>
             </button>
-            <div class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
+            <div bind:this={hamburgerOptions} class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
               <section class="p-4 pb-5 space-y-4 overflow-y-auto">
                 <p class="font-bold text-lg">Opsml</p>
                 <nav class="list-nav">
                   <ul>
                     {#each names as name}
+
                       <li>
-                        <a href='/opsml/{name.replace(/s$/, '').toLowerCase()}'>
+                        <button on:click={() => navigateToPath(name.replace(/s$/, '').toLowerCase())}>
                           <span class="flex-auto">{name}</span>
-                        </a>
+                        </button>
                       </li>
                     {/each}
                 </nav>

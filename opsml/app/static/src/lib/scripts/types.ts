@@ -136,6 +136,11 @@ export interface DataSchema {
   onnx_version?: string;
 }
 
+export interface Drift {
+  drift_profile_uri: string;
+  drift_type: string;
+}
+
 export interface ModelMetadata {
   model_name: string;
   model_class: string;
@@ -158,6 +163,7 @@ export interface ModelMetadata {
   uid: string;
   task_type?: string;
   onnx_args?: Map<string, string | boolean>;
+  drift: Drift | undefined;
 }
 
 export interface DataSplit {
@@ -175,12 +181,27 @@ export interface DataCardMetadata {
   data_splits?: string;
   feature_map?: string;
   sql_logic: Map<string, string> | undefined;
+  has_profile: boolean;
 }
 
 export enum RegistryName {
   Model = "OPSML_MODEL_REGISTRY",
   Data = "OPSML_DATA_REGISTRY",
   Run = "OPSML_RUN_REGISTRY",
+}
+
+export enum SaveName {
+  DataProfile = "data-profile.json",
+}
+
+export enum ProfileType {
+  SPC = "SPC",
+  PSI = "PSI",
+}
+
+export enum AlertStatus {
+  ACTIVE = "active",
+  ACKNOWLEDGED = "acknowledged",
 }
 
 export enum CommonPaths {
@@ -213,6 +234,12 @@ export enum CommonPaths {
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
   ERROR = "/opsml/error/page",
   HARDWARE = "/opsml/metrics/hardware",
+  DRIFT_PROFILE = "/opsml/scouter/drift/profile",
+  DRIFT_VALUES = "/opsml/scouter/drift/values",
+  FEATURE_DISTRIBUTION = "/opsml/scouter/feature/distribution",
+  MONITOR_ALERTS = "/opsml/scouter/alerts",
+  MONITOR_ALERT_METRICS = "/opsml/scouter/alerts/metrics",
+  OBSERVABILITY_METRICS = "/opsml/scouter/observability/metrics",
 }
 
 export enum CommonErrors {
@@ -221,6 +248,19 @@ export enum CommonErrors {
   INVALID_PASSWORD = "Invalid password",
   TOKEN_ERROR = "Error generating token",
   INCORRECT_ANSWER = "Incorrect answer",
+}
+
+export enum TimeWindow {
+  FiveMinutes = "5minute",
+  FifteenMinutes = "15minute",
+  ThirtyMinutes = "30minute",
+  OneHour = "1hour",
+  ThreeHours = "3hour",
+  SixHours = "6hour",
+  TwelveHours = "12hour",
+  TwentyFourHours = "24hour",
+  TwoDays = "2day",
+  FiveDays = "5day",
 }
 
 export interface FileExists {
@@ -583,4 +623,139 @@ export interface RunPageReturn {
   searchableMetrics: string[];
   metricVizData: ChartjsData | undefined;
   parsedMetrics: ParsedHardwareMetrics | undefined;
+}
+
+export interface SpcFeatureDriftProfile {
+  id: string;
+  center: number;
+  one_ucl: number;
+  one_lcl: number;
+  two_ucl: number;
+  two_lcl: number;
+  three_ucl: number;
+  three_lcl: number;
+  timestamp: string;
+}
+
+export interface FeatureMap {
+  features: Record<string, Record<string, number>>;
+}
+
+export interface SpcAlertRule {
+  rule: string;
+  zones_to_monitor: string[];
+}
+
+export interface SpcAlertConfig {
+  dispatch_type: string;
+  rule: SpcAlertRule;
+  schedule: string;
+  features_to_monitor: string[];
+  dispatch_kwargs: Record<string, string | number>;
+}
+
+export interface SpcDriftConfig {
+  sample_size: number;
+  sample: boolean;
+  repository: string;
+  name: string;
+  version: string;
+  alert_config: SpcAlertConfig;
+  feature_map: FeatureMap | undefined;
+  targets: string[];
+  drift_type: string;
+}
+
+export interface SpcDriftProfile {
+  features: Record<string, SpcFeatureDriftProfile>;
+  config: SpcDriftConfig;
+  scouter_version: string;
+}
+
+export interface DriftProfileResponse {
+  profile: SpcDriftProfile | undefined;
+}
+
+export interface UpdateProfileResponse {
+  complete: boolean;
+  message: string;
+}
+
+export interface DriftValues {
+  created_at: string[];
+  values: number[];
+}
+
+export interface FeatureDriftValues {
+  features: Record<string, DriftValues>;
+}
+
+export interface FeatureDriftValuesResponse {
+  data: FeatureDriftValues;
+  status: string;
+}
+
+export interface MonitoringPageReturn {
+  repository: string;
+  name: string;
+  version: string;
+  profile: SpcDriftProfile | undefined;
+}
+
+export interface SpcFeatureDistribution {
+  name: string;
+  repository: string;
+  version: string;
+  percentile_10: number;
+  percentile_20: number;
+  percentile_30: number;
+  percentile_40: number;
+  percentile_50: number;
+  percentile_60: number;
+  percentile_70: number;
+  percentile_80: number;
+  percentile_90: number;
+  percentile_100: number;
+  val_10: number;
+  val_20: number;
+  val_30: number;
+  val_40: number;
+  val_50: number;
+  val_60: number;
+  val_70: number;
+  val_80: number;
+  val_90: number;
+  val_100: number;
+}
+
+export interface TimestampData {
+  timestamps: string[];
+  zeros: number[];
+}
+
+export interface MonitorAlert {
+  created_at: string;
+  name: string;
+  repository: string;
+  version: string;
+  feature: string;
+  alert: Record<string, string>;
+  status: string;
+  id: number;
+}
+
+export interface MonitorAlerts {
+  alerts: MonitorAlert[];
+}
+
+export interface UpdateAlert {
+  status: string;
+  message: string;
+}
+
+export interface AlertMetrics {
+  created_at: string[];
+  acknowledged: number[];
+  active: number[];
+  alert_count: number[];
 }

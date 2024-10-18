@@ -28,18 +28,24 @@ jobs:
       - name: Git clone the repository
         uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "opsml/app/static/package-lock.json"
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
 
       - name: Build App for testing
         run: |
           cd opsml/app/static
-          npm install
-          npm run build --if-present
+          pnpm install
+          pnpm run build
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -81,18 +87,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "opsml/app/static/package-lock.json"
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
 
       - name: Build App for testing
         run: |
           cd opsml/app/static
-          npm install
-          npm run build --if-present
+          pnpm install
+          pnpm run build
 
       - name: "Az CLI login"
         uses: azure/login@v2
@@ -131,18 +143,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "opsml/app/static/package-lock.json"
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
 
       - name: Build App for testing
         run: |
           cd opsml/app/static
-          npm install
-          npm run build --if-present
+          pnpm install
+          pnpm run build
 
       # identity token doesn't work with python storage client and pre-signed urls
       #- name: "Authenticate with Google Cloud"

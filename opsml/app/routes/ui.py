@@ -37,10 +37,7 @@ async def index(request: Request) -> RedirectResponse:
 @router.get("/opsml")
 async def opsml_ui(request: Request) -> HTMLResponse:
     try:
-        return templates.TemplateResponse(
-            "site/opsml/index.html",
-            {"request": request},
-        )
+        return templates.TemplateResponse(name="site/opsml/index.html", request=request)
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
         raise error
@@ -50,8 +47,9 @@ async def opsml_ui(request: Request) -> HTMLResponse:
 async def opsml_(request: Request, path: str) -> HTMLResponse:
     try:
         return templates.TemplateResponse(
-            f"site/opsml/{path}.html",
-            {"request": request, "path": path},
+            name=f"site/opsml/{path}.html",
+            request=request,
+            context={"path": path},
         )
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
@@ -69,11 +67,10 @@ async def opsml_card_homepage(
     uid: Optional[str] = None,
 ) -> HTMLResponse:
     try:
-        print(f"site/opsml/{path}/card/{subpath}.html")
         return templates.TemplateResponse(
-            f"site/opsml/{path}/card/{subpath}.html",
-            {
-                "request": request,
+            name=f"site/opsml/{path}/card/{subpath}.html",
+            request=request,
+            context={
                 "name": name,
                 "repository": repository,
                 "version": version,
@@ -89,8 +86,9 @@ async def opsml_card_homepage(
 async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
     try:
         return templates.TemplateResponse(
-            "site/opsml/auth/login.html",
-            {"request": request, "path": url},
+            name="site/opsml/auth/login.html",
+            request=request,
+            context={"path": url},
         )
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
@@ -101,8 +99,9 @@ async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
 async def register_page(request: Request, url: Optional[str] = None) -> HTMLResponse:
     try:
         return templates.TemplateResponse(
-            "site/opsml/auth/register.html",
-            {"request": request, "path": url},
+            name="site/opsml/auth/register.html",
+            request=request,
+            context={"path": url},
         )
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
@@ -113,8 +112,9 @@ async def register_page(request: Request, url: Optional[str] = None) -> HTMLResp
 async def error_page(request: Request, message: str) -> HTMLResponse:
     try:
         return templates.TemplateResponse(
-            "site/opsml/error/page.html",
-            {"request": request, "message": message},
+            name="site/opsml/error/page.html",
+            request=request,
+            context={"message": message},
         )
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")

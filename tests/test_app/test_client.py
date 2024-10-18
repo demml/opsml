@@ -4,7 +4,6 @@ from typing import Any, Dict, Tuple, cast
 from unittest import mock
 
 import pytest
-from scouter import DriftConfig
 from sklearn.preprocessing import LabelEncoder
 from starlette.testclient import TestClient
 
@@ -20,6 +19,7 @@ from opsml.cards import (
 from opsml.data import NumpyData, PandasData, TorchData
 from opsml.model import HuggingFaceModel, SklearnModel
 from opsml.registry import CardRegistries, CardRegistry
+from opsml.scouter import SpcDriftConfig
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.storage.api import ApiRoutes
@@ -291,6 +291,7 @@ def test_register_model_data(
 
     loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
     loaded_card.load_model()
+    loaded_card.load_drift_profile()  # this should escape early
     assert loaded_card.model is not None
     assert loaded_card.sample_data is not None
 
@@ -542,12 +543,15 @@ def test_register_vit(
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.FEATURE_EXTRACTOR.value).with_suffix(""))
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
 def test_model_registry_scouter(
+    server: mock.MagicMock,
     mock_request: mock.MagicMock,
     linear_regression: Tuple[SklearnModel, NumpyData],
     api_registries: CardRegistries,
 ) -> None:
+    server.return_value = True
     mock_request.return_value = None
 
     data_registry = api_registries.data
@@ -562,9 +566,7 @@ def test_model_registry_scouter(
     )
 
     data_registry.register_card(card=datacard)
-
-    drift_config = DriftConfig()
-    model.create_drift_profile(data.data, drift_config)
+    model.create_drift_profile(data.data, SpcDriftConfig())
 
     modelcard = ModelCard(
         interface=model,
@@ -580,3 +582,153 @@ def test_model_registry_scouter(
     assert modelcard.interface.drift_profile is not None
     assert modelcard.interface.drift_profile.config.name == modelcard.name
     assert mock_request.called
+
+
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+def test_get_profile_success(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {"status": "success", "data": {"name": "model"}}
+    response = test_app.get(
+        "/opsml/scouter/drift/profile",
+        params={"repository": "mlops", "name": "model", "version": "0.1.0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["profile"]["name"] == "model"
+    assert mock_request.called
+
+
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+def test_scouter_healthcheck(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {"status": "success", "message": "Alive"}
+    response = test_app.get("/opsml/scouter/healthcheck")
+
+    assert response.status_code == 200
+    assert response.json()["running"]
+
+
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+def test_get_profile_error(mock_request: mock.MagicMock, test_app: TestClient) -> None:
+    mock_request.return_value = {"status": "error"}
+    response = test_app.get(
+        "/opsml/scouter/drift/profile",
+        params={"repository": "mlops", "name": "model", "version": "0.1.0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["profile"] is None
+    assert mock_request.called
+
+
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+def test_get_drift_values(
+    mock_request: mock.MagicMock,
+    test_app: TestClient,
+) -> None:
+    mock_request.return_value = {
+        "data": {
+            "features": {
+                "col_1": {
+                    "created_at": [
+                        "2024-09-18T06:43:12",
+                    ],
+                    "values": [
+                        -0.8606220085107592,
+                    ],
+                },
+            }
+        },
+        "status": "success",
+    }
+    response = test_app.get(
+        "/opsml/scouter/drift/values",
+        params={
+            "repository": "mlops",
+            "name": "model",
+            "version": "0.1.0",
+            "time_window": "2day",
+            "max_data_points": 10,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["features"]["col_1"]["values"][0] == -0.8606220085107592
+    assert mock_request.called
+
+    response = test_app.get(
+        "/opsml/scouter/drift/values",
+        params={
+            "repository": "mlops",
+            "name": "model",
+            "version": "0.1.0",
+            "time_window": "2day",
+            "max_data_points": 10,
+            "feature": "col_1",
+        },
+    )
+
+    assert response.status_code == 200
+    assert mock_request.called
+
+
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
+def test_model_registry_scouter_update(
+    server: mock.MagicMock,
+    mock_request: mock.MagicMock,
+    linear_regression: Tuple[SklearnModel, NumpyData],
+    api_registries: CardRegistries,
+) -> None:
+    server.return_value = True
+    mock_request.return_value = None
+
+    data_registry = api_registries.data
+    model_registry = api_registries.model
+    model, data = linear_regression
+
+    datacard = DataCard(
+        interface=data,
+        name="scouter_test",
+        repository="mlops",
+        contact="mlops.com",
+    )
+
+    data_registry.register_card(card=datacard)
+    model.create_drift_profile(data.data, SpcDriftConfig())
+
+    modelcard = ModelCard(
+        interface=model,
+        name="pipeline_model",
+        repository="mlops",
+        contact="mlops.com",
+        datacard_uid=datacard.uid,
+        to_onnx=True,
+    )
+
+    model_registry.register_card(card=modelcard)
+
+    # load the card
+    loaded_card: ModelCard = model_registry.load_card(uid=modelcard.uid)
+    loaded_card.load_model()
+
+    assert loaded_card.interface.drift_profile is None
+
+    # load drift profile
+    profile = loaded_card.load_drift_profile()
+    assert profile is not None
+    assert profile.config.name == modelcard.name
+
+    # load drift profile again, this escape early since it's already loaded
+    loaded_card.load_drift_profile()
+
+    # update profile
+    profile.update_config_args(sample_size=10)
+    assert profile.config.sample_size == 10
+
+    loaded_card.interface.drift_profile = profile
+    model_registry.update_card(card=loaded_card)
+
+    load_card_updated: ModelCard = model_registry.load_card(uid=loaded_card.uid)
+    profile = load_card_updated.load_drift_profile()
+    assert profile is not None
+
+    assert profile.config.sample_size == 10

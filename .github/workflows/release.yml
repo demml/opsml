@@ -6,50 +6,49 @@ on:
 
 jobs:
   Unit-Lint:
-      environment: pypi
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python-version: ["3.10"]
-          poetry-version: ["1.7.1"]
+    environment: pypi
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+        poetry-version: ["1.7.1"]
 
-      steps:
-        - name: Free Disk Space (Ubuntu)
-          uses: jlumbroso/free-disk-space@main
-          with:
-            # this might remove tools that are actually needed,
-            # if set to "true" but frees about 6 GB
-            tool-cache: false
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
 
-        - uses: actions/checkout@v4
-        - name: Install poetry
-          run: pipx install poetry==${{ matrix.poetry-version }}
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
 
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v5
-          with:
-            python-version: ${{ matrix.python-version }}
-            cache: 'poetry'
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
 
-        - name: Run tests
-          run : |
-                rm -rf /opt/hostedtoolcache/CodeQL
-                rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
-                rm -rf /opt/hostedtoolcache/Ruby
-                rm -rf /opt/hostedtoolcache/go
-                rm -rf /opt/hostedtoolcache/node
-                make setup.project
-                pip install -U twine
-                make lints.ci
-                make test.unit
-                make setup.project
-                test "v$(poetry version --short)" "=" "$GITHUB_REF_NAME"
-                poetry build
-                twine check --strict dist/*
-                
-        - name: upload to pypi
-          run: twine upload dist/*
-          env:
-            TWINE_USERNAME: __token__
-            TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      - name: Run tests
+        run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.project
+          pip install -U twine
+          make lints.ci
+          make test.unit
+          make setup.project
+          test "v$(poetry version --short)" "=" "$GITHUB_REF_NAME"
+          poetry build
+          twine check --strict dist/*
 
+      - name: upload to pypi
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

@@ -1,8 +1,15 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { type Files, type ModelMetadata } from "$lib/scripts/types";
+import { type ModelMetadata, CommonPaths } from "$lib/scripts/types";
 import { type AsyncResponseResolverReturnType } from "msw";
 import { graphs } from "./graphs";
+import {
+  exampleFeatureDistribution,
+  exampleAlerts,
+  exampleUpdateAlert,
+  exampleObservabilityMetrics,
+  exampleAlertMetrics,
+} from "./constants";
 
 const handlers = [
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
@@ -399,6 +406,133 @@ const handlers = [
   http.get("/opsml/runs/graphs", async ({ request, params, cookies }) => {
     return HttpResponse.json(graphs);
   }),
+
+  http.get(
+    "/opsml/scouter/drift/profile",
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json({
+        profile: {
+          features: {
+            col1: {
+              id: "col1",
+              center: 0.0,
+              one_ucl: 0.0,
+              one_lcl: 0.0,
+              two_ucl: 0.0,
+              two_lcl: 0.0,
+              three_ucl: 0.0,
+              three_lcl: 0.0,
+              timestamp: "2024-08-29T01:10:45.652409",
+            },
+          },
+          config: {
+            sample_size: 100,
+            sample: true,
+            name: "test",
+            repository: "test",
+            version: "1.0.0",
+            feature_map: undefined,
+            targets: [],
+            alert_config: {
+              dispatch_type: "Console",
+              rule: {
+                rule: "8 8 8 8 8 8 8 8",
+                zones_to_monitor: ["Zone 1", "Zone 2", "Zone 3", "Zone 4"],
+              },
+              schedule: "0 0 0 0 0 0 0 0",
+              dispatch_kwargs: {},
+            },
+          },
+          scouter_version: "1.0.0",
+        },
+      });
+    }
+  ),
+
+  http.put(CommonPaths.DRIFT_PROFILE, async ({ request, params, cookies }) => {
+    return HttpResponse.json({
+      complete: true,
+      message: "Drift profile updated",
+    });
+  }),
+
+  http.get(CommonPaths.DRIFT_VALUES, async ({ request, params, cookies }) => {
+    const url = new URL(request.url);
+    const feature = url.searchParams.get("feature")!;
+
+    // check if feature is undefined
+    if (feature) {
+      if (feature === "col1") {
+        return HttpResponse.json({
+          features: {
+            col_1: {
+              created_at: [
+                "2024-09-18T01:12:00",
+                "2024-09-18T01:26:24",
+                "2024-09-18T01:40:48",
+                "2024-09-18T01:55:12",
+                "2024-09-18T02:09:36",
+              ],
+              values: [
+                1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+                0.44125417583912063, -0.6577854789448841,
+              ],
+            },
+          },
+        });
+      } else {
+        return HttpResponse.json({
+          features: {},
+        });
+      }
+    } else {
+      return HttpResponse.json({
+        features: {
+          all_features: {
+            created_at: [
+              "2024-09-18T01:12:00",
+              "2024-09-18T01:26:24",
+              "2024-09-18T01:40:48",
+              "2024-09-18T01:55:12",
+              "2024-09-18T02:09:36",
+            ],
+            values: [
+              1.0530614698813359, -0.03748357969929229, 0.1782311377309393,
+              0.44125417583912063, -0.6577854789448841,
+            ],
+          },
+        },
+      });
+    }
+  }),
+
+  http.get(
+    CommonPaths.FEATURE_DISTRIBUTION,
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json(exampleFeatureDistribution);
+    }
+  ),
+
+  http.get(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
+    return HttpResponse.json(exampleAlerts);
+  }),
+  http.put(CommonPaths.MONITOR_ALERTS, async ({ request, params, cookies }) => {
+    return HttpResponse.json(exampleUpdateAlert);
+  }),
+
+  http.get(
+    CommonPaths.MONITOR_ALERT_METRICS,
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json(exampleAlertMetrics);
+    }
+  ),
+
+  http.get(
+    CommonPaths.OBSERVABILITY_METRICS,
+    async ({ request, params, cookies }) => {
+      return HttpResponse.json(exampleObservabilityMetrics);
+    }
+  ),
 ];
 
 export const server = setupServer(...handlers);

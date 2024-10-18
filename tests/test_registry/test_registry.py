@@ -13,7 +13,6 @@ import pandas as pd
 import polars as pl
 import pytest
 from pytest_lazyfixture import lazy_fixture
-from scouter import DriftConfig
 from sqlalchemy import select
 
 from opsml.cards import (
@@ -38,6 +37,7 @@ from opsml.registry import CardRegistries
 from opsml.registry.records import registry_name_record_map
 from opsml.registry.sql.base.query_engine import DialectHelper
 from opsml.registry.sql.base.sql_schema import DataSchema
+from opsml.scouter import SpcDriftConfig
 from tests.conftest import FOURTEEN_DAYS_STR, FOURTEEN_DAYS_TS, OPSML_TRACKING_URI
 
 
@@ -886,12 +886,15 @@ def test_sort_timestamp(sql_data: SqlData, db_registries: CardRegistries) -> Non
     assert cards[1]["name"] == "test1"
 
 
-@mock.patch("opsml.storage.scouter.ScouterClient.request")
+@mock.patch("opsml.scouter.server.ScouterServerClient.request")
+@mock.patch("opsml.scouter.integration.ScouterClient.server_running")
 def test_model_registry_scouter(
+    server: mock.MagicMock,
     mock_request: mock.MagicMock,
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[ModelInterface, DataInterface],
 ) -> None:
+    server.return_value = True
     mock_request.return_value = None
 
     # create data card
@@ -906,8 +909,7 @@ def test_model_registry_scouter(
     )
     data_registry.register_card(card=data_card)
 
-    drift_config = DriftConfig()
-    model.create_drift_profile(data.data, drift_config)
+    model.create_drift_profile(data.data, SpcDriftConfig())
 
     # test onnx
     model_card = ModelCard(
@@ -925,3 +927,12 @@ def test_model_registry_scouter(
     assert model_card.interface.drift_profile is not None
     assert model_card.interface.drift_profile.config.name == model_card.name
     assert mock_request.called
+
+    # test update
+    model_card.interface.drift_profile.update_config_args(sample_size=10)
+    model_registry.update_card(card=model_card)
+
+    # test load card
+    loaded_card: ModelCard = model_registry.load_card(uid=model_card.uid)
+    loaded_card.load_drift_profile()
+    assert loaded_card.interface.drift_profile.config.sample_size == 10

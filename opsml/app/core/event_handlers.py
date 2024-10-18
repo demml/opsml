@@ -13,6 +13,7 @@ from opsml.helpers.logging import ArtifactLogger
 from opsml.model.registrar import ModelRegistrar
 from opsml.registry.backend import _set_registry
 from opsml.registry.registry import CardRegistries
+from opsml.scouter.server import SCOUTER_SERVER_CLIENT
 from opsml.settings.config import config
 from opsml.storage import client
 from opsml.types import RegistryType
@@ -42,6 +43,7 @@ def _init_registries(app: FastAPI) -> None:
     app.state.model_registrar = ModelRegistrar(client.storage_client)
     app.state.storage_root = config.storage_root
     app.state.auth_db = _set_registry(RegistryType.AUTH)
+    app.state.scouter_client = SCOUTER_SERVER_CLIENT
 
 
 def _shutdown_registries(app: FastAPI) -> None:

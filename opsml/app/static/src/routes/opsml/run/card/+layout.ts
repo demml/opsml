@@ -85,8 +85,6 @@ export async function load({ url }): Promise<RunPageReturn> {
   // check if "run/card/metrics" exists in url
   let metricVizData: ChartjsData | undefined;
 
-  console.log("loaded");
-
   return {
     registry,
     repository: selectedCard.repository,
