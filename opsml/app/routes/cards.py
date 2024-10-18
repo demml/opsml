@@ -15,7 +15,6 @@ from opsml.app.routes.pydantic_models import (
     DeleteCardResponse,
     ListCardRequest,
     ListCardResponse,
-    NamesResponse,
     RegistryQuery,
     RepositoriesResponse,
     UidExistsRequest,

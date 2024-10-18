@@ -114,14 +114,6 @@ def test_register_data(
     cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="^1")
     assert len(cards) >= 1
 
-    # Verify card name normalization (replacing "_" with "-")
-    names = registry._registry.get_unique_card_names(repository="mlops")
-    # NOTE: opsml replaces "_" with "-" in card name name
-    assert "test-df" in names
-
-    names = registry._registry.get_unique_card_names()
-    assert "test-df" in names
-
     assert "mlops" in registry._registry.unique_repositories
 
 

@@ -39,9 +39,6 @@ class SQLRegistryBase:
     def unique_repositories(self) -> Sequence[str]:
         raise NotImplementedError
 
-    def get_unique_card_names(self, repository: Optional[str] = None) -> Sequence[str]:
-        raise NotImplementedError
-
     def query_stats(self, search_term: Optional[str]) -> Dict[str, int]:
         raise NotImplementedError
 
