@@ -5,7 +5,7 @@
     import { getScreenSize } from "$lib/scripts/utils";
     import { rebuildSpcDriftViz , getAlertMetrics, createAlertMetricViz} from "$lib/scripts/monitoring/utils";
     import { onMount } from 'svelte';
-    import SpcMonitorUI from "$lib/card/monitoring/SpcMonitoringUI.svelte";
+    import SpcMonitorUI from "$lib/card/monitoring/Test.svelte";
     import SpcAlertUI from "$lib/card/monitoring/SpcAlertUI.svelte";
 
     /** @type {import('./$types').PageData} */
