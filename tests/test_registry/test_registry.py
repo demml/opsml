@@ -684,7 +684,7 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
     assert splits["test"].X.schema["test_cat"] == orig_schema["test_cat"]
 
 
-def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries) -> None:
+def test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries) -> None:
     # create data card
     registry = db_registries.data
     data_card = DataCard(

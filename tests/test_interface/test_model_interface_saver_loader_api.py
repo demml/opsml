@@ -54,9 +54,7 @@ def test_save_huggingface_modelcard_api_client(
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TOKENIZER.value))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.QUANTIZED_MODEL.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
@@ -301,9 +299,7 @@ def test_save_torch_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.PT.value))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
@@ -322,6 +318,9 @@ def test_save_torch_modelcard_api_client(
 
     #
     loaded_card.load_model()
+
+    loaded_card.load_preprocessor()
+    assert loaded_card.preprocessor is not None
 
     model.model.load_state_dict(loaded_card.interface.model)
     loaded_card.interface.model = model.model
@@ -471,9 +470,7 @@ def test_save_tensorflow_multi_input_modelcard_api_client(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
@@ -523,9 +520,7 @@ def test_save_catboost_modelcard(
     save_card_artifacts(modelcard)
 
     # check paths exist on server
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CATBOOST.value)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CATBOOST.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(
         Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(model.sample_data.data_suffix)
@@ -579,9 +574,7 @@ def test_save_vowpal_modelcard(
 
     # check paths exist on server
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.MODEL.value))
-    assert api_storage_client.exists(
-        Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value)
-    )
+    assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
 
     # load objects
