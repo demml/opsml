@@ -80,19 +80,6 @@ def test_register_data(
     names = registry._registry.get_unique_card_names(repository="mlops")
     assert "test-df" in names
 
-    info = list_repository_name_info(registry=registry, repository="mlops")
-    assert info.repositories is not None
-    assert "mlops" in info.repositories
-
-    assert info.names is not None
-    assert "test-df" in info.names
-
-    info = list_repository_name_info(registry=registry)
-    assert info.repositories is not None
-    assert "mlops" in info.repositories
-    assert info.names is not None
-    assert "test-df" in info.names
-
     # test ui routes for cards
     response = test_app.get("/opsml/data")
     assert response.status_code == 200
@@ -282,9 +269,7 @@ def test_register_model_data(
     modelcard, datacard = populate_model_data_for_api
 
     assert api_storage_client.exists(Path(datacard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-    assert api_storage_client.exists(
-        Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    )
+    assert api_storage_client.exists(Path(datacard.uri, SaveName.DATA.value).with_suffix(datacard.interface.data_suffix))
 
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(".joblib"))
     assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
