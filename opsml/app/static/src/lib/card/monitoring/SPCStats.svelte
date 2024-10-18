@@ -4,7 +4,6 @@
     import IndividualChart from "$lib/card/run/IndividualCharts.svelte";
     import Fa from 'svelte-fa';
     import { faComputer } from '@fortawesome/free-solid-svg-icons';
-    import { onMount } from "svelte";
 
     export let feature_profile: SpcFeatureDriftProfile;
     export let featureDistVizData: ChartjsData;
