@@ -7,43 +7,43 @@ on:
 
 jobs:
   Unit-Lint-Release-Candidate:
-      environment: pypi
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python-version: ["3.11",]
-          poetry-version: ["1.7.1"]
+    environment: pypi
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
 
-      steps:
-        - uses: actions/checkout@v4
-        - name: Install poetry
-          run: pipx install poetry==${{ matrix.poetry-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
 
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v5
-          with:
-            python-version: ${{ matrix.python-version }}
-            cache: 'poetry'
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
 
-        - run : |
-                sudo swapoff -a
-                sudo rm -f /swapfile
-                sudo apt clean
-                make setup.project
-                pip install -U twine
-                make lints.ci
-                make test.unit
-                make setup.project
-                if [[ "v$(poetry version --short)" == *"rc"* ]]; 
-                then
-                  poetry build
-                  twine check --strict dist/*
-                else
-                  exit 1
-                fi
+      - run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          make setup.project
+          pip install -U twine
+          make lints.ci
+          make test.unit
+          make setup.project
+          if [[ "v$(poetry version --short)" == *"rc"* ]]; 
+          then
+            poetry build
+            twine check --strict dist/*
+          else
+            exit 1
+          fi
 
-        - name: upload to pypi
-          run: twine upload dist/*
-          env:
-            TWINE_USERNAME: __token__
-            TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      - name: upload to pypi
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
