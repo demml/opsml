@@ -101,7 +101,7 @@
   });
 
 
-  const names = ["Models", "Data", "Runs", "Services"];
+  const names = ["Models", "Data", "Runs"];
 
   if (needAuth) {
     popupMessage = "Login to access OpsML features";
