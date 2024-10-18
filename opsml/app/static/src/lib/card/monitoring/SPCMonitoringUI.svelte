@@ -3,7 +3,7 @@
   import { type SpcFeatureDriftProfile } from "$lib/scripts/types";
   import  {type MonitoringVizData, type MonitorData} from "$lib/scripts/monitoring/types";
   import SpcTimeChartDiv from '$lib/card/monitoring/SpcTimeChart.svelte';
-  import SpcStats from "$lib/card/monitoring/SPCStats.svelte";
+  import SpcStats from "$lib/card/monitoring/SpcStats.svelte";
 
 
   export let monitorData: MonitorData;

@@ -4,7 +4,7 @@
   import logo from '$lib/images/opsml-green.ico';
   import scouter_logo from '$lib/images/scouter.svg';
   import Dropdown from "$lib/components/Dropdown.svelte";
-  import SPCProfile from "$lib/card/monitoring/SPCProfile.svelte";
+  import SpcProfile from "$lib/card/monitoring/SpcProfile.svelte";
   import { goto } from '$app/navigation';
   import type { RouteVizData } from "$lib/scripts/monitoring/utils";
   import Observability from "$lib/card/monitoring/Observability.svelte";
@@ -190,7 +190,7 @@
 
       {#if showConfig}
         {#if profileType === ProfileType.SPC}
-          <SPCProfile 
+          <SpcProfile 
             showConfig={showConfig} 
             repository={driftProfiles[profileType].config.repository}
             name={driftProfiles[profileType].config.name}
