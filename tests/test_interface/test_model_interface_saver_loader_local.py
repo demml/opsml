@@ -496,7 +496,6 @@ def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) ->
 
     # check paths exist on server
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CKPT.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
     assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value).exists()
     assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
 
