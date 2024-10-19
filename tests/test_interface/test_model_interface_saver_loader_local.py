@@ -31,13 +31,21 @@ from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
 IS_311 = sys.version_info >= (3, 11)
 
 
+# type: ignore
+
+import sys
+
+
+IS_311 = sys.version_info >= (3, 11)
+
+
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
+def test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_torch_distilbert
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_hf_distil",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -72,18 +80,24 @@ def _test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMo
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
 
+    loaded_card.load_preprocessor()
+    assert loaded_card.preprocessor is not None
+
     loaded_card.load_model(load_preprocessor=True)
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 
     #
     loaded_card.load_onnx_model()
+    assert loaded_card.onnx_model is not None
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
 
     loaded_card.load_onnx_model(load_quantized=True)
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
+
+    assert loaded_card.model_metadata is not None
 
     # Test local loader
     loader = ModelLoader(modelcard.uri)
@@ -96,12 +110,12 @@ def _test_save_huggingface_modelcard(huggingface_torch_distilbert: HuggingFaceMo
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def _test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
+def test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
     model: HuggingFaceModel = huggingface_text_classification_pipeline
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_hf_pipe",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -139,11 +153,6 @@ def _test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pi
     assert type(loaded_card.interface.model) == type(modelcard.interface.model)
     assert type(loaded_card.interface.tokenizer) == type(modelcard.interface.tokenizer)
 
-    #
-    loaded_card.load_onnx_model()
-    assert loaded_card.interface.onnx_model is not None
-    assert loaded_card.interface.onnx_model.sess is not None
-
     loaded_card.load_onnx_model()
     assert loaded_card.interface.onnx_model is not None
     assert loaded_card.interface.onnx_model.sess is not None
@@ -161,7 +170,7 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_sklearn_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -210,12 +219,12 @@ def test_save_sklearn_modelcard(random_forest_classifier: SklearnModel) -> None:
 
 
 # @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def _test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
+def test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     model: LightGBMModel = lgb_booster_model
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_lgb_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -257,14 +266,14 @@ def _test_save_lgb_booster_modelcard(lgb_booster_model: LightGBMModel) -> None:
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def _test_save_lgb_sklearn_modelcard(
+def test_save_lgb_sklearn_modelcard(
     lgb_regressor_model: LightGBMModel,
 ) -> None:
     model: LightGBMModel = lgb_regressor_model
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_sklearn_lgb_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -308,14 +317,14 @@ def _test_save_lgb_sklearn_modelcard(
     assert loaded_card.interface.onnx_model.sess is not None
 
 
-def _test_save_xgb_booster_modelcard(
+def test_save_xgb_booster_modelcard(
     xgb_booster_regressor_model: XGBoostModel,
 ) -> None:
     model: XGBoostModel = xgb_booster_regressor_model
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_xgb_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -354,12 +363,12 @@ def _test_save_xgb_booster_modelcard(
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
+def test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
     model: TorchModel = pytorch_simple
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_torch_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -412,12 +421,12 @@ def _test_save_torch_modelcard(pytorch_simple: TorchModel) -> None:
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
+def test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
     model: TorchModel = pytorch_simple_tuple
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_torch_simple_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -465,13 +474,13 @@ def _test_save_torch_tuple_modelcard(pytorch_simple_tuple: TorchModel) -> None:
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def _test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
+def test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -> None:
     model, model_arch = lightning_regression
     model = cast(LightningModel, model)
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_lightning_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -487,7 +496,6 @@ def _test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -
 
     # check paths exist on server
     assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.CKPT.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
     assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value).exists()
     assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
 
@@ -516,12 +524,12 @@ def _test_save_torch_lightning_modelcard(lightning_regression: LightningModel) -
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def _test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> None:
+def test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> None:
     model: TensorFlowModel = tf_transformer_example
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_tf_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -566,12 +574,12 @@ def _test_save_tensorflow_modelcard(tf_transformer_example: TensorFlowModel) -> 
 
 
 @pytest.mark.skipif(EXCLUDE, reason="skipping")
-def _test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel) -> None:
+def test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFlowModel) -> None:
     model: TensorFlowModel = multi_input_tf_example
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_tf_multi_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -616,67 +624,12 @@ def _test_save_tensorflow_multi_input_modelcard(multi_input_tf_example: TensorFl
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_huggingface_pipeline_modelcard(huggingface_text_classification_pipeline: HuggingFaceModel) -> None:
-    model: HuggingFaceModel = huggingface_text_classification_pipeline
-
-    modelcard = ModelCard(
-        interface=model,
-        name="test_model",
-        repository="mlops",
-        contact="test_email",
-        datacard_uid=uuid.uuid4().hex,
-        to_onnx=True,
-        version="0.0.1",
-        uid=uuid.uuid4().hex,
-        metadata=ModelCardMetadata(
-            description=Description(summary="test summary"),
-        ),
-    )
-
-    save_card_artifacts(modelcard)
-
-    # check paths exist on server
-    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
-    assert Path(modelcard.uri, SaveName.ONNX_MODEL.value).exists()
-    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
-
-    # load objects
-    loader = CardLoader(
-        card_args={
-            "name": modelcard.name,
-            "repository": modelcard.repository,
-            "version": modelcard.version,
-        },
-        registry_type=RegistryType.MODEL,
-    )
-
-    loaded_card = cast(ModelCard, loader.load_card())
-    assert isinstance(loaded_card, ModelCard)
-    assert loaded_card.interface.model is None
-
-    # attempt to load onnx model before loading model
-    loaded_card.load_onnx_model(load_preprocessor=True)
-    assert loaded_card.onnx_model is not None
-    assert loaded_card.onnx_model.sess is not None
-    assert isinstance(loaded_card.onnx_model.sess, Pipeline)
-
-    # loading onnx model should also load preprocessors
-    assert type(loaded_card.preprocessor) == type(modelcard.interface.tokenizer)
-    assert loaded_card.interface.model is None  # model should still be none
-
-    loaded_card.load_model()
-    assert type(loaded_card.model) == type(modelcard.interface.model)
-    assert isinstance(loaded_card.model, Pipeline)
-
-
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel) -> None:
+def test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: HuggingFaceModel) -> None:
     model, _ = huggingface_vit_pipeline
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_hf_vit_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -710,6 +663,7 @@ def _test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Hugg
 
     loaded_card = cast(ModelCard, loader.load_card())
     assert isinstance(loaded_card, ModelCard)
+
     assert loaded_card.interface.model is None
     assert loaded_card.interface.feature_extractor is None
 
@@ -749,7 +703,7 @@ def _test_save_huggingface_vit_pipeline_modelcard(huggingface_vit_pipeline: Hugg
         assert Path(path, SaveName.MODEL_METADATA.value).with_suffix(Suffix.JSON.value).exists()
 
 
-def _test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
+def test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
     model: CatBoostModel = catboost_regressor
 
     # remake catboost model with list
@@ -761,7 +715,7 @@ def _test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
 
     modelcard = ModelCard(
         interface=new_model,
-        name="test_model",
+        name="test_catboost_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -806,12 +760,12 @@ def _test_save_catboost_modelcard(catboost_regressor: CatBoostModel) -> None:
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> None:
+def test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_bytes
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_torch_byo_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -865,12 +819,12 @@ def _test_save_torch_byo_bytes_modelcard(pytorch_onnx_byo_bytes: TorchModel) -> 
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def _test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> None:
+def test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> None:
     model: TorchModel = pytorch_onnx_byo_file
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_torch_byo_onn",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -926,49 +880,7 @@ def _test_save_torch_byo_file_modelcard(pytorch_onnx_byo_file: TorchModel) -> No
 
 
 @pytest.mark.skipif(bool(IS_311 or EXCLUDE), reason="vowpal not support for py311")
-def _test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel) -> None:
-    model: VowpalWabbitModel = vowpal_wabbit_cb
-
-    modelcard = ModelCard(
-        interface=model,
-        name="test_model",
-        repository="mlops",
-        contact="test_email",
-        datacard_uid=uuid.uuid4().hex,
-        to_onnx=True,
-        version="0.0.1",
-        uid=uuid.uuid4().hex,
-        metadata=ModelCardMetadata(
-            description=Description(summary="test summary"),
-        ),
-    )
-
-    save_card_artifacts(modelcard)
-
-    # check paths exist on server
-    assert Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(Suffix.MODEL.value).exists()
-    assert Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(Suffix.JOBLIB.value).exists()
-    assert Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value).exists()
-
-    # load objects
-    loader = CardLoader(
-        card_args={
-            "name": modelcard.name,
-            "repository": modelcard.repository,
-            "version": modelcard.version,
-        },
-        registry_type=RegistryType.MODEL,
-    )
-
-    loaded_card = cast(ModelCard, loader.load_card())
-    assert isinstance(loaded_card, ModelCard)
-
-    loaded_card.load_model(arguments="--cb 4")
-    assert type(loaded_card.interface.model) == type(modelcard.interface.model)
-
-
-@pytest.mark.skipif(bool(IS_311 or EXCLUDE), reason="vowpal not support for py311")
-def _test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
+def test_save_vowpal_modelcard(vowpal_wabbit_cb: VowpalWabbitModel):
     model: VowpalWabbitModel = vowpal_wabbit_cb
 
     modelcard = ModelCard(

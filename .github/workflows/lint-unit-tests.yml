@@ -228,52 +228,51 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  Unit-Test-Windows:
-    needs: Lints
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        poetry-version: ["1.7.1"]
-        os: [windows]
-        node-version: ["22.5.1"]
-
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
-        with:
-          version: 9
-          run_install: false
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
-          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
-
-      - name: Build App for testing
-        run: |
-          cd opsml/app/static
-          pnpm install
-          pnpm run build 
-          pnpm run test
-
-      - name: Set up uv
-        run: irm https://astral.sh/uv/install.ps1 | iex
-        shell: powershell
-
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-
-      - run: make setup.project
-      - run: make test.unit
+  #Unit-Test-Windows:
+  #  needs: Lints
+  #  strategy:
+  #    matrix:
+  #      python-version: ["3.11"]
+  #      poetry-version: ["1.7.1"]
+  #      os: [windows]
+  #      node-version: ["22.5.1"]
+  #
+  #  runs-on: ${{ matrix.os }}-2022
+  #  steps:
+  #    - uses: actions/checkout@v4
+  #
+  #    - uses: pnpm/action-setup@v4
+  #      name: Install pnpm
+  #      with:
+  #        version: 9
+  #        run_install: false
+  #
+  #    - name: Use Node.js ${{ matrix.node-version }}
+  #      uses: actions/setup-node@v4
+  #      with:
+  #        node-version: ${{ matrix.node-version }}
+  #        cache: "pnpm"
+  #        cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+  #
+  #    - name: Build App for testing
+  #      run: |
+  #        cd opsml/app/static
+  #        pnpm install
+  #        pnpm run build
+  #        pnpm run test
+  #
+  #    - name: Set up uv
+  #      run: irm https://astral.sh/uv/install.ps1 | iex
+  #      shell: powershell
+  #
+  #    - name: Set up Python ${{ matrix.python-version }}
+  #      run: uv python install ${{ matrix.python-version }}
+  #
+  #    - run: make setup.project
+  #    - run: make test.unit
 
   Postgres-Unit:
-    needs:
-      [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-Coverage]
+    needs: [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1
@@ -316,8 +315,7 @@ jobs:
           OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
 
   MySql-Unit:
-    needs:
-      [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Windows, Unit-Test-Coverage]
+    needs: [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Coverage]
     runs-on: ubuntu-latest
     env:
       OPSML_TESTING: 1

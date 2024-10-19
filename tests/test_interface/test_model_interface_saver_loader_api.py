@@ -37,7 +37,7 @@ def test_save_huggingface_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_hf_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -113,7 +113,7 @@ def test_save_sklearn_modelcard_api_client(
     model: SklearnModel = random_forest_classifier
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_rf_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -166,7 +166,7 @@ def test_save_lgb_booster_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_lgb_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -219,7 +219,7 @@ def test_save_lgb_sklearn_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_sk_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -285,7 +285,7 @@ def test_save_torch_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_torch_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -323,6 +323,9 @@ def test_save_torch_modelcard_api_client(
     #
     loaded_card.load_model()
 
+    loaded_card.load_preprocessor()
+    assert loaded_card.preprocessor is not None
+
     model.model.load_state_dict(loaded_card.interface.model)
     loaded_card.interface.model = model.model
 
@@ -344,7 +347,7 @@ def test_save_torch_lightning_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_light_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -400,7 +403,7 @@ def test_save_tensorflow_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_tf_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -455,7 +458,7 @@ def test_save_tensorflow_multi_input_modelcard_api_client(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_tf_multi_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -508,7 +511,7 @@ def test_save_catboost_modelcard(
     model: CatBoostModel = catboost_regressor
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_cat_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,
@@ -564,7 +567,7 @@ def test_save_vowpal_modelcard(
 
     modelcard = ModelCard(
         interface=model,
-        name="test_model",
+        name="test_vw_model",
         repository="mlops",
         contact="test_email",
         datacard_uid=uuid.uuid4().hex,

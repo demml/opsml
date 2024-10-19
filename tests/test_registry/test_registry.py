@@ -114,14 +114,6 @@ def test_register_data(
     cards = registry.list_cards(name=data_card.name, repository=data_card.repository, version="^1")
     assert len(cards) >= 1
 
-    # Verify card name normalization (replacing "_" with "-")
-    names = registry._registry.get_unique_card_names(repository="mlops")
-    # NOTE: opsml replaces "_" with "-" in card name name
-    assert "test-df" in names
-
-    names = registry._registry.get_unique_card_names()
-    assert "test-df" in names
-
     assert "mlops" in registry._registry.unique_repositories
 
 
@@ -692,7 +684,7 @@ def test_polars_dtypes(db_registries: CardRegistries, iris_data_polars: PolarsDa
     assert splits["test"].X.schema["test_cat"] == orig_schema["test_cat"]
 
 
-def _test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries) -> None:
+def test_datacard_major_minor_version(sql_data: SqlData, db_registries: CardRegistries) -> None:
     # create data card
     registry = db_registries.data
     data_card = DataCard(

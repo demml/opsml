@@ -35,7 +35,7 @@ def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
     assert runcard.compute_environment.memory > 0
 
 
-def _test_opsml_read_only(
+def test_opsml_read_only(
     db_registries: CardRegistries,
     sklearn_pipeline: Tuple[SklearnModel, PandasData],
 ) -> None:
