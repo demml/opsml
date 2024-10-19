@@ -3,7 +3,7 @@ name = "opsml"
 version = "3.0.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = '>=3.9, <3.12'
+requires-python = '>=3.9, <=3.12'
 dependencies = [
     "fsspec>=2023.1.0, <=2024.2.0",
     "joblib~=1.3",
