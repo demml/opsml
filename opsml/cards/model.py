@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import json
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from uuid import UUID
@@ -213,7 +214,14 @@ class ModelCard(ArtifactCard):
 
         from opsml.storage.card_loader import ModelCardLoader
 
-        ModelCardLoader(self).load_preprocessor(lpath, rpath)
+        if lpath is None and rpath is None:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                lpath = Path(tmp_dir)
+                rpath = self.uri
+                ModelCardLoader(self).load_preprocessor(lpath, rpath)
+
+        else:
+            ModelCardLoader(self).load_preprocessor(lpath, rpath)
 
     def create_registry_record(self) -> Dict[str, Any]:
         """Creates a registry record from the current ModelCard"""
