@@ -128,7 +128,9 @@ def test_opsml_read_only(
     assert loaded_card.model is not None
 
     # Load data card by uid
-    loaded_data_card: DataCard = proj.load_card(registry_name="data", info=CardInfo(name="pipeline_data", uid=data_card.uid))
+    loaded_data_card: DataCard = proj.load_card(
+        registry_name="data", info=CardInfo(name="pipeline_data", uid=data_card.uid)
+    )
     assert loaded_data_card.uid is not None
     assert loaded_data_card.uid == data_card.uid
     assert loaded_data_card.metadata.runcard_uid == proj.run_id

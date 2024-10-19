@@ -100,7 +100,9 @@ def test_opsml_project_log_code_directory(
         run.log_metric(key="m1", value=1.1)
         run.log_parameter(key="m1", value="apple")
 
-    assert api_storage_client.exists(Path(run.runcard.uri, "artifacts/code/tests/test_projects/test_opsml_project_app.py"))
+    assert api_storage_client.exists(
+        Path(run.runcard.uri, "artifacts/code/tests/test_projects/test_opsml_project_app.py")
+    )
 
 
 def test_opsml_project_hardware_metric(
