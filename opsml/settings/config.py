@@ -8,9 +8,9 @@ from __future__ import annotations
 import re
 import secrets
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 from opsml.types import StorageSystem
@@ -50,6 +50,34 @@ class OpsmlConfig(BaseSettings):
 
     # Auth
     opsml_auth: bool = False
+
+    # okta settings
+    okta_auth: bool = False  # okta auth flag
+    okta_client_id: Optional[str] = None  # okta client id for application
+    okta_issuer: Optional[str] = None  # okta issue url for application
+    okta_redirect_url: Optional[str] = None  # okta redirect url for application
+    okta_scopes: Optional[str] = None  # okta scopes for application
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
+        """Method for model validation. This is primarily use for auth validation"""
+
+        opsml_auth = model_args.get("opsml_auth", False)
+
+        # opsml_auth is required for any form of authentication
+        if not opsml_auth:
+            return model_args
+
+        okta_auth = model_args.get("okta_auth", False)
+
+        if okta_auth:
+            assert model_args.get("okta_client_id"), "Okta client id is required"
+            assert model_args.get("okta_issuer"), "Okta issuer is required"
+            assert model_args.get("okta_redirect_url"), "Okta redirect url is required"
+            assert model_args.get("okta_scopes"), "Okta scopes are required"
+
+        return model_args
 
     @field_validator("opsml_storage_uri", mode="before")
     @classmethod
