@@ -1,4 +1,4 @@
-from typing import Annotated, Union
+from typing import Annotated, Union, Dict, Optional
 
 import jwt
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
@@ -358,8 +358,8 @@ def delete_user(
 
 
 @router.get("/auth/verify")
-def check_auth() -> bool:
-    return config.opsml_auth
+def check_auth() -> Dict[str, Union[bool, Optional[str]]]:
+    return config.auth_settings
 
 
 @router.get("/auth/security", response_model=SecurityQuestionResponse)
