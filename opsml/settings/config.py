@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import secrets
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
@@ -128,6 +128,18 @@ class OpsmlConfig(BaseSettings):
                 return re.sub("^az://", "", storage_uri_lower)
             return storage_uri_lower
         return self.opsml_proxy_root
+
+    @property
+    def auth_settings(self) -> Dict[str, Union[bool, Optional[str]]]:
+        """Returns the auth settings for the current configuration"""
+        return {
+            "opsml_auth": self.opsml_auth,
+            "okta_auth": self.okta_auth,
+            "okta_client_id": self.okta_client_id,
+            "okta_issuer": self.okta_issuer,
+            "okta_redirect_url": self.okta_redirect_url,
+            "okta_scopes": self.okta_scopes,
+        }
 
 
 config = OpsmlConfig()
