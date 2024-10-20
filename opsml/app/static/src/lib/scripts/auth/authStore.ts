@@ -152,3 +152,18 @@ export function checkAuthstore(
     // do nothing
   }
 }
+
+export async function setupAuth() {
+  if (browser) {
+    // for testing purposes (don't have another way currently)
+    if (import.meta.env.VITE_TEST) {
+      localStorage.setItem("needAuth", "false");
+      return;
+    } else {
+      // await opsm/verify
+      let response = (await fetch(CommonPaths.VERIFY, {
+        method: "GET", // default, so we can ignore
+      })) as Response;
+    }
+  }
+}

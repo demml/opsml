@@ -11,9 +11,14 @@
   import Fa from 'svelte-fa'
   import { faUser } from '@fortawesome/free-solid-svg-icons'
   import { browser } from '$app/environment';
+  import { authStore } from '$lib/scripts/auth/newAuthStore';
 
-  export let needAuth: boolean;
-  export let loggedIn: string;
+  let auth;
+
+  // Subscribe to the store
+  $: auth = $authStore;
+
+
   let popupMessage: string = "";
 
   const modalStore: ModalStore = loadModal();
@@ -103,7 +108,7 @@
 
   const names = ["Models", "Data", "Runs"];
 
-  if (needAuth) {
+  if (auth.requireAuth) {
     popupMessage = "Login to access OpsML features";
   } else {
     popupMessage = "Authentication not required";
@@ -206,7 +211,7 @@
     </div>
 
 
-    {#if loggedIn === 'false'}
+    {#if !auth.isAuthenticated }
       <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
     {:else}
 
