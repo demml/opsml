@@ -1,7 +1,8 @@
 import { goto } from "$app/navigation";
 import { CommonPaths } from "$lib/scripts/types";
-import { authStore } from "$lib/scripts/auth/authStore";
 import type { Token } from "$lib/scripts/types";
+import { authStore, type AuthState } from "$lib/scripts/auth/newAuthStore";
+import { get } from "svelte/store";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -17,21 +18,55 @@ async function handleError(response: Response): Promise<Response> {
 class ApiHandler {
   constructor() {}
 
-  async refreshToken(): Promise<boolean> {
-    const response = await fetch(CommonPaths.REFRESH_TOKEN, {
-      method: "GET",
-    });
+  async refreshkOktaAuth(): Promise<boolean> {
+    // try refreshing the okta token if the token has expired
+    const auth = get(authStore);
 
-    if (response.ok) {
-      const res = (await response.json()) as Token;
-      authStore.setToken(res.access_token);
-      return true;
+    // if okta, check if the session exists
+    if (auth.authType === "okta") {
+      const sessionExists = await auth.oktaAuth!.session.exists();
+
+      // if the session exists, refresh the token
+      if (sessionExists) {
+        // refresh the token
+        let tokens = await auth.oktaAuth!.token.renewTokens();
+        auth.oktaAuth!.tokenManager.setTokens(tokens);
+        authStore.update((state) => ({
+          ...state,
+          token: tokens,
+        }));
+
+        return true;
+      } else {
+        // if the session does not exist, redirect to login
+        // add redirect param
+        void goto(CommonPaths.LOGIN + "?redirect=" + window.location.pathname);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async refreshToken(): Promise<boolean> {
+    const auth = get(authStore);
+    if (auth.authType === "basic") {
+      const response = await fetch(CommonPaths.REFRESH_TOKEN, {
+        method: "GET",
+      });
+
+      if (response.ok) {
+        const res = (await response.json()) as Token;
+        authStore.update((state) => ({ ...state, token: res.access_token }));
+        return true;
+      }
     }
     return false;
   }
 
   async get(url: string): Promise<Response> {
     let retries = 3;
+
+    await this.refreshkOktaAuth();
 
     while (retries > 0) {
       const response = await fetch(url, {
@@ -73,6 +108,7 @@ class ApiHandler {
   ): Promise<Response> {
     let retries = 3;
 
+    await this.refreshkOktaAuth();
     while (retries > 0) {
       const response = await fetch(url, {
         method: "PUT",
@@ -115,6 +151,7 @@ class ApiHandler {
   ): Promise<Response> {
     let retries = 3;
 
+    await this.refreshkOktaAuth();
     while (retries > 0) {
       const response = await fetch(url, {
         method: "PATCH",
@@ -158,6 +195,7 @@ class ApiHandler {
   ): Promise<Response> {
     let retries = 3;
 
+    await this.refreshkOktaAuth();
     while (retries > 0) {
       const headers = {
         "Content-Type": contentType,
