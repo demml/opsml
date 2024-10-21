@@ -57,7 +57,7 @@ export async function setupAuth() {
         isAuthenticated: false,
         user: undefined,
         token: undefined,
-        OktaConfig: oktaConfig,
+        oktaConfig: oktaConfig,
       });
     }
   }

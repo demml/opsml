@@ -1,5 +1,7 @@
 // src/stores/authStore.ts
 import { writable } from "svelte/store";
+import { OktaAuth, type Tokens } from "@okta/okta-auth-js";
+import { get } from "svelte/store";
 
 export interface OpsmlAuth {
   opsml_auth: boolean;
@@ -7,14 +9,14 @@ export interface OpsmlAuth {
   okta_client_id: string | undefined;
   okta_issuer: string | undefined;
   okta_redirect_uri: string | undefined;
-  okta_scopes: string | undefined;
+  okta_scopes: string[] | undefined;
 }
 
 export interface OktaConfig {
-  OktaClientId: string;
-  OktaIssuer: string;
-  OktaRedirectUri: string;
-  OktaScope: string;
+  clientId: string;
+  issuer: string;
+  redirectUri: string;
+  scopes: string[];
   pkce: boolean;
 }
 
@@ -24,8 +26,8 @@ export interface AuthState {
   requireAuth: boolean;
   isAuthenticated: boolean;
   user: string | undefined;
-  token: string | undefined;
-  OktaConfig: OktaConfig | undefined;
+  token: string | Tokens | undefined;
+  oktaConfig: OktaConfig | undefined;
 }
 
 // Initialize the store with default values
@@ -35,7 +37,7 @@ export const initialAuthState: AuthState = {
   authType: "basic",
   user: undefined,
   token: undefined,
-  OktaConfig: undefined,
+  oktaConfig: undefined,
 };
 
 export const authStore = writable<AuthState>(initialAuthState);
@@ -50,4 +52,47 @@ export function setAuthState(authState: AuthState) {
 export function clearAuthState() {
   authStore.set(initialAuthState);
   localStorage.removeItem("authState");
+}
+
+export async function login(username: string, password: string) {
+  const auth = get(authStore);
+
+  if (auth.authType === "basic") {
+    // Call your login endpoint here
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setAuthState({
+        ...auth,
+        isAuthenticated: true,
+        user: data.user,
+        token: data.token,
+      });
+    } else {
+      throw new Error("Login failed");
+    }
+  } else if (auth.authType === "okta") {
+    // Use Okta Auth JS library for Okta login
+    const oktaConfig = auth.oktaConfig;
+    if (oktaConfig) {
+      const oktaAuth = new OktaAuth({
+        clientId: oktaConfig.clientId,
+        issuer: oktaConfig.issuer,
+        redirectUri: oktaConfig.redirectUri,
+        scopes: oktaConfig.scopes,
+        pkce: oktaConfig.pkce,
+      });
+
+      oktaAuth.signInWithRedirect();
+    } else {
+      throw new Error("Okta configuration is missing");
+    }
+  }
 }
