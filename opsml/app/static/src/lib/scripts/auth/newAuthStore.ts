@@ -27,7 +27,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   user: string | undefined;
   token: string | Tokens | undefined;
-  oktaConfig: OktaConfig | undefined;
+  oktaAuth: OktaAuth | undefined;
 }
 
 // Initialize the store with default values
@@ -37,7 +37,7 @@ export const initialAuthState: AuthState = {
   authType: "basic",
   user: undefined,
   token: undefined,
-  oktaConfig: undefined,
+  oktaAuth: undefined,
 };
 
 export const authStore = writable<AuthState>(initialAuthState);
@@ -80,17 +80,8 @@ export async function login(username: string, password: string) {
     }
   } else if (auth.authType === "okta") {
     // Use Okta Auth JS library for Okta login
-    const oktaConfig = auth.oktaConfig;
-    if (oktaConfig) {
-      const oktaAuth = new OktaAuth({
-        clientId: oktaConfig.clientId,
-        issuer: oktaConfig.issuer,
-        redirectUri: oktaConfig.redirectUri,
-        scopes: oktaConfig.scopes,
-        pkce: oktaConfig.pkce,
-      });
-
-      oktaAuth.signInWithRedirect();
+    if (auth.oktaAuth) {
+      auth.oktaAuth.signInWithRedirect();
     } else {
       throw new Error("Okta configuration is missing");
     }

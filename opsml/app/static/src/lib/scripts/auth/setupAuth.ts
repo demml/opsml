@@ -6,6 +6,7 @@ import {
   type OpsmlAuth,
   type OktaConfig,
 } from "$lib/scripts/auth/newAuthStore";
+import OktaAuth from "@okta/okta-auth-js";
 
 export async function setupAuth() {
   // check if authState is stored in localStorage (for page refresh)
@@ -39,16 +40,24 @@ export async function setupAuth() {
       // define auth type. If okta_auth is true, then we need to set up the OktaConfig
       // if not, then we don't need to set up the OktaConfig and default to basic auth
       let authType: string = data.okta_auth ? "okta" : "basic";
-      let oktaConfig: OktaConfig | undefined;
+      let oktaAuth: OktaAuth | undefined = undefined;
 
       if (data.okta_auth) {
-        oktaConfig = {
-          OktaClientId: data.okta_client_id!,
-          OktaIssuer: data.okta_issuer!,
-          OktaRedirectUri: data.okta_redirect_uri!,
-          OktaScope: data.okta_scopes!,
+        let oktaConfig = {
+          clientId: data.okta_client_id!,
+          issuer: data.okta_issuer!,
+          redirectUri: data.okta_redirect_uri!,
+          scopes: data.okta_scopes!,
           pkce: true,
         };
+
+        oktaAuth = new OktaAuth({
+          clientId: oktaConfig.clientId,
+          issuer: oktaConfig.issuer,
+          redirectUri: oktaConfig.redirectUri,
+          scopes: oktaConfig.scopes,
+          pkce: oktaConfig.pkce,
+        });
       }
 
       setAuthState({
@@ -57,7 +66,7 @@ export async function setupAuth() {
         isAuthenticated: false,
         user: undefined,
         token: undefined,
-        oktaConfig: oktaConfig,
+        oktaAuth: oktaAuth,
       });
     }
   }
