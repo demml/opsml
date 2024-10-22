@@ -76,7 +76,7 @@ model_registry.register_card(modelcard)
 : uid of DataCard that contains training data. This is not required to instantiate a ModelCard, but it is required to register a ModelCard
 
 `to_onnx`
-: Whether to convert model to onnx or not. Default is True
+: Whether to convert model to onnx or not. Default is False
 
 `metadata`: `ModelCardMetadata`
 : Optional ModelCardMetadata used to store metadata about the model. See [ModelCardMetadata](./metadata.md) for more information. If not provided, a default object is created. When registering a card, the metadata is updated with the latest information. 
