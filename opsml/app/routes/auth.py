@@ -12,7 +12,7 @@ from opsml.app.routes.pydantic_models import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
-from opsml.settings.config import config
+from opsml.settings.config import OpsmlAuthSettings, config
 from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
@@ -358,8 +358,8 @@ def delete_user(
 
 
 @router.get("/auth/verify")
-def check_auth() -> bool:
-    return config.opsml_auth
+def check_auth() -> OpsmlAuthSettings:
+    return config.auth_settings
 
 
 @router.get("/auth/security", response_model=SecurityQuestionResponse)

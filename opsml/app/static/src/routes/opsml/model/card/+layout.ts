@@ -26,6 +26,8 @@ export async function load({ url }) {
   /** get last path from url */
   const tab = (url as URL).pathname.split("/").pop();
 
+  console.log("model page load");
+
   const metadata: ModelMetadata = await getModelMetadata(
     name!,
     repository!,
