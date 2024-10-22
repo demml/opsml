@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import secrets
 from pathlib import Path
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, List
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings
@@ -55,8 +55,8 @@ class OpsmlConfig(BaseSettings):
     okta_auth: bool = False  # okta auth flag
     okta_client_id: Optional[str] = None  # okta client id for application
     okta_issuer: Optional[str] = None  # okta issue url for application
-    okta_redirect_url: Optional[str] = None  # okta redirect url for application
-    okta_scopes: Optional[str] = None  # okta scopes for application
+    okta_redirect_uri: Optional[str] = None  # okta redirect url for application
+    okta_scopes: Optional[List[str]] = None  # okta scopes for application
 
     @model_validator(mode="before")
     @classmethod
@@ -74,7 +74,7 @@ class OpsmlConfig(BaseSettings):
         if okta_auth:
             assert model_args.get("okta_client_id"), "Okta client id is required"
             assert model_args.get("okta_issuer"), "Okta issuer is required"
-            assert model_args.get("okta_redirect_url"), "Okta redirect url is required"
+            assert model_args.get("okta_redirect_uri"), "Okta redirect url is required"
             assert model_args.get("okta_scopes"), "Okta scopes are required"
 
         return model_args
@@ -130,14 +130,14 @@ class OpsmlConfig(BaseSettings):
         return self.opsml_proxy_root
 
     @property
-    def auth_settings(self) -> Dict[str, Union[bool, Optional[str]]]:
+    def auth_settings(self) -> Dict[str, Union[bool, Optional[str], Optional[List[str]]]]:
         """Returns the auth settings for the current configuration"""
         return {
             "opsml_auth": self.opsml_auth,
             "okta_auth": self.okta_auth,
             "okta_client_id": self.okta_client_id,
             "okta_issuer": self.okta_issuer,
-            "okta_redirect_url": self.okta_redirect_url,
+            "okta_redirect_uri": self.okta_redirect_uri,
             "okta_scopes": self.okta_scopes,
         }
 

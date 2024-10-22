@@ -17,6 +17,7 @@ export async function handleOktaCallback() {
       token: tokens.tokens,
       authType: "okta",
       oktaAuth: auth.oktaAuth,
+      oktaConfig: auth.oktaConfig,
     });
   } else {
     throw new Error("Okta configuration is missing");

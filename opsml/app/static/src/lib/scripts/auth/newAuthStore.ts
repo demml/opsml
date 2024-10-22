@@ -28,6 +28,7 @@ export interface AuthState {
   user: string | undefined;
   token: string | Tokens | undefined;
   oktaAuth: OktaAuth | undefined;
+  oktaConfig: OktaConfig | undefined;
 }
 
 // Initialize the store with default values
@@ -38,9 +39,14 @@ export const initialAuthState: AuthState = {
   user: undefined,
   token: undefined,
   oktaAuth: undefined,
+  oktaConfig: undefined,
 };
 
 export const authStore = writable<AuthState>(initialAuthState);
+
+export function clearToken() {
+  authStore.update((state) => ({ ...state, token: undefined }));
+}
 
 // Function to update the auth state
 export function setAuthState(authState: AuthState) {

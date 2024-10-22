@@ -2,16 +2,30 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
-  import { authStore } from "$lib/scripts/auth/authStore";
+  import { authStore, login } from "$lib/scripts/auth/newAuthStore";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
-  import { updateLoginStore } from "$lib/scripts/store";
   import { CommonPaths } from "$lib/scripts/types";
   import { goTop } from "$lib/scripts/utils";
+  import { onMount } from "svelte";
+  import { get } from "svelte/store";
+  import OktaLogin from "$lib/components/auth/OktaLogin.svelte";
 
   let username = '';
   let password = '';
 
   let showLoginError: boolean = false;
+  let authType: string = '';
+
+  onMount(() => {
+    // check if user is already logged in
+    const auth = get(authStore);
+    authType = auth.authType;
+
+    if (auth.isAuthenticated) {
+      goto(CommonPaths.HOME);
+    }
+    
+  });
 
   /** @type {import('./$types').PageData} */
   export let data;
@@ -19,11 +33,12 @@
 
   async function handleLogin() {
     // Handle login logic here
-    let loggedIn: boolean = await authStore.loginWithCredentials(username, password);
+    
+    await login(username, password);
+    const auth = get(authStore);
 
-    if (loggedIn) {
+    if (auth.isAuthenticated) {
       // need to reload the page to update the nav bar
-      updateLoginStore();
       if (previousPath) {
         goto(previousPath);
       } else {
@@ -77,6 +92,10 @@
           />
         </label>
       </div>
+
+      {#if authType === 'okta'}
+      <OktaLogin />
+      {/if}
 
       <div class="grid justify-items-center">
         <button type="submit" class="btn bg-primary-500 text-white rounded-lg md:w-72 justify-self-center mb-2">
