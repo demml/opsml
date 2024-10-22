@@ -9,6 +9,7 @@ import {
 import OktaAuth from "@okta/okta-auth-js";
 
 export async function setupAuth() {
+  console.log("setupAuth");
   // check if authState is stored in localStorage (for page refresh)
   const storedAuthState = localStorage.getItem("authState");
   if (storedAuthState) {
@@ -41,9 +42,10 @@ export async function setupAuth() {
       // if not, then we don't need to set up the OktaConfig and default to basic auth
       let authType: string = data.okta_auth ? "okta" : "basic";
       let oktaAuth: OktaAuth | undefined = undefined;
+      let oktaConfig: OktaConfig | undefined = undefined;
 
       if (data.okta_auth) {
-        let oktaConfig = {
+        oktaConfig = {
           clientId: data.okta_client_id!,
           issuer: data.okta_issuer!,
           redirectUri: data.okta_redirect_uri!,
@@ -67,6 +69,7 @@ export async function setupAuth() {
         user: undefined,
         token: undefined,
         oktaAuth: oktaAuth,
+        oktaConfig: oktaConfig,
       });
     }
   }

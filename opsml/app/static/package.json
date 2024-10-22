@@ -67,6 +67,7 @@
 		"@melt-ui/svelte": "^0.83.0",
 		"@octokit/rest": "^20.1.1",
 		"@okta/okta-auth-js": "^7.8.1",
+		"@okta/okta-signin-widget": "^7.24.2",
 		"@popperjs/core": "^2.11.8",
 		"chart.js": "^4.4.5",
 		"chartjs-adapter-date-fns": "^3.0.0",

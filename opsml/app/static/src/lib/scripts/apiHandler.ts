@@ -1,7 +1,7 @@
 import { goto } from "$app/navigation";
 import { CommonPaths } from "$lib/scripts/types";
 import type { Token } from "$lib/scripts/types";
-import { authStore, type AuthState } from "$lib/scripts/auth/newAuthStore";
+import { authStore, clearToken } from "$lib/scripts/auth/newAuthStore";
 import { get } from "svelte/store";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -65,6 +65,7 @@ class ApiHandler {
 
   async get(url: string): Promise<Response> {
     let retries = 3;
+    const auth = get(authStore);
 
     await this.refreshkOktaAuth();
 
@@ -72,7 +73,7 @@ class ApiHandler {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${authStore.getToken()}`,
+          Authorization: `Bearer ${auth.token}`,
         },
       });
 
@@ -93,8 +94,7 @@ class ApiHandler {
       }
     }
     // only get here if retries are exhausted
-    authStore.clearToken();
-    authStore.clearUsername();
+    clearToken();
     void goto(CommonPaths.LOGIN);
     return new Response("Unauthorized", { status: 401 });
   }
@@ -107,6 +107,7 @@ class ApiHandler {
     contentType: string = "application/json"
   ): Promise<Response> {
     let retries = 3;
+    const auth = get(authStore);
 
     await this.refreshkOktaAuth();
     while (retries > 0) {
@@ -114,7 +115,7 @@ class ApiHandler {
         method: "PUT",
         headers: {
           "Content-Type": contentType,
-          Authorization: `Bearer ${authStore.getToken()}`,
+          Authorization: `Bearer ${auth.token}`,
         },
         body: JSON.stringify(body),
       });
@@ -136,8 +137,7 @@ class ApiHandler {
       }
     }
     // only get here if retries are exhausted
-    authStore.clearToken();
-    authStore.clearUsername();
+    clearToken();
     void goto(CommonPaths.LOGIN);
     return new Response("Unauthorized", { status: 401 });
   }
@@ -150,6 +150,7 @@ class ApiHandler {
     contentType: string = "application/json"
   ): Promise<Response> {
     let retries = 3;
+    const auth = get(authStore);
 
     await this.refreshkOktaAuth();
     while (retries > 0) {
@@ -157,7 +158,7 @@ class ApiHandler {
         method: "PATCH",
         headers: {
           "Content-Type": contentType,
-          Authorization: `Bearer ${authStore.getToken()}`,
+          Authorization: `Bearer ${auth.token}`,
         },
         body: JSON.stringify(body),
       });
@@ -177,8 +178,7 @@ class ApiHandler {
       }
     }
     // only get here if retries are exhausted
-    authStore.clearToken();
-    authStore.clearUsername();
+    clearToken();
     // check if authentication is eve
     void goto(CommonPaths.LOGIN);
 
@@ -194,12 +194,13 @@ class ApiHandler {
     additionalHeaders: Record<string, string> = {}
   ): Promise<Response> {
     let retries = 3;
+    const auth = get(authStore);
 
     await this.refreshkOktaAuth();
     while (retries > 0) {
       const headers = {
         "Content-Type": contentType,
-        Authorization: `Bearer ${authStore.getToken()}`,
+        Authorization: `Bearer ${auth.token}`,
         ...additionalHeaders,
       };
 
@@ -225,8 +226,7 @@ class ApiHandler {
       }
     }
     // only get here if retries are exhausted
-    authStore.clearToken();
-    authStore.clearUsername();
+    clearToken();
     void goto(CommonPaths.LOGIN);
 
     return new Response("Unauthorized", { status: 401 });
