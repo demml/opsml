@@ -1,6 +1,7 @@
 // src/stores/authStore.ts
 import { writable, get } from "svelte/store";
 import { CommonPaths } from "$lib/scripts/types";
+import { browser } from "$app/environment";
 
 export interface OpsmlAuth {
   opsml_auth: boolean;
@@ -41,13 +42,18 @@ export function clearToken() {
 // Function to update the auth state
 export function setAuthState(authState: AuthState) {
   authStore.set(authState);
-  localStorage.setItem("authState", JSON.stringify(authState));
+
+  if (browser) {
+    localStorage.setItem("authState", JSON.stringify(authState));
+  }
 }
 
 // Function to clear the auth state
 export function clearAuthState() {
   authStore.set(initialAuthState);
-  localStorage.removeItem("authState");
+  if (browser) {
+    localStorage.removeItem("authState");
+  }
 }
 
 export async function login(username: string, password: string) {
@@ -81,9 +87,13 @@ export async function login(username: string, password: string) {
 }
 
 export async function setupAuth() {
-  console.log("setupAuth");
   // check if authState is stored in localStorage (for page refresh)
-  const storedAuthState = localStorage.getItem("authState");
+  let storedAuthState: string | null = null;
+
+  if (browser) {
+    storedAuthState = localStorage.getItem("authState");
+  }
+
   if (storedAuthState) {
     const authState: AuthState = JSON.parse(storedAuthState);
     setAuthState(authState);
@@ -109,6 +119,8 @@ export async function setupAuth() {
       throw new Error(`HTTP error ${response.status}`);
     } else {
       let data = (await response.json()) as OpsmlAuth;
+
+      console.log("data", data);
 
       // define auth type. If okta_auth is true, then we need to set up the OktaConfig
       // if not, then we don't need to set up the OktaConfig and default to basic auth
