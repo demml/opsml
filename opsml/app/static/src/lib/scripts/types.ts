@@ -209,7 +209,7 @@ export enum CommonPaths {
   LOGIN = "/opsml/auth/login",
   REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",
-  VERIFY = "/opsml/auth/verify",
+  AUTH_SETTINGS = "/opsml/auth/verify",
   TOKEN = "/opsml/auth/token",
   USER_AUTH = "/opsml/auth/user",
   EXISTS = "/opsml/auth/user/exists",

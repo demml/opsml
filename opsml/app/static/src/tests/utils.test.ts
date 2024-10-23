@@ -20,6 +20,7 @@ import {
   exampleUpdateAlert,
   exampleObservabilityMetrics,
   exampleAlertMetrics,
+  sampleModelMetadata,
 } from "./constants";
 import { graphs } from "./graphs";
 import * as monitoring from "../lib/scripts/monitoring/utils";
@@ -197,22 +198,7 @@ it("getModelMetadata", async () => {
     "test",
     undefined
   );
-  expect(metadata).toEqual({
-    model_name: "test",
-    model_class: "test",
-    model_type: "test",
-    model_interface: "test",
-    model_uri: "test",
-    model_version: "test",
-    model_repository: "test",
-    opsml_version: "1.0.0",
-    uid: "test",
-    data_schema: {
-      data_type: "test",
-      input_features: "test",
-      ouput_features: "test",
-    },
-  });
+  expect(metadata).toEqual(sampleModelMetadata);
 });
 
 // test setup files

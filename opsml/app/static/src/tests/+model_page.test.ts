@@ -1,6 +1,16 @@
+import { afterEach, afterAll, vi, beforeAll, it } from "vitest";
+
 import { server } from "./server";
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => {
+  vi.restoreAllMocks();
+  server.close();
+});
+
 import { render } from "@testing-library/svelte";
-import { afterAll, afterEach, beforeAll, it } from "vitest";
+
 import Homepage from "../lib/Homepage.svelte";
 import Card from "../lib/Card.svelte";
 import ModelPage from "../routes/opsml/model/+page.svelte";
@@ -12,12 +22,8 @@ import type { RecentCards, CardJson } from "$lib/scripts/homepage";
 
 import { type Files } from "$lib/scripts/types";
 import { calculateTimeBetween } from "$lib/scripts/utils";
-import { sampleCard, sampleModelMetadata } from "./constants";
+import { sampleCard, sampleModelMetadata, user } from "./constants";
 import { ModelPageStore } from "$routes/store";
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
 
 const cards: CardJson[] = [
   {

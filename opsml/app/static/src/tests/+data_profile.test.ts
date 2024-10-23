@@ -14,7 +14,22 @@ import {
 
 storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
 
-beforeAll(() => server.listen());
+beforeAll(() => {
+  localStorage.setItem(
+    "cacheAuthState",
+    JSON.stringify({
+      authType: "basic",
+      isAuthenticated: true,
+      requireAuth: false,
+      state: {
+        user: undefined,
+        access_token: undefined,
+        refresh_token: undefined,
+      },
+    })
+  );
+  server.listen();
+});
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 

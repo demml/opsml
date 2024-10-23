@@ -7,6 +7,7 @@ import {
 } from "$lib/scripts/types";
 
 import { listCards, getReadme, getModelMetadata } from "$lib/scripts/utils";
+import { cos } from "svelte-highlight/languages";
 
 export const ssr = false;
 const opsmlRoot: string = `opsml-root:/${RegistryName.Model}`;
