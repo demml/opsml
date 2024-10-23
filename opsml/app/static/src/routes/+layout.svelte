@@ -15,7 +15,7 @@
 	export let data;
   let authStore = data.authStore;
 
-  checkAuthstore(authStore, data.previousPath);
+  checkAuthstore(authStore);
   
 </script>
 

@@ -47,7 +47,6 @@
 
     async function handleUpdate() {
 
-      console.log('Updating drift config');
 
       // check if Zone to monitor is a string
       if (typeof zones_to_monitor === 'string') {
@@ -69,7 +68,6 @@
         targets = targetsList.split(',').map(target => target.trim());
       }
 
-      console.log(features_to_monitor);
       // check if features to monitor is a string and split it
       if (typeof features_to_monitor === 'string') {
         let features = features_to_monitor as string;
@@ -106,7 +104,6 @@
 
       driftProfile.config = updatedDriftConfig;
 
-      console.log('Updated drift profile', driftProfile);
 
       //serialize the updated drift profile
   
