@@ -151,6 +151,22 @@ class AuthManager {
   public getAuthState(): AuthState {
     return get(this.authStore);
   }
+
+  public setAccessToken(token: string) {
+    let auth = get(this.authStore);
+    this.setAuthState({
+      ...auth,
+      state: {
+        ...auth.state,
+        access_token: token,
+      },
+    });
+  }
+
+  public getAccessToken(): string | undefined {
+    let auth = get(this.authStore);
+    return auth.state.access_token;
+  }
 }
 
 export const authManager = AuthManager.getInstance();
