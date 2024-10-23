@@ -19,14 +19,19 @@
     };
 
   
-  
     /** @type {import('./$types').PageData} */
     export let data;
 
     let user: User;
-    let currentUsername = data.user as string;
-    let username = data.user;
-    let loggedIn: boolean = data.loggedIn;
+    let currentUsername: string;
+    $: currentUsername = data.username;
+
+    let username: string;
+    $: username = data.username;
+
+    let loggedIn: boolean;
+    $: loggedIn = data.loggedIn;
+
     let password = '';
     let newPassword = '';
     let email = '';
@@ -41,8 +46,8 @@
   
 
       if (loggedIn === true) {
-        // get user data
-        getUser(currentUsername).then((response: UserResponse) => {
+       
+        getUser(data.username).then((response: UserResponse) => {
           user = response.user as User;
           if (user.email) email = user.email;
           if (user.full_name) fullName = user.full_name;
