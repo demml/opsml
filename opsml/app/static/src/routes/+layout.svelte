@@ -5,22 +5,29 @@
   import favicon from "$lib/images/opsml-green.ico";
   import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
-  import { checkAuthstore } from "$lib/scripts/auth/authStore";
-  import { loginStore } from "$lib/scripts/store";
   import { onMount } from "svelte";
-  import { a } from "vitest/dist/suite-IbNSsUWN.js";
+  import { type AuthState } from "$lib/scripts/auth/authManager"
+  import { CommonPaths } from "$lib/scripts/types";
+  import { goto } from "$app/navigation";
+  import { authManager } from "$lib/scripts/auth/authManager";
+
 
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
 
-  /** @type {import('./$types').LayoutData} */
-	export let data;
 
-  $: authStore = data.authStore;
+  // async onMOunt
+  onMount(async () => {
+    let authstate = authManager.getAuthState();
+    if (authstate.requireAuth && !authstate.isAuthenticated) {
+      // redirect to login page with previous page as query param
+      void goto(CommonPaths.LOGIN);
+      // do nothing
+    }
+  
 
-
-  checkAuthstore(authStore);
+  });
   
 </script>
 
@@ -32,9 +39,8 @@
 <Modal />
 
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
-    <Navbar 
-      needAuth={authStore.needAuth()}
-      loggedIn={authStore.loggedIn}
-    />
-    <slot></slot>
+
+  <Navbar/>
+  <slot></slot>
+
 </div>
