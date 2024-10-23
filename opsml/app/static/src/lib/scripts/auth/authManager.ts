@@ -33,7 +33,7 @@ export const initialAuthState: AuthState = {
   },
 };
 
-export const authStore = writable<AuthState>(initialAuthState);
+export const authStore = writable<AuthState>(undefined);
 
 export function clearToken() {
   authStore.update((state) => ({ ...state, token: undefined }));
@@ -44,7 +44,7 @@ export function setAuthState(authState: AuthState) {
   authStore.set(authState);
 
   if (browser) {
-    localStorage.setItem("authState", JSON.stringify(authState));
+    localStorage.setItem("cacheAuthState", JSON.stringify(authState));
   }
 }
 
@@ -52,7 +52,7 @@ export function setAuthState(authState: AuthState) {
 export function clearAuthState() {
   authStore.set(initialAuthState);
   if (browser) {
-    localStorage.removeItem("authState");
+    localStorage.removeItem("cacheAuthState");
   }
 }
 
@@ -91,7 +91,8 @@ export async function setupAuth() {
   let storedAuthState: string | null = null;
 
   if (browser) {
-    storedAuthState = localStorage.getItem("authState");
+    localStorage.clear();
+    storedAuthState = localStorage.getItem("cacheAuthState");
   }
 
   if (storedAuthState) {
@@ -100,42 +101,28 @@ export async function setupAuth() {
     return;
   }
 
-  // check if we are in test mode
-  if (import.meta.env.VITE_TEST) {
-    setAuthState({
-      ...initialAuthState,
-      isAuthenticated: false,
-    });
-    return;
+  let response = (await fetch(CommonPaths.VERIFY, {
+    method: "GET", // default, so we can ignore
+  })) as Response;
 
-    // all other cases
+  if (!response.ok) {
+    throw new Error(`HTTP error ${response.status}`);
   } else {
-    // await opsm/verify
-    let response = (await fetch(CommonPaths.VERIFY, {
-      method: "GET", // default, so we can ignore
-    })) as Response;
+    let data = (await response.json()) as OpsmlAuth;
 
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    } else {
-      let data = (await response.json()) as OpsmlAuth;
+    // define auth type. If okta_auth is true, then we need to set up the OktaConfig
+    // if not, then we don't need to set up the OktaConfig and default to basic auth
+    let authType: string = "basic";
 
-      console.log("data", data);
-
-      // define auth type. If okta_auth is true, then we need to set up the OktaConfig
-      // if not, then we don't need to set up the OktaConfig and default to basic auth
-      let authType: string = "basic";
-
-      setAuthState({
-        authType: authType,
-        requireAuth: data.opsml_auth,
-        isAuthenticated: false,
-        state: {
-          user: undefined,
-          access_token: undefined,
-          refresh_token: undefined,
-        },
-      });
-    }
+    setAuthState({
+      authType: authType,
+      requireAuth: data.opsml_auth,
+      isAuthenticated: false,
+      state: {
+        user: undefined,
+        access_token: undefined,
+        refresh_token: undefined,
+      },
+    });
   }
 }

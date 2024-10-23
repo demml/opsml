@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import js from "jquery";
   import logo from "$lib/images/opsml_word.png";
   import { page } from "$app/stores";
   import { popup, type PopupSettings } from '@skeletonlabs/skeleton';

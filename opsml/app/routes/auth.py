@@ -359,6 +359,7 @@ def delete_user(
 
 @router.get("/auth/verify")
 def check_auth() -> OpsmlAuthSettings:
+    logger.info("Checking auth settings")
     return config.auth_settings
 
 

@@ -50,7 +50,20 @@ export async function load({ url }) {
   const readme: Readme = await getReadme(markdownPath);
 
   // get datacard
-  const dataCard: DataCardMetadata = await getDataCard(cardReq);
+  //const dataCard: DataCardMetadata = await getDataCard(cardReq);
+
+  const fakeData: DataCardMetadata = {
+    name: "Fake Data",
+    repository: "fake",
+    version: "1.0.0",
+    uid: "fake",
+    contact: "hello",
+    interface_type: "PandasData",
+    data_splits: undefined,
+    feature_map: undefined,
+    has_profile: false,
+    sql_logic: undefined,
+  };
 
   return {
     registry,
@@ -59,7 +72,7 @@ export async function load({ url }) {
     hasReadme: readme.exists,
     card: cards.cards[0],
     readme: readme.readme,
-    metadata: dataCard,
+    metadata: fakeData,
     tabSet: tab,
   };
 }
