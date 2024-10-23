@@ -23,9 +23,6 @@ export async function load({ url }) {
   const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "data";
 
-  /** get last path from url */
-  const tab = (url as URL).pathname.split("/").pop();
-
   const cardReq: CardRequest = {
     name,
     repository,
@@ -50,21 +47,7 @@ export async function load({ url }) {
   const readme: Readme = await getReadme(markdownPath);
 
   // get datacard
-  //const dataCard: DataCardMetadata = await getDataCard(cardReq);
-
-  const fakeData: DataCardMetadata = {
-    name: "Fake Data",
-    repository: "fake",
-    version: "1.0.0",
-    uid: "fake",
-    contact: "hello",
-    interface_type: "PandasData",
-    data_splits: undefined,
-    feature_map: undefined,
-    has_profile: false,
-    sql_logic: undefined,
-  };
-
+  const dataCard: DataCardMetadata = await getDataCard(cardReq);
   return {
     registry,
     repository: selectedCard.repository,
@@ -72,7 +55,6 @@ export async function load({ url }) {
     hasReadme: readme.exists,
     card: cards.cards[0],
     readme: readme.readme,
-    metadata: fakeData,
-    tabSet: tab,
+    metadata: dataCard,
   };
 }

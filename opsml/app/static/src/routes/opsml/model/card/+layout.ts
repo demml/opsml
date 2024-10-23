@@ -23,11 +23,6 @@ export async function load({ url }) {
   const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "model";
 
-  /** get last path from url */
-  const tab = (url as URL).pathname.split("/").pop();
-
-  console.log("model page load");
-
   const metadata: ModelMetadata = await getModelMetadata(
     name!,
     repository!,
@@ -59,7 +54,6 @@ export async function load({ url }) {
     hasReadme: readme.exists,
     card: selectedCard,
     readme: readme.readme,
-    tabSet: tab,
     version: metadata.model_version,
   };
 }
