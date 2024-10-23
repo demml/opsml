@@ -15,11 +15,14 @@
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
+  let authstate;
 
 
   // async onMOunt
   onMount(async () => {
-    let authstate = authManager.getAuthState();
+    authstate = await authManager.setupAuth();
+    console.log("layout");
+    console.log(authstate);
     if (authstate.requireAuth && !authstate.isAuthenticated) {
       // redirect to login page with previous page as query param
       void goto(CommonPaths.LOGIN);
@@ -40,7 +43,10 @@
 
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
 
-  <Navbar/>
+  {#if authstate}
+    <Navbar/>
+  {/if}
+  
   <slot></slot>
 
 </div>

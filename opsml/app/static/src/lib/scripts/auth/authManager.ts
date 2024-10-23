@@ -38,7 +38,6 @@ class AuthManager {
 
   private constructor() {
     this.authStore = writable<AuthState>(initialAuthState);
-    this.setupAuth();
   }
 
   public static getInstance(): AuthManager {
@@ -114,7 +113,7 @@ class AuthManager {
   }
 
   public async getAuthReqs(): Promise<OpsmlAuth> {
-    let response = (await fetch(CommonPaths.VERIFY, {
+    let response = (await fetch(CommonPaths.AUTH_SETTINGS, {
       method: "GET",
     })) as Response;
 
@@ -131,6 +130,7 @@ class AuthManager {
       let storedAuthState: string | null = null;
 
       storedAuthState = localStorage.getItem("cacheAuthState");
+
       if (storedAuthState) {
         const authState: AuthState = JSON.parse(storedAuthState);
         this.setAuthState(authState);
