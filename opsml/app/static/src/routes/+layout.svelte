@@ -7,16 +7,13 @@
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
   import { checkAuthstore } from "$lib/scripts/auth/authStore";
   import { loginStore } from "$lib/scripts/store";
+  import { onMount } from "svelte";
+
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
 
-  /** @type {import('./$types').LayoutData} */
-	export let data;
-  let authStore = data.authStore;
 
-  checkAuthstore(authStore, data.previousPath);
-  
 </script>
 
 <svelte:head>
@@ -28,8 +25,8 @@
 
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
     <Navbar 
-      needAuth={authStore.needAuth()}
-      loggedIn={$loginStore}
+      needAuth={false}
+      loggedIn={"false"}
     />
     <slot></slot>
 </div>
