@@ -45,7 +45,6 @@
     //check if chart.type is not undefined
     if (chart.type) {
       // log chart id
-      console.log('Updating chart with id: ', id);
       chart.destroy();
       ctx = chartCanvas.getContext('2d');
       chart = new Chart(ctx, {
@@ -69,7 +68,6 @@
 
     function createChart() {
     // log chart id
-    console.log('Creating chart with id: ', id);
     ctx = chartCanvas.getContext('2d');
     chart = new Chart(ctx, {
       // @ts-ignore
