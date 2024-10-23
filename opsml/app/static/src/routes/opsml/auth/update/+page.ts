@@ -1,4 +1,3 @@
-import { CommonPaths } from "$lib/scripts/types";
 import { authManager } from "$lib/scripts/auth/authManager";
 
 export const ssr = false;
