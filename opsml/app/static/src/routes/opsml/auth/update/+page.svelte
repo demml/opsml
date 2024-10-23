@@ -2,13 +2,13 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { CommonPaths, type UserResponse, type User, type UpdateUserRequest, type UpdateUserResponse } from "$lib/scripts/types";
-  import { authStore } from "$lib/scripts/auth/authStore";
   import { updateUser, goTop } from "$lib/scripts/utils";
   import { onMount } from "svelte";
   import { getUser } from "$lib/scripts/utils";
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { getToastStore, type ToastSettings } from '@skeletonlabs/skeleton';
+  import { authManager } from "$lib/scripts/auth/authManager";
 
 
     // toast
@@ -21,9 +21,12 @@
   
   
     /** @type {import('./$types').PageData} */
+    export let data;
+
     let user: User;
-    let currentUsername = authStore.getUsername() as string;
-    let username = authStore.getUsername();
+    let currentUsername = data.user as string;
+    let username = data.user;
+    let loggedIn: boolean = data.loggedIn;
     let password = '';
     let newPassword = '';
     let email = '';
@@ -35,12 +38,11 @@
 
 
     onMount(() => {
-    
-      let loggedIn = authStore.loggedIn();
+  
 
-      if (loggedIn === "true") {
+      if (loggedIn === true) {
         // get user data
-        getUser(authStore.getUsername() as string).then((response: UserResponse) => {
+        getUser(currentUsername).then((response: UserResponse) => {
           user = response.user as User;
           if (user.email) email = user.email;
           if (user.full_name) fullName = user.full_name;
@@ -57,7 +59,7 @@
 
     // validate provided password
     // need to use original username to validate password
-    let valid = await authStore.loginWithCredentials(currentUsername, password);
+    let valid = await authManager.login(currentUsername, password);
 
     if (!valid) {
       warnUser = true;
@@ -93,7 +95,7 @@
 
     if (response.updated) {
       // set new user and pass to local storage
-      let valid = await authStore.loginWithCredentials(username as string, password);
+      let valid = await authManager.login(username as string, password);
       if (!valid) {
         warnUser = true;
         errorMessage = 'User profile updated but could not login with new credentials. Please try again or contact your admin.';

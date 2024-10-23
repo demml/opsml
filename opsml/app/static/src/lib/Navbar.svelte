@@ -10,10 +10,27 @@
   import Fa from 'svelte-fa'
   import { faUser } from '@fortawesome/free-solid-svg-icons'
   import { browser } from '$app/environment';
+  import { type AuthState } from "./scripts/auth/authManager";
+  import { authManager} from "./scripts/auth/authManager";
 
-  export let needAuth: boolean;
-  export let loggedIn: string;
+  let authstate: AuthState;
   let popupMessage: string = "";
+  let needAuth: boolean = false;
+  let loggedIn: boolean = false;
+  let hamburger;
+  let hamburgerOptions;
+  let isOptionsVisible = false;
+
+  onMount(() => {
+    authstate = authManager.getAuthState();
+
+    if (authstate) {
+      loggedIn = authstate.isAuthenticated;
+      needAuth = authstate.requireAuth;
+    }
+  });
+
+
 
   const modalStore: ModalStore = loadModal();
 
@@ -48,13 +65,11 @@
       component: modalComponent,
 		};
 		modalStore.trigger(modal);
+    authManager.logout();
+    loggedIn = false;
 
     
   }
-
-  let hamburger;
-  let hamburgerOptions;
-  let isOptionsVisible = false;
 
   function toggleOptions() {
     isOptionsVisible = !isOptionsVisible;
@@ -205,7 +220,7 @@
     </div>
 
 
-    {#if loggedIn === 'false'}
+    {#if loggedIn === false}
       <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
     {:else}
 

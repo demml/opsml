@@ -1,6 +1,5 @@
-// src/stores/authStore.ts
-import { writable, get } from "svelte/store";
-import { CommonPaths } from "$lib/scripts/types";
+import { writable, get, type Writable } from "svelte/store";
+import { CommonPaths, type Token } from "$lib/scripts/types";
 import { browser } from "$app/environment";
 
 export interface OpsmlAuth {
@@ -13,7 +12,6 @@ export interface OpsmlAuthState {
   refresh_token: string | undefined;
 }
 
-// Define the shape of your auth state
 export interface AuthState {
   authType: string;
   requireAuth: boolean;
@@ -21,108 +19,142 @@ export interface AuthState {
   state: OpsmlAuthState;
 }
 
-// Initialize the store with default values
+const baseOpsmlAuthState: OpsmlAuthState = {
+  user: undefined,
+  access_token: undefined,
+  refresh_token: undefined,
+};
+
 export const initialAuthState: AuthState = {
   requireAuth: false,
   isAuthenticated: false,
   authType: "basic",
-  state: {
-    user: undefined,
-    access_token: undefined,
-    refresh_token: undefined,
-  },
+  state: baseOpsmlAuthState,
 };
 
-export const authStore = writable<AuthState>(undefined);
+class AuthManager {
+  private static instance: AuthManager;
+  public authStore: Writable<AuthState>;
 
-export function clearToken() {
-  authStore.update((state) => ({ ...state, token: undefined }));
-}
-
-// Function to update the auth state
-export function setAuthState(authState: AuthState) {
-  authStore.set(authState);
-
-  if (browser) {
-    localStorage.setItem("cacheAuthState", JSON.stringify(authState));
+  private constructor() {
+    this.authStore = writable<AuthState>(initialAuthState);
+    this.setupAuth();
   }
-}
 
-// Function to clear the auth state
-export function clearAuthState() {
-  authStore.set(initialAuthState);
-  if (browser) {
-    localStorage.removeItem("cacheAuthState");
-  }
-}
-
-export async function login(username: string, password: string) {
-  const auth = get(authStore);
-
-  if (auth.authType === "basic") {
-    // Call your login endpoint here
-    const response = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      setAuthState({
-        ...auth,
-        isAuthenticated: true,
-        state: {
-          user: data.user,
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-        },
-      });
-    } else {
-      throw new Error("Login failed");
+  public static getInstance(): AuthManager {
+    if (!AuthManager.instance) {
+      AuthManager.instance = new AuthManager();
     }
-  }
-}
-
-export async function setupAuth() {
-  // check if authState is stored in localStorage (for page refresh)
-  let storedAuthState: string | null = null;
-
-  if (browser) {
-    localStorage.clear();
-    storedAuthState = localStorage.getItem("cacheAuthState");
+    return AuthManager.instance;
   }
 
-  if (storedAuthState) {
-    const authState: AuthState = JSON.parse(storedAuthState);
-    setAuthState(authState);
-    return;
-  }
-
-  let response = (await fetch(CommonPaths.VERIFY, {
-    method: "GET", // default, so we can ignore
-  })) as Response;
-
-  if (!response.ok) {
-    throw new Error(`HTTP error ${response.status}`);
-  } else {
-    let data = (await response.json()) as OpsmlAuth;
-
-    // define auth type. If okta_auth is true, then we need to set up the OktaConfig
-    // if not, then we don't need to set up the OktaConfig and default to basic auth
-    let authType: string = "basic";
-
-    setAuthState({
-      authType: authType,
-      requireAuth: data.opsml_auth,
-      isAuthenticated: false,
+  public clearToken() {
+    // keep user and clear tokens
+    let auth = get(this.authStore);
+    this.setAuthState({
+      ...auth,
       state: {
-        user: undefined,
+        ...auth.state,
         access_token: undefined,
         refresh_token: undefined,
       },
     });
   }
+
+  public logout() {
+    this.authStore.update((state) => ({
+      ...state,
+      isAuthenticated: false,
+      state: baseOpsmlAuthState,
+    }));
+
+    if (browser) {
+      localStorage.removeItem("cacheAuthState");
+    }
+  }
+
+  public setAuthState(authState: AuthState) {
+    this.authStore.set(authState);
+
+    if (browser) {
+      localStorage.setItem("cacheAuthState", JSON.stringify(authState));
+    }
+  }
+
+  public async login(username: string, password: string): Promise<boolean> {
+    const auth = get(this.authStore);
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("password", password);
+
+    if (auth.authType === "basic") {
+      const response = await fetch(CommonPaths.TOKEN, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as Token;
+        this.setAuthState({
+          ...auth,
+          isAuthenticated: true,
+          state: {
+            user: username,
+            access_token: data.access_token,
+            refresh_token: undefined,
+          },
+        });
+
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  public async getAuthReqs(): Promise<OpsmlAuth> {
+    let response = (await fetch(CommonPaths.VERIFY, {
+      method: "GET",
+    })) as Response;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    } else {
+      let data = (await response.json()) as OpsmlAuth;
+      return data;
+    }
+  }
+
+  public async setupAuth(): Promise<AuthState> {
+    if (browser) {
+      let storedAuthState: string | null = null;
+
+      storedAuthState = localStorage.getItem("cacheAuthState");
+      if (storedAuthState) {
+        const authState: AuthState = JSON.parse(storedAuthState);
+        this.setAuthState(authState);
+        return authState;
+      }
+      let reqs: OpsmlAuth = await this.getAuthReqs();
+
+      this.setAuthState({
+        authType: "basic",
+        requireAuth: reqs.opsml_auth,
+        isAuthenticated: false,
+        state: baseOpsmlAuthState,
+      });
+    }
+    return get(this.authStore);
+  }
+
+  public getAuthState(): AuthState {
+    return get(this.authStore);
+  }
 }
+
+export const authManager = AuthManager.getInstance();
+
+export const loggedIn = writable({
+  isLoggedIn: false,
+});

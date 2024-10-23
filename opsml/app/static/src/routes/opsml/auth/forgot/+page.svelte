@@ -2,7 +2,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
-  import { authStore } from "$lib/scripts/auth/authStore";
+  import { authManager } from "$lib/scripts/auth/authManager";
   import { getSecurity, getToken, resetPassword,type SecurityReturn, type TokenReturn, type PasswordReturn } from "$lib/scripts/auth/utils";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
   import { CommonPaths, type PasswordStrength } from "$lib/scripts/types";
@@ -63,7 +63,7 @@
         await sleep(2000);
 
         // clear temp token
-        authStore.clearToken();
+        authManager.clearToken();
 
         // redirect
         goto(CommonPaths.LOGIN);

@@ -7,6 +7,7 @@
   import { updateLoginStore } from "$lib/scripts/store";
   import { CommonPaths } from "$lib/scripts/types";
   import { goTop } from "$lib/scripts/utils";
+  import { authManager, loggedIn } from "$lib/scripts/auth/authManager";
 
   let username = '';
   let password = '';
@@ -19,11 +20,13 @@
 
   async function handleLogin() {
     // Handle login logic here
-    let loggedIn: boolean = await authStore.loginWithCredentials(username, password);
+    await authManager.login(username, password);
+    let authstate = authManager.getAuthState();
 
-    if (loggedIn) {
+    if (authstate.isAuthenticated === true) {
+      loggedIn.set({ isLoggedIn: true });
+
       // need to reload the page to update the nav bar
-      updateLoginStore();
       if (previousPath) {
         goto(previousPath);
       } else {
