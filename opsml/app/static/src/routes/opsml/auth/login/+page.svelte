@@ -2,9 +2,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
-  import { authStore } from "$lib/scripts/auth/authStore";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
-  import { updateLoginStore } from "$lib/scripts/store";
   import { CommonPaths } from "$lib/scripts/types";
   import { goTop } from "$lib/scripts/utils";
   import { authManager, loggedIn } from "$lib/scripts/auth/authManager";
