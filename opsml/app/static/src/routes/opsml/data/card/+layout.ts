@@ -23,9 +23,6 @@ export async function load({ url }) {
   const uid = (url as URL).searchParams.get("uid") as string | undefined;
   const registry = "data";
 
-  /** get last path from url */
-  const tab = (url as URL).pathname.split("/").pop();
-
   const cardReq: CardRequest = {
     name,
     repository,
@@ -51,7 +48,6 @@ export async function load({ url }) {
 
   // get datacard
   const dataCard: DataCardMetadata = await getDataCard(cardReq);
-
   return {
     registry,
     repository: selectedCard.repository,
@@ -60,6 +56,5 @@ export async function load({ url }) {
     card: cards.cards[0],
     readme: readme.readme,
     metadata: dataCard,
-    tabSet: tab,
   };
 }
