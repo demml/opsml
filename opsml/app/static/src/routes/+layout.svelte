@@ -14,6 +14,8 @@
   initializeStores();
 
 
+  checkAuthstore(authStore);
+  
 </script>
 
 <svelte:head>
