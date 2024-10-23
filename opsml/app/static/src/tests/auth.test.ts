@@ -4,7 +4,7 @@ import { getSecurity, getToken, resetPassword } from "$lib/scripts/auth/utils";
 import {
   registerUser,
   type RegisterResponse,
-} from "$lib/scripts/auth/auth_routes";
+} from "$lib/scripts/auth/authRoutes";
 import { type RegisterUser } from "$lib/scripts/types";
 
 beforeAll(() => server.listen());

@@ -1,10 +1,9 @@
 
 <script lang="ts">
 	import { type ModalStore} from '@skeletonlabs/skeleton';
-  import { authStore } from '$lib/scripts/auth/authStore';
+  import { authManager } from '$lib/scripts/auth/authManager';
   import { goto } from '$app/navigation';
   import type { SvelteComponent } from 'svelte';
-  import { updateLoginStore } from '$lib/scripts/store';
 
 	export let modalStore: ModalStore;
   export let parent: SvelteComponent;
@@ -12,9 +11,8 @@
 
  
 	function logOutHandler(): void {
-		authStore.logout();
+		authManager.logout();
     parent.onClose();
-    updateLoginStore();
     goto('/opsml/auth/login');
 	}
 
