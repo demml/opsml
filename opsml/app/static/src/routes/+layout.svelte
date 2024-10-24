@@ -9,7 +9,7 @@
   import { type AuthState } from "$lib/scripts/auth/authManager"
   import { CommonPaths } from "$lib/scripts/types";
   import { goto } from "$app/navigation";
-  import { authManager } from "$lib/scripts/auth/authManager";
+  import { authManager, checkAuthstore } from "$lib/scripts/auth/authManager";
 
 
 
@@ -17,15 +17,15 @@
   initializeStores();
   let authstate;
 
+  checkAuthstore();
+
 
   // async onMOunt
   onMount(async () => {
-    authstate = await authManager.setupAuth();
-    console.log("layout");
-    console.log(authstate);
+    authstate = authManager.getAuthState();
     if (authstate.requireAuth && !authstate.isAuthenticated) {
       // redirect to login page with previous page as query param
-      void goto(CommonPaths.LOGIN);
+      void goto(CommonPaths.LOGIN, { invalidateAll: true });
       // do nothing
     }
   
@@ -41,12 +41,13 @@
 <Toast />
 <Modal />
 
+
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
 
   {#if authstate}
     <Navbar/>
   {/if}
-  
+
   <slot></slot>
 
 </div>

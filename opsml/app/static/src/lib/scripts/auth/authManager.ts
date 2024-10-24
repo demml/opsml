@@ -1,9 +1,16 @@
 import { writable, get, type Writable } from "svelte/store";
 import { CommonPaths, type Token } from "$lib/scripts/types";
 import { browser } from "$app/environment";
+import { OktaAuth } from "@okta/okta-auth-js";
+import { goto } from "$app/navigation";
 
 export interface OpsmlAuth {
   opsml_auth: boolean;
+  okta_auth: boolean;
+  okta_client_id: string | undefined;
+  okta_issuer: string | undefined;
+  okta_redirect_uri: string | undefined;
+  okta_scopes: string[] | undefined;
 }
 
 export interface OpsmlAuthState {
@@ -12,11 +19,20 @@ export interface OpsmlAuthState {
   refresh_token: string | undefined;
 }
 
+export interface OktaConfig {
+  clientId: string;
+  issuer: string;
+  redirectUri: string;
+  scopes: string[];
+  pkce: boolean;
+}
+
 export interface AuthState {
   authType: string;
   requireAuth: boolean;
   isAuthenticated: boolean;
   state: OpsmlAuthState;
+  config: OktaConfig | undefined;
 }
 
 const baseOpsmlAuthState: OpsmlAuthState = {
@@ -30,6 +46,7 @@ export const initialAuthState: AuthState = {
   isAuthenticated: false,
   authType: "basic",
   state: baseOpsmlAuthState,
+  config: undefined,
 };
 
 class AuthManager {
@@ -108,6 +125,9 @@ class AuthManager {
       } else {
         return false;
       }
+    } else if (auth.authType === "okta") {
+      const oktaAuth = new OktaAuth(auth.config!);
+      await oktaAuth.signInWithRedirect();
     }
     return false;
   }
@@ -138,12 +158,31 @@ class AuthManager {
       }
       let reqs: OpsmlAuth = await this.getAuthReqs();
 
-      this.setAuthState({
-        authType: "basic",
-        requireAuth: reqs.opsml_auth,
-        isAuthenticated: false,
-        state: baseOpsmlAuthState,
-      });
+      if (!reqs.okta_auth) {
+        this.setAuthState({
+          authType: "basic",
+          requireAuth: reqs.opsml_auth,
+          isAuthenticated: false,
+          state: baseOpsmlAuthState,
+          config: undefined,
+        });
+      } else {
+        let oktaConfig: OktaConfig = {
+          clientId: reqs.okta_client_id as string,
+          issuer: reqs.okta_issuer as string,
+          redirectUri: reqs.okta_redirect_uri as string,
+          scopes: reqs.okta_scopes as string[],
+          pkce: true,
+        };
+
+        this.setAuthState({
+          authType: "okta",
+          requireAuth: reqs.okta_auth,
+          isAuthenticated: false,
+          state: baseOpsmlAuthState,
+          config: oktaConfig,
+        });
+      }
     }
     return get(this.authStore);
   }
@@ -174,3 +213,13 @@ export const authManager = AuthManager.getInstance();
 export const loggedIn = writable({
   isLoggedIn: false,
 });
+
+export function checkAuthstore(): void {
+  authManager.setupAuth().then((authstate) => {
+    if (authstate.requireAuth && !authstate.isAuthenticated) {
+      // redirect to login page with previous page as query param
+      void goto(CommonPaths.LOGIN, { invalidateAll: true });
+      // do nothing
+    }
+  });
+}

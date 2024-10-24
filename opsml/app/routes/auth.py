@@ -67,14 +67,19 @@ async def get_current_user(
         )
         username: str = payload.get("sub")
         if username is None:
-            raise credentials_exception
+            logger.error("Failed to get username from token. Redirecting to login")
+            raise HTTPException(
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                detail="username not found",
+                headers={"Location": "opsml/auth/login"},
+            )
         token_data = TokenData(username=username)
 
     except jwt.exceptions.ExpiredSignatureError as exc:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="token_expired",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            detail="username not found",
+            headers={"Location": "opsml/auth/login"},
         ) from exc
 
     except jwt.exceptions.DecodeError as exc:

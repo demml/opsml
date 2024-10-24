@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import secrets
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings
@@ -18,6 +18,11 @@ from opsml.types import StorageSystem
 
 class OpsmlAuthSettings(BaseModel):
     opsml_auth: bool = False
+    okta_auth: bool = False  # okta auth flag
+    okta_client_id: Optional[str] = None  # okta client id for application
+    okta_issuer: Optional[str] = None  # okta issue url for application
+    okta_redirect_uri: Optional[str] = None  # okta redirect url for application
+    okta_scopes: Optional[List[str]] = None  # okta scopes for application
 
 
 class OpsmlConfig(BaseSettings):
@@ -54,6 +59,13 @@ class OpsmlConfig(BaseSettings):
 
     # Auth
     opsml_auth: bool = False
+
+    # okta settings
+    okta_auth: bool = False  # okta auth flag
+    okta_client_id: Optional[str] = None  # okta client id for application
+    okta_issuer: Optional[str] = None  # okta issue url for application
+    okta_redirect_uri: Optional[str] = None  # okta redirect url for application
+    okta_scopes: Optional[List[str]] = None  # okta scopes for application
 
     @field_validator("opsml_storage_uri", mode="before")
     @classmethod
@@ -108,7 +120,14 @@ class OpsmlConfig(BaseSettings):
     @property
     def auth_settings(self) -> OpsmlAuthSettings:
         """Returns the auth settings for the current configuration"""
-        return OpsmlAuthSettings(opsml_auth=self.opsml_auth)
+        return OpsmlAuthSettings(
+            opsml_auth=self.opsml_auth,
+            okta_auth=self.okta_auth,
+            okta_client_id=self.okta_client_id,
+            okta_issuer=self.okta_issuer,
+            okta_redirect_uri=self.okta_redirect_uri,
+            okta_scopes=self.okta_scopes,
+        )
 
 
 config = OpsmlConfig()
