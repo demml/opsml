@@ -38,6 +38,8 @@ export const initialAuthState: AuthState = {
 
 class AuthManager {
   private static instance: AuthManager;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public authStore: any;
 
   private constructor() {
@@ -53,7 +55,8 @@ class AuthManager {
 
   public clearToken() {
     // keep user and clear tokens
-    let auth: AuthState = get(this.authStore);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const auth: AuthState = get(this.authStore);
     this.setAuthState({
       ...auth,
       state: {
@@ -65,15 +68,17 @@ class AuthManager {
   }
 
   public async logout() {
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.authStore.reset();
 
-    let auth = await this.setupAuth();
+    const auth = await this.setupAuth();
     auth.isAuthenticated = false;
     this.setAuthState(auth);
     loggedIn.set({ isLoggedIn: false });
   }
 
   public setAuthState(authState: AuthState) {
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.authStore.set(authState);
   }
 
@@ -111,14 +116,14 @@ class AuthManager {
   }
 
   public async getAuthReqs(): Promise<OpsmlAuth> {
-    let response = (await fetch(CommonPaths.AUTH_SETTINGS, {
+    const response = await fetch(CommonPaths.AUTH_SETTINGS, {
       method: "GET",
-    })) as Response;
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);
     } else {
-      let data = (await response.json()) as OpsmlAuth;
+      const data = (await response.json()) as OpsmlAuth;
       return data;
     }
   }
@@ -126,12 +131,13 @@ class AuthManager {
   public async setupAuth(): Promise<AuthState> {
     if (browser) {
       // check if auth state is already set
-      let auth: AuthState = get(this.authStore);
+      // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
+      const auth: AuthState = get(this.authStore);
       if (auth.setup) {
         return auth;
       }
 
-      let reqs: OpsmlAuth = await this.getAuthReqs();
+      const reqs: OpsmlAuth = await this.getAuthReqs();
 
       if (!reqs.opsml_auth) {
         this.setAuthState({
@@ -143,15 +149,18 @@ class AuthManager {
         });
       }
     }
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
     return get(this.authStore);
   }
 
   public getAuthState(): AuthState {
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
     return get(this.authStore);
   }
 
   public setAccessToken(token: string) {
-    let auth: AuthState = get(this.authStore);
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
+    const auth: AuthState = get(this.authStore);
     this.setAuthState({
       ...auth,
       state: {
@@ -162,7 +171,8 @@ class AuthManager {
   }
 
   public getAccessToken(): string | undefined {
-    let auth: AuthState = get(this.authStore);
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
+    const auth: AuthState = get(this.authStore);
     return auth.state.access_token;
   }
 }
@@ -173,12 +183,12 @@ export const loggedIn = writable({
   isLoggedIn: false,
 });
 
-export function checkAuthstore(): void {
-  authManager.setupAuth().then((authstate) => {
-    if (authstate.requireAuth && !authstate.isAuthenticated) {
-      // redirect to login page with previous page as query param
-      void goto(CommonPaths.LOGIN, { invalidateAll: true });
-      // do nothing
-    }
-  });
+export async function checkAuthstore(): Promise<void> {
+  const auth = await authManager.setupAuth();
+
+  if (auth.requireAuth && !auth.isAuthenticated) {
+    // redirect to login page with previous page as query param
+    void goto(CommonPaths.LOGIN, { invalidateAll: true });
+    // do nothing
+  }
 }

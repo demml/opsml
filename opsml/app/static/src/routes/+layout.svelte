@@ -27,7 +27,7 @@
 
 
     (async () => {
-      checkAuthstore();
+      await checkAuthstore();
       authstate = authManager.getAuthState();
     })();
 

@@ -8,7 +8,7 @@ export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
-  checkAuthstore();
+  await checkAuthstore();
 
   const repository = (url as URL).searchParams.get("repository") as
     | string

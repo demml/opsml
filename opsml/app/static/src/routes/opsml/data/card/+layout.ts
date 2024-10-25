@@ -13,8 +13,7 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
-  console.log("loading data card layout");
-  checkAuthstore();
+  await checkAuthstore();
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string

@@ -68,7 +68,7 @@ class ApiHandler {
       }
     }
 
-    authManager.logout();
+    await authManager.logout();
     void goto(CommonPaths.LOGIN);
     return new Response("Unauthorized", { status: 401 });
   }
