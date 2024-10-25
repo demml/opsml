@@ -851,9 +851,10 @@ export interface RouteVizData {
 function buildChart(
   label: string[],
   labels: Date[],
-  values: number[][]
+  values: number[][],
+  xLabel: string
 ): ChartjsData {
-  const grace = "10%";
+  const grace = "100%";
   const legend = {
     display: false,
   };
@@ -928,8 +929,9 @@ function buildChart(
         },
       },
       y: {
+        beginAtZero: true,
         grace: grace,
-        title: { display: true, text: "Feature Values" },
+        title: { display: true, text: xLabel },
         ticks: {
           maxTicksLimit: 30,
         },
@@ -968,8 +970,18 @@ export function createObservabilityViz(
     const p99 = metric.p99;
 
     // build request chart
-    const requestVizData = buildChart(["Requests per sec"], labels, [requests]);
-    const latencyVizData = buildChart(["P50", "P99"], labels, [p50, p99]);
+    const requestVizData = buildChart(
+      ["Requests per sec"],
+      labels,
+      [requests],
+      "Requests"
+    );
+    const latencyVizData = buildChart(
+      ["P50", "P99"],
+      labels,
+      [p50, p99],
+      "Latency"
+    );
 
     routeVizData.push({
       route_name: metric.route_name,

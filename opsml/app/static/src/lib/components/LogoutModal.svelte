@@ -11,8 +11,8 @@
 
  
 	function logOutHandler(): void {
-		authManager.logout();
     parent.onClose();
+    authManager.logout();
     goto('/opsml/auth/login');
 	}
 

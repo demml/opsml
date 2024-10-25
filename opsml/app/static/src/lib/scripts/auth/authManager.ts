@@ -3,6 +3,8 @@ import { CommonPaths, type Token } from "$lib/scripts/types";
 import { browser } from "$app/environment";
 import { OktaAuth } from "@okta/okta-auth-js";
 import { goto } from "$app/navigation";
+import { sleep } from "../utils";
+import { persisted } from "svelte-persisted-store";
 
 export interface OpsmlAuth {
   opsml_auth: boolean;
@@ -33,6 +35,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   state: OpsmlAuthState;
   config: OktaConfig | undefined;
+  setup: boolean;
 }
 
 const baseOpsmlAuthState: OpsmlAuthState = {
@@ -47,14 +50,15 @@ export const initialAuthState: AuthState = {
   authType: "basic",
   state: baseOpsmlAuthState,
   config: undefined,
+  setup: false,
 };
 
 class AuthManager {
   private static instance: AuthManager;
-  public authStore: Writable<AuthState>;
+  public authStore: any;
 
   private constructor() {
-    this.authStore = writable<AuthState>(initialAuthState);
+    this.authStore = persisted("cacheAuthState", initialAuthState);
   }
 
   public static getInstance(): AuthManager {
@@ -66,7 +70,7 @@ class AuthManager {
 
   public clearToken() {
     // keep user and clear tokens
-    let auth = get(this.authStore);
+    let auth: AuthState = get(this.authStore);
     this.setAuthState({
       ...auth,
       state: {
@@ -77,28 +81,22 @@ class AuthManager {
     });
   }
 
-  public logout() {
-    this.authStore.update((state) => ({
-      ...state,
-      isAuthenticated: false,
-      state: baseOpsmlAuthState,
-    }));
+  public async logout() {
+    this.authStore.reset();
 
-    if (browser) {
-      localStorage.removeItem("cacheAuthState");
-    }
+    let auth = await this.setupAuth();
+    auth.isAuthenticated = false;
+    this.setAuthState(auth);
+    loggedIn.set({ isLoggedIn: false });
   }
 
   public setAuthState(authState: AuthState) {
     this.authStore.set(authState);
-
-    if (browser) {
-      localStorage.setItem("cacheAuthState", JSON.stringify(authState));
-    }
   }
 
   public async login(username: string, password: string): Promise<boolean> {
-    const auth = get(this.authStore);
+    const auth = await this.setupAuth();
+
     const formData = new FormData();
     formData.append("username", username);
     formData.append("password", password);
@@ -147,15 +145,12 @@ class AuthManager {
 
   public async setupAuth(): Promise<AuthState> {
     if (browser) {
-      let storedAuthState: string | null = null;
-
-      storedAuthState = localStorage.getItem("cacheAuthState");
-
-      if (storedAuthState) {
-        const authState: AuthState = JSON.parse(storedAuthState);
-        this.setAuthState(authState);
-        return authState;
+      // check if auth state is already set
+      let auth: AuthState = get(this.authStore);
+      if (auth.setup) {
+        return auth;
       }
+
       let reqs: OpsmlAuth = await this.getAuthReqs();
 
       if (!reqs.okta_auth) {
@@ -165,6 +160,7 @@ class AuthManager {
           isAuthenticated: false,
           state: baseOpsmlAuthState,
           config: undefined,
+          setup: true,
         });
       } else {
         let oktaConfig: OktaConfig = {
@@ -181,6 +177,7 @@ class AuthManager {
           isAuthenticated: false,
           state: baseOpsmlAuthState,
           config: oktaConfig,
+          setup: true,
         });
       }
     }
@@ -192,7 +189,7 @@ class AuthManager {
   }
 
   public setAccessToken(token: string) {
-    let auth = get(this.authStore);
+    let auth: AuthState = get(this.authStore);
     this.setAuthState({
       ...auth,
       state: {
@@ -203,7 +200,7 @@ class AuthManager {
   }
 
   public getAccessToken(): string | undefined {
-    let auth = get(this.authStore);
+    let auth: AuthState = get(this.authStore);
     return auth.state.access_token;
   }
 }

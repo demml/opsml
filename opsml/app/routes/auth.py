@@ -10,10 +10,14 @@ from opsml.app.routes.pydantic_models import (
     TempRequest,
     UserExistsResponse,
 )
+from fastapi.responses import HTMLResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import OpsmlAuthSettings, config
 from opsml.types.extra import User
+from pathlib import Path
+from fastapi.templating import Jinja2Templates
+from typing import Optional
 
 logger = ArtifactLogger.get_logger()
 
@@ -21,6 +25,9 @@ router = APIRouter()
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/opsml/auth/token")
+# Constants
+TEMPLATE_PATH = Path(__file__).parents[1] / "static"
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
 class Token(BaseModel):
@@ -59,6 +66,8 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    logger.info("Getting current user")
+
     try:
         payload = jwt.decode(
             token,
@@ -89,6 +98,22 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+async def redirect_to_login(
+    request: Request,
+    token: Annotated[str, Depends(oauth2_scheme)],
+) -> Optional[HTMLResponse]:
+    try:
+        await get_current_user(request, token)
+        return None
+
+    except Exception:
+        logger.error("Redirecting to login page")
+        return templates.TemplateResponse(
+            name="site/opsml/auth/login.html",
+            request=request,
+        )
 
 
 async def get_current_active_user(
