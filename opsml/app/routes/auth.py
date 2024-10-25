@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Annotated, Union
 
 import jwt
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from opsml.app.routes.pydantic_models import (
@@ -10,14 +12,10 @@ from opsml.app.routes.pydantic_models import (
     TempRequest,
     UserExistsResponse,
 )
-from fastapi.responses import HTMLResponse
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
 from opsml.settings.config import OpsmlAuthSettings, config
 from opsml.types.extra import User
-from pathlib import Path
-from fastapi.templating import Jinja2Templates
-from typing import Optional
 
 logger = ArtifactLogger.get_logger()
 
@@ -98,22 +96,6 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
-
-
-async def redirect_to_login(
-    request: Request,
-    token: Annotated[str, Depends(oauth2_scheme)],
-) -> Optional[HTMLResponse]:
-    try:
-        await get_current_user(request, token)
-        return None
-
-    except Exception:
-        logger.error("Redirecting to login page")
-        return templates.TemplateResponse(
-            name="site/opsml/auth/login.html",
-            request=request,
-        )
 
 
 async def get_current_active_user(

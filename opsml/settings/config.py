@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import secrets
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings
