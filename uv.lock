@@ -3054,7 +3054,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "accelerate" },
+    { name = "accelerate", specifier = ">=1.0.1" },
     { name = "black", specifier = "~=24.3.0" },
     { name = "catboost", specifier = "~=1.2.2" },
     { name = "confluent-kafka", specifier = ">=2.5.3" },
@@ -3084,7 +3084,7 @@ dev = [
     { name = "types-pymysql", specifier = "~=1.0.19.1" },
     { name = "types-pyyaml", specifier = "~=6.0.12.12" },
     { name = "types-requests", specifier = "~=2.28.11.7" },
-    { name = "vowpalwabbit", marker = "python_full_version < '3.11' and platform_system == 'Linux'", specifier = "~=9.9.0" },
+    { name = "vowpalwabbit", marker = "python_full_version < '3.11' and platform_system == 'Linux'", specifier = "~=9.10.0" },
     { name = "xgboost", specifier = "~=1.7.1" },
 ]
 
@@ -5365,18 +5365,20 @@ wheels = [
 
 [[package]]
 name = "vowpalwabbit"
-version = "9.9.0"
+version = "9.10.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/76/cc/675efe785e0f38f069002de97f821ec9c4ccc27107a2c3403933add76e5e/vowpalwabbit-9.9.0.tar.gz", hash = "sha256:602836108e2b844330715133c7d112f19dc2a0275d794155938959d27b902547", size = 32878215 }
+sdist = { url = "https://files.pythonhosted.org/packages/9a/2b/c53869b3eece747977ab4e1d4b8c7de1709d12c260d8ce3c6ed8a306c435/vowpalwabbit-9.10.0.tar.gz", hash = "sha256:632aa6dcc956e942fe6c2b9f15fcd683d9810503612f147e83ef99ad0eaa33f1", size = 33339577 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/6e/2f35908b147db288b4f21a3e49b9ef67ed5602465304ae0beed984eae09b/vowpalwabbit-9.9.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d7741daf1a4d68976bfce01c6d722e1a9c1de65234f82718848f7d7969a540cc", size = 2921788 },
-    { url = "https://files.pythonhosted.org/packages/e6/ef/ba66e2b3847858ab1b86068933124b02d4acdc2d68f31557b2756c416b5a/vowpalwabbit-9.9.0-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:5b3ffcd1f8e26dbd311a0f142bcbd06ae44780e81d696aa180ec174a0a46e05f", size = 3408284 },
-    { url = "https://files.pythonhosted.org/packages/7b/07/ffec2e9daa714c2e5650c83c1387af17e2b0ce8db7ad559dbba1038dae32/vowpalwabbit-9.9.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:150819d66537ecf10f33f0d4cc15025b3779269de0b329abcff00932f17aff70", size = 3240829 },
-    { url = "https://files.pythonhosted.org/packages/07/70/3a75a4cfdb1a84d12757d591d0f0f5aa7e582ed38b241a9d156d95664fd3/vowpalwabbit-9.9.0-cp310-cp310-win_amd64.whl", hash = "sha256:1d595eef464bc59af3f4034fabdcd18c5263bb4ee97a91a710882bb5c3e70adf", size = 3942121 },
-    { url = "https://files.pythonhosted.org/packages/90/b5/ddf5ed687bf116423194db1f9a35b2c1162dba290956c36aa945b65ec07b/vowpalwabbit-9.9.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:07b234d5d1bc0499904c9a99202fcfdf07d8a43c913f1b8b1dbd38bb11eb95f4", size = 2921872 },
-    { url = "https://files.pythonhosted.org/packages/a7/d4/fd498514e817e19290a6258fe217c5fecc87d3dee93cdd555c383d175598/vowpalwabbit-9.9.0-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:414a7455b0726292dfb1907d1b1dc3a30aa211572db67fc6f5d0e7c0dd585507", size = 3408259 },
-    { url = "https://files.pythonhosted.org/packages/1e/07/25df92ff58abbc7e0eb8c5765c8d28d370315862de05cd3e4a55017959f0/vowpalwabbit-9.9.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:921d580c945b9be5a71d7c277f62b92388dee6c79e6353ad3bd3acff37b5de5a", size = 3240848 },
-    { url = "https://files.pythonhosted.org/packages/45/9b/c7813d76c17fb3cb0c5d6397878c3c8b2cd8d9b96cca932bcb5cf92b8628/vowpalwabbit-9.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:26a158c2631f9661b7c2e232a0f9434563baf104e14c408a6535586e45ddd8ac", size = 4138622 },
+    { url = "https://files.pythonhosted.org/packages/c1/af/64eac89867703ff4ca6243742c12639b761d4033065335367c1cb0c1259e/vowpalwabbit-9.10.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:59380da4d801cf8c02d8de4a4b4f3bb27301da427d1001d1b44e0440580ad3ab", size = 2896618 },
+    { url = "https://files.pythonhosted.org/packages/13/91/bb34d9df2a24f46882c5f527bad295a9e0c4be3a1a45f4fee6fd8ca5ad0e/vowpalwabbit-9.10.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:177ff8548239daa534260d45f14263f15df7af567c58f768d19bade5f34f86cf", size = 2728018 },
+    { url = "https://files.pythonhosted.org/packages/3f/23/3154a48c8c8f19efecd23ee59669bfe79ddc2371ea17245ced59468f8747/vowpalwabbit-9.10.0-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:38ae89749bda9399a66cac10cdeae4ef1a5f0e48a44fe30c8ac5e31ac564e042", size = 3439665 },
+    { url = "https://files.pythonhosted.org/packages/51/9a/1cafcac6ba10e731444ca977135a9f1bb296dca529e1323d05d1e5ccf3ed/vowpalwabbit-9.10.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5d807b149988020bcf65f8739bc32021b622c15c544ae018d5fa41834b3f85ca", size = 3259951 },
+    { url = "https://files.pythonhosted.org/packages/2c/c4/78e72c38719577704722649f964ad0c97e73c1ff9889ed39a74542cc4159/vowpalwabbit-9.10.0-cp310-cp310-win_amd64.whl", hash = "sha256:c76aacfdb98060262dbdf7d02453af187197905994ca90bd4b3c2edb1c9fe84c", size = 3952318 },
+    { url = "https://files.pythonhosted.org/packages/15/36/4ab1456173d4c86875eef2357c4526ce01d7043e68e9ca78905410e7016c/vowpalwabbit-9.10.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:4a3d08490d2a21fdce0bd397ce46a572046fa5ee83fd6d648188d792eabc652e", size = 2896781 },
+    { url = "https://files.pythonhosted.org/packages/36/bb/d54efddca04c8b6a8d776ef41c90d5a2084bf7e76585b71901c85be6bf25/vowpalwabbit-9.10.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:47f4d016239d310adfe441445cbca20e5bc7b208e9a7eecac2895eeffd239388", size = 2727974 },
+    { url = "https://files.pythonhosted.org/packages/cb/25/5db978157c456a144ce282a949c3ef148a558a088451f46d7a8ad9e90507/vowpalwabbit-9.10.0-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:9a975f06172aa8817c67890ef7381596b2f8a0c6b6f747e53085fab08cfacfa3", size = 3439522 },
+    { url = "https://files.pythonhosted.org/packages/9a/d5/fc622677624249bc9d4c3b01f650d6a988169d76438b18ffa5f64649b563/vowpalwabbit-9.10.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3d6d5cd93dbfff5b536a133ca8d943f0ea672eb439b0c9d986af1934687ef7ce", size = 3260030 },
+    { url = "https://files.pythonhosted.org/packages/be/de/bbfd11675ecbe4bc0c75fa51a983f11885dadfae52e2dd7de39a86be25d4/vowpalwabbit-9.10.0-cp39-cp39-win_amd64.whl", hash = "sha256:62831189fb3fb1957b4b7122baea03cb00984fb179662128f4c09b6aa78bb21b", size = 4148401 },
 ]
 
 [[package]]
