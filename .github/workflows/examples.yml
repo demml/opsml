@@ -13,7 +13,7 @@ jobs:
   Test-Examples:
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.11"]
         poetry-version: ["1.7.1"]
         os: [ubuntu]
 
