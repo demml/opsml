@@ -62,7 +62,7 @@ wheels = [
 
 [[package]]
 name = "accelerate"
-version = "0.26.1"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -73,9 +73,9 @@ dependencies = [
     { name = "safetensors" },
     { name = "torch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/19/c9/9efe35c86e1774dc13350cda2de0726a6f0256b507a1fad9c85a1fbe721b/accelerate-0.26.1.tar.gz", hash = "sha256:bf63716b6bd9460d87da970cf4d833abb824ca0aa633be36b741e63a1b504f89", size = 266705 }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/04/7f1b79a02f66a7e87e1716849b3bd295445cc46ecb63cb7521e6f7a72282/accelerate-1.0.1.tar.gz", hash = "sha256:e8f95fc2db14915dc0a9182edfcf3068e5ddb2fa310b583717ad44e5c442399c", size = 333238 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/b9/44623bdb05595481107153182e7f4b9f2ef9d3b674938ad13842054dcbd8/accelerate-0.26.1-py3-none-any.whl", hash = "sha256:04df826b84ac7bad8a0a8ab90e6aeacdecb1ea5a2d744d7e94f6735c29183227", size = 270886 },
+    { url = "https://files.pythonhosted.org/packages/2c/92/48aec3736ca778ffe5fa68e19e3c18917cba4de43fa46fe6176cccafe267/accelerate-1.0.1-py3-none-any.whl", hash = "sha256:c6aa0c7b8a797cb150471e90e3ca36ac41f5d4b40512cdd6f058b8bf25589467", size = 330926 },
 ]
 
 [[package]]
@@ -3054,7 +3054,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "accelerate", specifier = "~=0.26.1" },
+    { name = "accelerate" },
     { name = "black", specifier = "~=24.3.0" },
     { name = "catboost", specifier = "~=1.2.2" },
     { name = "confluent-kafka", specifier = ">=2.5.3" },
