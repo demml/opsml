@@ -2,11 +2,14 @@ import { type registryPageReturn } from "$lib/scripts/types";
 import { setupRegistryPage } from "$lib/scripts/utils";
 import { DataPageStore } from "$routes/store";
 import { get } from "svelte/store";
+import { checkAuthstore } from "$lib/scripts/auth/authManager";
 
 export const ssr = false;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
+  checkAuthstore();
+
   const repository = (url as URL).searchParams.get("repository") as
     | string
     | undefined;

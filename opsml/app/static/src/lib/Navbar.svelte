@@ -10,28 +10,17 @@
   import Fa from 'svelte-fa'
   import { faUser } from '@fortawesome/free-solid-svg-icons'
   import { browser } from '$app/environment';
-  import { authManager } from "./scripts/auth/authManager";
+  import { authManager, loggedIn } from "./scripts/auth/authManager";
 
   let popupMessage: string = "";
-
-
-  let needAuth: boolean = false;
-  $: needAuth = needAuth;
-
-  let isLoggedIn: boolean = false;
-  $: isLoggedIn = isLoggedIn;
+  export let needAuth: boolean = false;
+  export let isLoggedIn: boolean = false;
 
   let hamburger;
   let hamburgerOptions;
   let isOptionsVisible = false;
 
-  onMount(async () => {
-    let authstate = await authManager.getAuthState();
-    isLoggedIn = authstate.isAuthenticated;
-    needAuth = authstate.requireAuth;
-  });
 
- 
   const modalStore: ModalStore = loadModal();
 
   const popupAuth: PopupSettings = {
@@ -65,10 +54,6 @@
       component: modalComponent,
 		};
 		modalStore.trigger(modal);
-    authManager.logout();
-    isLoggedIn = false;
-
-    
   }
 
   function toggleOptions() {

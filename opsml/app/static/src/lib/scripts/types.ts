@@ -205,7 +205,7 @@ export enum AlertStatus {
 }
 
 export enum CommonPaths {
-  HOME = "/opsml",
+  HOME = "/opsml/index",
   LOGIN = "/opsml/auth/login",
   REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",

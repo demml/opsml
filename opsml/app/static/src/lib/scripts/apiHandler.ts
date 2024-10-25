@@ -53,19 +53,18 @@ class ApiHandler {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          const refreshed = await this.refreshToken();
+      if (response.ok) {
+        return response;
+      } else if (response.status === 401) {
+        const refreshed = await this.refreshToken();
 
-          if (refreshed) {
-            retries -= 1;
-            await sleep(500);
-          }
+        if (!refreshed) {
+          retries -= 1;
         } else {
-          return await handleError(response);
+          await sleep(500);
         }
       } else {
-        return response;
+        return await handleError(response);
       }
     }
 
