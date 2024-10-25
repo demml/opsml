@@ -1,18 +1,11 @@
-import { writable, get, type Writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import { CommonPaths, type Token } from "$lib/scripts/types";
 import { browser } from "$app/environment";
-import { OktaAuth } from "@okta/okta-auth-js";
 import { goto } from "$app/navigation";
-import { sleep } from "../utils";
 import { persisted } from "svelte-persisted-store";
 
 export interface OpsmlAuth {
   opsml_auth: boolean;
-  okta_auth: boolean;
-  okta_client_id: string | undefined;
-  okta_issuer: string | undefined;
-  okta_redirect_uri: string | undefined;
-  okta_scopes: string[] | undefined;
 }
 
 export interface OpsmlAuthState {
@@ -21,20 +14,11 @@ export interface OpsmlAuthState {
   refresh_token: string | undefined;
 }
 
-export interface OktaConfig {
-  clientId: string;
-  issuer: string;
-  redirectUri: string;
-  scopes: string[];
-  pkce: boolean;
-}
-
 export interface AuthState {
   authType: string;
   requireAuth: boolean;
   isAuthenticated: boolean;
   state: OpsmlAuthState;
-  config: OktaConfig | undefined;
   setup: boolean;
 }
 
@@ -49,7 +33,6 @@ export const initialAuthState: AuthState = {
   isAuthenticated: false,
   authType: "basic",
   state: baseOpsmlAuthState,
-  config: undefined,
   setup: false,
 };
 
@@ -123,9 +106,6 @@ class AuthManager {
       } else {
         return false;
       }
-    } else if (auth.authType === "okta") {
-      const oktaAuth = new OktaAuth(auth.config!);
-      await oktaAuth.signInWithRedirect();
     }
     return false;
   }
@@ -153,30 +133,12 @@ class AuthManager {
 
       let reqs: OpsmlAuth = await this.getAuthReqs();
 
-      if (!reqs.okta_auth) {
+      if (!reqs.opsml_auth) {
         this.setAuthState({
           authType: "basic",
           requireAuth: reqs.opsml_auth,
           isAuthenticated: false,
           state: baseOpsmlAuthState,
-          config: undefined,
-          setup: true,
-        });
-      } else {
-        let oktaConfig: OktaConfig = {
-          clientId: reqs.okta_client_id as string,
-          issuer: reqs.okta_issuer as string,
-          redirectUri: reqs.okta_redirect_uri as string,
-          scopes: reqs.okta_scopes as string[],
-          pkce: true,
-        };
-
-        this.setAuthState({
-          authType: "okta",
-          requireAuth: reqs.okta_auth,
-          isAuthenticated: false,
-          state: baseOpsmlAuthState,
-          config: oktaConfig,
           setup: true,
         });
       }
