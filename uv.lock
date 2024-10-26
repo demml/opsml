@@ -1766,12 +1766,11 @@ wheels = [
 
 [[package]]
 name = "lightning"
-version = "2.1.4"
+version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fsspec", extra = ["http"] },
     { name = "lightning-utilities" },
-    { name = "numpy" },
     { name = "packaging" },
     { name = "pytorch-lightning" },
     { name = "pyyaml" },
@@ -1780,9 +1779,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/42/be757e009e9fd68c31b7556e80ceec6add94c6f1c7109329a2e44b213fef/lightning-2.1.4.tar.gz", hash = "sha256:0e45098c700fa28c604a11ae233ce181b44aeffce2404debebc2616118431d9f", size = 1697261 }
+sdist = { url = "https://files.pythonhosted.org/packages/56/d0/78ea244ac044cd4df15aa8294a50ff3561fb177e7e5ba788aaa542046cae/lightning-2.4.0.tar.gz", hash = "sha256:9156604cc56e4b2b603f34fa7f0fe5107375c8e6d85e74544b319a15faa9ed0e", size = 620632 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/7a/61bd426456959e959643cee844d78ee090f0d6a34fb466a75254cd99586f/lightning-2.1.4-py3-none-any.whl", hash = "sha256:b6c72d5f4c10e510a9e5b7b0cf2fde0d545b663697eb8dbdefd056ca50d23563", size = 2026101 },
+    { url = "https://files.pythonhosted.org/packages/a3/2c/85eaf42c983b0cd81bcda5876da2c8e2a9fd347908666ea9855724369171/lightning-2.4.0-py3-none-any.whl", hash = "sha256:560163af9711cf59055c448232c473150a299089efce0d2be3cc3288082d8768", size = 810971 },
 ]
 
 [[package]]
@@ -3074,7 +3073,7 @@ dev = [
     { name = "coverage", extras = ["toml"], specifier = "~=6.5.0" },
     { name = "isort", specifier = "~=5.12.0" },
     { name = "lightgbm", specifier = ">=4.0.0,<4.4.0" },
-    { name = "lightning", specifier = "~=2.1.2" },
+    { name = "lightning", specifier = ">=2.4.0" },
     { name = "matplotlib", marker = "platform_system == 'Windows'", specifier = "<3.9.1" },
     { name = "mkdocs-material", specifier = "~=9.5" },
     { name = "mkdocstrings", extras = ["python"], specifier = "~=0.25.0" },
