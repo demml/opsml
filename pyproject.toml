@@ -120,8 +120,7 @@ dev-dependencies = [
     "pytest-lazy-fixture~=0.6.3",
     "pytest-cov~=3.0.0",
     "coverage[toml]~=6.5.0",
-    "torch~=2.1.0",
-    "torchvision~=0.16",
+    "torch>=2.4.0",
     "lightgbm>=4.0.0, <4.4.0",
     "xgboost~=1.7.1",
     "sentence-transformers~=3.0.1",
@@ -147,6 +146,7 @@ dev-dependencies = [
     "confluent-kafka>=2.5.3",
     "transformers>=4.42.0",
     "accelerate>=1.0.1",
+    "torchvision>=0.16.2",
 ]
 
 [tool.uv.sources]
