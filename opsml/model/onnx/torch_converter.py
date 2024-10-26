@@ -7,7 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import List, Tuple, Union, cast
+from typing import Any, List, Tuple, Union, cast
 
 import onnx
 import onnxruntime as rt
@@ -85,7 +85,7 @@ class _PyTorchOnnxModel:
         self.interface.model.eval()  # force model into evaluation mode
         torch.onnx.export(
             model=self.interface.model,
-            args=arg_data,
+            args=cast(tuple[Any, ...], arg_data),
             f=path.as_posix(),
             **onnx_args.model_dump(exclude={"options"}),
         )
