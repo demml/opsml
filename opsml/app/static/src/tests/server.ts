@@ -9,9 +9,14 @@ import {
   exampleUpdateAlert,
   exampleObservabilityMetrics,
   exampleAlertMetrics,
+  sampleModelMetadata,
 } from "./constants";
 
 const handlers = [
+  http.get(CommonPaths.AUTH_SETTINGS, async ({ request, params, cookies }) => {
+    return HttpResponse.json({ opsml_auth: false });
+  }),
+
   http.post("/opsml/cards/list", ({ request, params, cookies }) =>
     HttpResponse.json({
       cards: [
@@ -168,22 +173,7 @@ const handlers = [
       params,
       cookies,
     }): AsyncResponseResolverReturnType<ModelMetadata> =>
-      HttpResponse.json({
-        model_name: "test",
-        model_class: "test",
-        model_type: "test",
-        model_interface: "test",
-        model_uri: "test",
-        model_version: "test",
-        model_repository: "test",
-        opsml_version: "1.0.0",
-        uid: "test",
-        data_schema: {
-          data_type: "test",
-          input_features: "test",
-          ouput_features: "test",
-        },
-      })
+      HttpResponse.json(sampleModelMetadata)
   ),
 
   http.get("/opsml/files/list/info", async ({ request, params, cookies }) => {

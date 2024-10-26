@@ -5,7 +5,7 @@ import {
   type Readme,
   RegistryName,
 } from "$lib/scripts/types";
-
+import { checkAuthstore } from "$lib/scripts/auth/authManager";
 import { listCards, getDataCard, getReadme } from "$lib/scripts/utils";
 
 export const ssr = false;
@@ -13,6 +13,7 @@ const opsmlRoot: string = `opsml-root:/${RegistryName.Data}`;
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ url }) {
+  await checkAuthstore();
   const name = (url as URL).searchParams.get("name") as string | undefined;
   const repository = (url as URL).searchParams.get("repository") as
     | string

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import js from "jquery";
   import logo from "$lib/images/opsml_word.png";
   import { page } from "$app/stores";
   import { popup, type PopupSettings } from '@skeletonlabs/skeleton';
@@ -11,10 +10,16 @@
   import Fa from 'svelte-fa'
   import { faUser } from '@fortawesome/free-solid-svg-icons'
   import { browser } from '$app/environment';
+  import { authManager, loggedIn } from "./scripts/auth/authManager";
 
-  export let needAuth: boolean;
-  export let loggedIn: string;
   let popupMessage: string = "";
+  export let needAuth: boolean = false;
+  export let isLoggedIn: boolean = false;
+
+  let hamburger;
+  let hamburgerOptions;
+  let isOptionsVisible = false;
+
 
   const modalStore: ModalStore = loadModal();
 
@@ -49,13 +54,7 @@
       component: modalComponent,
 		};
 		modalStore.trigger(modal);
-
-    
   }
-
-  let hamburger;
-  let hamburgerOptions;
-  let isOptionsVisible = false;
 
   function toggleOptions() {
     isOptionsVisible = !isOptionsVisible;
@@ -151,50 +150,54 @@
         </div>
       </a>
     </div>
-    <nav id="navbar">
-      <ul class="flex items-center space-x-2 xl:space-x-3">
-        {#each names as name}
-          {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
+
+    {#if needAuth && isLoggedIn === true  || !needAuth}
+     
+      <nav id="navbar">
+        <ul class="flex items-center space-x-2 xl:space-x-3">
+          {#each names as name}
+            {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
+            <li class="hidden md:block">
+                <a class="group flex items-center md:text-lg text-white active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
+                  {name}
+                </a>
+            </li>
+          {/each}
           <li class="hidden md:block">
-              <a class="group flex items-center md:text-lg text-white active:font-bold" href={path} class:active={$page.url.pathname.includes(path)}>
-                {name}
-              </a>
+            <a class="group flex items-center md:text-lg text-white active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
+              Docs
+            </a>
           </li>
-        {/each}
-        <li class="hidden md:block">
-          <a class="group flex items-center md:text-lg text-white active:font-bold" href='https://thorrester.github.io/opsml-ghpages/'>
-            Docs
-          </a>
-        </li>
 
-        <li>
-          <div class="relative-group">
-            <button id="hamburger" bind:this={hamburger} on:click={toggleOptions} type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
-              <span class="sr-only">Open main menu</span>
-              <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-                  <path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
-              </svg>
-            </button>
-            <div bind:this={hamburgerOptions} class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
-              <section class="p-4 pb-5 space-y-4 overflow-y-auto">
-                <p class="font-bold text-lg">Opsml</p>
-                <nav class="list-nav">
-                  <ul>
-                    {#each names as name}
+          <li>
+            <div class="relative-group">
+              <button id="hamburger" bind:this={hamburger} on:click={toggleOptions} type="button" class="inline-flex items-center w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden" aria-controls="navbar-default" aria-expanded="false">
+                <span class="sr-only">Open main menu</span>
+                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                    <path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+                </svg>
+              </button>
+              <div bind:this={hamburgerOptions} class="hidden absolute top-full z-10 mt-1 w-32 min-w-0 max-w-xs overflow-hidden rounded-xl card bg-primary-50" id="hamburger-options">
+                <section class="p-4 pb-5 space-y-4 overflow-y-auto">
+                  <p class="font-bold text-lg">Opsml</p>
+                  <nav class="list-nav">
+                    <ul>
+                      {#each names as name}
 
-                      <li>
-                        <button on:click={() => navigateToPath(name.replace(/s$/, '').toLowerCase())}>
-                          <span class="flex-auto">{name}</span>
-                        </button>
-                      </li>
-                    {/each}
-                </nav>
-              </section>
+                        <li>
+                          <button on:click={() => navigateToPath(name.replace(/s$/, '').toLowerCase())}>
+                            <span class="flex-auto">{name}</span>
+                          </button>
+                        </li>
+                      {/each}
+                  </nav>
+                </section>
+              </div>
             </div>
-          </div>
-        </li>
-      </ul>
-    </nav>
+          </li>
+        </ul>
+      </nav>
+    {/if}
 
     <div class="flex items-center border-l border-slate-200 ml-4 mr-4 pl-2">
       <a href="https://github.com/shipt/opsml" class="ml-2 block text-slate-400 hover:text-slate-500">
@@ -206,7 +209,7 @@
     </div>
 
 
-    {#if loggedIn === 'false'}
+    {#if isLoggedIn === false}
       <button class="items-center md:text-lg text-white active:font-bold hover:font-bold" on:click={logInHandle} use:popup={popupAuth}>Login</button>
     {:else}
 

@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Annotated, Union
 
 import jwt
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from opsml.app.routes.pydantic_models import (
@@ -12,7 +14,7 @@ from opsml.app.routes.pydantic_models import (
 )
 from opsml.helpers.logging import ArtifactLogger
 from opsml.registry.sql.base.server import ServerAuthRegistry
-from opsml.settings.config import config
+from opsml.settings.config import OpsmlAuthSettings, config
 from opsml.types.extra import User
 
 logger = ArtifactLogger.get_logger()
@@ -21,6 +23,9 @@ router = APIRouter()
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/opsml/auth/token")
+# Constants
+TEMPLATE_PATH = Path(__file__).parents[1] / "static"
+templates = Jinja2Templates(directory=TEMPLATE_PATH)
 
 
 class Token(BaseModel):
@@ -59,6 +64,8 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    logger.info("Getting current user")
+
     try:
         payload = jwt.decode(
             token,
@@ -67,14 +74,19 @@ async def get_current_user(
         )
         username: str = payload.get("sub")
         if username is None:
-            raise credentials_exception
+            logger.error("Failed to get username from token. Redirecting to login")
+            raise HTTPException(
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                detail="username not found",
+                headers={"Location": "opsml/auth/login"},
+            )
         token_data = TokenData(username=username)
 
     except jwt.exceptions.ExpiredSignatureError as exc:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="token_expired",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            detail="username not found",
+            headers={"Location": "opsml/auth/login"},
         ) from exc
 
     except jwt.exceptions.DecodeError as exc:
@@ -358,8 +370,9 @@ def delete_user(
 
 
 @router.get("/auth/verify")
-def check_auth() -> bool:
-    return config.opsml_auth
+def check_auth() -> OpsmlAuthSettings:
+    logger.info("Checking auth settings")
+    return config.auth_settings
 
 
 @router.get("/auth/security", response_model=SecurityQuestionResponse)
