@@ -36,8 +36,8 @@
   async function showTabContent(value: string ) {
     let baseURL: string = `/opsml/${registry}/card`;
 
-    goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
 
+    goto(`${baseURL}/${value}?name=${name}&repository=${repository}&version=${card.version}`,  { invalidateAll: false });
 
     tabSet = value;
 

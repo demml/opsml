@@ -70,7 +70,7 @@
                         />
                       <SpcTimeChartDiv
                         data={route.latencyViz.data}
-                        id="Requests/sec"
+                        id="Latency (ms)"
                         options={route.latencyViz.options}
                         minHeight="min-h-[300px]"
                         maxHeight="max-h-[300px]"

@@ -5,17 +5,46 @@
   import favicon from "$lib/images/opsml-green.ico";
   import { initializeStores, Toast, Modal, storePopup } from '@skeletonlabs/skeleton';
   import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
-  import { checkAuthstore } from "$lib/scripts/auth/authStore";
-  import { loginStore } from "$lib/scripts/store";
+  import { onMount } from "svelte";
+  import { type AuthState } from "$lib/scripts/auth/authManager"
+  import { CommonPaths } from "$lib/scripts/types";
+  import { goto } from "$app/navigation";
+  import { authManager, checkAuthstore, loggedIn } from "$lib/scripts/auth/authManager";
+  import { sleep } from "$lib/scripts/utils";
+
+
 
   storePopup.set({ computePosition, autoUpdate, offset, shift, flip, arrow });
   initializeStores();
+  
+  let isLoggedIn: boolean = false;
 
-  /** @type {import('./$types').LayoutData} */
-	export let data;
-  let authStore = data.authStore;
+  let authstate: AuthState | undefined;
+  $: authstate = undefined;
 
-  checkAuthstore(authStore);
+  // async onMOunt
+  onMount(() => {
+
+
+    (async () => {
+      await checkAuthstore();
+      authstate = authManager.getAuthState();
+    })();
+
+    // set the isLoggedIn value
+    loggedIn.set({ isLoggedIn: authstate!.isAuthenticated });
+
+    const unsubscribe = loggedIn.subscribe(value => {
+      isLoggedIn = value.isLoggedIn;
+    });
+
+    
+
+    return () => {
+      unsubscribe();
+    };
+
+  });
   
 </script>
 
@@ -26,10 +55,15 @@
 <Toast />
 <Modal />
 
+
 <div class="bg-cover bg-center layout overflow-auto min-h-screen" id="page">
+
+  {#if authstate}
     <Navbar 
-      needAuth={authStore.needAuth()}
-      loggedIn={$loginStore}
-    />
-    <slot></slot>
+    isLoggedIn={isLoggedIn}
+    needAuth={authstate.requireAuth}/>
+  {/if}
+
+  <slot></slot>
+
 </div>

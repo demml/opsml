@@ -1,13 +1,11 @@
 import { CommonPaths, type User, type UserUpdated } from "$lib/scripts/types";
-import { checkUser } from "$lib/scripts/auth/auth_routes";
+import { checkUser } from "$lib/scripts/auth/authRoutes";
 import type { UserExistsResponse } from "$lib/scripts/types";
-import {
-  CommonErrors,
-} from "$lib/scripts/types";
+import { CommonErrors } from "$lib/scripts/types";
 import {
   getSecurityQuestion,
   generateTempToken,
-} from "$lib/scripts/auth/auth_routes";
+} from "$lib/scripts/auth/authRoutes";
 import { apiHandler } from "$lib/scripts/apiHandler";
 
 export interface SecurityReturn {

@@ -1,12 +1,11 @@
 
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
-  import { authStore } from "$lib/scripts/auth/authStore";
   import LoginWarning from "$lib/components/LoginWarning.svelte";
-  import { updateLoginStore } from "$lib/scripts/store";
   import { CommonPaths } from "$lib/scripts/types";
-  import { goTop } from "$lib/scripts/utils";
+  import { goTop, sleep } from "$lib/scripts/utils";
+  import { authManager, loggedIn } from "$lib/scripts/auth/authManager";
 
   let username = '';
   let password = '';
@@ -19,11 +18,12 @@
 
   async function handleLogin() {
     // Handle login logic here
-    let loggedIn: boolean = await authStore.loginWithCredentials(username, password);
+    let authenticated = await authManager.login(username, password);
 
-    if (loggedIn) {
+    if (authenticated === true) {
+      loggedIn.set({ isLoggedIn: true });
+
       // need to reload the page to update the nav bar
-      updateLoginStore();
       if (previousPath) {
         goto(previousPath);
       } else {

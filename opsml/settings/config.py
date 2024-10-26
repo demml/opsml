@@ -10,10 +10,14 @@ import secrets
 from pathlib import Path
 from typing import Optional
 
-from pydantic import field_validator
+from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings
 
 from opsml.types import StorageSystem
+
+
+class OpsmlAuthSettings(BaseModel):
+    opsml_auth: bool = False
 
 
 class OpsmlConfig(BaseSettings):
@@ -100,6 +104,13 @@ class OpsmlConfig(BaseSettings):
                 return re.sub("^az://", "", storage_uri_lower)
             return storage_uri_lower
         return self.opsml_proxy_root
+
+    @property
+    def auth_settings(self) -> OpsmlAuthSettings:
+        """Returns the auth settings for the current configuration"""
+        return OpsmlAuthSettings(
+            opsml_auth=self.opsml_auth,
+        )
 
 
 config = OpsmlConfig()

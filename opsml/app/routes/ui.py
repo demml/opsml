@@ -56,6 +56,19 @@ async def opsml_(request: Request, path: str) -> HTMLResponse:
         raise error
 
 
+@router.get("/opsml/auth/login")
+async def opsml_login(request: Request, url: Optional[str] = None) -> HTMLResponse:
+    try:
+        return templates.TemplateResponse(
+            name="site/opsml/auth/login.html",
+            request=request,
+            context={"path": url},
+        )
+    except Exception as error:
+        logger.error(f"Error rendering UI: {error}")
+        raise error
+
+
 @router.get("/opsml/{path}/card/{subpath:path}")
 async def opsml_card_homepage(
     request: Request,
@@ -76,19 +89,6 @@ async def opsml_card_homepage(
                 "version": version,
                 "uid": uid,
             },
-        )
-    except Exception as error:
-        logger.error(f"Error rendering UI: {error}")
-        raise error
-
-
-@router.get("/opsml/auth/login")
-async def has_auth(request: Request, url: Optional[str] = None) -> HTMLResponse:
-    try:
-        return templates.TemplateResponse(
-            name="site/opsml/auth/login.html",
-            request=request,
-            context={"path": url},
         )
     except Exception as error:
         logger.error(f"Error rendering UI: {error}")
