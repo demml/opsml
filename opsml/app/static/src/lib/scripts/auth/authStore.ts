@@ -138,17 +138,10 @@ class AuthStore {
 
 export const authStore = new AuthStore();
 
-export function checkAuthstore(
-  store: AuthStore,
-  previousPath: string | undefined
-): void {
+export function checkAuthstore(store: AuthStore): void {
   if (store.needAuth() && !store.getToken()) {
     // redirect to login page with previous page as query param
-    if (previousPath) {
-      void goto(`${CommonPaths.LOGIN}?redirect=${previousPath}`);
-    } else {
-      void goto(CommonPaths.LOGIN);
-    }
+    void goto(CommonPaths.LOGIN);
     // do nothing
   }
 }
