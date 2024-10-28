@@ -83,12 +83,14 @@ class _PyTorchOnnxModel:
         onnx_args = self._get_additional_model_args()
         # export
         self.interface.model.eval()  # force model into evaluation mode
+        logger.debug(f"Exporting model to ONNX: {path}")
         torch.onnx.export(
             model=self.interface.model,
             args=cast(tuple[Any, ...], arg_data),
             f=path.as_posix(),
             **onnx_args.model_dump(exclude={"options"}),
         )
+        logger.debug(f"Model exported to ONNX: {path}")
 
         # load
         return OnnxModel(
