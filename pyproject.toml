@@ -81,12 +81,12 @@ azure = ["adlfs~=2024.2.0"]
 postgres = ["psycopg2~=2.9.6"]
 mysql = ["pymysql~=1.0.2"]
 onnx = [
-    "onnx~=1.16.0; platform_system == 'Linux'",
-    "onnx==1.16.1; platform_system == 'Windows'",
-    "onnx~=1.16.0; platform_system == 'Darwin'"
+    "onnx~=1.17.0; platform_system == 'Linux'",
+    "onnx==1.17.0; platform_system == 'Windows'",
+    "onnx~=1.17.0; platform_system == 'Darwin'"
 ]
 onnxruntime = [
-    "onnxruntime~=1.16.0",
+    "onnxruntime~=1.19.2",
 ]
 tf_onnx = [
     "tf2onnx~=1.16.1",
