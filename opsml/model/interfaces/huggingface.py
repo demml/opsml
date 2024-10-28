@@ -309,7 +309,7 @@ try:
             Converted model or pipeline is accessible via the `onnx_model` attribute.
             """
 
-            logger.info("Staring conversion of HuggingFace model to ONNX")
+            logger.info("Starting conversion of HuggingFace model to ONNX")
 
             assert (
                 self.onnx_args is not None

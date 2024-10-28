@@ -11,7 +11,7 @@ from opsml.types import AllowedDataType
 # most methods are tested as part of other unit tests
 
 
-def test_model_data_base(numpy_data: NumpyData):
+def test_model_data_base(numpy_data: NumpyData) -> None:
     model_data = ModelDataHelper(input_data=numpy_data.data, data_type=AllowedDataType.NUMPY.value)
 
     with pytest.raises(NotImplementedError):
@@ -27,7 +27,7 @@ def test_model_data_base(numpy_data: NumpyData):
         model_data.feature_dict
 
 
-def test_dataframe(pandas_data: PandasData):
+def test_dataframe(pandas_data: PandasData) -> None:
     """Test ModelData for pandas dataframe"""
     pd_data = get_model_data(input_data=pandas_data.data, data_type=AllowedDataType.PANDAS)
 
@@ -37,7 +37,7 @@ def test_dataframe(pandas_data: PandasData):
     assert isinstance(pd_data.feature_types, zip)
 
 
-def test_numpy(numpy_data: NumpyData):
+def test_numpy(numpy_data: NumpyData) -> None:
     """Test ModelData for numpy array"""
     numpy_data = get_model_data(
         input_data=numpy_data.data,
@@ -54,7 +54,7 @@ def test_numpy(numpy_data: NumpyData):
         numpy_data.convert_dataframe_column(column_type="test", convert_column_type="test")
 
 
-def test_dictionary(numpy_data: NumpyData):
+def test_dictionary(numpy_data: NumpyData) -> None:
     """Test ModelData for dictionary"""
     data = {"test": numpy_data.data}
     dict_data = get_model_data(

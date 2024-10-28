@@ -81,12 +81,14 @@ azure = ["adlfs~=2024.2.0"]
 postgres = ["psycopg2~=2.9.6"]
 mysql = ["pymysql~=1.0.2"]
 onnx = [
-    "onnx~=1.16.0; platform_system == 'Linux'",
-    "onnx==1.16.1; platform_system == 'Windows'",
-    "onnx~=1.16.0; platform_system == 'Darwin'"
+    "onnx~=1.16.0; platform_system == 'Linux' and python_version <= '3.11'",
+    "onnx==1.16.1; platform_system == 'Windows' and python_version <= '3.11'",
+    "onnx~=1.16.0; platform_system == 'Darwin' and python_version <= '3.11'",
+    "onnx>=1.17.0; python_version >= '3.12'",
 ]
 onnxruntime = [
-    "onnxruntime~=1.16.0",
+    "onnxruntime~=1.16.0; python_version <= '3.11'",
+    "onnxruntime>=1.18.0; python_version >= '3.12'",
 ]
 tf_onnx = [
     "tf2onnx~=1.16.1",
@@ -120,7 +122,7 @@ dev-dependencies = [
     "pytest-lazy-fixture~=0.6.3",
     "pytest-cov~=3.0.0",
     "coverage[toml]~=6.5.0",
-    "torch==2.4.1",
+    "torch==2.2.0",
     "lightgbm>=4.0.0, <4.4.0",
     "xgboost~=1.7.1",
     "sentence-transformers~=3.0.1",
