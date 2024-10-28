@@ -875,7 +875,7 @@ def multi_input_tf_example():
 def pytorch_resnet() -> TorchModel:
     import torch
 
-    loaded_model = torch.load("tests/assets/resnet.pt")
+    loaded_model = torch.load("tests/assets/resnet18.pt")
     data = torch.randn(1, 3, 224, 224)
 
     return TorchModel(model=loaded_model, sample_data=data)
