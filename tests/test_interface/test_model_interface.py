@@ -32,7 +32,7 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel) -> None:
 
 @pytest.mark.flaky(reruns=2, reruns_delay=5)
 def test_torch_interface(squeezenet: TorchModel) -> None:
-    assert squeezenet.model_type == "DeepLabV3"
+    assert squeezenet.model_type == "SqueezeNet"
     prediction = squeezenet.get_sample_prediction()
     assert prediction.prediction_type == "collections.OrderedDict"
 
