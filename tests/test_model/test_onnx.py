@@ -5,13 +5,9 @@ import pytest
 from pytest_lazyfixture import lazy_fixture
 
 from opsml.model import (
-    HuggingFaceModel,
-    LightningModel,
     ModelInterface,
     TensorFlowModel,
-    TorchModel,
 )
-from tests import conftest
 from tests.conftest import EXCLUDE
 
 
