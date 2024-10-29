@@ -24,7 +24,7 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        run: make setup.project
+        run: make setup.install
 
       - name: Publish Docs
         run: make publish.docs
