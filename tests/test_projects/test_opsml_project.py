@@ -14,6 +14,7 @@ from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.projects._run_manager import ActiveRunException
 from opsml.projects.active_run import ActiveRun
 from opsml.registry.registry import CardRegistries
+from tests.conftest import WINDOWS_EXCLUDE
 
 
 def test_opsml_artifact_storage(db_registries: CardRegistries) -> None:
@@ -326,6 +327,7 @@ def test_opsml_project_id_creation(db_registries: CardRegistries) -> None:
     assert project.project_id == 1
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Windows exclude")
 def test_opsml_project_hardware(db_registries: CardRegistries) -> None:
     """verify that we can read artifacts / metrics / cards without making a run
     active."""
