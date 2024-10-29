@@ -47,7 +47,7 @@ lints: lints.format_check lints.ruff lints.pylint lints.mypy lints.gitleaks
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 .PHONY: test
-setup: setup.sysdeps setup.python setup.project
+setup: setup.sysdeps setup.python setup.install
 
 .PHONY: setup.install
 setup.install:
