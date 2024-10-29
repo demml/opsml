@@ -151,17 +151,14 @@ machine-learning = [
     "transformers>=4.42.0",
     "accelerate>=1.0.1",
 ]
-torch-deps-macos =  [
-    "torch~=2.1.0; platform_system == 'Darwin'",
-    "torchvision~=0.16; platform_system == 'Darwin'",
-    "lightning~=2.1.2; platform_system == 'Darwin'",
+torch-deps =  [
+    "torch~=2.1.0; python_version <= '3.11'",
+    "torchvision~=0.16; python_version <= '3.11'",
+    "lightning~=2.1.2; python_version <= '3.11'",
+    "torch==2.2.0; python_version > '3.11'",
+    "torchvision>=0.16.2; python_version > '3.11'",
+    "lightning>=2.4.0; python_version > '3.11'",
 ]
-torch-deps = [
-    "torch==2.2.0; platform_system == 'Linux' or platform_system == 'Windows'",
-    "torchvision>=0.16.2; platform_system == 'Linux' or platform_system == 'Windows'",
-    "lightning>=2.4.0; platform_system == 'Linux' or platform_system == 'Windows'",
-]
-
 
 [tool.uv.sources]
 
