@@ -38,7 +38,7 @@ jobs:
           rm -rf /opt/hostedtoolcache/Ruby
           rm -rf /opt/hostedtoolcache/go
           rm -rf /opt/hostedtoolcache/node
-          make setup.project
+          make setup.install
 
       - name: Run Sklearn Basic example
         run: uv run python examples/sklearn/basic.py && rm -rf opsml_registries && rm opsml.db
