@@ -62,7 +62,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      - run: make setup.project
+      - run: make setup.install
       - run: make test.integration.aws
 
   AZURE-Integration:
@@ -119,7 +119,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      - run: make setup.project
+      - run: make setup.install
       - run: make test.integration.azure
 
   GCS-Integration:
@@ -182,5 +182,5 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - run: |
-          make setup.project
+          make setup.install
           make test.integration.gcp

@@ -875,7 +875,7 @@ def multi_input_tf_example():
 def pytorch_resnet() -> TorchModel:
     import torch
 
-    loaded_model = torch.load("tests/assets/resnet.pt")
+    loaded_model = torch.load("tests/assets/resnet18.pt")
     data = torch.randn(1, 3, 224, 224)
 
     return TorchModel(model=loaded_model, sample_data=data)
@@ -2403,22 +2403,15 @@ def voting_regressor(example_dataframe):
 
 
 @pytest.fixture(scope="module")
-def deeplabv3_resnet50():
-    import torch
-    from PIL import Image
+def squeezenet():
     from torchvision import transforms
 
-    model = torch.hub.load(
-        "pytorch/vision:v0.8.0",
-        "deeplabv3_resnet50",
-        pretrained=True,
-        skip_validation=True,
-    )
-    model.eval()
-
+    model = torch.load("tests/assets/squeeze.pt")
     input_image = Image.open("tests/assets/deeplab.jpg")
     preprocess = transforms.Compose(
         [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
