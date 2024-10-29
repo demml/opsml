@@ -4,10 +4,7 @@ import warnings
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.model import (
-    ModelInterface,
-    TensorFlowModel,
-)
+from opsml.model import ModelInterface, TensorFlowModel
 from tests.conftest import EXCLUDE
 
 
