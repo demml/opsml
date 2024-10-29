@@ -49,9 +49,21 @@ lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 .PHONY: test
 setup: setup.sysdeps setup.python setup.project
 
-.PHONY: setup.project
-setup.project:
-	uv sync --all-extras --dev
+.PHONY: setup.install
+setup.install:
+	uv sync --all-extras  \
+		--group lints \
+		--group test \
+		--group machine-learning \
+		--group torch-deps
+
+.PHONY: setup.install-macos
+setup.install-macos:
+	uv sync --all-extras  \
+		--group lints \
+		--group test \
+		--group machine-learning \
+		--group torch-deps-macos
 
 .PHONY: test.unit
 test.unit:
