@@ -4,11 +4,7 @@ import warnings
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from opsml.model import (
-    HuggingFaceModel,
-    LightningModel,
-    TorchModel,
-)
+from opsml.model import HuggingFaceModel, LightningModel, TorchModel
 from tests import conftest
 from tests.conftest import EXCLUDE
 
