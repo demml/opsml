@@ -237,7 +237,7 @@ jobs:
         os: [windows]
         node-version: ["22.5.1"]
 
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}-2019
     steps:
       - uses: actions/checkout@v4
 
