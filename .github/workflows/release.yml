@@ -38,11 +38,10 @@ jobs:
           rm -rf /opt/hostedtoolcache/Ruby
           rm -rf /opt/hostedtoolcache/go
           rm -rf /opt/hostedtoolcache/node
-          make setup.project
+          make setup.install
           pip install -U twine
           make lints.ci
           make test.unit
-          make setup.project
           test "v$(poetry version --short)" "=" "$GITHUB_REF_NAME"
           poetry build
           twine check --strict dist/*

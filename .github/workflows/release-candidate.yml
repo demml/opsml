@@ -29,11 +29,11 @@ jobs:
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
-          make setup.project
+          make setup.install
           pip install -U twine
           make lints.ci
           make test.unit
-          make setup.project
+          make setup.install
           if [[ "v$(poetry version --short)" == *"rc"* ]]; 
           then
             poetry build
