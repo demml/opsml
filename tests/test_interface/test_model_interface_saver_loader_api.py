@@ -29,6 +29,7 @@ from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
 IS_311 = sys.version_info >= (3, 11)
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_save_huggingface_modelcard_api_client(
     huggingface_torch_distilbert: HuggingFaceModel,
     api_storage_client: client.StorageClientBase,
