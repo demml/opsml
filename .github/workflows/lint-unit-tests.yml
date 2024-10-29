@@ -164,7 +164,7 @@ jobs:
           rm -rf /opt/hostedtoolcache/Ruby
           rm -rf /opt/hostedtoolcache/go
           rm -rf /opt/hostedtoolcache/node
-          make setup.install-macos
+          make setup.install
 
       - name: Unit Tests
         run: make test.unit

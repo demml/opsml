@@ -55,15 +55,7 @@ setup.install:
 		--group lints \
 		--group test \
 		--group machine-learning \
-		--group torch-deps
-
-.PHONY: setup.install-macos
-setup.install-macos:
-	uv sync --all-extras  \
-		--group lints \
-		--group test \
-		--group machine-learning \
-		--group torch-deps-macos
+		--group torch-deps 
 
 .PHONY: test.unit
 test.unit:
