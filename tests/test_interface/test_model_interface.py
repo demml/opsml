@@ -34,7 +34,7 @@ def test_tf_interface(tf_transformer_example: TensorFlowModel) -> None:
 def test_torch_interface(squeezenet: TorchModel) -> None:
     assert squeezenet.model_type == "SqueezeNet"
     prediction = squeezenet.get_sample_prediction()
-    assert prediction.prediction_type == "collections.OrderedDict"
+    assert prediction.prediction_type == "torch.Tensor"
 
 
 @pytest.mark.flaky(reruns=1, reruns_delay=2)
