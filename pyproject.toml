@@ -8,7 +8,7 @@ dependencies = [
     "fsspec>=2023.1.0, <=2024.2.0",
     "joblib~=1.3",
     "httpx>=0.23.3, <1.0.0",
-    "opsml-cli~=0.5.0",
+    "opsml-cli~=0.6.1",
     "pandas>=1.5.3, <3",
     "polars~=1.0.0",
     "psutil~=5.9.0",
