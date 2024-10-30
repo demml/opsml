@@ -30,17 +30,17 @@ router = APIRouter()
 
 
 @router.get("/data/download", name="download_data")
-def download_data(request: Request, uid: str) -> StreamingResponse:
+async def download_data(request: Request, uid: str) -> StreamingResponse:
     """Downloads data associated with a datacard"""
 
     registry: CardRegistry = request.app.state.registries.data
     datacard = cast(DataCard, registry.load_card(uid=uid))
     load_path = Path(datacard.uri / SaveName.DATA.value).with_suffix(datacard.interface.data_suffix)
-    return download_artifacts_ui(request, str(load_path))
+    return await download_artifacts_ui(request, str(load_path))
 
 
 @router.get("/data/download/profile", name="download_data_profile")
-def download_data_profile(
+async def download_data_profile(
     request: Request,
     uid: str,
 ) -> StreamingResponse:
@@ -49,7 +49,7 @@ def download_data_profile(
     registry: CardRegistry = request.app.state.registries.data
     datacard = cast(DataCard, registry.load_card(uid=uid))
     load_path = Path(datacard.uri / SaveName.DATA_PROFILE.value).with_suffix(Suffix.HTML.value)
-    return download_file(request, str(load_path))
+    return await download_file(request, str(load_path))
 
 
 @router.post("/data/card", name="data_card", response_model=DataCardMetadata)
