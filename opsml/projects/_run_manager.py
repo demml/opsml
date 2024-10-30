@@ -5,11 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import concurrent
+import concurrent.futures
 import subprocess
 import tempfile
-import threading
 import time
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from queue import Empty, Queue
@@ -24,16 +25,6 @@ from opsml.registry import CardRegistries
 from opsml.types import CommonKwargs, ComputeEnvironment
 
 logger = ArtifactLogger.get_logger()
-
-
-class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
-    def _adjust_thread_count(self) -> None:
-        if len(self._threads) < self._max_workers:
-            thread_name = f"ThreadPoolExecutor-{len(self._threads)}"
-            _thread = threading.Thread(name=thread_name, target=self._worker)
-            _thread.daemon = True
-            _thread.start()
-            self._threads.add(_thread)
 
 
 def put_hw_metrics(
@@ -119,7 +110,7 @@ class _RunManager:
         self._project_info = project_info
         self.active_run: Optional[ActiveRun] = None
         self.registries = registries
-        self._hardware_futures: List[Any] = []
+        self._hardware_futures: List[Future[Any]] = []
 
         run_id = project_info.run_id
         if run_id is not None:
@@ -131,7 +122,7 @@ class _RunManager:
             self.run_id = None
             self._run_exists = False
 
-        self._thread_executor: Optional[DaemonThreadPoolExecutor] = None
+        self._thread_executor: Optional[concurrent.futures.ThreadPoolExecutor] = None
 
     @property
     def thread_executor(self) -> Optional[concurrent.futures.ThreadPoolExecutor]:
@@ -221,7 +212,7 @@ class _RunManager:
 
         # run hardware logger in background thread
         queue: Queue[Dict[str, Union[str, datetime, Dict[str, Any]]]] = Queue()
-        self.thread_executor = DaemonThreadPoolExecutor(max_workers=2)
+        self.thread_executor = ThreadPoolExecutor(max_workers=2)
         assert self.thread_executor is not None, "thread_executor should not be None"
 
         # submit futures for hardware logging
@@ -365,11 +356,10 @@ class _RunManager:
 
         # check if thread executor is still running
         if self.thread_executor is not None:
-            # cancel futures
             for future in self._hardware_futures:
                 future.cancel()
                 try:
-                    future.result(timeout=1)
+                    future.result(timeout=0.1)
                 except Exception:  # pylint: disable=broad-except
                     pass
 
