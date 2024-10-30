@@ -30,7 +30,7 @@ class DaemonThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     def _adjust_thread_count(self) -> None:
         if len(self._threads) < self._max_workers:
             thread_name = f"ThreadPoolExecutor-{len(self._threads)}"
-            _thread = threading.Thread(name=thread_name, target=self._worker)  # type: ignore
+            _thread = threading.Thread(name=thread_name, target=self._worker)  # pylint: disable=no-member
             _thread.daemon = True
             _thread.start()
             self._threads.add(_thread)
