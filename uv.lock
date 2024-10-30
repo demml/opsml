@@ -3156,7 +3156,7 @@ requires-dist = [
     { name = "opsml", extras = ["sklearn-onnx"], marker = "extra == 'all'" },
     { name = "opsml", extras = ["tf-onnx"], marker = "extra == 'all'" },
     { name = "opsml", extras = ["torch-onnx"], marker = "extra == 'all'" },
-    { name = "opsml-cli", specifier = "~=0.5.0" },
+    { name = "opsml-cli", specifier = "~=0.6.1" },
     { name = "pandas", specifier = ">=1.5.3,<3" },
     { name = "pipdeptree", specifier = ">=2.23.1" },
     { name = "polars", specifier = "~=1.0.0" },
@@ -3240,22 +3240,21 @@ torch-deps = [
 
 [[package]]
 name = "opsml-cli"
-version = "0.5.2"
+version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/ea/d279d35171d72be727b40935c03bb44495b88ae8d5bec0799852653251a5/opsml_cli-0.5.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:c6dd71827a928e4fe4c4e560f7aebc74e01250fd6763e4ec40f440be0f0f99ba", size = 1529605 },
-    { url = "https://files.pythonhosted.org/packages/92/54/7342ab566a27723eda314ec3f7e2373a9f1099309d27633fcfb8395945d5/opsml_cli-0.5.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:29fbaf5406a4b18bd94e337e25f6a8f712fb46cab84409ac755d3a794f5c8517", size = 1452656 },
-    { url = "https://files.pythonhosted.org/packages/81/6a/c9ead77333e26fe976690006b5cd9d1fd55ecf3fe6e0c5ea61db9d47405c/opsml_cli-0.5.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d5e159d1d6a32585818cd15b6b77d8028343d70c093b1f9ee9c9f2b9b5aa005b", size = 3459885 },
-    { url = "https://files.pythonhosted.org/packages/00/05/6516d3916573e82ba4ce7a2a22ab6ddce0c3f7c6ed2af04ea3eb80930b5c/opsml_cli-0.5.2-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fbed0c1d4fb0bf7858391dcdaa013dc2d4f0f5ab02a514910f8837d390e0a02a", size = 2790664 },
-    { url = "https://files.pythonhosted.org/packages/b7/73/447a36b6145d420594c1a8dcf7deb168709f9f10ca520b56b65bc86bd883/opsml_cli-0.5.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5be718dfc95f9faf1dd777af5c3a5517159cd2140b92a555514765f39cdad962", size = 3328529 },
-    { url = "https://files.pythonhosted.org/packages/8e/21/a3b493813e50c0d5a47d39bfe5dea1f28d1bfb3e8b211c1b75fc61e8e3f9/opsml_cli-0.5.2-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:5e881cc9a6b47fc0f5e81d82e5a3feff48b389c678d707b36dd3b2ffe00f6035", size = 3208606 },
-    { url = "https://files.pythonhosted.org/packages/98/95/6042ea0f81322e2048f45da807accffcba76d279eb67c483df0a80f34658/opsml_cli-0.5.2-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:985263034cb2d8bae32c940f7ef77bdad9cfc78d273cbb70ca987a9d48eea7f3", size = 3556957 },
-    { url = "https://files.pythonhosted.org/packages/62/43/3c2b75c68bc76ecab04a3f01c46471ece216d50c1044d553c2483d53c349/opsml_cli-0.5.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:013b38d887d3687b3b6aea99844e971be8f75475b02f40686555008903f71af5", size = 3367301 },
-    { url = "https://files.pythonhosted.org/packages/d8/ef/1433a356f5193e60df29a47bc348a79be7c7da2fa20f3e159e97e17ca87e/opsml_cli-0.5.2-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:df354b093f1218aed47fc5542fdbe4b8e69d71c1e5c12114fec4159897330de1", size = 3566982 },
-    { url = "https://files.pythonhosted.org/packages/8b/5f/23842e53551153a3b9ee835352f8579761110374cb984a716b2af876fe25/opsml_cli-0.5.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:c81dc0813ac9d7d13acc4ac1410b306603a03bddc17fc4ec58f2bf7fec454ae7", size = 3418764 },
-    { url = "https://files.pythonhosted.org/packages/84/92/a3c2b465df2d11b1335eb11f38519233e82661e5a7599000f2ad11bb7dd0/opsml_cli-0.5.2-py3-none-win32.whl", hash = "sha256:412be9aefdfcbf76b4048d3d632d22d22abe6d0c782df89977e6e3846fd2c8e3", size = 1441985 },
-    { url = "https://files.pythonhosted.org/packages/9d/d5/7554cc47f2315a71a989a2dd703109d5756e4b708da707c1f3fc6aec8db0/opsml_cli-0.5.2-py3-none-win_amd64.whl", hash = "sha256:88614992601c7ea2b7ac99c5fc10e290d7e72801b40e123d2d4ee2159eec3d93", size = 1546580 },
-    { url = "https://files.pythonhosted.org/packages/e9/f4/33ec052fa25f6deec83ecdf45854158a5a054dbe06b80680fa467892c6bd/opsml_cli-0.5.2-py3-none-win_arm64.whl", hash = "sha256:99ad7207dc351d210139ac68453e672dba8c8ab2e189d8be54777097f2ac6745", size = 1500425 },
+    { url = "https://files.pythonhosted.org/packages/e2/de/b4753c4ba6979a693d590681370ef8f9181d8e4fdf5da86daf823e166e83/opsml_cli-0.6.1-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ec647e26b94f3ab66db1f1f6f4b1104e14b8511da87e480bd6fa4b2ea8428522", size = 1473286 },
+    { url = "https://files.pythonhosted.org/packages/0c/91/b74d3a2f50b3ff9d980af402a7c198326cbaa941b98033263ea67bc12cfa/opsml_cli-0.6.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:25c05b127799c3f87a911add29b6008ea58566d35dc7bf8c970f520674df92db", size = 1412426 },
+    { url = "https://files.pythonhosted.org/packages/92/f7/5cc0e54a73a3b6e8b7ac460deb9cb40883b43f2841e6946477dda6618dba/opsml_cli-0.6.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6d9d76463eac4e3bffa60b0192b8ae327dfd8441f707dc92817101ea2782cde0", size = 3432749 },
+    { url = "https://files.pythonhosted.org/packages/a7/39/0629bc464f2c2b98da75deb509475404761b5236da691d1cb6128dc89906/opsml_cli-0.6.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:510b4b6b6fdd6324cbce89e8c1ebef49bca55da062b5719b7aa5182d9a7ea73b", size = 2825191 },
+    { url = "https://files.pythonhosted.org/packages/82/89/8af06fb57a1d94e41622f7f502c1d460a28552d8022dd1bdedee408e6d24/opsml_cli-0.6.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:82cf26effa0ad641152e4e17b6c8bb112b05131387d9d80b1a8ed004e0f7ad8b", size = 3337498 },
+    { url = "https://files.pythonhosted.org/packages/f4/76/82263dcefcdbac78afed9dc175ba3aafe70ef492f913335cb9550ec7d5dd/opsml_cli-0.6.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:3c9390530ada9c2428e2e5f3bec4e7b741bc481caef24ebf30c5054ef476265b", size = 3182904 },
+    { url = "https://files.pythonhosted.org/packages/ff/a6/5a1580b7213ec2bed1293e991d39692560b1a748bcf7a657491ce29c1c10/opsml_cli-0.6.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4a9b36012cf41506fcb59625280051f1bc717ed7bb885c84b22f3ad9095fdd23", size = 3344707 },
+    { url = "https://files.pythonhosted.org/packages/b2/5b/e43eb74bad5e7dddc3ca3aeaff393c4256de13125bb4d9f80b62c333d0dc/opsml_cli-0.6.1-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:7668aa87e3bff1df035b764d085825a58a09c93c145f10977e95c885bd19755e", size = 3544271 },
+    { url = "https://files.pythonhosted.org/packages/a1/0f/95b985d894334d2c1611463b330798298bc4838275cc216628b63aaad756/opsml_cli-0.6.1-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:1752f4f33d1ca519e543888789fb98dc498b11994e23bf539548bc532243582b", size = 3370630 },
+    { url = "https://files.pythonhosted.org/packages/6c/02/6dd2e9bdbfa6f514012e09ff96c5acbd01b6d34c9f0fcb3236b8e9e3f4bb/opsml_cli-0.6.1-py3-none-win32.whl", hash = "sha256:85ce8c037a9ddd6dccee597bdeb3de9806c38a20a3d92d09c999f508f7220260", size = 1439756 },
+    { url = "https://files.pythonhosted.org/packages/5d/e4/ba8db820e9c37ec4bf02a207673b12795ce3231afe883e28d34176bc0bbc/opsml_cli-0.6.1-py3-none-win_amd64.whl", hash = "sha256:b6ef7166c28b3f5eaf569071ccbd8fd35c154c50ff72be5a314b2b89833f99f5", size = 1537938 },
+    { url = "https://files.pythonhosted.org/packages/1f/2e/2b2bc12df12cfe9108a0b8fe1f1ca24775c4e557510ec426b8d71fb8dc85/opsml_cli-0.6.1-py3-none-win_arm64.whl", hash = "sha256:ef3698b2fa6607796f2e0c7120b3fcfac980258a73620a4db766a281f92837a3", size = 1478231 },
 ]
 
 [[package]]
