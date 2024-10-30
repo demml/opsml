@@ -269,7 +269,7 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - run: make setup.install
-      - run: make test.unit
+      - run: make test.registry
 
   Postgres-Unit:
     needs: [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Coverage]
