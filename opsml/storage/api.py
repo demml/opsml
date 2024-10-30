@@ -56,7 +56,7 @@ class ApiRoutes:
 
 
 api_routes = ApiRoutes()
-_TIMEOUT_CONFIG = httpx.Timeout(10, read=120, write=120)
+_TIMEOUT_CONFIG = httpx.Timeout(10, read=30, write=30)
 
 
 class ApiClient:
@@ -132,7 +132,11 @@ class ApiClient:
         """
         try:
             url = f"{self._base_url}/{route}"
-            response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
+
+            try:
+                response = getattr(self.client, request_type.value.lower())(url=url, **kwargs)
+            except httpx.ReadTimeout as exc:
+                raise ValueError(f"Request timed out for {request_type} request Url: {route}") from exc
 
             if response.status_code == 200:
                 return cast(Dict[str, Any], response.json())
@@ -157,9 +161,13 @@ class ApiClient:
 
         # self.refresh_token()
         url = f"{self._base_url}/{route}"
-        with self.client.stream(method="POST", url=url, files=files, headers=headers) as response:
-            for data in response.iter_bytes(chunk_size=chunk_size):
-                result += data.decode("utf-8")
+
+        try:
+            with self.client.stream(method="POST", url=url, files=files, headers=headers) as response:
+                for data in response.iter_bytes(chunk_size=chunk_size):
+                    result += data.decode("utf-8")
+        except httpx.ReadTimeout as exc:
+            raise ValueError(f"Request timed out for POST request Url: {route}") from exc
 
         response_result = cast(Dict[str, Any], py_json.loads(result))
 
@@ -184,9 +192,12 @@ class ApiClient:
         url = f"{self._base_url}/{route}"
 
         with open(local_path.as_posix(), "wb") as local_file:
-            with self.client.stream(method="GET", url=url, params={"path": read_path.as_posix()}) as response:
-                for data in response.iter_bytes(chunk_size=chunk_size):
-                    local_file.write(data)
+            try:
+                with self.client.stream(method="GET", url=url, params={"path": read_path.as_posix()}) as response:
+                    for data in response.iter_bytes(chunk_size=chunk_size):
+                        local_file.write(data)
+            except httpx.ReadTimeout as exc:
+                raise ValueError(f"Request timed out for GET request Url: {route}") from exc
 
         if response.status_code == 200:
             return {"status": 200}  # filler return

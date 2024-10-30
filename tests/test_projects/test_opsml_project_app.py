@@ -8,6 +8,7 @@ from starlette.testclient import TestClient
 from opsml.projects import OpsmlProject, ProjectInfo
 from opsml.registry.registry import CardRegistries
 from opsml.storage import client
+from tests.conftest import WINDOWS_EXCLUDE
 
 # test_app already performs a few tests with opsml project in client model
 # Adding additional tests here to avoid further cluttering test_app
@@ -105,6 +106,8 @@ def test_opsml_project_log_code_directory(
     )
 
 
+# exclude windows due to file path issues
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Windows exclude")
 def test_opsml_project_hardware_metric(
     test_app: TestClient,
     api_registries: CardRegistries,
