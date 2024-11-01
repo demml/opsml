@@ -114,7 +114,7 @@ async def upload_file(request: Request) -> Dict[str, str]:  # pragma: no cover
 
 
 @router.get("/files/download", name="download_file")
-async def download_file(request: Request, path: str) -> StreamingResponse:
+def download_file(request: Request, path: str) -> StreamingResponse:
     """Downloads a file
 
     Args:
@@ -130,8 +130,11 @@ async def download_file(request: Request, path: str) -> StreamingResponse:
     storage_client: StorageClientBase = request.app.state.storage_client
     try:
         file_path = Path(swap_opsml_root(request, Path(path)))
-        file_iterator = await run_in_threadpool(storage_client.iterfile, file_path, config.download_chunk_size)
-        return StreamingResponse(file_iterator, media_type="application/octet-stream")
+
+        return StreamingResponse(
+            storage_client.iterfile(file_path, config.download_chunk_size),
+            media_type="application/octet-stream",
+        )
 
     except Exception as error:
         logger.error("Server: Error downloading file {}", path)
@@ -141,7 +144,7 @@ async def download_file(request: Request, path: str) -> StreamingResponse:
         ) from error
 
 
-async def download_dir(request: Request, path: Path) -> StreamingResponse:
+def download_dir(request: Request, path: Path) -> StreamingResponse:
     """Downloads a file
 
     Args:
@@ -170,14 +173,16 @@ async def download_dir(request: Request, path: Path) -> StreamingResponse:
                     curr_rpath = Path(file_)
                     curr_lpath = lpath / curr_rpath.relative_to(rpath)
                     logger.info("Server: Downloading {} to {}", curr_rpath, curr_lpath)
-                    await run_in_threadpool(storage_client.get, curr_rpath, curr_lpath)
+                    storage_client.get(curr_rpath, curr_lpath)
                     zip_filepath = zipfile / curr_rpath.relative_to(rpath)
                     temp_zip.write(curr_lpath, zip_filepath)
 
             logger.info("Server: Sending zip file for {}", path)
-            iter_buffer = await run_in_threadpool(storage_client.iterbuffer, zip_io, config.download_chunk_size)
 
-            return StreamingResponse(iter_buffer, media_type="application/x-zip-compressed")
+            return StreamingResponse(
+                storage_client.iterbuffer(zip_io, config.download_chunk_size),
+                media_type="application/x-zip-compressed",
+            )
 
     except Exception as error:
         raise HTTPException(
@@ -187,7 +192,7 @@ async def download_dir(request: Request, path: Path) -> StreamingResponse:
 
 
 @router.get("/files/download/ui", name="download_artifacts")
-async def download_artifacts_ui(request: Request, path: str) -> StreamingResponse:
+def download_artifacts_ui(request: Request, path: str) -> StreamingResponse:
     """Downloads a file
 
     Args:
@@ -200,8 +205,8 @@ async def download_artifacts_ui(request: Request, path: str) -> StreamingRespons
         Streaming file response
     """
     if Path(path).suffix == "":
-        return await download_dir(request, Path(path))
-    return await download_file(request, path)
+        return download_dir(request, Path(path))
+    return download_file(request, path)
 
 
 @router.get("/files/list", name="list_files")
@@ -395,7 +400,7 @@ def get_file_to_view(request: Request, path: str) -> FileViewResponse:
 
 
 @router.post("/files/readme", name="create_readme")
-async def create_readme(
+def create_readme(
     request: Request,
     payload: ReadMeRequest,
 ) -> bool:
