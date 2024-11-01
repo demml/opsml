@@ -14,6 +14,7 @@ from pydantic import BaseModel, field_validator
 from pydantic_settings import BaseSettings
 
 from opsml.types import StorageSystem
+from opsml.version import __version__
 
 
 class OpsmlAuthSettings(BaseModel):
@@ -23,6 +24,7 @@ class OpsmlAuthSettings(BaseModel):
 class OpsmlConfig(BaseSettings):
     app_name: str = "opsml"
     app_env: str = "development"
+    app_version: str = __version__
 
     opsml_storage_uri: str = "./opsml_registries"
     opsml_tracking_uri: str = "sqlite:///opsml.db"
