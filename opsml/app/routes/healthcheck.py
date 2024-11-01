@@ -21,6 +21,7 @@ async def debug() -> DebugResponse:
         url=config.opsml_tracking_uri,
         storage=config.opsml_storage_uri,
         app_env=config.app_env,
+        app_version=config.app_version,
     )
 
 

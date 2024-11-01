@@ -43,6 +43,7 @@ class DebugResponse(BaseModel):
     url: str
     storage: str
     app_env: str
+    app_version: str
 
 
 class StorageSettingsResponse(BaseModel):

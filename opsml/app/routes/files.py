@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 import streaming_form_data
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-from starlette.concurrency import run_in_threadpool
 from starlette.requests import ClientDisconnect
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.validators import MaxSizeValidator
