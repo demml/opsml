@@ -52,7 +52,7 @@ class UserDeleted(BaseModel):
 router = APIRouter()
 
 
-async def get_current_user(
+def get_current_user(
     request: Request,
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> User:
@@ -98,7 +98,7 @@ async def get_current_user(
     return user
 
 
-async def get_current_active_user(
+def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not current_user.is_active:
@@ -107,7 +107,7 @@ async def get_current_active_user(
 
 
 @router.post("/auth/token")
-async def login_for_access_token(
+def login_for_access_token(
     request: Request,
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -149,7 +149,7 @@ async def login_for_access_token(
 
 
 @router.get("/auth/token/rotate")
-async def create_refresh_token(
+def create_refresh_token(
     request: Request,
     response: Response,
     refresh_token: Annotated[Union[str, None], Cookie()] = None,
@@ -175,7 +175,7 @@ async def create_refresh_token(
     try:
         # check user
         auth_db: ServerAuthRegistry = request.app.state.auth_db
-        user = await get_current_user(request, refresh_token)
+        user = get_current_user(request, refresh_token)
 
         # create new access token
         refresh_token = auth_db.create_access_token(user, minutes=60)
@@ -193,7 +193,7 @@ async def create_refresh_token(
 
 
 @router.get("/auth/token/refresh")
-async def get_refresh_from_cookie(
+def get_refresh_from_cookie(
     request: Request,
     response: Response,
     refresh_token: Annotated[Union[str, None], Cookie()] = None,
@@ -207,7 +207,7 @@ async def get_refresh_from_cookie(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = await get_current_user(request, refresh_token)
+    user = get_current_user(request, refresh_token)
     logger.info("Refreshing token for user: {}", user.username)
 
     # create new access token
