@@ -43,7 +43,7 @@ def get_runcard(request: Request, payload: CardRequest) -> RunCard:
 
 
 @router.get("/runs/graphs", name="graphs")
-async def get_graph_plots(request: Request, repository: str, name: str, version: str) -> Dict[str, Any]:
+def get_graph_plots(request: Request, repository: str, name: str, version: str) -> Dict[str, Any]:
     """Method for loading plots for a run
 
     Args:
