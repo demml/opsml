@@ -80,6 +80,17 @@ class Blob(Protocol):
         self, credentials: Any, version: str = "v4", expiration: datetime.timedelta = 600, method: str = "GET"
     ) -> str: ...
 
+    def open(
+        self,
+        mode: str = "r",
+        chunk_size: Optional[int] = None,
+        ignore_flush: Optional[bool] = None,
+        encoding: Optional[str] = None,
+        errors: Any = None,
+        newline: Any = None,
+        **kwargs: Any,
+    ) -> Any: ...
+
 
 class Bucket(Protocol):
     def blob(self, name: str) -> Blob: ...
