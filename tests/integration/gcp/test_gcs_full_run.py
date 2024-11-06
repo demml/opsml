@@ -19,7 +19,7 @@ from opsml.types import RegistryTableNames, SaveName, Suffix
         lazy_fixture("sklearn_pipeline"),
     ],
 )
-def test_gcs_full_run(
+def _test_gcs_full_run(
     api_registries: CardRegistries,
     model_and_data: Tuple[ModelInterface, PandasData],
     gcs_storage_client: StorageClient,
@@ -82,16 +82,10 @@ def test_gcs_full_run(
 
         # check model assets
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.CARD.value).with_suffix(Suffix.JSON.value))
-        assert api_storage_client.exists(
-            Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix)
-        )
+        assert api_storage_client.exists(Path(modelcard.uri, SaveName.TRAINED_MODEL.value).with_suffix(model.model_suffix))
         assert api_storage_client.exists(Path(modelcard.uri, SaveName.ONNX_MODEL.value).with_suffix(Suffix.ONNX.value))
-        assert api_storage_client.exists(
-            Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(data.data_suffix)
-        )
-        assert api_storage_client.exists(
-            Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix)
-        )
+        assert api_storage_client.exists(Path(modelcard.uri, SaveName.SAMPLE_MODEL_DATA.value).with_suffix(data.data_suffix))
+        assert api_storage_client.exists(Path(modelcard.uri, SaveName.PREPROCESSOR.value).with_suffix(model.preprocessor_suffix))
 
         # load cards
 

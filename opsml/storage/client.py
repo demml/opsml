@@ -142,7 +142,7 @@ class StorageClientBase(StorageClientProtocol):
         while chunk := buffer.read(chunk_size):
             yield chunk
 
-    def put(self, lpath: Path, rpath: Path) -> None:
+    def put(self, lpath: Path, rpath: Path, recursive: bool = True) -> None:
         if lpath.is_dir():
             abs_lpath = f"{str(lpath)}/"  # pathlib strips trailing slashes
             abs_rpath = f"{str(rpath)}/"
@@ -150,11 +150,11 @@ class StorageClientBase(StorageClientProtocol):
         else:
             self.client.put(str(lpath), str(rpath), False)
 
-    def copy(self, src: Path, dest: Path) -> None:
-        self.client.copy(str(src), str(dest), recursive=True)
+    def copy(self, src: Path, dest: Path, recursive: bool = True) -> None:
+        self.client.copy(str(src), str(dest), recursive)
 
-    def rm(self, path: Path) -> None:
-        self.client.rm(str(path), True)
+    def rm(self, path: Path, recursive: bool = True) -> None:
+        self.client.rm(str(path), recursive)
 
     def exists(self, path: Path) -> bool:
         try:
@@ -186,6 +186,8 @@ class GCSFSStorageClient(StorageClientBase):
 
         super().__init__(settings=settings, client=self.client)
         self.bucket = self.client.bucket(config.storage_root)
+
+    # self.bucket = self.client.bucket(config.storage_root)
 
     @cached_property
     def gcs_client(self) -> GCSClient:
@@ -230,8 +232,9 @@ class GCSFSStorageClient(StorageClientBase):
             return None
 
     def get(self, rpath: Path, lpath: Path, recursive: bool = False) -> None:
+        _rpath = rpath.relative_to(self.bucket.name)
         if recursive:
-            blobs = self.bucket.list_blobs(prefix=str(rpath))
+            blobs = self.bucket.list_blobs(prefix=str(_rpath))
             for blob in blobs:
                 # Determine the relative path of the blob
                 relative_path = Path(blob.name).relative_to(rpath)
@@ -244,13 +247,20 @@ class GCSFSStorageClient(StorageClientBase):
                 # Download the blob to the local path
                 blob.download_to_filename(str(local_path))
         else:
-            blob = self.bucket.blob(str(rpath))
+            blob = self.bucket.blob(str(_rpath))
             if rpath.is_dir():
                 raise ValueError("Non-recursive get cannot be used with directories")
+
             blob.download_to_filename(str(lpath))
 
     def ls(self, path: Path, detail: bool = False) -> Union[List[Path], List[Dict[str, Any]]]:
-        blobs = self.bucket.list_blobs(prefix=str(path))
+        _path = path.relative_to(self.bucket.name)
+
+        if path.as_posix() == self.bucket.name:
+            blobs = self.client.list_blobs(self.bucket.name)
+
+        else:
+            blobs = self.bucket.list_blobs(prefix=str(_path))
 
         if detail:
             return [
@@ -263,25 +273,37 @@ class GCSFSStorageClient(StorageClientBase):
                 for blob in blobs
             ]
 
-        return [Path(blob.name) for blob in blobs]
+        files = [Path(blob.name) for blob in blobs]
+
+        if not files:
+            raise FileNotFoundError(f"No files found in {path}")
+
+        return files
 
     def find(self, path: Path) -> List[Path]:
-        blobs = self.bucket.list_blobs(prefix=str(path))
-        return [Path(blob.name) for blob in blobs if not blob.name.endswith("/")]
+        _path = path.relative_to(self.bucket.name)
+        blobs = self.bucket.list_blobs(prefix=str(_path))
+
+        _blobs = [Path(self.bucket.name) / blob.name for blob in blobs if not blob.name.endswith("/")]
+
+        return _blobs
 
     def open(self, path: Path, mode: str, encoding: Optional[str] = None) -> Any:
-        blob = self.bucket.blob(str(path))
+        _path = path.relative_to(self.bucket.name)
+        blob = self.bucket.blob(str(_path))
         blob.open(mode=mode, encoding=encoding)
 
     def iterfile(self, path: Path, chunk_size: int) -> Iterator[bytes]:
-        bucket = self.gcs_client.bucket(config.storage_root)
-        blob = bucket.blob(str(path))
+        _path = path.relative_to(self.bucket.name)
+        blob = self.bucket.blob(str(_path))
         with blob.open("rb") as file_:
             while chunk := file_.read(chunk_size):
                 yield chunk
 
     def put(self, lpath: Path, rpath: Path, recursive: bool = False) -> None:
-        if recursive:
+        _rpath = rpath.relative_to(self.bucket.name)
+
+        if lpath.is_dir() or recursive:
             if not lpath.is_dir():
                 raise ValueError("Recursive put requires a directory as the source path")
 
@@ -289,50 +311,57 @@ class GCSFSStorageClient(StorageClientBase):
                 if local_file.is_file():
                     # Determine the relative path of the local file
                     relative_path = local_file.relative_to(lpath)
+
                     # Determine the remote path to save the file
-                    remote_path = rpath / relative_path
+                    remote_path = _rpath / relative_path
 
                     # Upload the file to the remote path
                     blob = self.bucket.blob(str(remote_path))
                     blob.upload_from_filename(str(local_file))
-        else:
-            if lpath.is_dir():
-                raise ValueError("Non-recursive put cannot be used with directories")
 
-            blob = self.bucket.blob(str(rpath))
+        else:
+            blob = self.bucket.blob(str(_rpath))
             blob.upload_from_filename(str(lpath))
 
     def copy(self, src: Path, dest: Path, recursive: bool = False) -> None:
+        _src = src.relative_to(self.bucket.name)
+        _dest = dest.relative_to(self.bucket.name)
+
         if recursive:
-            blobs = self.bucket.list_blobs(prefix=str(src))
+            blobs = self.bucket.list_blobs(prefix=str(_src))
             for blob in blobs:
                 # Determine the relative path of the blob
-                relative_path = Path(blob.name).relative_to(src)
+                relative_path = Path(blob.name).relative_to(_src)
                 # Determine the destination path to copy the blob
-                dest_path = dest / relative_path
+                dest_path = _dest / relative_path
 
                 # Copy the blob to the destination path
                 self.bucket.copy_blob(blob, self.bucket, str(dest_path))
+
         else:
-            blob = self.bucket.blob(str(src))
+            blob = self.bucket.blob(str(_src))
             if src.is_dir():
                 raise ValueError("Non-recursive copy cannot be used with directories")
-            self.bucket.copy_blob(blob, self.bucket, str(dest))
+
+            self.bucket.copy_blob(blob, self.bucket, str(_dest))
 
     def rm(self, path: Path, recursive: bool = False) -> None:
+        _path = path.relative_to(self.bucket.name)
+
         if recursive:
-            blobs = self.bucket.list_blobs(prefix=str(path))
+            blobs = self.bucket.list_blobs(prefix=str(_path))
             for blob in blobs:
                 blob.delete()
         else:
-            blob = self.bucket.blob(str(path))
+            blob = self.bucket.blob(str(_path))
             if path.is_dir():
                 raise ValueError("Non-recursive rm cannot be used with directories")
             blob.delete()
 
     def exists(self, path: Path) -> bool:
-        blob = self.bucket.blob(str(path))
-        return cast(bool, blob.exists())
+        paths = self.find(path)
+
+        return bool(paths)
 
 
 class S3StorageClient(StorageClientBase):
