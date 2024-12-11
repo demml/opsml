@@ -28,28 +28,28 @@
 
 ## **What is it?**
 
-`OpsML` is a comprehensive toolkit designed to streamline and standardize machine learning operations. It offers:
+`OpsML` is a comprehensive, open-source toolkit designed to streamline and standardize machine learning operations (MLOps). It offers:
 
-- Universal Registration System: A centralized platform for managing all ML artifacts.
-- Standardized Governance: Implement consistent practices across data science and engineering teams.
-- Artifact Lifecycle Management: Robust tracking, versioning, and storage solutions for all ML components.
-- Reproducible Workflows: Establish repeatable patterns for ML project management.
-- Cross-functional Compatibility: Bridge the gap between data science experimentation and production engineering.
-- Version Control for ML: Apply software engineering best practices to machine learning artifacts.
-- Metadata-Driven Approach: Enhance discoverability and traceability of models, datasets, and experiments.
+- **Unified Registration System**: A centralized platform for managing all ML artifacts.
+- **Standardized Governance**: Implement consistent practices across data science and engineering teams.
+- **Artifact Lifecycle Management**: Robust tracking, versioning, and storage solutions for all ML components.
+- **Reproducible Workflows**: Establish repeatable patterns for ML project management.
+- **Cross-functional Compatibility**: Bridge the gap between data science experimentation and production engineering.
+- **Version Control for ML**: Apply software engineering best practices to machine learning artifacts.
+- **Metadata-Driven Approach**: Enhance discoverability and traceability of models, datasets, and experiments.
 
 This toolkit empowers teams to maintain rigorous control over their ML projects, from initial data preprocessing to model deployment and monitoring, all within a unified, scalable framework.
 
+## **Why Choose OpsML?**
 
-## **Why OpsML?**
+`OpsML` addresses a critical gap in the ML ecosystem: the lack of a unified standard for artifact registration and governance. Our experience with various open-source and proprietary tools revealed a persistent need to integrate disparate systems for effective artifact management and deployment. This led to the development of `OpsML`, a unified framework designed to streamline ML operations.
 
-OpsML addresses a critical gap in the ML ecosystem: the lack of a universal standard for artifact registration and governance. Our experience with various open-source and proprietary tools revealed a persistent need to integrate disparate systems for effective artifact management and deployment. This led to the development of OpsML, a unified framework designed to streamline ML operations.
-
-Key Features:
+### Key Features:
 
 - **Modular Architecture**: Seamlessly integrates into existing ML pipelines and workflows.
 - **Card-based Artifact System**: Implements a SQL-based registry for tracking, versioning, and storing ML artifacts (data, models, runs, projects). Think of it as `trading cards for machine learning`.
 - **Strong Type Enforcement**: Ensures data integrity with built-in type checking for data and model artifacts.
+- **Efficiency and Speed**: The bulk of OpsML is written in `Rust` providing lower dependency overhead, memory safety and speed.
 - **Extensive Library Support**: Compatible with a wide range of ML and data processing libraries.
 - **Automated ML Ops**:
     - Auto-conversion to ONNX format
@@ -61,15 +61,11 @@ Key Features:
 
 OpsML aims to be the common language for ML artifact management, reducing cognitive overhead and enabling teams to focus on model development and deployment rather than operational complexities.
 
-<sup>
-* OpsML is integrated with <a href="https://github.com/demml/scouter">Scouter</a> out of the box. However, a Scouter server instance is required to use this feature.
-</sup>
+<sup>* OpsML is integrated with <a href="https://github.com/demml/scouter">Scouter</a> out of the box. However, a Scouter server instance is required to use this feature.</sup>
 
-## Incorporate into Existing Workflows
+## **Incorporate OpsML into Existing Workflows**
 
-Add quality control to your ML projects with little effort! With `OpsML`, data and models are added to interfaces and cards, which are then registered via card registries. 
-
-# Incorporate into Existing Workflows
+Add quality control to your ML projects with little effort! With `OpsML`, data and models are added to interfaces and cards, which are then registered via card registries.
 
 Given its simple and modular design, `OpsML` can be easily incorporated into existing workflows. 
 
