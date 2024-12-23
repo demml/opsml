@@ -1,6 +1,6 @@
 import pytest
-from opsml_core import Feature
-from opsml_core._opsml_core import RegistryTestHelper
+from opsml import Feature
+from opsml._opsml import RegistryTestHelper
 from typing import Tuple, Dict
 from pydantic import BaseModel
 

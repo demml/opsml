@@ -21,7 +21,7 @@ use opsml_types::{Card, CardInfo, CardList, LogLevel, ModelInterfaceType};
 use pyo3::prelude::*;
 
 #[pymodule]
-fn _opsml_core(_m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     // logging
     _m.add_class::<LogLevel>()?;
     _m.add_class::<OpsmlLogger>()?;

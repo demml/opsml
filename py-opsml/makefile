@@ -1,6 +1,6 @@
 PROJECT=opml-core
-PYTHON_VERSION=3.11.9
-SOURCE_OBJECTS=python/opsml_core
+PYTHON_VERSION=3.12.8
+SOURCE_OBJECTS=python/opsml
 
 format.isort:
 	uv run isort ${SOURCE_OBJECTS}
@@ -22,7 +22,7 @@ lints: lints.ruff lints.pylint lints.mypy
 lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
 
 setup.project:
-	uv sync --all-extras --group dev
+	uv sync --all-extras --group dev --verbose
 	uv run maturin develop --features server
 
 setup.docs:

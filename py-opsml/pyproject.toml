@@ -93,5 +93,5 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "python"
-module-name = "opsml._opsml"
+module-name = "py_opsml._py_opsml"
 cargo-extra-args = "--features extension-module"
