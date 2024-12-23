@@ -17,12 +17,13 @@ use opsml_types::cards::{
     HuggingFaceOnnxSaveArgs, OnnxSchema, RegistryType, TorchOnnxArgs, TorchSaveArgs, VersionType,
 };
 use opsml_types::shared::{CommonKwargs, SaveName, Suffix};
-use opsml_types::{Card, CardInfo, CardList, ModelInterfaceType};
+use opsml_types::{Card, CardInfo, CardList, LogLevel, ModelInterfaceType};
 use pyo3::prelude::*;
 
 #[pymodule]
 fn _opsml_core(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     // logging
+    _m.add_class::<LogLevel>()?;
     _m.add_class::<OpsmlLogger>()?;
 
     // errors

@@ -1,4 +1,4 @@
-from ._opsml_core import (  # type: ignore
+from ._opsml import (  # type: ignore
     CommonKwargs,
     DataSchema,
     Description,
@@ -21,6 +21,7 @@ from ._opsml_core import (  # type: ignore
     ModelInterfaceType,
     ModelInterfaceSaveMetadata,
     ModelInterfaceMetadata,
+    LogLevel,
 )
 
 __all__ = [
@@ -46,4 +47,5 @@ __all__ = [
     "ModelInterfaceType",
     "ModelInterfaceSaveMetadata",
     "ModelInterfaceMetadata",
+    "LogLevel",
 ]
