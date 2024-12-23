@@ -1,0 +1,33 @@
+[package]
+name = "opsml-registry"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+anyhow = { workspace = true }
+opsml-colors = { workspace = true }
+opsml-error = { workspace = true }
+opsml-logging = { workspace = true }
+opsml-types = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-sql = { workspace = true, optional = true }
+opsml-storage = { workspace = true }
+opsml-utils = { workspace = true }
+pyo3 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_qs = { workspace = true }
+sqlx = { workspace = true, optional = true }
+semver = { workspace = true, optional = true }
+tempfile = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+
+[features]
+server = ["opsml-sql", "sqlx", "semver"]

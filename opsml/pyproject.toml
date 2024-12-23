@@ -1,0 +1,97 @@
+[project]
+name = "opsml"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+version = "0.1.0"
+description = ""
+authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
+readme = "README.md"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "maturin >= 1.4.0, < 2.0.0",
+    "pytest >= 7.0.0, < 8.0.0",
+    "pytest-cov >= 5.0.0, < 6.0.0",
+    "ruff >= 0.1.0, < 1.0.0",
+    "mypy >= 1.0.0, < 2.0.0",
+    "black >= 24.3.0, < 25.0.0",
+    "pylint >= 3.0.0, < 4.0.0",
+    "pytest-lazy-fixture >= 0.6.3, < 1.0.0",
+    "isort >= 5.13.2, < 6.0.0",
+    "pip>=24.3.1",
+    "transformers>=4.46.3",
+    "optimum>=1.23.3",
+    "pydantic>=2.10.4",
+    "onnx>=1.17.0",
+    "onnxruntime>=1.20.1",
+    "joblib>=1.4.2",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.pylint.MASTER]
+load-plugins = ["pylint.extensions.docparams"]
+
+[tool.pylint.messages_control]
+max-line-length = 120
+disable = [
+    "too-few-public-methods",
+    "design",
+    "duplicate-code",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-many-nested-blocks",
+    "unused-argument",
+    "fixme",
+    "import-outside-toplevel"
+]
+
+[tool.flake8]
+# This section is just a doc placeholder..see setup.cfg
+max-complexity = 10
+format = "pylint"
+statistics = "True"
+max-line-length = 125
+# ignore non-PEP8 lints
+ignore = ["E203", "W503", "W0511"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
+
+[tool.mypy]
+# platform configuration
+python_version = "3.11"
+platform = "linux"
+mypy_path = "stubs"
+ignore_missing_imports = true
+plugins = []
+exclude = []
+
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "python"
+module-name = "opsml_core._opsml_core"
+cargo-extra-args = "--features extension-module"

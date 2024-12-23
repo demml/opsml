@@ -1,0 +1,20 @@
+[package]
+name = "opsml-todo"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+license = "MIT"
+description = "Opsml settings rust and python bindings"
+
+[dependencies]
+clap = { workspace = true }
+opsml-colors = { workspace = true }
+opsml-types = { workspace = true }
+rayon = { workspace = true }
+tabled = { workspace = true }
+walkdir = { workspace = true }
+
+
+[[bin]]
+name = "find-todo"
+path = "src/main.rs"
