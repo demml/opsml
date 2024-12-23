@@ -1,0 +1,24 @@
+[package]
+name = "opsml-sql"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+license = "MIT"
+description = "Core rust library for the opsml project"
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+opsml-error = { workspace = true }
+opsml-logging = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-types = { workspace = true }
+opsml-utils = { workspace = true }
+semver = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }

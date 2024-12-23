@@ -1,0 +1,16 @@
+[package]
+name = "opsml-utils"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+chrono = { workspace = true }
+regex = { workspace = true }
+semver = { workspace = true }
+uuid = { workspace = true }

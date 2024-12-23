@@ -1,0 +1,12 @@
+[package]
+name = "opsml-colors"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Logging for OpsML"
+
+[lib]
+doctest = false
+
+[dependencies]
+owo-colors = { workspace = true }

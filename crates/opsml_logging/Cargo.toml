@@ -1,0 +1,16 @@
+[package]
+name = "opsml-logging"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Logging for OpsML"
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+pyo3 = { workspace = true }
+time = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

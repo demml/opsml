@@ -1,0 +1,14 @@
+[package]
+name = "opsml-error"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Error handling for OpsML"
+
+[lib]
+doctest = false
+
+[dependencies]
+thiserror = { workspace = true }
+pyo3 = { workspace = true }
+serde = { workspace = true }
