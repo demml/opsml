@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 import polars as pl
-import pyarrow as pa
+import pyarrow as pa  # type: ignore
 from numpy.typing import NDArray
 from opsml import DataType
 from pydantic import (
@@ -67,7 +67,9 @@ class DataSplit(BaseModel):
         column_value = model_args.get("column_value")
 
         if column_value is not None:
-            if model_args.get("column_type") == "timestamp" and not isinstance(column_value, pd.Timestamp):
+            if model_args.get("column_type") == "timestamp" and not isinstance(
+                column_value, pd.Timestamp
+            ):
                 model_args["column_value"] = pd.Timestamp(column_value)
 
             if isinstance(column_value, pd.Timestamp):
@@ -157,7 +159,9 @@ class DataSplitterBase:
             return self.split.stop
         raise ValueError("Stop index was not provided")
 
-    def get_x_cols(self, columns: List[str], dependent_vars: List[Union[str, int]]) -> List[str]:
+    def get_x_cols(
+        self, columns: List[str], dependent_vars: List[Union[str, int]]
+    ) -> List[str]:
         for var in dependent_vars:
             if isinstance(var, str):
                 columns.remove(var)
@@ -192,7 +196,9 @@ class PolarsColumnSplitter(DataSplitterBase):
             data = data.filter(pl.col(self.column_name) <= self.column_value)
 
         if bool(self.dependent_vars):
-            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
+            x_cols = self.get_x_cols(
+                columns=data.columns, dependent_vars=self.dependent_vars
+            )
 
             return self.split.label, Data(
                 X=data.select(x_cols),
@@ -214,7 +220,9 @@ class PolarsIndexSplitter(DataSplitterBase):
         data = data[self.indices]
 
         if bool(self.dependent_vars):
-            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
+            x_cols = self.get_x_cols(
+                columns=data.columns, dependent_vars=self.dependent_vars
+            )
 
             return self.split.label, Data(
                 X=data.select(x_cols),
@@ -236,7 +244,9 @@ class PolarsRowsSplitter(DataSplitterBase):
         data = data[self.start : self.stop]
 
         if bool(self.dependent_vars):
-            x_cols = self.get_x_cols(columns=data.columns, dependent_vars=self.dependent_vars)
+            x_cols = self.get_x_cols(
+                columns=data.columns, dependent_vars=self.dependent_vars
+            )
 
             return self.split.label, Data(
                 X=data.select(x_cols),
