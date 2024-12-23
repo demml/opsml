@@ -19,7 +19,7 @@ impl CardSaver {
         let tmp_path = tmp_dir.into_path();
 
         match card {
-            CardEnum::Data(data_card) => {
+            CardEnum::Data(_data_card) => {
                 // save data card
                 // data_card.save_artifacts(tmp_path)?;
             }

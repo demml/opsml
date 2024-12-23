@@ -1,7 +1,7 @@
 use crate::shared::helper::PyHelperFuncs;
 use opsml_error::error::TypeError;
 use pyo3::prelude::*;
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::str::FromStr;
