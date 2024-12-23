@@ -1,7 +1,8 @@
-use crate::cards::types::{RegistryType, VersionType};
+use crate::cards::types::RegistryType;
 use crate::shared::PyHelperFuncs;
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
+use opsml_utils::VersionType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

@@ -17,6 +17,7 @@ opsml-settings = { workspace = true }
 opsml-storage = { workspace = true}
 opsml-todo = { workspace = true }
 opsml-types = { workspace = true }
+opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 
 [features]

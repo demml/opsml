@@ -151,6 +151,7 @@ class DataType:
     Str: "DataType"
     OrderedDict: "DataType"
     Joblib: "DataType"
+    Base: "DataType"
 
 # Errors
 class OpsmlError(Exception):
@@ -401,6 +402,8 @@ class Description:
             String representation of the Description.
         """
 
+# Utils
+
 class VersionType:
     Major = "major"
     Minor = "minor"
@@ -411,6 +414,19 @@ class VersionType:
 
     def __init__(self, version_type: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...
+
+class FileUtils:
+    @staticmethod
+    def find_filepath(name: str) -> str:
+        """Find a file path
+
+        Args:
+            name:
+                The name of the file
+
+        Returns:
+            The file path
+        """
 
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:

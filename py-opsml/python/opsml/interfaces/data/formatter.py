@@ -10,10 +10,10 @@ import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
 
-from opsml.helpers.logging import ArtifactLogger
-from opsml.types import AllowedDataType
+from opsml import OpsmlLogger, DataType
 
-logger = ArtifactLogger.get_logger()
+
+logger = OpsmlLogger.get_logger()
 
 ValidArrowData = Union[NDArray[Any], pd.DataFrame, pl.DataFrame, pa.Table]
 
@@ -374,8 +374,8 @@ class PolarsSchemaValidator(SchemaValidator):
         return feature_map
 
     @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.POLARS == data_type
+    def validate_data(data_type: DataType) -> bool:
+        return DataType.Polars == data_type
 
 
 class PandasSchemaValidator(SchemaValidator):
@@ -413,8 +413,8 @@ class PandasSchemaValidator(SchemaValidator):
         }
 
     @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.PANDAS == data_type
+    def validate_data(data_type: DataType) -> bool:
+        return DataType.Pandas == data_type
 
 
 class NumpySchemaValidator(SchemaValidator):
@@ -447,8 +447,8 @@ class NumpySchemaValidator(SchemaValidator):
         }
 
     @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.NUMPY == data_type
+    def validate_data(data_type: DataType) -> bool:
+        return DataType.Numpy == data_type
 
 
 class ArrowSchemaValidator(SchemaValidator):
@@ -484,8 +484,8 @@ class ArrowSchemaValidator(SchemaValidator):
         }
 
     @staticmethod
-    def validate_data(data_type: str) -> bool:
-        return AllowedDataType.PYARROW == data_type
+    def validate_data(data_type: DataType) -> bool:
+        return DataType.Pyarrow == data_type
 
 
 def generate_feature_schema(data: ValidArrowData, data_type: str) -> Dict[str, Feature]:

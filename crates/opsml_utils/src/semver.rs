@@ -1,6 +1,52 @@
 use opsml_error::error::VersionError;
-use opsml_types::cards::types::VersionType;
+use pyo3::prelude::*;
 use semver::{BuildMetadata, Prerelease, Version};
+use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+
+#[pyclass]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
+pub enum VersionType {
+    Major,
+    Minor,
+    Patch,
+    Pre,
+    Build,
+    PreBuild,
+}
+
+impl FromStr for VersionType {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<VersionType, Self::Err> {
+        match input.to_lowercase().as_str() {
+            "major" => Ok(VersionType::Major),
+            "minor" => Ok(VersionType::Minor),
+            "patch" => Ok(VersionType::Patch),
+            "pre" => Ok(VersionType::Pre),
+            "build" => Ok(VersionType::Build),
+            "pre_build" => Ok(VersionType::PreBuild),
+            _ => Err(()),
+        }
+    }
+}
+
+#[pymethods]
+impl VersionType {
+    #[new]
+    fn new(version_type: String) -> PyResult<Self> {
+        match VersionType::from_str(&version_type) {
+            Ok(version_type) => Ok(version_type),
+            Err(_) => Err(pyo3::exceptions::PyValueError::new_err(
+                "Invalid version type",
+            )),
+        }
+    }
+
+    fn __eq__(&self, other: &Self) -> bool {
+        self == other
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub struct VersionArgs {

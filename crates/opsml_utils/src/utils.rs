@@ -19,7 +19,7 @@ pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<
     let name_repo = format!("{}/{}", name, repository);
 
     let re = Regex::new(NAME_REPOSITORY_PATTERN)
-        .map_err(|_| UtilError::Error("Failed to create regex".to_string()))?;
+        .map_err(|e| UtilError::Error("Failed to create regex".to_string()))?;
 
     if !re.is_match(&name_repo) {
         return Err(UtilError::Error(

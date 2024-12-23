@@ -1,20 +1,20 @@
- from pathlib import Path
- from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
- import joblib
- from pydantic import BaseModel, ConfigDict, field_validator
- from scouter import DataProfile
+import joblib
+from pydantic import BaseModel, ConfigDict, field_validator
+from scouter import DataProfile
+from opsml import OpsmlLogger, Feature, Suffix, CommonKwargs, DataType
+from opsml.interfaces.data import Data, DataSplit, DataSplitter
 
- from opsml.data.splitter import Data, DataSplit, DataSplitter
- from opsml.helpers.logging import ArtifactLogger
- from opsml.helpers.utils import FileUtils
- from opsml.profile.profile_data import DataProfiler
- from opsml.types import CommonKwargs, Feature, Suffix
-
- logger = ArtifactLogger.get_logger()
+from opsml.helpers.utils import FileUtils
+from opsml.profile.profile_data import DataProfiler
 
 
- class DataInterface(BaseModel):
+logger = OpsmlLogger.get_logger()
+
+
+class DataInterface(BaseModel):
     """Base data interface for all data types
 
     Args:
@@ -52,8 +52,8 @@
     )
 
     @property
-    def data_type(self) -> str:
-        return CommonKwargs.UNDEFINED.value
+    def data_type(self) -> DataType:
+        return DataType.Base
 
     @field_validator("sql_logic", mode="before")
     @classmethod
@@ -126,7 +126,7 @@
         self.feature_map = {
             "features": Feature(
                 feature_type=str(type(self.data)),
-                shape=CommonKwargs.UNDEFINED.value,
+                shape=[],
             )
         }
 
@@ -211,7 +211,7 @@
             splits = data_card.split_data()
             print(splits["train"].X.head())
 
-               Chins  Situps  Jumps
+                Chins  Situps  Jumps
             0    5.0   162.0   60.0
             1    2.0   110.0   60.0
             2   12.0   101.0  101.0
@@ -239,11 +239,6 @@
             return data_holder
         raise ValueError("No data splits provided")
 
-    @property
-    def data_suffix(self) -> str:
-        """Returns suffix for storage"""
-        return Suffix.JOBLIB.value
-
     @staticmethod
-    def name() -> str:
+    def is_data_interface() -> bool:
         raise NotImplementedError

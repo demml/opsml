@@ -14,10 +14,11 @@ use opsml_types::cards::model::{
 };
 use opsml_types::cards::{
     DataSchema, Description, Feature, HuggingFaceORTModel, HuggingFaceOnnxArgs,
-    HuggingFaceOnnxSaveArgs, OnnxSchema, RegistryType, TorchOnnxArgs, TorchSaveArgs, VersionType,
+    HuggingFaceOnnxSaveArgs, OnnxSchema, RegistryType, TorchOnnxArgs, TorchSaveArgs,
 };
 use opsml_types::shared::{CommonKwargs, SaveName, Suffix};
 use opsml_types::{Card, CardInfo, CardList, DataType, LogLevel, ModelInterfaceType};
+use opsml_utils::{FileUtils, VersionType};
 use pyo3::prelude::*;
 
 #[pymodule]
@@ -39,6 +40,10 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<RegistryType>()?;
     _m.add_class::<DataType>()?;
 
+    // utils
+    _m.add_class::<VersionType>()?;
+    _m.add_class::<FileUtils>()?;
+
     // cards (types that are used across cards)
     _m.add_class::<HuggingFaceOnnxArgs>()?;
     _m.add_class::<HuggingFaceORTModel>()?;
@@ -47,7 +52,6 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<TorchSaveArgs>()?;
     _m.add_class::<Feature>()?;
     _m.add_class::<Description>()?;
-    _m.add_class::<VersionType>()?;
     _m.add_class::<DataSchema>()?;
     _m.add_class::<OnnxSchema>()?;
     _m.add_class::<CardInfo>()?;

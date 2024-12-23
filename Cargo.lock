@@ -3273,6 +3273,7 @@ dependencies = [
  "colored_json",
  "opsml-colors",
  "opsml-error",
+ "opsml-utils",
  "pyo3",
  "serde",
  "serde_json",
@@ -3286,10 +3287,12 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "opsml-error",
- "opsml-types",
+ "pyo3",
  "regex",
  "semver",
+ "serde",
  "uuid",
+ "walkdir",
 ]
 
 [[package]]
@@ -3607,6 +3610,7 @@ dependencies = [
  "opsml-storage",
  "opsml-todo",
  "opsml-types",
+ "opsml-utils",
  "pyo3",
 ]
 

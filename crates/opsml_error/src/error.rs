@@ -1,3 +1,5 @@
+use std::io::Error;
+
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::PyErr;
@@ -50,6 +52,9 @@ pub enum UtilError {
 
     #[error("Failed to parse date")]
     DateError,
+
+    #[error("Failed to find file")]
+    FileNotFoundError,
 }
 
 impl From<UtilError> for PyErr {
