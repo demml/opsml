@@ -421,7 +421,7 @@ class FileUtils:
         """Open a file and return the contents as a string
 
         Args:
-            name:
+            filepath:
                 The name of the file
 
         Returns:
@@ -433,7 +433,7 @@ class FileUtils:
         """Find the path to a file
 
         Args:
-            name:
+            filepath:
                 The name of the file
 
         Returns:
@@ -542,9 +542,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
