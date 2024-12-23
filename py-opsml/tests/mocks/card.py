@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 
 import joblib  # type: ignore
 from pydantic import BaseModel, ConfigDict, Field
-from opsml_core import (
+from opsml import (
     CommonKwargs,
     Feature,
     Suffix,

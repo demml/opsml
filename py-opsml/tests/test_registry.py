@@ -1,4 +1,4 @@
-from opsml_core import CardRegistry, RegistryType, OpsmlLogger
+from opsml import CardRegistry, RegistryType, OpsmlLogger
 
 # setup logging
 OpsmlLogger.setup_logging()

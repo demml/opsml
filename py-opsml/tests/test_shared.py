@@ -1,4 +1,4 @@
-from opsml_core import (
+from opsml import (
     CommonKwargs,
     SaveName,
     Suffix,
