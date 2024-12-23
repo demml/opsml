@@ -17,7 +17,7 @@ use opsml_types::cards::{
     HuggingFaceOnnxSaveArgs, OnnxSchema, RegistryType, TorchOnnxArgs, TorchSaveArgs, VersionType,
 };
 use opsml_types::shared::{CommonKwargs, SaveName, Suffix};
-use opsml_types::{Card, CardInfo, CardList, LogLevel, ModelInterfaceType};
+use opsml_types::{Card, CardInfo, CardList, DataType, LogLevel, ModelInterfaceType};
 use pyo3::prelude::*;
 
 #[pymodule]
@@ -37,6 +37,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<SaveName>()?;
     _m.add_class::<Suffix>()?;
     _m.add_class::<RegistryType>()?;
+    _m.add_class::<DataType>()?;
 
     // cards (types that are used across cards)
     _m.add_class::<HuggingFaceOnnxArgs>()?;

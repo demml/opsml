@@ -22,6 +22,7 @@ from ._opsml import (  # type: ignore
     ModelInterfaceSaveMetadata,
     ModelInterfaceMetadata,
     LogLevel,
+    DataType,
 )
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     "ModelInterfaceSaveMetadata",
     "ModelInterfaceMetadata",
     "LogLevel",
+    "DataType",
 ]

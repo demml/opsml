@@ -131,6 +131,27 @@ class RegistryType:
     Audi: "RegistryType"
     Pipeline: "RegistryType"
 
+class DataType:
+    Pandas: "DataType"
+    Pyarrow: "DataType"
+    Polars: "DataType"
+    Numpy: "DataType"
+    Image: "DataType"
+    Text: "DataType"
+    Dict: "DataType"
+    Sql: "DataType"
+    Profile: "DataType"
+    TransformerBatch: "DataType"
+    String: "DataType"
+    TorchTensor: "DataType"
+    TorchDataset: "DataType"
+    TensorflowTensor: "DataType"
+    Tuple: "DataType"
+    List: "DataType"
+    Str: "DataType"
+    OrderedDict: "DataType"
+    Joblib: "DataType"
+
 # Errors
 class OpsmlError(Exception):
     def __init__(self, message: str) -> None: ...
