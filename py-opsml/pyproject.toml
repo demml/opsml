@@ -104,7 +104,7 @@ omit = [
 
 [tool.mypy]
 # platform configuration
-python_version = "3.11"
+python_version = "3.12"
 platform = "linux"
 mypy_path = "stubs"
 ignore_missing_imports = true
