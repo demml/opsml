@@ -498,6 +498,7 @@ pub enum DataType {
     Str,
     OrderedDict,
     Joblib,
+    Base,
 }
 
 #[cfg(test)]

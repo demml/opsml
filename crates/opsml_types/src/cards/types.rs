@@ -1,10 +1,10 @@
 use crate::shared::helper::PyHelperFuncs;
 use opsml_error::error::TypeError;
+use opsml_utils::file::FileUtils;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use std::str::FromStr;
 use walkdir::WalkDir;
 
 #[pyclass(eq, eq_int)]
@@ -114,50 +114,6 @@ impl CardSQLTableNames {
     }
 }
 
-#[pyclass]
-#[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
-pub enum VersionType {
-    Major,
-    Minor,
-    Patch,
-    Pre,
-    Build,
-    PreBuild,
-}
-
-impl FromStr for VersionType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<VersionType, Self::Err> {
-        match input.to_lowercase().as_str() {
-            "major" => Ok(VersionType::Major),
-            "minor" => Ok(VersionType::Minor),
-            "patch" => Ok(VersionType::Patch),
-            "pre" => Ok(VersionType::Pre),
-            "build" => Ok(VersionType::Build),
-            "pre_build" => Ok(VersionType::PreBuild),
-            _ => Err(()),
-        }
-    }
-}
-
-#[pymethods]
-impl VersionType {
-    #[new]
-    fn new(version_type: String) -> PyResult<Self> {
-        match VersionType::from_str(&version_type) {
-            Ok(version_type) => Ok(version_type),
-            Err(_) => Err(pyo3::exceptions::PyValueError::new_err(
-                "Invalid version type",
-            )),
-        }
-    }
-
-    fn __eq__(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct Description {
@@ -184,7 +140,8 @@ impl Description {
         let extracted_summary = match summary {
             Some(summary) => {
                 if summary.ends_with(".md") {
-                    let filepath = Description::find_filepath(&summary)?;
+                    let filepath = FileUtils::find_filepath(&summary)
+                        .map_err(|e| TypeError::Error(e.to_string()))?;
                     Some(filepath)
                 } else {
                     Some(summary)
@@ -196,7 +153,8 @@ impl Description {
         let extracted_sample_code = match sample_code {
             Some(sample_code) => {
                 if sample_code.ends_with(".md") {
-                    let filepath = Description::find_filepath(&sample_code)?;
+                    let filepath = FileUtils::find_filepath(&sample_code)
+                        .map_err(|e| TypeError::Error(e.to_string()))?;
                     Some(filepath)
                 } else {
                     Some(sample_code)

@@ -9,8 +9,10 @@ doctest = false
 
 [dependencies]
 opsml-error = { workspace = true }
-opsml-types = { workspace = true }
 chrono = { workspace = true }
+pyo3 = { workspace = true }
 regex = { workspace = true }
 semver = { workspace = true }
+serde = { workspace = true }
 uuid = { workspace = true }
+walkdir = { workspace = true }

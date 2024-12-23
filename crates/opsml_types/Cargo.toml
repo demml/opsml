@@ -14,6 +14,7 @@ chrono = { workspace = true }
 colored_json = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-error = { workspace = true }
+opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
