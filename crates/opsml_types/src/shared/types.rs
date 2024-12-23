@@ -455,6 +455,27 @@ impl PresignableTypes {
     }
 }
 
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+
+impl LogLevel {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "debug" => LogLevel::Debug,
+            "info" => LogLevel::Info,
+            "warn" => LogLevel::Warn,
+            "error" => LogLevel::Error,
+            _ => LogLevel::Info,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
