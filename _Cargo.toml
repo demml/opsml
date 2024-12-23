@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "crates/*",
-  "opsml/*",
+  "py_opsml",
 ]
 default-members = [
   "crates/*",
