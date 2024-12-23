@@ -861,7 +861,7 @@ class OpsmlLogger:
                 Args to format the message with
         """
 
-    def warning(self, message: str, *args) -> None:
+    def warn(self, message: str, *args) -> None:
         """Logs a message at the Warning level.
 
         Args:

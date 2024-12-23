@@ -93,5 +93,9 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "python"
-module-name = "py_opsml._py_opsml"
-cargo-extra-args = "--features extension-module"
+module-name = "opsml._opsml"
+bindings = 'pyo3'
+features = ["pyo3/extension-module"]
+
+[tool.uv]
+package = false
