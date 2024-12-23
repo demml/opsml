@@ -123,7 +123,7 @@ impl ModelCard {
             version: base_args.version,
             uid: base_args.uid,
             tags: base_args.tags,
-            metadata: metadata,
+            metadata,
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
         })
