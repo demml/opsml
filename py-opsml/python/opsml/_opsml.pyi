@@ -813,14 +813,72 @@ class RegistryTestHelper:
     def setup(self) -> None: ...
     def cleanup(self) -> None: ...
 
+class LogLevel:
+    Debug: "LogLevel"
+    Info: "LogLevel"
+    Warning: "LogLevel"
+    Error: "LogLevel"
+
 class OpsmlLogger:
     @staticmethod
-    def setup_logging(log_level: Optional[str] = None) -> None:
+    def setup_logging(log_level: Optional[LogLevel] = None) -> None:
         """Setup logging
 
         Args:
             log_level:
                 The log level to use. Default is INFO
+        """
+    @staticmethod
+    def get_logger(log_level: Optional[LogLevel] = None) -> "OpsmlLogger":
+        """
+        Get the logger
+
+        Args:
+            log_level:
+                The log level to use. Default is INFO
+
+        Returns:
+            The logger
+        """
+
+    def info(self, message: str, *args) -> None:
+        """Logs a message at the Info level.
+
+        Args:
+            message:
+                The message to log
+            args:
+                Args to format the message with
+        """
+
+    def debug(self, message: str, *args) -> None:
+        """Logs a message at the Debug level.
+
+        Args:
+            message:
+                The message to log
+            args:
+                Args to format the message with
+        """
+
+    def warning(self, message: str, *args) -> None:
+        """Logs a message at the Warning level.
+
+        Args:
+            message:
+                The message to log
+            args:
+                Args to format the message with
+        """
+
+    def error(self, message: str, *args) -> None:
+        """Logs a message at the Error level.
+
+        Args:
+            message:
+                The message to log
+            args:
+                Args to format the message with
         """
 
 class ModelInterfaceType:
