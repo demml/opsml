@@ -140,7 +140,7 @@ impl Description {
         let extracted_summary = match summary {
             Some(summary) => {
                 if summary.ends_with(".md") {
-                    let filepath = FileUtils::find_filepath(&summary)
+                    let filepath = FileUtils::open_file(&summary)
                         .map_err(|e| TypeError::Error(e.to_string()))?;
                     Some(filepath)
                 } else {
@@ -153,7 +153,7 @@ impl Description {
         let extracted_sample_code = match sample_code {
             Some(sample_code) => {
                 if sample_code.ends_with(".md") {
-                    let filepath = FileUtils::find_filepath(&sample_code)
+                    let filepath = FileUtils::open_file(&sample_code)
                         .map_err(|e| TypeError::Error(e.to_string()))?;
                     Some(filepath)
                 } else {

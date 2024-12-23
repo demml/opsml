@@ -417,8 +417,20 @@ class VersionType:
 
 class FileUtils:
     @staticmethod
-    def find_filepath(name: str) -> str:
-        """Find a file path
+    def open_file(filepath: str) -> str:
+        """Open a file and return the contents as a string
+
+        Args:
+            name:
+                The name of the file
+
+        Returns:
+            The file path
+        """
+
+    @staticmethod
+    def find_path_to_file(filepath: str) -> str:
+        """Find the path to a file
 
         Args:
             name:
@@ -865,6 +877,7 @@ class OpsmlLogger:
             log_level:
                 The log level to use. Default is INFO
         """
+
     @staticmethod
     def get_logger(log_level: Optional[LogLevel] = None) -> "OpsmlLogger":
         """
