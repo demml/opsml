@@ -5,11 +5,12 @@
 # LICENSE file in the root directory of this source tree.
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
-from opsml import DataType
+
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
+from opsml import DataType
 from pydantic import (
     BaseModel,
     ConfigDict,

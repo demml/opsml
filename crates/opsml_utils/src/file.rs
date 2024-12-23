@@ -8,7 +8,14 @@ pub struct FileUtils;
 #[pymethods]
 impl FileUtils {
     #[staticmethod]
-    pub fn find_filepath(filepath: &str) -> PyResult<String> {
+    pub fn open_file(filepath: &str) -> PyResult<String> {
+        // get file name of path
+        let path = FileUtils::find_path_to_file(filepath)?;
+        std::fs::read_to_string(path).map_err(|e| OpsmlError::new_err(e))
+    }
+
+    #[staticmethod]
+    pub fn find_path_to_file(filepath: &str) -> PyResult<String> {
         // get file name of path
         let path = std::path::Path::new(&filepath)
             .file_name()
@@ -21,11 +28,8 @@ impl FileUtils {
         for entry in WalkDir::new(current_dir) {
             let entry = entry.map_err(|e| OpsmlError::new_err(e.to_string()))?;
             if entry.file_type().is_file() && entry.file_name().to_string_lossy() == path {
-                // open the file and read it to a string
-                let file =
-                    std::fs::read_to_string(entry.path()).map_err(|e| OpsmlError::new_err(e))?;
-
-                return Ok(file);
+                // return the full path to the file
+                return Ok(entry.path().to_str().unwrap().to_string());
             }
         }
         // raise error if file not found

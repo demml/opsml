@@ -2,14 +2,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import joblib
+from opsml import DataType, Feature, FileUtils, OpsmlLogger
+from opsml.interfaces.data import Data, DataSplit, DataSplitter
+from opsml.interfaces.data.profiler import DataProfiler
 from pydantic import BaseModel, ConfigDict, field_validator
 from scouter import DataProfile
-from opsml import OpsmlLogger, Feature, Suffix, CommonKwargs, DataType
-from opsml.interfaces.data import Data, DataSplit, DataSplitter
-
-from opsml.helpers.utils import FileUtils
-from opsml.profile.profile_data import DataProfiler
-
 
 logger = OpsmlLogger.get_logger()
 
@@ -64,10 +61,7 @@ class DataInterface(BaseModel):
         for name, query in sql_logic.items():
             if ".sql" in query:
                 try:
-                    sql_path = FileUtils.find_filepath(name=query)
-                    with open(sql_path, "r", encoding="utf-8") as file_:
-                        query_ = file_.read()
-                    sql_logic[name] = query_
+                    sql_logic[name] = FileUtils.open_file(query)
 
                 except Exception as error:
                     raise ValueError(
@@ -97,10 +91,7 @@ class DataInterface(BaseModel):
             self.sql_logic[name] = query
 
         elif filename is not None:
-            sql_path = str(FileUtils.find_filepath(name=filename))
-            with open(sql_path, "r", encoding="utf-8") as file_:
-                query = file_.read()
-            self.sql_logic[name] = query
+            self.sql_logic[name] = FileUtils.open_file(filename)
 
         else:
             raise ValueError("SQL Query or Filename must be provided")

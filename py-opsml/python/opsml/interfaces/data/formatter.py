@@ -3,15 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
-from opsml import Feature
 
 import pandas as pd
 import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
-
-from opsml import OpsmlLogger, DataType
-
+from opsml import DataType, Feature, OpsmlLogger
 
 logger = OpsmlLogger.get_logger()
 
@@ -37,7 +34,7 @@ class SchemaValidator:
         raise NotImplementedError
 
     @staticmethod
-    def validate_data(data_type: str) -> bool:
+    def validate_data(data_type: DataType) -> bool:
         """Validate data to formatter"""
         raise NotImplementedError
 
@@ -66,10 +63,10 @@ class DecimalType(PolarsType):
     def as_feature(data_type: pl.Decimal) -> Feature:
         return Feature(
             feature_type="decimal",
-            shape=(1,),
+            shape=[1],
             extra_args={
-                "precision": data_type.precision,
-                "scale": data_type.scale,
+                "precision": str(data_type.precision),
+                "scale": str(data_type.scale),
             },
         )
 
@@ -93,10 +90,10 @@ class DateTimeType(PolarsType):
     def as_feature(data_type: pl.DataType) -> Feature:
         return Feature(
             feature_type="datetime",
-            shape=(1,),
+            shape=[1],
             extra_args={
-                "time_unit": data_type.time_unit,
-                "time_zone": data_type.time_zone,
+                "time_unit": str(data_type.time_unit),  # type: ignore
+                "time_zone": str(data_type.time_zone),  # type: ignore
             },
         )
 
@@ -121,7 +118,7 @@ class DurationType(PolarsType):
         assert isinstance(data_type, pl.Duration)
         return Feature(
             feature_type="duration",
-            shape=(1,),
+            shape=[1],
             extra_args={
                 "time_unit": data_type.time_unit,
             },
@@ -145,9 +142,9 @@ class CategoricalType(PolarsType):
     def as_feature(data_type: pl.Categorical) -> Feature:
         return Feature(
             feature_type="categorical",
-            shape=(1,),
+            shape=[1],
             extra_args={
-                "ordering": data_type.ordering,
+                "ordering": str(data_type.ordering),
             },
         )
 
@@ -176,10 +173,8 @@ class EnumType(PolarsType):
 
         return Feature(
             feature_type="enum",
-            shape=(1,),
-            extra_args={
-                "categories": categories,
-            },
+            shape=[1],
+            extra_args={"name": "enum", "categories": ", ".join(categories)},
         )
 
     @staticmethod
@@ -200,7 +195,7 @@ class ListType(PolarsType):
     def as_feature(data_type: pl.List) -> Feature:
         return Feature(
             feature_type="list",
-            shape=(1,),
+            shape=[1],
             extra_args={"inner": str(data_type.inner)},
         )
 
@@ -223,10 +218,10 @@ class ArrayType(PolarsType):
     def as_feature(data_type: pl.Array) -> Feature:
         return Feature(
             feature_type="array",
-            shape=data_type.shape,
+            shape=list(data_type.shape),
             extra_args={
                 "inner": str(data_type.inner),
-                "size": data_type.size,
+                "size": str(data_type.size),
             },
         )
 
@@ -256,19 +251,12 @@ class ArrayType(PolarsType):
 class StructType(PolarsType):
     @staticmethod
     def as_feature(data_type: pl.Struct) -> Feature:
-        fields = [
-            {
-                "name": field.name,
-                "data_type": str(field.dtype),
-            }
-            for field in data_type.fields
-        ]
+        fields = {field.name: str(field.dtype) for field in data_type.fields}
+
         return Feature(
             feature_type="struct",
-            shape=data_type.shape,
-            extra_args={
-                "fields": fields,
-            },
+            shape=list(data_type.shape),  # type: ignore
+            extra_args=fields,
         )
 
     @staticmethod
@@ -293,7 +281,7 @@ class DefaultPolarsType(PolarsType):
     def as_feature(data_type: pl.DataType) -> Feature:
         return Feature(
             feature_type=str(data_type),
-            shape=(1,),
+            shape=[1],
         )
 
     @staticmethod
@@ -348,9 +336,7 @@ class PolarsSchemaValidator(SchemaValidator):
 
             return self.data.with_columns(_check_cols)
         except Exception as error:
-            logger.warning(
-                f"Failed to validate schema: {error}. Returning original data"
-            )
+            logger.warn(f"Failed to validate schema: {error}. Returning original data")
             raise error
             # return self.data
 
@@ -407,7 +393,7 @@ class PandasSchemaValidator(SchemaValidator):
         return {
             key: Feature(
                 feature_type=str(value),
-                shape=(1,),
+                shape=[1],
             )
             for key, value in data.dtypes.to_dict().items()
         }
@@ -442,7 +428,7 @@ class NumpySchemaValidator(SchemaValidator):
         return {
             "features": Feature(
                 feature_type=str(data.dtype),
-                shape=data.shape,
+                shape=list(data.shape),
             )
         }
 
@@ -478,7 +464,7 @@ class ArrowSchemaValidator(SchemaValidator):
         return {
             feature: Feature(
                 feature_type=str(type_),
-                shape=(1,),
+                shape=[1],
             )
             for feature, type_ in zip(schema.names, schema.types)
         }
@@ -488,7 +474,9 @@ class ArrowSchemaValidator(SchemaValidator):
         return DataType.Pyarrow == data_type
 
 
-def generate_feature_schema(data: ValidArrowData, data_type: str) -> Dict[str, Feature]:
+def generate_feature_schema(
+    data: ValidArrowData, data_type: DataType
+) -> Dict[str, Feature]:
     validator = next(
         (
             validator
@@ -507,9 +495,7 @@ def generate_feature_schema(data: ValidArrowData, data_type: str) -> Dict[str, F
 
 
 def check_data_schema(
-    data: ValidArrowData,
-    schema: Dict[str, Feature],
-    data_type: str,
+    data: ValidArrowData, schema: Dict[str, Feature], data_type: DataType
 ) -> ValidArrowData:
     """Check if data schema matches schema
 
