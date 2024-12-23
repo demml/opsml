@@ -5,22 +5,21 @@
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-import pyarrow as pa
+import pyarrow as pa  # type: ignore
 
-from opsml.data.interfaces.custom_data.arrow_reader import PyarrowDatasetReader
-from opsml.data.interfaces.custom_data.arrow_writer import PyarrowDatasetWriter
-from opsml.data.interfaces.custom_data.base import (
+from opsml.interfaces.data.file_system.arrow_reader import PyarrowDatasetReader
+from opsml.interfaces.data.file_system.arrow_writer import PyarrowDatasetWriter
+from opsml.interfaces.data.file_system.base import (
     Dataset,
     check_for_dirs,
     get_metadata_filepath,
 )
-from opsml.helpers.logging import ArtifactLogger
-from opsml.types import CommonKwargs
+from opsml import OpsmlLogger, DataType
 
-logger = ArtifactLogger.get_logger()
+logger = OpsmlLogger.get_logger()
 
 try:
-    from opsml.data.interfaces.custom_data.image import ImageMetadata
+    from opsml.interfaces.data.file_system.image import ImageMetadata
 
     class ImageDataset(Dataset):
         """Create an image dataset from a directory of images.
@@ -49,7 +48,7 @@ try:
                 to create the splits for you.
         """
 
-        splits: Dict[Optional[str], ImageMetadata] = {}
+        splits: Dict[Optional[str], ImageMetadata] = {}  # type: ignore
 
         def save_data(self, path: Path) -> None:
             """Saves data to path. Base implementation use Joblib
@@ -101,9 +100,13 @@ try:
 
             if bool(splits):
                 for split in splits:
-                    self.splits[split] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir, split)[0])
+                    self.splits[split] = ImageMetadata.load_from_file(
+                        get_metadata_filepath(self.data_dir, split)[0]
+                    )
             else:
-                self.splits[None] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir)[0])
+                self.splits[None] = ImageMetadata.load_from_file(
+                    get_metadata_filepath(self.data_dir)[0]
+                )
 
         @property
         def arrow_schema(self) -> pa.Schema:
@@ -137,8 +140,8 @@ try:
             return ImageDataset.__name__
 
         @property
-        def data_type(self) -> str:
-            return CommonKwargs.IMAGE.value
+        def data_type(self) -> DataType:
+            return DataType.Dataset
 
 except ModuleNotFoundError:
-    from opsml.data.interfaces.backups import ImageDatasetNoModule as ImageDataset
+    from opsml.interfaces.data.backups import ImageDatasetNoModule as ImageDataset  # type: ignore

@@ -7,7 +7,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
-import pyarrow as pa
+import pyarrow as pa  # type: ignore
 from pydantic import (
     BaseModel,
     FieldSerializationInfo,
@@ -15,10 +15,9 @@ from pydantic import (
     model_validator,
 )
 
-from opsml.helpers.logging import ArtifactLogger
-from opsml.types import CommonKwargs, Description, Suffix
+from opsml import OpsmlLogger, Description, DataType
 
-logger = ArtifactLogger.get_logger()
+logger = OpsmlLogger.get_logger()
 
 
 def check_for_dirs(data_dir: Path) -> List[str]:
@@ -58,7 +57,9 @@ def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> List[P
     if paths:
         return paths
 
-    raise ValueError(f"Could not find metadata.jsonl in {search_path} or subdirectories")
+    raise ValueError(
+        f"Could not find metadata.jsonl in {search_path} or subdirectories"
+    )
 
 
 class FileRecord(BaseModel):
@@ -180,7 +181,7 @@ class Dataset(BaseModel):
 
     data_dir: Path
     shard_size: str = "512MB"
-    splits: Dict[Optional[str], Metadata] = {}
+    splits: Dict[str, Metadata] = {}
     description: Description = Description()
 
     @field_serializer("data_dir", return_type=str, mode="plain")
@@ -198,7 +199,7 @@ class Dataset(BaseModel):
         return self.data_dir
 
     @property
-    def data_splits(self) -> Dict[Optional[str], Metadata]:
+    def data_splits(self) -> Dict[str, Metadata]:
         """Returns data splits"""
         return self.splits
 
@@ -248,9 +249,5 @@ class Dataset(BaseModel):
         raise NotImplementedError
 
     @property
-    def data_type(self) -> str:
-        return CommonKwargs.UNDEFINED.value
-
-    @property
-    def data_suffix(self) -> str:
-        return Suffix.NONE.value
+    def data_type(self) -> DataType:
+        return DataType.Dataset
