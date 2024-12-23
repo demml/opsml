@@ -48,6 +48,7 @@ axum-extra = { version =  "0.*", features = ["cookie"] }
 clap = { version = "4.*", features = ["derive"] }
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
+dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"
 futures-util = "0.*"
 google-cloud-storage = { version = "0.*", features  = ["auth"] }
@@ -76,8 +77,10 @@ time = "0.*"
 tokio = { version = "1.*", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.7.12",  features = ["codec", "io"]}
 tower-http = { version = "0.5.0", features = ["cors"] }
-tracing = "0.1.40"
-tracing-subscriber = {version = "0.3.18", features = ["json", "time"]}
+tracing = "0.*"
+tracing-appender = "0.*"
+tracing-core = "0.*"
+tracing-subscriber = {version = "0.*", features = ["json", "time"]}
 uuid = { version = "1.11.0", features = ["v4"] }
 walkdir = "2.*"
 
