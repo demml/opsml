@@ -476,6 +476,30 @@ impl LogLevel {
     }
 }
 
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum DataType {
+    Pandas,
+    Pyarrow,
+    Polars,
+    Numpy,
+    Image,
+    Text,
+    Dict,
+    Sql,
+    Profile,
+    TransformerBatch,
+    String,
+    TorchTensor,
+    TorchDataset,
+    TensorflowTensor,
+    Tuple,
+    List,
+    Str,
+    OrderedDict,
+    Joblib,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,1 +1,1 @@
-# from opsml.interfaces.data.base import DataInterface
+from opsml.interfaces.data.base import DataInterface
