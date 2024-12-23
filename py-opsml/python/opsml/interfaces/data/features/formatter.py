@@ -1,12 +1,11 @@
 # Copyright (c) 2023-2024 Shipt, Inc.
-# Copyright (c) 2024-current Demml, Inc.
+# Copyright (c) 2024-current Demml.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
-
+import pyarrow as pa  # type: ignore
 import pandas as pd
 import polars as pl
-import pyarrow as pa
 from numpy.typing import NDArray
 from opsml import DataType, Feature, OpsmlLogger
 
@@ -150,7 +149,9 @@ class CategoricalType(PolarsType):
 
     @staticmethod
     def cast(data: Any, feature: Feature) -> Any:  # TODO: Fix Any
-        ordering = cast(Optional[Literal["physical", "lexical"]], feature.extra_args.get("ordering"))
+        ordering = cast(
+            Optional[Literal["physical", "lexical"]], feature.extra_args.get("ordering")
+        )
         return pl.col(data).cast(pl.Categorical(ordering))
 
     @staticmethod
@@ -227,7 +228,9 @@ class ArrayType(PolarsType):
     def cast(data: Any, feature: Feature) -> Any:  # TODO: Fix Any
         _inner_type = cast(str, feature.extra_args.get("inner"))
         inner_type = getattr(pl, _inner_type)
-        size = cast(Optional[Union[int, Tuple[int, ...]]], feature.extra_args.get("size"))
+        size = cast(
+            Optional[Union[int, Tuple[int, ...]]], feature.extra_args.get("size")
+        )
 
         return pl.col(data).cast(
             pl.Array(
@@ -258,7 +261,10 @@ class StructType(PolarsType):
     @staticmethod
     def cast(data: Any, feature: Feature) -> Any:  # TODO: Fix Any
         _fields = cast(List[Dict[str, str]], feature.extra_args.get("fields"))
-        fields = [pl.Field(name=field["name"], dtype=getattr(pl, field["data_type"])) for field in _fields]
+        fields = [
+            pl.Field(name=field["name"], dtype=getattr(pl, field["data_type"]))
+            for field in _fields
+        ]
         return pl.col(data).cast(pl.Struct(fields=fields))
 
     @staticmethod
@@ -467,7 +473,9 @@ class ArrowSchemaValidator(SchemaValidator):
         return DataType.Pyarrow == data_type
 
 
-def generate_feature_schema(data: ValidArrowData, data_type: DataType) -> Dict[str, Feature]:
+def generate_feature_schema(
+    data: ValidArrowData, data_type: DataType
+) -> Dict[str, Feature]:
     validator = next(
         (
             validator
@@ -485,7 +493,9 @@ def generate_feature_schema(data: ValidArrowData, data_type: DataType) -> Dict[s
     return validator.generate_feature_map(data)
 
 
-def check_data_schema(data: ValidArrowData, schema: Dict[str, Feature], data_type: DataType) -> ValidArrowData:
+def check_data_schema(
+    data: ValidArrowData, schema: Dict[str, Feature], data_type: DataType
+) -> ValidArrowData:
     """Check if data schema matches schema
 
     Args:
