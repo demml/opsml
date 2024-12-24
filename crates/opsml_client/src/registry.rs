@@ -1,7 +1,7 @@
+use crate::base::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_storage::*;
 use opsml_types::*;
 
 // TODO: Add trait for client and server registry

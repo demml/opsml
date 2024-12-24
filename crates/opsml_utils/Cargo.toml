@@ -12,6 +12,5 @@ opsml-error = { workspace = true }
 chrono = { workspace = true }
 pyo3 = { workspace = true }
 regex = { workspace = true }
-serde = { workspace = true }
 uuid = { workspace = true }
 walkdir = { workspace = true }

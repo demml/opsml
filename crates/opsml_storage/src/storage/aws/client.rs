@@ -1,6 +1,5 @@
 use crate::storage::base::{get_files, PathExt, StorageClient};
 use crate::storage::filesystem::FileSystem;
-use crate::storage::http::base::OpsmlApiClient;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;

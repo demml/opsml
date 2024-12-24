@@ -7,6 +7,9 @@ members = [
 default-members = [
   "crates/*",
 ]
+exclude = [
+  "crates/opsml_client",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -19,6 +22,7 @@ repository = "https://github.com/demml/opsml"
 [workspace.dependencies]
 
 opsml-auth = { path = "crates/opsml_auth" }
+opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
 opsml-error = { path = "crates/opsml_error" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
