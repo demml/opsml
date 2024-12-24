@@ -4,6 +4,7 @@ use crate::saver::enums::CardSaver;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
+use opsml_semver::VersionType;
 use opsml_types::*;
 use pyo3::prelude::*;
 use std::collections::HashMap;

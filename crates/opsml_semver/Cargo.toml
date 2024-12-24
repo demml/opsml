@@ -1,5 +1,5 @@
 [package]
-name = "opsml-utils"
+name = "opsml-semver"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
@@ -9,9 +9,6 @@ doctest = false
 
 [dependencies]
 opsml-error = { workspace = true }
-chrono = { workspace = true }
 pyo3 = { workspace = true }
-regex = { workspace = true }
+semver = { workspace = true }
 serde = { workspace = true }
-uuid = { workspace = true }
-walkdir = { workspace = true }

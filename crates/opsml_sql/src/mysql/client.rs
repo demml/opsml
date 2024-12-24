@@ -8,9 +8,9 @@ use crate::schemas::schema::{
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
+use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{CardQueryArgs, CardSQLTableNames};
-use opsml_utils::semver::VersionValidator;
 use semver::Version;
 use sqlx::{
     mysql::{MySql, MySqlPoolOptions, MySqlRow},

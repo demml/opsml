@@ -13,6 +13,7 @@ opsml-colors = { workspace = true }
 opsml-error = { workspace = true }
 opsml-logging = { workspace = true }
 opsml-types = { workspace = true }
+opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
 opsml-sql = { workspace = true, optional = true }
 opsml-storage = { workspace = true }

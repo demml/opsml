@@ -3,6 +3,7 @@ pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
     use opsml_error::error::RegistryError;
+    use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
     use opsml_settings::config::OpsmlConfig;
     use opsml_sql::{
@@ -11,7 +12,6 @@ pub mod server_logic {
         schemas::*,
     };
     use opsml_types::*;
-    use opsml_utils::{VersionArgs, VersionValidator};
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
