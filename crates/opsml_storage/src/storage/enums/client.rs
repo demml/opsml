@@ -1,8 +1,8 @@
 /// Implements a generic enum to handle different storage clients based on the storage URI
 /// This enum is meant to provide a common interface to use in the server
 use crate::storage::filesystem::FileSystem;
-use crate::storage::http::base::OpsmlApiClient;
 use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
+
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
