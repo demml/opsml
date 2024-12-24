@@ -1,4 +1,5 @@
 use opsml_error::error::CardError;
+use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern};
 use pyo3::prelude::*;

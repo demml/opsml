@@ -9,9 +9,9 @@ use crate::schemas::schema::{
 
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
+use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{CardQueryArgs, CardSQLTableNames};
-use opsml_utils::semver::VersionValidator;
 use semver::Version;
 use sqlx::{
     postgres::{PgPoolOptions, PgRow, Postgres},

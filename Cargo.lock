@@ -3094,6 +3094,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-interfaces"
+version = "0.1.0"
+dependencies = [
+ "opsml-error",
+ "pyo3",
+]
+
+[[package]]
 name = "opsml-logging"
 version = "0.1.0"
 dependencies = [
@@ -3118,6 +3126,7 @@ dependencies = [
  "opsml-colors",
  "opsml-error",
  "opsml-logging",
+ "opsml-semver",
  "opsml-settings",
  "opsml-sql",
  "opsml-storage",
@@ -3133,6 +3142,16 @@ dependencies = [
  "tokio 1.42.0",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "opsml-semver"
+version = "0.1.0"
+dependencies = [
+ "opsml-error",
+ "pyo3",
+ "semver",
+ "serde",
 ]
 
 [[package]]
@@ -3153,6 +3172,7 @@ dependencies = [
  "opsml-error",
  "opsml-logging",
  "opsml-registry",
+ "opsml-semver",
  "opsml-settings",
  "opsml-sql",
  "opsml-storage",
@@ -3195,6 +3215,7 @@ dependencies = [
  "chrono",
  "opsml-error",
  "opsml-logging",
+ "opsml-semver",
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
@@ -3273,6 +3294,7 @@ dependencies = [
  "colored_json",
  "opsml-colors",
  "opsml-error",
+ "opsml-semver",
  "opsml-utils",
  "pyo3",
  "serde",
@@ -3289,7 +3311,6 @@ dependencies = [
  "opsml-error",
  "pyo3",
  "regex",
- "semver",
  "serde",
  "uuid",
  "walkdir",
