@@ -2,6 +2,7 @@ use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
 use indicatif::{ProgressBar, ProgressStyle};
+use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::ApiError;
 use opsml_error::error::StorageError;
@@ -21,7 +22,6 @@ use std::io::Write;
 use std::path::Path;
 
 const TIMEOUT_SECS: u64 = 30;
-const REDACTED: &str = "REDACTED";
 
 /// Create a new HTTP client that can be shared across different clients
 pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {

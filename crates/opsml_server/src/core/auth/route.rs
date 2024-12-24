@@ -3,8 +3,8 @@ use anyhow::{Context, Result};
 /// Route for debugging information
 use axum::extract::State;
 use axum::{http::header, http::header::HeaderMap, http::StatusCode, routing::get, Json, Router};
+use opsml_client::JwtToken;
 use opsml_sql::base::SqlClient;
-use opsml_types::JwtToken;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::error;

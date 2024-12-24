@@ -12,6 +12,7 @@ use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
 use indicatif::{ProgressBar, ProgressStyle};
+use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;

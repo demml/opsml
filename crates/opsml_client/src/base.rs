@@ -1,15 +1,7 @@
-use anyhow::{Context, Result as AnyhowResult};
-use bytes::BytesMut;
-use indicatif::{ProgressBar, ProgressStyle};
-use opsml_colors::Colorize;
+use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
-use opsml_error::error::StorageError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::{
-    DeleteFileQuery, DeleteFileResponse, DownloadFileQuery, FileInfo, ListFileInfoResponse,
-    ListFileQuery, ListFileResponse, MultiPartQuery, MultiPartSession, PresignedQuery,
-    PresignedUrl, StorageSettings, StorageType, DOWNLOAD_CHUNK_SIZE,
-};
+use opsml_types::{PresignedQuery, PresignedUrl};
 
 use reqwest::multipart::Form;
 use reqwest::Response;
@@ -18,8 +10,6 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
-use std::io::Write;
-use std::path::Path;
 
 const TIMEOUT_SECS: u64 = 30;
 const REDACTED: &str = "REDACTED";
