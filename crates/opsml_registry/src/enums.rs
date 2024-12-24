@@ -5,7 +5,7 @@ use opsml_types::*;
 
 #[derive(Debug)]
 pub enum OpsmlRegistry {
-    ClientRegistry(crate::client::registry::ClientRegistry),
+    ClientRegistry(opsml_client::ClientRegistry),
 
     #[cfg(feature = "server")]
     ServerRegistry(crate::server::registry::server_logic::ServerRegistry),
@@ -19,7 +19,7 @@ impl OpsmlRegistry {
         match storage_settings.client_mode {
             true => {
                 let client_registry =
-                    crate::client::registry::ClientRegistry::new(&config, registry_type).await?;
+                    opsml_client::ClientRegistry::new(&config, registry_type).await?;
                 Ok(Self::ClientRegistry(client_registry))
             }
             #[cfg(feature = "server")]
