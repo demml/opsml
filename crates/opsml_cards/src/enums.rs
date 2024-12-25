@@ -1,4 +1,4 @@
-use crate::cards::{DataCard, ModelCard};
+use crate::{DataCard, ModelCard};
 use opsml_error::error::CardError;
 use opsml_types::{CommonKwargs, RegistryType};
 use pyo3::prelude::*;

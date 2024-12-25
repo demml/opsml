@@ -1,7 +1,8 @@
-use crate::cards::*;
 use crate::enums::OpsmlRegistry;
 use crate::saver::enums::CardSaver;
+use opsml_cards::*;
 use opsml_colors::Colorize;
+use opsml_contracts::*;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;

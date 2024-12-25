@@ -1,5 +1,5 @@
-use crate::cards::CardEnum;
 use crate::saver::model::ModelSaver;
+use opsml_cards::CardEnum;
 use opsml_error::error::SaveError;
 use pyo3::Python;
 use tempfile::TempDir;

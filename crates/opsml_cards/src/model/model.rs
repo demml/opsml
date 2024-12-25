@@ -1,24 +1,25 @@
-use crate::cards::*;
-use opsml_error::error::OpsmlError;
+use crate::{BaseArgs, CardInfo};
+use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::*;
-use pyo3::{intern, prelude::*, IntoPyObjectExt};
+use pyo3::prelude::*;
+use pyo3::{intern, IntoPyObjectExt, PyObject};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DataCardMetadata {
+pub struct ModelCardMetadata {
     #[pyo3(get, set)]
-    pub interface_type: String,
-
-    #[pyo3(get, set)]
-    pub data_type: String,
+    pub interface_type: ModelInterfaceType,
 
     #[pyo3(get, set)]
     pub description: Description,
 
     #[pyo3(get, set)]
-    pub feature_map: HashMap<String, Feature>,
+    pub data_schema: DataSchema,
+
+    #[pyo3(get, set)]
+    pub datacard_uid: Option<String>,
 
     #[pyo3(get, set)]
     pub runcard_uid: Option<String>,
@@ -32,7 +33,7 @@ pub struct DataCardMetadata {
 
 #[pyclass]
 #[derive(Debug)]
-pub struct DataCard {
+pub struct ModelCard {
     #[pyo3(get, set)]
     pub interface: PyObject,
 
@@ -55,17 +56,20 @@ pub struct DataCard {
     pub tags: HashMap<String, String>,
 
     #[pyo3(get, set)]
-    pub metadata: DataCardMetadata,
+    pub metadata: ModelCardMetadata,
 
     #[pyo3(get)]
     pub card_type: CardType,
+
+    #[pyo3(get)]
+    pub to_onnx: bool,
 }
 
 #[pymethods]
-impl DataCard {
+impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, metadata=None))]
+    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, metadata=None, to_onnx=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
         name: Option<String>,
@@ -75,7 +79,8 @@ impl DataCard {
         uid: Option<String>,
         info: Option<CardInfo>,
         tags: Option<HashMap<String, String>>,
-        metadata: Option<DataCardMetadata>,
+        metadata: Option<ModelCardMetadata>,
+        to_onnx: Option<bool>,
     ) -> PyResult<Self> {
         let base_args = BaseArgs::new(
             name,
@@ -86,7 +91,6 @@ impl DataCard {
             info,
             tags.unwrap_or_default(),
         )?;
-
         let py = interface.py();
         // check if interface is a model interface (should be a bool)
         let is_interface: bool = interface
@@ -100,16 +104,14 @@ impl DataCard {
 
         if !is_interface {
             return Err(OpsmlError::new_err(
-                "Interface is not a data interface".to_string(),
+                "Interface argument is not a model interface".to_string(),
             ));
         }
-
         let mut metadata = metadata.unwrap_or_default();
-
         metadata.interface_type = interface
             .getattr(intern!(py, "interface_type"))
             .unwrap()
-            .to_string();
+            .extract()?;
 
         Ok(Self {
             interface: interface
@@ -122,7 +124,8 @@ impl DataCard {
             uid: base_args.uid,
             tags: base_args.tags,
             metadata,
-            card_type: CardType::Data,
+            card_type: CardType::Model,
+            to_onnx: to_onnx.unwrap_or(false),
         })
     }
 
@@ -130,7 +133,7 @@ impl DataCard {
     pub fn uri(&self) -> String {
         format!(
             "{}/{}/{}/v{}",
-            CardSQLTableNames::Data,
+            CardSQLTableNames::Model,
             self.repository,
             self.name,
             self.version
@@ -138,7 +141,19 @@ impl DataCard {
     }
 }
 
-impl FromPyObject<'_> for DataCard {
+impl ModelCard {
+    pub fn set_uid(&mut self, py: Python, uid: &str) -> Result<(), CardError> {
+        self.interface
+            .setattr(py, intern!(py, "modelcard_uid"), uid)
+            .map_err(|e| CardError::Error(e.to_string()))?;
+
+        self.uid = uid.to_string();
+
+        Ok(())
+    }
+}
+
+impl FromPyObject<'_> for ModelCard {
     fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
@@ -149,8 +164,9 @@ impl FromPyObject<'_> for DataCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let card_type = ob.getattr("card_type")?.extract()?;
+        let to_onnx = ob.getattr("to_onnx")?.extract()?;
 
-        Ok(DataCard {
+        Ok(ModelCard {
             interface: interface.into(),
             name,
             repository,
@@ -160,6 +176,65 @@ impl FromPyObject<'_> for DataCard {
             tags,
             metadata,
             card_type,
+            to_onnx,
         })
     }
 }
+
+//impl ModelCard {
+//    pub fn serialize(&self) -> Result<(), CardError> {
+//        Python::with_gil(|py| {
+//            let obj = &self.interface;
+//
+//            // Create the exclude dictionary
+//            let exclude_dict = PyDict::new(py);
+//            let exclude_set = PySet::new(
+//                py,
+//                &[
+//                    "model",
+//                    "preprocessor",
+//                    "sample_data",
+//                    "onnx_model",
+//                    "feature_extractor",
+//                    "tokenizer",
+//                    "drift_profile",
+//                ],
+//            )
+//            .map_err(|e| CardError::Error(e.to_string()))?;
+//            exclude_dict
+//                .set_item("exclude", exclude_set)
+//                .map_err(|e| CardError::Error(e.to_string()))?;
+//
+//            // Call the model_dump method with the exclude argument
+//            let result = obj
+//                .call_method(py, "model_dump", (), Some(&exclude_dict))
+//                .map_err(|e| {
+//                    CardError::Error(format!(
+//                        "Error calling model_dump method on interface: {}",
+//                        e
+//                    ))
+//                })?;
+//
+//            // cast to pydict
+//            let dumped_interface = result
+//                .downcast_bound::<PyDict>(py)
+//                .map_err(|e| CardError::Error(e.to_string()))?;
+//
+//            if let Ok(Some(onnx_args)) = dumped_interface.get_item("onnx_args") {
+//                let args = onnx_args
+//                    .downcast::<PyDict>()
+//                    .map_err(|e| CardError::Error(e.to_string()))?;
+//
+//                // check if config in args. if it is, pop it
+//                if let Ok(Some(_)) = args.get_item("config") {
+//                    args.del_item("config")
+//                        .map_err(|e| CardError::Error(e.to_string()))?;
+//                }
+//            }
+//
+//            println!("{:?}", result); // Print the result for debugging
+//
+//            Ok(())
+//        })
+//    }
+//}

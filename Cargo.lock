@@ -3083,6 +3083,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "opsml-error",
+ "opsml-semver",
  "opsml-types",
  "opsml-utils",
  "pyo3",
@@ -3176,8 +3177,10 @@ name = "opsml-registry"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "opsml-cards",
  "opsml-client",
  "opsml-colors",
+ "opsml-contracts",
  "opsml-error",
  "opsml-logging",
  "opsml-semver",
