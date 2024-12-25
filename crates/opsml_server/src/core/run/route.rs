@@ -13,6 +13,7 @@ use opsml_sql::schemas::schema::{
 };
 use opsml_types::*;
 
+use opsml_contracts::*;
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
