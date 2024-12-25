@@ -1,9 +1,10 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::http::base::{build_http_client, HttpStorageClient};
+use opsml_contracts::FileInfo;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::{FileInfo, StorageType};
+use opsml_types::StorageType;
 use std::path::{Path, PathBuf};
 
 pub struct HttpFSStorageClient {
