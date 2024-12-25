@@ -3078,6 +3078,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-cards"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "opsml-error",
+ "opsml-types",
+ "opsml-utils",
+ "pyo3",
+ "serde",
+]
+
+[[package]]
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [
@@ -3105,6 +3117,23 @@ name = "opsml-colors"
 version = "0.1.0"
 dependencies = [
  "owo-colors",
+]
+
+[[package]]
+name = "opsml-contracts"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "colored_json",
+ "opsml-cards",
+ "opsml-colors",
+ "opsml-error",
+ "opsml-semver",
+ "opsml-types",
+ "opsml-utils",
+ "pyo3",
+ "serde",
+ "tabled",
 ]
 
 [[package]]
@@ -3334,9 +3363,12 @@ name = "opsml-utils"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "colored_json",
  "opsml-error",
  "pyo3",
  "regex",
+ "serde",
+ "serde_json",
  "uuid",
  "walkdir",
 ]
