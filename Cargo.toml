@@ -19,8 +19,10 @@ repository = "https://github.com/demml/opsml"
 [workspace.dependencies]
 
 opsml-auth = { path = "crates/opsml_auth" }
+opsml-cards = { path = "crates/opsml_cards" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
+opsml-contracts = { path = "crates/opsml_contracts" }
 opsml-error = { path = "crates/opsml_error" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-logging = { path = "crates/opsml_logging" }

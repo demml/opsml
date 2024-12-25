@@ -1,5 +1,5 @@
 [package]
-name = "opsml-utils"
+name = "opsml-cards"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
@@ -8,12 +8,11 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
-opsml-error = { workspace = true }
-colored_json = { workspace = true }
 chrono = { workspace = true }
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
-regex = { workspace = true }
-serde_json = { workspace = true }
 serde = { workspace = true }
-uuid = { workspace = true }
-walkdir = { workspace = true }
+
+
