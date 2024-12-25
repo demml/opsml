@@ -1,4 +1,6 @@
-use opsml_types::{LogLevel, PyHelperFuncs, SqlType, StorageType};
+use opsml_logging::LogLevel;
+use opsml_types::{SqlType, StorageType};
+pub use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use rand::Rng;
 use serde::Serialize;

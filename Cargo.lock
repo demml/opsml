@@ -3161,7 +3161,6 @@ version = "0.1.0"
 dependencies = [
  "dynfmt",
  "opsml-error",
- "opsml-types",
  "pyo3",
  "serde",
  "serde_json",
@@ -3225,8 +3224,10 @@ dependencies = [
  "mockall",
  "mockito",
  "opsml-auth",
+ "opsml-cards",
  "opsml-client",
  "opsml-colors",
+ "opsml-contracts",
  "opsml-error",
  "opsml-logging",
  "opsml-registry",
@@ -3258,7 +3259,9 @@ name = "opsml-settings"
 version = "0.1.0"
 dependencies = [
  "opsml-error",
+ "opsml-logging",
  "opsml-types",
+ "opsml-utils",
  "pyo3",
  "rand 0.8.5",
  "serde",
