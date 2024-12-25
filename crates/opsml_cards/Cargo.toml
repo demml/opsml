@@ -15,5 +15,6 @@ opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
+walkdir = { workspace = true }
 
 

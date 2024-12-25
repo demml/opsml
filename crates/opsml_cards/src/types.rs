@@ -1,10 +1,205 @@
 use opsml_error::error::CardError;
 use opsml_types::*;
-use opsml_utils::{clean_string, validate_name_repository_pattern};
+use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
+use std::fmt;
+use walkdir::WalkDir;
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub struct Description {
+    #[pyo3(get, set)]
+    pub summary: Option<String>,
+
+    #[pyo3(get, set)]
+    pub sample_code: Option<String>,
+
+    #[pyo3(get, set)]
+    pub notes: Option<String>,
+}
+
+#[pymethods]
+impl Description {
+    #[new]
+    #[pyo3(signature = (summary=None, sample_code=None, notes=None))]
+    fn new(
+        summary: Option<String>,
+        sample_code: Option<String>,
+        notes: Option<String>,
+    ) -> Result<Self, CardError> {
+        // check if summary is some and if it is a file path. If .md file, read the file. IF not, return string
+        let extracted_summary = match summary {
+            Some(summary) => {
+                if summary.ends_with(".md") {
+                    let filepath = FileUtils::open_file(&summary)
+                        .map_err(|e| CardError::Error(e.to_string()))?;
+                    Some(filepath)
+                } else {
+                    Some(summary)
+                }
+            }
+            None => None,
+        };
+
+        let extracted_sample_code = match sample_code {
+            Some(sample_code) => {
+                if sample_code.ends_with(".md") {
+                    let filepath = FileUtils::open_file(&sample_code)
+                        .map_err(|e| CardError::Error(e.to_string()))?;
+                    Some(filepath)
+                } else {
+                    Some(sample_code)
+                }
+            }
+            None => None,
+        };
+
+        Ok(Description {
+            summary: extracted_summary,
+            sample_code: extracted_sample_code,
+            notes,
+        })
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+impl Description {
+    pub fn find_filepath(filepath: &str) -> Result<String, CardError> {
+        // get file name of path
+        let path = std::path::Path::new(&filepath)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+
+        let current_dir = std::env::current_dir().map_err(|e| CardError::Error(e.to_string()))?;
+        // recursively search for file in current directory
+        for entry in WalkDir::new(current_dir) {
+            let entry = entry.map_err(|e| CardError::Error(e.to_string()))?;
+            if entry.file_type().is_file() && entry.file_name().to_string_lossy() == path {
+                // open the file and read it to a string
+                let file = std::fs::read_to_string(entry.path())
+                    .map_err(|e| CardError::Error(e.to_string()))?;
+
+                return Ok(file);
+            }
+        }
+        // raise error if file not found
+        Err(CardError::Error("File not found".to_string()))
+    }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct Feature {
+    #[pyo3(get, set)]
+    feature_type: String,
+    #[pyo3(get, set)]
+    shape: Vec<i32>,
+    #[pyo3(get, set)]
+    extra_args: HashMap<String, String>,
+}
+
+#[pymethods]
+impl Feature {
+    #[new]
+    #[pyo3(signature = (feature_type, shape, extra_args=None))]
+    fn new(
+        feature_type: String,
+        shape: Vec<i32>,
+        extra_args: Option<HashMap<String, String>>,
+    ) -> Self {
+        Feature {
+            feature_type,
+            shape,
+            extra_args: extra_args.unwrap_or_default(),
+        }
+    }
+
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub struct OnnxSchema {
+    #[pyo3(get, set)]
+    pub input_features: HashMap<String, Feature>,
+
+    #[pyo3(get, set)]
+    pub output_features: HashMap<String, Feature>,
+
+    #[pyo3(get, set)]
+    pub onnx_version: String,
+}
+
+#[pymethods]
+impl OnnxSchema {
+    #[new]
+    #[pyo3(signature = (input_features, output_features, onnx_version))]
+    fn new(
+        input_features: HashMap<String, Feature>,
+        output_features: HashMap<String, Feature>,
+        onnx_version: String,
+    ) -> Self {
+        OnnxSchema {
+            input_features,
+            output_features,
+            onnx_version,
+        }
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub struct DataSchema {
+    #[pyo3(get, set)]
+    pub data_type: String,
+
+    #[pyo3(get, set)]
+    pub input_features: Option<HashMap<String, Feature>>,
+
+    #[pyo3(get, set)]
+    pub output_features: Option<HashMap<String, Feature>>,
+
+    #[pyo3(get, set)]
+    pub onnx_schema: Option<OnnxSchema>,
+}
+
+#[pymethods]
+impl DataSchema {
+    #[new]
+    #[pyo3(signature = (data_type, input_features=None, output_features=None, onnx_schema=None))]
+    fn new(
+        data_type: String,
+        input_features: Option<HashMap<String, Feature>>,
+        output_features: Option<HashMap<String, Feature>>,
+        onnx_schema: Option<OnnxSchema>,
+    ) -> Self {
+        DataSchema {
+            data_type,
+            input_features,
+            output_features,
+            onnx_schema,
+        }
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[pyclass]
@@ -227,4 +422,65 @@ impl BaseArgs {
             .map(|s| s.to_string())
             .ok_or_else(|| CardError::Error(format!("{} not provided", key)))
     }
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum CardTable {
+    Data,
+    Model,
+    Run,
+    Project,
+    Audit,
+    Pipeline,
+    Metrics,
+    HardwareMetrics,
+    Parameters,
+    Users,
+}
+
+impl fmt::Display for CardTable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let table_name = match self {
+            CardTable::Data => "opsml_data_registry",
+            CardTable::Model => "opsml_model_registry",
+            CardTable::Run => "opsml_run_registry",
+            CardTable::Project => "opsml_project_registry",
+            CardTable::Audit => "opsml_audit_registry",
+            CardTable::Pipeline => "opsml_pipeline_registry",
+            CardTable::Metrics => "opsml_run_metrics",
+            CardTable::HardwareMetrics => "opsml_run_hardware_metrics",
+            CardTable::Parameters => "opsml_run_parameters",
+            CardTable::Users => "opsml_users",
+        };
+        write!(f, "{}", table_name)
+    }
+}
+
+impl CardTable {
+    pub fn from_registry_type(registry_type: &RegistryType) -> Self {
+        match registry_type {
+            RegistryType::Data => CardTable::Data,
+            RegistryType::Model => CardTable::Model,
+            RegistryType::Run => CardTable::Run,
+            RegistryType::Project => CardTable::Project,
+            RegistryType::Audit => CardTable::Audit,
+            RegistryType::Pipeline => CardTable::Pipeline,
+            RegistryType::Metrics => CardTable::Metrics,
+            RegistryType::HardwareMetrics => CardTable::HardwareMetrics,
+            RegistryType::Parameters => CardTable::Parameters,
+            RegistryType::Users => CardTable::Users,
+        }
+    }
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum CardType {
+    Data,
+    Model,
+    Run,
+    Project,
+    Audit,
+    Pipeline,
 }

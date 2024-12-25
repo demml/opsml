@@ -1,4 +1,4 @@
-use crate::{BaseArgs, CardInfo};
+use crate::{BaseArgs, CardInfo, CardTable, CardType, Description, Feature};
 use opsml_error::error::OpsmlError;
 use pyo3::{intern, prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
@@ -129,7 +129,7 @@ impl DataCard {
     pub fn uri(&self) -> String {
         format!(
             "{}/{}/{}/v{}",
-            CardSQLTableNames::Data,
+            CardTable::Data,
             self.repository,
             self.name,
             self.version
