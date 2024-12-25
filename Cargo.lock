@@ -3088,6 +3088,7 @@ dependencies = [
  "opsml-utils",
  "pyo3",
  "serde",
+ "walkdir",
 ]
 
 [[package]]

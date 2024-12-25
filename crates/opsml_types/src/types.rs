@@ -9,6 +9,21 @@ pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum RegistryType {
+    Data,
+    Model,
+    Run,
+    Project,
+    Audit,
+    Pipeline,
+    Metrics,
+    HardwareMetrics,
+    Parameters,
+    Users,
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum StorageType {
     Google,
     AWS,
