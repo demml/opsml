@@ -1,4 +1,4 @@
-use crate::cards::ModelCard;
+use opsml_cards::ModelCard;
 
 use opsml_error::error::SaveError;
 use opsml_types::ModelInterfaceMetadata;

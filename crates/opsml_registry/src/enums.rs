@@ -1,3 +1,4 @@
+use opsml_contracts::{Card, CardQueryArgs};
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
