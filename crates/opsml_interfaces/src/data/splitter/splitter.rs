@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use pyo3::exceptions::PyValueError;
-use pyo3::prelude::*;
 use pyo3::types::{PyFloat, PyInt, PyString};
 use pyo3::PyResult;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 
 #[pyclass(eq)]
@@ -11,6 +13,17 @@ pub enum ColValType {
     Float(f64),
     Int(i64),
     Timestamp(String),
+}
+
+impl ColValType {
+    pub fn to_py_object(&self, py: Python) -> PyObject {
+        match self {
+            ColValType::String(val) => val.into_py_any(py).unwrap(),
+            ColValType::Float(val) => val.into_py_any(py).unwrap(),
+            ColValType::Int(val) => val.into_py_any(py).unwrap(),
+            ColValType::Timestamp(val) => val.into_py_any(py).unwrap(),
+        }
+    }
 }
 
 #[pyclass(eq, eq_int)]
@@ -168,5 +181,122 @@ impl DataSplit {
             start_stop_split,
             indice_split,
         })
+    }
+}
+
+#[pyclass]
+pub struct Data {
+    #[pyo3(get)]
+    x: PyObject,
+
+    #[pyo3(get)]
+    y: PyObject,
+}
+
+// remove elements from a that are in b
+fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
+    a.iter()
+        .filter(|x| !b.contains(x))
+        .cloned()
+        .collect::<Vec<T>>()
+}
+
+pub struct PolarsColumnSplitter {
+    label: String,
+    column_split: ColumnSplit,
+    dependent_vars: Option<Vec<String>>,
+}
+
+impl PolarsColumnSplitter {
+    pub fn new(
+        label: String,
+        column_split: ColumnSplit,
+        dependent_vars: Option<Vec<String>>,
+    ) -> Self {
+        PolarsColumnSplitter {
+            label,
+            column_split,
+            dependent_vars,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        let py = data.py();
+
+        // check if polars dataframe
+        let polars = py.import("polars")?;
+        let polars_dataframe = polars.getattr("DataFrame")?;
+        if !data.is_instance(&polars_dataframe)? {
+            return Err(PyValueError::new_err("data is not a polars DataFrame"));
+        }
+
+        let mut data_map = HashMap::new();
+        let column_name = &self.column_split.column_name;
+        let value = &self.column_split.column_value.to_py_object(py);
+
+        let filtered_data = match &self.column_split.inequality {
+            None => data.call_method1(
+                "filter",
+                (polars
+                    .call_method1("col", (column_name,))?
+                    .call_method1("eq", (value,))?,),
+            )?,
+            Some(ineq) if ineq == ">" => data.call_method1(
+                "filter",
+                (polars
+                    .call_method1("col", (column_name,))?
+                    .call_method1("gt", (value,))?,),
+            )?,
+            Some(ineq) if ineq == ">=" => data.call_method1(
+                "filter",
+                (polars
+                    .call_method1("col", (column_name,))?
+                    .call_method1("ge", (value,))?,),
+            )?,
+            Some(ineq) if ineq == "<" => data.call_method1(
+                "filter",
+                (polars
+                    .call_method1("col", (column_name,))?
+                    .call_method1("lt", (value,))?,),
+            )?,
+            Some(_) => data.call_method1(
+                "filter",
+                (polars
+                    .call_method1("col", (column_name,))?
+                    .call_method1("le", (value,))?,),
+            )?,
+        };
+
+        if let Some(dependent_vars) = &self.dependent_vars {
+            let columns: Vec<String> = filtered_data.getattr("columns")?.extract()?;
+            let x_cols = remove_diff(&columns, dependent_vars);
+
+            data_map.insert(
+                self.label.clone(),
+                Data {
+                    x: filtered_data
+                        .call_method1("select", (x_cols,))
+                        .unwrap()
+                        .into(),
+                    y: filtered_data
+                        .call_method1("select", (dependent_vars,))
+                        .unwrap()
+                        .into(),
+                },
+            );
+
+            return Ok(data_map);
+        } else {
+            data_map.insert(
+                self.label.clone(),
+                Data {
+                    x: filtered_data.into(),
+                    // pyany none
+                    y: py.None().into(),
+                },
+            );
+
+            return Ok(data_map);
+        }
     }
 }
