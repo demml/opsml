@@ -3,18 +3,18 @@ use opsml_error::error::SqlError;
 /// this file contains helper logic for generating sql queries across different databases
 use crate::base::add_version_bounds;
 use opsml_contracts::CardQueryArgs;
-use opsml_types::CardSQLTableNames;
+use opsml_cards::CardTable;
 use opsml_utils::utils::is_valid_uuid4;
 pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
-    pub fn get_uid_query(table: &CardSQLTableNames) -> String {
+    pub fn get_uid_query(table: &CardTable) -> String {
         format!("SELECT uid FROM {} WHERE uid = ?", table).to_string()
     }
     pub fn get_user_insert_query() -> String {
         format!(
             "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES (?, ?, ?, ?)",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -22,7 +22,7 @@ impl SqliteQueryHelper {
     pub fn get_user_query() -> String {
         format!(
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = ?",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -36,7 +36,7 @@ impl SqliteQueryHelper {
             group_permissions = ? ,
             refresh_token = ? 
             WHERE username = ?",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -63,7 +63,7 @@ impl SqliteQueryHelper {
             gpu_percent_utilization,
             gpu_percent_per_core
             FROM {} WHERE run_uid = ?",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         );
 
         query
@@ -77,7 +77,7 @@ impl SqliteQueryHelper {
                 step,
                 timestamp
             ) VALUES (?, ?, ?, ?, ?)",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         )
         .to_string()
     }
@@ -92,7 +92,7 @@ impl SqliteQueryHelper {
                 step,
                 timestamp
             ) VALUES ",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         )
         .to_string();
 
@@ -116,7 +116,7 @@ impl SqliteQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = ?",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -146,12 +146,12 @@ impl SqliteQueryHelper {
                 (SELECT project_id FROM {} WHERE name = ? AND repository = ?),
                 (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
             ) AS project_id",
-            CardSQLTableNames::Project,
-            CardSQLTableNames::Project
+            CardTable::Project,
+            CardTable::Project
         )
         .to_string()
     }
-    pub fn get_query_page_query(table: &CardSQLTableNames, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -227,7 +227,7 @@ impl SqliteQueryHelper {
 
         combined_query
     }
-    pub fn get_query_stats_query(table: &CardSQLTableNames) -> String {
+    pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
@@ -243,7 +243,7 @@ impl SqliteQueryHelper {
         base_query
     }
     pub fn get_versions_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         version: Option<&str>,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -276,7 +276,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_query_cards_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -331,7 +331,7 @@ impl SqliteQueryHelper {
                 name, 
                 value
             ) VALUES ",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         )
         .to_string();
 
@@ -353,7 +353,7 @@ impl SqliteQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = ?",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -397,7 +397,7 @@ impl SqliteQueryHelper {
                 gpu_percent_utilization, 
                 gpu_percent_per_core
             ) VALUES ",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         )
         .to_string();
 
@@ -416,12 +416,12 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_projectcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardSQLTableNames::Project)
+        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardSQLTableNames::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -450,7 +450,7 @@ impl SqliteQueryHelper {
         build_tag
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardSQLTableNames::Model
+            CardTable::Model
         )
         .to_string()
     }
@@ -478,7 +478,7 @@ impl SqliteQueryHelper {
         build_tag
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardSQLTableNames::Run
+            CardTable::Run
         )
         .to_string()
     }
@@ -504,7 +504,7 @@ impl SqliteQueryHelper {
         build_tag
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardSQLTableNames::Audit
+            CardTable::Audit
         )
         .to_string()
     }
@@ -530,7 +530,7 @@ impl SqliteQueryHelper {
         build_tag
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardSQLTableNames::Pipeline
+            CardTable::Pipeline
         )
         .to_string()
     }
@@ -555,7 +555,7 @@ impl SqliteQueryHelper {
         pre_tag = ?, 
         build_tag = ? 
         WHERE uid = ?",
-            CardSQLTableNames::Data
+            CardTable::Data
         )
         .to_string()
     }
@@ -583,7 +583,7 @@ impl SqliteQueryHelper {
         pre_tag = ?, 
         build_tag = ? 
         WHERE uid = ?",
-            CardSQLTableNames::Model
+            CardTable::Model
         )
         .to_string()
     }
@@ -609,7 +609,7 @@ impl SqliteQueryHelper {
         pre_tag = ?, 
         build_tag = ? 
         WHERE uid = ?",
-            CardSQLTableNames::Run
+            CardTable::Run
         )
         .to_string()
     }
@@ -633,7 +633,7 @@ impl SqliteQueryHelper {
         pre_tag = ?, 
         build_tag = ?
         WHERE uid = ?",
-            CardSQLTableNames::Audit
+            CardTable::Audit
         )
         .to_string()
     }
@@ -657,7 +657,7 @@ impl SqliteQueryHelper {
         pre_tag = ?, 
         build_tag = ? 
         WHERE uid = ?",
-            CardSQLTableNames::Pipeline
+            CardTable::Pipeline
         )
         .to_string()
     }

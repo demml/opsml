@@ -1,6 +1,7 @@
 use crate::types::{CardTable, CardType, DataSchema, Description};
 use crate::{BaseArgs, CardInfo};
 use opsml_error::error::{CardError, OpsmlError};
+use opsml_interfaces::ModelInterfaceType;
 use pyo3::prelude::*;
 use pyo3::{intern, IntoPyObjectExt, PyObject};
 use serde::{Deserialize, Serialize};

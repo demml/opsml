@@ -1,19 +1,19 @@
 use crate::base::add_version_bounds;
+use opsml_cards::CardTable;
 use opsml_contracts::CardQueryArgs;
 use opsml_error::error::SqlError;
-use opsml_types::CardSQLTableNames;
 use opsml_utils::utils::is_valid_uuid4;
 pub struct MySQLQueryHelper;
 
 impl MySQLQueryHelper {
-    pub fn get_uid_query(table: &CardSQLTableNames) -> String {
+    pub fn get_uid_query(table: &CardTable) -> String {
         format!("SELECT uid FROM {} WHERE uid = ?", table).to_string()
     }
 
     pub fn get_user_insert_query() -> String {
         format!(
             "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES (?, ?, ?, ?)",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -21,7 +21,7 @@ impl MySQLQueryHelper {
     pub fn get_user_query() -> String {
         format!(
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = ?",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -35,14 +35,14 @@ impl MySQLQueryHelper {
             group_permissions = ?,
             refresh_token = ? 
             WHERE username = ? ",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
             "SELECT * FROM {} WHERE run_uid = ?",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         );
 
         query
@@ -56,7 +56,7 @@ impl MySQLQueryHelper {
                 step,
                 timestamp
             ) VALUES (?, ?, ?, ?, ?)",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         )
         .to_string()
     }
@@ -71,7 +71,7 @@ impl MySQLQueryHelper {
                 step,
                 timestamp
             ) VALUES ",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         )
         .to_string();
 
@@ -96,7 +96,7 @@ impl MySQLQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = ?",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -127,12 +127,12 @@ impl MySQLQueryHelper {
                 (SELECT project_id FROM {} WHERE name = ? AND repository = ?),
                 (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
             ) AS project_id",
-            CardSQLTableNames::Project,
-            CardSQLTableNames::Project
+            CardTable::Project,
+            CardTable::Project
         )
         .to_string()
     }
-    pub fn get_query_page_query(table: &CardSQLTableNames, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -210,7 +210,7 @@ impl MySQLQueryHelper {
 
         combined_query
     }
-    pub fn get_query_stats_query(table: &CardSQLTableNames) -> String {
+    pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
                     COALESCE(COUNT(DISTINCT name), 0) AS nbr_names, 
@@ -226,7 +226,7 @@ impl MySQLQueryHelper {
         base_query
     }
     pub fn get_versions_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         version: Option<&str>,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -259,7 +259,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_query_cards_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -315,7 +315,7 @@ impl MySQLQueryHelper {
                 name, 
                 value
             ) VALUES ",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         )
         .to_string();
 
@@ -338,7 +338,7 @@ impl MySQLQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = ?",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -381,7 +381,7 @@ impl MySQLQueryHelper {
                 gpu_percent_utilization, 
                 gpu_percent_per_core
             ) VALUES ",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         )
         .to_string();
 

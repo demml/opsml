@@ -3,11 +3,11 @@ use crate::schemas::schema::{
     ServerCard, User,
 };
 use async_trait::async_trait;
+use opsml_cards::CardTable;
 use opsml_contracts::CardQueryArgs;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::CardSQLTableNames;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
     let version_bounds = VersionParser::get_version_to_search(version)
@@ -61,7 +61,7 @@ pub trait SqlClient: Sized {
     async fn run_migrations(&self) -> Result<(), SqlError>;
     async fn get_versions(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         name: &str,
         repository: &str,
         version: Option<&str>,
@@ -69,27 +69,17 @@ pub trait SqlClient: Sized {
 
     async fn query_cards(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<CardResults, SqlError>;
 
-    async fn insert_card(
-        &self,
-        table: &CardSQLTableNames,
-        card: &ServerCard,
-    ) -> Result<(), SqlError>;
-    async fn update_card(
-        &self,
-        table: &CardSQLTableNames,
-        card: &ServerCard,
-    ) -> Result<(), SqlError>;
-    async fn get_unique_repository_names(
-        &self,
-        table: &CardSQLTableNames,
-    ) -> Result<Vec<String>, SqlError>;
+    async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
+    async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError>;
+    async fn get_unique_repository_names(&self, table: &CardTable)
+        -> Result<Vec<String>, SqlError>;
     async fn query_stats(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         search_term: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
 
@@ -99,10 +89,10 @@ pub trait SqlClient: Sized {
         page: i32,
         search_term: Option<&str>,
         repository: Option<&str>,
-        table: &CardSQLTableNames,
+        table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError>;
 
-    async fn delete_card(&self, table: &CardSQLTableNames, uid: &str) -> Result<(), SqlError>;
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError>;
 
     // db specific functions
     // get project_id
@@ -244,9 +234,5 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `bool` - True if the uid exists
-    async fn check_uid_exists(
-        &self,
-        uid: &str,
-        table: &CardSQLTableNames,
-    ) -> Result<bool, SqlError>;
+    async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
 }

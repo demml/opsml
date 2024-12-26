@@ -1,5 +1,6 @@
-use crate::{BaseArgs, CardInfo, CardTable, CardType, Description, Feature};
+use crate::{BaseArgs, CardInfo, CardTable, CardType, Description};
 use opsml_error::error::OpsmlError;
+use opsml_interfaces::Feature;
 use pyo3::{intern, prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

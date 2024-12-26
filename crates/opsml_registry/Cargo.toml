@@ -14,6 +14,7 @@ opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-contracts = { workspace = true }
 opsml-error = { workspace = true }
+opsml-interfaces = { workspace = true }
 opsml-logging = { workspace = true }
 opsml-types = { workspace = true }
 opsml-semver = { workspace = true }

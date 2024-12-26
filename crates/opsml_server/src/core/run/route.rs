@@ -13,6 +13,10 @@ use opsml_sql::schemas::schema::{
 };
 use opsml_types::*;
 
+use opsml_cards::{
+    CPUMetrics, CardTable, GPUMetrics, HardwareMetrics, MemoryMetrics, Metric, NetworkRates,
+    Parameter, RunGraph,
+};
 use opsml_contracts::*;
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
@@ -281,7 +285,7 @@ pub async fn get_run_graphs(
 
     let card_result = state
         .sql_client
-        .query_cards(&CardSQLTableNames::Run, &args)
+        .query_cards(&CardTable::Run, &args)
         .await
         .map_err(|e| {
             error!("Failed to get run graphs: {}", e);
@@ -322,7 +326,7 @@ pub async fn get_run_graphs(
     // format uri to get the run graphs (this is a standardized route for all run graphs)
     let uri = format!(
         "{}/{}/{}/v{}/{}",
-        CardSQLTableNames::Run,
+        CardTable::Run,
         repo,
         name,
         version,

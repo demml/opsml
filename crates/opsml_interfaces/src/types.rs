@@ -35,3 +35,19 @@ impl Feature {
         PyHelperFuncs::__str__(self)
     }
 }
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
+pub enum ModelInterfaceType {
+    #[default]
+    Base,
+    Sklearn,
+    CatBoost,
+    HuggingFace,
+    LightGBM,
+    Lightning,
+    Torch,
+    TensorFlow,
+    VowpalWabbit,
+    XGBoost,
+}

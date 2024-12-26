@@ -1,4 +1,5 @@
 use opsml_error::error::CardError;
+use opsml_interfaces::types::Feature;
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;

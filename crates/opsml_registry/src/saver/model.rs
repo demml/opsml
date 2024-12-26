@@ -1,7 +1,7 @@
 use opsml_cards::ModelCard;
 
 use opsml_error::error::SaveError;
-use opsml_types::ModelInterfaceMetadata;
+use opsml_interfaces::ModelInterfaceMetadata;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::PathBuf;
