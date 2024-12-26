@@ -3153,7 +3153,10 @@ name = "opsml-interfaces"
 version = "0.1.0"
 dependencies = [
  "opsml-error",
+ "opsml-types",
+ "opsml-utils",
  "pyo3",
+ "serde",
 ]
 
 [[package]]
