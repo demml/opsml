@@ -17,7 +17,6 @@ repository = "https://github.com/demml/opsml"
 
 
 [workspace.dependencies]
-
 opsml-auth = { path = "crates/opsml_auth" }
 opsml-cards = { path = "crates/opsml_cards" }
 opsml-client = { path = "crates/opsml_client" }
@@ -63,7 +62,6 @@ indicatif = "0.*"
 jsonwebtoken = "9.*"
 owo-colors = "4.*"
 password-auth = "1.*"
-polars = "0.*"
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
 rand = "0.8.5"
 rayon = "1.*"

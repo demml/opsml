@@ -6,7 +6,6 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dynamic = ["version"]
 version = "0.1.0"
 description = ""
 authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]

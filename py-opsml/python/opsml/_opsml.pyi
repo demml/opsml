@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 # shared
 class CommonKwargs:
@@ -943,3 +943,128 @@ class ModelInterfaceType:
     TensorFlow: "ModelInterfaceType"
     VowpalWabbit: "ModelInterfaceType"
     XGBoost: "ModelInterfaceType"
+
+class ColValType:
+    String: "ColValType"
+    Float: "ColValType"
+    Int: "ColValType"
+    Timestamp: "ColValType"
+
+class ColType:
+    Builtin: "ColType"
+    Timestamp: "ColType"
+
+class ColumnSplit:
+    column_name: str
+    column_value: ColValType
+    column_type: ColType
+    inequality: Optional[str]
+
+    def __init__(
+        self,
+        column_name: str,
+        column_value: Union[str, float, int],
+        column_type: ColType,
+        inequality: Optional[str] = None,
+    ) -> None:
+        """Define a column split
+
+        Args:
+            column_name:
+                The name of the column
+            column_value:
+                The value of the column. Can be a string, float, or int. If
+                timestamp, convert to isoformat (str) and specify timestamp coltype
+            column_type:
+                The type of the column
+            inequality:
+                The inequality of the column
+        """
+
+class StartStopSplit:
+    start: int
+    stop: int
+
+    def __init__(self, start: int, stop: int) -> None:
+        """Define a start stop split
+
+        Args:
+            start:
+                The start of the split
+            stop:
+                The stop of the split
+        """
+
+class IndiceSplit:
+    indices: List[int]
+
+    def __init__(self, indices: List[int]) -> None:
+        """Define an indice split
+
+        Args:
+            indices:
+                The indices of the split
+        """
+
+class DataSplit:
+    label: str
+    column_split: Optional[ColumnSplit]
+    start_stop_split: Optional[StartStopSplit]
+    indice_split: Optional[IndiceSplit]
+
+    def __init__(
+        self,
+        label: str,
+        column_split: Optional[ColumnSplit] = None,
+        start_stop_split: Optional[StartStopSplit] = None,
+        indice_split: Optional[IndiceSplit] = None,
+    ) -> None:
+        """Define a data split
+
+        Args:
+            label:
+                The label of the split
+            column_split:
+                The column split
+            start_stop_split:
+                The start stop split
+            indice_split:
+                The indice split
+        """
+
+class Data:
+    x: Any
+    y: Any
+
+class PolarsColumnSplitter:
+    label: str
+    column_split: ColumnSplit
+    dependent_cards: Optional[List[str]]
+
+    def __init__(
+        self,
+        label: str,
+        column_split: ColumnSplit,
+        dependent_cards: Optional[List[str]] = None,
+    ) -> None:
+        """Define a polars column splitter
+
+        Args:
+            label:
+                The label of the split
+            column_split:
+                The column split
+            dependent_cards:
+                The dependent cards
+        """
+
+    def create_split(self, data: Any) -> Dict[str, Data]:
+        """Create a split
+
+        Args:
+            data:
+                The data to split
+
+        Returns:
+            A dictionary containing the split data
+        """
