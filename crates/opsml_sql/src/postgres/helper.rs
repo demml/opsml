@@ -3,7 +3,7 @@ use opsml_error::error::SqlError;
 use opsml_contracts::CardQueryArgs;
 use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
-use opsml_types::CardSQLTableNames;
+use opsml_cards::CardTable;
 use opsml_utils::utils::is_valid_uuid4;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
@@ -54,14 +54,14 @@ pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), Sql
 pub struct PostgresQueryHelper;
 
 impl PostgresQueryHelper {
-    pub fn get_uid_query(table: &CardSQLTableNames) -> String {
+    pub fn get_uid_query(table: &CardTable) -> String {
         format!("SELECT uid FROM {} WHERE uid = $1", table).to_string()
     }
 
     pub fn get_user_insert_query() -> String {
         format!(
             "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES ($1, $2, $3, $4)",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -69,7 +69,7 @@ impl PostgresQueryHelper {
     pub fn get_user_query() -> String {
         format!(
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = $1",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -83,7 +83,7 @@ impl PostgresQueryHelper {
             group_permissions = $4,
             refresh_token = $5
             WHERE username = $6",
-            CardSQLTableNames::Users
+            CardTable::Users
         )
         .to_string()
     }
@@ -91,7 +91,7 @@ impl PostgresQueryHelper {
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
             "SELECT * FROM {} WHERE run_uid = $1",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         );
 
         query
@@ -105,7 +105,7 @@ impl PostgresQueryHelper {
                 step,
                 timestamp
             ) VALUES ($1, $2, $3, $4, $5)",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         )
         .to_string()
     }
@@ -119,7 +119,7 @@ impl PostgresQueryHelper {
                 step,
                 timestamp
             ) VALUES ",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         );
 
         for i in 0..nbr_records {
@@ -143,7 +143,7 @@ impl PostgresQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = $1",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -174,12 +174,12 @@ impl PostgresQueryHelper {
                 (SELECT project_id FROM {} WHERE name = $1 AND repository = $2),
                 (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
             ) AS project_id",
-            CardSQLTableNames::Project,
-            CardSQLTableNames::Project
+            CardTable::Project,
+            CardTable::Project
         )
         .to_string()
     }
-    pub fn get_query_page_query(table: &CardSQLTableNames, sort_by: &str) -> String {
+    pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
                 SELECT 
@@ -247,7 +247,7 @@ impl PostgresQueryHelper {
 
         combined_query
     }
-    pub fn get_query_stats_query(table: &CardSQLTableNames) -> String {
+    pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
@@ -262,7 +262,7 @@ impl PostgresQueryHelper {
         base_query
     }
     pub fn get_versions_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         version: Option<&str>,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -295,7 +295,7 @@ impl PostgresQueryHelper {
     }
 
     pub fn get_query_cards_query(
-        table: &CardSQLTableNames,
+        table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<String, SqlError> {
         let mut query = format!(
@@ -348,7 +348,7 @@ impl PostgresQueryHelper {
                 name, 
                 value
             ) VALUES ",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         )
         .to_string();
 
@@ -366,7 +366,7 @@ impl PostgresQueryHelper {
             "SELECT *
             FROM {}
             WHERE run_uid = $1",
-            CardSQLTableNames::Parameters
+            CardTable::Parameters
         );
 
         let mut bindings: Vec<String> = Vec::new();
@@ -410,7 +410,7 @@ impl PostgresQueryHelper {
                 gpu_percent_utilization, 
                 gpu_percent_per_core
             ) VALUES ",
-            CardSQLTableNames::HardwareMetrics
+            CardTable::HardwareMetrics
         )
         .to_string();
 
@@ -439,7 +439,7 @@ impl PostgresQueryHelper {
         pre_tag,
         build_tag) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-            CardSQLTableNames::Project
+            CardTable::Project
         )
         .to_string()
     }
@@ -466,7 +466,7 @@ impl PostgresQueryHelper {
         build_tag
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
-            CardSQLTableNames::Data
+            CardTable::Data
         )
         .to_string()
     }
@@ -494,7 +494,7 @@ impl PostgresQueryHelper {
         pre_tag, 
         build_tag
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardSQLTableNames::Model).to_string()
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model).to_string()
     }
 
     pub fn get_runcard_insert_query() -> String {
@@ -520,7 +520,7 @@ impl PostgresQueryHelper {
         build_tag
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
-            CardSQLTableNames::Run
+            CardTable::Run
         )
         .to_string()
     }
@@ -546,7 +546,7 @@ impl PostgresQueryHelper {
         build_tag
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-            CardSQLTableNames::Audit
+            CardTable::Audit
         )
         .to_string()
     }
@@ -572,7 +572,7 @@ impl PostgresQueryHelper {
          build_tag
          ) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-            CardSQLTableNames::Pipeline
+            CardTable::Pipeline
         )
         .to_string()
     }
@@ -597,7 +597,7 @@ impl PostgresQueryHelper {
         pre_tag = $15, 
         build_tag = $16 
         WHERE uid = $17",
-            CardSQLTableNames::Data
+            CardTable::Data
         )
         .to_string()
     }
@@ -625,7 +625,7 @@ impl PostgresQueryHelper {
         pre_tag = $18, 
         build_tag = $19 
         WHERE uid = $20",
-            CardSQLTableNames::Model
+            CardTable::Model
         )
         .to_string()
     }
@@ -651,7 +651,7 @@ impl PostgresQueryHelper {
         pre_tag = $16, 
         build_tag = $17
         WHERE uid = $18",
-            CardSQLTableNames::Run
+            CardTable::Run
         )
         .to_string()
     }
@@ -675,7 +675,7 @@ impl PostgresQueryHelper {
         pre_tag = $14, 
         build_tag = $15 
         WHERE uid = $16",
-            CardSQLTableNames::Audit
+            CardTable::Audit
         )
         .to_string()
     }
@@ -699,7 +699,7 @@ impl PostgresQueryHelper {
         pre_tag = $14, 
         build_tag = $15 
         WHERE uid = $16",
-            CardSQLTableNames::Pipeline
+            CardTable::Pipeline
         )
         .to_string()
     }

@@ -1,5 +1,6 @@
 use crate::base::*;
 use crate::types::*;
+use opsml_cards::CardTable;
 use opsml_contracts::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
@@ -37,7 +38,7 @@ impl ClientRegistry {
     }
 
     pub fn table_name(&self) -> String {
-        CardSQLTableNames::from_registry_type(&self.registry_type).to_string()
+        CardTable::from_registry_type(&self.registry_type).to_string()
     }
 
     pub async fn list_cards(&mut self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {

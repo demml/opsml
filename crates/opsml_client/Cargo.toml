@@ -11,6 +11,7 @@ doctest = false
 anyhow = { workspace = true }
 bytes = { workspace = true }
 indicatif = { workspace = true }
+opsml-cards = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-contracts = { workspace = true }
 opsml-error = { workspace = true }

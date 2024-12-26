@@ -2,6 +2,7 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
+    use opsml_cards::CardTable;
     use opsml_contracts::*;
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
@@ -22,7 +23,7 @@ pub mod server_logic {
     pub struct ServerRegistry {
         sql_client: SqlClientEnum,
         pub registry_type: RegistryType,
-        pub table_name: CardSQLTableNames,
+        pub table_name: CardTable,
     }
 
     impl ServerRegistry {
@@ -34,7 +35,7 @@ pub mod server_logic {
                 RegistryError::NewError(format!("Failed to create sql client {}", e))
             })?;
 
-            let table_name = CardSQLTableNames::from_registry_type(&registry_type);
+            let table_name = CardTable::from_registry_type(&registry_type);
             Ok(Self {
                 sql_client,
                 table_name,
@@ -496,7 +497,7 @@ pub mod server_logic {
                     sort_by_timestamp: None,
                 };
                 let cards = client
-                    .query_cards(&CardSQLTableNames::Data, &query_args)
+                    .query_cards(&CardTable::Data, &query_args)
                     .await
                     .unwrap();
 

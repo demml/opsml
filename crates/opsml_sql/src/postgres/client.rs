@@ -12,7 +12,7 @@ use opsml_contracts::CardQueryArgs;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::CardSQLTableNames;
+use opsml_cards::CardTable;
 use semver::Version;
 use sqlx::{
     postgres::{PgPoolOptions, PgRow, Postgres},
@@ -97,7 +97,7 @@ impl SqlClient for PostgresClient {
     async fn check_uid_exists(
         &self,
         uid: &str,
-        table: &CardSQLTableNames,
+        table: &CardTable,
     ) -> Result<bool, SqlError> {
         let query = PostgresQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
@@ -123,7 +123,7 @@ impl SqlClient for PostgresClient {
     /// * `Vec<String>` - A vector of strings representing the sorted (desc) versions of the card
     async fn get_versions(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         name: &str,
         repository: &str,
         version: Option<&str>,
@@ -163,12 +163,12 @@ impl SqlClient for PostgresClient {
     /// * `CardResults` - The results of the query
     async fn query_cards(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<CardResults, SqlError> {
         let query = PostgresQueryHelper::get_query_cards_query(table, query_args)?;
         match table {
-            CardSQLTableNames::Data => {
+            CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -181,7 +181,7 @@ impl SqlClient for PostgresClient {
 
                 return Ok(CardResults::Data(card));
             }
-            CardSQLTableNames::Model => {
+            CardTable::Model => {
                 let card: Vec<ModelCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -194,7 +194,7 @@ impl SqlClient for PostgresClient {
 
                 return Ok(CardResults::Model(card));
             }
-            CardSQLTableNames::Run => {
+            CardTable::Run => {
                 let card: Vec<RunCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -208,7 +208,7 @@ impl SqlClient for PostgresClient {
                 return Ok(CardResults::Run(card));
             }
 
-            CardSQLTableNames::Audit => {
+            CardTable::Audit => {
                 let card: Vec<AuditCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -221,7 +221,7 @@ impl SqlClient for PostgresClient {
 
                 return Ok(CardResults::Audit(card));
             }
-            CardSQLTableNames::Pipeline => {
+            CardTable::Pipeline => {
                 let card: Vec<PipelineCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -234,7 +234,7 @@ impl SqlClient for PostgresClient {
 
                 return Ok(CardResults::Pipeline(card));
             }
-            CardSQLTableNames::Project => {
+            CardTable::Project => {
                 let card: Vec<ProjectCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
@@ -256,11 +256,11 @@ impl SqlClient for PostgresClient {
     }
     async fn insert_card(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         card: &ServerCard,
     ) -> Result<(), SqlError> {
         match table {
-            CardSQLTableNames::Data => match card {
+            CardTable::Data => match card {
                 ServerCard::Data(data) => {
                     let query = PostgresQueryHelper::get_datacard_insert_query();
                     sqlx::query(&query)
@@ -292,7 +292,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Model => match card {
+            CardTable::Model => match card {
                 ServerCard::Model(model) => {
                     let query = PostgresQueryHelper::get_modelcard_insert_query();
                     sqlx::query(&query)
@@ -327,7 +327,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Run => match card {
+            CardTable::Run => match card {
                 ServerCard::Run(run) => {
                     let query = PostgresQueryHelper::get_runcard_insert_query();
                     sqlx::query(&query)
@@ -360,7 +360,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Audit => match card {
+            CardTable::Audit => match card {
                 ServerCard::Audit(audit) => {
                     let query = PostgresQueryHelper::get_auditcard_insert_query();
                     sqlx::query(&query)
@@ -391,7 +391,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Pipeline => match card {
+            CardTable::Pipeline => match card {
                 ServerCard::Pipeline(pipeline) => {
                     let query = PostgresQueryHelper::get_pipelinecard_insert_query();
                     sqlx::query(&query)
@@ -422,7 +422,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Project => match card {
+            CardTable::Project => match card {
                 ServerCard::Project(project) => {
                     let query = PostgresQueryHelper::get_projectcard_insert_query();
                     sqlx::query(&query)
@@ -458,11 +458,11 @@ impl SqlClient for PostgresClient {
 
     async fn update_card(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         card: &ServerCard,
     ) -> Result<(), SqlError> {
         match table {
-            CardSQLTableNames::Data => match card {
+            CardTable::Data => match card {
                 ServerCard::Data(data) => {
                     let query = PostgresQueryHelper::get_datacard_update_query();
                     sqlx::query(&query)
@@ -494,7 +494,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Model => match card {
+            CardTable::Model => match card {
                 ServerCard::Model(model) => {
                     let query = PostgresQueryHelper::get_modelcard_update_query();
                     sqlx::query(&query)
@@ -529,7 +529,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Run => match card {
+            CardTable::Run => match card {
                 ServerCard::Run(run) => {
                     let query = PostgresQueryHelper::get_runcard_update_query();
                     sqlx::query(&query)
@@ -562,7 +562,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Audit => match card {
+            CardTable::Audit => match card {
                 ServerCard::Audit(audit) => {
                     let query = PostgresQueryHelper::get_auditcard_update_query();
                     sqlx::query(&query)
@@ -593,7 +593,7 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardSQLTableNames::Pipeline => match card {
+            CardTable::Pipeline => match card {
                 ServerCard::Pipeline(pipeline) => {
                     let query = PostgresQueryHelper::get_pipelinecard_update_query();
                     sqlx::query(&query)
@@ -644,7 +644,7 @@ impl SqlClient for PostgresClient {
     /// * `Vec<String>` - A vector of unique repository names
     async fn get_unique_repository_names(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
     ) -> Result<Vec<String>, SqlError> {
         let query = format!("SELECT DISTINCT repository FROM {}", table);
         let repos: Vec<String> = sqlx::query_scalar(&query)
@@ -657,7 +657,7 @@ impl SqlClient for PostgresClient {
 
     async fn query_stats(
         &self,
-        table: &CardSQLTableNames,
+        table: &CardTable,
         search_term: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = PostgresQueryHelper::get_query_stats_query(table);
@@ -691,7 +691,7 @@ impl SqlClient for PostgresClient {
         page: i32,
         search_term: Option<&str>,
         repository: Option<&str>,
-        table: &CardSQLTableNames,
+        table: &CardTable,
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = PostgresQueryHelper::get_query_page_query(table, sort_by);
 
@@ -711,7 +711,7 @@ impl SqlClient for PostgresClient {
         Ok(records)
     }
 
-    async fn delete_card(&self, table: &CardSQLTableNames, uid: &str) -> Result<(), SqlError> {
+    async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError> {
         let query = format!("DELETE FROM {} WHERE uid = $1", table);
         sqlx::query(&query)
             .bind(uid)
@@ -798,7 +798,7 @@ impl SqlClient for PostgresClient {
     async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         let query = format!(
             "SELECT DISTINCT name FROM {} WHERE run_uid = $1",
-            CardSQLTableNames::Metrics
+            CardTable::Metrics
         );
 
         let records: Vec<String> = sqlx::query_scalar(&query)
@@ -1040,53 +1040,53 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", None)
+            .get_versions(&CardTable::Data, "Data1", "repo1", None)
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         // check star pattern
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("*"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("*"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("1.*"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.*"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("1.1.*"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.1.*"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("~1"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("~1.1"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("~1.1.1"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1.1"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 1);
 
         let versions = client
-            .get_versions(&CardSQLTableNames::Data, "Data1", "repo1", Some("^2.0.0"))
+            .get_versions(&CardTable::Data, "Data1", "repo1", Some("^2.0.0"))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
@@ -1113,7 +1113,7 @@ mod tests {
 
         // check if uid exists
         let exists = client
-            .check_uid_exists("fake", &CardSQLTableNames::Data)
+            .check_uid_exists("fake", &CardTable::Data)
             .await
             .unwrap();
 
@@ -1129,7 +1129,7 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1143,7 +1143,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Model, &card_args)
+            .query_cards(&CardTable::Model, &card_args)
             .await
             .unwrap();
 
@@ -1155,7 +1155,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Run, &card_args)
+            .query_cards(&CardTable::Run, &card_args)
             .await
             .unwrap();
 
@@ -1171,7 +1171,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1183,7 +1183,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Audit, &card_args)
+            .query_cards(&CardTable::Audit, &card_args)
             .await
             .unwrap();
 
@@ -1195,7 +1195,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1205,7 +1205,7 @@ mod tests {
         let exists = client
             .check_uid_exists(
                 "550e8400-e29b-41d4-a716-446655440000",
-                &CardSQLTableNames::Data,
+                &CardTable::Data,
             )
             .await
             .unwrap();
@@ -1232,7 +1232,7 @@ mod tests {
         let card = ServerCard::Data(data_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Data, &card)
+            .insert_card(&CardTable::Data, &card)
             .await
             .unwrap();
 
@@ -1242,7 +1242,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1253,7 +1253,7 @@ mod tests {
         let card = ServerCard::Model(model_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Model, &card)
+            .insert_card(&CardTable::Model, &card)
             .await
             .unwrap();
 
@@ -1264,7 +1264,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardSQLTableNames::Model, &card_args)
+            .query_cards(&CardTable::Model, &card_args)
             .await
             .unwrap();
 
@@ -1275,7 +1275,7 @@ mod tests {
         let card = ServerCard::Run(run_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Run, &card)
+            .insert_card(&CardTable::Run, &card)
             .await
             .unwrap();
 
@@ -1287,7 +1287,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardSQLTableNames::Run, &card_args)
+            .query_cards(&CardTable::Run, &card_args)
             .await
             .unwrap();
 
@@ -1299,7 +1299,7 @@ mod tests {
         let card = ServerCard::Audit(audit_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Audit, &card)
+            .insert_card(&CardTable::Audit, &card)
             .await
             .unwrap();
 
@@ -1311,7 +1311,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardSQLTableNames::Audit, &card_args)
+            .query_cards(&CardTable::Audit, &card_args)
             .await
             .unwrap();
 
@@ -1322,7 +1322,7 @@ mod tests {
         let card = ServerCard::Pipeline(pipeline_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Pipeline, &card)
+            .insert_card(&CardTable::Pipeline, &card)
             .await
             .unwrap();
 
@@ -1334,7 +1334,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardSQLTableNames::Pipeline, &card_args)
+            .query_cards(&CardTable::Pipeline, &card_args)
             .await
             .unwrap();
 
@@ -1361,7 +1361,7 @@ mod tests {
         let card = ServerCard::Data(data_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Data, &card)
+            .insert_card(&CardTable::Data, &card)
             .await
             .unwrap();
 
@@ -1371,7 +1371,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1382,13 +1382,13 @@ mod tests {
         let updated_card = ServerCard::Data(data_card.clone());
 
         client
-            .update_card(&CardSQLTableNames::Data, &updated_card)
+            .update_card(&CardTable::Data, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1402,7 +1402,7 @@ mod tests {
         let card = ServerCard::Model(model_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Model, &card)
+            .insert_card(&CardTable::Model, &card)
             .await
             .unwrap();
 
@@ -1412,7 +1412,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Model, &card_args)
+            .query_cards(&CardTable::Model, &card_args)
             .await
             .unwrap();
 
@@ -1423,13 +1423,13 @@ mod tests {
         let updated_card = ServerCard::Model(model_card.clone());
 
         client
-            .update_card(&CardSQLTableNames::Model, &updated_card)
+            .update_card(&CardTable::Model, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardSQLTableNames::Model, &card_args)
+            .query_cards(&CardTable::Model, &card_args)
             .await
             .unwrap();
 
@@ -1443,7 +1443,7 @@ mod tests {
         let card = ServerCard::Run(run_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Run, &card)
+            .insert_card(&CardTable::Run, &card)
             .await
             .unwrap();
 
@@ -1453,7 +1453,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Run, &card_args)
+            .query_cards(&CardTable::Run, &card_args)
             .await
             .unwrap();
 
@@ -1464,13 +1464,13 @@ mod tests {
         let updated_card = ServerCard::Run(run_card.clone());
 
         client
-            .update_card(&CardSQLTableNames::Run, &updated_card)
+            .update_card(&CardTable::Run, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardSQLTableNames::Run, &card_args)
+            .query_cards(&CardTable::Run, &card_args)
             .await
             .unwrap();
 
@@ -1484,7 +1484,7 @@ mod tests {
         let card = ServerCard::Audit(audit_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Audit, &card)
+            .insert_card(&CardTable::Audit, &card)
             .await
             .unwrap();
 
@@ -1494,7 +1494,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Audit, &card_args)
+            .query_cards(&CardTable::Audit, &card_args)
             .await
             .unwrap();
 
@@ -1505,13 +1505,13 @@ mod tests {
         let updated_card = ServerCard::Audit(audit_card.clone());
 
         client
-            .update_card(&CardSQLTableNames::Audit, &updated_card)
+            .update_card(&CardTable::Audit, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardSQLTableNames::Audit, &card_args)
+            .query_cards(&CardTable::Audit, &card_args)
             .await
             .unwrap();
 
@@ -1525,7 +1525,7 @@ mod tests {
         let card = ServerCard::Pipeline(pipeline_card.clone());
 
         client
-            .insert_card(&CardSQLTableNames::Pipeline, &card)
+            .insert_card(&CardTable::Pipeline, &card)
             .await
             .unwrap();
 
@@ -1535,7 +1535,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardSQLTableNames::Pipeline, &card_args)
+            .query_cards(&CardTable::Pipeline, &card_args)
             .await
             .unwrap();
 
@@ -1546,13 +1546,13 @@ mod tests {
         let updated_card = ServerCard::Pipeline(pipeline_card.clone());
 
         client
-            .update_card(&CardSQLTableNames::Pipeline, &updated_card)
+            .update_card(&CardTable::Pipeline, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardSQLTableNames::Pipeline, &card_args)
+            .query_cards(&CardTable::Pipeline, &card_args)
             .await
             .unwrap();
 
@@ -1581,7 +1581,7 @@ mod tests {
 
         // get unique repository names
         let repos = client
-            .get_unique_repository_names(&CardSQLTableNames::Model)
+            .get_unique_repository_names(&CardTable::Model)
             .await
             .unwrap();
 
@@ -1607,7 +1607,7 @@ mod tests {
 
         // query stats
         let stats = client
-            .query_stats(&CardSQLTableNames::Model, None)
+            .query_stats(&CardTable::Model, None)
             .await
             .unwrap();
 
@@ -1617,7 +1617,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardSQLTableNames::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"))
             .await
             .unwrap();
 
@@ -1625,7 +1625,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardSQLTableNames::Data)
+            .query_page("name", 0, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -1633,7 +1633,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardSQLTableNames::Model)
+            .query_page("name", 0, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -1641,7 +1641,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo4"), &CardSQLTableNames::Model)
+            .query_page("name", 0, None, Some("repo4"), &CardTable::Model)
             .await
             .unwrap();
 
@@ -1675,7 +1675,7 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let cards = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1691,7 +1691,7 @@ mod tests {
 
         // delete the card
         client
-            .delete_card(&CardSQLTableNames::Data, &uid)
+            .delete_card(&CardTable::Data, &uid)
             .await
             .unwrap();
 
@@ -1702,7 +1702,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardSQLTableNames::Data, &args)
+            .query_cards(&CardTable::Data, &args)
             .await
             .unwrap();
 
@@ -1717,7 +1717,7 @@ mod tests {
 
         // check only 9 cards should be left
         let cards = client
-            .query_cards(&CardSQLTableNames::Data, &card_args)
+            .query_cards(&CardTable::Data, &card_args)
             .await
             .unwrap();
 
@@ -1749,7 +1749,7 @@ mod tests {
             1,
         );
         client
-            .insert_card(&CardSQLTableNames::Project, &ServerCard::Project(project))
+            .insert_card(&CardTable::Project, &ServerCard::Project(project))
             .await
             .unwrap();
 
@@ -1770,7 +1770,7 @@ mod tests {
             ..Default::default()
         };
         let cards = client
-            .query_cards(&CardSQLTableNames::Project, &args)
+            .query_cards(&CardTable::Project, &args)
             .await
             .unwrap();
 

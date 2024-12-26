@@ -25,7 +25,7 @@ impl CardRegistry {
 
         Ok(Self {
             registry_type: registry_type.clone(),
-            table_name: CardSQLTableNames::from_registry_type(&registry_type).to_string(),
+            table_name: CardTable::from_registry_type(&registry_type).to_string(),
             registry,
         })
     }
@@ -131,7 +131,7 @@ impl PyCardRegistry {
 
         Ok(Self {
             registry_type: registry_type.clone(),
-            table_name: CardSQLTableNames::from_registry_type(&registry_type).to_string(),
+            table_name: CardTable::from_registry_type(&registry_type).to_string(),
             registry,
             runtime: rt,
         })
@@ -468,7 +468,7 @@ mod tests {
         assert_eq!(registry.mode(), RegistryMode::Client);
 
         // Test table name
-        assert_eq!(registry.table_name(), CardSQLTableNames::Data.to_string());
+        assert_eq!(registry.table_name(), CardTable::Data.to_string());
 
         // Test list cards
         let cards = registry

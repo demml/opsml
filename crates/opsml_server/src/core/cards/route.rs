@@ -8,11 +8,11 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use opsml_cards::CardTable;
 use opsml_contracts::*;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
-use opsml_types::*;
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -24,7 +24,7 @@ pub async fn check_card_uid(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     let exists = state
         .sql_client
         .check_uid_exists(&params.uid, &table)
@@ -45,7 +45,7 @@ pub async fn get_card_repositories(
     State(state): State<Arc<AppState>>,
     params: Query<RepositoryRequest>,
 ) -> Result<Json<RepositoryResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     let repos = state
         .sql_client
         .get_unique_repository_names(&table)
@@ -68,7 +68,7 @@ pub async fn get_registry_stats(
     State(state): State<Arc<AppState>>,
     Query(params): Query<RegistryStatsRequest>,
 ) -> Result<Json<RegistryStatsResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     let stats = state
         .sql_client
         .query_stats(&table, params.search_term.as_deref())
@@ -89,7 +89,7 @@ pub async fn get_page(
     State(state): State<Arc<AppState>>,
     Query(params): Query<QueryPageRequest>,
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
     let page = params.page.unwrap_or(0);
     let summaries = state
@@ -117,7 +117,7 @@ pub async fn get_next_version(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardVersionRequest>,
 ) -> Result<Json<CardVersionResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
 
     let versions = state
         .sql_client
@@ -167,7 +167,7 @@ pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListCardRequest>,
 ) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     let card_args = CardQueryArgs {
         name: params.name,
         repository: params.repository,
@@ -224,7 +224,7 @@ pub async fn create_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<CreateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&card_request.registry_type);
+    let table = CardTable::from_registry_type(&card_request.registry_type);
 
     // match on registry type
     let card = match card_request.card {
@@ -343,7 +343,7 @@ pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&card_request.registry_type);
+    let table = CardTable::from_registry_type(&card_request.registry_type);
 
     // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
     // match on registry type (all fields should be supplied)
@@ -555,7 +555,7 @@ pub async fn delete_card(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardSQLTableNames::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&params.registry_type);
     state
         .sql_client
         .delete_card(&table, &params.uid)
