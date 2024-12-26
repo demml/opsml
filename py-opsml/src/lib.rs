@@ -1,50 +1,55 @@
+use opsml_cards::{CardInfo, DataSchema, Description, OnnxSchema};
+use opsml_contracts::{Card, CardList};
+use opsml_error::error::OpsmlError;
+use opsml_interfaces::{
+    data::{
+        ColType, ColValType, ColumnSplit, Data, DataSplit, IndiceSplit, PolarsColumnSplitter,
+        StartStopSplit,
+    },
+    CatBoostModelInterfaceMetadata, Feature, HuggingFaceModelInterfaceMetadata,
+    HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs,
+    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterfaceMetadata,
+    ModelInterfaceSaveMetadata, ModelInterfaceType, ModelSaveMetadata,
+    SklearnModelInterfaceMetadata, TensorFlowInterfaceMetadata, TorchInterfaceMetadata,
+    TorchOnnxArgs, TorchSaveArgs, VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
+};
+use opsml_logging::logging::{LogLevel, OpsmlLogger};
+use opsml_registry::PyCardRegistry;
 #[cfg(feature = "server")]
 use opsml_registry::RegistryTestHelper;
-
-use opsml_error::error::OpsmlError;
-use opsml_logging::logging::OpsmlLogger;
-use opsml_registry::PyCardRegistry;
+use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::cards::model::{
-    CatBoostModelInterfaceMetadata, HuggingFaceModelInterfaceMetadata,
-    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, ModelSaveMetadata, SklearnModelInterfaceMetadata,
-    TensorFlowInterfaceMetadata, TorchInterfaceMetadata, VowpalWabbitInterfaceMetadata,
-    XGBoostModelInterfaceMetadata,
-};
-use opsml_types::cards::{
-    DataSchema, Description, Feature, HuggingFaceORTModel, HuggingFaceOnnxArgs,
-    HuggingFaceOnnxSaveArgs, OnnxSchema, RegistryType, TorchOnnxArgs, TorchSaveArgs,
-};
-use opsml_types::shared::{CommonKwargs, SaveName, Suffix};
-use opsml_types::{Card, CardInfo, CardList, DataType, LogLevel, ModelInterfaceType};
-use opsml_utils::{FileUtils, VersionType};
+
+use opsml_types::{CommonKwargs, DataType, RegistryType, SaveName, Suffix};
+use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 
 #[pymodule]
 fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
-    // logging
+    // opsml_logging
     _m.add_class::<LogLevel>()?;
     _m.add_class::<OpsmlLogger>()?;
 
-    // errors
+    // opsml_errors
     _m.add("OpsmlError", _m.py().get_type::<OpsmlError>())?;
 
-    // config
+    // opsml_settings
     _m.add_class::<OpsmlConfig>()?;
 
-    // shared
+    // opsml_types
     _m.add_class::<CommonKwargs>()?;
     _m.add_class::<SaveName>()?;
     _m.add_class::<Suffix>()?;
     _m.add_class::<RegistryType>()?;
     _m.add_class::<DataType>()?;
 
-    // utils
+    // opsml_semver
     _m.add_class::<VersionType>()?;
+
+    // opsml_utils
     _m.add_class::<FileUtils>()?;
 
-    // cards (types that are used across cards)
+    // opsml_interfaces
     _m.add_class::<HuggingFaceOnnxArgs>()?;
     _m.add_class::<HuggingFaceORTModel>()?;
     _m.add_class::<HuggingFaceOnnxSaveArgs>()?;
@@ -74,12 +79,20 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<XGBoostModelInterfaceMetadata>()?;
     _m.add_class::<ModelSaveMetadata>()?;
     _m.add_class::<ModelInterfaceSaveMetadata>()?;
-
-    // registry
-    _m.add_class::<PyCardRegistry>()?;
-
-    // model interface
     _m.add_class::<ModelInterfaceType>()?;
+
+    // data_splitter
+    _m.add_class::<DataSplit>()?;
+    _m.add_class::<Data>()?;
+    _m.add_class::<ColumnSplit>()?;
+    _m.add_class::<StartStopSplit>()?;
+    _m.add_class::<IndiceSplit>()?;
+    _m.add_class::<PolarsColumnSplitter>()?;
+    _m.add_class::<ColType>()?;
+    _m.add_class::<ColValType>()?;
+
+    // opsml_registry
+    _m.add_class::<PyCardRegistry>()?;
 
     #[cfg(feature = "server")]
     _m.add_class::<RegistryTestHelper>()?;

@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-
+use opsml_utils::PyHelperFuncs;
 use pyo3::exceptions::PyValueError;
 use pyo3::types::{PyFloat, PyInt, PyString};
 use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -50,10 +50,10 @@ pub struct ColumnSplit {
 #[pymethods]
 impl ColumnSplit {
     #[new]
-    #[pyo3(signature = (column_value, column_name, column_type, inequality=None))]
+    #[pyo3(signature = (column_name, column_value, column_type, inequality=None))]
     pub fn new(
-        column_value: &Bound<'_, PyAny>,
         column_name: String,
+        column_value: &Bound<'_, PyAny>,
         column_type: ColType,
         inequality: Option<String>,
     ) -> PyResult<Self> {
@@ -96,6 +96,10 @@ impl ColumnSplit {
             inequality: ineq,
         })
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 #[pyclass(eq)]
@@ -113,6 +117,10 @@ impl StartStopSplit {
     pub fn new(start: i64, stop: i64) -> Self {
         StartStopSplit { start, stop }
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 #[pyclass(eq)]
@@ -128,10 +136,15 @@ impl IndiceSplit {
     pub fn new(indices: Vec<i64>) -> Self {
         IndiceSplit { indices }
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 #[pyclass]
-struct DataSplit {
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct DataSplit {
     #[pyo3(get, set)]
     label: String,
     #[pyo3(get, set)]
@@ -146,7 +159,7 @@ struct DataSplit {
 impl DataSplit {
     #[new]
     #[pyo3(signature = (label, column_split=None, start_stop_split=None, indice_split=None))]
-    fn new(
+    pub fn new(
         label: String,
         column_split: Option<ColumnSplit>,
         start_stop_split: Option<StartStopSplit>,
@@ -182,9 +195,14 @@ impl DataSplit {
             indice_split,
         })
     }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 #[pyclass]
+#[derive(Debug)]
 pub struct Data {
     #[pyo3(get)]
     x: PyObject,
@@ -201,13 +219,17 @@ fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
         .collect::<Vec<T>>()
 }
 
+#[pyclass]
 pub struct PolarsColumnSplitter {
     label: String,
     column_split: ColumnSplit,
     dependent_vars: Option<Vec<String>>,
 }
 
+#[pymethods]
 impl PolarsColumnSplitter {
+    #[new]
+    #[pyo3(signature = (label, column_split, dependent_vars=None))]
     pub fn new(
         label: String,
         column_split: ColumnSplit,

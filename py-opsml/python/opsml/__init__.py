@@ -24,6 +24,14 @@ from ._opsml import (  # type: ignore
     TorchOnnxArgs,
     TorchSaveArgs,
     VersionType,
+    ColType,
+    ColValType,
+    ColumnSplit,
+    StartStopSplit,
+    IndiceSplit,
+    DataSplit,
+    Data,
+    PolarsColumnSplitter,
 )
 
 __all__ = [
@@ -52,4 +60,12 @@ __all__ = [
     "ModelInterfaceMetadata",
     "LogLevel",
     "DataType",
+    "ColType",
+    "ColValType",
+    "ColumnSplit",
+    "StartStopSplit",
+    "IndiceSplit",
+    "DataSplit",
+    "Data",
+    "PolarsColumnSplitter",
 ]
