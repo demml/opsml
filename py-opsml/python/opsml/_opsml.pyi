@@ -1068,3 +1068,29 @@ class PolarsColumnSplitter:
         Returns:
             A dictionary containing the split data
         """
+
+class DataSplitter:
+    def __init__(self) -> None:
+        """Define a data splitter
+
+        Args:
+            data_split:
+                The data split
+        """
+
+    def split_data(
+        self,
+        split: DataSplit,
+        data: Any,
+        data_type: DataType,
+        dependent_vars: List[str],
+    ) -> Dict[str, Data]:
+        """Create a split
+
+        Args:
+            data:
+                The data to split
+
+        Returns:
+            A dictionary containing the split data
+        """

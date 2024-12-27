@@ -32,6 +32,7 @@ from ._opsml import (  # type: ignore
     DataSplit,
     Data,
     PolarsColumnSplitter,
+    DataSplitter,
 )
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     "DataSplit",
     "Data",
     "PolarsColumnSplitter",
+    "DataSplitter",
 ]
