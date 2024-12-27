@@ -64,7 +64,7 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
         column_name="foo",
         column_value=3,
         column_type=ColType.Builtin,
-        inequality="<",
+        inequality=Inequality.LesserThan,
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
@@ -110,7 +110,7 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
         column_name="foo",
         column_value=4,
         column_type=ColType.Builtin,
-        inequality=">",
+        inequality=Inequality.GreaterThan,
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
