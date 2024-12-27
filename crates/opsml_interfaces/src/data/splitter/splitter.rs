@@ -89,53 +89,48 @@ impl ColumnSplit {
         column_type: ColType,
         inequality: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<Self> {
-        let mut col_val = None;
         let py = column_value.py();
-        let fallback_ineq = "==".into_bound_py_any(py).unwrap();
+        let fallback_ineq = PyString::new(py, "==");
         let inequality = inequality.unwrap_or(&fallback_ineq);
 
-        let ineq: Inequality = if inequality.is_instance_of::<PyString>() {
-            let ineq = inequality.extract::<String>()?;
-            ineq.as_str().into()
-        } else if inequality.is_instance_of::<Inequality>() {
-            inequality.extract::<Inequality>()?
+        let ineq: Inequality = if let Ok(ineq_str) = inequality.extract::<String>() {
+            ineq_str.as_str().into()
+        } else if let Ok(ineq_enum) = inequality.extract::<Inequality>() {
+            ineq_enum
         } else {
             Inequality::Equal
         };
 
-        if !PyAnyMethods::is_none(column_value) {
-            col_val = match column_type {
-                ColType::Timestamp => {
-                    // column_value must be an isoformat string
-                    if column_value.is_instance_of::<PyFloat>() {
-                        let timestamp: f64 = column_value.extract().unwrap();
-                        PyDateTime::from_timestamp(py, timestamp, None).map_err(|e| {
-                            OpsmlError::new_err(format!("Failed to convert timestamp: {}", e))
-                        })?;
-                        Some(ColValType::Timestamp(timestamp))
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid timestamp"));
-                    }
+        let col_val = match column_type {
+            ColType::Timestamp => {
+                if column_value.is_instance_of::<PyFloat>() {
+                    let timestamp: f64 = column_value.extract()?;
+                    PyDateTime::from_timestamp(py, timestamp, None).map_err(|e| {
+                        OpsmlError::new_err(format!("Failed to convert timestamp: {}", e))
+                    })?;
+                    ColValType::Timestamp(timestamp)
+                } else {
+                    return Err(OpsmlError::new_err("Invalid timestamp"));
                 }
-                ColType::Builtin => {
-                    if column_value.is_instance_of::<PyString>() {
-                        Some(ColValType::String(column_value.extract().unwrap()))
-                    } else if column_value.is_instance_of::<PyFloat>() {
-                        Some(ColValType::Float(column_value.extract().unwrap()))
-                    } else if column_value.is_instance_of::<PyInt>() {
-                        Some(ColValType::Int(column_value.extract().unwrap()))
-                    } else {
-                        return Err(OpsmlError::new_err(
-                            "Invalid value type. Supported types are String, Float, Int",
-                        ));
-                    }
+            }
+            ColType::Builtin => {
+                if column_value.is_instance_of::<PyString>() {
+                    ColValType::String(column_value.extract()?)
+                } else if column_value.is_instance_of::<PyFloat>() {
+                    ColValType::Float(column_value.extract()?)
+                } else if column_value.is_instance_of::<PyInt>() {
+                    ColValType::Int(column_value.extract()?)
+                } else {
+                    return Err(OpsmlError::new_err(
+                        "Invalid value type. Supported types are String, Float, Int",
+                    ));
                 }
-            };
+            }
         };
 
         Ok(ColumnSplit {
             column_name,
-            column_value: col_val.unwrap(),
+            column_value: col_val,
             column_type,
             inequality: ineq,
         })
@@ -359,8 +354,6 @@ impl PolarsColumnSplitter {
                     .call_method1("col", (column_name,))?
                     .call_method1("le", (value,))?,),
             )?,
-
-            _ => return Err(OpsmlError::new_err("Invalid inequality")),
         };
 
         create_data(&self.label, &self.dependent_vars, &filtered_data)
