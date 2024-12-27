@@ -425,6 +425,71 @@ impl PolarsStartStopSplitter {
 }
 
 #[pyclass]
+pub struct PandasColumnSplitter {
+    label: String,
+    column_split: ColumnSplit,
+    dependent_vars: Vec<String>,
+}
+
+#[pymethods]
+impl PandasColumnSplitter {
+    #[new]
+    #[pyo3(signature = (label, column_split, dependent_vars))]
+    pub fn new(label: String, column_split: ColumnSplit, dependent_vars: Vec<String>) -> Self {
+        PandasColumnSplitter {
+            label,
+            column_split,
+            dependent_vars,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        let py = data.py();
+
+        // check if polars dataframe
+        let pandas = py.import("pandas")?;
+
+        let column_name = &self.column_split.column_name;
+
+        // if column type is timestamp, convert to datetime
+        let value = match &self.column_split.column_type {
+            ColType::Timestamp => {
+                let timestamp = self.column_split.column_value.to_py_object(py);
+                pandas
+                    .call_method1("Timestamp", (timestamp,))?
+                    .into_py_any(py)?
+            }
+            _ => self.column_split.column_value.to_py_object(py),
+        };
+
+        let filtered_data = match self.column_split.inequality {
+            Inequality::Equal => data.call_method1(
+                "__getitem__",
+                (data.get_item(column_name)?.call_method1("eq", (value,))?,),
+            )?,
+            Inequality::GreaterThan => data.call_method1(
+                "__getitem__",
+                (data.get_item(column_name)?.call_method1("gt", (value,))?,),
+            )?,
+            Inequality::GreaterThanEqual => data.call_method1(
+                "__getitem__",
+                (data.get_item(column_name)?.call_method1("ge", (value,))?,),
+            )?,
+            Inequality::LesserThan => data.call_method1(
+                "__getitem__",
+                (data.get_item(column_name)?.call_method1("lt", (value,))?,),
+            )?,
+            Inequality::LesserThanEqual => data.call_method1(
+                "__getitem__",
+                (data.get_item(column_name)?.call_method1("le", (value,))?,),
+            )?,
+        };
+
+        create_data(&self.label, &self.dependent_vars, &filtered_data)
+    }
+}
+
+#[pyclass]
 pub struct DataSplitter {}
 
 #[pymethods]
@@ -441,10 +506,22 @@ impl DataSplitter {
         data_type: DataType,
         dependent_vars: Vec<String>,
     ) -> PyResult<HashMap<String, Data>> {
-        if split.column_split.is_some() && data_type == DataType::Polars {
-            let polars_splitter =
-                PolarsColumnSplitter::new(split.label, split.column_split.unwrap(), dependent_vars);
-            return polars_splitter.create_split(data);
+        if split.column_split.is_some() {
+            if data_type == DataType::Polars {
+                let polars_splitter = PolarsColumnSplitter::new(
+                    split.label,
+                    split.column_split.unwrap(),
+                    dependent_vars,
+                );
+                return polars_splitter.create_split(data);
+            } else if data_type == DataType::Pandas {
+                let pandas_splitter = PandasColumnSplitter::new(
+                    split.label,
+                    split.column_split.unwrap(),
+                    dependent_vars,
+                );
+                return pandas_splitter.create_split(data);
+            }
         };
 
         if split.indice_split.is_some() && data_type == DataType::Polars {
