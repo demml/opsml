@@ -6,11 +6,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from PIL import Image
-from pydantic import BaseModel
-
 from opsml.data.interfaces.custom_data.base import FileRecord, Metadata
 from opsml.helpers.logging import ArtifactLogger
+from PIL import Image
+from pydantic import BaseModel
 
 logger = ArtifactLogger.get_logger()
 

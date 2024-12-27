@@ -3,13 +3,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
 import pyarrow.dataset as ds  # type: ignore
-
-from .base import (
-    Dataset,
-    get_metadata_filepath,
-    yield_chunks,
-)
 from opsml import OpsmlLogger
+
+from .base import Dataset, get_metadata_filepath, yield_chunks
 
 logger = OpsmlLogger.get_logger()
 
@@ -53,9 +49,7 @@ class PyarrowDatasetReader:
     @property
     def arrow_dataset(self) -> ds.Dataset:
         """Returns a pyarrow dataset"""
-        return ds.dataset(
-            source=self.lpath, format="parquet", ignore_prefixes=["metadata.jsonl"]
-        )
+        return ds.dataset(source=self.lpath, format="parquet", ignore_prefixes=["metadata.jsonl"])
 
     def _write_data_to_file(self, files: List[Dict[str, Any]]) -> None:
         """Writes a list of pyarrow data to image files.
@@ -92,17 +86,12 @@ class PyarrowDatasetReader:
 
         else:
             with ProcessPoolExecutor() as executor:
-                future_to_table = {
-                    executor.submit(self._write_data_to_file, chunk): chunk
-                    for chunk in chunks
-                }
+                future_to_table = {executor.submit(self._write_data_to_file, chunk): chunk for chunk in chunks}
                 for future in as_completed(future_to_table):
                     try:
                         _ = future.result()
                     except Exception as exc:
-                        logger.error(
-                            "Exception occurred while writing to file: {}", exc
-                        )
+                        logger.error("Exception occurred while writing to file: {}", exc)
                         raise exc
 
     def load_dataset(self) -> None:

@@ -2,10 +2,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-
-from opsml.interfaces.data.features.formatter import generate_feature_schema
-from opsml.interfaces.data.base import DataInterface
 from opsml import DataType
+from opsml.interfaces.data.base import DataInterface
+from opsml.interfaces.data.features.formatter import generate_feature_schema
 
 
 class NumpyData(DataInterface):

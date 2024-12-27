@@ -10,9 +10,6 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa
 from numpy.typing import NDArray
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
-from scouter import Drifter, SpcDriftConfig, SpcDriftProfile
-
 from opsml.data import DataInterface
 from opsml.helpers.utils import get_class_name
 from opsml.types import (
@@ -23,6 +20,8 @@ from opsml.types import (
     OnnxModel,
     Suffix,
 )
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from scouter import Drifter, SpcDriftConfig, SpcDriftProfile
 
 
 def get_processor_name(_class: Optional[Any] = None) -> str:
@@ -137,9 +136,7 @@ class ModelInterface(BaseModel):
         if model_args.get("modelcard_uid", False):
             return model_args
 
-        sample_data = cls._get_sample_data(
-            sample_data=model_args[CommonKwargs.SAMPLE_DATA.value]
-        )
+        sample_data = cls._get_sample_data(sample_data=model_args[CommonKwargs.SAMPLE_DATA.value])
 
         return _set_data_args(sample_data, model_args)
 
@@ -189,7 +186,6 @@ class ModelInterface(BaseModel):
             ModelReturn
         """
         import onnxruntime as rt
-
         from opsml.model.onnx import _get_onnx_metadata
 
         if self.onnx_model is None:
@@ -201,9 +197,7 @@ class ModelInterface(BaseModel):
             self.onnx_model.sess_to_path(path.with_suffix(Suffix.ONNX.value))
 
         assert self.onnx_model is not None, "No onnx model detected in interface"
-        metadata = _get_onnx_metadata(
-            self, cast(rt.InferenceSession, self.onnx_model.sess)
-        )
+        metadata = _get_onnx_metadata(self, cast(rt.InferenceSession, self.onnx_model.sess))
 
         return metadata
 
@@ -284,9 +278,7 @@ class ModelInterface(BaseModel):
             return sample_data
 
         # check if sample data can be converted to an interface
-        interface: Optional[DataInterface] = get_data_interface(
-            sample_data, get_class_name(sample_data)
-        )
+        interface: Optional[DataInterface] = get_data_interface(sample_data, get_class_name(sample_data))
         if interface is not None:
             assert interface.data is not None, "No data detected in interface"
             interface.data = interface.data[0:1]

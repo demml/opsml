@@ -63,9 +63,7 @@ class DataInterface(BaseModel):
                     sql_logic[name] = FileUtils.open_file(query)
 
                 except Exception as error:
-                    raise ValueError(
-                        f"Could not load sql file {query}. {error}"
-                    ) from error
+                    raise ValueError(f"Could not load sql file {query}. {error}") from error
 
         return sql_logic
 
@@ -151,9 +149,7 @@ class DataInterface(BaseModel):
         assert self.data_profile is not None, "No data profile detected in interface"
         self.data_profile.save_to_json(path)
 
-    def create_data_profile(
-        self, bin_size: int = 20, compute_correlations: bool = False
-    ) -> DataProfile:
+    def create_data_profile(self, bin_size: int = 20, compute_correlations: bool = False) -> DataProfile:
         """Creates a data profile report
 
         Args:
