@@ -2,7 +2,7 @@ use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::exceptions::PyValueError;
-use pyo3::types::{PyDateTime, PyFloat, PyInt, PyString};
+use pyo3::types::{PyDateTime, PyFloat, PyInt, PySlice, PyString};
 use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
@@ -555,6 +555,42 @@ impl PandasIndexSplitter {
 }
 
 #[pyclass]
+pub struct PandasStartStopSplitter {
+    label: String,
+    start_stop_split: StartStopSplit,
+    dependent_vars: Vec<String>,
+}
+
+#[pymethods]
+impl PandasStartStopSplitter {
+    #[new]
+    #[pyo3(signature = (label, start_stop_split, dependent_vars))]
+    pub fn new(
+        label: String,
+        start_stop_split: StartStopSplit,
+        dependent_vars: Vec<String>,
+    ) -> Self {
+        PandasStartStopSplitter {
+            label,
+            start_stop_split,
+            dependent_vars,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        // Slice the DataFrame using the start and stop indices
+        let py = data.py();
+        let start = self.start_stop_split.start as isize;
+        let stop = self.start_stop_split.stop as isize;
+        let slice = PySlice::new(py, start, stop, 1);
+
+        let sliced_data = data.get_item(slice)?;
+
+        create_pandas_data(&self.label, &self.dependent_vars, &sliced_data)
+    }
+}
+
+#[pyclass]
 pub struct DataSplitter {}
 
 #[pymethods]
@@ -615,13 +651,26 @@ impl DataSplitter {
             }
         };
 
-        if split.start_stop_split.is_some() && data_type == DataType::Polars {
-            let polars_splitter = PolarsStartStopSplitter::new(
-                split.label,
-                split.start_stop_split.unwrap(),
-                dependent_vars,
-            );
-            return polars_splitter.create_split(data);
+        if split.start_stop_split.is_some() {
+            match data_type {
+                DataType::Polars => {
+                    let polars_splitter = PolarsStartStopSplitter::new(
+                        split.label,
+                        split.start_stop_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return polars_splitter.create_split(data);
+                }
+                DataType::Pandas => {
+                    let pandas_splitter = PandasStartStopSplitter::new(
+                        split.label,
+                        split.start_stop_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return pandas_splitter.create_split(data);
+                }
+                _ => {}
+            }
         };
 
         Ok(HashMap::new())

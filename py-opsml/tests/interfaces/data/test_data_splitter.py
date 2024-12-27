@@ -333,3 +333,24 @@ def test_pandas_index_split(pandas_dataframe: pl.DataFrame):
     assert list(split.keys())[0] == "train"
     assert split["train"].x.shape == (3, 4)
     assert split["train"].x["n_legs"].to_list() == [2, 100, 4]
+
+
+def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
+    data_split = DataSplit(
+        label="train",
+        start_stop_split=StartStopSplit(start=3, stop=5),
+    )
+    splitter = DataSplitter()
+
+    split = splitter.split_data(
+        split=data_split,
+        data=pandas_dataframe,
+        data_type=DataType.Pandas,
+        dependent_vars=[],
+    )
+
+    assert split is not None
+    assert isinstance(split["train"], Data)
+    assert list(split.keys())[0] == "train"
+    assert split["train"].x.shape == (2, 4)
+    assert split["train"].x["n_legs"].to_list() == [100, 2]
