@@ -1,19 +1,20 @@
 import polars as pl
 import pandas as pd
+import pyarrow as pa  # type: ignore
 from opsml import (
     ColType,
-    ColValType,
     ColumnSplit,
     Data,
     DataSplit,
     IndiceSplit,
-    PolarsColumnSplitter,
     StartStopSplit,
     DataSplitter,
     DataType,
     Inequality,
 )
 import datetime
+import numpy as np
+from numpy.typing import NDArray
 
 
 def test_polars_equal_column_split(polars_dataframe: pl.DataFrame):
@@ -354,3 +355,86 @@ def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
     assert list(split.keys())[0] == "train"
     assert split["train"].x.shape == (2, 4)
     assert split["train"].x["n_legs"].to_list() == [100, 2]
+
+
+def test_pyarrow_index_split(arrow_dataframe: pa.Table):
+    data_split = DataSplit(
+        label="train",
+        indice_split=IndiceSplit(
+            indices=[0, 3],
+        ),
+    )
+    splitter = DataSplitter()
+
+    split = splitter.split_data(
+        split=data_split,
+        data=arrow_dataframe,
+        data_type=DataType.PyArrow,
+    )
+
+    assert split is not None
+    assert isinstance(split["train"], Data)
+    assert list(split.keys())[0] == "train"
+    assert split["train"].x.shape == (2, 2)
+    assert split["train"].x["n_legs"].to_pylist() == [2, 100]
+
+
+def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
+    data_split = DataSplit(
+        label="train",
+        start_stop_split=StartStopSplit(start=0, stop=3),
+    )
+    splitter = DataSplitter()
+
+    split = splitter.split_data(
+        split=data_split,
+        data=arrow_dataframe,
+        data_type=DataType.PyArrow,
+        dependent_vars=[],
+    )
+
+    assert split is not None
+    assert isinstance(split["train"], Data)
+    assert list(split.keys())[0] == "train"
+    assert split["train"].x.shape == (3, 2)
+    assert split["train"].x["n_legs"].to_pylist() == [2, 4, 5]
+
+
+def test_numpy_index_split(numpy_array: NDArray[np.float64]):
+    data_split = DataSplit(
+        label="train",
+        indice_split=IndiceSplit(
+            indices=[0, 5, 9],
+        ),
+    )
+    splitter = DataSplitter()
+
+    split = splitter.split_data(
+        split=data_split,
+        data=numpy_array,
+        data_type=DataType.Numpy,
+    )
+
+    assert split is not None
+    assert isinstance(split["train"], Data)
+    assert list(split.keys())[0] == "train"
+    assert split["train"].x.shape == (3, 100)
+
+
+def test_numpy_start_stop_split(numpy_array: NDArray[np.float64]):
+    data_split = DataSplit(
+        label="train",
+        start_stop_split=StartStopSplit(start=0, stop=5),
+    )
+    splitter = DataSplitter()
+
+    split = splitter.split_data(
+        split=data_split,
+        data=numpy_array,
+        data_type=DataType.Numpy,
+    )
+
+    assert split is not None
+    assert isinstance(split["train"], Data)
+    assert list(split.keys())[0] == "train"
+    assert split["train"].x.shape == (5, 100)
