@@ -8,21 +8,27 @@ from opsml import (
     IndiceSplit,
     PolarsColumnSplitter,
     StartStopSplit,
+    DataSplitter,
+    DataType,
 )
 
 
-def test_data_split(polars_dataframe: pl.DataFrame):
-    col_split = ColumnSplit(
+def test_polars_equal_column_split(polars_dataframe: pl.DataFrame):
+    eq_col_split = ColumnSplit(
         column_name="foo",
         column_value=3,
         column_type=ColType.Builtin,
     )
 
-    DataSplit(label="label", column_split=col_split)
+    data_split = DataSplit(label="train", column_split=eq_col_split)
+    splitter = DataSplitter()
 
-    splitter = PolarsColumnSplitter("train", col_split)
-
-    split = splitter.create_split(polars_dataframe)
+    split = splitter.split_data(
+        split=data_split,
+        data=polars_dataframe,
+        data_type=DataType.Polars,
+        dependent_vars=[],
+    )
 
     assert split is not None
     assert isinstance(split["train"], Data)

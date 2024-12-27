@@ -2,13 +2,41 @@ use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::exceptions::PyValueError;
-use pyo3::types::{PyDateTime, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyDateTime, PyFloat, PyInt, PyString};
 use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::data;
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum Inequality {
+    Equal,
+    GreaterThan,
+    GreaterThanEqual,
+    LessThan,
+    LessThanEqual,
+}
+
+#[pymethods]
+impl Inequality {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+impl From<&str> for Inequality {
+    fn from(s: &str) -> Self {
+        match s {
+            "==" => Inequality::Equal,
+            ">" => Inequality::GreaterThan,
+            ">=" => Inequality::GreaterThanEqual,
+            "<" => Inequality::LessThan,
+            "<=" => Inequality::LessThanEqual,
+            _ => Inequality::GreaterThan,
+        }
+    }
+}
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -48,7 +76,7 @@ pub struct ColumnSplit {
     #[pyo3(get, set)]
     column_type: ColType,
     #[pyo3(get, set)]
-    inequality: Option<String>,
+    inequality: Inequality,
 }
 
 #[pymethods]
@@ -62,7 +90,7 @@ impl ColumnSplit {
         inequality: Option<String>,
     ) -> PyResult<Self> {
         let mut col_val = None;
-        let mut ineq = None;
+        let ineq = inequality.unwrap_or("==".to_string());
         let py = column_value.py();
 
         if !PyAnyMethods::is_none(column_value) {
@@ -95,16 +123,11 @@ impl ColumnSplit {
             };
         };
 
-        if let Some(inequality) = inequality {
-            // strip whitespace
-            ineq = Some(inequality.trim().to_string());
-        }
-
         Ok(ColumnSplit {
             column_name,
             column_value: col_val.unwrap(),
             column_type,
-            inequality: ineq,
+            inequality: ineq.trim().into(),
         })
     }
 
@@ -296,36 +319,38 @@ impl PolarsColumnSplitter {
         let value = &self.column_split.column_value.to_py_object(py);
 
         let filtered_data = match &self.column_split.inequality {
-            None => data.call_method1(
+            Inequality::Equal => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("eq", (value,))?,),
             )?,
-            Some(ineq) if ineq == ">" => data.call_method1(
+            Inequality::GreaterThan => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("gt", (value,))?,),
             )?,
-            Some(ineq) if ineq == ">=" => data.call_method1(
+            Inequality::GreaterThanEqual => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("ge", (value,))?,),
             )?,
-            Some(ineq) if ineq == "<" => data.call_method1(
+            Inequality::LessThan => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("lt", (value,))?,),
             )?,
-            Some(_) => data.call_method1(
+            Inequality::LessThanEqual => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("le", (value,))?,),
             )?,
+
+            _ => return Err(OpsmlError::new_err("Invalid inequality")),
         };
 
         create_data(&self.label, &self.dependent_vars, &filtered_data)
@@ -422,6 +447,15 @@ impl DataSplitter {
         if split.indice_split.is_some() && data_type == DataType::Polars {
             let polars_splitter =
                 PolarsIndexSplitter::new(split.label, split.indice_split.unwrap(), dependent_vars);
+            return polars_splitter.create_split(data);
+        };
+
+        if split.start_stop_split.is_some() && data_type == DataType::Polars {
+            let polars_splitter = PolarsStartStopSplitter::new(
+                split.label,
+                split.start_stop_split.unwrap(),
+                dependent_vars,
+            );
             return polars_splitter.create_split(data);
         };
 
