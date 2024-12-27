@@ -258,7 +258,7 @@ fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
         .collect::<Vec<T>>()
 }
 
-fn create_data(
+fn create_polars_data(
     label: &str,
     dependent_vars: &Vec<String>,
     data: &Bound<'_, PyAny>,
@@ -277,6 +277,40 @@ fn create_data(
                     .call_method1("select", (&dependent_vars,))
                     .unwrap()
                     .into(),
+            },
+        );
+
+        return Ok(data_map);
+    } else {
+        data_map.insert(
+            label.to_string(),
+            Data {
+                x: data.into_py_any(py)?,
+                // pyany none
+                y: py.None().into(),
+            },
+        );
+
+        return Ok(data_map);
+    }
+}
+
+fn create_pandas_data(
+    label: &str,
+    dependent_vars: &Vec<String>,
+    data: &Bound<'_, PyAny>,
+) -> PyResult<HashMap<String, Data>> {
+    let py = data.py();
+    let mut data_map = HashMap::new();
+    if !dependent_vars.is_empty() {
+        let columns: Vec<String> = data.getattr("columns")?.extract()?;
+        let x_cols = remove_diff(&columns, &dependent_vars);
+
+        data_map.insert(
+            label.to_string(),
+            Data {
+                x: data.get_item(x_cols)?.into(),
+                y: data.get_item(&dependent_vars.clone())?.into(),
             },
         );
 
@@ -356,7 +390,7 @@ impl PolarsColumnSplitter {
             )?,
         };
 
-        create_data(&self.label, &self.dependent_vars, &filtered_data)
+        create_polars_data(&self.label, &self.dependent_vars, &filtered_data)
     }
 }
 
@@ -385,7 +419,7 @@ impl PolarsIndexSplitter {
         let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
         let sliced_data = data.get_item(indices)?;
 
-        create_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_polars_data(&self.label, &self.dependent_vars, &sliced_data)
     }
 }
 
@@ -420,7 +454,7 @@ impl PolarsStartStopSplitter {
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
 
-        create_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_polars_data(&self.label, &self.dependent_vars, &sliced_data)
     }
 }
 
@@ -485,7 +519,38 @@ impl PandasColumnSplitter {
             )?,
         };
 
-        create_data(&self.label, &self.dependent_vars, &filtered_data)
+        create_pandas_data(&self.label, &self.dependent_vars, &filtered_data)
+    }
+}
+
+#[pyclass]
+pub struct PandasIndexSplitter {
+    label: String,
+    indice_split: IndiceSplit,
+    dependent_vars: Vec<String>,
+}
+
+#[pymethods]
+impl PandasIndexSplitter {
+    #[new]
+    #[pyo3(signature = (label, indice_split, dependent_vars))]
+    pub fn new(label: String, indice_split: IndiceSplit, dependent_vars: Vec<String>) -> Self {
+        PandasIndexSplitter {
+            label,
+            indice_split,
+            dependent_vars,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        let py = data.py();
+
+        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
+        let sliced_data = data
+            .getattr("iloc")?
+            .call_method1("__getitem__", (indices,))?; // iloc is used to slice the dataframe
+
+        create_pandas_data(&self.label, &self.dependent_vars, &sliced_data)
     }
 }
 
@@ -507,27 +572,47 @@ impl DataSplitter {
         dependent_vars: Vec<String>,
     ) -> PyResult<HashMap<String, Data>> {
         if split.column_split.is_some() {
-            if data_type == DataType::Polars {
-                let polars_splitter = PolarsColumnSplitter::new(
-                    split.label,
-                    split.column_split.unwrap(),
-                    dependent_vars,
-                );
-                return polars_splitter.create_split(data);
-            } else if data_type == DataType::Pandas {
-                let pandas_splitter = PandasColumnSplitter::new(
-                    split.label,
-                    split.column_split.unwrap(),
-                    dependent_vars,
-                );
-                return pandas_splitter.create_split(data);
+            match data_type {
+                DataType::Polars => {
+                    let polars_splitter = PolarsColumnSplitter::new(
+                        split.label,
+                        split.column_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return polars_splitter.create_split(data);
+                }
+                DataType::Pandas => {
+                    let pandas_splitter = PandasColumnSplitter::new(
+                        split.label,
+                        split.column_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return pandas_splitter.create_split(data);
+                }
+                _ => {}
             }
         };
 
-        if split.indice_split.is_some() && data_type == DataType::Polars {
-            let polars_splitter =
-                PolarsIndexSplitter::new(split.label, split.indice_split.unwrap(), dependent_vars);
-            return polars_splitter.create_split(data);
+        if split.indice_split.is_some() {
+            match data_type {
+                DataType::Polars => {
+                    let polars_splitter = PolarsIndexSplitter::new(
+                        split.label,
+                        split.indice_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return polars_splitter.create_split(data);
+                }
+                DataType::Pandas => {
+                    let pandas_splitter = PandasIndexSplitter::new(
+                        split.label,
+                        split.indice_split.unwrap(),
+                        dependent_vars,
+                    );
+                    return pandas_splitter.create_split(data);
+                }
+                _ => {}
+            }
         };
 
         if split.start_stop_split.is_some() && data_type == DataType::Polars {
