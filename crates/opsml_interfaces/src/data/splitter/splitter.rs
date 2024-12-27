@@ -1,6 +1,8 @@
+use opsml_error::error::OpsmlError;
+use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::exceptions::PyValueError;
-use pyo3::types::{PyFloat, PyInt, PyString};
+use pyo3::types::{PyDateTime, PyFloat, PyInt, PyList, PyString};
 use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
@@ -12,7 +14,7 @@ pub enum ColValType {
     String(String),
     Float(f64),
     Int(i64),
-    Timestamp(String),
+    Timestamp(f64),
 }
 
 impl ColValType {
@@ -59,15 +61,20 @@ impl ColumnSplit {
     ) -> PyResult<Self> {
         let mut col_val = None;
         let mut ineq = None;
+        let py = column_value.py();
 
         if !PyAnyMethods::is_none(column_value) {
             col_val = match column_type {
                 ColType::Timestamp => {
                     // column_value must be an isoformat string
-                    if column_value.is_instance_of::<PyString>() {
-                        Some(ColValType::Timestamp(column_value.extract().unwrap()))
+                    if column_value.is_instance_of::<PyFloat>() {
+                        let timestamp: f64 = column_value.extract().unwrap();
+                        PyDateTime::from_timestamp(py, timestamp, None).map_err(|e| {
+                            OpsmlError::new_err(format!("Failed to convert timestamp: {}", e))
+                        })?;
+                        Some(ColValType::Timestamp(timestamp))
                     } else {
-                        return Err(PyValueError::new_err("Invalid timestamp"));
+                        return Err(OpsmlError::new_err("Invalid timestamp"));
                     }
                 }
                 ColType::Builtin => {
@@ -78,7 +85,9 @@ impl ColumnSplit {
                     } else if column_value.is_instance_of::<PyInt>() {
                         Some(ColValType::Int(column_value.extract().unwrap()))
                     } else {
-                        return Err(PyValueError::new_err("Invalid value"));
+                        return Err(OpsmlError::new_err(
+                            "Invalid value type. Supported types are String, Float, Int",
+                        ));
                     }
                 }
             };
@@ -223,18 +232,14 @@ fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
 pub struct PolarsColumnSplitter {
     label: String,
     column_split: ColumnSplit,
-    dependent_vars: Option<Vec<String>>,
+    dependent_vars: Vec<String>,
 }
 
 #[pymethods]
 impl PolarsColumnSplitter {
     #[new]
-    #[pyo3(signature = (label, column_split, dependent_vars=None))]
-    pub fn new(
-        label: String,
-        column_split: ColumnSplit,
-        dependent_vars: Option<Vec<String>>,
-    ) -> Self {
+    #[pyo3(signature = (label, column_split, dependent_vars))]
+    pub fn new(label: String, column_split: ColumnSplit, dependent_vars: Vec<String>) -> Self {
         PolarsColumnSplitter {
             label,
             column_split,
@@ -247,10 +252,6 @@ impl PolarsColumnSplitter {
 
         // check if polars dataframe
         let polars = py.import("polars")?;
-        let polars_dataframe = polars.getattr("DataFrame")?;
-        if !data.is_instance(&polars_dataframe)? {
-            return Err(PyValueError::new_err("data is not a polars DataFrame"));
-        }
 
         let mut data_map = HashMap::new();
         let column_name = &self.column_split.column_name;
@@ -289,9 +290,9 @@ impl PolarsColumnSplitter {
             )?,
         };
 
-        if let Some(dependent_vars) = &self.dependent_vars {
+        if !self.dependent_vars.is_empty() {
             let columns: Vec<String> = filtered_data.getattr("columns")?.extract()?;
-            let x_cols = remove_diff(&columns, dependent_vars);
+            let x_cols = remove_diff(&columns, &self.dependent_vars);
 
             data_map.insert(
                 self.label.clone(),
@@ -301,7 +302,7 @@ impl PolarsColumnSplitter {
                         .unwrap()
                         .into(),
                     y: filtered_data
-                        .call_method1("select", (dependent_vars,))
+                        .call_method1("select", (&self.dependent_vars,))
                         .unwrap()
                         .into(),
                 },
@@ -320,5 +321,93 @@ impl PolarsColumnSplitter {
 
             return Ok(data_map);
         }
+    }
+}
+
+#[pyclass]
+pub struct PolarsIndexSplitter {
+    label: String,
+    indice_split: IndiceSplit,
+    dependent_vars: Vec<String>,
+}
+
+#[pymethods]
+impl PolarsIndexSplitter {
+    #[new]
+    #[pyo3(signature = (label, indice_split, dependent_vars))]
+    pub fn new(label: String, indice_split: IndiceSplit, dependent_vars: Vec<String>) -> Self {
+        PolarsIndexSplitter {
+            label,
+            indice_split,
+            dependent_vars,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        let py = data.py();
+
+        let mut data_map = HashMap::new();
+
+        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
+        let sliced_data = data.get_item(indices)?;
+
+        if !self.dependent_vars.is_empty() {
+            let columns: Vec<String> = sliced_data.getattr("columns")?.extract()?;
+            let x_cols = remove_diff(&columns, &self.dependent_vars);
+
+            data_map.insert(
+                self.label.clone(),
+                Data {
+                    x: sliced_data
+                        .call_method1("select", (x_cols,))
+                        .unwrap()
+                        .into(),
+                    y: sliced_data
+                        .call_method1("select", (&self.dependent_vars,))
+                        .unwrap()
+                        .into(),
+                },
+            );
+
+            return Ok(data_map);
+        } else {
+            data_map.insert(
+                self.label.clone(),
+                Data {
+                    x: sliced_data.into(),
+                    // pyany none
+                    y: py.None().into(),
+                },
+            );
+
+            return Ok(data_map);
+        }
+    }
+}
+
+#[pyclass]
+pub struct DataSplitter {}
+
+#[pymethods]
+impl DataSplitter {
+    #[new]
+    pub fn new() -> Self {
+        DataSplitter {}
+    }
+
+    #[staticmethod]
+    pub fn split_data(
+        split: DataSplit,
+        data: &Bound<'_, PyAny>,
+        data_type: DataType,
+        dependent_vars: Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
+        if split.column_split.is_some() && data_type == DataType::Polars {
+            let polars_splitter =
+                PolarsColumnSplitter::new(split.label, split.column_split.unwrap(), dependent_vars);
+            return polars_splitter.create_split(data);
+        };
+
+        Ok(HashMap::new())
     }
 }
