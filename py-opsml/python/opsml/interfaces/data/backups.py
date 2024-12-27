@@ -1,19 +1,16 @@
 from pathlib import Path
 from typing import Any, Dict, Union
 
-from pydantic import model_validator
-
 from opsml.interfaces.data.base import DataInterface
 from opsml.interfaces.data.file_system.base import Dataset
+from pydantic import model_validator
 
 
 class TorchDataNoModule(DataInterface):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "TorchData requires pytorch to be installed. Please install pytorch."
-        )
+        raise ModuleNotFoundError("TorchData requires pytorch to be installed. Please install pytorch.")
 
     @staticmethod
     def name() -> str:
@@ -24,9 +21,7 @@ class ImageDatasetNoModule(Dataset):
     @model_validator(mode="before")
     @classmethod
     def check_model(cls, model_args: Dict[str, Any]) -> Dict[str, Any]:
-        raise ModuleNotFoundError(
-            "ImageDataset requires pillow to be installed. Please install pillow."
-        )
+        raise ModuleNotFoundError("ImageDataset requires pillow to be installed. Please install pillow.")
 
     @staticmethod
     def name() -> str:

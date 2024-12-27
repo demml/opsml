@@ -8,14 +8,13 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import pyarrow as pa  # type: ignore
+from opsml import DataType, Description, OpsmlLogger
 from pydantic import (
     BaseModel,
     FieldSerializationInfo,
     field_serializer,
     model_validator,
 )
-
-from opsml import OpsmlLogger, Description, DataType
 
 logger = OpsmlLogger.get_logger()
 
@@ -57,9 +56,7 @@ def get_metadata_filepath(data_dir: Path, split: Optional[str] = None) -> List[P
     if paths:
         return paths
 
-    raise ValueError(
-        f"Could not find metadata.jsonl in {search_path} or subdirectories"
-    )
+    raise ValueError(f"Could not find metadata.jsonl in {search_path} or subdirectories")
 
 
 class FileRecord(BaseModel):

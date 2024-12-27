@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 
 import pyarrow as pa  # type: ignore
-
+from opsml import DataType, OpsmlLogger
 from opsml.interfaces.data.file_system.arrow_reader import PyarrowDatasetReader
 from opsml.interfaces.data.file_system.arrow_writer import PyarrowDatasetWriter
 from opsml.interfaces.data.file_system.base import (
@@ -14,7 +14,6 @@ from opsml.interfaces.data.file_system.base import (
     check_for_dirs,
     get_metadata_filepath,
 )
-from opsml import OpsmlLogger, DataType
 
 logger = OpsmlLogger.get_logger()
 
@@ -100,13 +99,9 @@ try:
 
             if bool(splits):
                 for split in splits:
-                    self.splits[split] = ImageMetadata.load_from_file(
-                        get_metadata_filepath(self.data_dir, split)[0]
-                    )
+                    self.splits[split] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir, split)[0])
             else:
-                self.splits[None] = ImageMetadata.load_from_file(
-                    get_metadata_filepath(self.data_dir)[0]
-                )
+                self.splits[None] = ImageMetadata.load_from_file(get_metadata_filepath(self.data_dir)[0])
 
         @property
         def arrow_schema(self) -> pa.Schema:
@@ -144,4 +139,6 @@ try:
             return DataType.Dataset
 
 except ModuleNotFoundError:
-    from opsml.interfaces.data.backups import ImageDatasetNoModule as ImageDataset  # type: ignore
+    from opsml.interfaces.data.backups import (
+        ImageDatasetNoModule as ImageDataset,  # type: ignore
+    )

@@ -3,10 +3,9 @@ from typing import Optional
 
 import pyarrow as pa  # type: ignore
 import pyarrow.parquet as pq  # type: ignore
-
-from opsml.interfaces.data.features.formatter import generate_feature_schema
-from opsml.interfaces.data.base import DataInterface
 from opsml import DataType, Suffix
+from opsml.interfaces.data.base import DataInterface
+from opsml.interfaces.data.features.formatter import generate_feature_schema
 
 
 class ArrowData(DataInterface):

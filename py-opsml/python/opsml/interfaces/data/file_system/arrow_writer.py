@@ -7,15 +7,9 @@ from typing import Any, Dict, List, Optional
 
 import pyarrow as pa  # type: ignore
 import pyarrow.parquet as pq  # type: ignore
+from opsml import OpsmlLogger, SaveName, Suffix
 
-from .base import (
-    Dataset,
-    FileRecord,
-    Metadata,
-    yield_chunks,
-)
-
-from opsml import SaveName, Suffix, OpsmlLogger
+from .base import Dataset, FileRecord, Metadata, yield_chunks
 
 logger = OpsmlLogger.get_logger()
 
@@ -78,20 +72,14 @@ class PyarrowDatasetWriter:
         """
         raise NotImplementedError
 
-    def _write_buffer(
-        self, records: List[Dict[str, Any]], split_label: Optional[str] = None
-    ) -> Path:
+    def _write_buffer(self, records: List[Dict[str, Any]], split_label: Optional[str] = None) -> Path:
         try:
             temp_table = pa.Table.from_pylist(records, schema=self.schema)
 
             if split_label:
-                lpath = (
-                    self.lpath / split_label / f"shard-{uuid.uuid4().hex}"
-                ).with_suffix(Suffix.Parquet.as_string())
+                lpath = (self.lpath / split_label / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.Parquet.as_string())
             else:
-                lpath = (self.lpath / f"shard-{uuid.uuid4().hex}").with_suffix(
-                    Suffix.Parquet.as_string()
-                )
+                lpath = (self.lpath / f"shard-{uuid.uuid4().hex}").with_suffix(Suffix.Parquet.as_string())
 
             pq.write_table(table=temp_table, where=lpath)
 
@@ -110,9 +98,7 @@ class PyarrowDatasetWriter:
         lpath = self.lpath / sub_dir
         lpath.mkdir(parents=True, exist_ok=True)
 
-    def write_to_table(
-        self, records: List[FileRecord], split_label: Optional[str] = None
-    ) -> None:
+    def write_to_table(self, records: List[FileRecord], split_label: Optional[str] = None) -> None:
         """Write records to pyarrow table
 
         Args:
@@ -130,20 +116,16 @@ class PyarrowDatasetWriter:
 
         self._write_buffer(processed_records, split_label)
 
-    def _save_metadata(
-        self, metadata: Metadata, split_label: Optional[str] = None
-    ) -> None:
+    def _save_metadata(self, metadata: Metadata, split_label: Optional[str] = None) -> None:
         """Saves metadata for a split"""
 
         # write metadata to file
         if split_label:
-            meta_lpath = (
-                self.lpath / split_label / SaveName.Metadata.as_string()
-            ).with_suffix(Suffix.Jsonl.as_string())
-        else:
-            meta_lpath = (self.lpath / SaveName.Metadata.as_string()).with_suffix(
+            meta_lpath = (self.lpath / split_label / SaveName.Metadata.as_string()).with_suffix(
                 Suffix.Jsonl.as_string()
             )
+        else:
+            meta_lpath = (self.lpath / SaveName.Metadata.as_string()).with_suffix(Suffix.Jsonl.as_string())
 
         metadata.write_to_file(meta_lpath)
 
@@ -175,16 +157,13 @@ class PyarrowDatasetWriter:
             else:
                 with ProcessPoolExecutor() as executor:
                     future_to_table = {
-                        executor.submit(self.write_to_table, chunk, split_label): chunk
-                        for chunk in shard_chunks
+                        executor.submit(self.write_to_table, chunk, split_label): chunk for chunk in shard_chunks
                     }
                     for future in as_completed(future_to_table):
                         try:
                             future.result()
                         except Exception as exc:
-                            logger.error(
-                                "Exception occurred while writing to table: {}", exc
-                            )
+                            logger.error("Exception occurred while writing to table: {}", exc)
                             raise exc
 
             # write metadata
