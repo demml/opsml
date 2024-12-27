@@ -1,6 +1,9 @@
 import polars as pl
+import pyarrow as pa  # type: ignore
 import pytest
 import pandas as pd
+import numpy as np
+from numpy.typing import NDArray
 
 
 @pytest.fixture
@@ -39,3 +42,18 @@ def pandas_dataframe() -> pd.DataFrame:
     df["timestamp"] = pd.Timestamp.today()
 
     return df
+
+
+@pytest.fixture
+def arrow_dataframe() -> pa.Table:
+    n_legs = pa.array([2, 4, 5, 100])
+    animals = pa.array(["Flamingo", "Horse", "Brittle stars", "Centipede"])
+    names = ["n_legs", "animals"]
+    table = pa.Table.from_arrays([n_legs, animals], names=names)
+
+    return table
+
+
+@pytest.fixture
+def numpy_array() -> NDArray[np.float64]:
+    return np.random.rand(10, 100)

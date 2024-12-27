@@ -133,7 +133,7 @@ class RegistryType:
 
 class DataType:
     Pandas: "DataType"
-    Pyarrow: "DataType"
+    PyArrow: "DataType"
     Polars: "DataType"
     Numpy: "DataType"
     Image: "DataType"
@@ -1090,7 +1090,7 @@ class DataSplitter:
         split: DataSplit,
         data: Any,
         data_type: DataType,
-        dependent_vars: List[str],
+        dependent_vars: Optional[List[str]] = None,
     ) -> Dict[str, Data]:
         """Create a split
 

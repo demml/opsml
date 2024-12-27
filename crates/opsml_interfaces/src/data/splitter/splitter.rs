@@ -755,19 +755,21 @@ impl DataSplitter {
     }
 
     #[staticmethod]
+    #[pyo3(signature = (split, data, data_type, dependent_vars=None))]
     pub fn split_data(
         split: DataSplit,
         data: &Bound<'_, PyAny>,
         data_type: DataType,
-        dependent_vars: Vec<String>,
+        dependent_vars: Option<Vec<String>>,
     ) -> PyResult<HashMap<String, Data>> {
+        let dep_vars = dependent_vars.unwrap_or_default();
         if split.column_split.is_some() {
             match data_type {
                 DataType::Polars => {
                     let polars_splitter = PolarsColumnSplitter::new(
                         split.label,
                         split.column_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return polars_splitter.create_split(data);
                 }
@@ -775,7 +777,7 @@ impl DataSplitter {
                     let pandas_splitter = PandasColumnSplitter::new(
                         split.label,
                         split.column_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return pandas_splitter.create_split(data);
                 }
@@ -789,7 +791,7 @@ impl DataSplitter {
                     let polars_splitter = PolarsIndexSplitter::new(
                         split.label,
                         split.indice_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return polars_splitter.create_split(data);
                 }
@@ -797,7 +799,7 @@ impl DataSplitter {
                     let pandas_splitter = PandasIndexSplitter::new(
                         split.label,
                         split.indice_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return pandas_splitter.create_split(data);
                 }
@@ -821,7 +823,7 @@ impl DataSplitter {
                     let polars_splitter = PolarsStartStopSplitter::new(
                         split.label,
                         split.start_stop_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return polars_splitter.create_split(data);
                 }
@@ -829,7 +831,7 @@ impl DataSplitter {
                     let pandas_splitter = PandasStartStopSplitter::new(
                         split.label,
                         split.start_stop_split.unwrap(),
-                        dependent_vars,
+                        dep_vars,
                     );
                     return pandas_splitter.create_split(data);
                 }
