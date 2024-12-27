@@ -668,6 +668,83 @@ impl PyArrowStartStopSplitter {
 }
 
 #[pyclass]
+pub struct NumpyIndexSplitter {
+    label: String,
+    indice_split: IndiceSplit,
+}
+
+#[pymethods]
+impl NumpyIndexSplitter {
+    #[new]
+    #[pyo3(signature = (label, indice_split))]
+    pub fn new(label: String, indice_split: IndiceSplit) -> Self {
+        NumpyIndexSplitter {
+            label,
+            indice_split,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        let py = data.py();
+
+        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
+        let sliced_data = data.call_method1("__getitem__", (indices,))?;
+
+        let mut map = HashMap::new();
+
+        map.insert(
+            self.label.clone(),
+            Data {
+                x: sliced_data.into(),
+                y: py.None().into(),
+            },
+        );
+
+        Ok(map)
+    }
+}
+
+#[pyclass]
+pub struct NumpyStartStopSplitter {
+    label: String,
+    start_stop_split: StartStopSplit,
+}
+
+#[pymethods]
+impl NumpyStartStopSplitter {
+    #[new]
+    #[pyo3(signature = (label, start_stop_split))]
+    pub fn new(label: String, start_stop_split: StartStopSplit) -> Self {
+        NumpyStartStopSplitter {
+            label,
+            start_stop_split,
+        }
+    }
+
+    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+        // Slice the DataFrame using the start and stop indices
+        let py = data.py();
+        let start = self.start_stop_split.start as isize;
+        let stop = self.start_stop_split.stop as isize;
+        let slice = PySlice::new(py, start, stop, 1);
+
+        let sliced_data = data.get_item(slice)?;
+
+        let mut map = HashMap::new();
+
+        map.insert(
+            self.label.clone(),
+            Data {
+                x: sliced_data.into(),
+                y: py.None().into(),
+            },
+        );
+
+        Ok(map)
+    }
+}
+
+#[pyclass]
 pub struct DataSplitter {}
 
 #[pymethods]
@@ -729,6 +806,11 @@ impl DataSplitter {
                         PyArrowIndexSplitter::new(split.label, split.indice_split.unwrap());
                     return pyarrow_splitter.create_split(data);
                 }
+                DataType::Numpy => {
+                    let numpy_splitter =
+                        NumpyIndexSplitter::new(split.label, split.indice_split.unwrap());
+                    return numpy_splitter.create_split(data);
+                }
                 _ => {}
             }
         };
@@ -755,6 +837,11 @@ impl DataSplitter {
                     let pyarrow_splitter =
                         PyArrowStartStopSplitter::new(split.label, split.start_stop_split.unwrap());
                     return pyarrow_splitter.create_split(data);
+                }
+                DataType::Numpy => {
+                    let numpy_splitter =
+                        NumpyStartStopSplitter::new(split.label, split.start_stop_split.unwrap());
+                    return numpy_splitter.create_split(data);
                 }
                 _ => {}
             }
