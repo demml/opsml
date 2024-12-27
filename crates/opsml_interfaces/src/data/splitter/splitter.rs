@@ -14,8 +14,8 @@ pub enum Inequality {
     Equal,
     GreaterThan,
     GreaterThanEqual,
-    LessThan,
-    LessThanEqual,
+    LesserThan,
+    LesserThanEqual,
 }
 
 #[pymethods]
@@ -31,8 +31,8 @@ impl From<&str> for Inequality {
             "==" => Inequality::Equal,
             ">" => Inequality::GreaterThan,
             ">=" => Inequality::GreaterThanEqual,
-            "<" => Inequality::LessThan,
-            "<=" => Inequality::LessThanEqual,
+            "<" => Inequality::LesserThan,
+            "<=" => Inequality::LesserThanEqual,
             _ => Inequality::GreaterThan,
         }
     }
@@ -87,11 +87,21 @@ impl ColumnSplit {
         column_name: String,
         column_value: &Bound<'_, PyAny>,
         column_type: ColType,
-        inequality: Option<String>,
+        inequality: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<Self> {
         let mut col_val = None;
-        let ineq = inequality.unwrap_or("==".to_string());
         let py = column_value.py();
+        let fallback_ineq = "==".into_bound_py_any(py).unwrap();
+        let inequality = inequality.unwrap_or(&fallback_ineq);
+
+        let ineq: Inequality = if inequality.is_instance_of::<PyString>() {
+            let ineq = inequality.extract::<String>()?;
+            ineq.as_str().into()
+        } else if inequality.is_instance_of::<Inequality>() {
+            inequality.extract::<Inequality>()?
+        } else {
+            Inequality::Equal
+        };
 
         if !PyAnyMethods::is_none(column_value) {
             col_val = match column_type {
@@ -127,7 +137,7 @@ impl ColumnSplit {
             column_name,
             column_value: col_val.unwrap(),
             column_type,
-            inequality: ineq.trim().into(),
+            inequality: ineq,
         })
     }
 
@@ -337,13 +347,13 @@ impl PolarsColumnSplitter {
                     .call_method1("col", (column_name,))?
                     .call_method1("ge", (value,))?,),
             )?,
-            Inequality::LessThan => data.call_method1(
+            Inequality::LesserThan => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
                     .call_method1("lt", (value,))?,),
             )?,
-            Inequality::LessThanEqual => data.call_method1(
+            Inequality::LesserThanEqual => data.call_method1(
                 "filter",
                 (polars
                     .call_method1("col", (column_name,))?
