@@ -3,7 +3,7 @@ use opsml_contracts::{Card, CardList};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{
     data::{
-        ColType, ColValType, ColumnSplit, Data, DataSplit, DataSplitter, IndiceSplit,
+        ColType, ColValType, ColumnSplit, Data, DataSplit, DataSplitter, IndiceSplit, Inequality,
         PolarsColumnSplitter, StartStopSplit,
     },
     CatBoostModelInterfaceMetadata, Feature, HuggingFaceModelInterfaceMetadata,
@@ -91,6 +91,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<ColType>()?;
     _m.add_class::<ColValType>()?;
     _m.add_class::<DataSplitter>()?;
+    _m.add_class::<Inequality>()?;
 
     // opsml_registry
     _m.add_class::<PyCardRegistry>()?;

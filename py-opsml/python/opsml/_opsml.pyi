@@ -958,7 +958,7 @@ class ColumnSplit:
     column_name: str
     column_value: ColValType
     column_type: ColType
-    inequality: Optional[str]
+    inequality: Inequality
 
     def __init__(
         self,
@@ -1068,6 +1068,13 @@ class PolarsColumnSplitter:
         Returns:
             A dictionary containing the split data
         """
+
+class Inequality:
+    Equal: "Inequality"
+    GreaterThan: "Inequality"
+    GreaterThanEqual: "Inequality"
+    LesserThan: "Inequality"
+    LesserThanEqual: "Inequality"
 
 class DataSplitter:
     def __init__(self) -> None:
