@@ -474,7 +474,7 @@ impl PresignableTypes {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum DataType {
     Pandas,
-    Pyarrow,
+    PyArrow,
     Polars,
     Numpy,
     Image,
