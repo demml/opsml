@@ -1,6 +1,8 @@
 use crate::data::DataSplit;
 use crate::types::Feature;
 use opsml_error::error::OpsmlError;
+use opsml_types::DataType;
+use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
@@ -27,14 +29,16 @@ struct DataInterface {
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data, data_splits, dependent_vars, feature_map, sql_logic))]
+    #[pyo3(signature = (data, data_splits, dependent_vars, feature_map=None, sql_logic=None))]
     fn new(
         data: &Bound<'_, PyAny>,
         data_splits: Vec<DataSplit>,
         dependent_vars: Vec<String>,
-        feature_map: HashMap<String, Feature>,
-        sql_logic: HashMap<String, String>,
+        feature_map: Option<HashMap<String, Feature>>,
+        sql_logic: Option<HashMap<String, String>>,
     ) -> PyResult<Self> {
+        let feature_map = feature_map.unwrap_or_default();
+        let sql_logic = DataInterface::extract_sql_logic(sql_logic.unwrap_or_default())?;
         let py = data.py();
 
         Ok(DataInterface {
@@ -44,5 +48,60 @@ impl DataInterface {
             feature_map,
             sql_logic,
         })
+    }
+
+    #[getter]
+    fn data_type(&self) -> DataType {
+        DataType::Base
+    }
+
+    #[pyo3(signature = (key, query=None, filepath=None))]
+    fn add_sql_logic(
+        &mut self,
+        key: String,
+        query: Option<String>,
+        filepath: Option<String>,
+    ) -> PyResult<()> {
+        let query = query.unwrap_or_default();
+        let filepath = filepath.unwrap_or_default();
+
+        if !query.is_empty() && !filepath.is_empty() {
+            return Err(OpsmlError::new_err(
+                "Only one of query or filename can be provided",
+            ));
+        }
+
+        if !query.is_empty() {
+            self.sql_logic.insert(key, query);
+        } else {
+            let query = FileUtils::open_file(&filepath)?;
+            self.sql_logic.insert(key, query);
+        }
+
+        Ok(())
+    }
+}
+
+impl DataInterface {
+    fn extract_sql_logic(sql_logic: HashMap<String, String>) -> PyResult<HashMap<String, String>> {
+        // check if sql logic is present
+        if sql_logic.is_empty() {
+            return Ok(sql_logic);
+        }
+
+        // get the sql logic
+        let sql_logic = sql_logic
+            .iter()
+            .map(|(key, value)| {
+                if value.contains(".sql") {
+                    let sql = FileUtils::open_file(value)?;
+                    Ok((key.clone(), sql))
+                } else {
+                    Ok((key.clone(), value.clone()))
+                }
+            })
+            .collect::<PyResult<HashMap<String, String>>>()?;
+
+        Ok(sql_logic)
     }
 }
