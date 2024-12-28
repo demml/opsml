@@ -34,6 +34,7 @@ from ._opsml import (  # type: ignore
     TorchOnnxArgs,
     TorchSaveArgs,
     VersionType,
+    DataInterface,
 )
 
 __all__ = [
@@ -72,4 +73,5 @@ __all__ = [
     "PolarsColumnSplitter",
     "DataSplitter",
     "Inequality",
+    "DataInterface",
 ]

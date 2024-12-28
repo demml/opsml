@@ -6,22 +6,26 @@ use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
+use std::path::PathBuf;
+
+
+// TODO add opsml_logging and save_data method
 
 #[pyclass(subclass)]
-struct DataInterface {
-    #[pyo3(get)]
-    data: PyObject,
+pub struct DataInterface {
+    #[pyo3(get, set)]
+    data: Option<PyObject>,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     data_splits: Vec<DataSplit>,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     dependent_vars: Vec<String>,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     feature_map: HashMap<String, Feature>,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     sql_logic: HashMap<String, String>,
 }
 
@@ -29,20 +33,25 @@ struct DataInterface {
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data, data_splits, dependent_vars, feature_map=None, sql_logic=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
     fn new(
-        data: &Bound<'_, PyAny>,
-        data_splits: Vec<DataSplit>,
-        dependent_vars: Vec<String>,
+        data: Option<&Bound<'_, PyAny>>,
+        data_splits: Option<Vec<DataSplit>>,
+        dependent_vars: Option<Vec<String>>,
         feature_map: Option<HashMap<String, Feature>>,
         sql_logic: Option<HashMap<String, String>>,
     ) -> PyResult<Self> {
+        let data_splits = data_splits.unwrap_or_default();
+        let dependent_vars = dependent_vars.unwrap_or_default();
         let feature_map = feature_map.unwrap_or_default();
         let sql_logic = DataInterface::extract_sql_logic(sql_logic.unwrap_or_default())?;
-        let py = data.py();
 
         Ok(DataInterface {
-            data: data.into_py_any(py).map_err(|e| OpsmlError::new_err(e))?,
+            data: data.map(|d| {
+                d.into_py_any(d.py())
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))
+                    .unwrap()
+            }),
             data_splits,
             dependent_vars,
             feature_map,
@@ -50,15 +59,23 @@ impl DataInterface {
         })
     }
 
+    pub fn save_data(&self, path: PathBuf) -> PyResult<()> {
+        // if data is not present, return OK
+        if self.data.is_none() {
+            tr
+            return Ok(());
+        }
+    }
+
     #[getter]
-    fn data_type(&self) -> DataType {
+    pub fn data_type(&self) -> DataType {
         DataType::Base
     }
 
-    #[pyo3(signature = (key, query=None, filepath=None))]
-    fn add_sql_logic(
+    #[pyo3(signature = (name, query=None, filepath=None))]
+    pub fn add_sql_logic(
         &mut self,
-        key: String,
+        name: String,
         query: Option<String>,
         filepath: Option<String>,
     ) -> PyResult<()> {
@@ -72,10 +89,10 @@ impl DataInterface {
         }
 
         if !query.is_empty() {
-            self.sql_logic.insert(key, query);
+            self.sql_logic.insert(name, query);
         } else {
             let query = FileUtils::open_file(&filepath)?;
-            self.sql_logic.insert(key, query);
+            self.sql_logic.insert(name, query);
         }
 
         Ok(())

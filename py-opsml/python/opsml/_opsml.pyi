@@ -1101,3 +1101,61 @@ class DataSplitter:
         Returns:
             A dictionary containing the split data
         """
+
+class DataInterface:
+    data: Optional[Any]
+    data_splits: List[DataSplit]
+    dependent_vars: List[str]
+    feature_map: Dict[str, Feature]
+    sql_logic: Dict[str, str]
+
+    def __init__(
+        self,
+        data: Optional[Any] = None,
+        data_splits: List[DataSplit] = [],
+        dependent_vars: List[str] = [],
+        feature_map: Dict[str, Feature] = {},
+        sql_logic: Dict[str, str] = {},
+    ) -> None:
+        """Define a data interface
+
+        Args:
+            data:
+                Data. Can be a pyarrow table, pandas dataframe, polars dataframe
+                or numpy array
+            dependent_vars:
+                List of dependent variables to associate with data
+            data_splits:
+                Optional list of `DataSplit`
+            feature_map:
+                Dictionary of features -> automatically generated
+            sql_logic:
+                Sql logic used to generate data represented as a dictionary.
+                Key is the name to assign to the sql logic and value is either a sql query
+                or a path to a .sql file.
+        """
+
+    @property
+    def data_type(self) -> DataType:
+        """Return the data type.
+
+        Returns:
+            The data type.
+        """
+
+    def add_sql_logic(
+        self,
+        name: str,
+        query: Optional[str] = None,
+        filepath: Optional[str] = None,
+    ) -> None:
+        """Add sql logic to the data interface
+
+        Args:
+            name:
+                The name of the sql logic
+            query:
+                The optional query to use
+            filepath:
+                The optional filepath to open the query from
+        """
