@@ -250,7 +250,6 @@ pub struct Data {
     y: PyObject,
 }
 
-// remove elements from a that are in b
 fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
     a.iter()
         .filter(|x| !b.contains(x))
