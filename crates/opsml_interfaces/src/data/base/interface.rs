@@ -163,11 +163,23 @@ impl DataInterface {
             ));
         }
 
-        let splits = HashMap::new();
-        for split in self.data_splits.iter() {
-            let data = DataSplitter::split_data(&self.data.bind(py), split)?;
-            splits.insert(split.name.clone(), data);
-        }
+        let dependent_vars = self.dependent_vars.clone();
+        let splits = self
+            .data_splits
+            .iter()
+            .map(|split| {
+                let data = DataSplitter::split_data(
+                    &split,
+                    &self.data.bind(py),
+                    self.data_type(),
+                    dependent_vars.clone(),
+                )
+                .expect("Failed to split data");
+                data
+            })
+            .collect::<HashMap<String, Data>>();
+
+        Ok(splits)
     }
 }
 
