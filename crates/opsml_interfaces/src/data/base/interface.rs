@@ -84,7 +84,7 @@ impl DataInterface {
         let joblib = py.import("joblib")?;
 
         // Save the data using joblib
-        joblib.call_method1("dump", (&self.data, path))?;
+        joblib.call_method1("dump", (&self.data, save_path))?;
 
         // Get the class name of self.data
         let name: String = self
