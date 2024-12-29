@@ -43,6 +43,14 @@ impl DependentVars {
     pub fn get_column_indices(&self) -> Vec<usize> {
         self.column_indices.clone()
     }
+
+    pub fn column_empty(&self) -> bool {
+        self.column_names.is_empty()
+    }
+
+    pub fn idx_empty(&self) -> bool {
+        self.column_indices.is_empty()
+    }
 }
 
 #[pyclass]

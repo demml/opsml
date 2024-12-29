@@ -143,7 +143,7 @@ impl DataInterface {
         // Create and insert the feature
         let mut features = HashMap::new();
         features.insert("features".to_string(), Feature::new(name, vec![1], None));
-        self.feature_map = features;
+        self.feature_map = FeatureMap::new(Some(features));
 
         Ok(())
     }
