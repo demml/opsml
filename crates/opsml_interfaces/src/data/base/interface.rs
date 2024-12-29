@@ -1,10 +1,10 @@
-use crate::data::{Data, DataSplit, DataSplits, DataSplitter, DependentVars};
+use crate::data::{self, Data, DataSplit, DataSplits, DataSplitter, DependentVars, SqlLogic};
 use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
-use pyo3::types::{PyAny, PyAnyMethods};
+use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -25,7 +25,7 @@ pub struct DataInterface {
     feature_map: FeatureMap,
 
     #[pyo3(get, set)]
-    sql_logic: HashMap<String, String>,
+    sql_logic: SqlLogic,
 }
 
 #[pymethods]
@@ -35,16 +35,56 @@ impl DataInterface {
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
     fn new(
         py: Python,
-        data: Option<&Bound<'_, PyAny>>,
-        data_splits: Option<Vec<DataSplit>>,
-        dependent_vars: Option<Vec<String>>,
-        feature_map: Option<HashMap<String, Feature>>,
-        sql_logic: Option<HashMap<String, String>>,
+        data: Option<&Bound<'_, PyAny>>, // data can be any pyobject
+        data_splits: Option<&Bound<'_, PyAny>>, //
+        dependent_vars: Option<&Bound<'_, PyAny>>,
+        feature_map: Option<FeatureMap>,
+        sql_logic: Option<SqlLogic>,
     ) -> PyResult<Self> {
-        let data_splits = data_splits.unwrap_or_default();
-        let dependent_vars = dependent_vars.unwrap_or_default();
+        // define data splits
+        let splits: DataSplits = {
+            if let Some(data_splits) = data_splits {
+                // check if data_splits is either Vec<DataSplit> or DataSplits
+                if data_splits.is_instance_of::<DataSplits>() {
+                    data_splits.extract::<DataSplits>()?
+                } else if data_splits.is_instance_of::<PyList>() {
+                    // pylist should be list of DataSplit
+                    DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?)
+                } else {
+                    DataSplits::default()
+                }
+            } else {
+                DataSplits::default()
+            }
+        };
+
+        // define dependent vars
+        let depen_vars: DependentVars = {
+            if let Some(dependent_vars) = dependent_vars {
+                // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
+                if dependent_vars.is_instance_of::<DependentVars>() {
+                    dependent_vars.extract::<DependentVars>()?
+                } else if dependent_vars.is_instance_of::<PyList>() {
+                    // pylist should be list of string or list of int
+                    if dependent_vars.extract::<Vec<String>>().is_ok() {
+                        let column_names = dependent_vars.extract::<Vec<String>>()?;
+                        DependentVars::new(Some(column_names), None)
+                    } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
+                        let column_indices = dependent_vars.extract::<Vec<usize>>()?;
+                        DependentVars::new(None, Some(column_indices))
+                    } else {
+                        DependentVars::default()
+                    }
+                } else {
+                    DependentVars::default()
+                }
+            } else {
+                DependentVars::default()
+            }
+        };
+
         let feature_map = feature_map.unwrap_or_default();
-        let sql_logic = DataInterface::extract_sql_logic(sql_logic.unwrap_or_default())?;
+        let sql_logic = sql_logic.unwrap_or_default();
 
         let data = match data {
             Some(data) => data.into_py_any(py)?,
@@ -52,8 +92,8 @@ impl DataInterface {
         };
         Ok(DataInterface {
             data,
-            data_splits,
-            dependent_vars,
+            data_splits: splits,
+            dependent_vars: depen_vars,
             feature_map,
             sql_logic,
         })
@@ -130,21 +170,7 @@ impl DataInterface {
         query: Option<String>,
         filepath: Option<String>,
     ) -> PyResult<()> {
-        let query = query.unwrap_or_default();
-        let filepath = filepath.unwrap_or_default();
-
-        if !query.is_empty() && !filepath.is_empty() {
-            return Err(OpsmlError::new_err(
-                "Only one of query or filename can be provided",
-            ));
-        }
-
-        if !query.is_empty() {
-            self.sql_logic.insert(name, query);
-        } else {
-            let query = FileUtils::open_file(&filepath)?;
-            self.sql_logic.insert(name, query);
-        }
+        self.sql_logic.add_sql_logic(name, query, filepath)?;
 
         Ok(())
     }
