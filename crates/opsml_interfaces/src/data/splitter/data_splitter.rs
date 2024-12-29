@@ -279,7 +279,7 @@ fn create_polars_data(dependent_vars: &[String], data: &Bound<'_, PyAny>) -> PyR
     }
 }
 
-fn create_pandas_data(dependent_vars: &Vec<String>, data: &Bound<'_, PyAny>) -> PyResult<Data> {
+fn create_pandas_data(dependent_vars: &[String], data: &Bound<'_, PyAny>) -> PyResult<Data> {
     let py = data.py();
     if !dependent_vars.is_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
@@ -287,7 +287,7 @@ fn create_pandas_data(dependent_vars: &Vec<String>, data: &Bound<'_, PyAny>) -> 
 
         Ok(Data {
             x: data.get_item(x_cols)?.into(),
-            y: data.get_item(dependent_vars.clone())?.into(),
+            y: data.get_item(dependent_vars.to_owned())?.into(),
         })
     } else {
         Ok(Data {
@@ -304,7 +304,7 @@ impl PolarsColumnSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
         column_split: &ColumnSplit,
-        dependent_vars: &Vec<String>,
+        dependent_vars: &[String],
     ) -> PyResult<Data> {
         let py = data.py();
 
@@ -393,7 +393,7 @@ impl PandasColumnSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
         column_split: &ColumnSplit,
-        dependent_vars: &Vec<String>,
+        dependent_vars: &[String],
     ) -> PyResult<Data> {
         let py = data.py();
 
@@ -446,7 +446,7 @@ impl PandasIndexSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
-        dependent_vars: &Vec<String>,
+        dependent_vars: &[String],
     ) -> PyResult<Data> {
         let py = data.py();
 
@@ -466,7 +466,7 @@ impl PandasStartStopSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
         start_stop_split: &StartStopSplit,
-        dependent_vars: &Vec<String>,
+        dependent_vars: &[String],
     ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
@@ -491,7 +491,7 @@ impl PyArrowIndexSplitter {
 
         Ok(Data {
             x: sliced_data.into(),
-            y: py.None().into(),
+            y: py.None(),
         })
     }
 }
