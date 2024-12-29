@@ -30,3 +30,10 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     save_path.mkdir()
 
     data_interface.save_data(save_path)
+    data_interface.data = None
+
+    assert data_interface.data is None
+
+    data_interface.load_data(save_path)
+
+    assert data_interface.data is not None
