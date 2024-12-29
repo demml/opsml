@@ -1,7 +1,8 @@
-from opsml import DataInterface, DataType
+from opsml import DataInterface, DataType, OpsmlError
 import numpy as np
 from numpy.typing import NDArray
 from pathlib import Path
+import pytest
 
 
 def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
@@ -33,6 +34,11 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     data_interface.data = None
 
     assert data_interface.data is None
+
+    # should raise an error if we try to save again
+    with pytest.raises(OpsmlError) as error:
+        data_interface.save_data(save_path)
+    assert str(error.value) == "No data detected in interface for saving"
 
     data_interface.load_data(save_path)
 

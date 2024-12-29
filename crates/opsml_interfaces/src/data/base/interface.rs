@@ -79,6 +79,13 @@ impl DataInterface {
         Ok(())
     }
     pub fn save_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
+        // check if data is None
+        if self.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
         let save_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
 
         let joblib = py.import("joblib")?;
