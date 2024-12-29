@@ -101,6 +101,16 @@ impl DataInterface {
         Ok(())
     }
 
+    pub fn load_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+        let joblib = py.import("joblib")?;
+
+        // Load the data using joblib
+        self.data = joblib.call_method1("load", (load_path,))?.into();
+
+        Ok(())
+    }
+
     #[getter]
     pub fn data_type(&self) -> DataType {
         DataType::Base

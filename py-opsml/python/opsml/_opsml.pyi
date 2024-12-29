@@ -1191,6 +1191,14 @@ class DataInterface:
         """Save the data to a file
 
         Args:
-            filepath:
-                The path to save the data to
+            path:
+                Base path to save the data to
+        """
+
+    def load_data(self, path: Path) -> None:
+        """Load the data from a file
+
+        Args:
+            path:
+                Base path to load the data from
         """
