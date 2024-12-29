@@ -250,7 +250,7 @@ pub struct Data {
     y: PyObject,
 }
 
-fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
+fn remove_diff<T: PartialEq + Clone>(a: &[T], b: &[T]) -> Vec<T> {
     a.iter()
         .filter(|x| !b.contains(x))
         .cloned()
@@ -259,7 +259,7 @@ fn remove_diff<T: PartialEq + Clone>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
 
 fn create_polars_data(
     label: &str,
-    dependent_vars: &Vec<String>,
+    dependent_vars: &[String],
     data: &Bound<'_, PyAny>,
 ) -> PyResult<HashMap<String, Data>> {
     let py = data.py();
@@ -273,7 +273,7 @@ fn create_polars_data(
             Data {
                 x: data.call_method1("select", (x_cols,)).unwrap().into(),
                 y: data
-                    .call_method1("select", (&dependent_vars,))
+                    .call_method1("select", (dependent_vars,))
                     .unwrap()
                     .into(),
             },
@@ -382,67 +382,41 @@ impl PolarsColumnSplitter {
     }
 }
 
-#[pyclass]
-pub struct PolarsIndexSplitter {
-    label: String,
-    indice_split: IndiceSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PolarsIndexSplitter {}
 
-#[pymethods]
 impl PolarsIndexSplitter {
-    #[new]
-    #[pyo3(signature = (label, indice_split, dependent_vars))]
-    pub fn new(label: String, indice_split: IndiceSplit, dependent_vars: Vec<String>) -> Self {
-        PolarsIndexSplitter {
-            label,
-            indice_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        indice_split: &IndiceSplit,
+        dependent_vars: &Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
-        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
-        let sliced_data = data.get_item(indices)?;
+        let indices = &indice_split.indices;
+        let sliced_data = data.get_item(indices.into_py_any(py).unwrap())?;
 
-        create_polars_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_polars_data(label, dependent_vars, &sliced_data)
     }
 }
 
-#[pyclass]
-pub struct PolarsStartStopSplitter {
-    label: String,
-    start_stop_split: StartStopSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PolarsStartStopSplitter {}
 
-#[pymethods]
 impl PolarsStartStopSplitter {
-    #[new]
-    #[pyo3(signature = (label, start_stop_split, dependent_vars))]
-    pub fn new(
-        label: String,
-        start_stop_split: StartStopSplit,
-        dependent_vars: Vec<String>,
-    ) -> Self {
-        PolarsStartStopSplitter {
-            label,
-            start_stop_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        start_stop_split: &StartStopSplit,
+        dependent_vars: &[String],
+    ) -> PyResult<HashMap<String, Data>> {
         // Slice the DataFrame using the start and stop indices
-        let start = self.start_stop_split.start;
-        let stop = self.start_stop_split.stop;
+        let start = &start_stop_split.start;
+        let stop = &start_stop_split.stop;
         let slice_len = stop - start;
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
 
-        create_polars_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_polars_data(&label, dependent_vars, &sliced_data)
     }
 }
 
@@ -450,7 +424,6 @@ pub struct PandasColumnSplitter {}
 
 impl PandasColumnSplitter {
     pub fn create_split(
-        &self,
         data: &Bound<'_, PyAny>,
         label: &str,
         column_split: &ColumnSplit,
@@ -501,100 +474,65 @@ impl PandasColumnSplitter {
     }
 }
 
-#[pyclass]
-pub struct PandasIndexSplitter {
-    label: String,
-    indice_split: IndiceSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PandasIndexSplitter {}
 
-#[pymethods]
 impl PandasIndexSplitter {
-    #[new]
-    #[pyo3(signature = (label, indice_split, dependent_vars))]
-    pub fn new(label: String, indice_split: IndiceSplit, dependent_vars: Vec<String>) -> Self {
-        PandasIndexSplitter {
-            label,
-            indice_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        indice_split: &IndiceSplit,
+        dependent_vars: &Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
-        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
+        let indices = &indice_split.indices;
+
         let sliced_data = data
             .getattr("iloc")?
-            .call_method1("__getitem__", (indices,))?; // iloc is used to slice the dataframe
+            .call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?; // iloc is used to slice the dataframe
 
-        create_pandas_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_pandas_data(label, dependent_vars, &sliced_data)
     }
 }
 
-#[pyclass]
-pub struct PandasStartStopSplitter {
-    label: String,
-    start_stop_split: StartStopSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PandasStartStopSplitter {}
 
-#[pymethods]
 impl PandasStartStopSplitter {
-    #[new]
-    #[pyo3(signature = (label, start_stop_split, dependent_vars))]
-    pub fn new(
-        label: String,
-        start_stop_split: StartStopSplit,
-        dependent_vars: Vec<String>,
-    ) -> Self {
-        PandasStartStopSplitter {
-            label,
-            start_stop_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        start_stop_split: &StartStopSplit,
+        dependent_vars: &Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
-        let start = self.start_stop_split.start as isize;
-        let stop = self.start_stop_split.stop as isize;
+        let start = start_stop_split.start.clone() as isize;
+        let stop = start_stop_split.stop.clone() as isize;
         let slice = PySlice::new(py, start, stop, 1);
 
         let sliced_data = data.get_item(slice)?;
 
-        create_pandas_data(&self.label, &self.dependent_vars, &sliced_data)
+        create_pandas_data(&label, &dependent_vars, &sliced_data)
     }
 }
 
-#[pyclass]
-pub struct PyArrowIndexSplitter {
-    label: String,
-    indice_split: IndiceSplit,
-}
+pub struct PyArrowIndexSplitter {}
 
-#[pymethods]
 impl PyArrowIndexSplitter {
-    #[new]
-    #[pyo3(signature = (label, indice_split))]
-    pub fn new(label: String, indice_split: IndiceSplit) -> Self {
-        PyArrowIndexSplitter {
-            label,
-            indice_split,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        indice_split: &IndiceSplit,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
-        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
-        let sliced_data = data.call_method1("take", (indices,))?;
+        let indices = &indice_split.indices;
+        let sliced_data = data.call_method1("take", (indices.into_py_any(py).unwrap(),))?;
 
         let mut map = HashMap::new();
 
         map.insert(
-            self.label.clone(),
+            label.clone().to_string(),
             Data {
                 x: sliced_data.into(),
                 y: py.None().into(),
@@ -605,28 +543,18 @@ impl PyArrowIndexSplitter {
     }
 }
 
-#[pyclass]
-pub struct PyArrowStartStopSplitter {
-    label: String,
-    start_stop_split: StartStopSplit,
-}
+pub struct PyArrowStartStopSplitter {}
 
-#[pymethods]
 impl PyArrowStartStopSplitter {
-    #[new]
-    #[pyo3(signature = (label, start_stop_split))]
-    pub fn new(label: String, start_stop_split: StartStopSplit) -> Self {
-        PyArrowStartStopSplitter {
-            label,
-            start_stop_split,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        start_stop_split: &StartStopSplit,
+    ) -> PyResult<HashMap<String, Data>> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
-        let start = self.start_stop_split.start;
-        let stop = self.start_stop_split.stop;
+        let start = &start_stop_split.start;
+        let stop = &start_stop_split.stop;
         let slice_len = stop - start;
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
@@ -634,7 +562,7 @@ impl PyArrowStartStopSplitter {
         let mut map = HashMap::new();
 
         map.insert(
-            self.label.clone(),
+            label.clone().to_string(),
             Data {
                 x: sliced_data.into(),
                 y: py.None().into(),
@@ -645,29 +573,23 @@ impl PyArrowStartStopSplitter {
     }
 }
 
-pub struct NumpyIndexSplitter {
-    label: String,
-    indice_split: IndiceSplit,
-}
+pub struct NumpyIndexSplitter {}
 
 impl NumpyIndexSplitter {
-    pub fn new(label: String, indice_split: IndiceSplit) -> Self {
-        NumpyIndexSplitter {
-            label,
-            indice_split,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        indice_split: &IndiceSplit,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
-        let indices = self.indice_split.indices.clone().into_py_any(py).unwrap();
-        let sliced_data = data.call_method1("__getitem__", (indices,))?;
+        let indices = &indice_split.indices;
+        let sliced_data = data.call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?;
 
         let mut map = HashMap::new();
 
         map.insert(
-            self.label.clone(),
+            label.clone().to_string(),
             Data {
                 x: sliced_data.into(),
                 y: py.None().into(),
@@ -678,24 +600,18 @@ impl NumpyIndexSplitter {
     }
 }
 
-pub struct NumpyStartStopSplitter {
-    label: String,
-    start_stop_split: StartStopSplit,
-}
+pub struct NumpyStartStopSplitter {}
 
 impl NumpyStartStopSplitter {
-    pub fn new(label: String, start_stop_split: StartStopSplit) -> Self {
-        NumpyStartStopSplitter {
-            label,
-            start_stop_split,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        start_stop_split: &StartStopSplit,
+    ) -> PyResult<HashMap<String, Data>> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
-        let start = self.start_stop_split.start as isize;
-        let stop = self.start_stop_split.stop as isize;
+        let start = start_stop_split.start.clone() as isize;
+        let stop = start_stop_split.stop.clone() as isize;
         let slice = PySlice::new(py, start, stop, 1);
 
         let sliced_data = data.get_item(slice)?;
@@ -703,7 +619,7 @@ impl NumpyStartStopSplitter {
         let mut map = HashMap::new();
 
         map.insert(
-            self.label.clone(),
+            label.clone().to_string(),
             Data {
                 x: sliced_data.into(),
                 y: py.None().into(),
@@ -725,7 +641,7 @@ impl DataSplitter {
         split: &DataSplit,
         data: &Bound<'_, PyAny>,
         data_type: DataType,
-        dependent_vars: &Vec<String>,
+        dependent_vars: Vec<String>,
     ) -> PyResult<HashMap<String, Data>> {
         if split.column_split.is_some() {
             match data_type {
@@ -734,16 +650,16 @@ impl DataSplitter {
                         data,
                         &split.label,
                         &split.column_split.as_ref().unwrap(),
-                        dependent_vars,
+                        &dependent_vars,
                     );
                 }
                 DataType::Pandas => {
-                    let pandas_splitter = PandasColumnSplitter::new(
-                        split.label,
-                        split.column_split.unwrap(),
-                        dependent_vars,
+                    return PandasColumnSplitter::create_split(
+                        data,
+                        &split.label,
+                        &split.column_split.as_ref().unwrap(),
+                        &dependent_vars,
                     );
-                    return pandas_splitter.create_split(data);
                 }
                 _ => {}
             }
@@ -752,30 +668,34 @@ impl DataSplitter {
         if split.indice_split.is_some() {
             match data_type {
                 DataType::Polars => {
-                    let polars_splitter = PolarsIndexSplitter::new(
-                        split.label,
-                        split.indice_split.unwrap(),
-                        dep_vars,
+                    return PolarsIndexSplitter::create_split(
+                        data,
+                        &split.label,
+                        &split.indice_split.as_ref().unwrap(),
+                        &dependent_vars,
                     );
-                    return polars_splitter.create_split(data);
                 }
                 DataType::Pandas => {
-                    let pandas_splitter = PandasIndexSplitter::new(
-                        split.label,
-                        split.indice_split.unwrap(),
-                        dep_vars,
+                    return PandasIndexSplitter::create_split(
+                        data,
+                        &split.label,
+                        &split.indice_split.as_ref().unwrap(),
+                        &dependent_vars,
                     );
-                    return pandas_splitter.create_split(data);
                 }
                 DataType::PyArrow => {
-                    let pyarrow_splitter =
-                        PyArrowIndexSplitter::new(split.label, split.indice_split.unwrap());
-                    return pyarrow_splitter.create_split(data);
+                    return PyArrowIndexSplitter::create_split(
+                        data,
+                        &split.label,
+                        &split.indice_split.as_ref().unwrap(),
+                    );
                 }
                 DataType::Numpy => {
-                    let numpy_splitter =
-                        NumpyIndexSplitter::new(split.label, split.indice_split.unwrap());
-                    return numpy_splitter.create_split(data);
+                    return NumpyIndexSplitter::create_split(
+                        data,
+                        &split.label,
+                        &split.indice_split.as_ref().unwrap(),
+                    );
                 }
                 _ => {}
             }
@@ -784,30 +704,34 @@ impl DataSplitter {
         if split.start_stop_split.is_some() {
             match data_type {
                 DataType::Polars => {
-                    let polars_splitter = PolarsStartStopSplitter::new(
-                        split.label,
-                        split.start_stop_split.unwrap(),
-                        dep_vars,
+                    return PolarsStartStopSplitter::create_split(
+                        data,
+                        &split.label,
+                        split.start_stop_split.as_ref().unwrap(),
+                        &dependent_vars,
                     );
-                    return polars_splitter.create_split(data);
                 }
                 DataType::Pandas => {
-                    let pandas_splitter = PandasStartStopSplitter::new(
-                        split.label,
-                        split.start_stop_split.unwrap(),
-                        dep_vars,
+                    return PandasStartStopSplitter::create_split(
+                        data,
+                        &split.label,
+                        split.start_stop_split.as_ref().unwrap(),
+                        &dependent_vars,
                     );
-                    return pandas_splitter.create_split(data);
                 }
                 DataType::PyArrow => {
-                    let pyarrow_splitter =
-                        PyArrowStartStopSplitter::new(split.label, split.start_stop_split.unwrap());
-                    return pyarrow_splitter.create_split(data);
+                    return PyArrowStartStopSplitter::create_split(
+                        data,
+                        &split.label,
+                        split.start_stop_split.as_ref().unwrap(),
+                    );
                 }
                 DataType::Numpy => {
-                    let numpy_splitter =
-                        NumpyStartStopSplitter::new(split.label, split.start_stop_split.unwrap());
-                    return numpy_splitter.create_split(data);
+                    return NumpyStartStopSplitter::create_split(
+                        data,
+                        &split.label,
+                        split.start_stop_split.as_ref().unwrap(),
+                    );
                 }
                 _ => {}
             }
