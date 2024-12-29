@@ -25,9 +25,8 @@ def test_polars_equal_column_split(polars_dataframe: pl.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -35,9 +34,8 @@ def test_polars_equal_column_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (1, 3)
+    assert isinstance(split, Data)
+    assert split.x.shape == (1, 3)
 
 
 def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
@@ -49,9 +47,8 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -59,9 +56,8 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 3)
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 3)
 
     lessthan_eq_col_split = ColumnSplit(
         column_name="foo",
@@ -71,9 +67,8 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -81,9 +76,8 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 3)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 3)
 
 
 def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
@@ -95,9 +89,8 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -105,9 +98,8 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 3)
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 3)
 
     lessthan_eq_col_split = ColumnSplit(
         column_name="foo",
@@ -117,9 +109,8 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -127,10 +118,9 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 2)
-    assert split["train"].y.shape == (2, 1)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 2)
+    assert split.y.shape == (2, 1)
 
 
 def test_polars_index_split(polars_dataframe: pl.DataFrame):
@@ -140,9 +130,8 @@ def test_polars_index_split(polars_dataframe: pl.DataFrame):
             indices=[0, 3, 5],
         ),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -150,10 +139,9 @@ def test_polars_index_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 3)
-    assert split["train"].x["foo"].to_list() == [1, 4, 6]
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 3)
+    assert split.x["foo"].to_list() == [1, 4, 6]
 
 
 def test_polars_start_stop_split(polars_dataframe: pl.DataFrame):
@@ -161,9 +149,8 @@ def test_polars_start_stop_split(polars_dataframe: pl.DataFrame):
         label="train",
         start_stop_split=StartStopSplit(start=3, stop=5),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
@@ -171,10 +158,9 @@ def test_polars_start_stop_split(polars_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 3)
-    assert split["train"].x["foo"].to_list() == [4, 5]
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 3)
+    assert split.x["foo"].to_list() == [4, 5]
 
 
 def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
@@ -195,9 +181,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 4)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 4)
 
     lessthan_eq_col_split = ColumnSplit(
         column_name="n_legs",
@@ -207,9 +192,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -217,9 +201,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 4)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 4)
 
     lessthan_eq_col_split = ColumnSplit(
         column_name="n_legs",
@@ -229,9 +212,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=lessthan_eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -239,9 +221,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 4)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 4)
 
     col_split = ColumnSplit(
         column_name="n_legs",
@@ -251,9 +232,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -261,9 +241,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (4, 4)
+    assert isinstance(split, Data)
+    assert split.x.shape == (4, 4)
 
     col_split = ColumnSplit(
         column_name="n_legs",
@@ -273,9 +252,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -283,9 +261,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 4)
+    assert isinstance(split, Data)
+    assert split.x.shape == (2, 4)
 
 
 def test_pandas_timestamp(pandas_dataframe: pd.DataFrame):
@@ -297,9 +274,8 @@ def test_pandas_timestamp(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -307,10 +283,9 @@ def test_pandas_timestamp(pandas_dataframe: pd.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (8, 3)
-    assert split["train"].y.shape == (8, 1)
+    assert isinstance(split, Data)
+    assert split.x.shape == (8, 3)
+    assert split.y.shape == (8, 1)
 
 
 def test_pandas_index_split(pandas_dataframe: pl.DataFrame):
@@ -320,9 +295,8 @@ def test_pandas_index_split(pandas_dataframe: pl.DataFrame):
             indices=[0, 3, 5],
         ),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -330,10 +304,10 @@ def test_pandas_index_split(pandas_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 4)
-    assert split["train"].x["n_legs"].to_list() == [2, 100, 4]
+    assert isinstance(split, Data)
+
+    assert split.x.shape == (3, 4)
+    assert split.x["n_legs"].to_list() == [2, 100, 4]
 
 
 def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
@@ -341,9 +315,8 @@ def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
         label="train",
         start_stop_split=StartStopSplit(start=3, stop=5),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
@@ -351,10 +324,10 @@ def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 4)
-    assert split["train"].x["n_legs"].to_list() == [100, 2]
+    assert isinstance(split, Data)
+
+    assert split.x.shape == (2, 4)
+    assert split.x["n_legs"].to_list() == [100, 2]
 
 
 def test_pyarrow_index_split(arrow_dataframe: pa.Table):
@@ -364,29 +337,8 @@ def test_pyarrow_index_split(arrow_dataframe: pa.Table):
             indices=[0, 3],
         ),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
-        split=data_split,
-        data=arrow_dataframe,
-        data_type=DataType.PyArrow,
-    )
-
-    assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (2, 2)
-    assert split["train"].x["n_legs"].to_pylist() == [2, 100]
-
-
-def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
-    data_split = DataSplit(
-        label="train",
-        start_stop_split=StartStopSplit(start=0, stop=3),
-    )
-    splitter = DataSplitter()
-
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=arrow_dataframe,
         data_type=DataType.PyArrow,
@@ -394,10 +346,29 @@ def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 2)
-    assert split["train"].x["n_legs"].to_pylist() == [2, 4, 5]
+    assert isinstance(split, Data)
+
+    assert split.x.shape == (2, 2)
+    assert split.x["n_legs"].to_pylist() == [2, 100]
+
+
+def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
+    data_split = DataSplit(
+        label="train",
+        start_stop_split=StartStopSplit(start=0, stop=3),
+    )
+
+    split = DataSplitter.split_data(
+        split=data_split,
+        data=arrow_dataframe,
+        data_type=DataType.PyArrow,
+        dependent_vars=[],
+    )
+
+    assert split is not None
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 2)
+    assert split.x["n_legs"].to_pylist() == [2, 4, 5]
 
 
 def test_numpy_index_split(numpy_array: NDArray[np.float64]):
@@ -407,18 +378,17 @@ def test_numpy_index_split(numpy_array: NDArray[np.float64]):
             indices=[0, 5, 9],
         ),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=numpy_array,
         data_type=DataType.Numpy,
+        dependent_vars=[],
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (3, 100)
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 100)
 
 
 def test_numpy_start_stop_split(numpy_array: NDArray[np.float64]):
@@ -426,15 +396,15 @@ def test_numpy_start_stop_split(numpy_array: NDArray[np.float64]):
         label="train",
         start_stop_split=StartStopSplit(start=0, stop=5),
     )
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=numpy_array,
         data_type=DataType.Numpy,
+        dependent_vars=[],
     )
 
     assert split is not None
-    assert isinstance(split["train"], Data)
-    assert list(split.keys())[0] == "train"
-    assert split["train"].x.shape == (5, 100)
+    assert isinstance(split, Data)
+
+    assert split.x.shape == (5, 100)
