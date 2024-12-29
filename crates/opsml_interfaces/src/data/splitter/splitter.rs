@@ -446,45 +446,35 @@ impl PolarsStartStopSplitter {
     }
 }
 
-#[pyclass]
-pub struct PandasColumnSplitter {
-    label: String,
-    column_split: ColumnSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PandasColumnSplitter {}
 
-#[pymethods]
 impl PandasColumnSplitter {
-    #[new]
-    #[pyo3(signature = (label, column_split, dependent_vars))]
-    pub fn new(label: String, column_split: ColumnSplit, dependent_vars: Vec<String>) -> Self {
-        PandasColumnSplitter {
-            label,
-            column_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        &self,
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        column_split: &ColumnSplit,
+        dependent_vars: &Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
         // check if polars dataframe
         let pandas = py.import("pandas")?;
 
-        let column_name = &self.column_split.column_name;
+        let column_name = &column_split.column_name;
 
         // if column type is timestamp, convert to datetime
-        let value = match &self.column_split.column_type {
+        let value = match column_split.column_type {
             ColType::Timestamp => {
-                let timestamp = self.column_split.column_value.to_py_object(py);
+                let timestamp = column_split.column_value.to_py_object(py);
                 pandas
                     .call_method1("Timestamp", (timestamp,))?
                     .into_py_any(py)?
             }
-            _ => self.column_split.column_value.to_py_object(py),
+            _ => column_split.column_value.to_py_object(py),
         };
 
-        let filtered_data = match self.column_split.inequality {
+        let filtered_data = match column_split.inequality {
             Inequality::Equal => data.call_method1(
                 "__getitem__",
                 (data.get_item(column_name)?.call_method1("eq", (value,))?,),
@@ -507,7 +497,7 @@ impl PandasColumnSplitter {
             )?,
         };
 
-        create_pandas_data(&self.label, &self.dependent_vars, &filtered_data)
+        create_pandas_data(label, dependent_vars, &filtered_data)
     }
 }
 
@@ -730,14 +720,13 @@ pub struct DataSplitter {}
 #[pymethods]
 impl DataSplitter {
     #[staticmethod]
-    #[pyo3(signature = (split, data, data_type, dependent_vars=None))]
+    #[pyo3(signature = (split, data, data_type, dependent_vars))]
     pub fn split_data(
         split: &DataSplit,
         data: &Bound<'_, PyAny>,
         data_type: DataType,
-        dependent_vars: Option<Vec<String>>,
+        dependent_vars: &Vec<String>,
     ) -> PyResult<HashMap<String, Data>> {
-        let dep_vars = dependent_vars.unwrap_or_default();
         if split.column_split.is_some() {
             match data_type {
                 DataType::Polars => {
@@ -745,14 +734,14 @@ impl DataSplitter {
                         data,
                         &split.label,
                         &split.column_split.as_ref().unwrap(),
-                        &dep_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     let pandas_splitter = PandasColumnSplitter::new(
                         split.label,
                         split.column_split.unwrap(),
-                        dep_vars,
+                        dependent_vars,
                     );
                     return pandas_splitter.create_split(data);
                 }
