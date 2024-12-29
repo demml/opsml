@@ -56,4 +56,5 @@ def arrow_dataframe() -> pa.Table:
 
 @pytest.fixture
 def numpy_array() -> NDArray[np.float64]:
-    return np.random.rand(10, 100)
+    array = np.random.rand(10, 100)
+    return array
