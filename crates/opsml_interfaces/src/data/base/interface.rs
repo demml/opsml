@@ -169,8 +169,8 @@ impl DataInterface {
             .iter()
             .map(|split| {
                 let data = DataSplitter::split_data(
-                    &split,
-                    &self.data.bind(py),
+                    split,
+                    self.data.bind(py),
                     &self.data_type(),
                     dependent_vars.clone(),
                 )

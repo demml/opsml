@@ -1,3 +1,3 @@
-pub mod splitter;
+pub mod data_splitter;
 
-pub use splitter::*;
+pub use data_splitter::*;
