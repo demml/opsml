@@ -4,7 +4,7 @@ use opsml_error::error::OpsmlError;
 use opsml_interfaces::{
     data::{
         ColType, ColValType, ColumnSplit, Data, DataInterface, DataSplit, DataSplitter,
-        IndiceSplit, Inequality, PolarsColumnSplitter, StartStopSplit,
+        IndiceSplit, Inequality, StartStopSplit,
     },
     CatBoostModelInterfaceMetadata, Feature, HuggingFaceModelInterfaceMetadata,
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs,
