@@ -1,4 +1,4 @@
-use crate::data::{Data, DataSplit, DataSplitter};
+use crate::data::{Data, DataSplit, DataSplitter, DependentVars};
 use crate::types::Feature;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -19,7 +19,7 @@ pub struct DataInterface {
     data_splits: Vec<DataSplit>,
 
     #[pyo3(get, set)]
-    dependent_vars: Vec<String>,
+    dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
     feature_map: HashMap<String, Feature>,
