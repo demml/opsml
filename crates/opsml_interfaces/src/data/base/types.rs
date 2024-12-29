@@ -1,6 +1,8 @@
-use opsml_utils::PyHelperFuncs;
+use opsml_error::OpsmlError;
+use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -28,5 +30,77 @@ impl DependentVars {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SqlLogic {
+    #[pyo3(get, set)]
+    pub queries: HashMap<String, String>,
+}
+
+#[pymethods]
+impl SqlLogic {
+    #[new]
+    #[pyo3(signature = (queries=None))]
+    pub fn new(queries: Option<HashMap<String, String>>) -> PyResult<Self> {
+        Ok(SqlLogic {
+            queries: SqlLogic::extract_sql_logic(queries.unwrap_or_default())?,
+        })
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    #[pyo3(signature = (name, query=None, filepath=None))]
+    pub fn add_sql_logic(
+        &mut self,
+        name: String,
+        query: Option<String>,
+        filepath: Option<String>,
+    ) -> PyResult<()> {
+        let query = query.unwrap_or_default();
+        let filepath = filepath.unwrap_or_default();
+
+        if !query.is_empty() && !filepath.is_empty() {
+            return Err(OpsmlError::new_err(
+                "Only one of query or filename can be provided",
+            ));
+        }
+
+        if !query.is_empty() {
+            self.queries.insert(name, query);
+        } else {
+            let query = FileUtils::open_file(&filepath)?;
+            self.queries.insert(name, query);
+        }
+
+        Ok(())
+    }
+}
+
+impl SqlLogic {
+    fn extract_sql_logic(sql_logic: HashMap<String, String>) -> PyResult<HashMap<String, String>> {
+        // check if sql logic is present
+        if sql_logic.is_empty() {
+            return Ok(sql_logic);
+        }
+
+        // get the sql logic
+        let sql_logic = sql_logic
+            .iter()
+            .map(|(key, value)| {
+                if value.contains(".sql") {
+                    let sql = FileUtils::open_file(value)?;
+                    Ok((key.clone(), sql))
+                } else {
+                    Ok((key.clone(), value.clone()))
+                }
+            })
+            .collect::<PyResult<HashMap<String, String>>>()?;
+
+        Ok(sql_logic)
     }
 }
