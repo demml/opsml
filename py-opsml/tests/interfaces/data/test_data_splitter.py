@@ -171,9 +171,8 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
     )
 
     data_split = DataSplit(label="train", column_split=eq_col_split)
-    splitter = DataSplitter()
 
-    split = splitter.split_data(
+    split = DataSplitter.split_data(
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
