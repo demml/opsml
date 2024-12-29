@@ -328,35 +328,25 @@ fn create_pandas_data(
     }
 }
 
-#[pyclass]
-pub struct PolarsColumnSplitter {
-    label: String,
-    column_split: ColumnSplit,
-    dependent_vars: Vec<String>,
-}
+pub struct PolarsColumnSplitter {}
 
-#[pymethods]
 impl PolarsColumnSplitter {
-    #[new]
-    #[pyo3(signature = (label, column_split, dependent_vars))]
-    pub fn new(label: String, column_split: ColumnSplit, dependent_vars: Vec<String>) -> Self {
-        PolarsColumnSplitter {
-            label,
-            column_split,
-            dependent_vars,
-        }
-    }
-
-    pub fn create_split(&self, data: &Bound<'_, PyAny>) -> PyResult<HashMap<String, Data>> {
+    pub fn create_split(
+        &self,
+        data: &Bound<'_, PyAny>,
+        label: &str,
+        column_split: &ColumnSplit,
+        dependent_vars: &Vec<String>,
+    ) -> PyResult<HashMap<String, Data>> {
         let py = data.py();
 
         // check if polars dataframe
         let polars = py.import("polars")?;
 
-        let column_name = &self.column_split.column_name;
-        let value = &self.column_split.column_value.to_py_object(py);
+        let column_name = &column_split.column_name;
+        let value = column_split.column_value.to_py_object(py);
 
-        let filtered_data = match &self.column_split.inequality {
+        let filtered_data = match column_split.inequality {
             Inequality::Equal => data.call_method1(
                 "filter",
                 (polars
@@ -389,7 +379,7 @@ impl PolarsColumnSplitter {
             )?,
         };
 
-        create_polars_data(&self.label, &self.dependent_vars, &filtered_data)
+        create_polars_data(label, &dependent_vars, &filtered_data)
     }
 }
 
@@ -666,16 +656,12 @@ impl PyArrowStartStopSplitter {
     }
 }
 
-#[pyclass]
 pub struct NumpyIndexSplitter {
     label: String,
     indice_split: IndiceSplit,
 }
 
-#[pymethods]
 impl NumpyIndexSplitter {
-    #[new]
-    #[pyo3(signature = (label, indice_split))]
     pub fn new(label: String, indice_split: IndiceSplit) -> Self {
         NumpyIndexSplitter {
             label,
@@ -703,16 +689,12 @@ impl NumpyIndexSplitter {
     }
 }
 
-#[pyclass]
 pub struct NumpyStartStopSplitter {
     label: String,
     start_stop_split: StartStopSplit,
 }
 
-#[pymethods]
 impl NumpyStartStopSplitter {
-    #[new]
-    #[pyo3(signature = (label, start_stop_split))]
     pub fn new(label: String, start_stop_split: StartStopSplit) -> Self {
         NumpyStartStopSplitter {
             label,
@@ -743,20 +725,11 @@ impl NumpyStartStopSplitter {
     }
 }
 
-#[pyclass]
 pub struct DataSplitter {}
 
-#[pymethods]
 impl DataSplitter {
-    #[new]
-    pub fn new() -> Self {
-        DataSplitter {}
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (split, data, data_type, dependent_vars=None))]
     pub fn split_data(
-        split: DataSplit,
+        split: &DataSplit,
         data: &Bound<'_, PyAny>,
         data_type: DataType,
         dependent_vars: Option<Vec<String>>,
@@ -766,9 +739,9 @@ impl DataSplitter {
             match data_type {
                 DataType::Polars => {
                     let polars_splitter = PolarsColumnSplitter::new(
-                        split.label,
-                        split.column_split.unwrap(),
-                        dep_vars,
+                        &split.label,
+                        split.column_split.as_ref().unwrap(),
+                        &dep_vars,
                     );
                     return polars_splitter.create_split(data);
                 }

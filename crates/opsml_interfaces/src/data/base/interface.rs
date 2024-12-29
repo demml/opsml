@@ -1,4 +1,4 @@
-use crate::data::DataSplit;
+use crate::data::{Data, DataSplit, DataSplitter};
 use crate::types::Feature;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -147,6 +147,27 @@ impl DataInterface {
         }
 
         Ok(())
+    }
+
+    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+        // check if data is None
+        if self.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        if self.data_splits.is_empty() {
+            return Err(OpsmlError::new_err(
+                "No data splits detected in interface for splitting",
+            ));
+        }
+
+        let splits = HashMap::new();
+        for split in self.data_splits.iter() {
+            let data = DataSplitter::split_data(&self.data.bind(py), split)?;
+            splits.insert(split.name.clone(), data);
+        }
     }
 }
 
