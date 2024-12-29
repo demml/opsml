@@ -11,7 +11,7 @@ impl FileUtils {
     pub fn open_file(filepath: &str) -> PyResult<String> {
         // get file name of path
         let path = FileUtils::find_path_to_file(filepath)?;
-        std::fs::read_to_string(path).map_err(|e| OpsmlError::new_err(e))
+        std::fs::read_to_string(path).map_err(OpsmlError::new_err)
     }
 
     #[staticmethod]

@@ -261,21 +261,21 @@ fn create_polars_data(dependent_vars: &[String], data: &Bound<'_, PyAny>) -> PyR
 
     if !dependent_vars.is_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
-        let x_cols = remove_diff(&columns, &dependent_vars);
+        let x_cols = remove_diff(&columns, dependent_vars);
 
-        return Ok(Data {
+        Ok(Data {
             x: data.call_method1("select", (x_cols,)).unwrap().into(),
             y: data
                 .call_method1("select", (dependent_vars,))
                 .unwrap()
                 .into(),
-        });
+        })
     } else {
-        return Ok(Data {
+        Ok(Data {
             x: data.into_py_any(py)?,
             // pyany none
-            y: py.None().into(),
-        });
+            y: py.None(),
+        })
     }
 }
 
@@ -283,18 +283,18 @@ fn create_pandas_data(dependent_vars: &Vec<String>, data: &Bound<'_, PyAny>) -> 
     let py = data.py();
     if !dependent_vars.is_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
-        let x_cols = remove_diff(&columns, &dependent_vars);
+        let x_cols = remove_diff(&columns, dependent_vars);
 
-        return Ok(Data {
+        Ok(Data {
             x: data.get_item(x_cols)?.into(),
-            y: data.get_item(&dependent_vars.clone())?.into(),
-        });
+            y: data.get_item(dependent_vars.clone())?.into(),
+        })
     } else {
-        return Ok(Data {
+        Ok(Data {
             x: data.into_py_any(py)?,
             // pyany none
-            y: py.None().into(),
-        });
+            y: py.None(),
+        })
     }
 }
 
@@ -347,7 +347,7 @@ impl PolarsColumnSplitter {
             )?,
         };
 
-        create_polars_data(&dependent_vars, &filtered_data)
+        create_polars_data(dependent_vars, &filtered_data)
     }
 }
 
@@ -357,7 +357,7 @@ impl PolarsIndexSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
         indice_split: &IndiceSplit,
-        dependent_vars: &Vec<String>,
+        dependent_vars: &[String],
     ) -> PyResult<Data> {
         let py = data.py();
 
@@ -470,13 +470,13 @@ impl PandasStartStopSplitter {
     ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
-        let start = start_stop_split.start.clone() as isize;
-        let stop = start_stop_split.stop.clone() as isize;
+        let start = start_stop_split.start as isize;
+        let stop = start_stop_split.stop as isize;
         let slice = PySlice::new(py, start, stop, 1);
 
         let sliced_data = data.get_item(slice)?;
 
-        create_pandas_data(&dependent_vars, &sliced_data)
+        create_pandas_data(dependent_vars, &sliced_data)
     }
 }
 
@@ -489,10 +489,10 @@ impl PyArrowIndexSplitter {
         let indices = &indice_split.indices;
         let sliced_data = data.call_method1("take", (indices.into_py_any(py).unwrap(),))?;
 
-        return Ok(Data {
+        Ok(Data {
             x: sliced_data.into(),
             y: py.None().into(),
-        });
+        })
     }
 }
 
@@ -511,10 +511,10 @@ impl PyArrowStartStopSplitter {
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
 
-        return Ok(Data {
+        Ok(Data {
             x: sliced_data.into(),
-            y: py.None().into(),
-        });
+            y: py.None(),
+        })
     }
 }
 
@@ -527,10 +527,10 @@ impl NumpyIndexSplitter {
         let indices = &indice_split.indices;
         let sliced_data = data.call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?;
 
-        return Ok(Data {
+        Ok(Data {
             x: sliced_data.into(),
-            y: py.None().into(),
-        });
+            y: py.None(),
+        })
     }
 }
 
@@ -543,16 +543,16 @@ impl NumpyStartStopSplitter {
     ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
-        let start = start_stop_split.start.clone() as isize;
-        let stop = start_stop_split.stop.clone() as isize;
+        let start = start_stop_split.start as isize;
+        let stop = start_stop_split.stop as isize;
         let slice = PySlice::new(py, start, stop, 1);
 
         let sliced_data = data.get_item(slice)?;
 
-        return Ok(Data {
+        Ok(Data {
             x: sliced_data.into(),
-            y: py.None().into(),
-        });
+            y: py.None(),
+        })
     }
 }
 
@@ -574,14 +574,14 @@ impl DataSplitter {
                 DataType::Polars => {
                     return PolarsColumnSplitter::create_split(
                         data,
-                        &split.column_split.as_ref().unwrap(),
+                        split.column_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     return PandasColumnSplitter::create_split(
                         data,
-                        &split.column_split.as_ref().unwrap(),
+                        split.column_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
                 }
@@ -594,27 +594,27 @@ impl DataSplitter {
                 DataType::Polars => {
                     return PolarsIndexSplitter::create_split(
                         data,
-                        &split.indice_split.as_ref().unwrap(),
+                        split.indice_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     return PandasIndexSplitter::create_split(
                         data,
-                        &split.indice_split.as_ref().unwrap(),
+                        split.indice_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
                 }
                 DataType::PyArrow => {
                     return PyArrowIndexSplitter::create_split(
                         data,
-                        &split.indice_split.as_ref().unwrap(),
+                        split.indice_split.as_ref().unwrap(),
                     );
                 }
                 DataType::Numpy => {
                     return NumpyIndexSplitter::create_split(
                         data,
-                        &split.indice_split.as_ref().unwrap(),
+                        split.indice_split.as_ref().unwrap(),
                     );
                 }
                 _ => {}
