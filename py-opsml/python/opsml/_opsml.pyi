@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
 
 # shared
 class CommonKwargs:
@@ -1133,17 +1134,33 @@ class DataInterface:
     def data(self) -> Optional[Any]:
         """Returns the data"""
 
+    @data.setter
+    def data(self, data: Any) -> None:
+        """Sets the data"""
+
     @property
     def data_splits(self) -> List[DataSplit]:
         """Returns the data splits."""
+
+    @data_splits.setter
+    def data_splits(self, data_splits: List[DataSplit]) -> None:
+        """Sets the data splits"""
 
     @property
     def dependent_vars(self) -> List[str]:
         """Returns the dependent variables."""
 
+    @dependent_vars.setter
+    def dependent_vars(self, dependent_vars: List[str]) -> None:
+        """Sets the dependent variables"""
+
     @property
     def feature_map(self) -> Dict[str, Feature]:
         """Returns the feature map."""
+
+    @feature_map.setter
+    def feature_map(self, feature_map: Dict[str, Feature]) -> None:
+        """Sets the feature map"""
 
     @property
     def sql_logic(self) -> Dict[str, str]:
@@ -1168,4 +1185,12 @@ class DataInterface:
                 The optional query to use
             filepath:
                 The optional filepath to open the query from
+        """
+
+    def save_data(self, path: Path) -> None:
+        """Save the data to a file
+
+        Args:
+            filepath:
+                The path to save the data to
         """

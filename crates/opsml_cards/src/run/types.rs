@@ -211,8 +211,9 @@ impl RunGraph {
         // check if path is a file
         if !path.is_file() {
             // append filename to path
-            let filename = format!("{}_{}.{}", self.name, self.graph_style, Suffix::Json);
-            path.push(filename);
+            path = path
+                .join(format!("{}_{}", self.name, self.graph_style))
+                .with_extension(Suffix::Json);
         }
 
         PyHelperFuncs::save_to_json(self, path)
