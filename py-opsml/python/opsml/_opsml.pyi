@@ -1037,39 +1037,6 @@ class Data:
     x: Any
     y: Any
 
-class PolarsColumnSplitter:
-    label: str
-    column_split: ColumnSplit
-    dependent_cards: Optional[List[str]]
-
-    def __init__(
-        self,
-        label: str,
-        column_split: ColumnSplit,
-        dependent_cards: Optional[List[str]] = None,
-    ) -> None:
-        """Define a polars column splitter
-
-        Args:
-            label:
-                The label of the split
-            column_split:
-                The column split
-            dependent_cards:
-                The dependent cards
-        """
-
-    def create_split(self, data: Any) -> Dict[str, Data]:
-        """Create a split
-
-        Args:
-            data:
-                The data to split
-
-        Returns:
-            A dictionary containing the split data
-        """
-
 class Inequality:
     Equal: "Inequality"
     GreaterThan: "Inequality"
@@ -1078,21 +1045,13 @@ class Inequality:
     LesserThanEqual: "Inequality"
 
 class DataSplitter:
-    def __init__(self) -> None:
-        """Define a data splitter
-
-        Args:
-            data_split:
-                The data split
-        """
-
+    @staticmethod
     def split_data(
-        self,
         split: DataSplit,
         data: Any,
         data_type: DataType,
-        dependent_vars: Optional[List[str]] = None,
-    ) -> Dict[str, Data]:
+        dependent_vars: List[str],
+    ) -> Data:
         """Create a split
 
         Args:
