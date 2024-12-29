@@ -1,3 +1,3 @@
-pub mod model;
+pub mod modelcard;
 
-pub use model::*;
+pub use modelcard::*;
