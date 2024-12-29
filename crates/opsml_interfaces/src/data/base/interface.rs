@@ -1,5 +1,5 @@
-use crate::data::{Data, DataSplit, DataSplitter, DependentVars};
-use crate::types::Feature;
+use crate::data::{Data, DataSplit, DataSplits, DataSplitter, DependentVars};
+use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::FileUtils;
@@ -16,13 +16,13 @@ pub struct DataInterface {
     data: PyObject,
 
     #[pyo3(get, set)]
-    data_splits: Vec<DataSplit>,
+    data_splits: DataSplits,
 
     #[pyo3(get, set)]
     dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
-    feature_map: HashMap<String, Feature>,
+    feature_map: FeatureMap,
 
     #[pyo3(get, set)]
     sql_logic: HashMap<String, String>,

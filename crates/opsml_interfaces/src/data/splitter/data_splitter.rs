@@ -240,6 +240,25 @@ impl DataSplit {
 }
 
 #[pyclass]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct DataSplits {
+    #[pyo3(get, set)]
+    pub splits: Vec<DataSplit>,
+}
+
+#[pymethods]
+impl DataSplits {
+    #[new]
+    pub fn new(splits: Vec<DataSplit>) -> Self {
+        DataSplits { splits }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass]
 #[derive(Debug)]
 pub struct Data {
     #[pyo3(get)]
