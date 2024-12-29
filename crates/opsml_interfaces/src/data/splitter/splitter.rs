@@ -257,65 +257,45 @@ fn remove_diff<T: PartialEq + Clone>(a: &[T], b: &[T]) -> Vec<T> {
         .collect::<Vec<T>>()
 }
 
-fn create_polars_data(
-    label: &str,
-    dependent_vars: &[String],
-    data: &Bound<'_, PyAny>,
-) -> PyResult<(String, Data)> {
+fn create_polars_data(dependent_vars: &[String], data: &Bound<'_, PyAny>) -> PyResult<Data> {
     let py = data.py();
 
     if !dependent_vars.is_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
         let x_cols = remove_diff(&columns, &dependent_vars);
 
-        return Ok((
-            label.to_string(),
-            Data {
-                x: data.call_method1("select", (x_cols,)).unwrap().into(),
-                y: data
-                    .call_method1("select", (dependent_vars,))
-                    .unwrap()
-                    .into(),
-            },
-        ));
+        return Ok(Data {
+            x: data.call_method1("select", (x_cols,)).unwrap().into(),
+            y: data
+                .call_method1("select", (dependent_vars,))
+                .unwrap()
+                .into(),
+        });
     } else {
-        return Ok((
-            label.to_string(),
-            Data {
-                x: data.into_py_any(py)?,
-                // pyany none
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: data.into_py_any(py)?,
+            // pyany none
+            y: py.None().into(),
+        });
     }
 }
 
-fn create_pandas_data(
-    label: &str,
-    dependent_vars: &Vec<String>,
-    data: &Bound<'_, PyAny>,
-) -> PyResult<(String, Data)> {
+fn create_pandas_data(dependent_vars: &Vec<String>, data: &Bound<'_, PyAny>) -> PyResult<Data> {
     let py = data.py();
     if !dependent_vars.is_empty() {
         let columns: Vec<String> = data.getattr("columns")?.extract()?;
         let x_cols = remove_diff(&columns, &dependent_vars);
 
-        return Ok((
-            label.to_string(),
-            Data {
-                x: data.get_item(x_cols)?.into(),
-                y: data.get_item(&dependent_vars.clone())?.into(),
-            },
-        ));
+        return Ok(Data {
+            x: data.get_item(x_cols)?.into(),
+            y: data.get_item(&dependent_vars.clone())?.into(),
+        });
     } else {
-        return Ok((
-            label.to_string(),
-            Data {
-                x: data.into_py_any(py)?,
-                // pyany none
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: data.into_py_any(py)?,
+            // pyany none
+            y: py.None().into(),
+        });
     }
 }
 
@@ -324,10 +304,9 @@ pub struct PolarsColumnSplitter {}
 impl PolarsColumnSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         column_split: &ColumnSplit,
         dependent_vars: &Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         let py = data.py();
 
         // check if polars dataframe
@@ -369,7 +348,7 @@ impl PolarsColumnSplitter {
             )?,
         };
 
-        create_polars_data(label, &dependent_vars, &filtered_data)
+        create_polars_data(&dependent_vars, &filtered_data)
     }
 }
 
@@ -378,16 +357,15 @@ pub struct PolarsIndexSplitter {}
 impl PolarsIndexSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         indice_split: &IndiceSplit,
         dependent_vars: &Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         let py = data.py();
 
         let indices = &indice_split.indices;
         let sliced_data = data.get_item(indices.into_py_any(py).unwrap())?;
 
-        create_polars_data(label, dependent_vars, &sliced_data)
+        create_polars_data(dependent_vars, &sliced_data)
     }
 }
 
@@ -396,10 +374,9 @@ pub struct PolarsStartStopSplitter {}
 impl PolarsStartStopSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         start_stop_split: &StartStopSplit,
         dependent_vars: &[String],
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let start = &start_stop_split.start;
         let stop = &start_stop_split.stop;
@@ -407,7 +384,7 @@ impl PolarsStartStopSplitter {
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
 
-        create_polars_data(&label, dependent_vars, &sliced_data)
+        create_polars_data(dependent_vars, &sliced_data)
     }
 }
 
@@ -416,10 +393,9 @@ pub struct PandasColumnSplitter {}
 impl PandasColumnSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         column_split: &ColumnSplit,
         dependent_vars: &Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         let py = data.py();
 
         // check if polars dataframe
@@ -461,7 +437,7 @@ impl PandasColumnSplitter {
             )?,
         };
 
-        create_pandas_data(label, dependent_vars, &filtered_data)
+        create_pandas_data(dependent_vars, &filtered_data)
     }
 }
 
@@ -470,10 +446,9 @@ pub struct PandasIndexSplitter {}
 impl PandasIndexSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         indice_split: &IndiceSplit,
         dependent_vars: &Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         let py = data.py();
 
         let indices = &indice_split.indices;
@@ -482,7 +457,7 @@ impl PandasIndexSplitter {
             .getattr("iloc")?
             .call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?; // iloc is used to slice the dataframe
 
-        create_pandas_data(label, dependent_vars, &sliced_data)
+        create_pandas_data(dependent_vars, &sliced_data)
     }
 }
 
@@ -491,10 +466,9 @@ pub struct PandasStartStopSplitter {}
 impl PandasStartStopSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         start_stop_split: &StartStopSplit,
         dependent_vars: &Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
         let start = start_stop_split.start.clone() as isize;
@@ -503,30 +477,23 @@ impl PandasStartStopSplitter {
 
         let sliced_data = data.get_item(slice)?;
 
-        create_pandas_data(&label, &dependent_vars, &sliced_data)
+        create_pandas_data(&dependent_vars, &sliced_data)
     }
 }
 
 pub struct PyArrowIndexSplitter {}
 
 impl PyArrowIndexSplitter {
-    pub fn create_split(
-        data: &Bound<'_, PyAny>,
-        label: &str,
-        indice_split: &IndiceSplit,
-    ) -> PyResult<(String, Data)> {
+    pub fn create_split(data: &Bound<'_, PyAny>, indice_split: &IndiceSplit) -> PyResult<Data> {
         let py = data.py();
 
         let indices = &indice_split.indices;
         let sliced_data = data.call_method1("take", (indices.into_py_any(py).unwrap(),))?;
 
-        return Ok((
-            label.clone().to_string(),
-            Data {
-                x: sliced_data.into(),
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: sliced_data.into(),
+            y: py.None().into(),
+        });
     }
 }
 
@@ -535,9 +502,8 @@ pub struct PyArrowStartStopSplitter {}
 impl PyArrowStartStopSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         start_stop_split: &StartStopSplit,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
         let start = &start_stop_split.start;
@@ -546,36 +512,26 @@ impl PyArrowStartStopSplitter {
 
         let sliced_data = data.call_method1("slice", (start, slice_len))?;
 
-        return Ok((
-            label.clone().to_string(),
-            Data {
-                x: sliced_data.into(),
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: sliced_data.into(),
+            y: py.None().into(),
+        });
     }
 }
 
 pub struct NumpyIndexSplitter {}
 
 impl NumpyIndexSplitter {
-    pub fn create_split(
-        data: &Bound<'_, PyAny>,
-        label: &str,
-        indice_split: &IndiceSplit,
-    ) -> PyResult<(String, Data)> {
+    pub fn create_split(data: &Bound<'_, PyAny>, indice_split: &IndiceSplit) -> PyResult<Data> {
         let py = data.py();
 
         let indices = &indice_split.indices;
         let sliced_data = data.call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?;
 
-        return Ok((
-            label.clone().to_string(),
-            Data {
-                x: sliced_data.into(),
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: sliced_data.into(),
+            y: py.None().into(),
+        });
     }
 }
 
@@ -584,9 +540,8 @@ pub struct NumpyStartStopSplitter {}
 impl NumpyStartStopSplitter {
     pub fn create_split(
         data: &Bound<'_, PyAny>,
-        label: &str,
         start_stop_split: &StartStopSplit,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         // Slice the DataFrame using the start and stop indices
         let py = data.py();
         let start = start_stop_split.start.clone() as isize;
@@ -595,13 +550,10 @@ impl NumpyStartStopSplitter {
 
         let sliced_data = data.get_item(slice)?;
 
-        return Ok((
-            label.clone().to_string(),
-            Data {
-                x: sliced_data.into(),
-                y: py.None().into(),
-            },
-        ));
+        return Ok(Data {
+            x: sliced_data.into(),
+            y: py.None().into(),
+        });
     }
 }
 
@@ -617,13 +569,12 @@ impl DataSplitter {
         data: &Bound<'_, PyAny>,
         data_type: DataType,
         dependent_vars: Vec<String>,
-    ) -> PyResult<(String, Data)> {
+    ) -> PyResult<Data> {
         if split.column_split.is_some() {
             match data_type {
                 DataType::Polars => {
                     return PolarsColumnSplitter::create_split(
                         data,
-                        &split.label,
                         &split.column_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -631,7 +582,6 @@ impl DataSplitter {
                 DataType::Pandas => {
                     return PandasColumnSplitter::create_split(
                         data,
-                        &split.label,
                         &split.column_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -645,7 +595,6 @@ impl DataSplitter {
                 DataType::Polars => {
                     return PolarsIndexSplitter::create_split(
                         data,
-                        &split.label,
                         &split.indice_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -653,7 +602,6 @@ impl DataSplitter {
                 DataType::Pandas => {
                     return PandasIndexSplitter::create_split(
                         data,
-                        &split.label,
                         &split.indice_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -661,14 +609,12 @@ impl DataSplitter {
                 DataType::PyArrow => {
                     return PyArrowIndexSplitter::create_split(
                         data,
-                        &split.label,
                         &split.indice_split.as_ref().unwrap(),
                     );
                 }
                 DataType::Numpy => {
                     return NumpyIndexSplitter::create_split(
                         data,
-                        &split.label,
                         &split.indice_split.as_ref().unwrap(),
                     );
                 }
@@ -681,7 +627,6 @@ impl DataSplitter {
                 DataType::Polars => {
                     return PolarsStartStopSplitter::create_split(
                         data,
-                        &split.label,
                         split.start_stop_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -689,7 +634,6 @@ impl DataSplitter {
                 DataType::Pandas => {
                     return PandasStartStopSplitter::create_split(
                         data,
-                        &split.label,
                         split.start_stop_split.as_ref().unwrap(),
                         &dependent_vars,
                     );
@@ -697,14 +641,12 @@ impl DataSplitter {
                 DataType::PyArrow => {
                     return PyArrowStartStopSplitter::create_split(
                         data,
-                        &split.label,
                         split.start_stop_split.as_ref().unwrap(),
                     );
                 }
                 DataType::Numpy => {
                     return NumpyStartStopSplitter::create_split(
                         data,
-                        &split.label,
                         split.start_stop_split.as_ref().unwrap(),
                     );
                 }
