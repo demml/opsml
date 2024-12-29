@@ -240,7 +240,7 @@ impl DataSplit {
 }
 
 #[pyclass]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub struct DataSplits {
     #[pyo3(get, set)]
     pub splits: Vec<DataSplit>,
@@ -255,6 +255,12 @@ impl DataSplits {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+impl DataSplits {
+    pub fn is_empty(&self) -> bool {
+        self.splits.is_empty()
     }
 }
 
