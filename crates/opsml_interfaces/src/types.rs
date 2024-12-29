@@ -18,7 +18,7 @@ pub struct Feature {
 impl Feature {
     #[new]
     #[pyo3(signature = (feature_type, shape, extra_args=None))]
-    fn new(
+    pub fn new(
         feature_type: String,
         shape: Vec<i32>,
         extra_args: Option<HashMap<String, String>>,

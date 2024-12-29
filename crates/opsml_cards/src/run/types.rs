@@ -211,7 +211,7 @@ impl RunGraph {
         // check if path is a file
         if !path.is_file() {
             // append filename to path
-            let filename = format!("{}_{}{}", self.name, self.graph_style, Suffix::Json);
+            let filename = format!("{}_{}.{}", self.name, self.graph_style, Suffix::Json);
             path.push(filename);
         }
 

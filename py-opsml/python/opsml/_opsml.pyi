@@ -1103,12 +1103,6 @@ class DataSplitter:
         """
 
 class DataInterface:
-    data: Optional[Any]
-    data_splits: List[DataSplit]
-    dependent_vars: List[str]
-    feature_map: Dict[str, Feature]
-    sql_logic: Dict[str, str]
-
     def __init__(
         self,
         data: Optional[Any] = None,
@@ -1136,12 +1130,28 @@ class DataInterface:
         """
 
     @property
-    def data_type(self) -> DataType:
-        """Return the data type.
+    def data(self) -> Optional[Any]:
+        """Returns the data"""
 
-        Returns:
-            The data type.
-        """
+    @property
+    def data_splits(self) -> List[DataSplit]:
+        """Returns the data splits."""
+
+    @property
+    def dependent_vars(self) -> List[str]:
+        """Returns the dependent variables."""
+
+    @property
+    def feature_map(self) -> Dict[str, Feature]:
+        """Returns the feature map."""
+
+    @property
+    def sql_logic(self) -> Dict[str, str]:
+        """Returns the sql logic."""
+
+    @property
+    def data_type(self) -> DataType:
+        """Return the data type."""
 
     def add_sql_logic(
         self,

@@ -1,7 +1,9 @@
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Display;
+use std::path::Path;
 
 pub const UPLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
@@ -314,6 +316,33 @@ impl Display for SaveName {
     }
 }
 
+impl AsRef<Path> for SaveName {
+    fn as_ref(&self) -> &Path {
+        match self {
+            SaveName::Card => Path::new("card"),
+            SaveName::Audit => Path::new("audit"),
+            SaveName::PipelineCard => Path::new("pipelinecard"),
+            SaveName::ModelMetadata => Path::new("model-metadata"),
+            SaveName::TrainedModel => Path::new("trained-model"),
+            SaveName::Preprocessor => Path::new("preprocessor"),
+            SaveName::OnnxModel => Path::new("onnx-model"),
+            SaveName::SampleModelData => Path::new("sample-model-data"),
+            SaveName::DataProfile => Path::new("data-profile"),
+            SaveName::Data => Path::new("data"),
+            SaveName::Profile => Path::new("profile"),
+            SaveName::Artifacts => Path::new("artifacts"),
+            SaveName::QuantizedModel => Path::new("quantized-model"),
+            SaveName::Tokenizer => Path::new("tokenizer"),
+            SaveName::FeatureExtractor => Path::new("feature_extractor"),
+            SaveName::Metadata => Path::new("metadata"),
+            SaveName::Graphs => Path::new("graphs"),
+            SaveName::OnnxConfig => Path::new("onnx-config"),
+            SaveName::Dataset => Path::new("dataset"),
+            SaveName::DriftProfile => Path::new("drift-profile"),
+        }
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Suffix {
@@ -338,40 +367,40 @@ impl Suffix {
     #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
-            ".onnx" => Some(Suffix::Onnx),
-            ".parquet" => Some(Suffix::Parquet),
-            ".zarr" => Some(Suffix::Zarr),
-            ".joblib" => Some(Suffix::Joblib),
-            ".html" => Some(Suffix::Html),
-            ".json" => Some(Suffix::Json),
-            ".ckpt" => Some(Suffix::Ckpt),
-            ".pt" => Some(Suffix::Pt),
-            ".txt" => Some(Suffix::Text),
-            ".cbm" => Some(Suffix::Catboost),
-            ".jsonl" => Some(Suffix::Jsonl),
+            "onnx" => Some(Suffix::Onnx),
+            "parquet" => Some(Suffix::Parquet),
+            "zarr" => Some(Suffix::Zarr),
+            "joblib" => Some(Suffix::Joblib),
+            "html" => Some(Suffix::Html),
+            "json" => Some(Suffix::Json),
+            "ckpt" => Some(Suffix::Ckpt),
+            "pt" => Some(Suffix::Pt),
+            "txt" => Some(Suffix::Text),
+            "cbm" => Some(Suffix::Catboost),
+            "jsonl" => Some(Suffix::Jsonl),
             "" => Some(Suffix::Empty),
-            ".dmatrix" => Some(Suffix::Dmatrix),
-            ".model" => Some(Suffix::Model),
+            "dmatrix" => Some(Suffix::Dmatrix),
+            "model" => Some(Suffix::Model),
             _ => None,
         }
     }
 
     pub fn as_string(&self) -> &str {
         match self {
-            Suffix::Onnx => ".onnx",
-            Suffix::Parquet => ".parquet",
-            Suffix::Zarr => ".zarr",
-            Suffix::Joblib => ".joblib",
-            Suffix::Html => ".html",
-            Suffix::Json => ".json",
-            Suffix::Ckpt => ".ckpt",
-            Suffix::Pt => ".pt",
-            Suffix::Text => ".txt",
-            Suffix::Catboost => ".cbm",
-            Suffix::Jsonl => ".jsonl",
+            Suffix::Onnx => "onnx",
+            Suffix::Parquet => "parquet",
+            Suffix::Zarr => "zarr",
+            Suffix::Joblib => "joblib",
+            Suffix::Html => "html",
+            Suffix::Json => "json",
+            Suffix::Ckpt => "ckpt",
+            Suffix::Pt => "pt",
+            Suffix::Text => "txt",
+            Suffix::Catboost => "cbm",
+            Suffix::Jsonl => "jsonl",
             Suffix::Empty => "",
-            Suffix::Dmatrix => ".dmatrix",
-            Suffix::Model => ".model",
+            Suffix::Dmatrix => "dmatrix",
+            Suffix::Model => "model",
         }
     }
 }
@@ -379,6 +408,12 @@ impl Suffix {
 impl Display for Suffix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_string())
+    }
+}
+
+impl AsRef<OsStr> for Suffix {
+    fn as_ref(&self) -> &OsStr {
+        OsStr::new(self.as_string())
     }
 }
 
@@ -553,15 +588,15 @@ mod tests {
 
     #[test]
     fn test_suffix_from_str() {
-        assert_eq!(Suffix::from_string(".onnx"), Some(Suffix::Onnx));
-        assert_eq!(Suffix::from_string(".parquet"), Some(Suffix::Parquet));
-        assert_eq!(Suffix::from_string(".invalid_suffix"), None);
+        assert_eq!(Suffix::from_string("onnx"), Some(Suffix::Onnx));
+        assert_eq!(Suffix::from_string("parquet"), Some(Suffix::Parquet));
+        assert_eq!(Suffix::from_string("invalid_suffix"), None);
     }
 
     #[test]
     fn test_suffix_as_str() {
-        assert_eq!(Suffix::Onnx.as_string(), ".onnx");
-        assert_eq!(Suffix::Parquet.as_string(), ".parquet");
+        assert_eq!(Suffix::Onnx.as_string(), "onnx");
+        assert_eq!(Suffix::Parquet.as_string(), "parquet");
     }
 
     #[test]

@@ -1,20 +1,19 @@
 use crate::data::DataSplit;
 use crate::types::Feature;
 use opsml_error::error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
+use pyo3::types::{PyAny, PyAnyMethods};
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
-
 
 // TODO add opsml_logging and save_data method
 
 #[pyclass(subclass)]
 pub struct DataInterface {
-    #[pyo3(get, set)]
-    data: Option<PyObject>,
+    data: PyObject,
 
     #[pyo3(get, set)]
     data_splits: Vec<DataSplit>,
@@ -35,6 +34,7 @@ impl DataInterface {
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
     fn new(
+        py: Python,
         data: Option<&Bound<'_, PyAny>>,
         data_splits: Option<Vec<DataSplit>>,
         dependent_vars: Option<Vec<String>>,
@@ -46,12 +46,12 @@ impl DataInterface {
         let feature_map = feature_map.unwrap_or_default();
         let sql_logic = DataInterface::extract_sql_logic(sql_logic.unwrap_or_default())?;
 
+        let data = match data {
+            Some(data) => data.into_py_any(py)?,
+            None => py.None(),
+        };
         Ok(DataInterface {
-            data: data.map(|d| {
-                d.into_py_any(d.py())
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))
-                    .unwrap()
-            }),
+            data,
             data_splits,
             dependent_vars,
             feature_map,
@@ -59,12 +59,46 @@ impl DataInterface {
         })
     }
 
-    pub fn save_data(&self, path: PathBuf) -> PyResult<()> {
-        // if data is not present, return OK
-        if self.data.is_none() {
-            tr
+    #[getter]
+    pub fn data(&mut self) -> &PyObject {
+        &self.data
+    }
+
+    #[setter]
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = data.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(data) {
+            self.data = py.None();
             return Ok(());
-        }
+        } else {
+            self.data = data.into_py_any(py)?;
+        };
+
+        Ok(())
+    }
+    pub fn save_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
+        let save_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method1("dump", (&self.data, path))?;
+
+        // Get the class name of self.data
+        let name: String = self
+            .data
+            .getattr(py, "__class__")?
+            .getattr(py, "__name__")?
+            .extract(py)?;
+
+        // Create and insert the feature
+        let mut features = HashMap::new();
+        features.insert("features".to_string(), Feature::new(name, vec![1], None));
+        self.feature_map = features;
+
+        Ok(())
     }
 
     #[getter]
