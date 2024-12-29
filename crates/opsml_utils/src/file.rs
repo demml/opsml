@@ -23,7 +23,7 @@ impl FileUtils {
             .to_str()
             .unwrap();
 
-        let current_dir = std::env::current_dir().map_err(|e| OpsmlError::new_err(e))?;
+        let current_dir = std::env::current_dir().map_err(OpsmlError::new_err)?;
         // recursively search for file in current directory
         for entry in WalkDir::new(current_dir) {
             let entry = entry.map_err(|e| OpsmlError::new_err(e.to_string()))?;

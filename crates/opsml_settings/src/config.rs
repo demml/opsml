@@ -7,6 +7,7 @@ use serde::Serialize;
 use std::default::Default;
 use std::env;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 /// ApiSettings for use with ApiClient
 #[derive(Debug, Clone)]
@@ -131,7 +132,8 @@ impl Default for OpsmlConfig {
         };
 
         let log_level =
-            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()));
+            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
+                .unwrap();
 
         OpsmlConfig {
             app_name: "opsml".to_string(),

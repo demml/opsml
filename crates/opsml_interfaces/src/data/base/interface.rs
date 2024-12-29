@@ -171,11 +171,11 @@ impl DataInterface {
                 let data = DataSplitter::split_data(
                     &split,
                     &self.data.bind(py),
-                    self.data_type(),
+                    &self.data_type(),
                     dependent_vars.clone(),
                 )
                 .expect("Failed to split data");
-                data
+                (split.label.clone(), data)
             })
             .collect::<HashMap<String, Data>>();
 
