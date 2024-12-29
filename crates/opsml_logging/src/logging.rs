@@ -1,11 +1,11 @@
-use std::io;
-
 use dynfmt::{Format, SimpleCurlyFormat};
 use opsml_error::error::LoggingError;
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 use pyo3::types::PyTupleMethods;
 use serde::{Deserialize, Serialize};
+use std::io;
+use std::str::FromStr;
 use tracing_subscriber;
 use tracing_subscriber::fmt::time::UtcTime;
 
@@ -18,14 +18,16 @@ pub enum LogLevel {
     Error,
 }
 
-impl LogLevel {
-    pub fn from_str(s: &str) -> Self {
+impl FromStr for LogLevel {
+    type Err = LoggingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "debug" => LogLevel::Debug,
-            "info" => LogLevel::Info,
-            "warn" => LogLevel::Warn,
-            "error" => LogLevel::Error,
-            _ => LogLevel::Info,
+            "debug" => Ok(LogLevel::Debug),
+            "info" => Ok(LogLevel::Info),
+            "warn" => Ok(LogLevel::Warn),
+            "error" => Ok(LogLevel::Error),
+            _ => Ok(LogLevel::Info),
         }
     }
 }

@@ -87,7 +87,6 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<ColumnSplit>()?;
     _m.add_class::<StartStopSplit>()?;
     _m.add_class::<IndiceSplit>()?;
-    _m.add_class::<PolarsColumnSplitter>()?;
     _m.add_class::<ColType>()?;
     _m.add_class::<ColValType>()?;
     _m.add_class::<DataSplitter>()?;

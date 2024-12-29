@@ -6,7 +6,6 @@ use pyo3::types::{PyDateTime, PyFloat, PyInt, PySlice, PyString};
 use pyo3::PyResult;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -567,7 +566,7 @@ impl DataSplitter {
     pub fn split_data(
         split: &DataSplit,
         data: &Bound<'_, PyAny>,
-        data_type: DataType,
+        data_type: &DataType,
         dependent_vars: Vec<String>,
     ) -> PyResult<Data> {
         if split.column_split.is_some() {
