@@ -332,7 +332,6 @@ pub struct PolarsColumnSplitter {}
 
 impl PolarsColumnSplitter {
     pub fn create_split(
-        &self,
         data: &Bound<'_, PyAny>,
         label: &str,
         column_split: &ColumnSplit,
@@ -725,9 +724,13 @@ impl NumpyStartStopSplitter {
     }
 }
 
+#[pyclass]
 pub struct DataSplitter {}
 
+#[pymethods]
 impl DataSplitter {
+    #[staticmethod]
+    #[pyo3(signature = (split, data, data_type, dependent_vars=None))]
     pub fn split_data(
         split: &DataSplit,
         data: &Bound<'_, PyAny>,
@@ -738,12 +741,12 @@ impl DataSplitter {
         if split.column_split.is_some() {
             match data_type {
                 DataType::Polars => {
-                    let polars_splitter = PolarsColumnSplitter::new(
+                    return PolarsColumnSplitter::create_split(
+                        data,
                         &split.label,
-                        split.column_split.as_ref().unwrap(),
+                        &split.column_split.as_ref().unwrap(),
                         &dep_vars,
                     );
-                    return polars_splitter.create_split(data);
                 }
                 DataType::Pandas => {
                     let pandas_splitter = PandasColumnSplitter::new(
