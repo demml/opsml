@@ -1,5 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # shared
 class CommonKwargs:
@@ -556,9 +556,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
