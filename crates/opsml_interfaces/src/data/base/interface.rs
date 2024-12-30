@@ -1,8 +1,7 @@
-use crate::data::{self, Data, DataSplit, DataSplits, DataSplitter, DependentVars, SqlLogic};
+use crate::data::{Data, DataSplit, DataSplits, DependentVars, SqlLogic};
 use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
-use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
@@ -190,45 +189,8 @@ impl DataInterface {
         }
 
         let dependent_vars = self.dependent_vars.clone();
-        let splits = self
-            .data_splits
-            .iter()
-            .map(|split| {
-                let data = DataSplitter::split_data(
-                    split,
-                    self.data.bind(py),
-                    &self.data_type(),
-                    dependent_vars.clone(),
-                )
-                .expect("Failed to split data");
-                (split.label.clone(), data)
-            })
-            .collect::<HashMap<String, Data>>();
 
-        Ok(splits)
-    }
-}
-
-impl DataInterface {
-    fn extract_sql_logic(sql_logic: HashMap<String, String>) -> PyResult<HashMap<String, String>> {
-        // check if sql logic is present
-        if sql_logic.is_empty() {
-            return Ok(sql_logic);
-        }
-
-        // get the sql logic
-        let sql_logic = sql_logic
-            .iter()
-            .map(|(key, value)| {
-                if value.contains(".sql") {
-                    let sql = FileUtils::open_file(value)?;
-                    Ok((key.clone(), sql))
-                } else {
-                    Ok((key.clone(), value.clone()))
-                }
-            })
-            .collect::<PyResult<HashMap<String, String>>>()?;
-
-        Ok(sql_logic)
+        self.data_splits
+            .split_data(self.data.bind(py), &self.data_type(), &dependent_vars)
     }
 }
