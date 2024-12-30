@@ -312,6 +312,18 @@ class Feature:
             String representation of the Feature.
         """
 
+class FeatureMap:
+    def __init__(self, map: Optional[dict[str, Feature]] = None) -> None:
+        """Define a feature map
+
+        Args:
+            features:
+                The features to use in the feature map
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the FeatureMap."""
+
 class OnnxSchema:
     input_features: dict[str, Feature]
     output_features: dict[str, Feature]
@@ -1037,6 +1049,81 @@ class Data:
     x: Any
     y: Any
 
+class SqlLogic:
+    def __init__(self, queries: Dict[str, str]) -> None:
+        """Define sql logic
+
+        Args:
+            queries:
+                Sql logic used to generate data represented as a dictionary.
+                Key is the name to assign to the sql logic and value is either a sql query
+                or a path to a .sql file.
+        """
+
+    def __str__(self) -> str:
+        """String representation of the sql logic"""
+
+    def add_sql_logic(
+        self,
+        name: str,
+        query: Optional[str] = None,
+        filepath: Optional[str] = None,
+    ) -> None:
+        """Add sql logic to existing queries
+
+        Args:
+            name:
+                The name to associate with the sql logic
+            query:
+                SQL query
+            filepath:
+                Filepath to SQL query
+
+        """
+
+    @property
+    def queries(self) -> Dict[str, str]:
+        """Return the queries"""
+
+    @queries.setter
+    def queries(self, queries: Dict[str, str]) -> None:
+        """Set the queries"""
+
+class DependentVars:
+    def __init__(
+        self,
+        column_names: Optional[List[str]],
+        column_indices: Optional[List[str]],
+    ) -> None:
+        """Define dependent variables for the data interface. User
+        can specify either column names or column indices.
+
+        Args:
+            column_names:
+                The column names of the dependent variables
+            column_indices:
+                The column indices of the dependent variables
+        """
+
+    def __str__(self) -> str:
+        """String representation of the dependent variables"""
+
+    @property
+    def column_names(self) -> List[str]:
+        """Return the column names"""
+
+    @column_names.setter
+    def column_names(self, column_names: List[str]) -> None:
+        """Set the column names"""
+
+    @property
+    def column_indices(self) -> List[int]:
+        """Return the column indices"""
+
+    @column_indices.setter
+    def column_indices(self, column_indices: List[int]) -> None:
+        """Set the column indices"""
+
 class Inequality:
     Equal: "Inequality"
     GreaterThan: "Inequality"
@@ -1050,16 +1137,22 @@ class DataSplitter:
         split: DataSplit,
         data: Any,
         data_type: DataType,
-        dependent_vars: List[str],
+        dependent_vars: DependentVars,
     ) -> Data:
         """Create a split
 
         Args:
+            split:
+                The data split to use to split the data
             data:
                 The data to split
+            data_type:
+                The data type
+            dependent_vars:
+                Dependent variables to associate with the data
 
         Returns:
-            A dictionary containing the split data
+            A Data object
         """
 
 class DataInterface:
