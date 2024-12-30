@@ -1124,8 +1124,8 @@ class SqlLogic:
 class DependentVars:
     def __init__(
         self,
-        column_names: Optional[List[str]],
-        column_indices: Optional[List[str]],
+        column_names: Optional[List[str]] = None,
+        column_indices: Optional[List[str]] = None,
     ) -> None:
         """Define dependent variables for the data interface. User
         can specify either column names or column indices.

@@ -11,6 +11,7 @@ from opsml import (
     DataSplitter,
     DataType,
     Inequality,
+    DependentVars,
 )
 import datetime
 import numpy as np
@@ -30,7 +31,7 @@ def test_polars_equal_column_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -52,7 +53,7 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -72,7 +73,7 @@ def test_polars_less_than_column_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -94,7 +95,7 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -114,7 +115,7 @@ def test_polars_greater_than_column_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=["y"],
+        dependent_vars=DependentVars(column_names=["y"]),
     )
 
     assert split is not None
@@ -135,7 +136,7 @@ def test_polars_index_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -154,7 +155,7 @@ def test_polars_start_stop_split(polars_dataframe: pl.DataFrame):
         split=data_split,
         data=polars_dataframe,
         data_type=DataType.Polars,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -176,7 +177,7 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -196,7 +197,7 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -216,7 +217,7 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -236,7 +237,7 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -256,7 +257,7 @@ def test_pandas_inequality_split(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -278,7 +279,7 @@ def test_pandas_timestamp(pandas_dataframe: pd.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=["n_legs"],
+        dependent_vars=DependentVars(column_names=["n_legs"]),
     )
 
     assert split is not None
@@ -299,7 +300,7 @@ def test_pandas_index_split(pandas_dataframe: pl.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -319,7 +320,7 @@ def test_pandas_start_stop_split(pandas_dataframe: pl.DataFrame):
         split=data_split,
         data=pandas_dataframe,
         data_type=DataType.Pandas,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -341,7 +342,7 @@ def test_pyarrow_index_split(arrow_dataframe: pa.Table):
         split=data_split,
         data=arrow_dataframe,
         data_type=DataType.PyArrow,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -361,7 +362,7 @@ def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
         split=data_split,
         data=arrow_dataframe,
         data_type=DataType.PyArrow,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -382,7 +383,7 @@ def test_numpy_index_split(numpy_array: NDArray[np.float64]):
         split=data_split,
         data=numpy_array,
         data_type=DataType.Numpy,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
@@ -400,7 +401,7 @@ def test_numpy_start_stop_split(numpy_array: NDArray[np.float64]):
         split=data_split,
         data=numpy_array,
         data_type=DataType.Numpy,
-        dependent_vars=[],
+        dependent_vars=DependentVars(),
     )
 
     assert split is not None
