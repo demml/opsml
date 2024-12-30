@@ -1,7 +1,6 @@
 use opsml_error::OpsmlError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
