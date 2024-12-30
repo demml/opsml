@@ -12,12 +12,13 @@ use std::path::PathBuf;
 
 #[pyclass(subclass)]
 pub struct DataInterface {
+    #[pyo3(get)]
     data: PyObject,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     data_splits: DataSplits,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
@@ -98,11 +99,6 @@ impl DataInterface {
         })
     }
 
-    #[getter]
-    pub fn data(&mut self) -> &PyObject {
-        &self.data
-    }
-
     #[setter]
     pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
@@ -117,6 +113,57 @@ impl DataInterface {
 
         Ok(())
     }
+
+    #[setter]
+    pub fn set_data_splits(&mut self, data_splits: &Bound<'_, PyAny>) -> PyResult<()> {
+        // check if data_splits is None
+        if PyAnyMethods::is_none(data_splits) {
+            self.data_splits = DataSplits::default();
+            return Ok(());
+        }
+
+        // check if data_splits is either Vec<DataSplit> or DataSplits
+        if data_splits.is_instance_of::<DataSplits>() {
+            self.data_splits = data_splits.extract::<DataSplits>()?;
+        } else if data_splits.is_instance_of::<PyList>() {
+            // pylist should be list of DataSplit
+            self.data_splits = DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?);
+        } else {
+            self.data_splits = DataSplits::default();
+        }
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_dependent_vars(&mut self, dependent_vars: &Bound<'_, PyAny>) -> PyResult<()> {
+        // check if dependent_vars is None
+        if PyAnyMethods::is_none(dependent_vars) {
+            self.dependent_vars = DependentVars::default();
+            return Ok(());
+        }
+
+        // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
+        if dependent_vars.is_instance_of::<DependentVars>() {
+            self.dependent_vars = dependent_vars.extract::<DependentVars>()?;
+        } else if dependent_vars.is_instance_of::<PyList>() {
+            // pylist should be list of string or list of int
+            if dependent_vars.extract::<Vec<String>>().is_ok() {
+                let column_names = dependent_vars.extract::<Vec<String>>()?;
+                self.dependent_vars = DependentVars::new(Some(column_names), None);
+            } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
+                let column_indices = dependent_vars.extract::<Vec<usize>>()?;
+                self.dependent_vars = DependentVars::new(None, Some(column_indices));
+            } else {
+                self.dependent_vars = DependentVars::default();
+            }
+        } else {
+            self.dependent_vars = DependentVars::default();
+        }
+
+        Ok(())
+    }
+
     pub fn save_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
         // check if data is None
         if self.data.is_none(py) {
