@@ -362,13 +362,25 @@ def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
         split=data_split,
         data=arrow_dataframe,
         data_type=DataType.PyArrow,
-        dependent_vars=DependentVars(),
+        dependent_vars=DependentVars(column_names=["n_legs"]),
     )
 
     assert split is not None
     assert isinstance(split, Data)
-    assert split.x.shape == (3, 2)
-    assert split.x["n_legs"].to_pylist() == [2, 4, 5]
+    assert split.x.shape == (3, 1)
+    assert split.y["n_legs"].to_pylist() == [2, 4, 5]
+
+    split = DataSplitter.split_data(
+        split=data_split,
+        data=arrow_dataframe,
+        data_type=DataType.PyArrow,
+        dependent_vars=DependentVars(column_indices=[0]),
+    )
+
+    assert split is not None
+    assert isinstance(split, Data)
+    assert split.x.shape == (3, 1)
+    assert split.y["n_legs"].to_pylist() == [2, 4, 5]
 
 
 def test_numpy_index_split(numpy_array: NDArray[np.float64]):
@@ -383,12 +395,13 @@ def test_numpy_index_split(numpy_array: NDArray[np.float64]):
         split=data_split,
         data=numpy_array,
         data_type=DataType.Numpy,
-        dependent_vars=DependentVars(),
+        dependent_vars=DependentVars(column_indices=[5]),
     )
 
     assert split is not None
     assert isinstance(split, Data)
-    assert split.x.shape == (3, 100)
+    assert split.x.shape == (3, 99)
+    assert split.y.shape == (3, 1)
 
 
 def test_numpy_start_stop_split(numpy_array: NDArray[np.float64]):
