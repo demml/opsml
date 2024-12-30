@@ -683,14 +683,14 @@ impl DataSplitter {
                     return PolarsColumnSplitter::create_split(
                         data,
                         split.column_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     return PandasColumnSplitter::create_split(
                         data,
                         split.column_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 _ => {}
@@ -703,28 +703,28 @@ impl DataSplitter {
                     return PolarsIndexSplitter::create_split(
                         data,
                         split.indice_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     return PandasIndexSplitter::create_split(
                         data,
                         split.indice_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::PyArrow => {
                     return PyArrowIndexSplitter::create_split(
                         data,
                         split.indice_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Numpy => {
                     return NumpyIndexSplitter::create_split(
                         data,
                         split.indice_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 _ => {}
@@ -737,28 +737,28 @@ impl DataSplitter {
                     return PolarsStartStopSplitter::create_split(
                         data,
                         split.start_stop_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Pandas => {
                     return PandasStartStopSplitter::create_split(
                         data,
                         split.start_stop_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::PyArrow => {
                     return PyArrowStartStopSplitter::create_split(
                         data,
                         split.start_stop_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 DataType::Numpy => {
                     return NumpyStartStopSplitter::create_split(
                         data,
                         split.start_stop_split.as_ref().unwrap(),
-                        &dependent_vars,
+                        dependent_vars,
                     );
                 }
                 _ => {}
