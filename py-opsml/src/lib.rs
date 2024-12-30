@@ -3,10 +3,10 @@ use opsml_contracts::{Card, CardList};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{
     data::{
-        ColType, ColValType, ColumnSplit, Data, DataInterface, DataSplit, DataSplitter,
-        IndiceSplit, Inequality, StartStopSplit,
+        ColType, ColValType, ColumnSplit, Data, DataInterface, DataSplit, DataSplits, DataSplitter,
+        DependentVars, IndiceSplit, Inequality, SqlLogic, StartStopSplit,
     },
-    CatBoostModelInterfaceMetadata, Feature, HuggingFaceModelInterfaceMetadata,
+    CatBoostModelInterfaceMetadata, Feature, FeatureMap, HuggingFaceModelInterfaceMetadata,
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs,
     LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata, ModelInterfaceType, ModelSaveMetadata,
@@ -56,6 +56,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<TorchOnnxArgs>()?;
     _m.add_class::<TorchSaveArgs>()?;
     _m.add_class::<Feature>()?;
+    _m.add_class::<FeatureMap>()?;
     _m.add_class::<Description>()?;
     _m.add_class::<DataSchema>()?;
     _m.add_class::<OnnxSchema>()?;
@@ -91,6 +92,9 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<ColValType>()?;
     _m.add_class::<DataSplitter>()?;
     _m.add_class::<Inequality>()?;
+    _m.add_class::<DependentVars>()?;
+    _m.add_class::<SqlLogic>()?;
+    _m.add_class::<DataSplits>()?;
 
     // data_interface
     _m.add_class::<DataInterface>()?;

@@ -369,9 +369,7 @@ fn create_pyarrow_data(dependent_vars: &DependentVars, data: &Bound<'_, PyAny>) 
 
         Ok(Data {
             x: data.call_method1("select", (x_cols,))?.into(),
-            y: data
-                .call_method1("select", (&dependent_vars.column_names,))?
-                .into(),
+            y: data.call_method1("select", (y_cols,))?.into(),
         })
     } else {
         Ok(Data {
@@ -642,7 +640,7 @@ impl NumpyIndexSplitter {
         let indices = &indice_split.indices;
         let sliced_data = data.call_method1("__getitem__", (indices.into_py_any(py).unwrap(),))?;
 
-        create_pyarrow_data(dependent_vars, &sliced_data)
+        create_numpy_data(dependent_vars, &sliced_data)
     }
 }
 
