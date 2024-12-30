@@ -1057,6 +1057,14 @@ class DataSplits:
     def __str__(self) -> str:
         """String representation of the data splits"""
 
+    @property
+    def splits(self) -> List[DataSplit]:
+        """Return the splits"""
+
+    @splits.setter
+    def splits(self, splits: List[DataSplit]) -> None:
+        """Set the splits"""
+
     def split_data(
         self,
         data: Any,
@@ -1120,6 +1128,17 @@ class SqlLogic:
     @queries.setter
     def queries(self, queries: Dict[str, str]) -> None:
         """Set the queries"""
+
+    def __getitem__(self, key: str) -> str:
+        """Get the query by key
+
+        Args:
+            key:
+                The key to get the query by
+
+        Returns:
+            The query
+        """
 
 class DependentVars:
     def __init__(
@@ -1191,10 +1210,10 @@ class DataInterface:
     def __init__(
         self,
         data: Optional[Any] = None,
-        data_splits: List[DataSplit] = [],
-        dependent_vars: List[str] = [],
-        feature_map: Dict[str, Feature] = {},
-        sql_logic: Dict[str, str] = {},
+        data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
+        dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
+        feature_map: Optional[FeatureMap] = None,
+        sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
 
@@ -1223,31 +1242,34 @@ class DataInterface:
         """Sets the data"""
 
     @property
-    def data_splits(self) -> List[DataSplit]:
+    def data_splits(self) -> DataSplits:
         """Returns the data splits."""
 
     @data_splits.setter
-    def data_splits(self, data_splits: List[DataSplit]) -> None:
+    def data_splits(self, data_splits: Union[DataSplits, List[DataSplit]]) -> None:
         """Sets the data splits"""
 
     @property
-    def dependent_vars(self) -> List[str]:
+    def dependent_vars(self) -> DependentVars:
         """Returns the dependent variables."""
 
     @dependent_vars.setter
-    def dependent_vars(self, dependent_vars: List[str]) -> None:
+    def dependent_vars(
+        self,
+        dependent_vars: Union[DependentVars, List[str], List[int]],
+    ) -> None:
         """Sets the dependent variables"""
 
     @property
-    def feature_map(self) -> Dict[str, Feature]:
+    def feature_map(self) -> FeatureMap:
         """Returns the feature map."""
 
     @feature_map.setter
-    def feature_map(self, feature_map: Dict[str, Feature]) -> None:
+    def feature_map(self, feature_map: FeatureMap) -> None:
         """Sets the feature map"""
 
     @property
-    def sql_logic(self) -> Dict[str, str]:
+    def sql_logic(self) -> SqlLogic:
         """Returns the sql logic."""
 
     @property
@@ -1285,4 +1307,11 @@ class DataInterface:
         Args:
             path:
                 Base path to load the data from
+        """
+
+    def split_data(self) -> Dict[str, Data]:
+        """Split the data
+
+        Returns:
+            A dictionary of data splits
         """

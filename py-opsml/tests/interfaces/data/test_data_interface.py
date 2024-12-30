@@ -1,4 +1,13 @@
-from opsml import DataInterface, DataType, OpsmlError
+from opsml import (
+    DataInterface,
+    DataType,
+    OpsmlError,
+    SqlLogic,
+    DataSplit,
+    DataSplits,
+    IndiceSplit,
+    DependentVars,
+)
 import numpy as np
 from numpy.typing import NDArray
 from pathlib import Path
@@ -15,7 +24,9 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     assert data_interface.data_type == DataType.Base
 
-    data_interface = DataInterface(data=numpy_array, sql_logic={"sql": "test_sql.sql"})
+    sql_logic = SqlLogic(queries={"sql": "test_sql.sql"})
+
+    data_interface = DataInterface(data=numpy_array, sql_logic=sql_logic)
 
     assert (
         data_interface.sql_logic["sql"] == "SELECT ORDER_ID FROM TEST_TABLE limit 100"
@@ -35,7 +46,7 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     assert data_interface.data is None
 
-    # should raise an error if we try to save again
+    ## should raise an error if we try to save again
     with pytest.raises(OpsmlError) as error:
         data_interface.save_data(save_path)
     assert str(error.value) == "No data detected in interface for saving"
@@ -43,3 +54,28 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     data_interface.load_data(save_path)
 
     assert data_interface.data is not None
+
+
+def test_data_split(numpy_array: NDArray[np.float64]):
+    data_split = DataSplit(
+        label="train",
+        indice_split=IndiceSplit(
+            indices=[0, 5, 9],
+        ),
+    )
+
+    interface = DataInterface(data=numpy_array, data_splits=[data_split])
+    interface = DataInterface(data=numpy_array, data_splits=DataSplits([data_split]))
+
+    # update the data split
+    data_split.label = "test"
+
+    assert data_split.label == "test"
+
+    interface.data_splits = DataSplits([data_split])
+
+    assert interface.data_splits.splits[0].label == "test"
+
+    interface.dependent_vars = DependentVars(["test"])
+
+    assert interface.dependent_vars.column_names[0] == "test"

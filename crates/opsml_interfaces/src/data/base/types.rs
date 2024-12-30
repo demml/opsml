@@ -99,6 +99,13 @@ impl SqlLogic {
 
         Ok(())
     }
+
+    pub fn __getitem__(&self, key: &str) -> PyResult<String> {
+        match self.queries.get(key) {
+            Some(query) => Ok(query.clone()),
+            None => Err(OpsmlError::new_err("Key not found")),
+        }
+    }
 }
 
 impl SqlLogic {
