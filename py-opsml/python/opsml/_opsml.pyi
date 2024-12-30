@@ -1045,6 +1045,38 @@ class DataSplit:
                 The indice split
         """
 
+class DataSplits:
+    def __init__(self, splits: List[DataSplit]) -> None:
+        """Define data splits
+
+        Args:
+            splits:
+                The data splits
+        """
+
+    def __str__(self) -> str:
+        """String representation of the data splits"""
+
+    def split_data(
+        self,
+        data: Any,
+        data_type: DataType,
+        dependent_vars: DependentVars,
+    ) -> Dict[str, Data]:
+        """Split the data
+
+        Args:
+            data:
+                The data to split
+            data_type:
+                The data type
+            dependent_vars:
+                Dependent variables to associate with the data
+
+        Returns:
+            A dictionary of data splits
+        """
+
 class Data:
     x: Any
     y: Any
