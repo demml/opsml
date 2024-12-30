@@ -34,6 +34,10 @@ from ._opsml import (  # type: ignore
     TorchSaveArgs,
     VersionType,
     DataInterface,
+    DependentVars,
+    DataSplits,
+    FeatureMap,
+    SqlLogic,
 )
 
 __all__ = [
@@ -72,4 +76,8 @@ __all__ = [
     "DataSplitter",
     "Inequality",
     "DataInterface",
+    "DependentVars",
+    "DataSplits",
+    "FeatureMap",
+    "SqlLogic",
 ]
