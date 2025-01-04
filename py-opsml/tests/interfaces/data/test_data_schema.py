@@ -7,7 +7,6 @@ def test_polars_interface(
 ):
     feature_map = generate_feature_schema(multi_type_polars_dataframe, DataType.Polars)
 
-    print(feature_map)
     assert feature_map["int8"].feature_type == "Int8"
     assert feature_map["int16"].feature_type == "Int16"
     assert feature_map["int32"].feature_type == "Int32"
@@ -32,5 +31,3 @@ def test_polars_interface(
     assert feature_map["null"].feature_type == "Null"
     assert feature_map["list"].feature_type == "List"
     assert feature_map["array"].feature_type == "Array"
-
-    a

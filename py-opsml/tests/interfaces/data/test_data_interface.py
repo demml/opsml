@@ -97,4 +97,4 @@ def test_polars_interface(polars_dataframe: pl.DataFrame, tmp_path: Path):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    # ata.save_data(path=save_path)
+    save_path = data.save_data(path=save_path)

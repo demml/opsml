@@ -1,4 +1,6 @@
-use crate::data::{Data, DataSplit, DataSplits, DependentVars, SqlLogic};
+use crate::data::{
+    Data, DataInterfaceType, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata, SqlLogic,
+};
 use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -27,6 +29,8 @@ pub struct DataInterface {
 
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
+
+    pub interface_type: DataInterfaceType,
 }
 
 #[pymethods]
@@ -97,6 +101,7 @@ impl DataInterface {
             dependent_vars: depen_vars,
             feature_map,
             sql_logic,
+            interface_type: DataInterfaceType::DataInterface,
         })
     }
 
@@ -171,7 +176,7 @@ impl DataInterface {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> PyResult<InterfaceSaveMetadata> {
         // check if data is None
         if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
@@ -184,7 +189,7 @@ impl DataInterface {
         let joblib = py.import("joblib")?;
 
         // Save the data using joblib
-        joblib.call_method1("dump", (&self.data, save_path))?;
+        joblib.call_method1("dump", (&self.data, save_path.clone()))?;
 
         // Get the class name of self.data
         let name: String = self
@@ -198,7 +203,13 @@ impl DataInterface {
         features.insert("features".to_string(), Feature::new(name, vec![1], None));
         self.feature_map = FeatureMap::new(Some(features));
 
-        Ok(())
+        Ok(InterfaceSaveMetadata {
+            interface_type: self.interface_type.clone(),
+            data_type: self.data_type(),
+            feature_map: self.feature_map.clone(),
+            data_save_path: save_path,
+            data_profile_save_path: None,
+        })
     }
 
     pub fn load_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {

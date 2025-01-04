@@ -26,7 +26,7 @@ enum PolarsType {
     Time,
     DateTime,
     Duration,
-    DefaultPolarsType,
+    DefaultDataType,
     Categorical,
     Enum,
     List,
@@ -61,7 +61,7 @@ impl PolarsType {
             "List" => PolarsType::List,
             "Array" => PolarsType::Array,
             "Struct" => PolarsType::Struct,
-            _ => PolarsType::DefaultPolarsType,
+            _ => PolarsType::DefaultDataType,
         }
     }
 }
@@ -693,9 +693,9 @@ impl Struct {
 
 /// Default PolarsType for any data type that is not explicitly defined
 /// This includes Object, Null Unknown
-pub struct DefaultPolarsType {}
+pub struct DefaultDataType {}
 
-impl DefaultPolarsType {
+impl DefaultDataType {
     fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new(data_type.str().unwrap().to_string(), vec![1], None);
         Ok(feature)
@@ -1009,7 +1009,7 @@ impl PolarsSchemaValidator {
                         return Err(OpsmlError::new_err("Invalid data type"));
                     }
                 }
-                _ => DefaultPolarsType::as_feature(&value).map_err(|e| {
+                _ => DefaultDataType::as_feature(&value).map_err(|e| {
                     OpsmlError::new_err(format!(
                         "Error encountered converting polars type for feature: {}",
                         e
