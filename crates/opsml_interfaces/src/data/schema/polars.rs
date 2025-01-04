@@ -728,7 +728,7 @@ impl PolarsSchemaValidator {
                         Int64::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -741,7 +741,7 @@ impl PolarsSchemaValidator {
                         Int32::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -754,7 +754,7 @@ impl PolarsSchemaValidator {
                         Int16::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -767,7 +767,7 @@ impl PolarsSchemaValidator {
                         Int8::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -780,7 +780,7 @@ impl PolarsSchemaValidator {
                         UInt64::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -793,7 +793,7 @@ impl PolarsSchemaValidator {
                         UInt32::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -806,7 +806,7 @@ impl PolarsSchemaValidator {
                         UInt16::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -819,7 +819,7 @@ impl PolarsSchemaValidator {
                         UInt8::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -832,7 +832,7 @@ impl PolarsSchemaValidator {
                         Float32::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -845,7 +845,7 @@ impl PolarsSchemaValidator {
                         Float64::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -858,7 +858,7 @@ impl PolarsSchemaValidator {
                         Decimal::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -871,7 +871,7 @@ impl PolarsSchemaValidator {
                         Boolean::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -884,7 +884,7 @@ impl PolarsSchemaValidator {
                         PolarsString::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -897,7 +897,7 @@ impl PolarsSchemaValidator {
                         Utf8::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -910,7 +910,7 @@ impl PolarsSchemaValidator {
                         Binary::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -923,7 +923,7 @@ impl PolarsSchemaValidator {
                         Date::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -937,7 +937,7 @@ impl PolarsSchemaValidator {
                     let feature = Time::as_feature(&value).map_err(|e| {
                         OpsmlError::new_err(format!(
                             "Error encountered converting polars type for feature: {}",
-                            e.to_string()
+                            e
                         ))
                     });
                     feature
@@ -947,7 +947,7 @@ impl PolarsSchemaValidator {
                         DateTime::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -960,7 +960,7 @@ impl PolarsSchemaValidator {
                         Duration::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -973,7 +973,7 @@ impl PolarsSchemaValidator {
                         Categorical::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -986,7 +986,7 @@ impl PolarsSchemaValidator {
                         PolarsEnum::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -999,7 +999,7 @@ impl PolarsSchemaValidator {
                         List::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -1012,7 +1012,7 @@ impl PolarsSchemaValidator {
                         Array::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -1025,7 +1025,7 @@ impl PolarsSchemaValidator {
                         Struct::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
-                                e.to_string()
+                                e
                             ))
                         })
                     } else {
@@ -1036,7 +1036,7 @@ impl PolarsSchemaValidator {
                 _ => DefaultPolarsType::as_feature(&value).map_err(|e| {
                     OpsmlError::new_err(format!(
                         "Error encountered converting polars type for feature: {}",
-                        e.to_string()
+                        e
                     ))
                 }),
             };
