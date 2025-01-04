@@ -1,9 +1,49 @@
 use crate::types::{Feature, FeatureMap};
 
-use opsml_types::DataType;
+use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyTuple};
 use std::collections::HashMap;
+
+enum PolarsType {
+    Boolean,
+    Utf8,
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    UInt8,
+    UInt16,
+    UInt32,
+    UInt64,
+    Float32,
+    Float64,
+    Decimal,
+    PolarsStructType,
+    DefaultPolarsType,
+}
+
+impl PolarsType {
+    fn from_str(data_type: &str) -> PolarsType {
+        match data_type {
+            "Boolean" => PolarsType::Boolean,
+            "Utf8" => PolarsType::Utf8,
+            "Int8" => PolarsType::Int8,
+            "Int16" => PolarsType::Int16,
+            "Int32" => PolarsType::Int32,
+            "Int64" => PolarsType::Int64,
+            "UInt8" => PolarsType::UInt8,
+            "UInt16" => PolarsType::UInt16,
+            "UInt32" => PolarsType::UInt32,
+            "UInt64" => PolarsType::UInt64,
+            "Float32" => PolarsType::Float32,
+            "Float64" => PolarsType::Float64,
+            "Decimal" => PolarsType::Decimal,
+            "PolarsStructType" => PolarsType::PolarsStructType,
+            _ => PolarsType::DefaultPolarsType,
+        }
+    }
+}
 
 pub struct Int8 {}
 
@@ -308,22 +348,106 @@ impl PolarsSchemaValidator {
         let mut feature_map = FeatureMap::new(None);
 
         let binding = data.as_ref().getattr("schema")?;
-
-        println!("binding: {:?}", binding.call_method0("to_python")?);
-
         let schema_items = binding.downcast::<PyDict>()?;
 
-        println!("schema_items: {:?}", schema_items);
-
         for (key, value) in schema_items.iter() {
-            println!(
-                "key = {}, value = {}",
-                key,
-                value.call_method0("to_python")?
-            );
+            let data_type_name = key.str()?.extract::<String>()?;
+            let polars_type = PolarsType::from_str(&data_type_name);
 
-            let feature_type = value.get_type().to_string();
-            println!("feature_type: {}", feature_type);
+            match polars_type {
+                PolarsType::Int64 => {
+                    if Int64::validate(&value)? {
+                        let feature = Int64::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Int32 => {
+                    if Int32::validate(&value)? {
+                        let feature = Int32::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Int16 => {
+                    if Int16::validate(&value)? {
+                        let feature = Int16::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Int8 => {
+                    if Int8::validate(&value)? {
+                        let feature = Int8::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::UInt64 => {
+                    if UInt64::validate(&value)? {
+                        let feature = UInt64::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::UInt32 => {
+                    if UInt32::validate(&value)? {
+                        let feature = UInt32::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::UInt16 => {
+                    if UInt16::validate(&value)? {
+                        let feature = UInt16::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::UInt8 => {
+                    if UInt8::validate(&value)? {
+                        let feature = UInt8::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Float32 => {
+                    if Float32::validate(&value)? {
+                        let feature = Float32::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Float64 => {
+                    if Float64::validate(&value)? {
+                        let feature = Float64::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Decimal => {
+                    if Decimal::validate(&value)? {
+                        let feature = Decimal::as_feature(&value)?;
+                        feature_map.map.insert(data_type_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                _ => {
+                    let feature = DefaultPolarsType::as_feature(&value)?;
+                    feature_map.map.insert(data_type_name, feature);
+                }
+            }
         }
 
         let test = binding.getattr("items")?;
