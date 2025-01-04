@@ -30,6 +30,7 @@ enum PolarsType {
     DefaultPolarsType,
     Categorical,
     Enum,
+    List,
 }
 
 impl PolarsType {
@@ -56,6 +57,7 @@ impl PolarsType {
             "Datetime" => PolarsType::DateTime,
             "Decimal" => PolarsType::Decimal,
             "Enum" => PolarsType::Enum,
+            "List" => PolarsType::List,
             _ => PolarsType::DefaultPolarsType,
         }
     }
@@ -565,6 +567,39 @@ impl PolarsEnum {
     }
 }
 
+pub struct List {}
+
+impl List {
+    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let mut extra_args = HashMap::new();
+
+        let inner = data_type.getattr("inner")?;
+        let class_name = inner
+            .getattr("__class__")?
+            .getattr("__name__")?
+            .extract::<String>()?;
+
+        // insert categories as a string
+        extra_args.insert("inner".to_string(), class_name);
+
+        let feature = Feature::new("List".to_string(), vec![1], Some(extra_args));
+
+        Ok(feature)
+    }
+
+    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = data_type.py();
+
+        let list = py.import("polars")?.getattr("datatypes")?.getattr("List")?;
+
+        let is_list = data_type.is_instance(&list)?;
+
+        Ok(is_list)
+    }
+}
+
+/// Default PolarsType for any data type that is not explicitly defined
+/// This includes Object, Null Unknown
 pub struct DefaultPolarsType {}
 
 impl DefaultPolarsType {
@@ -768,6 +803,14 @@ impl PolarsSchemaValidator {
                 PolarsType::Enum => {
                     if PolarsEnum::validate(&value)? {
                         let feature = PolarsEnum::as_feature(&value)?;
+                        feature_map.map.insert(feature_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::List => {
+                    if List::validate(&value)? {
+                        let feature = List::as_feature(&value)?;
                         feature_map.map.insert(feature_name, feature);
                     } else {
                         return Err(OpsmlError::new_err("Invalid data type"));

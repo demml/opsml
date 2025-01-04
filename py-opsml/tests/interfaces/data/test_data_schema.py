@@ -28,5 +28,8 @@ def test_polars_interface(
     assert feature_map["duration"].feature_type == "Duration"
     assert feature_map["categorical"].feature_type == "Categorical"
     assert feature_map["enum"].feature_type == "Enum"
+    assert feature_map["object"].feature_type == "Object"
+    assert feature_map["null"].feature_type == "Null"
+    assert feature_map["list"].feature_type == "List"
 
     a

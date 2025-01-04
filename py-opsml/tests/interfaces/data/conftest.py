@@ -116,6 +116,16 @@ def multi_type_polars_dataframe() -> pl.DataFrame:
             "categorical": ["a", "b", "c"],
             # enum
             "enum": ["a", "b", "c"],
+            # object
+            "object": [1, "a", 1.0],
+            # null
+            "null": [None, None, None],
+            # list
+            "list": [
+                [1, 2, 3],
+                [1, 2, 3],
+                [1, 2, 3],
+            ],
         },
         schema={
             "int8": pl.Int8,
@@ -139,6 +149,9 @@ def multi_type_polars_dataframe() -> pl.DataFrame:
             "duration": pl.Duration("ns"),
             "categorical": pl.Categorical,
             "enum": pl.Enum(["a", "b", "c"]),
+            "object": pl.Object,
+            "null": pl.Null,
+            "list": pl.List(pl.Int64),
         },
     )
 
