@@ -7,6 +7,7 @@ from opsml import (
     DataSplits,
     IndiceSplit,
     DependentVars,
+    NumpyData,
 )
 import numpy as np
 from numpy.typing import NDArray
@@ -79,3 +80,10 @@ def test_data_split(numpy_array: NDArray[np.float64]):
     interface.dependent_vars = DependentVars(["test"])
 
     assert interface.dependent_vars.column_names[0] == "test"
+
+
+def test_numpy_interface(numpy_array: NDArray[np.float64]):
+    _ = NumpyData(data=numpy_array)
+
+    with pytest.raises(OpsmlError) as error:
+        _ = NumpyData(data=10)
