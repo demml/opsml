@@ -715,22 +715,10 @@ impl PolarsSchemaValidator {
 
         for (key, value) in schema_items.iter() {
             let feature_name = key.str()?.extract::<String>()?;
-            //let data_type_name = value.get_type().name()?.to_string();
-            //let value_str = value.str()?.extract::<String>()?;
-            let repr = value.repr()?.extract::<String>()?;
             let class_name = value
                 .getattr("__class__")?
                 .getattr("__name__")?
                 .extract::<String>()?;
-
-            println!(
-                "feature_name: {}, repr: {}, class name: {}",
-                feature_name, repr, class_name
-            );
-            //println!(
-            //    "feature_name: {}, datatype: {}, value_str: {} repr: {}",
-            //    feature_name, data_type_name, value_str, repr
-            //);
 
             let polars_type = PolarsType::from_str(&class_name);
 
