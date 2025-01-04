@@ -299,7 +299,7 @@ impl DefaultPolarsType {
     }
 }
 
-struct PolarsSchemaValidator {}
+pub struct PolarsSchemaValidator {}
 
 impl PolarsSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
@@ -331,13 +331,4 @@ impl PolarsSchemaValidator {
 
         Ok(feature_map)
     }
-}
-
-#[pyfunction]
-pub fn generate_feature_schema(data: &Bound<'_, PyAny>, data_type: &DataType) -> PyResult<()> {
-    let feature_map = match data_type {
-        DataType::Polars => PolarsSchemaValidator::generate_feature_map(data)?,
-        _ => FeatureMap::new(None),
-    };
-    Ok(())
 }

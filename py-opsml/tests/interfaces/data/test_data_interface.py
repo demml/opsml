@@ -8,8 +8,10 @@ from opsml import (
     IndiceSplit,
     DependentVars,
     NumpyData,
+    PolarsData,
 )
 import numpy as np
+import polars as pl
 from numpy.typing import NDArray
 from pathlib import Path
 import pytest
@@ -87,3 +89,12 @@ def test_numpy_interface(numpy_array: NDArray[np.float64]):
 
     with pytest.raises(OpsmlError) as error:
         _ = NumpyData(data=10)
+
+
+def test_polars_interface(polars_dataframe: pl.DataFrame, tmp_path: Path):
+    data = PolarsData(data=polars_dataframe)
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    data.save_data(path=save_path)

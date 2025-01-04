@@ -26,10 +26,12 @@ from ._opsml import (  # type: ignore
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
     ModelInterfaceType,
+    NumpyData,
     OnnxSchema,
     OpsmlConfig,
     OpsmlError,
     OpsmlLogger,
+    PolarsData,
     RegistryType,
     SaveName,
     SqlLogic,
@@ -38,7 +40,6 @@ from ._opsml import (  # type: ignore
     TorchOnnxArgs,
     TorchSaveArgs,
     VersionType,
-    NumpyData,
 )
 
 __all__ = [
@@ -82,4 +83,5 @@ __all__ = [
     "FeatureMap",
     "SqlLogic",
     "NumpyData",
+    "PolarsData",
 ]
