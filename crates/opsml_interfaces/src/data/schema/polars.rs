@@ -31,6 +31,7 @@ enum PolarsType {
     Categorical,
     Enum,
     List,
+    Array,
 }
 
 impl PolarsType {
@@ -58,6 +59,7 @@ impl PolarsType {
             "Decimal" => PolarsType::Decimal,
             "Enum" => PolarsType::Enum,
             "List" => PolarsType::List,
+            "Array" => PolarsType::Array,
             _ => PolarsType::DefaultPolarsType,
         }
     }
@@ -598,6 +600,56 @@ impl List {
     }
 }
 
+pub struct Array {}
+
+impl Array {
+    fn recursive_check_class<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<String> {
+        let inner = data_type.getattr("inner")?;
+        let class_name = inner
+            .getattr("__class__")?
+            .getattr("__name__")?
+            .extract::<String>()?;
+
+        if class_name == "Array" {
+            return Array::recursive_check_class(&inner);
+        }
+
+        Ok(class_name)
+    }
+
+    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let mut extra_args = HashMap::new();
+
+        let inner_class_name = Array::recursive_check_class(data_type)?;
+
+        let size = data_type.getattr("size")?.extract::<usize>().unwrap_or(0);
+        let shape = data_type
+            .getattr("shape")?
+            .extract::<Vec<usize>>()
+            .unwrap_or(vec![]);
+        // insert categories as a string
+        extra_args.insert("inner".to_string(), inner_class_name);
+        extra_args.insert("size".to_string(), size.to_string());
+
+        let feature = Feature::new("Array".to_string(), shape, Some(extra_args));
+
+        Ok(feature)
+    }
+
+    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = data_type.py();
+
+        let array = py
+            .import("polars")?
+            .getattr("datatypes")?
+            .getattr("Array")?;
+
+        let is_array = data_type.is_instance(&array)?;
+
+        Ok(is_array)
+    }
+}
+
 /// Default PolarsType for any data type that is not explicitly defined
 /// This includes Object, Null Unknown
 pub struct DefaultPolarsType {}
@@ -811,6 +863,14 @@ impl PolarsSchemaValidator {
                 PolarsType::List => {
                     if List::validate(&value)? {
                         let feature = List::as_feature(&value)?;
+                        feature_map.map.insert(feature_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+                PolarsType::Array => {
+                    if Array::validate(&value)? {
+                        let feature = Array::as_feature(&value)?;
                         feature_map.map.insert(feature_name, feature);
                     } else {
                         return Err(OpsmlError::new_err("Invalid data type"));

@@ -126,6 +126,18 @@ def multi_type_polars_dataframe() -> pl.DataFrame:
                 [1, 2, 3],
                 [1, 2, 3],
             ],
+            # array
+            "array": [
+                [1, 2, 3],
+                [1, 2, 3],
+                [1, 2, 3],
+            ],
+            # array2
+            "array2": [
+                [[1, 2, 3], [1, 2, 3]],
+                [[1, 2, 3], [1, 2, 3]],
+                [[1, 2, 3], [1, 2, 3]],
+            ],
         },
         schema={
             "int8": pl.Int8,
@@ -152,6 +164,8 @@ def multi_type_polars_dataframe() -> pl.DataFrame:
             "object": pl.Object,
             "null": pl.Null,
             "list": pl.List(pl.Int64),
+            "array": pl.Array(pl.Int64, shape=(3,)),
+            "array2": pl.Array(pl.Int64, shape=(2, 3)),
         },
     )
 

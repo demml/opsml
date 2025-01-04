@@ -10,7 +10,7 @@ pub struct Feature {
     #[pyo3(get, set)]
     feature_type: String,
     #[pyo3(get, set)]
-    shape: Vec<i32>,
+    shape: Vec<usize>,
     #[pyo3(get, set)]
     extra_args: HashMap<String, String>,
 }
@@ -21,7 +21,7 @@ impl Feature {
     #[pyo3(signature = (feature_type, shape, extra_args=None))]
     pub fn new(
         feature_type: String,
-        shape: Vec<i32>,
+        shape: Vec<usize>,
         extra_args: Option<HashMap<String, String>>,
     ) -> Self {
         Feature {

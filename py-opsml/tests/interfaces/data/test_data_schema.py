@@ -31,5 +31,6 @@ def test_polars_interface(
     assert feature_map["object"].feature_type == "Object"
     assert feature_map["null"].feature_type == "Null"
     assert feature_map["list"].feature_type == "List"
+    assert feature_map["array"].feature_type == "Array"
 
     a
