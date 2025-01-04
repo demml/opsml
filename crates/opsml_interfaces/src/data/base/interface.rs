@@ -204,7 +204,6 @@ impl DataInterface {
         self.feature_map = FeatureMap::new(Some(features));
 
         Ok(InterfaceSaveMetadata {
-            interface_type: self.interface_type.clone(),
             data_type: self.data_type(),
             feature_map: self.feature_map.clone(),
             data_save_path: save_path,

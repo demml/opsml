@@ -559,7 +559,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -1294,7 +1296,7 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save_data(self, path: Path) -> None:
+    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
         """Save the data to a file
 
         Args:
@@ -1317,7 +1319,7 @@ class DataInterface:
             A dictionary of data splits
         """
 
-class NumpyData:
+class NumpyData(DataInterface):
     def __init__(
         self,
         data: Optional[Any] = None,
@@ -1343,7 +1345,28 @@ class NumpyData:
                 or a path to a .sql file.
         """
 
-class PolarsData:
+class InterfaceSaveMetadata:
+    def __init__(
+        self,
+        data_type: DataType,
+        feature_map: FeatureMap,
+        data_save_path: Path,
+        data_profile_save_path: Optional[Path] = None,
+    ) -> None:
+        """Define interface save metadata
+
+        Args:
+            data_type:
+                The data type
+            feature_map:
+                The feature map
+            data_save_path:
+                The data save path
+            data_profile_save_path:
+                The data profile save path
+        """
+
+class PolarsData(DataInterface):
     def __init__(
         self,
         data: Optional[Any] = None,
@@ -1369,12 +1392,20 @@ class PolarsData:
                 or a path to a .sql file.
         """
 
-    def save_data(self, path: Path, **kwargs) -> None:
+    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
         """Save the data to a file
 
         Args:
             path:
                 Base path to save the data to
+        """
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """Load the data from a file
+
+        Args:
+            path:
+                Base path to load the data from
         """
 
 def generate_feature_schema(data: Any, data_type: DataType) -> FeatureMap:
