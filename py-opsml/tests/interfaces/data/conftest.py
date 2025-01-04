@@ -58,3 +58,16 @@ def arrow_dataframe() -> pa.Table:
 def numpy_array() -> NDArray[np.float64]:
     array = np.random.rand(10, 100)
     return array
+
+
+# create a multi-type polars dataframe
+@pytest.fixture
+def multi_type_polars_dataframe() -> pl.DataFrame
+    df = pl.DataFrame(
+             {
+                 "foo": [1, 2, 3],
+                 "bar": [6.0, 7.0, 8.0],
+                 "ham": ["a", "b", "c"],
+             }
+         )
+    return df

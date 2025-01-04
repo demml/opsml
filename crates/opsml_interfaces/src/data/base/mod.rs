@@ -6,4 +6,5 @@ pub mod types;
 
 pub use interface::*;
 pub use numpy::NumpyData;
+pub use polars::PolarsData;
 pub use types::*;
