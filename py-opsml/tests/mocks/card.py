@@ -74,7 +74,7 @@ class ModelInterface(BaseModel):
         assert self.model is not None, "No model detected in interface"
 
         save_path = (path / SaveName.TrainedModel.as_string()).with_suffix(
-            Suffix.Joblib.as_string()
+            f".{Suffix.Joblib.as_string()}"
         )
         # joblib.dump(self.model, save_path)
 
@@ -105,7 +105,7 @@ class ModelInterface(BaseModel):
         """
 
         save_path = (path / SaveName.SampleModelData.as_string()).with_suffix(
-            Suffix.Joblib.as_string()
+            f".{Suffix.Joblib.as_string()}"
         )
         # joblib.dump(self.sample_data, save_path)
 
@@ -126,7 +126,7 @@ class ModelInterface(BaseModel):
         # return None
 
         save_path = (path / SaveName.SampleModelData.as_string()).with_suffix(
-            Suffix.Joblib.as_string()
+            f".{Suffix.Joblib.as_string()}"
         )
         # joblib.dump(self.sample_data, save_path)
 
@@ -144,7 +144,7 @@ class ModelInterface(BaseModel):
         """
 
         save_path = (path / SaveName.OnnxModel.as_string()).with_suffix(
-            Suffix.Onnx.as_string()
+            f".{Suffix.Onnx.as_string()}"
         )
 
         return save_path.as_posix()
