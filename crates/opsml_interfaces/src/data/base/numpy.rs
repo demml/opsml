@@ -2,8 +2,11 @@ use crate::data::DataInterface;
 use crate::data::SqlLogic;
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
+use opsml_types::{SaveName, Suffix};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
 pub struct NumpyData {}
@@ -75,6 +78,45 @@ impl NumpyData {
             }
             super_.data = data.into_py_any(py)?;
         };
+
+        Ok(())
+    }
+
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_data(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        // check if data is None
+        let super_ = self_.as_super();
+
+        if super_.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        let save_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+
+        let numpy = py.import("numpy")?;
+        let args = (super_.data, save_path);
+
+        // Save the data using joblib
+        numpy.call_method("save", args, kwargs)?;
+
+        // Get the class name of self.data
+        let name: String = self
+            .data
+            .getattr(py, "__class__")?
+            .getattr(py, "__name__")?
+            .extract(py)?;
+
+        // Create and insert the feature
+        let mut features = HashMap::new();
+        features.insert("features".to_string(), Feature::new(name, vec![1], None));
+        self.feature_map = FeatureMap::new(Some(features));
 
         Ok(())
     }

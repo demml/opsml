@@ -360,6 +360,7 @@ pub enum Suffix {
     Empty,
     Dmatrix,
     Model,
+    Numpy,
 }
 
 #[pymethods]
@@ -381,6 +382,7 @@ impl Suffix {
             "" => Some(Suffix::Empty),
             "dmatrix" => Some(Suffix::Dmatrix),
             "model" => Some(Suffix::Model),
+            "npy" => Some(Suffix::Numpy),
             _ => None,
         }
     }
@@ -401,6 +403,7 @@ impl Suffix {
             Suffix::Empty => "",
             Suffix::Dmatrix => "dmatrix",
             Suffix::Model => "model",
+            Suffix::Numpy => "npy",
         }
     }
 }
