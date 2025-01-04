@@ -324,6 +324,9 @@ class FeatureMap:
     def __str__(self) -> str:
         """Return a string representation of the FeatureMap."""
 
+    def __getitem__(self, key: str) -> Feature:
+        """Returns the feature at the given key."""
+
 class OnnxSchema:
     input_features: dict[str, Feature]
     output_features: dict[str, Feature]
