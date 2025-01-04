@@ -8,24 +8,24 @@ use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-// TODO add data_profile
+//TODO: add data_profile
 
 #[pyclass(subclass)]
 pub struct DataInterface {
     #[pyo3(get)]
-    data: PyObject,
+    pub data: PyObject,
 
     #[pyo3(get)]
-    data_splits: DataSplits,
+    pub data_splits: DataSplits,
 
     #[pyo3(get)]
-    dependent_vars: DependentVars,
+    pub dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
-    feature_map: FeatureMap,
+    pub feature_map: FeatureMap,
 
     #[pyo3(get, set)]
-    sql_logic: SqlLogic,
+    pub sql_logic: SqlLogic,
 }
 
 #[pymethods]
@@ -33,7 +33,7 @@ impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
-    fn new(
+    pub fn new(
         py: Python,
         data: Option<&Bound<'_, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'_, PyAny>>, //

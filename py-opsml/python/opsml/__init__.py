@@ -38,6 +38,7 @@ from ._opsml import (  # type: ignore
     TorchOnnxArgs,
     TorchSaveArgs,
     VersionType,
+    NumpyData,
 )
 
 __all__ = [
@@ -80,4 +81,5 @@ __all__ = [
     "DataSplits",
     "FeatureMap",
     "SqlLogic",
+    "NumpyData",
 ]
