@@ -84,18 +84,17 @@ impl PolarsData {
         // Save the data using parquet
         let feature_map = generate_feature_schema(super_.data.bind(py), &DataType::Polars)?;
 
-        //
-        let save_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
+        let full_save_path = path.join(&save_path);
 
         let _ = &super_
             .data
-            .call_method(py, "write_parquet", (save_path.clone(),), py_kwargs)
+            .call_method(py, "write_parquet", (full_save_path,), py_kwargs)
             .unwrap();
 
         super_.feature_map = feature_map.clone();
 
         Ok(InterfaceSaveMetadata {
-            interface_type: self_.interface_type.clone(),
             data_type: self_.data_type.clone(),
             feature_map,
             data_save_path: save_path,

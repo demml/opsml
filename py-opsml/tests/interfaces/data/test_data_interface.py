@@ -9,6 +9,7 @@ from opsml import (
     DependentVars,
     NumpyData,
     PolarsData,
+    InterfaceSaveMetadata,
 )
 import numpy as np
 import polars as pl
@@ -91,10 +92,19 @@ def test_numpy_interface(numpy_array: NDArray[np.float64]):
         _ = NumpyData(data=10)
 
 
-def test_polars_interface(polars_dataframe: pl.DataFrame, tmp_path: Path):
-    data = PolarsData(data=polars_dataframe)
+def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
+    data = PolarsData(data=multi_type_polars_dataframe2)
 
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    save_path = data.save_data(path=save_path)
+    data.save_data(path=save_path)
+
+    # set data to none
+    data.data = None
+
+    assert data.data is None
+
+    data.load_data(path=save_path)
+
+    assert data.data is not None
