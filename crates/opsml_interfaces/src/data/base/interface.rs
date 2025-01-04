@@ -3,6 +3,7 @@ use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
@@ -164,7 +165,13 @@ impl DataInterface {
         Ok(())
     }
 
-    pub fn save_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_data(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
         // check if data is None
         if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
