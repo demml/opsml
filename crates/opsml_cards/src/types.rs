@@ -1,4 +1,5 @@
 use opsml_error::error::CardError;
+use opsml_error::OpsmlError;
 use opsml_interfaces::types::Feature;
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
@@ -30,13 +31,13 @@ impl Description {
         summary: Option<String>,
         sample_code: Option<String>,
         notes: Option<String>,
-    ) -> Result<Self, CardError> {
+    ) -> PyResult<Self> {
         // check if summary is some and if it is a file path. If .md file, read the file. IF not, return string
         let extracted_summary = match summary {
             Some(summary) => {
                 if summary.ends_with(".md") {
                     let filepath = FileUtils::open_file(&summary)
-                        .map_err(|e| CardError::Error(e.to_string()))?;
+                        .map_err(|e| OpsmlError::new_err(e.to_string()))?;
                     Some(filepath)
                 } else {
                     Some(summary)
@@ -49,7 +50,7 @@ impl Description {
             Some(sample_code) => {
                 if sample_code.ends_with(".md") {
                     let filepath = FileUtils::open_file(&sample_code)
-                        .map_err(|e| CardError::Error(e.to_string()))?;
+                        .map_err(|e| OpsmlError::new_err(e.to_string()))?;
                     Some(filepath)
                 } else {
                     Some(sample_code)
@@ -92,7 +93,8 @@ impl Description {
             }
         }
         // raise error if file not found
-        Err(CardError::Error("File not found".to_string()))
+        let msg = format!("File not found: {}", filepath);
+        Err(CardError::Error(msg))
     }
 }
 

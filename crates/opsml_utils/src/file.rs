@@ -33,6 +33,7 @@ impl FileUtils {
             }
         }
         // raise error if file not found
-        Err(OpsmlError::new_err("File not found"))
+        let msg = format!("File not found: {}", filepath);
+        Err(OpsmlError::new_err(msg))
     }
 }

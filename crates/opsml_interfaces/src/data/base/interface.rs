@@ -8,7 +8,7 @@ use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-// TODO add opsml_logging and save_data method
+// TODO add data_profile
 
 #[pyclass(subclass)]
 pub struct DataInterface {
