@@ -1,7 +1,7 @@
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_data_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
 -- ModelSchema
 CREATE TABLE IF NOT EXISTS opsml_model_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
 -- RunSchema
 CREATE TABLE IF NOT EXISTS opsml_run_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
 -- AuditSchema
 CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
 -- PipelineSchema
 CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
 
 -- ProjectSchema
 CREATE TABLE IF NOT EXISTS opsml_project_registry (
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     uid VARCHAR(64),
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_metrics (
     value FLOAT,
     step INT,
     timestamp BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     idx SERIAL PRIMARY KEY
 );
 
@@ -141,14 +141,14 @@ CREATE TABLE IF NOT EXISTS opsml_run_parameters (
     run_uid VARCHAR(64),
     name VARCHAR(128),
     value VARCHAR(128),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     idx SERIAL PRIMARY KEY
 );
 
 -- HardwareMetricSchema
 CREATE TABLE IF NOT EXISTS opsml_run_hardware_metrics (
     run_uid VARCHAR(64) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     cpu_percent_utilization FLOAT,
     cpu_percent_per_core JSONB,
     compute_overall FLOAT,
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_hardware_metrics (
 
 CREATE TABLE IF NOT EXISTS opsml_users (
     id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     active BOOLEAN DEFAULT TRUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
