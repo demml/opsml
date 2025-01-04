@@ -5,8 +5,8 @@ use opsml_types::DataType;
 use pyo3::prelude::*;
 
 #[pyfunction]
-pub fn generate_feature_schema<'py>(
-    data: &Bound<'py, PyAny>,
+pub fn generate_feature_schema(
+    data: &Bound<'_, PyAny>,
     data_type: &DataType,
 ) -> PyResult<FeatureMap> {
     let feature_map = match data_type {

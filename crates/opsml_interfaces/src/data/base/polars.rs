@@ -19,11 +19,11 @@ impl PolarsData {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
-    fn new(
+    fn new<'py>(
         py: Python,
-        data: Option<&Bound<'_, PyAny>>, // data can be any pyobject
-        data_splits: Option<&Bound<'_, PyAny>>, //
-        dependent_vars: Option<&Bound<'_, PyAny>>,
+        data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
+        data_splits: Option<&Bound<'py, PyAny>>, //
+        dependent_vars: Option<&Bound<'py, PyAny>>,
         feature_map: Option<FeatureMap>,
         sql_logic: Option<SqlLogic>,
     ) -> PyResult<(Self, DataInterface)> {
