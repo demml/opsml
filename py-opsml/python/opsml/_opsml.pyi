@@ -556,7 +556,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -1373,3 +1375,16 @@ class PolarsData:
             path:
                 Base path to save the data to
         """
+
+def generate_feature_schema(data: Any, data_type: DataType) -> FeatureMap:
+    """Generate a feature schema
+
+    Args:
+        data:
+            Data to generate the feature schema from
+        data_type:
+            The data type
+
+    Returns:
+        A feature map
+    """
