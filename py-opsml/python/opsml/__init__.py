@@ -40,6 +40,7 @@ from ._opsml import (  # type: ignore
     TorchOnnxArgs,
     TorchSaveArgs,
     VersionType,
+    generate_feature_schema,
 )
 
 __all__ = [
@@ -84,4 +85,5 @@ __all__ = [
     "SqlLogic",
     "NumpyData",
     "PolarsData",
+    "generate_feature_schema",
 ]
