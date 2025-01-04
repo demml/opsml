@@ -101,22 +101,22 @@ impl NumpyData {
         let save_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
 
         let numpy = py.import("numpy")?;
-        let args = (super_.data, save_path);
+        let args = (&super_.data, save_path);
 
         // Save the data using joblib
         numpy.call_method("save", args, kwargs)?;
 
         // Get the class name of self.data
-        let name: String = self
+        let name: String = super_
             .data
             .getattr(py, "__class__")?
             .getattr(py, "__name__")?
             .extract(py)?;
 
         // Create and insert the feature
-        let mut features = HashMap::new();
-        features.insert("features".to_string(), Feature::new(name, vec![1], None));
-        self.feature_map = FeatureMap::new(Some(features));
+        //let mut features = HashMap::new();
+        //features.insert("features".to_string(), Feature::new(name, vec![1], None));
+        //self.feature_map = FeatureMap::new(Some(features));
 
         Ok(())
     }

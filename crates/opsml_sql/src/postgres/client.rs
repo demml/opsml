@@ -8,11 +8,11 @@ use crate::schemas::schema::{
 };
 
 use async_trait::async_trait;
+use opsml_cards::CardTable;
 use opsml_contracts::CardQueryArgs;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_cards::CardTable;
 use semver::Version;
 use sqlx::{
     postgres::{PgPoolOptions, PgRow, Postgres},
@@ -94,11 +94,7 @@ impl SqlClient for PostgresClient {
     /// # Returns
     ///
     /// * `bool` - True if the uid exists, false otherwise
-    async fn check_uid_exists(
-        &self,
-        uid: &str,
-        table: &CardTable,
-    ) -> Result<bool, SqlError> {
+    async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError> {
         let query = PostgresQueryHelper::get_uid_query(table);
         let exists: Option<String> = sqlx::query_scalar(&query)
             .bind(uid)
@@ -254,11 +250,7 @@ impl SqlClient for PostgresClient {
             }
         }
     }
-    async fn insert_card(
-        &self,
-        table: &CardTable,
-        card: &ServerCard,
-    ) -> Result<(), SqlError> {
+    async fn insert_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(data) => {
@@ -456,11 +448,7 @@ impl SqlClient for PostgresClient {
         }
     }
 
-    async fn update_card(
-        &self,
-        table: &CardTable,
-        card: &ServerCard,
-    ) -> Result<(), SqlError> {
+    async fn update_card(&self, table: &CardTable, card: &ServerCard) -> Result<(), SqlError> {
         match table {
             CardTable::Data => match card {
                 ServerCard::Data(data) => {
@@ -1203,10 +1191,7 @@ mod tests {
 
         // check if uid exists
         let exists = client
-            .check_uid_exists(
-                "550e8400-e29b-41d4-a716-446655440000",
-                &CardTable::Data,
-            )
+            .check_uid_exists("550e8400-e29b-41d4-a716-446655440000", &CardTable::Data)
             .await
             .unwrap();
 
@@ -1231,10 +1216,7 @@ mod tests {
         let data_card = DataCardRecord::default();
         let card = ServerCard::Data(data_card.clone());
 
-        client
-            .insert_card(&CardTable::Data, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1252,10 +1234,7 @@ mod tests {
         let model_card = ModelCardRecord::default();
         let card = ServerCard::Model(model_card.clone());
 
-        client
-            .insert_card(&CardTable::Model, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1274,10 +1253,7 @@ mod tests {
         let run_card = RunCardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
-        client
-            .insert_card(&CardTable::Run, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Run, &card).await.unwrap();
 
         // check if the card was inserted
 
@@ -1298,10 +1274,7 @@ mod tests {
         let audit_card = AuditCardRecord::default();
         let card = ServerCard::Audit(audit_card.clone());
 
-        client
-            .insert_card(&CardTable::Audit, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Audit, &card).await.unwrap();
 
         // check if the card was inserted
 
@@ -1360,10 +1333,7 @@ mod tests {
         let mut data_card = DataCardRecord::default();
         let card = ServerCard::Data(data_card.clone());
 
-        client
-            .insert_card(&CardTable::Data, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1401,10 +1371,7 @@ mod tests {
         let mut model_card = ModelCardRecord::default();
         let card = ServerCard::Model(model_card.clone());
 
-        client
-            .insert_card(&CardTable::Model, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Model, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1442,10 +1409,7 @@ mod tests {
         let mut run_card = RunCardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
-        client
-            .insert_card(&CardTable::Run, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Run, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1483,10 +1447,7 @@ mod tests {
         let mut audit_card = AuditCardRecord::default();
         let card = ServerCard::Audit(audit_card.clone());
 
-        client
-            .insert_card(&CardTable::Audit, &card)
-            .await
-            .unwrap();
+        client.insert_card(&CardTable::Audit, &card).await.unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1606,10 +1567,7 @@ mod tests {
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         // query stats
-        let stats = client
-            .query_stats(&CardTable::Model, None)
-            .await
-            .unwrap();
+        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
 
         assert_eq!(stats.nbr_names, 9);
         assert_eq!(stats.nbr_versions, 9);
@@ -1690,10 +1648,7 @@ mod tests {
         assert!(!uid.is_empty());
 
         // delete the card
-        client
-            .delete_card(&CardTable::Data, &uid)
-            .await
-            .unwrap();
+        client.delete_card(&CardTable::Data, &uid).await.unwrap();
 
         // check if the card was deleted
         let args = CardQueryArgs {
@@ -1701,10 +1656,7 @@ mod tests {
             ..Default::default()
         };
 
-        let results = client
-            .query_cards(&CardTable::Data, &args)
-            .await
-            .unwrap();
+        let results = client.query_cards(&CardTable::Data, &args).await.unwrap();
 
         assert_eq!(results.len(), 0);
 
