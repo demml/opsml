@@ -32,6 +32,7 @@ enum PolarsType {
     Enum,
     List,
     Array,
+    Struct,
 }
 
 impl PolarsType {
@@ -60,6 +61,7 @@ impl PolarsType {
             "Enum" => PolarsType::Enum,
             "List" => PolarsType::List,
             "Array" => PolarsType::Array,
+            "Struct" => PolarsType::Struct,
             _ => PolarsType::DefaultPolarsType,
         }
     }
@@ -584,7 +586,7 @@ impl List {
         // insert categories as a string
         extra_args.insert("inner".to_string(), class_name);
 
-        let feature = Feature::new("List".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("List".to_string(), vec![], Some(extra_args));
 
         Ok(feature)
     }
@@ -647,6 +649,46 @@ impl Array {
         let is_array = data_type.is_instance(&array)?;
 
         Ok(is_array)
+    }
+}
+
+pub struct Struct {}
+
+impl Struct {
+    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let mut extra_args = HashMap::new();
+
+        let fields = data_type.getattr("fields")?;
+        let fields = fields.downcast::<PyList>()?;
+
+        // iterate over fields and extract name and dtype
+        for field in fields.iter() {
+            let name = field.getattr("name")?.extract::<String>()?;
+            let dtype = field.getattr("dtype")?;
+            let dtype_class_name = dtype
+                .getattr("__class__")?
+                .getattr("__name__")?
+                .extract::<String>()?;
+
+            extra_args.insert(name, dtype_class_name);
+        }
+
+        let feature = Feature::new("Struct".to_string(), vec![], Some(extra_args));
+
+        Ok(feature)
+    }
+
+    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+        let py = data_type.py();
+
+        let struct_ = py
+            .import("polars")?
+            .getattr("datatypes")?
+            .getattr("Struct")?;
+
+        let is_struct = data_type.is_instance(&struct_)?;
+
+        Ok(is_struct)
     }
 }
 
@@ -871,6 +913,15 @@ impl PolarsSchemaValidator {
                 PolarsType::Array => {
                     if Array::validate(&value)? {
                         let feature = Array::as_feature(&value)?;
+                        feature_map.map.insert(feature_name, feature);
+                    } else {
+                        return Err(OpsmlError::new_err("Invalid data type"));
+                    }
+                }
+
+                PolarsType::Struct => {
+                    if Struct::validate(&value)? {
+                        let feature = Struct::as_feature(&value)?;
                         feature_map.map.insert(feature_name, feature);
                     } else {
                         return Err(OpsmlError::new_err("Invalid data type"));
