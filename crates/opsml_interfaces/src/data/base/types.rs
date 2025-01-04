@@ -1,8 +1,20 @@
+use crate::{data, types::FeatureMap};
 use opsml_error::OpsmlError;
+use opsml_types::DataType;
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub enum DataInterfaceType {
+    DataInterface,
+    NumPyInterface,
+    PandasInterface,
+    PolarsInterface,
+    ArrowInterface,
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -129,5 +141,40 @@ impl SqlLogic {
             .collect::<PyResult<HashMap<String, String>>>()?;
 
         Ok(sql_logic)
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InterfaceSaveMetadata {
+    pub interface_type: DataInterfaceType,
+    pub data_type: DataType,
+    pub feature_map: FeatureMap,
+    pub data_save_path: PathBuf,
+    pub data_profile_save_path: Option<PathBuf>,
+}
+
+#[pymethods]
+impl InterfaceSaveMetadata {
+    #[new]
+    #[pyo3(signature = (interface_type, data_type, feature_map, data_save_path, data_profile_save_path=None))]
+    pub fn new(
+        interface_type: DataInterfaceType,
+        data_type: DataType,
+        feature_map: FeatureMap,
+        data_save_path: PathBuf,
+        data_profile_save_path: Option<PathBuf>,
+    ) -> Self {
+        InterfaceSaveMetadata {
+            interface_type,
+            data_type,
+            feature_map,
+            data_save_path,
+            data_profile_save_path,
+        }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }
