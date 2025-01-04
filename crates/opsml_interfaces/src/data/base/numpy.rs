@@ -3,6 +3,7 @@ use crate::data::SqlLogic;
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 
 #[pyclass(extends=DataInterface, subclass)]
 pub struct NumpyData {}
@@ -49,5 +50,32 @@ impl NumpyData {
             sql_logic,
         )?;
         Ok((NumpyData {}, data_interface))
+    }
+
+    #[setter]
+    pub fn set_data(mut self_: PyRefMut<'_, Self>, data: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = data.py();
+        let super_ = self_.as_super();
+
+        // check if data is None
+        if PyAnyMethods::is_none(data) {
+            super_.data = py.None();
+            return Ok(());
+        } else {
+            // check if data is a numpy array
+            // get type name of data
+            let data_type = data
+                .get_type()
+                .name()
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+            // check if data is a numpy array
+            if data_type.to_string_lossy().to_lowercase() != "ndarray" {
+                return Err(OpsmlError::new_err("Data must be a numpy array"));
+            }
+            super_.data = data.into_py_any(py)?;
+        };
+
+        Ok(())
     }
 }
