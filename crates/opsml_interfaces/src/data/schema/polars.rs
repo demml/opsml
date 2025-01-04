@@ -69,12 +69,12 @@ impl PolarsType {
 pub struct Int8 {}
 
 impl Int8 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Int8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let signed_int = py.import("polars")?.getattr("datatypes")?.getattr("Int8")?;
@@ -88,12 +88,12 @@ impl Int8 {
 pub struct Int16 {}
 
 impl Int16 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Int16".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let signed_int = py
@@ -110,12 +110,12 @@ impl Int16 {
 pub struct Int32 {}
 
 impl Int32 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Int32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let signed_int = py
@@ -132,12 +132,12 @@ impl Int32 {
 pub struct Int64 {}
 
 impl Int64 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Int64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let signed_int = py
@@ -154,12 +154,12 @@ impl Int64 {
 pub struct UInt8 {}
 
 impl UInt8 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("UInt8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -176,12 +176,12 @@ impl UInt8 {
 pub struct UInt16 {}
 
 impl UInt16 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("UInt16".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -198,12 +198,12 @@ impl UInt16 {
 pub struct UInt32 {}
 
 impl UInt32 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("UInt32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -220,12 +220,12 @@ impl UInt32 {
 pub struct UInt64 {}
 
 impl UInt64 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("UInt64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let unsigned_int = py
@@ -242,12 +242,12 @@ impl UInt64 {
 pub struct Float32 {}
 
 impl Float32 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Float32".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let float = py
@@ -264,12 +264,12 @@ impl Float32 {
 pub struct Float64 {}
 
 impl Float64 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Float64".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let float = py
@@ -286,7 +286,7 @@ impl Float64 {
 pub struct Decimal {}
 
 impl Decimal {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let precision = data_type
@@ -309,7 +309,7 @@ impl Decimal {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let decimal = py
@@ -326,12 +326,12 @@ impl Decimal {
 pub struct Boolean {}
 
 impl Boolean {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Boolean".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let boolean = py
@@ -348,12 +348,12 @@ impl Boolean {
 pub struct PolarsString {}
 
 impl PolarsString {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("String".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let string = py
@@ -370,12 +370,12 @@ impl PolarsString {
 pub struct Utf8 {}
 
 impl Utf8 {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Utf8".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let string = py.import("polars")?.getattr("datatypes")?.getattr("Utf8")?;
@@ -389,12 +389,12 @@ impl Utf8 {
 pub struct Binary {}
 
 impl Binary {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Binary".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let binary = py
@@ -411,12 +411,12 @@ impl Binary {
 pub struct Date {}
 
 impl Date {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Date".to_string(), vec![1], None);
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let date = py.import("polars")?.getattr("datatypes")?.getattr("Date")?;
@@ -430,7 +430,7 @@ impl Date {
 pub struct Time {}
 
 impl Time {
-    fn as_feature<'py>(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(_data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new("Time".to_string(), vec![1], None);
         Ok(feature)
     }
@@ -439,7 +439,7 @@ impl Time {
 pub struct DateTime {}
 
 impl DateTime {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -462,7 +462,7 @@ impl DateTime {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let datetime = py
@@ -479,7 +479,7 @@ impl DateTime {
 pub struct Duration {}
 
 impl Duration {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -495,7 +495,7 @@ impl Duration {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let duration = py
@@ -512,7 +512,7 @@ impl Duration {
 pub struct Categorical {}
 
 impl Categorical {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -528,7 +528,7 @@ impl Categorical {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let categorical = py
@@ -545,7 +545,7 @@ impl Categorical {
 pub struct PolarsEnum {}
 
 impl PolarsEnum {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let categories = data_type.getattr("categories")?;
@@ -559,7 +559,7 @@ impl PolarsEnum {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let polars_enum = py.import("polars")?.getattr("datatypes")?.getattr("Enum")?;
@@ -573,7 +573,7 @@ impl PolarsEnum {
 pub struct List {}
 
 impl List {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let inner = data_type.getattr("inner")?;
@@ -590,7 +590,7 @@ impl List {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let list = py.import("polars")?.getattr("datatypes")?.getattr("List")?;
@@ -604,7 +604,7 @@ impl List {
 pub struct Array {}
 
 impl Array {
-    fn recursive_check_class<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<String> {
+    fn recursive_check_class<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<String> {
         let inner = data_type.getattr("inner")?;
         let class_name = inner
             .getattr("__class__")?
@@ -618,7 +618,7 @@ impl Array {
         Ok(class_name)
     }
 
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let inner_class_name = Array::recursive_check_class(data_type)?;
@@ -637,7 +637,7 @@ impl Array {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let array = py
@@ -654,7 +654,7 @@ impl Array {
 pub struct Struct {}
 
 impl Struct {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let fields = data_type.getattr("fields")?;
@@ -677,7 +677,7 @@ impl Struct {
         Ok(feature)
     }
 
-    fn validate<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn validate<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<bool> {
         let py = data_type.py();
 
         let struct_ = py
@@ -696,7 +696,7 @@ impl Struct {
 pub struct DefaultPolarsType {}
 
 impl DefaultPolarsType {
-    fn as_feature<'py>(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+    fn as_feature<'py>(data_type: &Bound<'py, PyAny>) -> PyResult<Feature> {
         let feature = Feature::new(data_type.str().unwrap().to_string(), vec![1], None);
         Ok(feature)
     }
@@ -705,9 +705,9 @@ impl DefaultPolarsType {
 pub struct PolarsSchemaValidator {}
 
 impl PolarsSchemaValidator {
-    //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
+    //pub fn get_polars_feature(value: &Bound<'py, PyAny>) -> PyResult<Feature> {}
 
-    pub fn generate_feature_map<'py>(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
+    pub fn generate_feature_map<'py>(data: &Bound<'py, PyAny>) -> PyResult<FeatureMap> {
         let mut feature_map = FeatureMap::new(None);
 
         let binding = data.as_ref().getattr("schema")?;
