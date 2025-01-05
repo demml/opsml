@@ -1,15 +1,19 @@
-use crate::data::DataInterface;
-use crate::data::SqlLogic;
+use crate::data::{generate_feature_schema, DataInterface, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
-use opsml_types::{SaveName, Suffix};
+use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
 
+use super::InterfaceSaveMetadata;
+
 #[pyclass(extends=DataInterface, subclass)]
-pub struct NumpyData {}
+pub struct NumpyData {
+    #[pyo3(get)]
+    pub data_type: DataType,
+}
 
 #[pymethods]
 impl NumpyData {
@@ -29,13 +33,9 @@ impl NumpyData {
             Some(data) => {
                 // check if data is a numpy array
                 // get type name of data
-                let data_type = data
-                    .get_type()
-                    .name()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
+                let numpy = py.import("numpy")?.getattr("ndarray")?;
                 // check if data is a numpy array
-                if data_type.to_string_lossy().to_lowercase() == "ndarray" {
+                if data.is_instance(&numpy).unwrap() {
                     Some(data)
                 } else {
                     return Err(OpsmlError::new_err("Data must be a numpy array"));
@@ -52,7 +52,12 @@ impl NumpyData {
             feature_map,
             sql_logic,
         )?;
-        Ok((NumpyData {}, data_interface))
+        Ok((
+            NumpyData {
+                data_type: DataType::Numpy,
+            },
+            data_interface,
+        ))
     }
 
     #[setter]
@@ -67,19 +72,16 @@ impl NumpyData {
         } else {
             // check if data is a numpy array
             // get type name of data
-            let data_type = data
-                .get_type()
-                .name()
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            let numpy = py.import("numpy")?.getattr("ndarray")?;
 
             // check if data is a numpy array
-            if data_type.to_string_lossy().to_lowercase() != "ndarray" {
+            if data.is_instance(&numpy).unwrap() {
+                super_.data = data.into_py_any(py)?;
+                return Ok(());
+            } else {
                 return Err(OpsmlError::new_err("Data must be a numpy array"));
             }
-            super_.data = data.into_py_any(py)?;
         };
-
-        Ok(())
     }
 
     #[pyo3(signature = (path, **kwargs))]
@@ -88,7 +90,7 @@ impl NumpyData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> PyResult<InterfaceSaveMetadata> {
         // check if data is None
         let super_ = self_.as_super();
 
@@ -98,25 +100,44 @@ impl NumpyData {
             ));
         }
 
-        let save_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+        let feature_map = generate_feature_schema(super_.data.bind(py), &DataType::Numpy)?;
+
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Numpy);
+        let full_save_path = path.join(&save_path);
 
         let numpy = py.import("numpy")?;
-        let args = (&super_.data, save_path);
+        let args = (&super_.data, full_save_path);
 
         // Save the data using joblib
         numpy.call_method("save", args, kwargs)?;
 
-        // Get the class name of self.data
-        let name: String = super_
-            .data
-            .getattr(py, "__class__")?
-            .getattr(py, "__name__")?
-            .extract(py)?;
+        super_.feature_map = feature_map.clone();
 
-        // Create and insert the feature
-        //let mut features = HashMap::new();
-        //features.insert("features".to_string(), Feature::new(name, vec![1], None));
-        //self.feature_map = FeatureMap::new(Some(features));
+        Ok(InterfaceSaveMetadata {
+            data_type: self_.data_type.clone(),
+            feature_map,
+            data_save_path: save_path,
+            data_profile_save_path: None,
+        })
+    }
+
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_data<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<()> {
+        let super_ = self_.as_super();
+
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+
+        let numpy = PyModule::import(py, "numpy")?;
+
+        // Load the data using numpy
+        let data = numpy.call_method("load", (load_path,), kwargs)?;
+
+        super_.data = data.into();
 
         Ok(())
     }

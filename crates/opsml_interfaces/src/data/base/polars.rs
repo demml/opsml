@@ -1,6 +1,5 @@
 use crate::data::{
-    schema::generate_feature_schema, DataInterface, DataInterfaceType, InterfaceSaveMetadata,
-    SqlLogic,
+    schema::generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic,
 };
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
@@ -13,8 +12,6 @@ use std::path::PathBuf;
 pub struct PolarsData {
     #[pyo3(get)]
     pub data_type: DataType,
-
-    pub interface_type: DataInterfaceType,
 }
 
 #[pymethods]
@@ -59,18 +56,17 @@ impl PolarsData {
         Ok((
             PolarsData {
                 data_type: DataType::Polars,
-                interface_type: DataInterfaceType::PolarsInterface,
             },
             data_interface,
         ))
     }
 
-    #[pyo3(signature = (path, **py_kwargs))]
+    #[pyo3(signature = (path, **kwargs))]
     pub fn save_data<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        py_kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
         // check if data is None
         let super_ = self_.as_super();
@@ -89,7 +85,7 @@ impl PolarsData {
 
         let _ = &super_
             .data
-            .call_method(py, "write_parquet", (full_save_path,), py_kwargs)
+            .call_method(py, "write_parquet", (full_save_path,), kwargs)
             .unwrap();
 
         super_.feature_map = feature_map.clone();
@@ -102,12 +98,12 @@ impl PolarsData {
         })
     }
 
-    #[pyo3(signature = (path, **py_kwargs))]
+    #[pyo3(signature = (path, **kwargs))]
     pub fn load_data<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        py_kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         let super_ = self_.as_super();
 
@@ -116,7 +112,7 @@ impl PolarsData {
         let polars = PyModule::import(py, "polars")?;
 
         // Load the data using polars
-        let data = polars.call_method("read_parquet", (load_path,), py_kwargs)?;
+        let data = polars.call_method("read_parquet", (load_path,), kwargs)?;
 
         super_.data = data.into();
 

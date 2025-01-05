@@ -1319,6 +1319,27 @@ class DataInterface:
             A dictionary of data splits
         """
 
+class InterfaceSaveMetadata:
+    def __init__(
+        self,
+        data_type: DataType,
+        feature_map: FeatureMap,
+        data_save_path: Path,
+        data_profile_save_path: Optional[Path] = None,
+    ) -> None:
+        """Define interface save metadata
+
+        Args:
+            data_type:
+                The data type
+            feature_map:
+                The feature map
+            data_save_path:
+                The data save path
+            data_profile_save_path:
+                The data profile save path
+        """
+
 class NumpyData(DataInterface):
     def __init__(
         self,
@@ -1345,25 +1366,20 @@ class NumpyData(DataInterface):
                 or a path to a .sql file.
         """
 
-class InterfaceSaveMetadata:
-    def __init__(
-        self,
-        data_type: DataType,
-        feature_map: FeatureMap,
-        data_save_path: Path,
-        data_profile_save_path: Optional[Path] = None,
-    ) -> None:
-        """Define interface save metadata
+    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Save the data to a file
 
         Args:
-            data_type:
-                The data type
-            feature_map:
-                The feature map
-            data_save_path:
-                The data save path
-            data_profile_save_path:
-                The data profile save path
+            path:
+                Base path to save the data to
+        """
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """Load the data from a file
+
+        Args:
+            path:
+                Base path to load the data from
         """
 
 class PolarsData(DataInterface):

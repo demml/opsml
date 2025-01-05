@@ -1,20 +1,10 @@
-use crate::{data, types::FeatureMap};
+use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
-
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub enum DataInterfaceType {
-    DataInterface,
-    NumPyInterface,
-    PandasInterface,
-    PolarsInterface,
-    ArrowInterface,
-}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
