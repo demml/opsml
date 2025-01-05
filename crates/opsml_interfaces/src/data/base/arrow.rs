@@ -131,7 +131,7 @@ impl ArrowData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
 
         let parquet = py.import("pyarrow")?.getattr("parquet")?;
 

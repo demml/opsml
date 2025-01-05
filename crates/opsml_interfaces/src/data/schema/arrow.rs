@@ -1,5 +1,6 @@
 use crate::types::{Feature, FeatureMap};
 use pyo3::prelude::*;
+use pyo3::types::PyList;
 
 pub struct ArrowSchemaValidator {}
 
@@ -8,8 +9,16 @@ impl ArrowSchemaValidator {
 
     pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
         let schema = data.getattr("schema")?;
+
         let schema_names = schema.getattr("names")?.extract::<Vec<String>>()?;
-        let schema_types = schema.getattr("types")?.extract::<Vec<String>>()?;
+
+        // get types, downcast to list, iterate and call str() on each element
+        let schema_types = schema
+            .getattr("types")?
+            .downcast::<PyList>()?
+            .iter()
+            .map(|x| Ok(x.str()?.to_string()))
+            .collect::<Result<Vec<String>, PyErr>>()?;
 
         let feature_map = schema_names
             .iter()

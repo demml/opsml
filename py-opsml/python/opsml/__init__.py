@@ -43,6 +43,7 @@ from ._opsml import (  # type: ignore
     TorchSaveArgs,
     VersionType,
     generate_feature_schema,
+    ArrowData,
 )
 
 __all__ = [
@@ -90,4 +91,5 @@ __all__ = [
     "generate_feature_schema",
     "InterfaceSaveMetadata",
     "PandasData",
+    "ArrowData",
 ]

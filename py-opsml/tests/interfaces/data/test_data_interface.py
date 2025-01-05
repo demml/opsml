@@ -10,9 +10,11 @@ from opsml import (
     NumpyData,
     PolarsData,
     PandasData,
+    ArrowData,
 )
 import numpy as np
 import polars as pl
+import pyarrow as pa  # type: ignore
 from numpy.typing import NDArray
 from pathlib import Path
 import pytest
@@ -158,3 +160,23 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: P
         assert (
             interface.data.dtypes.iloc[i] == pandas_mixed_type_dataframe.dtypes.iloc[i]
         )
+
+
+def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
+    interface = ArrowData(data=arrow_dataframe)
+
+    assert interface.data is not None
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    interface.save_data(path=save_path)
+
+    # set data to none
+    interface.data = None
+
+    assert interface.data is None
+
+    interface.load_data(path=save_path)
+
+    assert interface.data is not None
