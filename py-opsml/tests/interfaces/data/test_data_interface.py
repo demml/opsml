@@ -85,20 +85,42 @@ def test_data_split(numpy_array: NDArray[np.float64]):
     assert interface.dependent_vars.column_names[0] == "test"
 
 
-def test_numpy_interface(numpy_array: NDArray[np.float64]):
-    _ = NumpyData(data=numpy_array)
+def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
+    interface = NumpyData(data=numpy_array)
 
-    with pytest.raises(OpsmlError) as error:
+    assert interface.data is not None
+    assert interface.data_type == DataType.Numpy
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    metadata = interface.save_data(save_path)
+
+    assert metadata.data_save_path == "data.npy"
+
+    with pytest.raises(OpsmlError):
         _ = NumpyData(data=10)
+
+    interface.data = None
+    assert interface.data is None
+
+    interface.load_data(save_path)
+
+    assert interface.data is not None
 
 
 def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
     data = PolarsData(data=multi_type_polars_dataframe2)
 
+    assert data.data is not None
+
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    data.save_data(path=save_path)
+    kwargs = {"compression": "gzip"}
+    data.save_data(path=save_path, **kwargs)
 
     # set data to none
     data.data = None
