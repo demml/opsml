@@ -119,7 +119,8 @@ impl ArrowData {
         Ok(InterfaceSaveMetadata {
             data_type: self_.data_type.clone(),
             feature_map,
-            data_save_path: save_path,
+            data_save_path: Some(save_path),
+            sql_save_path: None,
             data_profile_save_path: None,
         })
     }

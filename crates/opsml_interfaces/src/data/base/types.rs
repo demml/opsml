@@ -1,10 +1,12 @@
-use crate::types::FeatureMap;
+use crate::{data, types::FeatureMap};
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
+
+use super::sql;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -144,7 +146,10 @@ pub struct InterfaceSaveMetadata {
     pub feature_map: FeatureMap,
 
     #[pyo3(get)]
-    pub data_save_path: PathBuf,
+    pub data_save_path: Option<PathBuf>,
+
+    #[pyo3(get)]
+    pub sql_save_path: Option<PathBuf>,
 
     #[pyo3(get)]
     pub data_profile_save_path: Option<PathBuf>,
@@ -153,17 +158,19 @@ pub struct InterfaceSaveMetadata {
 #[pymethods]
 impl InterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = ( data_type, feature_map, data_save_path, data_profile_save_path=None))]
+    #[pyo3(signature = (data_type, feature_map, data_save_path=None, sql_save_path=None, data_profile_save_path=None))]
     pub fn new(
         data_type: DataType,
         feature_map: FeatureMap,
-        data_save_path: PathBuf,
+        data_save_path: Option<PathBuf>,
+        sql_save_path: Option<PathBuf>,
         data_profile_save_path: Option<PathBuf>,
     ) -> Self {
         InterfaceSaveMetadata {
             data_type,
             feature_map,
             data_save_path,
+            sql_save_path,
             data_profile_save_path,
         }
     }

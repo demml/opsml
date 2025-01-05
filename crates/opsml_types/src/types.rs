@@ -361,6 +361,7 @@ pub enum Suffix {
     Dmatrix,
     Model,
     Numpy,
+    Sql,
 }
 
 #[pymethods]
@@ -383,6 +384,7 @@ impl Suffix {
             "dmatrix" => Some(Suffix::Dmatrix),
             "model" => Some(Suffix::Model),
             "npy" => Some(Suffix::Numpy),
+            "sql" => Some(Suffix::Sql),
             _ => None,
         }
     }
@@ -404,6 +406,7 @@ impl Suffix {
             Suffix::Dmatrix => "dmatrix",
             Suffix::Model => "model",
             Suffix::Numpy => "npy",
+            Suffix::Sql => "sql",
         }
     }
 }
