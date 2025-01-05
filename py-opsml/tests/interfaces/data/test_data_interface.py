@@ -110,6 +110,9 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     assert interface.data is not None
 
+    interface.feature_map["numpy_array"].feature_type = "float64"
+    interface.feature_map["numpy_array"].shape = [10, 100]
+
 
 def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
     data = PolarsData(data=multi_type_polars_dataframe2)
