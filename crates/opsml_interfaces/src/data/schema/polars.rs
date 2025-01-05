@@ -708,318 +708,320 @@ impl PolarsSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
     pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
-        let mut feature_map = FeatureMap::new(None);
-
         let binding = data.as_ref().getattr("schema")?;
         let schema_items = binding.downcast::<PyDict>()?;
 
-        for (key, value) in schema_items.iter() {
-            let feature_name = key.str()?.extract::<String>()?;
-            let class_name = value
-                .getattr("__class__")?
-                .getattr("__name__")?
-                .extract::<String>()?;
+        let features = schema_items
+            .iter()
+            .map(|(key, value)| {
+                let feature_name = key.str()?.extract::<String>()?;
+                let class_name = value
+                    .getattr("__class__")?
+                    .getattr("__name__")?
+                    .extract::<String>()?;
 
-            let polars_type = PolarsType::from_str(&class_name);
+                let polars_type = PolarsType::from_str(&class_name);
 
-            let feature = match polars_type {
-                PolarsType::Int64 => {
-                    if Int64::validate(&value)? {
-                        Int64::as_feature(&value).map_err(|e| {
+                let feature = match polars_type {
+                    PolarsType::Int64 => {
+                        if Int64::validate(&value)? {
+                            Int64::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Int32 => {
+                        if Int32::validate(&value)? {
+                            Int32::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Int16 => {
+                        if Int16::validate(&value)? {
+                            Int16::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Int8 => {
+                        if Int8::validate(&value)? {
+                            Int8::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::UInt64 => {
+                        if UInt64::validate(&value)? {
+                            UInt64::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::UInt32 => {
+                        if UInt32::validate(&value)? {
+                            UInt32::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::UInt16 => {
+                        if UInt16::validate(&value)? {
+                            UInt16::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::UInt8 => {
+                        if UInt8::validate(&value)? {
+                            UInt8::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Float32 => {
+                        if Float32::validate(&value)? {
+                            Float32::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Float64 => {
+                        if Float64::validate(&value)? {
+                            Float64::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Decimal => {
+                        if Decimal::validate(&value)? {
+                            Decimal::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Boolean => {
+                        if Boolean::validate(&value)? {
+                            Boolean::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::PolarsString => {
+                        if PolarsString::validate(&value)? {
+                            PolarsString::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Utf8 => {
+                        if Utf8::validate(&value)? {
+                            Utf8::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Binary => {
+                        if Binary::validate(&value)? {
+                            Binary::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Date => {
+                        if Date::validate(&value)? {
+                            Date::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
+                    }
+                    PolarsType::Time => {
+                        // the underlying data type in polars does not work as expected.
+                        // We only validate based on the Time __repr__ and enum
+                        Time::as_feature(&value).map_err(|e| {
                             OpsmlError::new_err(format!(
                                 "Error encountered converting polars type for feature: {}",
                                 e
                             ))
                         })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
                     }
-                }
-                PolarsType::Int32 => {
-                    if Int32::validate(&value)? {
-                        Int32::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::DateTime => {
+                        if DateTime::validate(&value)? {
+                            DateTime::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::Int16 => {
-                    if Int16::validate(&value)? {
-                        Int16::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::Duration => {
+                        if Duration::validate(&value)? {
+                            Duration::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::Int8 => {
-                    if Int8::validate(&value)? {
-                        Int8::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::Categorical => {
+                        if Categorical::validate(&value)? {
+                            Categorical::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::UInt64 => {
-                    if UInt64::validate(&value)? {
-                        UInt64::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::Enum => {
+                        if PolarsEnum::validate(&value)? {
+                            PolarsEnum::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::UInt32 => {
-                    if UInt32::validate(&value)? {
-                        UInt32::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::List => {
+                        if List::validate(&value)? {
+                            List::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::UInt16 => {
-                    if UInt16::validate(&value)? {
-                        UInt16::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::Array => {
+                        if Array::validate(&value)? {
+                            Array::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::UInt8 => {
-                    if UInt8::validate(&value)? {
-                        UInt8::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
+                    PolarsType::Struct => {
+                        if Struct::validate(&value)? {
+                            Struct::as_feature(&value).map_err(|e| {
+                                OpsmlError::new_err(format!(
+                                    "Error encountered converting polars type for feature: {}",
+                                    e
+                                ))
+                            })
+                        } else {
+                            return Err(OpsmlError::new_err("Invalid data type"));
+                        }
                     }
-                }
-                PolarsType::Float32 => {
-                    if Float32::validate(&value)? {
-                        Float32::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Float64 => {
-                    if Float64::validate(&value)? {
-                        Float64::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Decimal => {
-                    if Decimal::validate(&value)? {
-                        Decimal::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Boolean => {
-                    if Boolean::validate(&value)? {
-                        Boolean::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::PolarsString => {
-                    if PolarsString::validate(&value)? {
-                        PolarsString::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Utf8 => {
-                    if Utf8::validate(&value)? {
-                        Utf8::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Binary => {
-                    if Binary::validate(&value)? {
-                        Binary::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Date => {
-                    if Date::validate(&value)? {
-                        Date::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Time => {
-                    // the underlying data type in polars does not work as expected.
-                    // We only validate based on the Time __repr__ and enum
-                    Time::as_feature(&value).map_err(|e| {
+                    _ => DefaultDataType::as_feature(&value).map_err(|e| {
                         OpsmlError::new_err(format!(
                             "Error encountered converting polars type for feature: {}",
                             e
                         ))
-                    })
-                }
-                PolarsType::DateTime => {
-                    if DateTime::validate(&value)? {
-                        DateTime::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Duration => {
-                    if Duration::validate(&value)? {
-                        Duration::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Categorical => {
-                    if Categorical::validate(&value)? {
-                        Categorical::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Enum => {
-                    if PolarsEnum::validate(&value)? {
-                        PolarsEnum::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::List => {
-                    if List::validate(&value)? {
-                        List::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Array => {
-                    if Array::validate(&value)? {
-                        Array::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                PolarsType::Struct => {
-                    if Struct::validate(&value)? {
-                        Struct::as_feature(&value).map_err(|e| {
-                            OpsmlError::new_err(format!(
-                                "Error encountered converting polars type for feature: {}",
-                                e
-                            ))
-                        })
-                    } else {
-                        return Err(OpsmlError::new_err("Invalid data type"));
-                    }
-                }
-                _ => DefaultDataType::as_feature(&value).map_err(|e| {
-                    OpsmlError::new_err(format!(
-                        "Error encountered converting polars type for feature: {}",
-                        e
-                    ))
-                }),
-            };
+                    }),
+                };
 
-            feature_map.map.insert(feature_name, feature?);
-        }
+                Ok((feature_name, feature?))
+            })
+            .collect::<Result<HashMap<String, Feature>, PyErr>>()?;
 
+        let feature_map = FeatureMap::new(Some(features));
         Ok(feature_map)
     }
 }
