@@ -138,8 +138,6 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
 def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: Path):
     interface = PandasData(data=pandas_mixed_type_dataframe)
 
-    print(pandas_mixed_type_dataframe)
-
     assert interface.data is not None
 
     save_path = tmp_path / "test"
@@ -155,3 +153,8 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: P
     interface.load_data(path=save_path)
 
     assert interface.data is not None
+
+    for i in range(0, len(interface.data.columns)):
+        assert (
+            interface.data.dtypes.iloc[i] == pandas_mixed_type_dataframe.dtypes.iloc[i]
+        )
