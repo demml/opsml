@@ -1,6 +1,4 @@
-use crate::data::{
-    Data, DataInterfaceType, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata, SqlLogic,
-};
+use crate::data::{Data, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata, SqlLogic};
 use crate::types::{Feature, FeatureMap};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -30,7 +28,8 @@ pub struct DataInterface {
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
 
-    pub interface_type: DataInterfaceType,
+    #[pyo3(get)]
+    pub data_type: DataType,
 }
 
 #[pymethods]
@@ -101,7 +100,7 @@ impl DataInterface {
             dependent_vars: depen_vars,
             feature_map,
             sql_logic,
-            interface_type: DataInterfaceType::DataInterface,
+            data_type: DataType::Base,
         })
     }
 
@@ -184,12 +183,12 @@ impl DataInterface {
             ));
         }
 
-        let save_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
-
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
         let joblib = py.import("joblib")?;
 
         // Save the data using joblib
-        joblib.call_method1("dump", (&self.data, save_path.clone()))?;
+        joblib.call_method("dump", (&self.data, full_save_path), kwargs)?;
 
         // Get the class name of self.data
         let name: String = self
@@ -204,26 +203,27 @@ impl DataInterface {
         self.feature_map = FeatureMap::new(Some(features));
 
         Ok(InterfaceSaveMetadata {
-            data_type: self.data_type(),
+            data_type: self.data_type.clone(),
             feature_map: self.feature_map.clone(),
             data_save_path: save_path,
             data_profile_save_path: None,
         })
     }
 
-    pub fn load_data(&mut self, py: Python, path: PathBuf) -> PyResult<()> {
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_data<'py>(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.data = joblib.call_method1("load", (load_path,))?.into();
+        self.data = joblib.call_method("load", (load_path,), kwargs)?.into();
 
         Ok(())
-    }
-
-    #[getter]
-    pub fn data_type(&self) -> DataType {
-        DataType::Base
     }
 
     #[pyo3(signature = (name, query=None, filepath=None))]
@@ -255,6 +255,6 @@ impl DataInterface {
         let dependent_vars = self.dependent_vars.clone();
 
         self.data_splits
-            .split_data(self.data.bind(py), &self.data_type(), &dependent_vars)
+            .split_data(self.data.bind(py), &self.data_type, &dependent_vars)
     }
 }
