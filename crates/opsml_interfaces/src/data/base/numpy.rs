@@ -88,7 +88,7 @@ impl NumpyData {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data<'py>(
+    pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
@@ -119,13 +119,14 @@ impl NumpyData {
         Ok(InterfaceSaveMetadata {
             data_type: self_.data_type.clone(),
             feature_map,
-            data_save_path: save_path,
+            data_save_path: Some(save_path),
+            sql_save_path: None,
             data_profile_save_path: None,
         })
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
+    pub fn load<'py>(
         &mut self,
         py: Python,
         path: PathBuf,

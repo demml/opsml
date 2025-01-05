@@ -170,7 +170,7 @@ impl DataInterface {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data(
+    pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
@@ -205,13 +205,14 @@ impl DataInterface {
         Ok(InterfaceSaveMetadata {
             data_type: self.data_type.clone(),
             feature_map: self.feature_map.clone(),
-            data_save_path: save_path,
+            data_save_path: Some(save_path),
+            sql_save_path: None,
             data_profile_save_path: None,
         })
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
+    pub fn load<'py>(
         &mut self,
         py: Python,
         path: PathBuf,
