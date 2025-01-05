@@ -1304,7 +1304,7 @@ class DataInterface:
                 Base path to save the data to
         """
 
-    def load_data(self, path: Path) -> None:
+    def load_data(self, path: Path, **kwargs) -> None:
         """Load the data from a file
 
         Args:
@@ -1320,6 +1320,11 @@ class DataInterface:
         """
 
 class InterfaceSaveMetadata:
+    data_type: DataType
+    feature_map: FeatureMap
+    data_save_path: Path
+    data_profile_save_path: Optional[Path]
+
     def __init__(
         self,
         data_type: DataType,

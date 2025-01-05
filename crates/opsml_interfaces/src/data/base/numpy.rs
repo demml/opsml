@@ -1,4 +1,4 @@
-use crate::data::{generate_feature_schema, DataInterface, SqlLogic};
+use crate::data::{generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -7,12 +7,13 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
 
-use super::InterfaceSaveMetadata;
-
 #[pyclass(extends=DataInterface, subclass)]
 pub struct NumpyData {
     #[pyo3(get)]
     pub data_type: DataType,
+
+    #[pyo3(get, set)]
+    pub data: PyObject,
 }
 
 #[pymethods]
@@ -36,38 +37,40 @@ impl NumpyData {
                 let numpy = py.import("numpy")?.getattr("ndarray")?;
                 // check if data is a numpy array
                 if data.is_instance(&numpy).unwrap() {
-                    Some(data)
+                    data.into_py_any(py)?
                 } else {
                     return Err(OpsmlError::new_err("Data must be a numpy array"));
                 }
             }
-            None => None,
+            None => py.None(),
         };
 
         let data_interface = DataInterface::new(
             py,
-            data,
+            None,
             data_splits,
             dependent_vars,
             feature_map,
             sql_logic,
         )?;
+
         Ok((
             NumpyData {
                 data_type: DataType::Numpy,
+
+                data,
             },
             data_interface,
         ))
     }
 
     #[setter]
-    pub fn set_data(mut self_: PyRefMut<'_, Self>, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
-        let super_ = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            super_.data = py.None();
+            self.data = py.None();
             return Ok(());
         } else {
             // check if data is a numpy array
@@ -76,7 +79,7 @@ impl NumpyData {
 
             // check if data is a numpy array
             if data.is_instance(&numpy).unwrap() {
-                super_.data = data.into_py_any(py)?;
+                self.data = data.into_py_any(py)?;
                 return Ok(());
             } else {
                 return Err(OpsmlError::new_err("Data must be a numpy array"));
@@ -91,26 +94,26 @@ impl NumpyData {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
-        // check if data is None
-        let super_ = self_.as_super();
-
-        if super_.data.is_none(py) {
+        if self_.data.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
         }
 
-        let feature_map = generate_feature_schema(super_.data.bind(py), &DataType::Numpy)?;
+        let feature_map = generate_feature_schema(self_.data.bind(py), &DataType::Numpy)?;
 
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Numpy);
         let full_save_path = path.join(&save_path);
 
         let numpy = py.import("numpy")?;
-        let args = (&super_.data, full_save_path);
+        let args = (full_save_path, &self_.data);
 
         // Save the data using joblib
-        numpy.call_method("save", args, kwargs)?;
+        numpy
+            .call_method("save", args, kwargs)
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
+        let super_ = self_.as_super();
         super_.feature_map = feature_map.clone();
 
         Ok(InterfaceSaveMetadata {
@@ -123,13 +126,11 @@ impl NumpyData {
 
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
+        &mut self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
-        let super_ = self_.as_super();
-
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
 
         let numpy = PyModule::import(py, "numpy")?;
@@ -137,7 +138,7 @@ impl NumpyData {
         // Load the data using numpy
         let data = numpy.call_method("load", (load_path,), kwargs)?;
 
-        super_.data = data.into();
+        self.data = data.into();
 
         Ok(())
     }

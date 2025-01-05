@@ -86,7 +86,7 @@ impl PolarsData {
         let _ = &super_
             .data
             .call_method(py, "write_parquet", (full_save_path,), kwargs)
-            .unwrap();
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         super_.feature_map = feature_map.clone();
 
