@@ -40,7 +40,7 @@ impl PandasData {
                 if data.is_instance(&pandas).unwrap() {
                     data.into_py_any(py)?
                 } else {
-                    return Err(OpsmlError::new_err("Data must be a numpy array"));
+                    return Err(OpsmlError::new_err("Data must be a pandas dataframe"));
                 }
             }
             None => py.None(),

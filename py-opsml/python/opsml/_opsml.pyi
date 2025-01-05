@@ -559,9 +559,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -1401,6 +1399,48 @@ class PolarsData(DataInterface):
         Args:
             data:
                 Polars dataframe
+            dependent_vars:
+                List of dependent variables to associate with data
+            data_splits:
+                Optional list of `DataSplit`
+            feature_map:
+                Dictionary of features -> automatically generated
+            sql_logic:
+                Sql logic used to generate data represented as a dictionary.
+                Key is the name to assign to the sql logic and value is either a sql query
+                or a path to a .sql file.
+        """
+
+    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Save the data to a file
+
+        Args:
+            path:
+                Base path to save the data to
+        """
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """Load the data from a file
+
+        Args:
+            path:
+                Base path to load the data from
+        """
+
+class PandasData(DataInterface):
+    def __init__(
+        self,
+        data: Optional[Any] = None,
+        data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
+        dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
+        feature_map: Optional[FeatureMap] = None,
+        sql_logic: Optional[SqlLogic] = None,
+    ) -> None:
+        """Define a data interface
+
+        Args:
+            data:
+                Pandas dataframe
             dependent_vars:
                 List of dependent variables to associate with data
             data_splits:

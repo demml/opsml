@@ -10,7 +10,6 @@ impl PandasSchemaValidator {
 
     pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
         let columns = data.getattr("dtypes")?.call_method0("to_dict")?;
-
         let columns = columns.downcast::<PyDict>()?;
 
         let features = columns
