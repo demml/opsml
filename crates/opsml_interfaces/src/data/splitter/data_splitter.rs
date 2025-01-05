@@ -713,7 +713,7 @@ impl DataSplitter {
                         dependent_vars,
                     );
                 }
-                DataType::PyArrow => {
+                DataType::Arrow => {
                     return PyArrowIndexSplitter::create_split(
                         data,
                         split.indice_split.as_ref().unwrap(),
@@ -747,7 +747,7 @@ impl DataSplitter {
                         dependent_vars,
                     );
                 }
-                DataType::PyArrow => {
+                DataType::Arrow => {
                     return PyArrowStartStopSplitter::create_split(
                         data,
                         split.start_stop_split.as_ref().unwrap(),

@@ -711,7 +711,7 @@ impl PolarsSchemaValidator {
         let binding = data.as_ref().getattr("schema")?;
         let schema_items = binding.downcast::<PyDict>()?;
 
-        let features = schema_items
+        let feature_map = schema_items
             .iter()
             .map(|(key, value)| {
                 let feature_name = key.str()?.extract::<String>()?;
@@ -1019,9 +1019,8 @@ impl PolarsSchemaValidator {
 
                 Ok((feature_name, feature?))
             })
-            .collect::<Result<HashMap<String, Feature>, PyErr>>()?;
+            .collect::<Result<FeatureMap, PyErr>>()?;
 
-        let feature_map = FeatureMap::new(Some(features));
         Ok(feature_map)
     }
 }
