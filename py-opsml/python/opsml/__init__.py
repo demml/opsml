@@ -22,6 +22,7 @@ from ._opsml import (  # type: ignore
     HuggingFaceORTModel,
     IndiceSplit,
     Inequality,
+    InterfaceSaveMetadata,
     LogLevel,
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
@@ -31,6 +32,7 @@ from ._opsml import (  # type: ignore
     OpsmlConfig,
     OpsmlError,
     OpsmlLogger,
+    PandasData,
     PolarsData,
     RegistryType,
     SaveName,
@@ -41,7 +43,6 @@ from ._opsml import (  # type: ignore
     TorchSaveArgs,
     VersionType,
     generate_feature_schema,
-    InterfaceSaveMetadata,
 )
 
 __all__ = [
@@ -88,4 +89,5 @@ __all__ = [
     "PolarsData",
     "generate_feature_schema",
     "InterfaceSaveMetadata",
+    "PandasData",
 ]

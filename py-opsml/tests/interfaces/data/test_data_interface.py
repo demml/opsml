@@ -9,7 +9,7 @@ from opsml import (
     DependentVars,
     NumpyData,
     PolarsData,
-    InterfaceSaveMetadata,
+    PandasData,
 )
 import numpy as np
 import polars as pl
@@ -115,21 +115,43 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
 
 def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
-    data = PolarsData(data=multi_type_polars_dataframe2)
+    interface = PolarsData(data=multi_type_polars_dataframe2)
 
-    assert data.data is not None
+    assert interface.data is not None
 
     save_path = tmp_path / "test"
     save_path.mkdir()
 
     kwargs = {"compression": "gzip"}
-    data.save_data(path=save_path, **kwargs)
+    interface.save_data(path=save_path, **kwargs)
 
     # set data to none
-    data.data = None
+    interface.data = None
 
-    assert data.data is None
+    assert interface.data is None
 
-    data.load_data(path=save_path)
+    interface.load_data(path=save_path)
 
-    assert data.data is not None
+    assert interface.data is not None
+
+
+def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: Path):
+    interface = PandasData(data=pandas_mixed_type_dataframe)
+
+    print(pandas_mixed_type_dataframe)
+
+    assert interface.data is not None
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    interface.save_data(path=save_path)
+
+    # set data to none
+    interface.data = None
+
+    assert interface.data is None
+
+    interface.load_data(path=save_path)
+
+    assert interface.data is not None

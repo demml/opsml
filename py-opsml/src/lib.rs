@@ -5,7 +5,7 @@ use opsml_interfaces::{
     data::{
         generate_feature_schema, ColType, ColValType, ColumnSplit, Data, DataInterface, DataSplit,
         DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality, InterfaceSaveMetadata,
-        NumpyData, PolarsData, SqlLogic, StartStopSplit,
+        NumpyData, PandasData, PolarsData, SqlLogic, StartStopSplit,
     },
     CatBoostModelInterfaceMetadata, Feature, FeatureMap, HuggingFaceModelInterfaceMetadata,
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs,
@@ -101,6 +101,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<DataInterface>()?;
     _m.add_class::<NumpyData>()?;
     _m.add_class::<PolarsData>()?;
+    _m.add_class::<PandasData>()?;
     _m.add_class::<InterfaceSaveMetadata>()?;
     _m.add_function(wrap_pyfunction!(generate_feature_schema, _m)?)?;
 
