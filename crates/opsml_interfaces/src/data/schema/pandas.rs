@@ -1,7 +1,6 @@
 use crate::types::{Feature, FeatureMap};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use std::collections::HashMap;
 
 pub struct PandasSchemaValidator {}
 
@@ -12,7 +11,7 @@ impl PandasSchemaValidator {
         let columns = data.getattr("dtypes")?.call_method0("to_dict")?;
         let columns = columns.downcast::<PyDict>()?;
 
-        let features = columns
+        let feature_map = columns
             .iter()
             .map(|(key, value)| {
                 let data_type = value.str()?.to_string();
@@ -20,9 +19,7 @@ impl PandasSchemaValidator {
 
                 Ok((key.to_string(), Feature::new(data_type, data_shape, None)))
             })
-            .collect::<Result<HashMap<String, Feature>, PyErr>>()?;
-
-        let feature_map = FeatureMap::new(Some(features));
+            .collect::<Result<FeatureMap, PyErr>>()?;
 
         Ok(feature_map)
     }

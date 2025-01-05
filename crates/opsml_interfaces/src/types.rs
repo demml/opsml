@@ -70,6 +70,16 @@ impl FeatureMap {
     }
 }
 
+impl FromIterator<(String, Feature)> for FeatureMap {
+    fn from_iter<I: IntoIterator<Item = (String, Feature)>>(iter: I) -> Self {
+        let mut map = HashMap::new();
+        for (key, value) in iter {
+            map.insert(key, value);
+        }
+        FeatureMap { map }
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelInterfaceType {
