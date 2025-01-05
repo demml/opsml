@@ -88,11 +88,11 @@ impl NumpyData {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data(
-        mut self_: PyRefMut<'_, Self>,
+    pub fn save_data<'py>(
+        mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
         if self_.data.is_none(py) {
             return Err(OpsmlError::new_err(
