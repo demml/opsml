@@ -1321,12 +1321,13 @@ class DataInterface:
         """
 
     def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
-        """Saves all data interface component to the given path.
+        """Saves all data interface component to the given path. This used as part of saving a
+        DataCard
 
         Methods called in save:
-            - save_sql
-            - create_feature_map
-            - save_data
+            - save_sql: Saves all sql logic to files(s)
+            - create_feature_map: Creates a featuremap from the associated data
+            - save_data: Saves the data to a file
 
         Args:
             path:
@@ -1353,6 +1354,7 @@ class InterfaceSaveMetadata:
     data_type: DataType
     feature_map: FeatureMap
     data_save_path: Path
+    sql_save_path: Optional[Path]
     data_profile_save_path: Optional[Path]
 
     def __init__(
@@ -1401,12 +1403,36 @@ class NumpyData(DataInterface):
                 or a path to a .sql file.
         """
 
-    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+    def save_data(self, path: Path, **kwargs) -> Path:
         """Save the data to a file
 
         Args:
             path:
                 Base path to save the data to
+        """
+
+    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Saves all data interface component to the given path. This used as part of saving a
+        DataCard
+
+        Methods called in save:
+            - save_sql: Saves all sql logic to files(s)
+            - create_feature_map: Creates a featuremap from the associated data
+            - save_data: Saves the data to a file
+
+        Args:
+            path:
+                The path to save the data interface components to.
+
+        Kwargs:
+
+            see: https://numpy.org/doc/stable/reference/generated/numpy.save.html
+
+            allow_pickle (bool):
+                Allow saving object arrays using Python pickles.
+            fix_imports (bool):
+                The fix_imports flag is deprecated and has no effect
+
         """
 
     def load_data(self, path: Path, **kwargs) -> None:
