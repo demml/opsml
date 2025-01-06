@@ -1404,25 +1404,11 @@ class NumpyData(DataInterface):
         """
 
     def save_data(self, path: Path, **kwargs) -> Path:
-        """Save the data to a file
+        """Save data using numpy save format
 
         Args:
-            path:
+            path (Path) :
                 Base path to save the data to
-        """
-
-    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
-        """Saves all data interface component to the given path. This used as part of saving a
-        DataCard
-
-        Methods called in save:
-            - save_sql: Saves all sql logic to files(s)
-            - create_feature_map: Creates a featuremap from the associated data
-            - save_data: Saves the data to a file
-
-        Args:
-            path:
-                The path to save the data interface components to.
 
         Kwargs:
 
@@ -1435,12 +1421,42 @@ class NumpyData(DataInterface):
 
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
-        """Load the data from a file
+    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Saves Interface attributes. This used as part of saving a
+        DataCard
+
+        Methods called in save:
+            - save_sql: Saves all sql logic to files(s)
+            - create_feature_map: Creates a featuremap from the associated data
+            - save_data: Saves the data to a file
 
         Args:
             path:
+                The path to save the data interface components to.
+
+        """
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """Load the data via numpy.load
+
+        Args:
+            path (Path):
                 Base path to load the data from
+
+        Kwargs:
+
+            see: https://numpy.org/doc/stable/reference/generated/numpy.load.html
+
+            mmap_mode:
+                If not None, then memory-map the file, using the given mode
+            allow_pickle (bool):
+                Allow loading pickled object arrays stored in npy files
+            fix_imports (bool):
+                If fix_imports is True, pickle will try to map the old Python 2 names to the new names used in Python 3.
+            encoding (str):
+                What encoding to use when reading Python 2 strings. Only useful when py3k is True.
+            max_header_size (int):
+                The maximum size of the file header
         """
 
 class PolarsData(DataInterface):
@@ -1469,20 +1485,97 @@ class PolarsData(DataInterface):
                 or a path to a .sql file.
         """
 
-    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
-        """Save the data to a file
+    def save_data(self, path: Path, **kwargs) -> Path:
+        """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
-            path:
+            path (Path):
                 Base path to save the data to
+
+        Kwargs:
+            compression (ParquetCompression):
+                Compression codec to use for writing.
+            compression_level (int | None):
+                Compression level to use. Default is None.
+            statistics (bool | str | dict[str, bool]):
+                Whether to write statistics. Default is True.
+            row_group_size (int | None):
+                Number of rows per row group. Default is None.
+            data_page_size (int | None):
+                Size of data pages. Default is None.
+            use_pyarrow (bool):
+                Whether to use PyArrow for writing. Default is False.
+            pyarrow_options (dict[str, Any] | None):
+                Additional options for PyArrow. Default is None.
+            partition_by (str | Sequence[str] | None):
+                Columns to partition by. Default is None.
+            partition_chunk_size_bytes (int):
+                Size of partition chunks in bytes. Default is 4294967296.
+            storage_options (dict[str, Any] | None):
+                Additional storage options. Default is None.
+            credential_provider (CredentialProviderFunction | Literal['auto'] | None):
+                Credential provider function. Default is 'auto'.
+            retries (int):
+                Number of retries for writing. Default is 2.
+
+        See Also:
+            https://docs.pola.rs/api/python/dev/reference/api/polars.DataFrame.write_parquet.html
+
         """
 
     def load_data(self, path: Path, **kwargs) -> None:
         """Load the data from a file
 
         Args:
-            path:
+            path (Path):
                 Base path to load the data from
+
+        Kwargs:
+            columns (list[int] | list[str] | None):
+                Columns to load. Default is None.
+            n_rows (int | None):
+                Number of rows to load. Default is None.
+            row_index_name (str | None):
+                Name of the row index. Default is None.
+            row_index_offset (int):
+                Offset for the row index. Default is 0.
+            parallel (ParallelStrategy):
+                Parallel strategy to use. Default is 'auto'.
+            use_statistics (bool):
+                Whether to use statistics. Default is True.
+            hive_partitioning (bool | None):
+                Whether to use hive partitioning. Default is None.
+            glob (bool):
+                Whether to use glob pattern matching. Default is True.
+            schema (SchemaDict | None):
+                Schema to use. Default is None.
+            hive_schema (SchemaDict | None):
+                Hive schema to use. Default is None.
+            try_parse_hive_dates (bool):
+                Whether to try parsing hive dates. Default is True.
+            rechunk (bool):
+                Whether to rechunk the data. Default is False.
+            low_memory (bool):
+                Whether to use low memory mode. Default is False.
+            storage_options (dict[str, Any] | None):
+                Additional storage options. Default is None.
+            credential_provider (CredentialProviderFunction | Literal['auto'] | None):
+                Credential provider function. Default is 'auto'.
+            retries (int):
+                Number of retries for loading. Default is 2.
+            use_pyarrow (bool):
+                Whether to use PyArrow for loading. Default is False.
+            pyarrow_options (dict[str, Any] | None):
+                Additional options for PyArrow. Default is None.
+            memory_map (bool):
+                Whether to use memory mapping. Default is True.
+            include_file_paths (str | None):
+                File paths to include. Default is None.
+            allow_missing_columns (bool):
+                Whether to allow missing columns. Default is False.
+
+        See Also:
+            https://docs.pola.rs/api/python/dev/reference/api/polars.read_parquet.html
         """
 
 class PandasData(DataInterface):
