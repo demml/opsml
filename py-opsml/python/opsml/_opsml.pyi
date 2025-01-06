@@ -1885,12 +1885,12 @@ class DataCard:
     def __init__(
         self,
         interface: DataInterface,
-        name: Optional[str],
-        repository: Optional[str],
-        contact: Optional[str],
-        version: Optional[str],
-        uid: Optional[str],
-        info: Optional[CardInfo],
+        name: Optional[str] = None,
+        repository: Optional[str] = None,
+        contact: Optional[str] = None,
+        version: Optional[str] = None,
+        uid: Optional[str] = None,
+        info: Optional[CardInfo] = None,
         tags: Dict[str, str] = {},
         metadata: Optional[DataCardMetadata] = None,
     ) -> None:
@@ -1917,7 +1917,7 @@ class DataCard:
     def uri(self) -> str:
         """Return the uri"""
 
-    def save(self, path: Path, **kwargs) -> None:
+    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
         """Save the data card
 
         Args:
