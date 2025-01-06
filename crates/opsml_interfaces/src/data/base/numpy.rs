@@ -21,11 +21,11 @@ impl NumpyData {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
-    fn new(
+    fn new<'py>(
         py: Python,
-        data: Option<&Bound<'_, PyAny>>, // data can be any pyobject
-        data_splits: Option<&Bound<'_, PyAny>>, //
-        dependent_vars: Option<&Bound<'_, PyAny>>,
+        data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
+        data_splits: Option<&Bound<'py, PyAny>>, //
+        dependent_vars: Option<&Bound<'py, PyAny>>,
         feature_map: Option<FeatureMap>,
         sql_logic: Option<SqlLogic>,
     ) -> PyResult<(Self, DataInterface)> {
@@ -65,7 +65,7 @@ impl NumpyData {
     }
 
     #[setter]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data<'py>(&mut self, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
 
         // check if data is None
@@ -88,11 +88,11 @@ impl NumpyData {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data(
+    pub fn save_data<'py>(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
         if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
@@ -133,7 +133,7 @@ impl NumpyData {
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
         let save_path = self_.save_data(py, path.clone(), kwargs)?;
         let feature_map = self_.create_feature_map(py)?;

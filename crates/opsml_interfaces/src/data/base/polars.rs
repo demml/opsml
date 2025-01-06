@@ -110,7 +110,7 @@ impl PolarsData {
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
         let save_path = self_.save_data(py, path.clone(), kwargs)?;
         let feature_map = self_.create_feature_map(py)?;
