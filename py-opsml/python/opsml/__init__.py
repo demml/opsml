@@ -1,4 +1,5 @@
 from ._opsml import (  # type: ignore
+    ArrowData,
     CardInfo,
     CardList,
     CardRegistry,
@@ -43,7 +44,6 @@ from ._opsml import (  # type: ignore
     TorchSaveArgs,
     VersionType,
     generate_feature_schema,
-    ArrowData,
 )
 
 __all__ = [

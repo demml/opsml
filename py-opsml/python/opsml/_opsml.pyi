@@ -559,9 +559,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -1471,18 +1469,19 @@ class PolarsData(DataInterface):
         """Define a data interface
 
         Args:
-            data:
-                Polars dataframe
-            dependent_vars:
+            data (pl.DataFrame | None):
+                Pandas dataframe
+            dependent_vars (DependentVars | List[str] | List[int] | None):
                 List of dependent variables to associate with data
-            data_splits:
+            data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map:
+            feature_map (FeatureMap | None):
                 Dictionary of features -> automatically generated
-            sql_logic:
+            sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
                 Key is the name to assign to the sql logic and value is either a sql query
                 or a path to a .sql file.
+
         """
 
     def save_data(self, path: Path, **kwargs) -> Path:
@@ -1605,7 +1604,7 @@ class PandasData(DataInterface):
         """
 
     def save_data(self, path: Path, **kwargs) -> Path:
-        """Saves pandas dataframe as parquet dataset via to_parquet
+        """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
             path:
@@ -1693,26 +1692,81 @@ class ArrowData(DataInterface):
         """Define a data interface
 
         Args:
-            data:
+             data (pa.Table | None):
                 PyArrow Table
-            dependent_vars:
+            dependent_vars (DependentVars | List[str] | List[int] | None):
                 List of dependent variables to associate with data
-            data_splits:
+            data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map:
+            feature_map (FeatureMap | None):
                 Dictionary of features -> automatically generated
-            sql_logic:
+            sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
                 Key is the name to assign to the sql logic and value is either a sql query
                 or a path to a .sql file.
         """
 
-    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
-        """Save the data to a file
+    def save_data(self, path: Path, **kwargs) -> Path:
+        """Saves pyarrow table to parquet via write_table
 
         Args:
             path:
                 Base path to save the data to
+
+        Kwargs:
+            row_group_size (int | None):
+                Maximum number of rows in each written row group. If None, the row group size will be the minimum of the Table size and 1024 * 1024. Default is None.
+            version ({'1.0', '2.4', '2.6'}):
+                Determine which Parquet logical types are available for use. Default is '2.6'.
+            use_dictionary (bool | list):
+                Specify if dictionary encoding should be used in general or only for some columns. Default is True.
+            compression (str | dict):
+                Specify the compression codec, either on a general basis or per-column. Valid values: {'NONE', 'SNAPPY', 'GZIP', 'BROTLI', 'LZ4', 'ZSTD'}. Default is 'snappy'.
+            write_statistics (bool | list):
+                Specify if statistics should be written in general or only for some columns. Default is True.
+            use_deprecated_int96_timestamps (bool | None):
+                Write timestamps to INT96 Parquet format. Default is None.
+            coerce_timestamps (str | None):
+                Cast timestamps to a particular resolution. Valid values: {None, 'ms', 'us'}. Default is None.
+            allow_truncated_timestamps (bool):
+                Allow loss of data when coercing timestamps to a particular resolution. Default is False.
+            data_page_size (int | None):
+                Set a target threshold for the approximate encoded size of data pages within a column chunk (in bytes). Default is None.
+            flavor ({'spark'} | None):
+                Sanitize schema or set other compatibility options to work with various target systems. Default is None.
+            filesystem (FileSystem | None):
+                Filesystem object to use when reading the parquet file. Default is None.
+            compression_level (int | dict | None):
+                Specify the compression level for a codec, either on a general basis or per-column. Default is None.
+            use_byte_stream_split (bool | list):
+                Specify if the byte_stream_split encoding should be used in general or only for some columns. Default is False.
+            column_encoding (str | dict | None):
+                Specify the encoding scheme on a per column basis. Default is None.
+            data_page_version ({'1.0', '2.0'}):
+                The serialized Parquet data page format version to write. Default is '1.0'.
+            use_compliant_nested_type (bool):
+                Whether to write compliant Parquet nested type (lists). Default is True.
+            encryption_properties (FileEncryptionProperties | None):
+                File encryption properties for Parquet Modular Encryption. Default is None.
+            write_batch_size (int | None):
+                Number of values to write to a page at a time. Default is None.
+            dictionary_pagesize_limit (int | None):
+                Specify the dictionary page size limit per row group. Default is None.
+            store_schema (bool):
+                By default, the Arrow schema is serialized and stored in the Parquet file metadata. Default is True.
+            write_page_index (bool):
+                Whether to write a page index in general for all columns. Default is False.
+            write_page_checksum (bool):
+                Whether to write page checksums in general for all columns. Default is False.
+            sorting_columns (Sequence[SortingColumn] | None):
+                Specify the sort order of the data being written. Default is None.
+            store_decimal_as_integer (bool):
+                Allow decimals with 1 <= precision <= 18 to be stored as integers. Default is False.
+            **kwargs:
+                Additional options for ParquetWriter.
+
+        Additional Information:
+            https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
         """
 
     def load_data(self, path: Path, **kwargs) -> None:
@@ -1721,6 +1775,66 @@ class ArrowData(DataInterface):
         Args:
             path:
                 Base path to load the data from
+
+        Kwargs:
+            columns (list | None):
+                If not None, only these columns will be read from the file. A column name may be a prefix of a nested field, e.g. 'a' will select 'a.b', 'a.c', and 'a.d.e'. If empty, no columns will be read. Default is None.
+            use_threads (bool):
+                Perform multi-threaded column reads. Default is True.
+            schema (Schema | None):
+                Optionally provide the Schema for the parquet dataset, in which case it will not be inferred from the source. Default is None.
+            use_pandas_metadata (bool):
+                If True and file has custom pandas schema metadata, ensure that index columns are also loaded. Default is False.
+            read_dictionary (list | None):
+                List of names or column paths (for nested types) to read directly as DictionaryArray. Only supported for BYTE_ARRAY storage. Default is None.
+            memory_map (bool):
+                If the source is a file path, use a memory map to read file, which can improve performance in some environments. Default is False.
+            buffer_size (int):
+                If positive, perform read buffering when deserializing individual column chunks. Otherwise IO calls are unbuffered. Default is 0.
+            partitioning (pyarrow.dataset.Partitioning | str | list of str):
+                The partitioning scheme for a partitioned dataset. Default is 'hive'.
+            filesystem (FileSystem | None):
+                If nothing passed, will be inferred based on path. Default is None.
+            filters (pyarrow.compute.Expression | list[tuple] | list[list[tuple]] | None):
+                Rows which do not match the filter predicate will be removed from scanned data. Default is None.
+            use_legacy_dataset (bool | None):
+                Deprecated and has no effect from PyArrow version 15.0.0. Default is None.
+            ignore_prefixes (list | None):
+                Files matching any of these prefixes will be ignored by the discovery process. Default is ['.', '_'].
+            pre_buffer (bool):
+                Coalesce and issue file reads in parallel to improve performance on high-latency filesystems (e.g. S3). Default is True.
+            coerce_int96_timestamp_unit (str | None):
+                Cast timestamps that are stored in INT96 format to a particular resolution (e.g. 'ms'). Default is None.
+            decryption_properties (FileDecryptionProperties | None):
+                File-level decryption properties. Default is None.
+            thrift_string_size_limit (int | None):
+                If not None, override the maximum total string size allocated when decoding Thrift structures. Default is None.
+            thrift_container_size_limit (int | None):
+                If not None, override the maximum total size of containers allocated when decoding Thrift structures. Default is None.
+            page_checksum_verification (bool):
+                If True, verify the checksum for each page read from the file. Default is False.
+
+        Additional Information:
+            https://arrow.apache.org/docs/python/generated/pyarrow.parquet.read_table.html
+        """
+
+class SqlData:
+    data_type: DataType
+
+    def __init__(self, sql_logic: SqlLogic) -> None:
+        """Define a sql data interface
+
+        Args:
+            sql (SqlLogic):
+                Sql logic used to generate data represented as a dictionary.
+        """
+
+    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Save the sql logic to a file
+
+        Args:
+            path (Path):
+                The path to save the sql logic to
         """
 
 def generate_feature_schema(data: Any, data_type: DataType) -> FeatureMap:
