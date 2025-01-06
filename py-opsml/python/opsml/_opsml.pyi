@@ -1590,34 +1590,95 @@ class PandasData(DataInterface):
         """Define a data interface
 
         Args:
-            data:
+            data (pd.DataFrame | None):
                 Pandas dataframe
-            dependent_vars:
+            dependent_vars (DependentVars | List[str] | List[int] | None):
                 List of dependent variables to associate with data
-            data_splits:
+            data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map:
+            feature_map (FeatureMap | None):
                 Dictionary of features -> automatically generated
-            sql_logic:
+            sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
                 Key is the name to assign to the sql logic and value is either a sql query
                 or a path to a .sql file.
         """
 
-    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
-        """Save the data to a file
+    def save_data(self, path: Path, **kwargs) -> Path:
+        """Saves pandas dataframe as parquet dataset via to_parquet
 
         Args:
             path:
                 Base path to save the data to
+
+        Kwargs:
+            engine ({'auto', 'pyarrow', 'fastparquet'}):
+                Parquet library to use. If 'auto', then the option io.parquet.engine is used. The default io.parquet.engine behavior is to try 'pyarrow',
+                falling back to 'fastparquet' if 'pyarrow' is unavailable. Default is 'auto'.
+            compression (str | None):
+                Name of the compression to use. Use None for no compression.
+                Supported options: 'snappy', 'gzip', 'brotli', 'lz4', 'zstd'. Default is 'snappy'.
+            index (bool | None):
+                If True, include the dataframe’s index(es) in the file output.
+                If False, they will not be written to the file. If None, similar to True the dataframe's index(es) will be saved.
+                However, instead of being saved as values, the RangeIndex will be stored as a range in the metadata so it doesn't require much space and is faster.
+                Other indexes will be included as columns in the file output. Default is None.
+            partition_cols (list | None):
+                Column names by which to partition the dataset. Columns are partitioned in the order they are given.
+                Must be None if path is not a string. Default is None.
+            storage_options (dict | None):
+                Extra options that make sense for a particular storage connection, e.g. host, port, username, password, etc.
+                For HTTP(S) URLs the key-value pairs are forwarded to urllib.request.Request as header options.
+                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open. Default is None.
+            **kwargs:
+                Any additional kwargs are passed to the engine
+
+        Additional Information:
+            https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html
         """
 
     def load_data(self, path: Path, **kwargs) -> None:
-        """Load the data from a file
+        """Load the pandas dataframe from a parquet dataset via read_parquet
 
         Args:
             path:
                 Base path to load the data from
+
+        Kwargs:
+            engine ({'auto', 'pyarrow', 'fastparquet'}):
+                Parquet library to use. If 'auto', then the option io.parquet.engine is used.
+                The default io.parquet.engine behavior is to try 'pyarrow', falling back to 'fastparquet' if 'pyarrow' is unavailable. Default is 'auto'.
+            columns (list | None):
+                If not None, only these columns will be read from the file. Default is None.
+            storage_options (dict | None):
+                Extra options that make sense for a particular storage connection, e.g. host, port, username, password, etc.
+                For HTTP(S) URLs the key-value pairs are forwarded to urllib.request.Request as header options.
+                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open. Default is None.
+            use_nullable_dtypes (bool):
+                If True, use dtypes that use pd.NA as missing value indicator for the resulting DataFrame.
+                (only applicable for the pyarrow engine) As new dtypes are added that support pd.NA in the future, the output with this option will change to use those dtypes.
+                Note: this is an experimental option, and behaviour (e.g. additional support dtypes) may change without notice. Default is False. Deprecated since version 2.0.
+            dtype_backend ({'numpy_nullable', 'pyarrow'}):
+                Back-end data type applied to the resultant DataFrame (still experimental).
+                Behaviour is as follows:
+                    - "numpy_nullable": returns nullable-dtype-backed DataFrame (default).
+                    - "pyarrow": returns pyarrow-backed nullable ArrowDtype DataFrame. Default is 'numpy_nullable'.
+            filesystem (fsspec | pyarrow filesystem | None):
+                Filesystem object to use when reading the parquet file. Only implemented for engine="pyarrow". Default is None.
+            filters (list[tuple] | list[list[tuple]] | None):
+                To filter out data.
+                Filter syntax:
+                    [[(column, op, val), …],…] where op is [==, =, >, >=, <, <=, !=, in, not in]
+                The innermost tuples are transposed into a set of filters applied through an AND operation.
+                The outer list combines these sets of filters through an OR operation. A single list of tuples can also be used, meaning that no OR operation between set of filters is to be conducted.
+                Using this argument will NOT result in row-wise filtering of the final partitions unless engine="pyarrow" is also specified.
+                For other engines, filtering is only performed at the partition level, that is, to prevent the loading of some row-groups and/or files.
+                Default is None.
+            **kwargs:
+                Any additional kwargs are passed to the engine.
+
+        Additional Information:
+            https://pandas.pydata.org/docs/reference/api/pandas.read_parquet.html
         """
 
 class ArrowData(DataInterface):
