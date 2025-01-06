@@ -1,5 +1,8 @@
-use crate::data::{Data, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata, SqlLogic};
-use crate::types::{Feature, FeatureMap};
+use crate::data::{
+    generate_feature_schema, Data, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata,
+    SqlLogic,
+};
+use crate::types::FeatureMap;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -8,6 +11,11 @@ use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+// Design choice: DataInterface is to be used as a base class for all data interfaces
+// However, do to the (at times) cumbersome nature of using the super struct in a child struct,
+// many subclassed DataInterfaces will re-implement the same methods. While it increases code duplication in some spots,
+// we believe it makes the code easier to reason about. As with all decisions, this can be revisited if it becomes a problem.
 
 //TODO: add data_profile
 
@@ -195,11 +203,9 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&self, name: String) -> PyResult<FeatureMap> {
+    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureMap> {
         // Create and insert the feature
-        let mut features = HashMap::new();
-        features.insert("features".to_string(), Feature::new(name, vec![1], None));
-        Ok(FeatureMap::new(Some(features)))
+        generate_feature_schema(&self.data.bind(py), &self.data_type)
     }
 
     /// Save the data
@@ -261,15 +267,7 @@ impl DataInterface {
 
         // save sql logic
         let sql_save_path = self.save_sql(path.clone())?;
-
-        // Get the class name of self.data
-        let name: String = self
-            .data
-            .getattr(py, "__class__")?
-            .getattr(py, "__name__")?
-            .extract(py)?;
-
-        self.feature_map = self.create_feature_map(name)?;
+        self.feature_map = self.create_feature_map(py)?;
 
         Ok(InterfaceSaveMetadata {
             data_type: self.data_type.clone(),

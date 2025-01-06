@@ -17,6 +17,7 @@ pub fn generate_feature_schema(
         DataType::Numpy => NumpySchemaValidator::generate_feature_map(data)?,
         DataType::Pandas => PandasSchemaValidator::generate_feature_map(data)?,
         DataType::Arrow => ArrowSchemaValidator::generate_feature_map(data)?,
+
         _ => FeatureMap::new(None),
     };
     Ok(feature_map)

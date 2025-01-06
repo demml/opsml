@@ -80,6 +80,8 @@ impl PolarsData {
             ));
         }
 
+        println!("Saving data to {:?}", path);
+
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
@@ -110,7 +112,7 @@ impl PolarsData {
         let super_ = self_.as_super();
 
         let sql_save_path = super_.save_sql(path.clone())?;
-        super_.create_feature_map(name)?;
+        super_.feature_map = super_.create_feature_map(name)?;
 
         Ok(InterfaceSaveMetadata {
             data_type: DataType::Pandas,
