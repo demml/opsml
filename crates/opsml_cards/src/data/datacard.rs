@@ -1,18 +1,19 @@
 use crate::{BaseArgs, CardInfo, CardTable, CardType, Description};
 use opsml_error::error::OpsmlError;
+use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::Feature;
-use pyo3::{intern, prelude::*, IntoPyObjectExt};
+use opsml_types::{DataType, InterfaceType};
+use pyo3::types::PyDict;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DataCardMetadata {
     #[pyo3(get, set)]
-    pub interface_type: String,
-
-    #[pyo3(get, set)]
-    pub data_type: String,
+    pub data_type: DataType,
 
     #[pyo3(get, set)]
     pub description: Description,
@@ -28,6 +29,30 @@ pub struct DataCardMetadata {
 
     #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
+}
+
+#[pymethods]
+impl DataCardMetadata {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (data_type, description=None, feature_map=None, runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
+    pub fn new(
+        data_type: DataType,
+        description: Option<Description>,
+        feature_map: Option<HashMap<String, Feature>>,
+        runcard_uid: Option<String>,
+        pipelinecard_uid: Option<String>,
+        auditcard_uid: Option<String>,
+    ) -> Self {
+        Self {
+            data_type,
+            description: description.unwrap_or_default(),
+            feature_map: feature_map.unwrap_or_default(),
+            runcard_uid,
+            pipelinecard_uid,
+            auditcard_uid,
+        }
+    }
 }
 
 #[pyclass]
@@ -88,28 +113,36 @@ impl DataCard {
         )?;
 
         let py = interface.py();
-        // check if interface is a model interface (should be a bool)
-        let is_interface: bool = interface
-            .call_method0("is_interface")
-            .and_then(|result| {
-                result
-                    .extract()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))
-            })
-            .unwrap_or(false);
 
-        if !is_interface {
+        // try and extract data_type from interface
+        let interface_type = interface
+            .getattr("interface_type")?
+            .extract::<InterfaceType>()
+            .map_err(|e| {
+                OpsmlError::new_err(
+                    format!("Invalid type passed to interface. Ensure class is a subclass of DataInterface. Error: {}", e.to_string())
+                )
+            })?;
+
+        let data_type = interface
+            .getattr("data_type")?
+            .extract::<DataType>()
+            .map_err(|e| {
+                OpsmlError::new_err(format!(
+                    "Error parsing data_type from interface. Error: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        if interface_type != InterfaceType::Data {
             return Err(OpsmlError::new_err(
-                "Interface is not a data interface".to_string(),
+                "Invalid type passed to interface. Ensure class is a subclass of DataInterface",
             ));
         }
 
-        let mut metadata = metadata.unwrap_or_default();
-
-        metadata.interface_type = interface
-            .getattr(intern!(py, "interface_type"))
-            .unwrap()
-            .to_string();
+        let metadata = metadata.unwrap_or(DataCardMetadata::new(
+            data_type, None, None, None, None, None,
+        ));
 
         Ok(Self {
             interface: interface
@@ -135,6 +168,36 @@ impl DataCard {
             self.name,
             self.version
         )
+    }
+
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save<'py>(
+        &self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<DataInterfaceSaveMetadata> {
+        let args = (path,);
+
+        // call save on interface
+        let metadata = self
+            .interface
+            .call_method(py, "save", args, kwargs)
+            .map_err(|e| {
+                OpsmlError::new_err(format!(
+                    "Error calling save method on interface: {}",
+                    e.to_string()
+                ))
+            })?
+            .extract::<DataInterfaceSaveMetadata>(py)
+            .map_err(|e| {
+                OpsmlError::new_err(format!(
+                    "Error extracting metadata from interface: {}",
+                    e.to_string()
+                ))
+            })?;
+
+        Ok(metadata)
     }
 }
 

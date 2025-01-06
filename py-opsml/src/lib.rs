@@ -1,19 +1,18 @@
-use opsml_cards::{CardInfo, DataSchema, Description, OnnxSchema};
+use opsml_cards::{CardInfo, DataCard, DataCardMetadata, DataSchema, Description, OnnxSchema};
 use opsml_contracts::{Card, CardList};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{
     data::{
         generate_feature_schema, ArrowData, ColType, ColValType, ColumnSplit, Data, DataInterface,
-        DataSplit, DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality,
-        InterfaceSaveMetadata, NumpyData, PandasData, PolarsData, SqlData, SqlLogic,
-        StartStopSplit,
+        DataInterfaceSaveMetadata, DataSplit, DataSplits, DataSplitter, DependentVars, IndiceSplit,
+        Inequality, NumpyData, PandasData, PolarsData, SqlData, SqlLogic, StartStopSplit,
     },
     CatBoostModelInterfaceMetadata, Feature, FeatureMap, HuggingFaceModelInterfaceMetadata,
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs,
-    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, ModelInterfaceType, ModelSaveMetadata,
-    SklearnModelInterfaceMetadata, TensorFlowInterfaceMetadata, TorchInterfaceMetadata,
-    TorchOnnxArgs, TorchSaveArgs, VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
+    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelDataInterfaceSaveMetadata,
+    ModelInterfaceMetadata, ModelInterfaceType, ModelSaveMetadata, SklearnModelInterfaceMetadata,
+    TensorFlowInterfaceMetadata, TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs,
+    VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
 };
 use opsml_logging::logging::{LogLevel, OpsmlLogger};
 use opsml_registry::PyCardRegistry;
@@ -22,7 +21,7 @@ use opsml_registry::RegistryTestHelper;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 
-use opsml_types::{CommonKwargs, DataType, RegistryType, SaveName, Suffix};
+use opsml_types::{CommonKwargs, DataType, InterfaceType, RegistryType, SaveName, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 
@@ -44,6 +43,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<Suffix>()?;
     _m.add_class::<RegistryType>()?;
     _m.add_class::<DataType>()?;
+    _m.add_class::<InterfaceType>()?;
 
     // opsml_semver
     _m.add_class::<VersionType>()?;
@@ -65,9 +65,11 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<CardInfo>()?;
     _m.add_class::<Card>()?;
     _m.add_class::<CardList>()?;
+    _m.add_class::<DataCard>()?;
+    _m.add_class::<DataCardMetadata>()?;
 
     // Model Interface
-    _m.add_class::<ModelInterfaceSaveMetadata>()?;
+    _m.add_class::<ModelDataInterfaceSaveMetadata>()?;
     _m.add_class::<ModelInterfaceMetadata>()?;
 
     // Model Interface args
@@ -81,7 +83,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<VowpalWabbitInterfaceMetadata>()?;
     _m.add_class::<XGBoostModelInterfaceMetadata>()?;
     _m.add_class::<ModelSaveMetadata>()?;
-    _m.add_class::<ModelInterfaceSaveMetadata>()?;
+    _m.add_class::<ModelDataInterfaceSaveMetadata>()?;
     _m.add_class::<ModelInterfaceType>()?;
 
     // data_splitter
@@ -104,7 +106,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<PolarsData>()?;
     _m.add_class::<PandasData>()?;
     _m.add_class::<ArrowData>()?;
-    _m.add_class::<InterfaceSaveMetadata>()?;
+    _m.add_class::<DataInterfaceSaveMetadata>()?;
     _m.add_class::<SqlData>()?;
     _m.add_function(wrap_pyfunction!(generate_feature_schema, _m)?)?;
 

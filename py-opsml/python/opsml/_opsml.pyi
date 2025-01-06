@@ -155,6 +155,10 @@ class DataType:
     Base: "DataType"
     Dataset: "DataType"
 
+class InterfaceType:
+    Data: "InterfaceType"
+    Model: "InterfaceType"
+
 # Errors
 class OpsmlError(Exception):
     def __init__(self, message: str) -> None: ...
@@ -458,7 +462,7 @@ class FileUtils:
         """
 
 # Define interface save and metadata arguments
-class ModelInterfaceSaveMetadata:
+class ModelDataInterfaceSaveMetadata:
     trained_model_uri: str
     sample_data_uri: str
     preprocessor_uri: Optional[str]
@@ -497,13 +501,13 @@ class ModelInterfaceMetadata:
     modelcard_uid: str
     feature_map: dict[str, Feature]
     sample_data_interface_type: str
-    save_metadata: ModelInterfaceSaveMetadata
+    save_metadata: ModelDataInterfaceSaveMetadata
     extra_metadata: dict[str, str]
 
     def __init__(
         self,
         interface: Any,
-        save_metadata: ModelInterfaceSaveMetadata,
+        save_metadata: ModelDataInterfaceSaveMetadata,
         extra_metadata: Optional[dict[str, str]] = None,
     ) -> None:
         """Define a model interface
@@ -1320,7 +1324,7 @@ class DataInterface:
                 Base path to save the data to
         """
 
-    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
         """Saves all data interface component to the given path. This used as part of saving a
         DataCard
 
@@ -1350,7 +1354,7 @@ class DataInterface:
             A dictionary of data splits
         """
 
-class InterfaceSaveMetadata:
+class DataInterfaceSaveMetadata:
     data_type: DataType
     feature_map: FeatureMap
     data_save_path: Path
@@ -1421,7 +1425,7 @@ class NumpyData(DataInterface):
 
         """
 
-    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
         """Saves Interface attributes. This used as part of saving a
         DataCard
 
@@ -1831,7 +1835,7 @@ class SqlData:
                 Sql logic used to generate data represented as a dictionary.
         """
 
-    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
         """Save the sql logic to a file
 
         Args:
@@ -1851,3 +1855,77 @@ def generate_feature_schema(data: Any, data_type: DataType) -> FeatureMap:
     Returns:
         A feature map
     """
+
+class DataCardMetadata:
+    @property
+    def data_type(self) -> DataType:
+        """Return the data type"""
+
+    @property
+    def description(self) -> Description:
+        """Return the data type"""
+
+    @property
+    def feature_map(self) -> FeatureMap:
+        """Return the feature map"""
+
+    @property
+    def runcard_uid(self) -> Optional[str]:
+        """Return the runcard uid"""
+
+    @property
+    def pipelinecard_uid(self) -> Optional[str]:
+        """Return the runcard uid"""
+
+    @property
+    def auditcard_uid(self) -> Optional[str]:
+        """Return the runcard uid"""
+
+class DataCard:
+    def __init__(
+        self,
+        interface: DataInterface,
+        name: Optional[str],
+        repository: Optional[str],
+        contact: Optional[str],
+        version: Optional[str],
+        uid: Optional[str],
+        info: Optional[CardInfo],
+        tags: Dict[str, str] = {},
+        metadata: Optional[DataCardMetadata] = None,
+    ) -> None:
+        """Define a data card
+
+        Args:
+            name:
+                The name of the data card
+            repository:
+                The repository of the data card
+            contact:
+                The contact of the data card
+            version:
+                The version of the data card
+            uid:
+                The uid of the data card
+            info:
+                The info of the data card
+            tags:
+                The tags of the data card
+        """
+
+    @property
+    def uri(self) -> str:
+        """Return the uri"""
+
+    def save(self, path: Path, **kwargs) -> None:
+        """Save the data card
+
+        Args:
+            path:
+                The path to save the data card to
+
+        Kwargs:
+            Kwargs are passed to the underlying data interface for saving.
+            For a complete list of options see the save method of the data interface and
+            their associated libraries.
+        """

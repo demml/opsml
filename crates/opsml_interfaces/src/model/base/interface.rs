@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModelInterfaceSaveMetadata {
+pub struct ModelDataInterfaceSaveMetadata {
     #[pyo3(get)]
     pub trained_model_uri: String,
 
@@ -28,7 +28,7 @@ pub struct ModelInterfaceSaveMetadata {
 }
 
 #[pymethods]
-impl ModelInterfaceSaveMetadata {
+impl ModelDataInterfaceSaveMetadata {
     #[new]
     #[pyo3(signature = (trained_model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, extra_metadata=None))]
     pub fn new(
@@ -39,7 +39,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<String>,
         extra_metadata: Option<HashMap<String, String>>,
     ) -> Self {
-        ModelInterfaceSaveMetadata {
+        ModelDataInterfaceSaveMetadata {
             trained_model_uri,
             sample_data_uri,
             preprocessor_uri,
@@ -71,7 +71,7 @@ pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
     pub sample_data_interface_type: String,
     #[pyo3(get)]
-    pub save_metadata: ModelInterfaceSaveMetadata,
+    pub save_metadata: ModelDataInterfaceSaveMetadata,
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
 }
@@ -82,7 +82,7 @@ impl ModelInterfaceMetadata {
     #[pyo3(signature = (interface, save_metadata, extra_metadata=None))]
     fn new(
         interface: &Bound<'_, PyAny>,
-        save_metadata: ModelInterfaceSaveMetadata,
+        save_metadata: ModelDataInterfaceSaveMetadata,
         extra_metadata: Option<HashMap<String, String>>,
     ) -> PyResult<Self> {
         let task_type: String = interface
