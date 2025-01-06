@@ -1,4 +1,4 @@
-use crate::data::{DataInterface, InterfaceSaveMetadata, SqlLogic};
+use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
@@ -43,12 +43,12 @@ impl SqlData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<InterfaceSaveMetadata> {
+    ) -> PyResult<DataInterfaceSaveMetadata> {
         let super_ = self_.as_super();
         let sql_save_path = super_.save_sql(path)?;
 
         // need to implement save logic for SqlLogic
-        Ok(InterfaceSaveMetadata {
+        Ok(DataInterfaceSaveMetadata {
             data_type: self_.data_type.clone(),
             feature_map: FeatureMap::default(),
             data_save_path: None,

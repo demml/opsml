@@ -23,10 +23,10 @@ from ._opsml import (  # type: ignore
     HuggingFaceORTModel,
     IndiceSplit,
     Inequality,
-    InterfaceSaveMetadata,
+    DataInterfaceSaveMetadata,
     LogLevel,
     ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata,
+    ModelDataInterfaceSaveMetadata,
     ModelInterfaceType,
     NumpyData,
     OnnxSchema,
@@ -45,6 +45,8 @@ from ._opsml import (  # type: ignore
     TorchSaveArgs,
     VersionType,
     generate_feature_schema,
+    DataCard,
+    DataCardMetadata,
 )
 
 __all__ = [
@@ -69,7 +71,7 @@ __all__ = [
     "CardList",
     "OpsmlLogger",
     "ModelInterfaceType",
-    "ModelInterfaceSaveMetadata",
+    "ModelDataInterfaceSaveMetadata",
     "ModelInterfaceMetadata",
     "LogLevel",
     "DataType",
@@ -90,8 +92,10 @@ __all__ = [
     "NumpyData",
     "PolarsData",
     "generate_feature_schema",
-    "InterfaceSaveMetadata",
+    "DataInterfaceSaveMetadata",
     "PandasData",
     "ArrowData",
     "SqlData",
+    "DataCard",
+    "DataCardMetadata",
 ]

@@ -1,10 +1,10 @@
 use crate::data::{
-    generate_feature_schema, Data, DataSplit, DataSplits, DependentVars, InterfaceSaveMetadata,
+    generate_feature_schema, Data, DataSplit, DataSplits, DependentVars, DataInterfaceSaveMetadata,
     SqlLogic,
 };
 use crate::types::FeatureMap;
 use opsml_error::error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::{DataType, InterfaceType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
@@ -38,6 +38,9 @@ pub struct DataInterface {
 
     #[pyo3(get)]
     pub data_type: DataType,
+
+    #[pyo3(get)]
+    pub interface_type: InterfaceType,
 }
 
 #[pymethods]
@@ -109,6 +112,7 @@ impl DataInterface {
             feature_map,
             sql_logic,
             data_type: DataType::Base,
+            interface_type: InterfaceType::Data,
         })
     }
 
@@ -254,14 +258,14 @@ impl DataInterface {
     ///
     /// # Returns
     ///
-    /// * `PyResult<InterfaceSaveMetadata>` - InterfaceSaveMetadata
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, **kwargs))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<InterfaceSaveMetadata> {
+    ) -> PyResult<DataInterfaceSaveMetadata> {
         // save data
         let save_path = self.save_data(py, path.clone(), kwargs)?;
 
@@ -269,7 +273,7 @@ impl DataInterface {
         let sql_save_path = self.save_sql(path.clone())?;
         self.feature_map = self.create_feature_map(py)?;
 
-        Ok(InterfaceSaveMetadata {
+        Ok(DataInterfaceSaveMetadata {
             data_type: self.data_type.clone(),
             feature_map: self.feature_map.clone(),
             data_save_path: Some(save_path),

@@ -10,7 +10,7 @@ from opsml import (
     Suffix,
     ModelInterfaceType,
     SaveName,
-    ModelInterfaceSaveMetadata,
+    ModelDataInterfaceSaveMetadata,
     ModelInterfaceMetadata,
 )
 import onnxruntime as rt  # type: ignore
@@ -174,7 +174,7 @@ class ModelInterface(BaseModel):
         if to_onnx:
             onnx_model_uri = self.save_onnx(path)
 
-        save_metadata = ModelInterfaceSaveMetadata(
+        save_metadata = ModelDataInterfaceSaveMetadata(
             trained_model_uri=trained_model_uri,
             sample_data_uri=sample_data_uri,
             preprocessor_uri=preprocessor_uri,

@@ -541,6 +541,13 @@ pub enum DataType {
     Dataset,
 }
 
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum InterfaceType {
+    Data,
+    Model,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

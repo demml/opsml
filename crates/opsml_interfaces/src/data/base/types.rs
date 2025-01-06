@@ -155,7 +155,7 @@ impl SqlLogic {
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InterfaceSaveMetadata {
+pub struct DataInterfaceSaveMetadata {
     #[pyo3(get)]
     pub data_type: DataType,
 
@@ -173,7 +173,7 @@ pub struct InterfaceSaveMetadata {
 }
 
 #[pymethods]
-impl InterfaceSaveMetadata {
+impl DataInterfaceSaveMetadata {
     #[new]
     #[pyo3(signature = (data_type, feature_map, data_save_path=None, sql_save_path=None, data_profile_save_path=None))]
     pub fn new(
@@ -183,7 +183,7 @@ impl InterfaceSaveMetadata {
         sql_save_path: Option<PathBuf>,
         data_profile_save_path: Option<PathBuf>,
     ) -> Self {
-        InterfaceSaveMetadata {
+        DataInterfaceSaveMetadata {
             data_type,
             feature_map,
             data_save_path,

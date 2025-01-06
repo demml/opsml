@@ -1,4 +1,4 @@
-use crate::data::{generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic};
+use crate::data::{generate_feature_schema, DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -134,7 +134,7 @@ impl NumpyData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<InterfaceSaveMetadata> {
+    ) -> PyResult<DataInterfaceSaveMetadata> {
         let save_path = self_.save_data(py, path.clone(), kwargs)?;
         let feature_map = self_.create_feature_map(py)?;
 
@@ -142,7 +142,7 @@ impl NumpyData {
         let sql_save_path = super_.save_sql(path.clone())?;
         super_.feature_map = feature_map;
 
-        Ok(InterfaceSaveMetadata {
+        Ok(DataInterfaceSaveMetadata {
             data_type: DataType::Numpy,
             feature_map: super_.feature_map.clone(),
             data_save_path: Some(save_path),
