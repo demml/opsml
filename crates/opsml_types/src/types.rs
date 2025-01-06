@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Display;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub const UPLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
@@ -311,6 +311,10 @@ impl SaveName {
             SaveName::Sql => "sql",
         }
     }
+
+    pub fn __str__(&self) -> String {
+        self.to_string()
+    }
 }
 
 impl Display for SaveName {
@@ -412,6 +416,10 @@ impl Suffix {
             Suffix::Numpy => "npy",
             Suffix::Sql => "sql",
         }
+    }
+
+    pub fn __str__(&self) -> String {
+        self.to_string()
     }
 }
 
@@ -546,6 +554,47 @@ pub enum DataType {
 pub enum InterfaceType {
     Data,
     Model,
+}
+
+#[pyclass]
+pub struct SaverPath {
+    #[pyo3(get)]
+    path: PathBuf,
+}
+
+#[pymethods]
+impl SaverPath {
+    #[new]
+    #[pyo3(signature = (parent, child=None, filename=None, extension=None))]
+    pub fn new(
+        parent: PathBuf,
+        child: Option<PathBuf>,
+        filename: Option<SaveName>,
+        extension: Option<Suffix>,
+    ) -> Self {
+        // if child_path is not none, append it to the parent path and create all directories if they do not exist
+        let mut build_path = match &child {
+            Some(child) => {
+                let mut path = parent.clone();
+                path.push(child);
+                if !path.exists() {
+                    std::fs::create_dir_all(&path).unwrap();
+                }
+                path
+            }
+            None => parent.clone(),
+        };
+
+        // if file_name is not none, append it to the parent path with the extension
+        if let Some(file_name) = filename {
+            build_path.push(file_name);
+            if let Some(extension) = extension {
+                build_path.set_extension(extension);
+            }
+        }
+
+        SaverPath { path: build_path }
+    }
 }
 
 #[cfg(test)]

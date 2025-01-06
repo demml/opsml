@@ -89,6 +89,13 @@ class SaveName:
             String representation of the SaveName.
         """
 
+    def __str__(self):
+        """Return a string representation of the SaveName.
+
+        Returns:
+            String representation of the SaveName.
+        """
+
 class Suffix:
     Onnx: "Suffix"
     Parquet: "Suffix"
@@ -122,6 +129,36 @@ class Suffix:
 
         Returns:
             String representation of the Suffix.
+        """
+
+    def __str__(self):
+        """Return a string representation of the Suffix.
+
+        Returns:
+            String representation of the Suffix.
+        """
+
+class SaverPath:
+    path: Path
+
+    def __init__(
+        self,
+        parent: Path,
+        child: Optional[Path],
+        filename: Optional[SaveName],
+        extension: Optional[Suffix],
+    ) -> None:
+        """Helper for creating paths for saving artifacts.
+
+        Args:
+            parent (Path):
+                The parent path.
+            child (Path | None):
+                The child path.
+            filename (SaveName | None):
+                The filename.
+            extension (Suffix | None):
+                The extension.
         """
 
 class RegistryType:

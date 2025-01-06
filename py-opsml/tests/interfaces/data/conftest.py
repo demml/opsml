@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
 from datetime import datetime, timedelta
+from opsml import DataInterface, SaveName, Suffix, SaverPath
+from pathlib import Path
+import joblib  # type: ignore
 
 
 @pytest.fixture
@@ -215,3 +218,16 @@ def pandas_mixed_type_dataframe() -> pd.DataFrame:
     df["category"] = pd.Categorical(["a", "b", "c", "d", "e", "f", "g", "h"])
 
     return df
+
+
+@pytest.fixture
+def custom_data_interface() -> type[DataInterface]:
+    class CustomDataInterface(DataInterface):
+        def save_data(self, path: Path, **kwargs) -> Path:
+            save_path = SaverPath(path, None, SaveName.Data, Suffix.Joblib).path
+
+            joblib.dump(self.data, save_path)
+
+            return save_path
+
+    return CustomDataInterface
