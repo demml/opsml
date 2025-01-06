@@ -1,4 +1,4 @@
-use crate::data::{DataInterface, InterfaceSaveMetadata, SqlLogic};
+use crate::data::{generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -80,8 +80,6 @@ impl PolarsData {
             ));
         }
 
-        println!("Saving data to {:?}", path);
-
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
@@ -93,6 +91,20 @@ impl PolarsData {
         Ok(save_path)
     }
 
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureMap> {
+        // Create and insert the feature
+        generate_feature_schema(&self.data.bind(py), &self.data_type)
+    }
+
     #[pyo3(signature = (path, kwargs=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
@@ -101,18 +113,11 @@ impl PolarsData {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
         let save_path = self_.save_data(py, path.clone(), kwargs)?;
-
-        // Get the class name of self.data
-        let name: String = self_
-            .data
-            .getattr(py, "__class__")?
-            .getattr(py, "__name__")?
-            .extract(py)?;
+        let feature_map = self_.create_feature_map(py)?;
 
         let super_ = self_.as_super();
-
         let sql_save_path = super_.save_sql(path.clone())?;
-        super_.feature_map = super_.create_feature_map(name)?;
+        super_.feature_map = feature_map;
 
         Ok(InterfaceSaveMetadata {
             data_type: DataType::Pandas,
