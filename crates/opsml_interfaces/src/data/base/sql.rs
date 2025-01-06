@@ -1,10 +1,9 @@
-use crate::data::{generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic};
+use crate::data::{DataInterface, InterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::DataType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
@@ -37,6 +36,7 @@ impl SqlData {
         Err(OpsmlError::new_err("Data cannot be set for SqlData"))
     }
 
+    #[allow(unused_variables)]
     #[pyo3(signature = (path, **kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
@@ -44,17 +44,22 @@ impl SqlData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<InterfaceSaveMetadata> {
+        let super_ = self_.as_super();
+        let sql_save_path = super_.save_sql(path)?;
+
+        // need to implement save logic for SqlLogic
         Ok(InterfaceSaveMetadata {
             data_type: self_.data_type.clone(),
             feature_map: FeatureMap::default(),
             data_save_path: None,
-            sql_save_path: None,
+            sql_save_path: sql_save_path,
             data_profile_save_path: None,
         })
     }
 
+    #[allow(unused_variables)]
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load<'py>(
+    pub fn load_data<'py>(
         &mut self,
         py: Python,
         path: PathBuf,

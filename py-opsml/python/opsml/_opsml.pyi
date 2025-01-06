@@ -1296,12 +1296,42 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save_data(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+    def save_sql(self, path: Path, **kwargs) -> Optional[Path]:
+        """Save the sql logic to a file
+
+        Args:
+            Path:
+                The path to save the sql logic to
+        """
+
+    def create_feature_map(self, name: str) -> FeatureMap:
+        """Save the sql logic to a file
+
+        Args:
+            name:
+                The name of the data object
+        """
+
+    def save_data(self, path: Path, **kwargs) -> Path:
         """Save the data to a file
 
         Args:
             path:
                 Base path to save the data to
+        """
+
+    def save(self, path: Path, **kwargs) -> InterfaceSaveMetadata:
+        """Saves all data interface component to the given path.
+
+        Methods called in save:
+            - save_sql
+            - create_feature_map
+            - save_data
+
+        Args:
+            path:
+                The path to save the data interface components to.
+
         """
 
     def load_data(self, path: Path, **kwargs) -> None:

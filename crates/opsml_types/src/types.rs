@@ -253,6 +253,7 @@ pub enum SaveName {
     OnnxConfig,
     Dataset,
     DriftProfile,
+    Sql,
 }
 
 #[pymethods]
@@ -280,6 +281,7 @@ impl SaveName {
             "onnx-config" => Some(SaveName::OnnxConfig),
             "dataset" => Some(SaveName::Dataset),
             "drift-profile" => Some(SaveName::DriftProfile),
+            "sql" => Some(SaveName::Sql),
             _ => None,
         }
     }
@@ -306,6 +308,7 @@ impl SaveName {
             SaveName::OnnxConfig => "onnx-config",
             SaveName::Dataset => "dataset",
             SaveName::DriftProfile => "drift-profile",
+            SaveName::Sql => "sql",
         }
     }
 }
@@ -339,6 +342,7 @@ impl AsRef<Path> for SaveName {
             SaveName::OnnxConfig => Path::new("onnx-config"),
             SaveName::Dataset => Path::new("dataset"),
             SaveName::DriftProfile => Path::new("drift-profile"),
+            SaveName::Sql => Path::new("sql"),
         }
     }
 }

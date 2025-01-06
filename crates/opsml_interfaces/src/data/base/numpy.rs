@@ -1,4 +1,4 @@
-use crate::data::{generate_feature_schema, DataInterface, InterfaceSaveMetadata, SqlLogic};
+use crate::data::{DataInterface, InterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -88,45 +88,64 @@ impl NumpyData {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn save_data<'py>(
+        &self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<InterfaceSaveMetadata> {
-        if self_.data.is_none(py) {
+    ) -> PyResult<PathBuf> {
+        if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
         }
 
-        let feature_map = generate_feature_schema(self_.data.bind(py), &DataType::Numpy)?;
-
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Numpy);
         let full_save_path = path.join(&save_path);
 
         let numpy = py.import("numpy")?;
-        let args = (full_save_path, &self_.data);
+        let args = (full_save_path, &self.data);
 
         // Save the data using joblib
         numpy
             .call_method("save", args, kwargs)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
+        Ok(save_path)
+    }
+
+    #[pyo3(signature = (path, kwargs=None))]
+    pub fn save<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<InterfaceSaveMetadata> {
+        let save_path = self_.save_data(py, path.clone(), kwargs)?;
+
+        // Get the class name of self.data
+        let name: String = self_
+            .data
+            .getattr(py, "__class__")?
+            .getattr(py, "__name__")?
+            .extract(py)?;
+
         let super_ = self_.as_super();
-        super_.feature_map = feature_map.clone();
+
+        let sql_save_path = super_.save_sql(path.clone())?;
+        super_.create_feature_map(name)?;
 
         Ok(InterfaceSaveMetadata {
-            data_type: self_.data_type.clone(),
-            feature_map,
+            data_type: DataType::Numpy,
+            feature_map: super_.feature_map.clone(),
             data_save_path: Some(save_path),
-            sql_save_path: None,
+            sql_save_path: sql_save_path,
             data_profile_save_path: None,
         })
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load<'py>(
+    pub fn load_data<'py>(
         &mut self,
         py: Python,
         path: PathBuf,
