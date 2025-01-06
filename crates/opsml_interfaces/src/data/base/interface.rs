@@ -169,13 +169,58 @@ impl DataInterface {
         Ok(())
     }
 
+    /// Save the SQL logic to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save the SQL logic
+    ///
+    /// # Returns
+    ///
+    /// * `Option<PathBuf>` - Path to the saved SQL logic
+    pub fn save_sql(&self, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        if !self.sql_logic.queries.is_empty() {
+            return Ok(Some(self.sql_logic.save(&path)?));
+        } else {
+            return Ok(None);
+        }
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_map(&self, name: String) -> PyResult<FeatureMap> {
+        // Create and insert the feature
+        let mut features = HashMap::new();
+        features.insert("features".to_string(), Feature::new(name, vec![1], None));
+        Ok(FeatureMap::new(Some(features)))
+    }
+
+    /// Save the data
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<PathBuf>` - Path to the saved data
+    ///
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save(
+    pub fn save_data<'py>(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<InterfaceSaveMetadata> {
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<PathBuf> {
         // check if data is None
         if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
@@ -190,6 +235,33 @@ impl DataInterface {
         // Save the data using joblib
         joblib.call_method("dump", (&self.data, full_save_path), kwargs)?;
 
+        Ok(save_path)
+    }
+
+    /// Save the data and SQL logic
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<InterfaceSaveMetadata>` - InterfaceSaveMetadata
+    #[pyo3(signature = (path, kwargs=None))]
+    pub fn save(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<InterfaceSaveMetadata> {
+        // save data
+        let save_path = self.save_data(py, path.clone(), kwargs)?;
+
+        // save sql logic
+        let sql_save_path = self.save_sql(path.clone())?;
+
         // Get the class name of self.data
         let name: String = self
             .data
@@ -197,22 +269,19 @@ impl DataInterface {
             .getattr(py, "__name__")?
             .extract(py)?;
 
-        // Create and insert the feature
-        let mut features = HashMap::new();
-        features.insert("features".to_string(), Feature::new(name, vec![1], None));
-        self.feature_map = FeatureMap::new(Some(features));
+        self.feature_map = self.create_feature_map(name)?;
 
         Ok(InterfaceSaveMetadata {
             data_type: self.data_type.clone(),
             feature_map: self.feature_map.clone(),
             data_save_path: Some(save_path),
-            sql_save_path: None,
+            sql_save_path: sql_save_path,
             data_profile_save_path: None,
         })
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load<'py>(
+    pub fn load_data<'py>(
         &mut self,
         py: Python,
         path: PathBuf,

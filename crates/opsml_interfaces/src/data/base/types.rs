@@ -1,12 +1,11 @@
-use crate::{data, types::FeatureMap};
-use opsml_error::OpsmlError;
+use crate::types::FeatureMap;
+use opsml_error::{OpsmlError, SaveError};
 use opsml_types::DataType;
+use opsml_types::{SaveName, Suffix};
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
-
-use super::sql;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -133,6 +132,24 @@ impl SqlLogic {
             .collect::<PyResult<HashMap<String, String>>>()?;
 
         Ok(sql_logic)
+    }
+
+    pub fn save(&self, save_path: &PathBuf) -> Result<PathBuf, SaveError> {
+        let sql_directory = save_path.join(SaveName::Sql);
+
+        // create directory if it does not exist
+        if !sql_directory.exists() {
+            std::fs::create_dir_all(&sql_directory).map_err(|e| SaveError::Error(e.to_string()))?;
+        }
+
+        for (key, value) in &self.queries {
+            let save_path = sql_directory.join(key).with_extension(Suffix::Sql);
+
+            // save string to file
+            std::fs::write(save_path, value).map_err(|e| SaveError::Error(e.to_string()))?;
+        }
+
+        Ok(sql_directory)
     }
 }
 
