@@ -105,7 +105,7 @@ impl PolarsData {
         generate_feature_schema(&self.data.bind(py), &self.data_type)
     }
 
-    #[pyo3(signature = (path, kwargs=None))]
+    #[pyo3(signature = (path, **kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
@@ -120,7 +120,7 @@ impl PolarsData {
         super_.feature_map = feature_map;
 
         Ok(InterfaceSaveMetadata {
-            data_type: DataType::Pandas,
+            data_type: DataType::Polars,
             feature_map: super_.feature_map.clone(),
             data_save_path: Some(save_path),
             sql_save_path: sql_save_path,

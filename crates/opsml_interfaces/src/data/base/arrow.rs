@@ -127,7 +127,7 @@ impl ArrowData {
         generate_feature_schema(&self.data.bind(py), &self.data_type)
     }
 
-    #[pyo3(signature = (path, kwargs=None))]
+    #[pyo3(signature = (path, **kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
