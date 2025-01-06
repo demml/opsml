@@ -21,7 +21,9 @@ use opsml_registry::RegistryTestHelper;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 
-use opsml_types::{CommonKwargs, DataType, InterfaceType, RegistryType, SaveName, Suffix};
+use opsml_types::{
+    CommonKwargs, DataType, InterfaceType, RegistryType, SaveName, SaverPath, Suffix,
+};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 
@@ -44,6 +46,7 @@ fn _opsml(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     _m.add_class::<RegistryType>()?;
     _m.add_class::<DataType>()?;
     _m.add_class::<InterfaceType>()?;
+    _m.add_class::<SaverPath>()?;
 
     // opsml_semver
     _m.add_class::<VersionType>()?;

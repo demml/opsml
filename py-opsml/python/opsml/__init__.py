@@ -47,6 +47,7 @@ from ._opsml import (  # type: ignore
     generate_feature_schema,
     DataCard,
     DataCardMetadata,
+    SaverPath,
 )
 
 __all__ = [
@@ -98,4 +99,5 @@ __all__ = [
     "SqlData",
     "DataCard",
     "DataCardMetadata",
+    "SaverPath",
 ]
