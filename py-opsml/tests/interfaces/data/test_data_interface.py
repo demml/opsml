@@ -47,7 +47,7 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    data_interface.save_data(save_path)
+    data_interface.save(save_path)
     data_interface.data = None
 
     assert data_interface.data is None
@@ -98,7 +98,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    metadata = interface.save_data(save_path)
+    metadata = interface.save(save_path)
 
     assert metadata.data_save_path == "data.npy"
 
@@ -111,6 +111,8 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     interface.load_data(save_path)
 
     assert interface.data is not None
+
+    print(interface.feature_map)
 
     interface.feature_map["numpy_array"].feature_type = "float64"
     interface.feature_map["numpy_array"].shape = [10, 100]
@@ -125,7 +127,7 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
     save_path.mkdir()
 
     kwargs = {"compression": "gzip"}
-    interface.save_data(path=save_path, **kwargs)
+    interface.save(path=save_path, **kwargs)
 
     # set data to none
     interface.data = None
@@ -145,7 +147,7 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: P
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    interface.save_data(path=save_path)
+    interface.save(path=save_path)
 
     # set data to none
     interface.data = None
@@ -170,7 +172,7 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    interface.save_data(path=save_path)
+    interface.save(path=save_path)
 
     # set data to none
     interface.data = None

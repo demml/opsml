@@ -108,7 +108,7 @@ impl PandasData {
         let super_ = self_.as_super();
 
         let sql_save_path = super_.save_sql(path.clone())?;
-        super_.create_feature_map(name)?;
+        super_.feature_map = super_.create_feature_map(name)?;
 
         Ok(InterfaceSaveMetadata {
             data_type: DataType::Pandas,
