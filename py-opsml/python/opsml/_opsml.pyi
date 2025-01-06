@@ -134,7 +134,7 @@ class RegistryType:
 
 class DataType:
     Pandas: "DataType"
-    PyArrow: "DataType"
+    Arrow: "DataType"
     Polars: "DataType"
     Numpy: "DataType"
     Image: "DataType"
@@ -559,7 +559,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:

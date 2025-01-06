@@ -255,7 +255,7 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<InterfaceSaveMetadata>` - InterfaceSaveMetadata
-    #[pyo3(signature = (path, kwargs=None))]
+    #[pyo3(signature = (path, **kwargs))]
     pub fn save(
         &mut self,
         py: Python,
