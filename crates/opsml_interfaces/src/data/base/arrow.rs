@@ -65,7 +65,7 @@ impl ArrowData {
     }
 
     #[setter]
-    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data<'py>(&mut self, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
 
         // check if data is None
@@ -88,11 +88,11 @@ impl ArrowData {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data(
+    pub fn save_data<'py>(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
         if self.data.is_none(py) {
             return Err(OpsmlError::new_err(
