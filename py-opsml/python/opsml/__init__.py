@@ -37,6 +37,7 @@ from ._opsml import (  # type: ignore
     PolarsData,
     RegistryType,
     SaveName,
+    SqlData,
     SqlLogic,
     StartStopSplit,
     Suffix,
@@ -92,4 +93,5 @@ __all__ = [
     "InterfaceSaveMetadata",
     "PandasData",
     "ArrowData",
+    "SqlData",
 ]
