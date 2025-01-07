@@ -341,7 +341,7 @@ def test_pyarrow_index_split(arrow_dataframe: pa.Table):
     split = DataSplitter.split_data(
         split=data_split,
         data=arrow_dataframe,
-        data_type=DataType.PyArrow,
+        data_type=DataType.Arrow,
         dependent_vars=DependentVars(),
     )
 
@@ -361,7 +361,7 @@ def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
     split = DataSplitter.split_data(
         split=data_split,
         data=arrow_dataframe,
-        data_type=DataType.PyArrow,
+        data_type=DataType.Arrow,
         dependent_vars=DependentVars(column_names=["n_legs"]),
     )
 
@@ -373,7 +373,7 @@ def test_pyarrow_start_stop_split(arrow_dataframe: pa.Table):
     split = DataSplitter.split_data(
         split=data_split,
         data=arrow_dataframe,
-        data_type=DataType.PyArrow,
+        data_type=DataType.Arrow,
         dependent_vars=DependentVars(column_indices=[0]),
     )
 
