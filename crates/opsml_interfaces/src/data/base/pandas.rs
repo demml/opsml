@@ -63,11 +63,11 @@ impl PandasData {
     #[setter]
     pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
-        let base = self_.as_super();
+        let parent = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            base.data = py.None();
+            parent.data = py.None();
             return Ok(());
         } else {
             // check if data is a numpy array
@@ -76,7 +76,7 @@ impl PandasData {
 
             // check if data is a numpy array
             if data.is_instance(&pandas).unwrap() {
-                base.data = data.into_py_any(py)?;
+                parent.data = data.into_py_any(py)?;
                 return Ok(());
             } else {
                 return Err(OpsmlError::new_err("Data must be a pandas DataFrame"));
@@ -93,8 +93,8 @@ impl PandasData {
     ) -> PyResult<PathBuf> {
         // check if data is None
 
-        let base = self_.as_super();
-        if base.data.is_none(py) {
+        let parent = self_.as_super();
+        if parent.data.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -103,7 +103,7 @@ impl PandasData {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
-        let _ = &base
+        let _ = &parent
             .data
             .call_method(py, "to_parquet", (full_save_path,), kwargs)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
