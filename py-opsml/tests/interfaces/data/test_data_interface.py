@@ -94,6 +94,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     assert interface.data_type == DataType.Numpy
     assert interface.dependent_vars is not None
     assert interface.data_splits is not None
+    assert interface.sql_logic is not None
 
     save_path = tmp_path / "test"
     save_path.mkdir()
@@ -121,6 +122,10 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
     interface = PolarsData(data=multi_type_polars_dataframe2)
 
     assert interface.data is not None
+    assert interface.data_type == DataType.Polars
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+    assert interface.sql_logic is not None
 
     save_path = tmp_path / "test"
     save_path.mkdir()
@@ -146,6 +151,10 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: P
     interface = PandasData(data=pandas_mixed_type_dataframe)
 
     assert interface.data is not None
+    assert interface.data_type == DataType.Pandas
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+    assert interface.sql_logic is not None
 
     save_path = tmp_path / "test"
     save_path.mkdir()
@@ -175,6 +184,10 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     interface = ArrowData(data=arrow_dataframe)
 
     assert interface.data is not None
+    assert interface.data_type == DataType.Arrow
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+    assert interface.sql_logic is not None
 
     save_path = tmp_path / "test"
     save_path.mkdir()

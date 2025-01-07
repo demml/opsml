@@ -1,5 +1,5 @@
 use crate::data::{
-    generate_feature_schema, Data, DataSplit, DataSplits, DependentVars, DataInterfaceSaveMetadata,
+    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
     SqlLogic,
 };
 use crate::types::FeatureMap;
@@ -209,7 +209,11 @@ impl DataInterface {
     /// * `PyResult<FeatureMap>` - FeatureMap
     pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureMap> {
         // Create and insert the feature
-        generate_feature_schema(&self.data.bind(py), &self.data_type)
+        let feature_map = generate_feature_schema(&self.data.bind(py), &self.data_type)?;
+
+        self.feature_map = feature_map.clone();
+
+        Ok(feature_map)
     }
 
     /// Save the data

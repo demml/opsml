@@ -1,4 +1,4 @@
-use crate::data::{generate_feature_schema, DataInterface, DataInterfaceSaveMetadata, SqlLogic};
+use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureMap;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
@@ -8,13 +8,7 @@ use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
-pub struct NumpyData {
-    #[pyo3(get)]
-    pub data_type: DataType,
-
-    #[pyo3(get, set)]
-    pub data: PyObject,
-}
+pub struct NumpyData {}
 
 #[pymethods]
 impl NumpyData {
@@ -45,7 +39,7 @@ impl NumpyData {
             None => py.None(),
         };
 
-        let data_interface = DataInterface::new(
+        let mut data_interface = DataInterface::new(
             py,
             None,
             data_splits,
@@ -54,23 +48,25 @@ impl NumpyData {
             sql_logic,
         )?;
 
-        Ok((
-            NumpyData {
-                data_type: DataType::Numpy,
+        data_interface.data_type = DataType::Numpy;
+        data_interface.data = data;
 
-                data,
-            },
-            data_interface,
-        ))
+        Ok((NumpyData {}, data_interface))
+    }
+
+    #[getter]
+    pub fn get_data<'py>(self_: PyRef<'py, Self>, py: Python) -> PyObject {
+        self_.as_super().data.clone_ref(py)
     }
 
     #[setter]
-    pub fn set_data<'py>(&mut self, data: &Bound<'py, PyAny>) -> PyResult<()> {
+    pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
+        let base = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            self.data = py.None();
+            base.data = py.None();
             return Ok(());
         } else {
             // check if data is a numpy array
@@ -79,7 +75,7 @@ impl NumpyData {
 
             // check if data is a numpy array
             if data.is_instance(&numpy).unwrap() {
-                self.data = data.into_py_any(py)?;
+                base.data = data.into_py_any(py)?;
                 return Ok(());
             } else {
                 return Err(OpsmlError::new_err("Data must be a numpy array"));
@@ -89,12 +85,13 @@ impl NumpyData {
 
     #[pyo3(signature = (path, **kwargs))]
     pub fn save_data<'py>(
-        &self,
+        mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
-        if self.data.is_none(py) {
+        let base = self_.as_super();
+        if base.data.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -104,7 +101,7 @@ impl NumpyData {
         let full_save_path = path.join(&save_path);
 
         let numpy = py.import("numpy")?;
-        let args = (full_save_path, &self.data);
+        let args = (full_save_path, &base.data);
 
         // Save the data using joblib
         numpy
@@ -114,20 +111,6 @@ impl NumpyData {
         Ok(save_path)
     }
 
-    /// Create a feature schema
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Name of the feature
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureMap> {
-        // Create and insert the feature
-        generate_feature_schema(&self.data.bind(py), &self.data_type)
-    }
-
     #[pyo3(signature = (path, **kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
@@ -135,16 +118,13 @@ impl NumpyData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<DataInterfaceSaveMetadata> {
-        let save_path = self_.save_data(py, path.clone(), kwargs)?;
-        let feature_map = self_.create_feature_map(py)?;
-
-        let super_ = self_.as_super();
-        let sql_save_path = super_.save_sql(path.clone())?;
-        super_.feature_map = feature_map;
+        let feature_map = self_.as_super().create_feature_map(py)?;
+        let sql_save_path = self_.as_super().save_sql(path.clone())?;
+        let save_path = NumpyData::save_data(self_, py, path.clone(), kwargs)?;
 
         Ok(DataInterfaceSaveMetadata {
             data_type: DataType::Numpy,
-            feature_map: super_.feature_map.clone(),
+            feature_map: feature_map.clone(),
             data_save_path: Some(save_path),
             sql_save_path: sql_save_path,
             data_profile_save_path: None,
@@ -153,7 +133,7 @@ impl NumpyData {
 
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_data<'py>(
-        &mut self,
+        mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
@@ -165,7 +145,7 @@ impl NumpyData {
         // Load the data using numpy
         let data = numpy.call_method("load", (load_path,), kwargs)?;
 
-        self.data = data.into();
+        self_.as_super().data = data.into();
 
         Ok(())
     }
