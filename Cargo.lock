@@ -1273,6 +1273,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbe58904b68d95ad2c69a2e9607ffc70ce196c1910f83a340029c1448e06ed65"
+dependencies = [
+ "chrono",
+ "once_cell",
+ "winnow",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2565,6 +2576,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2685,6 +2714,16 @@ name = "matchit"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+
+[[package]]
+name = "matrixmultiply"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9380b911e3e96d10c1f415da0876389aaf1b56759054eeb0de7df940c456ba1a"
+dependencies = [
+ "autocfg",
+ "rawpointer",
+]
 
 [[package]]
 name = "md-5"
@@ -2869,6 +2908,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "ndarray"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "882ed72dce9365842bf196bdeedf5055305f11fc8c03dee7bb0194a6cad34841"
+dependencies = [
+ "matrixmultiply",
+ "num-complex",
+ "num-integer",
+ "num-traits",
+ "portable-atomic",
+ "portable-atomic-util",
+ "rawpointer",
+ "rayon",
+]
+
+[[package]]
+name = "ndarray-stats"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17ebbe97acce52d06aebed4cd4a87c0941f4b2519b59b82b4feb5bd0ce003dfd"
+dependencies = [
+ "indexmap 2.7.0",
+ "itertools 0.13.0",
+ "ndarray",
+ "noisy_float",
+ "num-integer",
+ "num-traits",
+ "rand 0.8.5",
+]
+
+[[package]]
 name = "net2"
 version = "0.2.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2877,6 +2947,15 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "noisy_float"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "978fe6e6ebc0bf53de533cd456ca2d9de13de13856eda1518a285d7705a213af"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
@@ -2924,6 +3003,15 @@ dependencies = [
  "rand 0.8.5",
  "smallvec",
  "zeroize",
+]
+
+[[package]]
+name = "num-complex"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
@@ -2986,6 +3074,21 @@ name = "number_prefix"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
+
+[[package]]
+name = "numpy"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b94caae805f998a07d33af06e6a3891e38556051b8045c615470a71590e13e78"
+dependencies = [
+ "libc",
+ "ndarray",
+ "num-complex",
+ "num-integer",
+ "num-traits",
+ "pyo3",
+ "rustc-hash",
+]
 
 [[package]]
 name = "oauth2"
@@ -3158,6 +3261,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
+ "scouter-client",
  "serde",
 ]
 
@@ -3623,6 +3727,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "280dc24453071f1b63954171985a0b0d30058d287960968b9b2aca264c8d4ee6"
 
 [[package]]
+name = "portable-atomic-util"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8a2f0d8d040d7848a709caf78912debcc3f33ee4b3cac47d73d1e1069e83507"
+dependencies = [
+ "portable-atomic",
+]
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3920,6 +4033,12 @@ checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
  "rand_core 0.5.1",
 ]
+
+[[package]]
+name = "rawpointer"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rayon"
@@ -4317,6 +4436,141 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "scouter-client"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "ndarray",
+ "ndarray-stats",
+ "num-traits",
+ "numpy",
+ "pyo3",
+ "scouter-dispatch",
+ "scouter-drift",
+ "scouter-error",
+ "scouter-observability",
+ "scouter-profile",
+ "scouter-types",
+]
+
+[[package]]
+name = "scouter-contracts"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "chrono",
+ "scouter-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "scouter-dispatch"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "futures",
+ "pyo3",
+ "reqwest 0.12.9",
+ "scouter-error",
+ "scouter-types",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "scouter-drift"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "chrono",
+ "cron",
+ "indicatif",
+ "itertools 0.14.0",
+ "ndarray",
+ "ndarray-stats",
+ "noisy_float",
+ "num-traits",
+ "numpy",
+ "pyo3",
+ "rayon",
+ "scouter-contracts",
+ "scouter-dispatch",
+ "scouter-error",
+ "scouter-types",
+ "serde",
+ "serde_json",
+ "tokio 1.42.0",
+ "tracing",
+]
+
+[[package]]
+name = "scouter-error"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "pyo3",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "scouter-observability"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "itertools 0.14.0",
+ "ndarray",
+ "ndarray-stats",
+ "noisy_float",
+ "pyo3",
+ "rayon",
+ "scouter-error",
+ "scouter-types",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "scouter-profile"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "chrono",
+ "indicatif",
+ "itertools 0.14.0",
+ "ndarray",
+ "ndarray-stats",
+ "noisy_float",
+ "num-traits",
+ "numpy",
+ "pyo3",
+ "rayon",
+ "scouter-error",
+ "scouter-types",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "scouter-types"
+version = "0.4.0"
+source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+dependencies = [
+ "chrono",
+ "colored_json",
+ "cron",
+ "pyo3",
+ "rayon",
+ "scouter-error",
+ "serde",
+ "serde_json",
+ "tracing",
+]
 
 [[package]]
 name = "sct"
@@ -5908,6 +6162,15 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+
+[[package]]
+name = "winnow"
+version = "0.6.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39281189af81c07ec09db316b302a3e67bf9bd7cbf6c820b50e35fee9c2fa980"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "winreg"
