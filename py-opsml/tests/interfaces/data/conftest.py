@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from opsml import DataInterface, SaveName, Suffix, SaverPath
 from pathlib import Path
 import joblib  # type: ignore
+import torch
 
 
 @pytest.fixture
@@ -231,3 +232,8 @@ def custom_data_interface() -> type[DataInterface]:
             return save_path
 
     return CustomDataInterface
+
+
+@pytest.fixture
+def torch_tensor() -> torch.Tensor:
+    return torch.tensor(np.array([[1, 2, 3], [4, 5, 6]]))

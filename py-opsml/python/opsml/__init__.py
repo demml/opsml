@@ -48,6 +48,7 @@ from ._opsml import (  # type: ignore
     DataCard,
     DataCardMetadata,
     SaverPath,
+    TorchData,
 )
 
 __all__ = [
@@ -100,4 +101,5 @@ __all__ = [
     "DataCard",
     "DataCardMetadata",
     "SaverPath",
+    "TorchData",
 ]
