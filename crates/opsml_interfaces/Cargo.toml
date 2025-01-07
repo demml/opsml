@@ -12,4 +12,5 @@ opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
+scouter-client = { workspace = true }
 serde = { workspace = true }

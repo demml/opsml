@@ -1,6 +1,6 @@
 use crate::data::{
-    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
-    SqlLogic,
+    self, generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits,
+    DependentVars, SqlLogic,
 };
 use crate::types::FeatureMap;
 use opsml_error::error::OpsmlError;
@@ -9,6 +9,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
+use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -36,6 +37,9 @@ pub struct DataInterface {
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
 
+    #[pyo3(get, set)]
+    pub data_profile: Option<DataProfile>,
+
     #[pyo3(get)]
     pub data_type: DataType,
 
@@ -47,7 +51,7 @@ pub struct DataInterface {
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
@@ -55,6 +59,7 @@ impl DataInterface {
         dependent_vars: Option<&Bound<'py, PyAny>>,
         feature_map: Option<FeatureMap>,
         sql_logic: Option<SqlLogic>,
+        data_profile: Option<DataProfile>,
     ) -> PyResult<Self> {
         // define data splits
         let splits: DataSplits = {
@@ -113,6 +118,7 @@ impl DataInterface {
             sql_logic,
             data_type: DataType::Base,
             interface_type: InterfaceType::Data,
+            data_profile,
         })
     }
 
@@ -332,5 +338,16 @@ impl DataInterface {
 
         self.data_splits
             .split_data(self.data.bind(py), &self.data_type, &dependent_vars)
+    }
+
+    pub fn create_data_profile(
+        &mut self,
+        py: Python,
+        bin_size: Option<usize>,
+        compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        let data_profile = DataProfile::new();
+        self.data_profile = Some(data_profile.clone());
+        Ok(data_profile)
     }
 }
