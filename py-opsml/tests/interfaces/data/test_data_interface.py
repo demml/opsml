@@ -11,6 +11,7 @@ from opsml import (
     PolarsData,
     PandasData,
     ArrowData,
+    TorchData,
 )
 import numpy as np
 import polars as pl
@@ -18,6 +19,7 @@ import pyarrow as pa  # type: ignore
 from numpy.typing import NDArray
 from pathlib import Path
 import pytest
+import torch
 
 
 def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
@@ -203,6 +205,35 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     assert metadata.data_type == DataType.Arrow
     assert interface.feature_map["n_legs"].feature_type == "int64"
     assert interface.feature_map["animals"].feature_type == "string"
+
+    # set data to none
+    interface.data = None
+
+    assert interface.data is None
+
+    interface.load_data(path=save_path)
+
+    assert interface.data is not None
+
+    with pytest.raises(OpsmlError):
+        interface.data = 10
+
+
+def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
+    interface = TorchData(data=torch_tensor)
+
+    assert interface.data is not None
+    assert interface.data_type == DataType.TorchTensor
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+    assert interface.sql_logic is not None
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    metadata = interface.save(path=save_path)
+
+    assert metadata.data_type == DataType.TorchTensor
 
     # set data to none
     interface.data = None

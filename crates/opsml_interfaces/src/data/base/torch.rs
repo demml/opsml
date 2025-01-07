@@ -101,7 +101,7 @@ impl TorchData {
         let full_save_path = path.join(&save_path);
 
         let torch = py.import("torch")?;
-        let args = (full_save_path, &parent.data);
+        let args = (&parent.data, full_save_path);
 
         // Save the data using joblib
         torch
@@ -138,7 +138,7 @@ impl TorchData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
 
         let numpy = PyModule::import(py, "torch")?;
 

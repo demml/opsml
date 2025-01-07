@@ -1861,6 +1861,78 @@ class ArrowData(DataInterface):
             https://arrow.apache.org/docs/python/generated/pyarrow.parquet.read_table.html
         """
 
+class TorchData(DataInterface):
+    def __init__(
+        self,
+        data: Optional[Any] = None,
+        data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
+        dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
+        feature_map: Optional[FeatureMap] = None,
+        sql_logic: Optional[SqlLogic] = None,
+    ) -> None:
+        """Define a data interface
+
+        Args:
+             data (torch.Tensor | None):
+                Torch tensor
+            dependent_vars (DependentVars | List[str] | List[int] | None):
+                List of dependent variables to associate with data
+            data_splits (DataSplits | List[DataSplit]):
+                Optional list of `DataSplit`
+            feature_map (FeatureMap | None):
+                Dictionary of features -> automatically generated
+            sql_logic (SqlLogic | None):
+                Sql logic used to generate data represented as a dictionary.
+                Key is the name to assign to the sql logic and value is either a sql query
+                or a path to a .sql file.
+        """
+
+    def save_data(self, path: Path, **kwargs) -> Path:
+        """Saves torch tensor to a file
+
+        Args:
+            path:
+                Base path to save the data to
+
+        Kwargs:
+            pickle_module (Any):
+                Module used for pickling metadata and objects.
+            pickle_protocol (int):
+                Can be specified to override the default protocol.
+
+
+        Additional Information:
+           https://pytorch.org/docs/main/generated/torch.save.html
+        """
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """Load the torch tensor from file
+
+        Args:
+            path:
+                Base path to load the data from
+
+        Kwargs:
+            map_location:
+                A function, torch.device, string or a dict specifying how to remap storage locations.
+            pickle_module:
+                Module used for unpickling metadata and objects (has to match the pickle_module used to serialize file).
+            weights_only:
+                Indicates whether unpickler should be restricted to loading only tensors, primitive types, dictionaries and any types added via torch.serialization.add_safe_globals().
+            mmap:
+                Indicates whether the file should be mmaped rather than loading all the storages into memory.
+                Typically, tensor storages in the file will first be moved from disk to CPU memory,
+                after which they are moved to the location that they were tagged with when saving, or specified by map_location.
+                This second step is a no-op if the final location is CPU. When the mmap flag is set,
+                instead of copying the tensor storages from disk to CPU memory in the first step, f is mmaped.
+            pickle_load_args:
+                (Python 3 only) optional keyword arguments passed over to pickle_module.load() and pickle_module.Unpickler(), e.g., errors=....
+
+
+        Additional Information:
+            https://pytorch.org/docs/stable/generated/torch.load.html
+        """
+
 class SqlData:
     data_type: DataType
 
