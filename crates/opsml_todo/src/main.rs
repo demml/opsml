@@ -6,8 +6,7 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use tabled::settings::object::{Columns, Rows};
-use tabled::settings::Alignment;
-use tabled::settings::{format::Format, Color, Style, Width};
+use tabled::settings::{format::Format, Alignment, Color, Style, Width};
 use tabled::{Table, Tabled};
 use walkdir::WalkDir;
 
