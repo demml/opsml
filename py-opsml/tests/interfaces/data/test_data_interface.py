@@ -146,6 +146,9 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
 
     assert interface.data is not None
 
+    with pytest.raises(OpsmlError):
+        interface.data = 10
+
 
 def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: Path):
     interface = PandasData(data=pandas_mixed_type_dataframe)
@@ -179,6 +182,9 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: P
             interface.data.dtypes.iloc[i] == pandas_mixed_type_dataframe.dtypes.iloc[i]
         )
 
+    with pytest.raises(OpsmlError):
+        interface.data = 10
+
 
 def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     interface = ArrowData(data=arrow_dataframe)
@@ -206,3 +212,6 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     interface.load_data(path=save_path)
 
     assert interface.data is not None
+
+    with pytest.raises(OpsmlError):
+        interface.data = 10

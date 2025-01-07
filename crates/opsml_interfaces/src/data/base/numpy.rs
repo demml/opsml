@@ -62,11 +62,11 @@ impl NumpyData {
     #[setter]
     pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
-        let base = self_.as_super();
+        let parent = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            base.data = py.None();
+            parent.data = py.None();
             return Ok(());
         } else {
             // check if data is a numpy array
@@ -75,7 +75,7 @@ impl NumpyData {
 
             // check if data is a numpy array
             if data.is_instance(&numpy).unwrap() {
-                base.data = data.into_py_any(py)?;
+                parent.data = data.into_py_any(py)?;
                 return Ok(());
             } else {
                 return Err(OpsmlError::new_err("Data must be a numpy array"));
@@ -90,8 +90,8 @@ impl NumpyData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let base = self_.as_super();
-        if base.data.is_none(py) {
+        let parent = self_.as_super();
+        if parent.data.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -101,7 +101,7 @@ impl NumpyData {
         let full_save_path = path.join(&save_path);
 
         let numpy = py.import("numpy")?;
-        let args = (full_save_path, &base.data);
+        let args = (full_save_path, &parent.data);
 
         // Save the data using joblib
         numpy
