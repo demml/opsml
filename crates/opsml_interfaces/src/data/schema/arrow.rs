@@ -1,4 +1,4 @@
-use crate::types::{Feature, FeatureMap};
+use crate::types::{FeatureSchema, SchemaFeature};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
@@ -7,7 +7,7 @@ pub struct ArrowSchemaValidator {}
 impl ArrowSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
-    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
+    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
         let schema = data.getattr("schema")?;
 
         let schema_names = schema.getattr("names")?.extract::<Vec<String>>()?;
@@ -28,10 +28,10 @@ impl ArrowSchemaValidator {
 
                 Ok((
                     name.to_string(),
-                    Feature::new(data_type.to_string(), data_shape, None),
+                    SchemaFeature::new(data_type.to_string(), data_shape, None),
                 ))
             })
-            .collect::<Result<FeatureMap, PyErr>>()?;
+            .collect::<Result<FeatureSchema, PyErr>>()?;
 
         Ok(feature_map)
     }

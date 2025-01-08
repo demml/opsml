@@ -1,24 +1,17 @@
 use crate::data::{
-    self, generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits,
-    DependentVars, SqlLogic,
+    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
+    SqlLogic,
 };
-use crate::types::FeatureMap;
+use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, InterfaceType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
-use scouter_client::DataProfile;
+use scouter_client::{DataProfile, DataProfiler};
 use std::collections::HashMap;
 use std::path::PathBuf;
-
-// Design choice: DataInterface is to be used as a base class for all data interfaces
-// However, do to the (at times) cumbersome nature of using the super struct in a child struct,
-// many subclassed DataInterfaces will re-implement the same methods. While it increases code duplication in some spots,
-// we believe it makes the code easier to reason about. As with all decisions, this can be revisited if it becomes a problem.
-
-//TODO: add data_profile
 
 #[pyclass(subclass)]
 pub struct DataInterface {
@@ -32,7 +25,7 @@ pub struct DataInterface {
     pub dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
-    pub feature_map: FeatureMap,
+    pub feature_map: FeatureSchema,
 
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
@@ -57,7 +50,7 @@ impl DataInterface {
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureMap>,
+        feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> PyResult<Self> {
@@ -118,7 +111,7 @@ impl DataInterface {
             sql_logic,
             data_type: DataType::Base,
             interface_type: InterfaceType::Data,
-            data_profile,
+            data_profile: data_profile,
         })
     }
 
@@ -213,7 +206,7 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureMap> {
+    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
         // Create and insert the feature
         let feature_map = generate_feature_schema(&self.data.bind(py), &self.data_type)?;
 
@@ -340,14 +333,37 @@ impl DataInterface {
             .split_data(self.data.bind(py), &self.data_type, &dependent_vars)
     }
 
+    #[pyo3(signature = (bin_size=20, compute_correlations=false))]
     pub fn create_data_profile(
         &mut self,
         py: Python,
         bin_size: Option<usize>,
         compute_correlations: Option<bool>,
     ) -> PyResult<DataProfile> {
-        let data_profile = DataProfile::new();
-        self.data_profile = Some(data_profile.clone());
-        Ok(data_profile)
+        let mut profiler = DataProfiler::new();
+
+        // get ScouterDataType from opsml DataType
+
+        let data_type = match self.data_type {
+            DataType::Numpy => Some(&scouter_client::DataType::Numpy),
+            DataType::Pandas => Some(&scouter_client::DataType::Pandas),
+            DataType::Polars => Some(&scouter_client::DataType::Polars),
+            DataType::Arrow => Some(&scouter_client::DataType::Arrow),
+            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+        };
+
+        println!("Data type: {:?}", data_type);
+        println!("Data: {:?}", self.data.bind(py));
+
+        let profile = profiler.create_data_profile(
+            &self.data.bind(py),
+            data_type,
+            bin_size,
+            compute_correlations,
+        )?;
+
+        self.data_profile = Some(profile.clone());
+
+        Ok(profile)
     }
 }

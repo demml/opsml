@@ -1,4 +1,4 @@
-use crate::types::FeatureMap;
+use crate::types::FeatureSchema;
 
 use crate::data::schema::arrow::ArrowSchemaValidator;
 use crate::data::schema::numpy::NumpySchemaValidator;
@@ -12,7 +12,7 @@ use pyo3::prelude::*;
 pub fn generate_feature_schema(
     data: &Bound<'_, PyAny>,
     data_type: &DataType,
-) -> PyResult<FeatureMap> {
+) -> PyResult<FeatureSchema> {
     let feature_map = match data_type {
         DataType::Polars => PolarsSchemaValidator::generate_feature_map(data)?,
         DataType::Numpy => NumpySchemaValidator::generate_feature_map(data)?,
@@ -20,7 +20,7 @@ pub fn generate_feature_schema(
         DataType::Arrow => ArrowSchemaValidator::generate_feature_map(data)?,
         DataType::TorchTensor => TorchTensorSchemaValidator::generate_feature_map(data)?,
 
-        _ => FeatureMap::new(None),
+        _ => FeatureSchema::new(None),
     };
     Ok(feature_map)
 }

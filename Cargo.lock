@@ -2585,15 +2585,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2930,7 +2921,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17ebbe97acce52d06aebed4cd4a87c0941f4b2519b59b82b4feb5bd0ce003dfd"
 dependencies = [
  "indexmap 2.7.0",
- "itertools 0.13.0",
+ "itertools",
  "ndarray",
  "noisy_float",
  "num-integer",
@@ -3824,6 +3815,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
+ "scouter-client",
 ]
 
 [[package]]
@@ -4440,7 +4432,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "ndarray",
  "ndarray-stats",
@@ -4453,12 +4445,13 @@ dependencies = [
  "scouter-observability",
  "scouter-profile",
  "scouter-types",
+ "tracing",
 ]
 
 [[package]]
 name = "scouter-contracts"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "chrono",
  "scouter-types",
@@ -4469,7 +4462,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "futures",
  "pyo3",
@@ -4484,12 +4477,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4510,7 +4503,7 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "pyo3",
  "serde",
@@ -4520,9 +4513,9 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4537,11 +4530,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4559,7 +4552,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git#7948ef57224cf758b0d6b271657e282dc52b9b93"
+source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
 dependencies = [
  "chrono",
  "colored_json",

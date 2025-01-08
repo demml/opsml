@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct Feature {
+pub struct SchemaFeature {
     #[pyo3(get, set)]
     feature_type: String,
     #[pyo3(get, set)]
@@ -16,7 +16,7 @@ pub struct Feature {
 }
 
 #[pymethods]
-impl Feature {
+impl SchemaFeature {
     #[new]
     #[pyo3(signature = (feature_type, shape, extra_args=None))]
     pub fn new(
@@ -24,7 +24,7 @@ impl Feature {
         shape: Vec<usize>,
         extra_args: Option<HashMap<String, String>>,
     ) -> Self {
-        Feature {
+        SchemaFeature {
             feature_type,
             shape,
             extra_args: extra_args.unwrap_or_default(),
@@ -39,17 +39,17 @@ impl Feature {
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct FeatureMap {
+pub struct FeatureSchema {
     #[pyo3(get, set)]
-    pub map: HashMap<String, Feature>,
+    pub map: HashMap<String, SchemaFeature>,
 }
 
 #[pymethods]
-impl FeatureMap {
+impl FeatureSchema {
     #[new]
     #[pyo3(signature = (map=None))]
-    pub fn new(map: Option<HashMap<String, Feature>>) -> Self {
-        FeatureMap {
+    pub fn new(map: Option<HashMap<String, SchemaFeature>>) -> Self {
+        FeatureSchema {
             map: map.unwrap_or_default(),
         }
     }
@@ -59,7 +59,7 @@ impl FeatureMap {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn __getitem__(&self, key: &str) -> PyResult<Feature> {
+    pub fn __getitem__(&self, key: &str) -> PyResult<SchemaFeature> {
         match self.map.get(key) {
             Some(value) => Ok(value.clone()),
             None => Err(OpsmlError::new_err(format!(
@@ -70,13 +70,13 @@ impl FeatureMap {
     }
 }
 
-impl FromIterator<(String, Feature)> for FeatureMap {
-    fn from_iter<I: IntoIterator<Item = (String, Feature)>>(iter: I) -> Self {
+impl FromIterator<(String, SchemaFeature)> for FeatureSchema {
+    fn from_iter<I: IntoIterator<Item = (String, SchemaFeature)>>(iter: I) -> Self {
         let mut map = HashMap::new();
         for (key, value) in iter {
             map.insert(key, value);
         }
-        FeatureMap { map }
+        FeatureSchema { map }
     }
 }
 

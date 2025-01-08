@@ -1,5 +1,7 @@
 from pathlib import Path
-from typing import Any, Dict, List, NewType, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple
+from numpy.typing import NDArray
+import datetime
 
 # shared
 class CommonKwargs:
@@ -324,7 +326,7 @@ class TorchSaveArgs:
                 Whether to save the model as a state dict. Default is False
         """
 
-class Feature:
+class SchemaFeature:
     feature_type: str
     shape: List[int]
     extra_args: Dict[str, str]
@@ -353,8 +355,8 @@ class Feature:
             String representation of the Feature.
         """
 
-class FeatureMap:
-    def __init__(self, map: Optional[dict[str, Feature]] = None) -> None:
+class FeatureSchema:
+    def __init__(self, map: Optional[dict[str, SchemaFeature]] = None) -> None:
         """Define a feature map
 
         Args:
@@ -363,20 +365,20 @@ class FeatureMap:
         """
 
     def __str__(self) -> str:
-        """Return a string representation of the FeatureMap."""
+        """Return a string representation of the FeatureSchema."""
 
-    def __getitem__(self, key: str) -> Feature:
+    def __getitem__(self, key: str) -> SchemaFeature:
         """Returns the feature at the given key."""
 
 class OnnxSchema:
-    input_features: dict[str, Feature]
-    output_features: dict[str, Feature]
+    input_features: FeatureSchema
+    output_features: FeatureSchema
     onnx_version: str
 
     def __init__(
         self,
-        input_features: dict[str, Feature],
-        output_features: dict[str, Feature],
+        input_features: FeatureSchema,
+        output_features: FeatureSchema,
         onnx_version: str,
     ) -> None:
         """Define an onnx schema
@@ -399,15 +401,15 @@ class OnnxSchema:
 
 class DataSchema:
     data_type: str
-    input_features: Optional[dict[str, Feature]]
-    output_features: Optional[dict[str, Feature]]
+    input_features: Optional[FeatureSchema]
+    output_features: Optional[FeatureSchema]
     onnx_schema: Optional[OnnxSchema]
 
     def __init__(
         self,
         data_type: str,
-        input_features: Optional[dict[str, Feature]] = None,
-        output_features: Optional[dict[str, Feature]] = None,
+        input_features: Optional[FeatureSchema] = None,
+        output_features: Optional[FeatureSchema] = None,
         onnx_schema: Optional[OnnxSchema] = None,
     ) -> None:
         """Define a data schema
@@ -536,7 +538,7 @@ class ModelInterfaceMetadata:
     model_type: str
     data_type: str
     modelcard_uid: str
-    feature_map: dict[str, Feature]
+    feature_map: FeatureSchema
     sample_data_interface_type: str
     save_metadata: ModelDataInterfaceSaveMetadata
     extra_metadata: dict[str, str]
@@ -567,7 +569,7 @@ class SklearnModelInterfaceMetadata(ModelInterfaceMetadata):
         model_type: str,
         data_type: str,
         modelcard_uid: str,
-        feature_map: dict[str, Feature],
+        feature_map: FeatureSchema,
         sample_data_interface_type: str,
         preprocessor_name: str,
         metadata: Optional[dict[str, str]] = None,
@@ -627,7 +629,7 @@ class HuggingFaceModelInterfaceMetadata(SklearnModelInterfaceMetadata):
         model_type: str,
         data_type: str,
         modelcard_uid: str,
-        feature_map: dict[str, Feature],
+        feature_map: FeatureSchema,
         sample_data_interface_type: str,
         preprocessor_name: str,
         is_pipeline: bool,
@@ -679,7 +681,7 @@ class LightningInterfaceMetadata(SklearnModelInterfaceMetadata):
         model_type: str,
         data_type: str,
         modelcard_uid: str,
-        feature_map: dict[str, Feature],
+        feature_map: FeatureSchema,
         sample_data_interface_type: str,
         preprocessor_name: str,
         onnx_args: Optional[TorchOnnxArgs] = None,
@@ -718,7 +720,7 @@ class TorchInterfaceMetadata(SklearnModelInterfaceMetadata):
         model_type: str,
         data_type: str,
         modelcard_uid: str,
-        feature_map: dict[str, Feature],
+        feature_map: FeatureSchema,
         sample_data_interface_type: str,
         preprocessor_name: str,
         onnx_args: Optional[TorchOnnxArgs] = None,
@@ -761,7 +763,7 @@ class VowpalWabbitInterfaceMetadata(ModelInterfaceMetadata):
         model_type: str,
         data_type: str,
         modelcard_uid: str,
-        feature_map: dict[str, Feature],
+        feature_map: FeatureSchema,
         arguments: str,
         sample_data_interface_type: str,
         metadata: Optional[dict[str, str]] = None,
@@ -1256,7 +1258,7 @@ class DataInterface:
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1305,11 +1307,11 @@ class DataInterface:
         """Sets the dependent variables"""
 
     @property
-    def feature_map(self) -> FeatureMap:
+    def feature_map(self) -> FeatureSchema:
         """Returns the feature map."""
 
     @feature_map.setter
-    def feature_map(self, feature_map: FeatureMap) -> None:
+    def feature_map(self, feature_map: FeatureSchema) -> None:
         """Sets the feature map"""
 
     @property
@@ -1345,7 +1347,7 @@ class DataInterface:
                 The path to save the sql logic to
         """
 
-    def create_feature_map(self, name: str) -> FeatureMap:
+    def create_feature_map(self, name: str) -> FeatureSchema:
         """Save the sql logic to a file
 
         Args:
@@ -1367,7 +1369,7 @@ class DataInterface:
 
         Methods called in save:
             - save_sql: Saves all sql logic to files(s)
-            - create_feature_map: Creates a featuremap from the associated data
+            - create_feature_map: Creates a FeatureSchema from the associated data
             - save_data: Saves the data to a file
 
         Args:
@@ -1390,10 +1392,27 @@ class DataInterface:
         Returns:
             A dictionary of data splits
         """
+    def create_data_profile(
+        self,
+        bin_size: Optional[int] = 20,
+        compute_correlations: Optional[bool] = False,
+    ) -> Any:
+        """Create a data profile
+
+
+        Args:
+            bin_size:
+                The bin size for the data profile
+            compute_correlations:
+                Whether to compute correlations
+        """
+
+    @property
+    def data_profile(self) -> Optional[Any]: ...
 
 class DataInterfaceSaveMetadata:
     data_type: DataType
-    feature_map: FeatureMap
+    feature_map: FeatureSchema
     data_save_path: Path
     sql_save_path: Optional[Path]
     data_profile_save_path: Optional[Path]
@@ -1401,7 +1420,7 @@ class DataInterfaceSaveMetadata:
     def __init__(
         self,
         data_type: DataType,
-        feature_map: FeatureMap,
+        feature_map: FeatureSchema,
         data_save_path: Path,
         data_profile_save_path: Optional[Path] = None,
     ) -> None:
@@ -1424,7 +1443,7 @@ class NumpyData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1468,7 +1487,7 @@ class NumpyData(DataInterface):
 
         Methods called in save:
             - save_sql: Saves all sql logic to files(s)
-            - create_feature_map: Creates a featuremap from the associated data
+            - create_feature_map: Creates a FeatureSchema from the associated data
             - save_data: Saves the data to a file
 
         Args:
@@ -1506,7 +1525,7 @@ class PolarsData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1518,7 +1537,7 @@ class PolarsData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureMap | None):
+            feature_map (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
@@ -1626,7 +1645,7 @@ class PandasData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1638,7 +1657,7 @@ class PandasData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureMap | None):
+            feature_map (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
@@ -1729,7 +1748,7 @@ class ArrowData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1741,7 +1760,7 @@ class ArrowData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureMap | None):
+            feature_map (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
@@ -1867,7 +1886,7 @@ class TorchData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureMap] = None,
+        feature_map: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
     ) -> None:
         """Define a data interface
@@ -1879,7 +1898,7 @@ class TorchData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureMap | None):
+            feature_map (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
@@ -1952,7 +1971,7 @@ class SqlData:
                 The path to save the sql logic to
         """
 
-def generate_feature_schema(data: Any, data_type: DataType) -> FeatureMap:
+def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
     """Generate a feature schema
 
     Args:
@@ -1975,7 +1994,7 @@ class DataCardMetadata:
         """Return the data type"""
 
     @property
-    def feature_map(self) -> FeatureMap:
+    def feature_map(self) -> FeatureSchema:
         """Return the feature map"""
 
     @property

@@ -1,5 +1,5 @@
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
-use crate::types::FeatureMap;
+use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use pyo3::prelude::*;
@@ -19,7 +19,7 @@ impl SqlData {
     fn new(py: Python, sql_logic: SqlLogic) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
 
-        let data_interface = DataInterface::new(py, None, None, None, None, Some(sql_logic))?;
+        let data_interface = DataInterface::new(py, None, None, None, None, Some(sql_logic), None)?;
 
         Ok((
             SqlData {
@@ -50,7 +50,7 @@ impl SqlData {
         // need to implement save logic for SqlLogic
         Ok(DataInterfaceSaveMetadata {
             data_type: self_.data_type.clone(),
-            feature_map: FeatureMap::default(),
+            feature_map: FeatureSchema::default(),
             data_save_path: None,
             sql_save_path: sql_save_path,
             data_profile_save_path: None,

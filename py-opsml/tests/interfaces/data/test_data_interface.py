@@ -20,6 +20,7 @@ from numpy.typing import NDArray
 from pathlib import Path
 import pytest
 import torch
+import pandas as pd
 
 
 def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
@@ -152,7 +153,7 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
         interface.data = 10
 
 
-def test_pandas_interface(pandas_mixed_type_dataframe: pl.DataFrame, tmp_path: Path):
+def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: Path):
     interface = PandasData(data=pandas_mixed_type_dataframe)
 
     assert interface.data is not None
@@ -246,3 +247,8 @@ def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
 
     with pytest.raises(OpsmlError):
         interface.data = 10
+
+
+def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
+    interface = PandasData(data=pandas_dataframe_profile)
+    data_profile = interface.create_data_profile()

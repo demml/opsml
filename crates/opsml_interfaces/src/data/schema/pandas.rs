@@ -1,4 +1,4 @@
-use crate::types::{Feature, FeatureMap};
+use crate::types::{SchemaFeature, FeatureSchema};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -7,7 +7,7 @@ pub struct PandasSchemaValidator {}
 impl PandasSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
-    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureMap> {
+    pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
         let columns = data.getattr("dtypes")?.call_method0("to_dict")?;
         let columns = columns.downcast::<PyDict>()?;
 
@@ -17,9 +17,12 @@ impl PandasSchemaValidator {
                 let data_type = value.str()?.to_string();
                 let data_shape = vec![1];
 
-                Ok((key.to_string(), Feature::new(data_type, data_shape, None)))
+                Ok((
+                    key.to_string(),
+                    SchemaFeature::new(data_type, data_shape, None),
+                ))
             })
-            .collect::<Result<FeatureMap, PyErr>>()?;
+            .collect::<Result<FeatureSchema, PyErr>>()?;
 
         Ok(feature_map)
     }
