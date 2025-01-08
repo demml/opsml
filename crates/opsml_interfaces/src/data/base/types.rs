@@ -1,4 +1,4 @@
-use crate::types::FeatureMap;
+use crate::types::FeatureSchema;
 use opsml_error::{OpsmlError, SaveError};
 use opsml_types::DataType;
 use opsml_types::{SaveName, Suffix};
@@ -160,7 +160,7 @@ pub struct DataInterfaceSaveMetadata {
     pub data_type: DataType,
 
     #[pyo3(get)]
-    pub feature_map: FeatureMap,
+    pub feature_map: FeatureSchema,
 
     #[pyo3(get)]
     pub data_save_path: Option<PathBuf>,
@@ -178,7 +178,7 @@ impl DataInterfaceSaveMetadata {
     #[pyo3(signature = (data_type, feature_map, data_save_path=None, sql_save_path=None, data_profile_save_path=None))]
     pub fn new(
         data_type: DataType,
-        feature_map: FeatureMap,
+        feature_map: FeatureSchema,
         data_save_path: Option<PathBuf>,
         sql_save_path: Option<PathBuf>,
         data_profile_save_path: Option<PathBuf>,

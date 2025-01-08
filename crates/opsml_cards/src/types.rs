@@ -1,6 +1,7 @@
 use opsml_error::error::CardError;
 use opsml_error::OpsmlError;
-use opsml_interfaces::types::Feature;
+use opsml_interfaces::types::SchemaFeature;
+use opsml_interfaces::FeatureSchema;
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -102,10 +103,10 @@ impl Description {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct OnnxSchema {
     #[pyo3(get, set)]
-    pub input_features: HashMap<String, Feature>,
+    pub input_features: HashMap<String, SchemaFeature>,
 
     #[pyo3(get, set)]
-    pub output_features: HashMap<String, Feature>,
+    pub output_features: HashMap<String, SchemaFeature>,
 
     #[pyo3(get, set)]
     pub onnx_version: String,
@@ -116,8 +117,8 @@ impl OnnxSchema {
     #[new]
     #[pyo3(signature = (input_features, output_features, onnx_version))]
     fn new(
-        input_features: HashMap<String, Feature>,
-        output_features: HashMap<String, Feature>,
+        input_features: HashMap<String, SchemaFeature>,
+        output_features: HashMap<String, SchemaFeature>,
         onnx_version: String,
     ) -> Self {
         OnnxSchema {
@@ -139,10 +140,10 @@ pub struct DataSchema {
     pub data_type: String,
 
     #[pyo3(get, set)]
-    pub input_features: Option<HashMap<String, Feature>>,
+    pub input_features: Option<FeatureSchema>,
 
     #[pyo3(get, set)]
-    pub output_features: Option<HashMap<String, Feature>>,
+    pub output_features: Option<FeatureSchema>,
 
     #[pyo3(get, set)]
     pub onnx_schema: Option<OnnxSchema>,
@@ -154,8 +155,8 @@ impl DataSchema {
     #[pyo3(signature = (data_type, input_features=None, output_features=None, onnx_schema=None))]
     fn new(
         data_type: String,
-        input_features: Option<HashMap<String, Feature>>,
-        output_features: Option<HashMap<String, Feature>>,
+        input_features: Option<FeatureSchema>,
+        output_features: Option<FeatureSchema>,
         onnx_schema: Option<OnnxSchema>,
     ) -> Self {
         DataSchema {

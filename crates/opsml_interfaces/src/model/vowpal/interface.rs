@@ -1,4 +1,4 @@
-use crate::Feature;
+use crate::FeatureSchema;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ pub struct VowpalWabbitInterfaceMetadata {
     #[pyo3(get)]
     pub modelcard_uid: String,
     #[pyo3(get)]
-    pub feature_map: HashMap<String, Feature>,
+    pub feature_map: FeatureSchema,
     #[pyo3(get)]
     pub arguments: String,
     #[pyo3(get)]
@@ -34,7 +34,7 @@ impl VowpalWabbitInterfaceMetadata {
         model_type: String,
         data_type: String,
         modelcard_uid: String,
-        feature_map: HashMap<String, Feature>,
+        feature_map: FeatureSchema,
         arguments: String,
         sample_data_interface_type: String,
         metadata: Option<HashMap<String, String>>,

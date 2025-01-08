@@ -65,6 +65,18 @@ def numpy_array() -> NDArray[np.float64]:
     return array
 
 
+@pytest.fixture
+def pandas_dataframe_profile(numpy_array: NDArray) -> pd.DataFrame:
+    df = pd.DataFrame(numpy_array)
+
+    # change column names
+    df.rename(columns={0: "column_0", 1: "column_1", 2: "column_2"}, inplace=True)
+
+    df.columns = df.columns.astype(str)
+
+    return df
+
+
 # create a multi-type polars dataframe
 @pytest.fixture
 def multi_type_polars_dataframe() -> pl.DataFrame:

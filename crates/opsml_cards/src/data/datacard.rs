@@ -1,7 +1,7 @@
 use crate::{BaseArgs, CardInfo, CardTable, CardType, Description};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
-use opsml_interfaces::Feature;
+use opsml_interfaces::FeatureSchema;
 use opsml_types::{DataType, InterfaceType};
 use pyo3::types::PyDict;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -19,7 +19,7 @@ pub struct DataCardMetadata {
     pub description: Description,
 
     #[pyo3(get, set)]
-    pub feature_map: HashMap<String, Feature>,
+    pub feature_map: FeatureSchema,
 
     #[pyo3(get, set)]
     pub runcard_uid: Option<String>,
@@ -39,7 +39,7 @@ impl DataCardMetadata {
     pub fn new(
         data_type: DataType,
         description: Option<Description>,
-        feature_map: Option<HashMap<String, Feature>>,
+        feature_map: Option<FeatureSchema>,
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,

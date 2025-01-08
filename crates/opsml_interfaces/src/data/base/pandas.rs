@@ -1,10 +1,11 @@
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
-use crate::types::FeatureMap;
+use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use scouter_client::DataProfile;
 use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
@@ -14,14 +15,15 @@ pub struct PandasData {}
 impl PandasData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
     fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureMap>,
+        feature_map: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
+        data_profile: Option<DataProfile>,
     ) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
         let data = match data {
@@ -47,6 +49,7 @@ impl PandasData {
             dependent_vars,
             feature_map,
             sql_logic,
+            data_profile,
         )?;
 
         data_interface.data_type = DataType::Pandas;
