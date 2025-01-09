@@ -402,6 +402,14 @@ mod tests {
         key
     }
 
+    pub fn set_env_vars() {
+        std::env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:3000");
+    }
+
+    pub fn unset_env_vars() {
+        std::env::remove_var("OPSML_TRACKING_URI");
+    }
+
     #[tokio::test]
     async fn test_gcs_storage_client() {
         let config = OpsmlConfig::new(Some(true));
@@ -544,6 +552,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_local_storage_client() {
+        set_env_vars();
+
         let config = OpsmlConfig::new(Some(true));
 
         let mut client = FileSystemStorage::new(&mut config.storage_settings())
@@ -600,5 +610,7 @@ mod tests {
         // opsml_registries is 2 directories up
         let path = current_dir.join("../../opsml_registries");
         std::fs::remove_dir_all(&path).unwrap();
+
+        unset_env_vars();
     }
 }

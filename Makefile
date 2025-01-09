@@ -6,6 +6,7 @@ format:
 lints:
 	cargo clippy --workspace --all-targets -- -D warnings
 
+####### SQL tests
 .PHONY: test.sql.sqlite
 test.sql.sqlite:
 	cargo test -p opsml-sql test_sqlite -- --nocapture --test-threads=1
@@ -36,6 +37,29 @@ test.sql.mysql: build.mysql
 
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
+
+######## Server tests
+
+.PHONE: build.server
+build.server:
+	cargo build -p opsml-server
+	./target/debug/opsml-server &
+
+
+.PHONE: stop.server
+stop.server:
+	lsof -ti:3000 | xargs kill -9
+
+######## Storage tests
+.PHONY: test.storage.client
+test.storage.client:
+	cargo test -p opsml-storage test_local_storage_client -- --nocapture
+
+.PHONY: test.storage.local.server
+test.storage.local.server:
+	cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
+
+
 
 
 .PHONY: test.utils
