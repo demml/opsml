@@ -12,7 +12,7 @@ impl NumpySchemaValidator {
         let data_type = data.getattr("dtype")?.str()?.to_string();
         let data_shape = data.getattr("shape")?.extract::<Vec<usize>>()?;
 
-        feature_map.map.insert(
+        feature_map.items.insert(
             "numpy_array".to_string(),
             Feature::new(data_type.to_string(), data_shape, None),
         );

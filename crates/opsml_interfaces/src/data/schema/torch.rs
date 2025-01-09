@@ -11,7 +11,7 @@ impl TorchTensorSchemaValidator {
         let data_type = data.getattr("dtype")?.str()?.to_string();
         let mut feature_map = FeatureSchema::new(None);
 
-        feature_map.map.insert(
+        feature_map.items.insert(
             "torch_tensor".to_string(),
             Feature::new(data_type, shape, None),
         );

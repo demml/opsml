@@ -41,16 +41,16 @@ impl Feature {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct FeatureSchema {
     #[pyo3(get, set)]
-    pub map: HashMap<String, Feature>,
+    pub items: HashMap<String, Feature>,
 }
 
 #[pymethods]
 impl FeatureSchema {
     #[new]
-    #[pyo3(signature = (map=None))]
-    pub fn new(map: Option<HashMap<String, Feature>>) -> Self {
+    #[pyo3(signature = (items=None))]
+    pub fn new(items: Option<HashMap<String, Feature>>) -> Self {
         FeatureSchema {
-            map: map.unwrap_or_default(),
+            items: items.unwrap_or_default(),
         }
     }
 
@@ -60,7 +60,7 @@ impl FeatureSchema {
     }
 
     pub fn __getitem__(&self, key: &str) -> PyResult<Feature> {
-        match self.map.get(key) {
+        match self.items.get(key) {
             Some(value) => Ok(value.clone()),
             None => Err(OpsmlError::new_err(format!(
                 "KeyError: key '{}' not found in FeatureMap",
@@ -72,11 +72,11 @@ impl FeatureSchema {
 
 impl FromIterator<(String, Feature)> for FeatureSchema {
     fn from_iter<I: IntoIterator<Item = (String, Feature)>>(iter: I) -> Self {
-        let mut map = HashMap::new();
+        let mut items = HashMap::new();
         for (key, value) in iter {
-            map.insert(key, value);
+            items.insert(key, value);
         }
-        FeatureSchema { map }
+        FeatureSchema { items }
     }
 }
 

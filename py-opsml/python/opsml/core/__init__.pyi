@@ -354,7 +354,7 @@ class Feature:
         """
 
 class FeatureSchema:
-    def __init__(self, map: Optional[dict[str, Feature]] = None) -> None:
+    def __init__(self, items: Optional[dict[str, Feature]] = None) -> None:
         """Define a feature map
 
         Args:
