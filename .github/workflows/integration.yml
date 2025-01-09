@@ -1,0 +1,186 @@
+# Integration tests for AWS, GCP and AZURE storage
+# AWS and AZURE use oidc method for authentication
+# GCP uses service account json file (workload identity provider does not currently support presigned urls in python)
+name: Storage Integration tests
+on:
+  push:
+    branches:
+      - main
+
+# permission can be added at job level or workflow level
+jobs:
+  AWS-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+        node-version: ["22.5.1"]
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: "${{ secrets.AWS_REGION }}"
+      AWS_S3_BUCKET: "${{ secrets.AWS_S3_BUCKET }}"
+      OPSML_STORAGE_URI: s3://${{ secrets.AWS_S3_BUCKET }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install poetry
+        run: pipx install poetry==${{ matrix.poetry-version }}
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make test.integration.aws
+
+  AZURE-Integration:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+        node-version: ["22.5.1"]
+    runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+      OPSML_STORAGE_URI: az://${{ secrets.AZURE_CONTAINER_NAME }}
+      AZURE_CONTAINER_NAME: ${{ secrets.AZURE_CONTAINER_NAME }}
+      AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build
+
+      - name: "Az CLI login"
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_STORAGE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_STORAGE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make test.integration.azure
+
+  GCS-Integration:
+    runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+      OPSML_GCS_BUCKET: ${{ secrets.OPSML_GCS_BUCKET }}
+      OPSML_STORAGE_URI: gs://${{ secrets.OPSML_GCS_BUCKET }}
+      GOOGLE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_ACCOUNT_JSON_BASE64 }}
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        node-version: ["22.5.1"]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build
+
+      # identity token doesn't work with python storage client and pre-signed urls
+      #- name: "Authenticate with Google Cloud"
+      #  id: auth
+      #  uses: google-github-actions/auth@v2
+      #  with:
+      #    project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #    workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      #    create_credentials_file: true
+      #    service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      #- name: Set up Cloud SDK
+      #  uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: |
+          make setup.install
+          make test.integration.gcp
