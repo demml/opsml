@@ -57,11 +57,12 @@ impl NumpyData {
     }
 
     #[getter]
-    pub fn get_data<'py>(self_: PyRef<'py, Self>, py: Python) -> PyObject {
+    pub fn get_data(self_: PyRef<'_, Self>, py: Python) -> PyObject {
         self_.as_super().data.clone_ref(py)
     }
 
     #[setter]
+    #[allow(clippy::needless_lifetimes)]
     pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
         let py = data.py();
         let parent = self_.as_super();
@@ -69,7 +70,7 @@ impl NumpyData {
         // check if data is None
         if PyAnyMethods::is_none(data) {
             parent.data = py.None();
-            return Ok(());
+            Ok(())
         } else {
             // check if data is a numpy array
             // get type name of data
@@ -78,11 +79,11 @@ impl NumpyData {
             // check if data is a numpy array
             if data.is_instance(&numpy).unwrap() {
                 parent.data = data.into_py_any(py)?;
-                return Ok(());
+                Ok(())
             } else {
-                return Err(OpsmlError::new_err("Data must be a numpy array"));
+                Err(OpsmlError::new_err("Data must be a numpy array"))
             }
-        };
+        }
     }
 
     #[pyo3(signature = (path, **kwargs))]
@@ -128,7 +129,7 @@ impl NumpyData {
             data_type: DataType::Numpy,
             feature_map: feature_map.clone(),
             data_save_path: Some(save_path),
-            sql_save_path: sql_save_path,
+            sql_save_path,
             data_profile_save_path: None,
         })
     }

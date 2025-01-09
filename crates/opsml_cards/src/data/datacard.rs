@@ -120,7 +120,7 @@ impl DataCard {
             .extract::<InterfaceType>()
             .map_err(|e| {
                 OpsmlError::new_err(
-                    format!("Invalid type passed to interface. Ensure class is a subclass of DataInterface. Error: {}", e.to_string())
+                    format!("Invalid type passed to interface. Ensure class is a subclass of DataInterface. Error: {}", e)
                 )
             })?;
 
@@ -130,7 +130,7 @@ impl DataCard {
             .map_err(|e| {
                 OpsmlError::new_err(format!(
                     "Error parsing data_type from interface. Error: {}",
-                    e.to_string()
+                    e
                 ))
             })?;
 
@@ -171,11 +171,11 @@ impl DataCard {
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save<'py>(
+    pub fn save(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<DataInterfaceSaveMetadata> {
         let args = (path,);
 
@@ -184,17 +184,11 @@ impl DataCard {
             .interface
             .call_method(py, "save", args, kwargs)
             .map_err(|e| {
-                OpsmlError::new_err(format!(
-                    "Error calling save method on interface: {}",
-                    e.to_string()
-                ))
+                OpsmlError::new_err(format!("Error calling save method on interface: {}", e))
             })?
             .extract::<DataInterfaceSaveMetadata>(py)
             .map_err(|e| {
-                OpsmlError::new_err(format!(
-                    "Error extracting metadata from interface: {}",
-                    e.to_string()
-                ))
+                OpsmlError::new_err(format!("Error extracting metadata from interface: {}", e))
             })?;
 
         Ok(metadata)

@@ -31,7 +31,7 @@ impl SqlData {
 
     #[allow(unused_variables)]
     #[setter]
-    fn set_data<'py>(&mut self, data: &Bound<'py, PyAny>) -> PyResult<()> {
+    fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         // this should return an error. Data cannot be set for SqlData
         Err(OpsmlError::new_err("Data cannot be set for SqlData"))
     }
@@ -52,18 +52,18 @@ impl SqlData {
             data_type: self_.data_type.clone(),
             feature_map: FeatureSchema::default(),
             data_save_path: None,
-            sql_save_path: sql_save_path,
+            sql_save_path,
             data_profile_save_path: None,
         })
     }
 
     #[allow(unused_variables)]
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
+    pub fn load_data(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         Ok(())
     }
