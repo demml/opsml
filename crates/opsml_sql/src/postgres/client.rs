@@ -996,15 +996,13 @@ mod tests {
     }
 
     pub fn db_config() -> DatabaseSettings {
-        let config = DatabaseSettings {
+        DatabaseSettings {
             connection_uri: env::var("OPSML_TRACKING_URI").unwrap_or_else(|_| {
                 "postgres://postgres:postgres@localhost:5432/postgres".to_string()
             }),
             max_connections: 1,
             sql_type: SqlType::Postgres,
-        };
-
-        config
+        }
     }
 
     pub async fn db_client() -> PostgresClient {
