@@ -1,0 +1,24 @@
+[package]
+name = "opsml-types"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+
+[dependencies]
+anyhow = { workspace = true }
+chrono = { workspace = true }
+colored_json = { workspace = true }
+opsml-colors = { workspace = true }
+opsml-error = { workspace = true }
+opsml-semver = { workspace = true }
+opsml-utils = { workspace = true }
+pyo3 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tabled = { workspace = true, features = ["ansi"] }
+walkdir = { workspace = true }
+

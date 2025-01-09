@@ -1,0 +1,16 @@
+[package]
+name = "opsml-interfaces"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+opsml-utils = { workspace = true }
+pyo3 = { workspace = true }
+scouter-client = { workspace = true }
+serde = { workspace = true }

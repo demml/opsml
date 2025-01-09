@@ -135,3 +135,4 @@ target/
 **/.DS_Store
 /opsml_registries
 local_test_db.db
+.git.bfg-report*

@@ -1,0 +1,14 @@
+[package]
+name = "opsml-semver"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+pyo3 = { workspace = true }
+semver = { workspace = true }
+serde = { workspace = true }

@@ -1,0 +1,189 @@
+name: OpsML Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+env:
+  RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
+
+jobs:
+  format-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run format
+        run: make format
+
+      - name: Run lints
+        run: make lints
+
+  test-sql:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Server tests
+        run: make test.sql
+
+  # this will run local client and server storage tests.
+  # Intergration tests will be run when prs are merged to main
+  test-storage:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Setup Server
+        run: make build.server
+
+      - name: Run client tests
+        run: make test.storage.client
+
+      - name: Shutdown Server
+        run: make stop.server
+
+      - name: Run server tests
+        run: make test.storage.server
+
+  test-server:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run server tests
+        run: make test.server
+
+  test-utils:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: make test.utils
+
+  test-python:
+    name: test ${{ matrix.os }}-${{ matrix.python-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    runs-on: ${{ matrix.os }}-latest
+    needs: [format-and-lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        working-directory: ./py-opsml
+        run: make setup.project
+
+      - name: Lints
+        working-directory: ./py-opsml
+        run: make lints.ci
+
+      - name: Run tests and report coverage
+        working-directory: ./py-opsml
+        run: make test.unit
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  test-python-windows:
+    name: test ${{ matrix.os }}-${{ matrix.python-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    runs-on: ${{ matrix.os }}-latest
+    needs: [format-and-lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        working-directory: ./py-opsml
+        run: make setup.project
+
+      - name: Run tests and report coverage
+        working-directory: ./py-opsml
+        run: make test.unit

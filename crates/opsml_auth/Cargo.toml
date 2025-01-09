@@ -1,0 +1,18 @@
+[package]
+name = "opsml-auth"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+password-auth = { workspace = true }
+jsonwebtoken = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+
+opsml-error = { workspace = true }
+opsml-sql = { workspace = true }
+ 

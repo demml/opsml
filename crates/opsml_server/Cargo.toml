@@ -1,0 +1,49 @@
+[package]
+name = "opsml-server"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Server for OpsML"
+license = "MIT"
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+axum = { workspace = true }
+axum-extra = { workspace = true }
+bytes = { workspace = true }
+futures = { workspace = true }
+opsml-auth = { workspace = true }
+opsml-client = { workspace = true }
+opsml-cards = { workspace = true }
+opsml-contracts = { workspace = true }
+opsml-colors = { workspace = true }
+opsml-logging = { workspace = true }
+opsml-registry = { workspace = true, features = ["server"] }
+opsml-semver = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-storage = { workspace = true }
+opsml-sql = { workspace = true }
+opsml-utils = { workspace = true }
+opsml-error = { workspace = true }
+opsml-types = { workspace = true }
+password-auth = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+semver = { workspace = true }
+sqlx = { workspace = true }
+tempfile = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+http-body-util = "0.*"
+mockall = "0.*"
+mockito = "1.*"
+rand = "0.8.5"
+serde_qs = "0.*"
+tower = { version = "0.4.13", features = ["util"] }
