@@ -27,5 +27,4 @@ serde_qs = { workspace = true }
 
 [dev-dependencies]
 mockito = "1.*"
-reqwest_mock = "0.*"
 tokio = { workspace = true }

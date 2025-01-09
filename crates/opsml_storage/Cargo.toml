@@ -49,5 +49,4 @@ walkdir = { workspace = true }
 mockall = "0.*"
 mockito = "1.*"
 rand = "0.8.5"
-reqwest_mock = "0.*"
 tempfile = "3.*"
