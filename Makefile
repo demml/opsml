@@ -66,13 +66,8 @@ test.utils:
 	cargo test -p opsml-utils -- --nocapture
 
 .PHONY: test.opsml.server
-test.opsml.server:
+test.server:
 	cargo test -p opsml-server test_opsml_server -- --nocapture --test-threads=1
-
-.PHONY: test.opsml.registry.client
-start.server:
-	cargo build -p opsml-server
-	./target/debug/opsml-server
 
 .PHONY: test.opsml.registry.client
 test.opsml.registry.client:

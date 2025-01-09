@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
-use opsml_error::error::{OpsmlError, UtilError};
+use opsml_error::error::UtilError;
+use opsml_error::RunError;
 use opsml_types::Suffix;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -157,18 +158,18 @@ impl RunGraph {
         x: Vec<f64>,
         y: Option<Vec<f64>>,
         y_group: Option<HashMap<String, Vec<f64>>>,
-    ) -> PyResult<Self> {
+    ) -> Result<Self, RunError> {
         // ensure that y_group and y are not both provided
         if y.is_some() && y_group.is_some() {
-            return Err(OpsmlError::new_err(
-                "y and y_group cannot both be provided. Provide only one.",
+            return Err(RunError::Error(
+                "y and y_group cannot both be provided. Provide only one.".to_string(),
             ));
         }
 
         let graph_type = if y.is_some() {
             // assert length of y matches length of x
             if y.as_ref().unwrap().len() != x.len() {
-                return Err(OpsmlError::new_err(format!(
+                return Err(RunError::Error(format!(
                     "Length of y must match length of x. Length of y: {}, Length of x: {}",
                     y.as_ref().unwrap().len(),
                     x.len()
@@ -179,7 +180,7 @@ impl RunGraph {
             // assert length of each member of y_group matches length of x
             for (group_name, group_values) in y_group.as_ref().unwrap() {
                 if group_values.len() != x.len() {
-                    return Err(OpsmlError::new_err(format!(
+                    return Err(RunError::Error(format!(
                         "Length of y_group values for group {} must match length of x. Length of y_group values: {}, Length of x: {}",
                         group_name,
                         group_values.len(),

@@ -67,4 +67,19 @@ jobs:
         run: make stop.server
 
       - name: Run server tests
-        run: make stop.server
+        run: make test.storage.server
+
+  test-server:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run server tests
+        run: make test.server
