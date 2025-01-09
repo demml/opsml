@@ -132,7 +132,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Create virtual environment
-        working-directory: ./py-scouter
+        working-directory: ./py-opsml
         run: make setup.project
 
       - name: Lints
