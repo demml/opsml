@@ -1034,14 +1034,12 @@ mod tests {
     }
 
     pub fn db_config() -> DatabaseSettings {
-        let config = DatabaseSettings {
+        DatabaseSettings {
             connection_uri: env::var("OPSML_TRACKING_URI")
                 .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/mysql".to_string()),
             max_connections: 1,
             sql_type: SqlType::MySql,
-        };
-
-        config
+        }
     }
 
     pub async fn db_client() -> MySqlClient {
