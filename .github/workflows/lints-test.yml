@@ -83,3 +83,18 @@ jobs:
 
       - name: Run server tests
         run: make test.server
+
+  test-utils:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: make test.utils
