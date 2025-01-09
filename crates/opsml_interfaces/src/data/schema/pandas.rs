@@ -1,4 +1,4 @@
-use crate::types::{SchemaFeature, FeatureSchema};
+use crate::types::{Feature, FeatureSchema};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -17,10 +17,7 @@ impl PandasSchemaValidator {
                 let data_type = value.str()?.to_string();
                 let data_shape = vec![1];
 
-                Ok((
-                    key.to_string(),
-                    SchemaFeature::new(data_type, data_shape, None),
-                ))
+                Ok((key.to_string(), Feature::new(data_type, data_shape, None)))
             })
             .collect::<Result<FeatureSchema, PyErr>>()?;
 

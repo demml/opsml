@@ -1,5 +1,8 @@
 import pytest
-from opsml import Feature
+
+from opsml.data import DataInterface
+# from opsml.core import SchemaFeature
+
 from opsml._opsml import RegistryTestHelper
 from typing import Tuple, Dict
 from pydantic import BaseModel
@@ -10,17 +13,19 @@ class MockInterface(BaseModel):
 
 
 @pytest.fixture
-def card_args() -> Tuple[Dict[str, Feature], Dict[str, str]]:
-    feature_map = {"feature1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
+def card_args() -> Tuple[Dict[str, SchemaFeature], Dict[str, str]]:
+    SchemaFeature_map = {
+        "SchemaFeature1": SchemaFeature("type1", [1, 2, 3], {"arg1": "value1"})
+    }
     metadata = {"key1": "value1"}
-    return feature_map, metadata
+    return SchemaFeature_map, metadata
 
 
 @pytest.fixture
 def mock_interface(
-    card_args: Tuple[Dict[str, Feature], Dict[str, str]],
+    card_args: Tuple[Dict[str, SchemaFeature], Dict[str, str]],
 ) -> MockInterface:
-    feature_map, metadata = card_args
+    SchemaFeature_map, metadata = card_args
     return MockInterface()
 
 

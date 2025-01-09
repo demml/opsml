@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct SchemaFeature {
+pub struct Feature {
     #[pyo3(get, set)]
     feature_type: String,
     #[pyo3(get, set)]
@@ -16,7 +16,7 @@ pub struct SchemaFeature {
 }
 
 #[pymethods]
-impl SchemaFeature {
+impl Feature {
     #[new]
     #[pyo3(signature = (feature_type, shape, extra_args=None))]
     pub fn new(
@@ -24,7 +24,7 @@ impl SchemaFeature {
         shape: Vec<usize>,
         extra_args: Option<HashMap<String, String>>,
     ) -> Self {
-        SchemaFeature {
+        Feature {
             feature_type,
             shape,
             extra_args: extra_args.unwrap_or_default(),
@@ -41,14 +41,14 @@ impl SchemaFeature {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct FeatureSchema {
     #[pyo3(get, set)]
-    pub map: HashMap<String, SchemaFeature>,
+    pub map: HashMap<String, Feature>,
 }
 
 #[pymethods]
 impl FeatureSchema {
     #[new]
     #[pyo3(signature = (map=None))]
-    pub fn new(map: Option<HashMap<String, SchemaFeature>>) -> Self {
+    pub fn new(map: Option<HashMap<String, Feature>>) -> Self {
         FeatureSchema {
             map: map.unwrap_or_default(),
         }
@@ -59,7 +59,7 @@ impl FeatureSchema {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn __getitem__(&self, key: &str) -> PyResult<SchemaFeature> {
+    pub fn __getitem__(&self, key: &str) -> PyResult<Feature> {
         match self.map.get(key) {
             Some(value) => Ok(value.clone()),
             None => Err(OpsmlError::new_err(format!(
@@ -70,8 +70,8 @@ impl FeatureSchema {
     }
 }
 
-impl FromIterator<(String, SchemaFeature)> for FeatureSchema {
-    fn from_iter<I: IntoIterator<Item = (String, SchemaFeature)>>(iter: I) -> Self {
+impl FromIterator<(String, Feature)> for FeatureSchema {
+    fn from_iter<I: IntoIterator<Item = (String, Feature)>>(iter: I) -> Self {
         let mut map = HashMap::new();
         for (key, value) in iter {
             map.insert(key, value);

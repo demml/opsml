@@ -1,4 +1,4 @@
-use crate::types::{FeatureSchema, SchemaFeature};
+use crate::types::{Feature, FeatureSchema};
 use pyo3::prelude::*;
 
 pub struct TorchTensorSchemaValidator {}
@@ -13,7 +13,7 @@ impl TorchTensorSchemaValidator {
 
         feature_map.map.insert(
             "torch_tensor".to_string(),
-            SchemaFeature::new(data_type, shape, None),
+            Feature::new(data_type, shape, None),
         );
         Ok(feature_map)
     }

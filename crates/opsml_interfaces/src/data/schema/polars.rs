@@ -1,4 +1,4 @@
-use crate::types::{FeatureSchema, SchemaFeature};
+use crate::types::{Feature, FeatureSchema};
 
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
@@ -69,8 +69,8 @@ impl PolarsType {
 pub struct Int8 {}
 
 impl Int8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Int8".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Int8".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -88,8 +88,8 @@ impl Int8 {
 pub struct Int16 {}
 
 impl Int16 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Int16".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Int16".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -110,8 +110,8 @@ impl Int16 {
 pub struct Int32 {}
 
 impl Int32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Int32".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Int32".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -132,8 +132,8 @@ impl Int32 {
 pub struct Int64 {}
 
 impl Int64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Int64".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Int64".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -154,8 +154,8 @@ impl Int64 {
 pub struct UInt8 {}
 
 impl UInt8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("UInt8".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("UInt8".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -176,8 +176,8 @@ impl UInt8 {
 pub struct UInt16 {}
 
 impl UInt16 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("UInt16".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("UInt16".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -198,8 +198,8 @@ impl UInt16 {
 pub struct UInt32 {}
 
 impl UInt32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("UInt32".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("UInt32".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -220,8 +220,8 @@ impl UInt32 {
 pub struct UInt64 {}
 
 impl UInt64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("UInt64".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("UInt64".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -242,8 +242,8 @@ impl UInt64 {
 pub struct Float32 {}
 
 impl Float32 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Float32".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Float32".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -264,8 +264,8 @@ impl Float32 {
 pub struct Float64 {}
 
 impl Float64 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Float64".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Float64".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -286,7 +286,7 @@ impl Float64 {
 pub struct Decimal {}
 
 impl Decimal {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let precision = data_type
@@ -304,7 +304,7 @@ impl Decimal {
         extra_args.insert("precision".to_string(), precision);
         extra_args.insert("scale".to_string(), scale);
 
-        let feature = SchemaFeature::new("Decimal".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("Decimal".to_string(), vec![1], Some(extra_args));
 
         Ok(feature)
     }
@@ -326,8 +326,8 @@ impl Decimal {
 pub struct Boolean {}
 
 impl Boolean {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Boolean".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Boolean".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -348,8 +348,8 @@ impl Boolean {
 pub struct PolarsString {}
 
 impl PolarsString {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("String".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("String".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -370,8 +370,8 @@ impl PolarsString {
 pub struct Utf8 {}
 
 impl Utf8 {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Utf8".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Utf8".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -389,8 +389,8 @@ impl Utf8 {
 pub struct Binary {}
 
 impl Binary {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Binary".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Binary".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -411,8 +411,8 @@ impl Binary {
 pub struct Date {}
 
 impl Date {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Date".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Date".to_string(), vec![1], None);
         Ok(feature)
     }
 
@@ -430,8 +430,8 @@ impl Date {
 pub struct Time {}
 
 impl Time {
-    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new("Time".to_string(), vec![1], None);
+    fn as_feature(_data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new("Time".to_string(), vec![1], None);
         Ok(feature)
     }
 }
@@ -439,7 +439,7 @@ impl Time {
 pub struct DateTime {}
 
 impl DateTime {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -457,7 +457,7 @@ impl DateTime {
         extra_args.insert("time_unit".to_string(), time_unit);
         extra_args.insert("time_zone".to_string(), timezone);
 
-        let feature = SchemaFeature::new("Datetime".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("Datetime".to_string(), vec![1], Some(extra_args));
 
         Ok(feature)
     }
@@ -479,7 +479,7 @@ impl DateTime {
 pub struct Duration {}
 
 impl Duration {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -490,7 +490,7 @@ impl Duration {
 
         extra_args.insert("time_unit".to_string(), time_unit);
 
-        let feature = SchemaFeature::new("Duration".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("Duration".to_string(), vec![1], Some(extra_args));
 
         Ok(feature)
     }
@@ -512,7 +512,7 @@ impl Duration {
 pub struct Categorical {}
 
 impl Categorical {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let time_unit = data_type
@@ -523,7 +523,7 @@ impl Categorical {
 
         extra_args.insert("ordering".to_string(), time_unit);
 
-        let feature = SchemaFeature::new("Categorical".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("Categorical".to_string(), vec![1], Some(extra_args));
 
         Ok(feature)
     }
@@ -545,7 +545,7 @@ impl Categorical {
 pub struct PolarsEnum {}
 
 impl PolarsEnum {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let categories = data_type.getattr("categories")?;
@@ -554,7 +554,7 @@ impl PolarsEnum {
         // insert categories as a string
         extra_args.insert("categories".to_string(), categories.join(","));
 
-        let feature = SchemaFeature::new("Enum".to_string(), vec![1], Some(extra_args));
+        let feature = Feature::new("Enum".to_string(), vec![1], Some(extra_args));
 
         Ok(feature)
     }
@@ -573,7 +573,7 @@ impl PolarsEnum {
 pub struct List {}
 
 impl List {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let inner = data_type.getattr("inner")?;
@@ -585,7 +585,7 @@ impl List {
         // insert categories as a string
         extra_args.insert("inner".to_string(), class_name);
 
-        let feature = SchemaFeature::new("List".to_string(), vec![], Some(extra_args));
+        let feature = Feature::new("List".to_string(), vec![], Some(extra_args));
 
         Ok(feature)
     }
@@ -618,7 +618,7 @@ impl Array {
         Ok(class_name)
     }
 
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let inner_class_name = Array::recursive_check_class(data_type)?;
@@ -632,7 +632,7 @@ impl Array {
         extra_args.insert("inner".to_string(), inner_class_name);
         extra_args.insert("size".to_string(), size.to_string());
 
-        let feature = SchemaFeature::new("Array".to_string(), shape, Some(extra_args));
+        let feature = Feature::new("Array".to_string(), shape, Some(extra_args));
 
         Ok(feature)
     }
@@ -654,7 +654,7 @@ impl Array {
 pub struct Struct {}
 
 impl Struct {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
         let mut extra_args = HashMap::new();
 
         let fields = data_type.getattr("fields")?;
@@ -672,7 +672,7 @@ impl Struct {
             extra_args.insert(name, dtype_class_name);
         }
 
-        let feature = SchemaFeature::new("Struct".to_string(), vec![], Some(extra_args));
+        let feature = Feature::new("Struct".to_string(), vec![], Some(extra_args));
 
         Ok(feature)
     }
@@ -696,8 +696,8 @@ impl Struct {
 pub struct DefaultDataType {}
 
 impl DefaultDataType {
-    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {
-        let feature = SchemaFeature::new(data_type.str().unwrap().to_string(), vec![1], None);
+    fn as_feature(data_type: &Bound<'_, PyAny>) -> PyResult<Feature> {
+        let feature = Feature::new(data_type.str().unwrap().to_string(), vec![1], None);
         Ok(feature)
     }
 }
@@ -705,7 +705,7 @@ impl DefaultDataType {
 pub struct PolarsSchemaValidator {}
 
 impl PolarsSchemaValidator {
-    //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<SchemaFeature> {}
+    //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
     pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
         let binding = data.as_ref().getattr("schema")?;

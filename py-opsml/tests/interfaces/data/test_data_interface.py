@@ -1,18 +1,13 @@
 from opsml import (
     DataInterface,
-    DataType,
-    OpsmlError,
-    SqlLogic,
-    DataSplit,
-    DataSplits,
-    IndiceSplit,
-    DependentVars,
     NumpyData,
     PolarsData,
     PandasData,
     ArrowData,
     TorchData,
+    DataType,
 )
+from opsml.data import SqlLogic, DataSplits, DataSplit, IndiceSplit, DependentVars
 import numpy as np
 import polars as pl
 import pyarrow as pa  # type: ignore

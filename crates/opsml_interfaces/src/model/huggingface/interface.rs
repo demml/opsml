@@ -1,5 +1,5 @@
 use crate::model::huggingface::HuggingFaceORTModel;
-use crate::SchemaFeature;
+use crate::Feature;
 use opsml_types::CommonKwargs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ pub struct HuggingFaceModelInterfaceMetadata {
     #[pyo3(get)]
     pub modelcard_uid: String,
     #[pyo3(get)]
-    pub feature_map: HashMap<String, SchemaFeature>,
+    pub feature_map: HashMap<String, Feature>,
     #[pyo3(get)]
     pub sample_data_interface_type: String,
     #[pyo3(get)]
@@ -64,7 +64,7 @@ impl HuggingFaceModelInterfaceMetadata {
         model_type: String,
         data_type: String,
         modelcard_uid: String,
-        feature_map: HashMap<String, SchemaFeature>,
+        feature_map: HashMap<String, Feature>,
         sample_data_interface_type: String,
         preprocessor_name: String,
         is_pipeline: bool,

@@ -1,6 +1,5 @@
 use opsml_error::error::CardError;
 use opsml_error::OpsmlError;
-use opsml_interfaces::types::SchemaFeature;
 use opsml_interfaces::FeatureSchema;
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
@@ -103,10 +102,10 @@ impl Description {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct OnnxSchema {
     #[pyo3(get, set)]
-    pub input_features: HashMap<String, SchemaFeature>,
+    pub input_features: FeatureSchema,
 
     #[pyo3(get, set)]
-    pub output_features: HashMap<String, SchemaFeature>,
+    pub output_features: FeatureSchema,
 
     #[pyo3(get, set)]
     pub onnx_version: String,
@@ -117,8 +116,8 @@ impl OnnxSchema {
     #[new]
     #[pyo3(signature = (input_features, output_features, onnx_version))]
     fn new(
-        input_features: HashMap<String, SchemaFeature>,
-        output_features: HashMap<String, SchemaFeature>,
+        input_features: FeatureSchema,
+        output_features: FeatureSchema,
         onnx_version: String,
     ) -> Self {
         OnnxSchema {
