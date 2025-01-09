@@ -55,10 +55,9 @@ stop.server:
 test.storage.client:
 	cargo test -p opsml-storage test_local_storage_client -- --nocapture
 
-.PHONY: test.storage.local.server
-test.storage.local.server:
+.PHONY: test.storage.server
+test.storage.server:
 	cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
-
 
 
 
