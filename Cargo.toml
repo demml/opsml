@@ -47,7 +47,7 @@ aws-smithy-types = { version = "1.2.9", features = ["rt-tokio", "http-body-0-4-x
 aws-types = "1.*"
 base64 = "0.*"
 bytes = "1.*"
-axum = { version = "0.7.7", features = ["multipart", "macros"] }
+axum = { version = "0.*", features = ["multipart", "macros"] }
 axum-extra = { version =  "0.*", features = ["cookie"] }
 clap = { version = "4.*", features = ["derive"] }
 chrono = { version = "0.*", features = ["serde"] }
@@ -79,7 +79,7 @@ tempfile = "3.*"
 thiserror = "2.*"
 time = "0.*"
 
-tokio = { version = "1.*", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.7.12",  features = ["codec", "io"]}
 tower-http = { version = "0.5.0", features = ["cors"] }
 tracing = "0.*"
