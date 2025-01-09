@@ -1,4 +1,4 @@
-// Tests are in python
+// Tests are in py-opsml/tests/interfaces/data
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;

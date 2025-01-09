@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from ..core import FeatureSchema, Description
+from ..core import Description, FeatureSchema
 from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
 
 class RegistryType:
@@ -84,7 +84,7 @@ class CardList:
 # Registry
 
 class DataCard:
-    def __init__(
+    def __init__(  # pylint: disable=dangerous-default-value
         self,
         interface: DataInterface,
         name: Optional[str] = None,
@@ -125,6 +125,8 @@ class DataCard:
         Args:
             path:
                 The path to save the data card to
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             Kwargs are passed to the underlying data interface for saving.
