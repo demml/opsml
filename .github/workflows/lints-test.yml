@@ -28,7 +28,7 @@ jobs:
       - name: Run lints
         run: make lints
 
-  test-server:
+  test-sql:
     runs-on: ubuntu-latest
     needs: format-and-lint
     steps:
@@ -41,93 +41,4 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Server tests
-        run: make test.opsml.server
-
-  test-sqlite:
-    runs-on: ubuntu-latest
-    needs: format-and-lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run SQLite tests
-        run: make test.sql.sqlite
-
-  test-mysql:
-    runs-on: ubuntu-latest
-    needs: format-and-lint
-    services:
-      mysql:
-        image: mysql:latest
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        env:
-          MYSQL_ROOT_PASSWORD: admin
-          MYSQL_DATABASE: testdb
-          MYSQL_USER: admin
-          MYSQL_PASSWORD: admin
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run MySQL tests
-        run: make test.sql.mysql
-
-  test-postgres:
-    runs-on: ubuntu-latest
-    needs: format-and-lint
-    services:
-      postgres:
-        image: postgres:latest
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: admin
-          POSTGRES_PASSWORD: admin
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run Postgres tests
-        run: make test.sql.postgres
-
-  test-sql-enum:
-    runs-on: ubuntu-latest
-    needs: format-and-lint
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust
-        run: rustup override set stable && rustup update
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run SQLite tests
-        run: make test.sql.enum
+        run: make test.sql

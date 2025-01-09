@@ -995,31 +995,36 @@ mod tests {
         .unwrap();
     }
 
-    #[tokio::test]
-    async fn test_postgres() {
+    pub fn db_config() -> DatabaseSettings {
         let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
+            connection_uri: env::var("OPSML_TRACKING_URI").unwrap_or_else(|_| {
+                "postgres://postgres:postgres@localhost:5432/postgres".to_string()
+            }),
             max_connections: 1,
             sql_type: SqlType::Postgres,
         };
 
-        let _client = PostgresClient::new(&config).await.unwrap();
+        config
+    }
+
+    pub async fn db_client() -> PostgresClient {
+        let config = db_config();
+        let client = PostgresClient::new(&config).await.unwrap();
+
+        cleanup(&client.pool).await;
+
+        client
+    }
+
+    #[tokio::test]
+    async fn test_postgres() {
+        let _client = db_client().await;
         // Add assertions or further test logic here
     }
 
     #[tokio::test]
     async fn test_postgres_versions() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-
-        let client = PostgresClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1078,22 +1083,11 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_query_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-
-        let client = PostgresClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1196,22 +1190,11 @@ mod tests {
             .unwrap();
 
         assert!(exists);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_insert_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-
-        let client = PostgresClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         let data_card = DataCardRecord::default();
         let card = ServerCard::Data(data_card.clone());
@@ -1312,22 +1295,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_update_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-
-        let client = PostgresClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Test DataCardRecord
         let mut data_card = DataCardRecord::default();
@@ -1521,20 +1493,11 @@ mod tests {
         if let CardResults::Pipeline(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedPipelineName");
         }
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_unique_repos() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1547,20 +1510,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(repos.len(), 9);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_query_stats() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1604,20 +1558,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_delete_card() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1674,20 +1619,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(cards.len(), 9);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_project_id() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1727,20 +1663,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(cards.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_run_metrics() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1790,20 +1717,11 @@ mod tests {
         let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
 
         assert_eq!(records.len(), 5);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_hardware_metric() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
@@ -1827,21 +1745,11 @@ mod tests {
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_parameter() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
-
+        let client = db_client().await;
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
@@ -1871,20 +1779,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(param_records.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_postgres_user() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "postgres://admin:admin@localhost:5432/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::Postgres,
-        };
-        let client = PostgresClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         let user = User::new("user".to_string(), "pass".to_string(), None, None);
         client.insert_user(&user).await.unwrap();
@@ -1900,7 +1799,5 @@ mod tests {
         let user = client.get_user("user").await.unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
-
-        cleanup(&client.pool).await;
     }
 }

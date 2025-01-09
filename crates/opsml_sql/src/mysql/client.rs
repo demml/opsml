@@ -1033,30 +1033,34 @@ mod tests {
         .unwrap();
     }
 
-    #[tokio::test]
-    async fn test_mysql() {
+    pub fn db_config() -> DatabaseSettings {
         let config = DatabaseSettings {
             connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
+                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/mysql".to_string()),
             max_connections: 1,
             sql_type: SqlType::MySql,
         };
 
-        let _client = MySqlClient::new(&config).await.unwrap();
+        config
+    }
+
+    pub async fn db_client() -> MySqlClient {
+        let config = db_config();
+        let client = MySqlClient::new(&config).await.unwrap();
+
+        cleanup(&client.pool).await;
+
+        client
+    }
+
+    #[tokio::test]
+    async fn test_mysql() {
+        let _client = db_client().await;
     }
 
     #[tokio::test]
     async fn test_mysql_versions() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-
-        let client = MySqlClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1115,22 +1119,11 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_query_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-
-        let client = MySqlClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1233,22 +1226,11 @@ mod tests {
             .unwrap();
 
         assert!(exists);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_insert_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-
-        let client = MySqlClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         let data_card = DataCardRecord::default();
         let card = ServerCard::Data(data_card.clone());
@@ -1349,22 +1331,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_update_cards() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-
-        let client = MySqlClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Test DataCardRecord
         let mut data_card = DataCardRecord::default();
@@ -1558,22 +1529,11 @@ mod tests {
         if let CardResults::Pipeline(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedPipelineName");
         }
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_unique_repos() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-
-        let client = MySqlClient::new(&config).await.unwrap();
-
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1586,20 +1546,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(repos.len(), 10);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_query_stats() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1619,20 +1570,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(stats.nbr_names, 2); // for Model1 and Model10
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_query_page() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1661,19 +1603,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_delete_card() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1730,20 +1664,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(cards.len(), 9);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_project_id() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1783,20 +1708,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(cards.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_run_metrics() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1845,20 +1761,11 @@ mod tests {
         let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
 
         assert_eq!(records.len(), 5);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_hardware_metric() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1882,20 +1789,11 @@ mod tests {
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_parameter() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
@@ -1926,20 +1824,11 @@ mod tests {
             .unwrap();
 
         assert_eq!(records.len(), 1);
-
-        cleanup(&client.pool).await;
     }
 
     #[tokio::test]
     async fn test_mysql_user() {
-        let config = DatabaseSettings {
-            connection_uri: env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "mysql://admin:admin@localhost:3306/testdb".to_string()),
-            max_connections: 1,
-            sql_type: SqlType::MySql,
-        };
-        let client = MySqlClient::new(&config).await.unwrap();
-        cleanup(&client.pool).await;
+        let client = db_client().await;
 
         let user = User::new("user".to_string(), "pass".to_string(), None, None);
         client.insert_user(&user).await.unwrap();
@@ -1955,7 +1844,5 @@ mod tests {
         let user = client.get_user("user").await.unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
-
-        cleanup(&client.pool).await;
     }
 }
