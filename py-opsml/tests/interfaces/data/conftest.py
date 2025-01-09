@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
 from datetime import datetime, timedelta
-from opsml import DataInterface, SaveName, Suffix, SaverPath
+from opsml.data import DataInterface
+from opsml.core import SaveName, Suffix, SaverPath
 from pathlib import Path
 import joblib  # type: ignore
 import torch

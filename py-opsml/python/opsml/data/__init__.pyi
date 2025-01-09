@@ -1,6 +1,30 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from ..core import DataType, FeatureSchema
+from ..core import FeatureSchema
+from ..scouter import DataProfile
+
+class DataType:
+    Pandas: "DataType"
+    Arrow: "DataType"
+    Polars: "DataType"
+    Numpy: "DataType"
+    Image: "DataType"
+    Text: "DataType"
+    Dict: "DataType"
+    Sql: "DataType"
+    Profile: "DataType"
+    TransformerBatch: "DataType"
+    String: "DataType"
+    TorchTensor: "DataType"
+    TorchDataset: "DataType"
+    TensorflowTensor: "DataType"
+    Tuple: "DataType"
+    List: "DataType"
+    Str: "DataType"
+    OrderedDict: "DataType"
+    Joblib: "DataType"
+    Base: "DataType"
+    Dataset: "DataType"
 
 class ColValType:
     String: "ColValType"
@@ -344,7 +368,7 @@ class DataInterface:
         self,
         bin_size: Optional[int] = 20,
         compute_correlations: Optional[bool] = False,
-    ) -> Any:
+    ) -> DataProfile:
         """Create a data profile
 
 

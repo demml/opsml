@@ -1,7 +1,7 @@
 import polars as pl
 import pandas as pd
 import pyarrow as pa  # type: ignore
-from opsml import (
+from opsml.data import (
     ColType,
     ColumnSplit,
     Data,

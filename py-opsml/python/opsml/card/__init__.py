@@ -1,20 +1,23 @@
-from .._opsml import card  # type: ignore
+# type: ignore
 
-Description = card.Description
+from .. import card
+
 CardInfo = card.CardInfo
 Card = card.Card
 CardRegistry = card.CardRegistry
 DataCard = card.DataCard
 DataCardMetadata = card.DataCardMetadata
 CardRegistry = card.CardRegistry
+RegistryTestHelper = card.RegistryTestHelper
+RegistryType = card.RegistryType
 
 
 __all__ = [
-    "Description",
     "CardInfo",
     "Card",
     "CardRegistry",
     "DataCard",
     "DataCardMetadata",
     "CardRegistry",
+    "RegistryType",
 ]
