@@ -117,7 +117,7 @@ jobs:
       - name: Run Postgres tests
         run: make test.sql.postgres
 
-  test-enum:
+  test-sql-enum:
     runs-on: ubuntu-latest
     needs: format-and-lint
     steps:
