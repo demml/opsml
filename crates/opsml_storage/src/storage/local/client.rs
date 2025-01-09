@@ -638,6 +638,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_local_storage_server() -> Result<(), StorageError> {
+        // set en vars
         let rand_name = uuid::Uuid::new_v4().to_string();
         let filename = format!("file-{}.txt", rand_name);
 
