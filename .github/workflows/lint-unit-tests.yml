@@ -1,0 +1,359 @@
+name: Lint-Unit-Test
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - main
+jobs:
+  Lints:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        node-version: ["22.5.1"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build 
+          pnpm run test
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make lints.ci
+
+  Unit-Test-Ubuntu:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+        node-version: ["22.5.1"]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build 
+          pnpm run test
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Build and tests
+        run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.install
+          make test.unit
+
+  Unit-Test-MacOS:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [macos]
+        node-version: ["22.5.1"]
+
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build 
+          pnpm run test
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install Extras
+        run: |
+          brew install postgresql libomp
+          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+
+      - name: Setup Project
+        run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          make setup.install
+
+      - name: Unit Tests
+        run: make test.unit
+
+  Unit-Test-Coverage:
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [ubuntu]
+        node-version: ["22.5.1"]
+    runs-on: ${{ matrix.os }}-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+      OPSML_AUTH: True
+      OPSML_USERNAME: admin
+      OPSML_PASSWORD: admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build 
+          pnpm run test
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: |
+          rm -rf /opt/hostedtoolcache/CodeQL
+          rm -rf /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk
+          rm -rf /opt/hostedtoolcache/Ruby
+          rm -rf /opt/hostedtoolcache/go
+          rm -rf /opt/hostedtoolcache/node
+          sudo apt clean
+          make setup.install
+          make test.coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  Unit-Test-Windows:
+    needs: Lints
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+        os: [windows]
+        node-version: ["22.5.1"]
+
+    runs-on: ${{ matrix.os }}-2019
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+          cache-dependency-path: "opsml/app/static/pnpm-lock.yaml"
+
+      - name: Build App for testing
+        run: |
+          cd opsml/app/static
+          pnpm install
+          pnpm run build
+          pnpm run test
+
+      - name: Set up uv
+        run: irm https://astral.sh/uv/install.ps1 | iex
+        shell: powershell
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make test.registry
+
+  Postgres-Unit:
+    needs: [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Coverage]
+    runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make test.registry
+        env:
+          OPSML_TRACKING_URI: postgresql://postgres:postgres@localhost:5432/postgres?connect_timeout=5&sslmode=disable
+
+  MySql-Unit:
+    needs: [Unit-Test-Ubuntu, Unit-Test-MacOS, Unit-Test-Coverage]
+    runs-on: ubuntu-latest
+    env:
+      OPSML_TESTING: 1
+      LOG_LEVEL: DEBUG
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        poetry-version: ["1.7.1"]
+
+    services:
+      mysql:
+        image: mysql:8.2
+        env:
+          MYSQL_DATABASE: mysql
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+          --name=mysql-test
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: |
+          sudo apt-get update
+          sudo apt-get install libcurl4-openssl-dev libmysqlclient-dev libgirepository1.0-dev
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - run: make setup.install
+      - run: make test.registry
+        env:
+          OPSML_TRACKING_URI: mysql+pymysql://root@127.0.0.1:3306/mysql?connect_timeout=5

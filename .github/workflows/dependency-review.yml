@@ -9,7 +9,6 @@ permissions:
   contents: read
   # this is required to comment on PRs
   pull-requests: write
-
 jobs:
   Dependency-Review:
     runs-on: ubuntu-latest
