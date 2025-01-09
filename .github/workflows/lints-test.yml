@@ -147,3 +147,43 @@ jobs:
         uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  test-python-windows:
+    name: test ${{ matrix.os }}-${{ matrix.python-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    runs-on: ${{ matrix.os }}-latest
+    needs: [format-and-lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        working-directory: ./py-opsml
+        run: make setup.project
+
+      - name: Run tests and report coverage
+        working-directory: ./py-opsml
+        run: make test.unit
