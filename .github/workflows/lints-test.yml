@@ -61,7 +61,10 @@ jobs:
         run: make build.server
 
       - name: Run client tests
-        run: make tests.storage.client
+        run: make test.storage.client
 
       - name: Shutdown Server
+        run: make stop.server
+
+      - name: Run server tests
         run: make stop.server
