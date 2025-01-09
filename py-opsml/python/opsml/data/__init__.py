@@ -21,6 +21,8 @@ PandasData = data.PandasData
 ArrowData = data.ArrowData
 TorchData = data.TorchData
 SqlData = data.SqlData
+generate_feature_schema = data.generate_feature_schema
+DataType = data.DataType
 
 
 __all__ = [
@@ -44,4 +46,6 @@ __all__ = [
     "ArrowData",
     "TorchData",
     "SqlData",
+    "generate_feature_schema",
+    "DataType",
 ]

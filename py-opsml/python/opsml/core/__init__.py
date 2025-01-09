@@ -2,17 +2,17 @@
 
 from .. import core
 
+Description = core.Description
 LogLevel = core.LogLevel
 OpsmlLogger = core.OpsmlLogger
 OpsmlError = core.OpsmlError
 OpsmlConfig = core.OpsmlConfig
 CommonKwargs = core.CommonKwargs
 SaveName = core.SaveName
+SaverPath = core.SaverPath
 Suffix = core.Suffix
-RegistryType = core.RegistryType
-DataType = core.DataType
 VersionType = core.VersionType
-SchemaFeature = core.SchemaFeature
+Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
 DataSchema = core.DataSchema
@@ -26,10 +26,8 @@ __all__ = [
     "CommonKwargs",
     "SaveName",
     "Suffix",
-    "RegistryType",
-    "DataType",
     "VersionType",
-    "SchemaFeature",
+    "Feature",
     "FeatureSchema",
     "OnnxSchema",
     "DataSchema",

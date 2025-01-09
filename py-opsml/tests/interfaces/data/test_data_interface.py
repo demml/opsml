@@ -1,13 +1,18 @@
-from opsml import (
+from opsml.data import (
     DataInterface,
     NumpyData,
     PolarsData,
     PandasData,
     ArrowData,
     TorchData,
+    SqlLogic,
+    DataSplits,
+    DataSplit,
+    IndiceSplit,
+    DependentVars,
     DataType,
 )
-from opsml.data import SqlLogic, DataSplits, DataSplit, IndiceSplit, DependentVars
+from opsml.core import OpsmlError
 import numpy as np
 import polars as pl
 import pyarrow as pa  # type: ignore
@@ -246,4 +251,5 @@ def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
 
 def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
     interface = PandasData(data=pandas_dataframe_profile)
-    data_profile = interface.create_data_profile()
+    data_profile = interface.create_data_profile(compute_correlations=True)
+    assert data_profile is not None

@@ -95,9 +95,7 @@ class ServerRecord:
     @property
     def record(
         self,
-    ) -> Union[
-        SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics
-    ]:
+    ) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
         """Return the drift server record."""
 
 class ServerRecords:
@@ -2067,9 +2065,7 @@ class CustomMetricAlertConfig:
         """Return the alert_condition that were set during metric definition"""
 
     @alert_conditions.setter
-    def alert_conditions(
-        self, alert_conditions: dict[str, CustomMetricAlertCondition]
-    ) -> None:
+    def alert_conditions(self, alert_conditions: dict[str, CustomMetricAlertCondition]) -> None:
         """Update the alert_condition that were set during metric definition"""
 
 class CustomMetricDriftConfig:

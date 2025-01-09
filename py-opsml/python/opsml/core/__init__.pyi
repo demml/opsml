@@ -1,5 +1,35 @@
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
+
+class Description:
+    summary: Optional[str]
+    sample_code: Optional[str]
+    notes: Optional[str]
+
+    def __init__(
+        self,
+        summary: Optional[str] = None,
+        sample_code: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> None:
+        """Define a description to be used in a card
+
+        Args:
+            summary:
+                A summary string or path to a markdown file with a summary.
+                You can also define a summary on the ui for the card.
+            sample_code:
+                Sample code string or path to a markdown file with sample code.
+            notes:
+                Any additional notes
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the Description.
+
+        Returns:
+            String representation of the Description.
+        """
 
 class LogLevel:
     Debug: "LogLevel"
@@ -254,37 +284,6 @@ class SaverPath:
                 The extension.
         """
 
-class RegistryType:
-    Data: "RegistryType"
-    Model: "RegistryType"
-    Run: "RegistryType"
-    Project: "RegistryType"
-    Audi: "RegistryType"
-    Pipeline: "RegistryType"
-
-class DataType:
-    Pandas: "DataType"
-    Arrow: "DataType"
-    Polars: "DataType"
-    Numpy: "DataType"
-    Image: "DataType"
-    Text: "DataType"
-    Dict: "DataType"
-    Sql: "DataType"
-    Profile: "DataType"
-    TransformerBatch: "DataType"
-    String: "DataType"
-    TorchTensor: "DataType"
-    TorchDataset: "DataType"
-    TensorflowTensor: "DataType"
-    Tuple: "DataType"
-    List: "DataType"
-    Str: "DataType"
-    OrderedDict: "DataType"
-    Joblib: "DataType"
-    Base: "DataType"
-    Dataset: "DataType"
-
 class InterfaceType:
     Data: "InterfaceType"
     Model: "InterfaceType"
@@ -325,7 +324,7 @@ class FileUtils:
             The file path
         """
 
-class SchemaFeature:
+class Feature:
     feature_type: str
     shape: List[int]
     extra_args: Dict[str, str]
@@ -355,7 +354,7 @@ class SchemaFeature:
         """
 
 class FeatureSchema:
-    def __init__(self, map: Optional[dict[str, SchemaFeature]] = None) -> None:
+    def __init__(self, map: Optional[dict[str, Feature]] = None) -> None:
         """Define a feature map
 
         Args:
@@ -366,7 +365,7 @@ class FeatureSchema:
     def __str__(self) -> str:
         """Return a string representation of the FeatureSchema."""
 
-    def __getitem__(self, key: str) -> SchemaFeature:
+    def __getitem__(self, key: str) -> Feature:
         """Returns the feature at the given key."""
 
 # Utils

@@ -1,4 +1,4 @@
-from opsml import LogLevel, OpsmlLogger
+from opsml.core import LogLevel, OpsmlLogger
 
 
 def test_loglevel():

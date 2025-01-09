@@ -1,11 +1,11 @@
-from opsml import (
+from opsml.core import (
     CommonKwargs,
     SaveName,
     Suffix,
     OpsmlConfig,
     VersionType,
-    RegistryType,
 )
+from opsml.card import RegistryType
 import pytest
 
 
