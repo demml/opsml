@@ -2,7 +2,6 @@
 
 from .. import model  # noqa: F401
 
-
 HuggingFaceORTModel = model.HuggingFaceORTModel
 HuggingFaceOnnxArgs = model.HuggingFaceOnnxArgs
 TorchOnnxArgs = model.TorchOnnxArgs

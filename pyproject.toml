@@ -192,6 +192,7 @@ disable = [
     "ungrouped-imports",
     "cyclic-import", 
     "logging-too-many-args",
+    "too-many-lines",
 ]
 extension-pkg-whitelist = ["pydantic"]
 

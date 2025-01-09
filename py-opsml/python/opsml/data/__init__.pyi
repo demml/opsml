@@ -1,7 +1,15 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
 from ..core import FeatureSchema
 from ..scouter import DataProfile
+
+class Inequality:
+    Equal: "Inequality"
+    GreaterThan: "Inequality"
+    GreaterThanEqual: "Inequality"
+    LesserThan: "Inequality"
+    LesserThanEqual: "Inequality"
 
 class DataType:
     Pandas: "DataType"
@@ -114,6 +122,41 @@ class DataSplit:
                 The indice split
         """
 
+class DependentVars:
+    def __init__(
+        self,
+        column_names: Optional[List[str]] = None,
+        column_indices: Optional[List[int]] = None,
+    ) -> None:
+        """Define dependent variables for the data interface. User
+        can specify either column names or column indices.
+
+        Args:
+            column_names:
+                The column names of the dependent variables
+            column_indices:
+                The column indices of the dependent variables
+        """
+
+    def __str__(self) -> str:
+        """String representation of the dependent variables"""
+
+    @property
+    def column_names(self) -> List[str]:
+        """Return the column names"""
+
+    @column_names.setter
+    def column_names(self, column_names: List[str]) -> None:
+        """Set the column names"""
+
+    @property
+    def column_indices(self) -> List[int]:
+        """Return the column indices"""
+
+    @column_indices.setter
+    def column_indices(self, column_indices: List[int]) -> None:
+        """Set the column indices"""
+
 class DataSplits:
     def __init__(self, splits: List[DataSplit]) -> None:
         """Define data splits
@@ -158,48 +201,6 @@ class Data:
     x: Any
     y: Any
 
-class DependentVars:
-    def __init__(
-        self,
-        column_names: Optional[List[str]] = None,
-        column_indices: Optional[List[int]] = None,
-    ) -> None:
-        """Define dependent variables for the data interface. User
-        can specify either column names or column indices.
-
-        Args:
-            column_names:
-                The column names of the dependent variables
-            column_indices:
-                The column indices of the dependent variables
-        """
-
-    def __str__(self) -> str:
-        """String representation of the dependent variables"""
-
-    @property
-    def column_names(self) -> List[str]:
-        """Return the column names"""
-
-    @column_names.setter
-    def column_names(self, column_names: List[str]) -> None:
-        """Set the column names"""
-
-    @property
-    def column_indices(self) -> List[int]:
-        """Return the column indices"""
-
-    @column_indices.setter
-    def column_indices(self, column_indices: List[int]) -> None:
-        """Set the column indices"""
-
-class Inequality:
-    Equal: "Inequality"
-    GreaterThan: "Inequality"
-    GreaterThanEqual: "Inequality"
-    LesserThan: "Inequality"
-    LesserThanEqual: "Inequality"
-
 class DataSplitter:
     @staticmethod
     def split_data(
@@ -222,6 +223,33 @@ class DataSplitter:
 
         Returns:
             A Data object
+        """
+
+class DataInterfaceSaveMetadata:
+    data_type: DataType
+    feature_map: FeatureSchema
+    data_save_path: Path
+    sql_save_path: Optional[Path]
+    data_profile_save_path: Optional[Path]
+
+    def __init__(
+        self,
+        data_type: DataType,
+        feature_map: FeatureSchema,
+        data_save_path: Path,
+        data_profile_save_path: Optional[Path] = None,
+    ) -> None:
+        """Define interface save metadata
+
+        Args:
+            data_type:
+                The data type
+            feature_map:
+                The feature map
+            data_save_path:
+                The data save path
+            data_profile_save_path:
+                The data profile save path
         """
 
 class DataInterface:
@@ -315,8 +343,10 @@ class DataInterface:
         """Save the sql logic to a file
 
         Args:
-            Path:
+            path:
                 The path to save the sql logic to
+            **kwargs:
+                Additional kwargs to pass in.
         """
 
     def create_feature_map(self, name: str) -> FeatureSchema:
@@ -333,6 +363,8 @@ class DataInterface:
         Args:
             path:
                 Base path to save the data to
+            **kwargs:
+                Additional kwargs to pass in.
         """
 
     def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
@@ -347,6 +379,8 @@ class DataInterface:
         Args:
             path:
                 The path to save the data interface components to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         """
 
@@ -356,6 +390,8 @@ class DataInterface:
         Args:
             path:
                 Base path to load the data from
+            **kwargs:
+                Additional kwargs to pass in.
         """
 
     def split_data(self) -> Dict[str, Data]:
@@ -364,6 +400,7 @@ class DataInterface:
         Returns:
             A dictionary of data splits
         """
+
     def create_data_profile(
         self,
         bin_size: Optional[int] = 20,
@@ -433,33 +470,6 @@ class SqlLogic:
             The query
         """
 
-class DataInterfaceSaveMetadata:
-    data_type: DataType
-    feature_map: FeatureSchema
-    data_save_path: Path
-    sql_save_path: Optional[Path]
-    data_profile_save_path: Optional[Path]
-
-    def __init__(
-        self,
-        data_type: DataType,
-        feature_map: FeatureSchema,
-        data_save_path: Path,
-        data_profile_save_path: Optional[Path] = None,
-    ) -> None:
-        """Define interface save metadata
-
-        Args:
-            data_type:
-                The data type
-            feature_map:
-                The feature map
-            data_save_path:
-                The data save path
-            data_profile_save_path:
-                The data profile save path
-        """
-
 class NumpyData(DataInterface):
     def __init__(
         self,
@@ -490,8 +500,10 @@ class NumpyData(DataInterface):
         """Save data using numpy save format
 
         Args:
-            path (Path) :
-                Base path to save the data to
+            path (Path):
+                Base path to save the data to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
 
@@ -516,6 +528,8 @@ class NumpyData(DataInterface):
         Args:
             path:
                 The path to save the data interface components to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         """
 
@@ -524,7 +538,9 @@ class NumpyData(DataInterface):
 
         Args:
             path (Path):
-                Base path to load the data from
+                Base path to load the data from.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
 
@@ -574,7 +590,9 @@ class PolarsData(DataInterface):
 
         Args:
             path (Path):
-                Base path to save the data to
+                Base path to save the data to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             compression (ParquetCompression):
@@ -612,7 +630,9 @@ class PolarsData(DataInterface):
 
         Args:
             path (Path):
-                Base path to load the data from
+                Base path to load the data from.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             columns (list[int] | list[str] | None):
@@ -693,19 +713,23 @@ class PandasData(DataInterface):
 
         Args:
             path:
-                Base path to save the data to
+                Base path to save the data to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             engine ({'auto', 'pyarrow', 'fastparquet'}):
-                Parquet library to use. If 'auto', then the option io.parquet.engine is used. The default io.parquet.engine behavior is to try 'pyarrow',
+                Parquet library to use. If 'auto', then the option io.parquet.engine is used.
+                The default io.parquet.engine behavior is to try 'pyarrow',
                 falling back to 'fastparquet' if 'pyarrow' is unavailable. Default is 'auto'.
             compression (str | None):
                 Name of the compression to use. Use None for no compression.
                 Supported options: 'snappy', 'gzip', 'brotli', 'lz4', 'zstd'. Default is 'snappy'.
             index (bool | None):
-                If True, include the dataframe’s index(es) in the file output.
+                If True, include the dataframe's index(es) in the file output.
                 If False, they will not be written to the file. If None, similar to True the dataframe's index(es) will be saved.
-                However, instead of being saved as values, the RangeIndex will be stored as a range in the metadata so it doesn't require much space and is faster.
+                However, instead of being saved as values, the RangeIndex will be stored as a range in the metadata so it doesn't
+                require much space and is faster.
                 Other indexes will be included as columns in the file output. Default is None.
             partition_cols (list | None):
                 Column names by which to partition the dataset. Columns are partitioned in the order they are given.
@@ -713,7 +737,8 @@ class PandasData(DataInterface):
             storage_options (dict | None):
                 Extra options that make sense for a particular storage connection, e.g. host, port, username, password, etc.
                 For HTTP(S) URLs the key-value pairs are forwarded to urllib.request.Request as header options.
-                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open. Default is None.
+                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open.
+                Default is None.
             **kwargs:
                 Any additional kwargs are passed to the engine
 
@@ -726,22 +751,28 @@ class PandasData(DataInterface):
 
         Args:
             path:
-                Base path to load the data from
+                Base path to load the data from.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             engine ({'auto', 'pyarrow', 'fastparquet'}):
                 Parquet library to use. If 'auto', then the option io.parquet.engine is used.
-                The default io.parquet.engine behavior is to try 'pyarrow', falling back to 'fastparquet' if 'pyarrow' is unavailable. Default is 'auto'.
+                The default io.parquet.engine behavior is to try 'pyarrow',
+                falling back to 'fastparquet' if 'pyarrow' is unavailable. Default is 'auto'.
             columns (list | None):
                 If not None, only these columns will be read from the file. Default is None.
             storage_options (dict | None):
                 Extra options that make sense for a particular storage connection, e.g. host, port, username, password, etc.
                 For HTTP(S) URLs the key-value pairs are forwarded to urllib.request.Request as header options.
-                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open. Default is None.
+                For other URLs (e.g. starting with “s3://”, and “gcs://”) the key-value pairs are forwarded to fsspec.open.
+                Default is None.
             use_nullable_dtypes (bool):
                 If True, use dtypes that use pd.NA as missing value indicator for the resulting DataFrame.
-                (only applicable for the pyarrow engine) As new dtypes are added that support pd.NA in the future, the output with this option will change to use those dtypes.
-                Note: this is an experimental option, and behaviour (e.g. additional support dtypes) may change without notice. Default is False. Deprecated since version 2.0.
+                (only applicable for the pyarrow engine) As new dtypes are added that support pd.NA in the future,
+                the output with this option will change to use those dtypes.
+                Note: this is an experimental option, and behaviour (e.g. additional support dtypes) may change without notice.
+                Default is False. Deprecated since version 2.0.
             dtype_backend ({'numpy_nullable', 'pyarrow'}):
                 Back-end data type applied to the resultant DataFrame (still experimental).
                 Behaviour is as follows:
@@ -754,10 +785,12 @@ class PandasData(DataInterface):
                 Filter syntax:
                     [[(column, op, val), …],…] where op is [==, =, >, >=, <, <=, !=, in, not in]
                 The innermost tuples are transposed into a set of filters applied through an AND operation.
-                The outer list combines these sets of filters through an OR operation. A single list of tuples can also be used, meaning that no OR operation between set of filters is to be conducted.
-                Using this argument will NOT result in row-wise filtering of the final partitions unless engine="pyarrow" is also specified.
-                For other engines, filtering is only performed at the partition level, that is, to prevent the loading of some row-groups and/or files.
-                Default is None.
+                The outer list combines these sets of filters through an OR operation. A single list of tuples can also be used,
+                meaning that no OR operation between set of filters is to be conducted.
+                Using this argument will NOT result in row-wise filtering of the final partitions unless engine="pyarrow"
+                is also specified.
+                For other engines, filtering is only performed at the partition level, that is,
+                to prevent the loading of some row-groups and/or files. Default is None.
             **kwargs:
                 Any additional kwargs are passed to the engine.
 
@@ -796,17 +829,21 @@ class ArrowData(DataInterface):
 
         Args:
             path:
-                Base path to save the data to
+                Base path to save the data to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             row_group_size (int | None):
-                Maximum number of rows in each written row group. If None, the row group size will be the minimum of the Table size and 1024 * 1024. Default is None.
+                Maximum number of rows in each written row group. If None, the row group size will be the minimum of the
+                Table size and 1024 * 1024. Default is None.
             version ({'1.0', '2.4', '2.6'}):
                 Determine which Parquet logical types are available for use. Default is '2.6'.
             use_dictionary (bool | list):
                 Specify if dictionary encoding should be used in general or only for some columns. Default is True.
             compression (str | dict):
-                Specify the compression codec, either on a general basis or per-column. Valid values: {'NONE', 'SNAPPY', 'GZIP', 'BROTLI', 'LZ4', 'ZSTD'}. Default is 'snappy'.
+                Specify the compression codec, either on a general basis or per-column.
+                Valid values: {'NONE', 'SNAPPY', 'GZIP', 'BROTLI', 'LZ4', 'ZSTD'}. Default is 'snappy'.
             write_statistics (bool | list):
                 Specify if statistics should be written in general or only for some columns. Default is True.
             use_deprecated_int96_timestamps (bool | None):
@@ -816,7 +853,8 @@ class ArrowData(DataInterface):
             allow_truncated_timestamps (bool):
                 Allow loss of data when coercing timestamps to a particular resolution. Default is False.
             data_page_size (int | None):
-                Set a target threshold for the approximate encoded size of data pages within a column chunk (in bytes). Default is None.
+                Set a target threshold for the approximate encoded size of data pages within a column chunk (in bytes).
+                Default is None.
             flavor ({'spark'} | None):
                 Sanitize schema or set other compatibility options to work with various target systems. Default is None.
             filesystem (FileSystem | None):
@@ -858,24 +896,31 @@ class ArrowData(DataInterface):
         """Load the data from a file
 
         Args:
-            path:
-                Base path to load the data from
+            path (Path):
+                Base path to load the data from.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             columns (list | None):
-                If not None, only these columns will be read from the file. A column name may be a prefix of a nested field, e.g. 'a' will select 'a.b', 'a.c', and 'a.d.e'. If empty, no columns will be read. Default is None.
+                If not None, only these columns will be read from the file. A column name may be a prefix of a nested field,
+                e.g. 'a' will select 'a.b', 'a.c', and 'a.d.e'. If empty, no columns will be read. Default is None.
             use_threads (bool):
                 Perform multi-threaded column reads. Default is True.
             schema (Schema | None):
-                Optionally provide the Schema for the parquet dataset, in which case it will not be inferred from the source. Default is None.
+                Optionally provide the Schema for the parquet dataset, in which case it will not be inferred from the source.
+                Default is None.
             use_pandas_metadata (bool):
                 If True and file has custom pandas schema metadata, ensure that index columns are also loaded. Default is False.
             read_dictionary (list | None):
-                List of names or column paths (for nested types) to read directly as DictionaryArray. Only supported for BYTE_ARRAY storage. Default is None.
+                List of names or column paths (for nested types) to read directly as DictionaryArray.
+                Only supported for BYTE_ARRAY storage. Default is None.
             memory_map (bool):
-                If the source is a file path, use a memory map to read file, which can improve performance in some environments. Default is False.
+                If the source is a file path, use a memory map to read file, which can improve performance in some environments.
+                Default is False.
             buffer_size (int):
-                If positive, perform read buffering when deserializing individual column chunks. Otherwise IO calls are unbuffered. Default is 0.
+                If positive, perform read buffering when deserializing individual column chunks.
+                Otherwise IO calls are unbuffered. Default is 0.
             partitioning (pyarrow.dataset.Partitioning | str | list of str):
                 The partitioning scheme for a partitioned dataset. Default is 'hive'.
             filesystem (FileSystem | None):
@@ -887,7 +932,8 @@ class ArrowData(DataInterface):
             ignore_prefixes (list | None):
                 Files matching any of these prefixes will be ignored by the discovery process. Default is ['.', '_'].
             pre_buffer (bool):
-                Coalesce and issue file reads in parallel to improve performance on high-latency filesystems (e.g. S3). Default is True.
+                Coalesce and issue file reads in parallel to improve performance on high-latency filesystems (e.g. S3).
+                Default is True.
             coerce_int96_timestamp_unit (str | None):
                 Cast timestamps that are stored in INT96 format to a particular resolution (e.g. 'ms'). Default is None.
             decryption_properties (FileDecryptionProperties | None):
@@ -895,7 +941,8 @@ class ArrowData(DataInterface):
             thrift_string_size_limit (int | None):
                 If not None, override the maximum total string size allocated when decoding Thrift structures. Default is None.
             thrift_container_size_limit (int | None):
-                If not None, override the maximum total size of containers allocated when decoding Thrift structures. Default is None.
+                If not None, override the maximum total size of containers allocated when decoding Thrift structures.
+                Default is None.
             page_checksum_verification (bool):
                 If True, verify the checksum for each page read from the file. Default is False.
 
@@ -934,7 +981,9 @@ class TorchData(DataInterface):
 
         Args:
             path:
-                Base path to save the data to
+                Base path to save the data to.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             pickle_module (Any):
@@ -952,7 +1001,9 @@ class TorchData(DataInterface):
 
         Args:
             path:
-                Base path to load the data from
+                Base path to load the data from.
+            **kwargs:
+                Additional kwargs to pass in.
 
         Kwargs:
             map_location:
@@ -960,7 +1011,8 @@ class TorchData(DataInterface):
             pickle_module:
                 Module used for unpickling metadata and objects (has to match the pickle_module used to serialize file).
             weights_only:
-                Indicates whether unpickler should be restricted to loading only tensors, primitive types, dictionaries and any types added via torch.serialization.add_safe_globals().
+                Indicates whether unpickler should be restricted to loading only tensors, primitive types,
+                dictionaries and any types added via torch.serialization.add_safe_globals().
             mmap:
                 Indicates whether the file should be mmaped rather than loading all the storages into memory.
                 Typically, tensor storages in the file will first be moved from disk to CPU memory,
@@ -968,7 +1020,8 @@ class TorchData(DataInterface):
                 This second step is a no-op if the final location is CPU. When the mmap flag is set,
                 instead of copying the tensor storages from disk to CPU memory in the first step, f is mmaped.
             pickle_load_args:
-                (Python 3 only) optional keyword arguments passed over to pickle_module.load() and pickle_module.Unpickler(), e.g., errors=....
+                (Python 3 only) optional keyword arguments passed over to pickle_module.load() and pickle_module.Unpickler(),
+                e.g., errors=....
 
 
         Additional Information:
@@ -991,7 +1044,9 @@ class SqlData:
 
         Args:
             path (Path):
-                The path to save the sql logic to
+                The path to save the sql logic to.
+            **kwargs:
+                Additional kwargs to pass in.
         """
 
 def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
