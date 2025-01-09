@@ -1,0 +1,133 @@
+name: OpsML Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+env:
+  RUSTFLAGS: -C debuginfo=0 # Do not produce debug symbols to keep memory usage down
+
+jobs:
+  format-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run format
+        run: make format
+
+      - name: Run lints
+        run: make lints
+
+  test-server:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Server tests
+        run: make test.opsml.server
+
+  test-sqlite:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run SQLite tests
+        run: make test.sql.sqlite
+
+  test-mysql:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    services:
+      mysql:
+        image: mysql:latest
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        env:
+          MYSQL_ROOT_PASSWORD: admin
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run MySQL tests
+        run: make test.sql.mysql
+
+  test-postgres:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    services:
+      postgres:
+        image: postgres:latest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Postgres tests
+        run: make test.sql.postgres
+
+  test-enum:
+    runs-on: ubuntu-latest
+    needs: format-and-lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup override set stable && rustup update
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run SQLite tests
+        run: make test.sql.enum

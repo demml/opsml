@@ -1,5 +1,12 @@
 from opsml.model import HuggingFaceORTModel, HuggingFaceOnnxArgs, TorchOnnxArgs
-from opsml.core import Feature, OnnxSchema, DataSchema, OpsmlError, Description
+from opsml.core import (
+    Feature,
+    OnnxSchema,
+    DataSchema,
+    OpsmlError,
+    Description,
+    FeatureSchema,
+)
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
 
@@ -129,8 +136,12 @@ def test_feature_default_extra_args():
 
 
 def test_onnx_schema_creation():
-    input_features = {"input1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
-    output_features = {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
+    input_features = FeatureSchema(
+        {"input1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
+    )
+    output_features = FeatureSchema(
+        {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
+    )
     onnx_version = "1.0"
 
     schema = OnnxSchema(input_features, output_features, onnx_version)
@@ -142,8 +153,12 @@ def test_onnx_schema_creation():
 
 def test_data_schema_creation():
     data_type = "example_type"
-    input_features = {"input1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
-    output_features = {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
+    input_features = FeatureSchema(
+        {"input1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
+    )
+    output_features = FeatureSchema(
+        {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
+    )
     onnx_schema = OnnxSchema(input_features, output_features, "1.0")
 
     schema = DataSchema(data_type, input_features, output_features, onnx_schema)

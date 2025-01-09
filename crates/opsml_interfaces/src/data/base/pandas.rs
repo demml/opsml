@@ -59,7 +59,7 @@ impl PandasData {
     }
 
     #[getter]
-    pub fn get_data<'py>(self_: PyRef<'py, Self>, py: Python) -> PyObject {
+    pub fn get_data(self_: PyRef<'_, Self>, py: Python) -> PyObject {
         self_.as_super().data.clone_ref(py)
     }
 
@@ -71,7 +71,7 @@ impl PandasData {
         // check if data is None
         if PyAnyMethods::is_none(data) {
             parent.data = py.None();
-            return Ok(());
+            Ok(())
         } else {
             // check if data is a numpy array
             // get type name of data
@@ -80,11 +80,11 @@ impl PandasData {
             // check if data is a numpy array
             if data.is_instance(&pandas).unwrap() {
                 parent.data = data.into_py_any(py)?;
-                return Ok(());
+                Ok(())
             } else {
-                return Err(OpsmlError::new_err("Data must be a pandas DataFrame"));
+                Err(OpsmlError::new_err("Data must be a pandas DataFrame"))
             }
-        };
+        }
     }
 
     #[pyo3(signature = (path, **kwargs))]
@@ -129,7 +129,7 @@ impl PandasData {
             data_type: DataType::Pandas,
             feature_map: feature_map.clone(),
             data_save_path: Some(save_path),
-            sql_save_path: sql_save_path,
+            sql_save_path,
             data_profile_save_path: None,
         })
     }

@@ -5,7 +5,10 @@ use opsml_types::{SaveName, Suffix};
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -134,7 +137,7 @@ impl SqlLogic {
         Ok(sql_logic)
     }
 
-    pub fn save(&self, save_path: &PathBuf) -> Result<PathBuf, SaveError> {
+    pub fn save(&self, save_path: &Path) -> Result<PathBuf, SaveError> {
         let sql_directory = save_path.join(SaveName::Sql);
 
         // create directory if it does not exist

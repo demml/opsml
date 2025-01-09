@@ -111,7 +111,7 @@ impl DataInterface {
             sql_logic,
             data_type: DataType::Base,
             interface_type: InterfaceType::Data,
-            data_profile: data_profile,
+            data_profile,
         })
     }
 
@@ -191,9 +191,9 @@ impl DataInterface {
     /// * `Option<PathBuf>` - Path to the saved SQL logic
     pub fn save_sql(&self, path: PathBuf) -> PyResult<Option<PathBuf>> {
         if !self.sql_logic.queries.is_empty() {
-            return Ok(Some(self.sql_logic.save(&path)?));
+            Ok(Some(self.sql_logic.save(&path)?))
         } else {
-            return Ok(None);
+            Ok(None)
         }
     }
 
@@ -208,7 +208,7 @@ impl DataInterface {
     /// * `PyResult<FeatureMap>` - FeatureMap
     pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
         // Create and insert the feature
-        let feature_map = generate_feature_schema(&self.data.bind(py), &self.data_type)?;
+        let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
 
         self.feature_map = feature_map.clone();
 
@@ -228,11 +228,11 @@ impl DataInterface {
     /// * `PyResult<PathBuf>` - Path to the saved data
     ///
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data<'py>(
+    pub fn save_data(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
         if self.data.is_none(py) {
@@ -280,17 +280,17 @@ impl DataInterface {
             data_type: self.data_type.clone(),
             feature_map: self.feature_map.clone(),
             data_save_path: Some(save_path),
-            sql_save_path: sql_save_path,
+            sql_save_path,
             data_profile_save_path: None,
         })
     }
 
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
+    pub fn load_data(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
@@ -352,11 +352,8 @@ impl DataInterface {
             _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
         };
 
-        println!("Data type: {:?}", data_type);
-        println!("Data: {:?}", self.data.bind(py));
-
         let profile = profiler.create_data_profile(
-            &self.data.bind(py),
+            self.data.bind(py),
             data_type,
             bin_size,
             compute_correlations,
