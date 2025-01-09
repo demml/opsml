@@ -106,7 +106,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu, macos]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     runs-on: ${{ matrix.os }}-latest
     needs: [format-and-lint]
@@ -146,4 +146,4 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
