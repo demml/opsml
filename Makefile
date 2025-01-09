@@ -17,7 +17,7 @@ test.sql.enum:
 .PHONY: build.postgres
 build.postgres:
 	docker-compose down
-	docker-compose up -d --build postgres
+	docker-compose up -d --build postgres --wait
 
 .PHONY: test.sql.postgres
 test.sql.postgres: build.postgres
@@ -27,7 +27,7 @@ test.sql.postgres: build.postgres
 .PHONY: build.mysql
 build.mysql:
 	docker-compose down
-	docker-compose up -d --build mysql
+	docker-compose up -d --build mysql --wait
 
 .PHONY: test.sql.mysql
 test.sql.mysql: build.mysql
