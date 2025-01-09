@@ -1,4 +1,4 @@
-use crate::SchemaFeature;
+use crate::Feature;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,7 +15,7 @@ pub struct CatBoostModelInterfaceMetadata {
     #[pyo3(get)]
     pub modelcard_uid: String,
     #[pyo3(get)]
-    pub feature_map: HashMap<String, SchemaFeature>,
+    pub feature_map: HashMap<String, Feature>,
     #[pyo3(get)]
     pub sample_data_interface_type: String,
     #[pyo3(get)]
@@ -34,7 +34,7 @@ impl CatBoostModelInterfaceMetadata {
         model_type: String,
         data_type: String,
         modelcard_uid: String,
-        feature_map: HashMap<String, SchemaFeature>,
+        feature_map: HashMap<String, Feature>,
         sample_data_interface_type: String,
         preprocessor_name: String,
         metadata: Option<HashMap<String, String>>,

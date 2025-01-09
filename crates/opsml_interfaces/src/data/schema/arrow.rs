@@ -1,4 +1,4 @@
-use crate::types::{FeatureSchema, SchemaFeature};
+use crate::types::{Feature, FeatureSchema};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
@@ -28,7 +28,7 @@ impl ArrowSchemaValidator {
 
                 Ok((
                     name.to_string(),
-                    SchemaFeature::new(data_type.to_string(), data_shape, None),
+                    Feature::new(data_type.to_string(), data_shape, None),
                 ))
             })
             .collect::<Result<FeatureSchema, PyErr>>()?;

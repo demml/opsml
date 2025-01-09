@@ -1,4 +1,4 @@
-use crate::SchemaFeature;
+use crate::Feature;
 use opsml_error::error::OpsmlError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -67,7 +67,7 @@ pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
     pub modelcard_uid: String,
     #[pyo3(get)]
-    pub feature_map: HashMap<String, SchemaFeature>,
+    pub feature_map: HashMap<String, Feature>,
     #[pyo3(get)]
     pub sample_data_interface_type: String,
     #[pyo3(get)]
@@ -105,7 +105,7 @@ impl ModelInterfaceMetadata {
             .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
             .to_string();
 
-        let feature_map: HashMap<String, SchemaFeature> = interface
+        let feature_map: HashMap<String, Feature> = interface
             .getattr("feature_map")
             .map_err(|e| OpsmlError::new_err(format!("Failed to get feature_map: {}", e)))?
             .extract()?;
