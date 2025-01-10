@@ -91,12 +91,22 @@ def pandas_dataframe_num(numpy_array: NDArray) -> pd.DataFrame:
 
 
 @pytest.fixture
-def polars_dataframe_num(numpy_array: NDArray) -> pd.DataFrame:
+def polars_dataframe_num(numpy_array: NDArray) -> pl.DataFrame:
     df = pl.from_numpy(numpy_array)
 
     df.columns = [f"column_{i}" for i in range(df.shape[1])]
 
     return df
+
+
+@pytest.fixture
+def arrow_num(numpy_array: NDArray) -> pa.Table:
+    arrays = [pa.array(numpy_array[:, i]) for i in range(numpy_array.shape[1])]
+    table = pa.Table.from_arrays(
+        arrays, names=[f"column_{i}" for i in range(numpy_array.shape[1])]
+    )
+
+    return table
 
 
 # create a multi-type polars dataframe

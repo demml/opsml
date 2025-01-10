@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import polars as pl
+import pyarrow as pa  # type: ignore
 
 
 def test_model_interface_sample_data_numpy(
@@ -50,9 +51,9 @@ def test_model_interface_sample_data_pandas(
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
-        - This sample data should be converted to NumpyData Interface with sampled data
+        - This sample data should be converted to PandasData Interface with sampled data
 
-    2. Create new model interface with NumpyData, should return same interface with sampled data
+    2. Create new model interface with PandasData, should return same interface with sampled data
     """
 
     ##1
@@ -87,9 +88,9 @@ def test_model_interface_sample_data_polars(
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
-        - This sample data should be converted to NumpyData Interface with sampled data
+        - This sample data should be converted to PolarsData Interface with sampled data
 
-    2. Create new model interface with NumpyData, should return same interface with sampled data
+    2. Create new model interface with PolarsData, should return same interface with sampled data
     """
 
     ##1
@@ -116,3 +117,38 @@ def test_model_interface_sample_data_polars(
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.Polars
+
+
+def test_model_interface_sample_data_arrow(tmp_path: Path, arrow_num: pa.Table):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as numpy_array
+        - This sample data should be converted to ArrowData Interface with sampled data
+
+    2. Create new model interface with ArrowData, should return same interface with sampled data
+    """
+
+    ##1
+    assert arrow_num.shape == (10, 100)
+    model_interface = ModelInterface(sample_data=arrow_num)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, ArrowData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+
+    ##2
+    assert arrow_num.shape == (10, 100)
+    data_interface = ArrowData(data=arrow_num)
+    model_interface = ModelInterface(sample_data=data_interface)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, ArrowData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+    assert id(model_interface.sample_data) == id(data_interface)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.Arrow
