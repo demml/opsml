@@ -9,6 +9,7 @@ pub enum InterfaceDataType {
     Polars,
     Numpy,
     Arrow,
+    Torch,
 }
 
 impl InterfaceDataType {
@@ -18,6 +19,7 @@ impl InterfaceDataType {
             "polars.dataframe.frame.DataFrame" => Ok(InterfaceDataType::Polars),
             "numpy.ndarray" => Ok(InterfaceDataType::Numpy),
             "pyarrow.lib.Table" => Ok(InterfaceDataType::Arrow),
+            "torch.Tensor" => Ok(InterfaceDataType::Torch),
             _ => Err(TypeError::Error("Invalid data type".to_string())),
         }
     }
