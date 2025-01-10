@@ -2,7 +2,6 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::{SampleData, TaskType};
 use crate::types::FeatureSchema;
-use crate::Feature;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -21,16 +20,16 @@ pub struct ModelInterfaceSaveMetadata {
     pub model_uri: PathBuf,
 
     #[pyo3(get)]
-    pub preprocessor_uri: Option<String>,
+    pub preprocessor_uri: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub preprocessor_name: Option<String>,
+    pub preprocessor_name: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub sample_data_uri: Option<String>,
+    pub sample_data_uri: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub onnx_model_uri: Option<String>,
+    pub onnx_model_uri: Option<PathBuf>,
 
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
@@ -41,11 +40,11 @@ impl ModelInterfaceSaveMetadata {
     #[new]
     #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, extra_metadata=HashMap::new()))]
     pub fn new(
-        model_uri: String,
-        sample_data_uri: Option<String>,
-        preprocessor_uri: Option<String>,
-        preprocessor_name: Option<String>,
-        onnx_model_uri: Option<String>,
+        model_uri: PathBuf,
+        sample_data_uri: Option<PathBuf>,
+        preprocessor_uri: Option<PathBuf>,
+        preprocessor_name: Option<PathBuf>,
+        onnx_model_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
@@ -308,11 +307,23 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // save data
-        let save_path = self.save_model(py, path.clone(), kwargs)?;
+        let model_uri = self.save_model(py, path.clone(), kwargs)?;
+
+        // if sample_data is not None, save the sample data
+        let sample_data_uri = self.sample_data.save_data(py, path).unwrap_or_else(|e| {
+            warn!("Failed to save sample data. Defaulting to None: {}", e);
+            None
+        });
+
         self.schema = self.create_feature_schema(py)?;
 
         Ok(ModelInterfaceSaveMetadata {
-            model_uri: save_path,
+            model_uri,
+            preprocessor_uri: None,
+            preprocessor_name: None,
+            sample_data_uri,
+            onnx_model_uri: None,
+            extra_metadata: HashMap::new(),
         })
     }
 }
