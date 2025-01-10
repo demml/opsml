@@ -11,10 +11,15 @@ pub struct SklearnPipeline {}
 
 pub struct SklearnOnnxModelConverter {
     model_type: ModelType,
-    model: PyObject,
 }
 
 impl SklearnOnnxModelConverter {
+    pub fn new(model_type: &ModelType) -> Self {
+        SklearnOnnxModelConverter {
+            model_type: model_type.clone(),
+        }
+    }
+
     fn is_stacking_model_type(&self) -> bool {
         // check if the model type  is StackingEstimator, StackingClassifier, or StackingRegressor
         matches!(
@@ -101,16 +106,14 @@ impl SklearnOnnxModelConverter {
 
     pub fn convert_model<'py>(
         &self,
+        py: Python<'py>,
         model: &Bound<'py, PyAny>,
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         info!("Converting model to ONNX");
-        // convert the model to ONNX
-        let py = model.py();
 
-        self.update_sklearn_onnx_registries(py)?;
-
+        //self.update_sklearn_onnx_registries(py)?;
         let skl2onnx = py
             .import("skl2onnx")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import skl2onnx: {}", e)))?;
