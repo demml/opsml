@@ -1,9 +1,9 @@
 use opsml_interfaces::{
     CatBoostModelInterfaceMetadata, HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel,
     HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModelInterfaceMetadata,
-    LightningInterfaceMetadata, ModelDataInterfaceSaveMetadata, ModelInterfaceMetadata,
-    ModelInterfaceType, ModelSaveMetadata, SklearnModelInterfaceMetadata,
-    TensorFlowInterfaceMetadata, TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs,
+    LightningInterfaceMetadata, ModelDataInterfaceSaveMetadata, ModelInterface,
+    ModelInterfaceMetadata, ModelInterfaceType, ModelSaveMetadata, SklearnModelInterfaceMetadata,
+    TaskType, TensorFlowInterfaceMetadata, TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs,
     VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
 };
 
@@ -17,10 +17,12 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<HuggingFaceOnnxSaveArgs>()?;
     m.add_class::<TorchOnnxArgs>()?;
     m.add_class::<TorchSaveArgs>()?;
+    m.add_class::<TaskType>()?;
 
     // Model Interface
     m.add_class::<ModelDataInterfaceSaveMetadata>()?;
     m.add_class::<ModelInterfaceMetadata>()?;
+    m.add_class::<ModelInterface>()?;
 
     // Model Interface args
     m.add_class::<CatBoostModelInterfaceMetadata>()?;

@@ -405,3 +405,65 @@ class ModelInterfaceType:
     TensorFlow: "ModelInterfaceType"
     VowpalWabbit: "ModelInterfaceType"
     XGBoost: "ModelInterfaceType"
+    
+class TaskType:
+    Classification: "TaskType"
+    Regression: "TaskType"
+    Clustering: "TaskType"
+    AnomalyDetection: "TaskType"
+    TimeSeries: "TaskType"
+    Forecasting: "TaskType"
+    Recommendation: "TaskType"
+    Ranking: "TaskType"
+    NLP: "TaskType"
+    Image: "TaskType"
+    Audio: "TaskType"
+    Video: "TaskType"
+    Graph: "TaskType"
+    Tabular: "TaskType"
+    TimeSeriesForecasting: "TaskType"
+    TimeSeriesAnomalyDetection: "TaskType"
+    TimeSeriesClassification: "TaskType"
+    TimeSeriesRegression: "TaskType"
+    TimeSeriesClustering: "TaskType"
+    TimeSeriesRecommendation: "TaskType"
+    TimeSeriesRanking: "TaskType"
+    TimeSeriesNLP: "TaskType"
+    TimeSeriesImage: "TaskType"
+    TimeSeriesAudio: "TaskType"
+    TimeSeriesVideo: "TaskType"
+    TimeSeriesGraph: "TaskType"
+    TimeSeriesTabular: "TaskType"
+    Other: "TaskType"
+    
+class ModelInterface:
+    def __init__(
+        self,
+        data: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+    ) -> None:
+        """Define a data interface
+
+        Args:
+            data:
+                Data. Can be a pyarrow table, pandas dataframe, polars dataframe
+                or numpy array
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+        """
+
+    @property
+    def sample_data(self) -> Optional[Any]:
+        """Returns the data"""
+
+    @data.setter
+    def sample_data(self, data: Any) -> None:
+        """Sets the data"""
+
+    
