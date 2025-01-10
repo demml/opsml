@@ -4,6 +4,7 @@ pub mod huggingface;
 pub mod interface;
 pub mod lightgbm;
 pub mod lightning;
+pub mod onnx;
 pub mod sklearn;
 pub mod tensorflow;
 pub mod torch;
@@ -19,6 +20,7 @@ pub use huggingface::{
 pub use interface::*;
 pub use lightgbm::*;
 pub use lightning::*;
+pub use onnx::*;
 pub use sklearn::*;
 pub use tensorflow::*;
 pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};

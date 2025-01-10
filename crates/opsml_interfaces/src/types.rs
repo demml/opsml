@@ -95,3 +95,72 @@ pub enum ModelInterfaceType {
     VowpalWabbit,
     XGBoost,
 }
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum TrainedModelType {
+    Transformers,
+    SklearnPipeline,
+    SklearnEstimator,
+    StackingRegressor,
+    StackingClassifier,
+    StackingEstimator,
+    CalibratedClassifier,
+    LgbmRegressor,
+    LgbmClassifier,
+    XgbRegressor,
+    XgbClassifier,
+    XgbBooster,
+    LgbmBooster,
+    TfKeras,
+    Pytorch,
+    PytorchLightning,
+    Catboost,
+    Vowpal,
+}
+
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum HuggingFaceModuleType {
+    PretrainedModel,
+    TransformerModel,
+    TransformerPipeline,
+}
+
+pub const SKLEARN_SUPPORTED_MODEL_TYPES: &[TrainedModelType] = &[
+    TrainedModelType::SklearnEstimator,
+    TrainedModelType::StackingRegressor,
+    TrainedModelType::StackingClassifier,
+    TrainedModelType::SklearnPipeline,
+    TrainedModelType::LgbmRegressor,
+    TrainedModelType::LgbmClassifier,
+    TrainedModelType::XgbRegressor,
+    TrainedModelType::CalibratedClassifier,
+];
+
+pub const LIGHTGBM_SUPPORTED_MODEL_TYPES: &[TrainedModelType] = &[TrainedModelType::LgbmBooster];
+
+pub const UPDATE_REGISTRY_MODELS: &[TrainedModelType] = &[
+    TrainedModelType::LgbmClassifier,
+    TrainedModelType::LgbmRegressor,
+    TrainedModelType::XgbRegressor,
+];
+
+pub const AVAILABLE_MODEL_TYPES: &[TrainedModelType] = &[
+    TrainedModelType::Transformers,
+    TrainedModelType::SklearnPipeline,
+    TrainedModelType::SklearnEstimator,
+    TrainedModelType::StackingRegressor,
+    TrainedModelType::StackingClassifier,
+    TrainedModelType::StackingEstimator,
+    TrainedModelType::CalibratedClassifier,
+    TrainedModelType::LgbmRegressor,
+    TrainedModelType::LgbmClassifier,
+    TrainedModelType::XgbRegressor,
+    TrainedModelType::XgbClassifier,
+    TrainedModelType::XgbBooster,
+    TrainedModelType::LgbmBooster,
+    TrainedModelType::TfKeras,
+    TrainedModelType::Pytorch,
+    TrainedModelType::PytorchLightning,
+    TrainedModelType::Catboost,
+    TrainedModelType::Vowpal,
+];
