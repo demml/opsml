@@ -7,7 +7,7 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa  # type: ignore
 import torch
-from typing import List
+from typing import List, Dict
 
 
 def test_model_interface_sample_data_numpy(
@@ -84,9 +84,7 @@ def test_model_interface_sample_data_pandas(
     assert model_interface.data_type == DataType.Pandas
 
 
-def test_model_interface_sample_data_polars(
-    tmp_path: Path, polars_dataframe_num: pl.DataFrame
-):
+def test_model_interface_sample_data_polars(polars_dataframe_num: pl.DataFrame):
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
@@ -121,7 +119,7 @@ def test_model_interface_sample_data_polars(
     assert model_interface.data_type == DataType.Polars
 
 
-def test_model_interface_sample_data_arrow(tmp_path: Path, arrow_num: pa.Table):
+def test_model_interface_sample_data_arrow(arrow_num: pa.Table):
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
@@ -156,7 +154,7 @@ def test_model_interface_sample_data_arrow(tmp_path: Path, arrow_num: pa.Table):
     assert model_interface.data_type == DataType.Arrow
 
 
-def test_model_interface_sample_data_torch(tmp_path: Path, torch_tensor: torch.Tensor):
+def test_model_interface_sample_data_torch(torch_tensor: torch.Tensor):
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
@@ -191,12 +189,10 @@ def test_model_interface_sample_data_torch(tmp_path: Path, torch_tensor: torch.T
     assert model_interface.data_type == DataType.TorchTensor
 
 
-def test_model_interface_sample_data_list(
-    tmp_path: Path, numpy_list: List[NDArray[np.float64]]
-):
+def test_model_interface_sample_data_list(numpy_list: List[NDArray[np.float64]]):
     """Test logic
 
-    1. Create a ModelInterface object with sample_data as a list of nddarays
+    1. Create a ModelInterface object with sample_data as a list of ndarays
         - This sample data should be iterated over and sliced
     """
 
@@ -218,12 +214,10 @@ def test_model_interface_sample_data_list(
     assert model_interface.data_type == DataType.List
 
 
-def test_model_interface_sample_data_tuple(
-    tmp_path: Path, numpy_tuple: tuple[NDArray[np.float64]]
-):
+def test_model_interface_sample_data_tuple(numpy_tuple: tuple[NDArray[np.float64]]):
     """Test logic
 
-    1. Create a ModelInterface object with sample_data as a list of nddarays
+    1. Create a ModelInterface object with sample_data as a tuple of ndarrays
         - This sample data should be iterated over and sliced
     """
 
@@ -243,3 +237,28 @@ def test_model_interface_sample_data_tuple(
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.Tuple
+
+
+def test_model_interface_sample_data_dict(numpy_dict: Dict[str, NDArray[np.float64]]):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as a Dictionary of ndarrays
+        - This sample data should be iterated over and sliced
+    """
+
+    ##1
+    assert len(numpy_dict.keys()) == 2
+    for _, data in numpy_dict.items():
+        assert data.shape == (2, 3)
+
+    model_interface = ModelInterface(sample_data=numpy_dict)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, dict)
+
+    ## assert each data is sliced
+    for _, data in model_interface.sample_data.items():
+        assert data.shape == (1, 3)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.Dict

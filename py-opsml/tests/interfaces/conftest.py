@@ -10,6 +10,7 @@ from opsml.core import SaveName, Suffix, SaverPath
 from pathlib import Path
 import joblib  # type: ignore
 import torch
+from typing import Dict
 
 
 @pytest.fixture
@@ -291,3 +292,11 @@ def numpy_list() -> list:
 @pytest.fixture
 def numpy_tuple() -> tuple:
     return (np.array([[1, 2, 3], [4, 5, 6]]), np.array([[1, 2, 3], [4, 5, 6]]))
+
+
+@pytest.fixture
+def numpy_dict() -> Dict[str, np.ndarray]:
+    return {
+        "a": np.array([[1, 2, 3], [4, 5, 6]]),
+        "b": np.array([[1, 2, 3], [4, 5, 6]]),
+    }
