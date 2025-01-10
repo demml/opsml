@@ -7,6 +7,7 @@ import pandas as pd
 import polars as pl
 import pyarrow as pa  # type: ignore
 import torch
+from typing import List
 
 
 def test_model_interface_sample_data_numpy(
@@ -188,3 +189,27 @@ def test_model_interface_sample_data_torch(tmp_path: Path, torch_tensor: torch.T
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.TorchTensor
+
+
+def test_model_interface_sample_data_list(
+    tmp_path: Path, numpy_list: List[NDArray[np.float64]]
+):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as a list of nddarays
+        - This sample data should be iterated over and sliced
+    """
+
+    ##1
+    assert len(numpy_list) == 2
+    for data in numpy_list:
+        assert data.shape == (2, 3)
+
+    model_interface = ModelInterface(sample_data=numpy_list)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, list)
+
+    ## assert each data is sliced
+    for data in model_interface.sample_data:
+        assert data.shape == (1, 3)
