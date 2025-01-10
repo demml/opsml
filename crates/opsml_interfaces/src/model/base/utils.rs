@@ -4,6 +4,8 @@ use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::{prelude::*, types::PySlice};
+
+#[derive(Default)]
 pub enum SampleData {
     Pandas(PyObject),
     Polars(PyObject),
@@ -12,6 +14,8 @@ pub enum SampleData {
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
+
+    #[default]
     None,
 }
 
@@ -176,11 +180,5 @@ impl SampleData {
             SampleData::Dict(_) => DataType::Dict,
             SampleData::None => DataType::NotProvided,
         }
-    }
-}
-
-impl Default for SampleData {
-    fn default() -> Self {
-        SampleData::None
     }
 }
