@@ -1,7 +1,11 @@
+use crate::data::DataInterface;
+use crate::types::FeatureSchema;
 use crate::Feature;
 use opsml_error::error::OpsmlError;
+use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use pyo3::types::PySlice;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -133,4 +137,79 @@ impl ModelInterfaceMetadata {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
     }
+}
+
+#[pyclass(eq)]
+#[derive(PartialEq, Serialize, Deserialize, Clone)]
+pub enum TaskType {
+    Classification,
+    Regression,
+    Clustering,
+    AnomalyDetection,
+    TimeSeries,
+    Forecasting,
+    Recommendation,
+    Ranking,
+    NLP,
+    Image,
+    Audio,
+    Video,
+    Graph,
+    Tabular,
+    TimeSeriesForecasting,
+    TimeSeriesAnomalyDetection,
+    TimeSeriesClassification,
+    TimeSeriesRegression,
+    TimeSeriesClustering,
+    TimeSeriesRecommendation,
+    TimeSeriesRanking,
+    TimeSeriesNLP,
+    TimeSeriesImage,
+    TimeSeriesAudio,
+    TimeSeriesVideo,
+    TimeSeriesGraph,
+    TimeSeriesTabular,
+    Other,
+}
+
+pub struct ModelInterfaceDataHelper {}
+
+impl ModelInterfaceDataHelper {
+    pub fn get_sample_data<'py>(data: &Bound<'py, PyAny>) -> PyResult<PyObject> {
+        // get python interpreter
+        let py = data.py();
+
+        // check if data is instance of DataInterface
+        if data.is_instance_of::<DataInterface>() {
+            // extract data
+            // get slice of data (data.data[0:1])
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_data = data.getattr("data")?.get_item(slice)?;
+            // set interface data to sliced data
+            data.setattr("data", sliced_data)?;
+
+            return Ok(data.unbind());
+        } else {
+            return Err(OpsmlError::new_err("Invalid DataInterface type"));
+        }
+        Ok(())
+    }
+}
+
+#[pyclass(subclass)]
+pub struct ModelInterface {
+    #[pyo3(get)]
+    pub model: PyObject,
+
+    #[pyo3(get)]
+    pub sample_data: PyObject,
+
+    #[pyo3(get, set)]
+    pub data_type: DataType,
+
+    #[pyo3(get, set)]
+    pub task_type: TaskType,
+
+    #[pyo3(get, set)]
+    pub schema: FeatureSchema,
 }
