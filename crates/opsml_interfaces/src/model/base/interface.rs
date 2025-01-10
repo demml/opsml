@@ -193,4 +193,15 @@ impl ModelInterface {
             sample_data,
         })
     }
+
+    #[getter]
+    pub fn get_sample_data(&self, py: Python<'_>) -> PyResult<PyObject> {
+        self.sample_data.get_data(py)
+    }
+
+    #[setter]
+    pub fn set_sample_data(&mut self, sample_data: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.sample_data = SampleData::new(sample_data)?;
+        Ok(())
+    }
 }

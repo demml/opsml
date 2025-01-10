@@ -3,6 +3,7 @@ use crate::model::InterfaceDataType;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
+use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
 
 #[derive(Default)]
@@ -179,6 +180,19 @@ impl SampleData {
             SampleData::Tuple(_) => DataType::Tuple,
             SampleData::Dict(_) => DataType::Dict,
             SampleData::None => DataType::NotProvided,
+        }
+    }
+
+    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+        match self {
+            SampleData::Pandas(data) => Ok(data.clone_ref(py)),
+            SampleData::Polars(data) => Ok(data.clone_ref(py)),
+            SampleData::Numpy(data) => Ok(data.clone_ref(py)),
+            SampleData::Arrow(data) => Ok(data.clone_ref(py)),
+            SampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
+            SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
+            SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
+            SampleData::None => Ok(py.None()),
         }
     }
 }
