@@ -1,4 +1,5 @@
-use crate::data::DataInterface;
+use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData};
+use crate::model::{InterfaceDataType, SampleData, TaskType};
 use crate::types::FeatureSchema;
 use crate::Feature;
 use opsml_error::error::OpsmlError;
@@ -139,39 +140,6 @@ impl ModelInterfaceMetadata {
     }
 }
 
-#[pyclass(eq)]
-#[derive(PartialEq, Serialize, Deserialize, Clone)]
-pub enum TaskType {
-    Classification,
-    Regression,
-    Clustering,
-    AnomalyDetection,
-    TimeSeries,
-    Forecasting,
-    Recommendation,
-    Ranking,
-    NLP,
-    Image,
-    Audio,
-    Video,
-    Graph,
-    Tabular,
-    TimeSeriesForecasting,
-    TimeSeriesAnomalyDetection,
-    TimeSeriesClassification,
-    TimeSeriesRegression,
-    TimeSeriesClustering,
-    TimeSeriesRecommendation,
-    TimeSeriesRanking,
-    TimeSeriesNLP,
-    TimeSeriesImage,
-    TimeSeriesAudio,
-    TimeSeriesVideo,
-    TimeSeriesGraph,
-    TimeSeriesTabular,
-    Other,
-}
-
 pub struct ModelInterfaceDataHelper {}
 
 impl ModelInterfaceDataHelper {
@@ -188,11 +156,63 @@ impl ModelInterfaceDataHelper {
             // set interface data to sliced data
             data.setattr("data", sliced_data)?;
 
-            return Ok(data.unbind());
+            return Ok(data.clone().unbind());
         } else {
-            return Err(OpsmlError::new_err("Invalid DataInterface type"));
+            // attempt to get interface from data
+            let interface = ModelInterfaceDataHelper::get_interface_for_sample(data)?;
+
+            if let Some(interface) = interface {
+                // get sample data
+
+                return Ok(interface);
+            } else {
+                return Err(OpsmlError::new_err("Failed to get interface type"));
+            }
         }
-        Ok(())
+    }
+
+    pub fn get_interface_for_sample<'py>(data: &Bound<'py, PyAny>) -> PyResult<Option<PyObject>> {
+        let py = data.py();
+        let class = data.getattr("__class__")?;
+        let module = class.getattr("__module__")?.str()?.to_string();
+        let name = class.getattr("__name__")?.str()?.to_string();
+        let full_class_name = format!("{}.{}", module, name);
+
+        let interface_type = InterfaceDataType::from_module_name(&full_class_name).ok();
+
+        // if interface_type is not None, match is to the DataInterfaces and return the interface
+        if let Some(interface_type) = interface_type {
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_data = data.get_item(slice)?;
+            match interface_type {
+                InterfaceDataType::Pandas => {
+                    let interface =
+                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(bound));
+                }
+                InterfaceDataType::Polars => {
+                    let interface =
+                        PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(bound));
+                }
+                InterfaceDataType::Numpy => {
+                    let interface =
+                        NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(bound));
+                }
+                InterfaceDataType::Arrow => {
+                    let interface =
+                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(bound));
+                }
+            }
+        } else {
+            return Ok(None);
+        }
     }
 }
 
@@ -200,9 +220,6 @@ impl ModelInterfaceDataHelper {
 pub struct ModelInterface {
     #[pyo3(get)]
     pub model: PyObject,
-
-    #[pyo3(get)]
-    pub sample_data: PyObject,
 
     #[pyo3(get, set)]
     pub data_type: DataType,
@@ -212,4 +229,6 @@ pub struct ModelInterface {
 
     #[pyo3(get, set)]
     pub schema: FeatureSchema,
+
+    pub sample_data: SampleData,
 }
