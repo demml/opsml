@@ -78,6 +78,27 @@ def pandas_dataframe_profile(numpy_array: NDArray) -> pd.DataFrame:
     return df
 
 
+@pytest.fixture
+def pandas_dataframe_num(numpy_array: NDArray) -> pd.DataFrame:
+    df = pd.DataFrame(numpy_array)
+
+    cols = [f"column_{i}" for i in range(df.shape[1])]
+
+    # update column names
+    df.columns = cols  # type: ignore
+
+    return df
+
+
+@pytest.fixture
+def polars_dataframe_num(numpy_array: NDArray) -> pd.DataFrame:
+    df = pl.from_numpy(numpy_array)
+
+    df.columns = [f"column_{i}" for i in range(df.shape[1])]
+
+    return df
+
+
 # create a multi-type polars dataframe
 @pytest.fixture
 def multi_type_polars_dataframe() -> pl.DataFrame:
