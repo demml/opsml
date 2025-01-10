@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
-
 from ..core import CommonKwargs, FeatureSchema
+from ..data import DataType
 
 class HuggingFaceORTModel:
     OrtAudioClassification = "ORTModelForAudioClassification"
@@ -207,7 +207,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -405,7 +407,7 @@ class ModelInterfaceType:
     TensorFlow: "ModelInterfaceType"
     VowpalWabbit: "ModelInterfaceType"
     XGBoost: "ModelInterfaceType"
-    
+
 class TaskType:
     Classification: "TaskType"
     Regression: "TaskType"
@@ -435,7 +437,7 @@ class TaskType:
     TimeSeriesGraph: "TaskType"
     TimeSeriesTabular: "TaskType"
     Other: "TaskType"
-    
+
 class ModelInterface:
     def __init__(
         self,
@@ -444,7 +446,7 @@ class ModelInterface:
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
     ) -> None:
-        """Define a data interface
+        """Base class for ModelInterface
 
         Args:
             data:
@@ -459,11 +461,17 @@ class ModelInterface:
         """
 
     @property
+    def task_type(self) -> TaskType:
+        """Returns the task type"""
+
+    @property
+    def data_type(self) -> DataType:
+        """Returns the task type"""
+
+    @property
     def sample_data(self) -> Optional[Any]:
         """Returns the data"""
 
-    @data.setter
+    @sample_data.setter
     def sample_data(self, data: Any) -> None:
         """Sets the data"""
-
-    
