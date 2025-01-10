@@ -2,7 +2,7 @@ use crate::model::{SampleData, TaskType};
 use crate::types::FeatureSchema;
 use crate::Feature;
 use opsml_error::error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, InterfaceType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -203,5 +203,30 @@ impl ModelInterface {
     pub fn set_sample_data(&mut self, sample_data: &Bound<'_, PyAny>) -> PyResult<()> {
         self.sample_data = SampleData::new(sample_data)?;
         Ok(())
+    }
+
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_model(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        // check if data is None
+        if self.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        let save_path =
+            PathBuf::from(SaveName::TrainedModel.to_string()).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method("dump", (&self.data, full_save_path), kwargs)?;
+
+        Ok(save_path)
     }
 }
