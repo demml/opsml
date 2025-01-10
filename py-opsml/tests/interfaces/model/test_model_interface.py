@@ -213,3 +213,33 @@ def test_model_interface_sample_data_list(
     ## assert each data is sliced
     for data in model_interface.sample_data:
         assert data.shape == (1, 3)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.List
+
+
+def test_model_interface_sample_data_tuple(
+    tmp_path: Path, numpy_tuple: tuple[NDArray[np.float64]]
+):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as a list of nddarays
+        - This sample data should be iterated over and sliced
+    """
+
+    ##1
+    assert len(numpy_tuple) == 2
+    for data in numpy_tuple:
+        assert data.shape == (2, 3)
+
+    model_interface = ModelInterface(sample_data=numpy_tuple)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, tuple)
+
+    ## assert each data is sliced
+    for data in model_interface.sample_data:
+        assert data.shape == (1, 3)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.Tuple

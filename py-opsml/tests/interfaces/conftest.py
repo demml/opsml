@@ -286,3 +286,8 @@ def torch_tensor() -> torch.Tensor:
 @pytest.fixture
 def numpy_list() -> list:
     return [np.array([[1, 2, 3], [4, 5, 6]]), np.array([[1, 2, 3], [4, 5, 6]])]
+
+
+@pytest.fixture
+def numpy_tuple() -> tuple:
+    return (np.array([[1, 2, 3], [4, 5, 6]]), np.array([[1, 2, 3], [4, 5, 6]]))
