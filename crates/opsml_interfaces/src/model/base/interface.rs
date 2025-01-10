@@ -1,14 +1,14 @@
-use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData};
-use crate::model::{InterfaceDataType, SampleData, TaskType};
+use crate::model::{SampleData, TaskType};
 use crate::types::FeatureSchema;
 use crate::Feature;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::types::PySlice;
+use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::warn;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -140,82 +140,6 @@ impl ModelInterfaceMetadata {
     }
 }
 
-pub struct ModelInterfaceDataHelper {}
-
-impl ModelInterfaceDataHelper {
-    pub fn get_sample_data<'py>(data: &Bound<'py, PyAny>) -> PyResult<PyObject> {
-        // get python interpreter
-        let py = data.py();
-
-        // check if data is instance of DataInterface
-        if data.is_instance_of::<DataInterface>() {
-            // extract data
-            // get slice of data (data.data[0:1])
-            let slice = PySlice::new(py, 0, 1, 1);
-            let sliced_data = data.getattr("data")?.get_item(slice)?;
-            // set interface data to sliced data
-            data.setattr("data", sliced_data)?;
-
-            return Ok(data.clone().unbind());
-        } else {
-            // attempt to get interface from data
-            let interface = ModelInterfaceDataHelper::get_interface_for_sample(data)?;
-
-            if let Some(interface) = interface {
-                // get sample data
-
-                return Ok(interface);
-            } else {
-                return Err(OpsmlError::new_err("Failed to get interface type"));
-            }
-        }
-    }
-
-    pub fn get_interface_for_sample<'py>(data: &Bound<'py, PyAny>) -> PyResult<Option<PyObject>> {
-        let py = data.py();
-        let class = data.getattr("__class__")?;
-        let module = class.getattr("__module__")?.str()?.to_string();
-        let name = class.getattr("__name__")?.str()?.to_string();
-        let full_class_name = format!("{}.{}", module, name);
-
-        let interface_type = InterfaceDataType::from_module_name(&full_class_name).ok();
-
-        // if interface_type is not None, match is to the DataInterfaces and return the interface
-        if let Some(interface_type) = interface_type {
-            let slice = PySlice::new(py, 0, 1, 1);
-            let sliced_data = data.get_item(slice)?;
-            match interface_type {
-                InterfaceDataType::Pandas => {
-                    let interface =
-                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(bound));
-                }
-                InterfaceDataType::Polars => {
-                    let interface =
-                        PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(bound));
-                }
-                InterfaceDataType::Numpy => {
-                    let interface =
-                        NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(bound));
-                }
-                InterfaceDataType::Arrow => {
-                    let interface =
-                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(bound));
-                }
-            }
-        } else {
-            return Ok(None);
-        }
-    }
-}
-
 #[pyclass(subclass)]
 pub struct ModelInterface {
     #[pyo3(get)]
@@ -231,4 +155,42 @@ pub struct ModelInterface {
     pub schema: FeatureSchema,
 
     pub sample_data: SampleData,
+}
+
+#[pymethods]
+impl ModelInterface {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,))]
+    pub fn new<'py>(
+        py: Python,
+        model: Option<&Bound<'py, PyAny>>,
+        sample_data: Option<&Bound<'py, PyAny>>,
+        task_type: TaskType,
+        schema: Option<FeatureSchema>,
+    ) -> PyResult<Self> {
+        let model = match model {
+            Some(model) => model.into_py_any(py)?,
+            None => py.None(),
+        };
+
+        let sample_data = match sample_data {
+            // attempt to create sample data. If it fails, return default sample data and log a warning
+            Some(data) => SampleData::new(data).unwrap_or_else(|e| {
+                warn!("Failed to create sample data. Defaulting to None: {}", e);
+                SampleData::default()
+            }),
+            None => SampleData::default(),
+        };
+
+        let schema = schema.unwrap_or_default();
+
+        Ok(ModelInterface {
+            model,
+            data_type: sample_data.get_data_type(),
+            task_type,
+            schema,
+            sample_data,
+        })
+    }
 }

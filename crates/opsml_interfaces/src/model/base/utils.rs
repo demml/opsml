@@ -12,6 +12,7 @@ pub enum SampleData {
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
+    None,
 }
 
 impl SampleData {
@@ -56,7 +57,7 @@ impl SampleData {
             return Self::handle_pydict(data);
         }
 
-        Err(OpsmlError::new_err("Data type not supported"))
+        Ok(SampleData::None)
     }
 
     fn get_interface_for_sample<'py>(data: &Bound<'py, PyAny>) -> PyResult<Option<Self>> {
@@ -162,5 +163,24 @@ impl SampleData {
         }
 
         Ok(SampleData::Dict(py_dict.clone().unbind()))
+    }
+
+    pub fn get_data_type(&self) -> DataType {
+        match self {
+            SampleData::Pandas(_) => DataType::Pandas,
+            SampleData::Polars(_) => DataType::Polars,
+            SampleData::Numpy(_) => DataType::Numpy,
+            SampleData::Arrow(_) => DataType::Arrow,
+            SampleData::List(_) => DataType::List,
+            SampleData::Tuple(_) => DataType::Tuple,
+            SampleData::Dict(_) => DataType::Dict,
+            SampleData::None => DataType::NotProvided,
+        }
+    }
+}
+
+impl Default for SampleData {
+    fn default() -> Self {
+        SampleData::None
     }
 }
