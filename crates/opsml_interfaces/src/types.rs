@@ -3,6 +3,9 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Display;
+use std::fmt::Formatter;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
@@ -117,6 +120,65 @@ pub enum ModelType {
     Catboost,
     Vowpal,
 }
+
+impl Display for ModelType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        // match the types and return the string representation
+        let model_type = match self {
+            ModelType::Transformers => "transformers",
+            ModelType::SklearnPipeline => "Pipeline",
+            ModelType::SklearnEstimator => "SklearnEstimator",
+            ModelType::StackingRegressor => "StackingRegressor",
+            ModelType::StackingClassifier => "StackingClassifier",
+            ModelType::StackingEstimator => "StackingEstimator",
+            ModelType::CalibratedClassifier => "CalibratedClassifierCV",
+            ModelType::LgbmRegressor => "LGBMRegressor",
+            ModelType::LgbmClassifier => "LGBMClassifier",
+            ModelType::XgbRegressor => "XGBRegressor",
+            ModelType::XgbClassifier => "XGBClassifier",
+            ModelType::XgbBooster => "Booster",
+            ModelType::LgbmBooster => "Booster",
+            ModelType::TfKeras => "keras",
+            ModelType::Pytorch => "pytorch",
+            ModelType::PytorchLightning => "pytorch_lightning",
+            ModelType::Catboost => "CatBoost",
+            ModelType::Vowpal => "VowpalWabbit",
+        };
+
+        write!(f, "{}", model_type)
+    }
+}
+
+impl ModelType {
+    pub fn get_type(model_type: &str) -> ModelType {
+        match model_type {
+            "transformers" => ModelType::Transformers,
+            "Pipeline" => ModelType::SklearnPipeline,
+            "SklearnEstimator" => ModelType::SklearnEstimator,
+            "StackingRegressor" => ModelType::StackingRegressor,
+            "StackingClassifier" => ModelType::StackingClassifier,
+            "StackingEstimator" => ModelType::StackingEstimator,
+            "CalibratedClassifierCV" => ModelType::CalibratedClassifier,
+            "LGBMRegressor" => ModelType::LgbmRegressor,
+            "LGBMClassifier" => ModelType::LgbmClassifier,
+            "XGBRegressor" => ModelType::XgbRegressor,
+            "XGBClassifier" => ModelType::XgbClassifier,
+            "Booster" => ModelType::XgbBooster,
+            "keras" => ModelType::TfKeras,
+            "pytorch" => ModelType::Pytorch,
+            "pytorch_lightning" => ModelType::PytorchLightning,
+            "CatBoost" => ModelType::Catboost,
+            "VowpalWabbit" => ModelType::Vowpal,
+            _ => ModelType::SklearnEstimator,
+        }
+    }
+
+    pub fn in_update_registry(&self) -> bool {
+        UPDATE_REGISTRY_MODELS.contains(&self)
+    }
+}
+
+// add matching function that compares string to ModelType
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum HuggingFaceModuleType {
