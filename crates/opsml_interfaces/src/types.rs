@@ -99,6 +99,7 @@ pub enum ModelInterfaceType {
     XGBoost,
 }
 
+#[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum ModelType {
     Transformers,
@@ -119,6 +120,7 @@ pub enum ModelType {
     PytorchLightning,
     Catboost,
     Vowpal,
+    Unknown,
 }
 
 impl Display for ModelType {
@@ -143,6 +145,7 @@ impl Display for ModelType {
             ModelType::PytorchLightning => "pytorch_lightning",
             ModelType::Catboost => "CatBoost",
             ModelType::Vowpal => "VowpalWabbit",
+            ModelType::Unknown => "Unknown",
         };
 
         write!(f, "{}", model_type)
@@ -169,7 +172,38 @@ impl ModelType {
             "pytorch_lightning" => ModelType::PytorchLightning,
             "CatBoost" => ModelType::Catboost,
             "VowpalWabbit" => ModelType::Vowpal,
-            _ => ModelType::SklearnEstimator,
+            _ => ModelType::Unknown,
+        }
+    }
+
+    pub fn from_pyobject(object: &Bound<'_, PyAny>) -> ModelType {
+        let model_type = object
+            .getattr("__class__")
+            .unwrap()
+            .getattr("__name__")
+            .unwrap()
+            .extract::<String>()
+            .unwrap();
+
+        match model_type.as_str() {
+            "transformers" => ModelType::Transformers,
+            "Pipeline" => ModelType::SklearnPipeline,
+            "SklearnEstimator" => ModelType::SklearnEstimator,
+            "StackingRegressor" => ModelType::StackingRegressor,
+            "StackingClassifier" => ModelType::StackingClassifier,
+            "StackingEstimator" => ModelType::StackingEstimator,
+            "CalibratedClassifierCV" => ModelType::CalibratedClassifier,
+            "LGBMRegressor" => ModelType::LgbmRegressor,
+            "LGBMClassifier" => ModelType::LgbmClassifier,
+            "XGBRegressor" => ModelType::XgbRegressor,
+            "XGBClassifier" => ModelType::XgbClassifier,
+            "Booster" => ModelType::XgbBooster,
+            "keras" => ModelType::TfKeras,
+            "pytorch" => ModelType::Pytorch,
+            "pytorch_lightning" => ModelType::PytorchLightning,
+            "CatBoost" => ModelType::Catboost,
+            "VowpalWabbit" => ModelType::Vowpal,
+            _ => ModelType::Unknown,
         }
     }
 

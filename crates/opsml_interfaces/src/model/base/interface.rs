@@ -1,7 +1,8 @@
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
+use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
-use crate::types::FeatureSchema;
+use crate::types::{FeatureSchema, ModelInterfaceType, ModelType};
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -157,6 +158,12 @@ pub struct ModelInterface {
     #[pyo3(get, set)]
     pub schema: FeatureSchema,
 
+    #[pyo3(get)]
+    pub model_type: ModelType,
+
+    #[pyo3(get)]
+    pub model_interface_type: ModelInterfaceType,
+
     pub sample_data: SampleData,
 }
 
@@ -172,11 +179,7 @@ impl ModelInterface {
         task_type: TaskType,
         schema: Option<FeatureSchema>,
     ) -> PyResult<Self> {
-        let model = match model {
-            Some(model) => model.into_py_any(py)?,
-            None => py.None(),
-        };
-
+        // Extract the sample data
         let sample_data = match sample_data {
             // attempt to create sample data. If it fails, return default sample data and log a warning
             Some(data) => SampleData::new(data).unwrap_or_else(|e| {
@@ -186,7 +189,21 @@ impl ModelInterface {
             None => SampleData::default(),
         };
 
+        // Extract the schema if it exists
         let schema = schema.unwrap_or_default();
+
+        // Determing model_type
+        let model_type = if let Some(model) = model {
+            ModelType::from_pyobject(model)
+        } else {
+            ModelType::Unknown
+        };
+
+        // Convert the model to a PyObject for storing in struct
+        let model = match model {
+            Some(model) => model.into_py_any(py)?,
+            None => py.None(),
+        };
 
         Ok(ModelInterface {
             model,
@@ -194,6 +211,8 @@ impl ModelInterface {
             task_type,
             schema,
             sample_data,
+            model_type,
+            model_interface_type: ModelInterfaceType::Base,
         })
     }
 
@@ -325,5 +344,30 @@ impl ModelInterface {
             onnx_model_uri: None,
             extra_metadata: HashMap::new(),
         })
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (**kwargs))]
+    pub fn convert_to_onnx(
+        &mut self,
+        py: Python,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        OnnxModelConverter::convert_model(
+            py,
+            &self.model.bind(py),
+            &self.sample_data,
+            &self.model_interface_type,
+            &self.model_type,
+            kwargs,
+        )?;
+
+        Ok(())
     }
 }
