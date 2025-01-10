@@ -1,8 +1,10 @@
 from opsml.model import ModelInterface, TaskType
-from opsml.data import NumpyData, DataType
+from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData
 from numpy.typing import NDArray
 from pathlib import Path
 import numpy as np
+import pandas as pd
+import polars as pl
 
 
 def test_model_interface_sample_data_numpy(
@@ -40,3 +42,77 @@ def test_model_interface_sample_data_numpy(
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.Numpy
+
+
+def test_model_interface_sample_data_pandas(
+    tmp_path: Path, pandas_dataframe_num: pd.DataFrame
+):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as numpy_array
+        - This sample data should be converted to NumpyData Interface with sampled data
+
+    2. Create new model interface with NumpyData, should return same interface with sampled data
+    """
+
+    ##1
+    assert pandas_dataframe_num.shape == (10, 100)
+    model_interface = ModelInterface(sample_data=pandas_dataframe_num)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, PandasData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+
+    ##2
+    assert pandas_dataframe_num.shape == (10, 100)
+    data_interface = PandasData(data=pandas_dataframe_num)
+    model_interface = ModelInterface(sample_data=data_interface)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, PandasData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+    assert id(model_interface.sample_data) == id(data_interface)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.Pandas
+
+
+def test_model_interface_sample_data_polars(
+    tmp_path: Path, polars_dataframe_num: pl.DataFrame
+):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as numpy_array
+        - This sample data should be converted to NumpyData Interface with sampled data
+
+    2. Create new model interface with NumpyData, should return same interface with sampled data
+    """
+
+    ##1
+    assert polars_dataframe_num.shape == (10, 100)
+    model_interface = ModelInterface(sample_data=polars_dataframe_num)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, PolarsData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+
+    ##2
+    assert polars_dataframe_num.shape == (10, 100)
+    data_interface = PolarsData(data=polars_dataframe_num)
+    model_interface = ModelInterface(sample_data=data_interface)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, PolarsData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 100)
+    assert id(model_interface.sample_data) == id(data_interface)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.Polars
