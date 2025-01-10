@@ -1,4 +1,4 @@
-use crate::model::torch::{TorchOnnxArgs, TorchSaveArgs};
+use crate::model::torch::types::{TorchOnnxArgs, TorchSaveArgs};
 use crate::FeatureSchema;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};

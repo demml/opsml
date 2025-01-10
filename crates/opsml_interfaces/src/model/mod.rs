@@ -21,6 +21,6 @@ pub use lightgbm::*;
 pub use lightning::*;
 pub use sklearn::*;
 pub use tensorflow::*;
-pub use torch::*;
+pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};
 pub use vowpal::*;
 pub use xgboost::*;

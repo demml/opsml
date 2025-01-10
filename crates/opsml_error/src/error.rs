@@ -75,7 +75,7 @@ impl From<UtilError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum TypeError {
-    #[error("Type Error: {0}")]
+    #[error("{0}")]
     Error(String),
 
     #[error("Error serializing data")]

@@ -1,9 +1,14 @@
+use crate::model::{SampleData, TaskType};
+use crate::types::FeatureSchema;
 use crate::Feature;
 use opsml_error::error::OpsmlError;
+use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::warn;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -132,5 +137,71 @@ impl ModelInterfaceMetadata {
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass(subclass)]
+pub struct ModelInterface {
+    #[pyo3(get)]
+    pub model: PyObject,
+
+    #[pyo3(get, set)]
+    pub data_type: DataType,
+
+    #[pyo3(get, set)]
+    pub task_type: TaskType,
+
+    #[pyo3(get, set)]
+    pub schema: FeatureSchema,
+
+    pub sample_data: SampleData,
+}
+
+#[pymethods]
+impl ModelInterface {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,))]
+    pub fn new<'py>(
+        py: Python,
+        model: Option<&Bound<'py, PyAny>>,
+        sample_data: Option<&Bound<'py, PyAny>>,
+        task_type: TaskType,
+        schema: Option<FeatureSchema>,
+    ) -> PyResult<Self> {
+        let model = match model {
+            Some(model) => model.into_py_any(py)?,
+            None => py.None(),
+        };
+
+        let sample_data = match sample_data {
+            // attempt to create sample data. If it fails, return default sample data and log a warning
+            Some(data) => SampleData::new(data).unwrap_or_else(|e| {
+                warn!("Failed to create sample data. Defaulting to None: {}", e);
+                SampleData::default()
+            }),
+            None => SampleData::default(),
+        };
+
+        let schema = schema.unwrap_or_default();
+
+        Ok(ModelInterface {
+            model,
+            data_type: sample_data.get_data_type(),
+            task_type,
+            schema,
+            sample_data,
+        })
+    }
+
+    #[getter]
+    pub fn get_sample_data(&self, py: Python<'_>) -> PyResult<PyObject> {
+        self.sample_data.get_data(py)
+    }
+
+    #[setter]
+    pub fn set_sample_data(&mut self, sample_data: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.sample_data = SampleData::new(sample_data)?;
+        Ok(())
     }
 }
