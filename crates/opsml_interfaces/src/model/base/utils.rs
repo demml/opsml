@@ -40,7 +40,7 @@ impl SampleData {
     ///
     /// # Returns
     ///
-    pub fn new<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+    pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         if data.is_instance_of::<DataInterface>() {
             return Self::handle_data_interface(data);
         }
@@ -64,7 +64,7 @@ impl SampleData {
         Ok(SampleData::None)
     }
 
-    fn get_interface_for_sample<'py>(data: &Bound<'py, PyAny>) -> PyResult<Option<Self>> {
+    fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
         let py = data.py();
         let class = data.getattr("__class__")?;
         let module = class.getattr("__module__")?.str()?.to_string();
@@ -81,25 +81,25 @@ impl SampleData {
                     let interface =
                         PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
                     let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(SampleData::Pandas(bound)));
+                    Ok(Some(SampleData::Pandas(bound)))
                 }
                 InterfaceDataType::Polars => {
                     let interface =
                         PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
                     let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(SampleData::Polars(bound)));
+                    Ok(Some(SampleData::Polars(bound)))
                 }
                 InterfaceDataType::Numpy => {
                     let interface =
                         NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
                     let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(SampleData::Numpy(bound)));
+                    Ok(Some(SampleData::Numpy(bound)))
                 }
                 InterfaceDataType::Arrow => {
                     let interface =
                         ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
                     let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    return Ok(Some(SampleData::Arrow(bound)));
+                    Ok(Some(SampleData::Arrow(bound)))
                 }
             }
         } else {
@@ -107,7 +107,7 @@ impl SampleData {
         }
     }
 
-    fn handle_data_interface<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+    fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         let data_type = data.getattr("data_type")?.extract::<DataType>()?;
 
         match data_type {
@@ -119,7 +119,7 @@ impl SampleData {
         }
     }
 
-    fn slice_and_return<'py, F>(data: &Bound<'py, PyAny>, constructor: F) -> PyResult<Self>
+    fn slice_and_return<F>(data: &Bound<'_, PyAny>, constructor: F) -> PyResult<Self>
     where
         F: FnOnce(PyObject) -> SampleData,
     {
@@ -130,7 +130,7 @@ impl SampleData {
         Ok(constructor(data.clone().unbind()))
     }
 
-    fn handle_pylist<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+    fn handle_pylist(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
         let py_list = data.downcast::<PyList>()?;
 
@@ -143,7 +143,7 @@ impl SampleData {
         Ok(SampleData::List(py_list.clone().unbind()))
     }
 
-    fn handle_pytuple<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+    fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
         let py_tuple = data.downcast::<PyTuple>()?;
 
@@ -156,7 +156,7 @@ impl SampleData {
         Ok(SampleData::Tuple(py_tuple.clone().unbind()))
     }
 
-    fn handle_pydict<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+    fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
         let py_dict = data.downcast::<PyDict>()?;
 
