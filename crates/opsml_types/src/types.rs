@@ -547,6 +547,7 @@ pub enum DataType {
     Joblib,
     Base,
     Dataset,
+    NotProvided,
 }
 
 #[pyclass(eq)]
