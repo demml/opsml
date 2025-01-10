@@ -60,7 +60,6 @@ test.storage.server:
 	cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
 
 
-
 .PHONY: test.utils
 test.utils:
 	cargo test -p opsml-utils -- --nocapture
