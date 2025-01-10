@@ -154,15 +154,19 @@ impl SampleData {
 
     fn handle_pytuple(data: &Bound<'_, PyAny>) -> PyResult<Self> {
         let py = data.py();
-        let py_tuple = data.downcast::<PyTuple>()?;
 
-        for (idx, item) in py_tuple.iter().enumerate() {
+        // convert data from PyTuple to PyList
+        let py_list = PyList::new(py, data.downcast::<PyTuple>()?.iter())?;
+
+        for (idx, item) in py_list.iter().enumerate() {
             let slice = PySlice::new(py, 0, 1, 1);
             let sliced_item = item.get_item(&slice)?;
-            py_tuple.set_item(idx, sliced_item)?;
+            py_list.set_item(idx, sliced_item)?;
         }
 
-        Ok(SampleData::Tuple(py_tuple.clone().unbind()))
+        let tuple = PyTuple::new(py, py_list.iter())?.unbind();
+
+        Ok(SampleData::Tuple(tuple))
     }
 
     fn handle_pydict(data: &Bound<'_, PyAny>) -> PyResult<Self> {
