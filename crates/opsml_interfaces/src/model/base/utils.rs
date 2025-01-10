@@ -1,10 +1,11 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
+use std::path::PathBuf;
 
 #[derive(Default)]
 pub enum SampleData {
@@ -207,6 +208,37 @@ impl SampleData {
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::None => Ok(py.None()),
+        }
+    }
+
+    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+        let py = data.py();
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+        joblib.call_method1("dump", (data, full_save_path))?;
+
+        Ok(path)
+    }
+
+    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+        let path = data.call_method1("save_data", (path,))?;
+        // convert pyany to pathbuf
+        let path = path.extract::<PathBuf>()?;
+        Ok(path)
+    }
+
+    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        match self {
+            SampleData::Pandas(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Polars(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Numpy(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Arrow(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Torch(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::None => Ok(None),
         }
     }
 }
