@@ -1,122 +1,166 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData};
-use opsml_error::{OpsmlError, TypeError};
+use crate::model::InterfaceDataType;
+use opsml_error::OpsmlError;
 use opsml_types::DataType;
-use pyo3::types::{PyList, PyListMethods, PyTuple, PyTupleMethods};
+use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::{prelude::*, types::PySlice};
-use serde::{Deserialize, Serialize};
-
-pub struct ListData {
-    pub strings: Option<Vec<String>>,
-    pub numbers: Option<Vec<i32>>,
-    pub floats: Option<Vec<f64>>,
-}
-
-impl ListData {
-    /// Create a new List object
-    pub fn new<'py>(list: &Bound<'py, PyList>) -> PyResult<Self> {
-        let list = list.get_item(0).map_err(|e| OpsmlError::new_err(e))?;
-
-        let mut strings = Vec::new();
-        let mut numbers = Vec::new();
-        let mut floats = Vec::new();
-
-        while let Ok(item) = list.try_iter() {
-            if let Ok(string) = item.extract::<String>() {
-                strings.push(string);
-            } else if let Ok(number) = item.extract::<i32>() {
-                numbers.push(number);
-            } else if let Ok(float) = item.extract::<f64>() {
-                floats.push(float);
-            } else {
-                return Err(OpsmlError::new_err(
-                    "List must contain only strings, numbers, or floats",
-                ));
-            }
-        }
-
-        Ok(ListData {
-            strings: Some(strings),
-            numbers: Some(numbers),
-            floats: Some(floats),
-        })
-    }
-}
-
-pub struct TupleData {
-    pub strings: Option<Vec<String>>,
-    pub numbers: Option<Vec<i32>>,
-    pub floats: Option<Vec<f64>>,
-}
-
-impl TupleData {
-    /// Create a new Tuple object
-    pub fn new<'py>(tuple: &Bound<'py, PyTuple>) -> PyResult<Self> {
-        let mut strings = Vec::new();
-        let mut numbers = Vec::new();
-        let mut floats = Vec::new();
-
-        for item in tuple.iter() {
-            if let Ok(string) = item.extract::<String>() {
-                strings.push(string);
-            } else if let Ok(number) = item.extract::<i32>() {
-                numbers.push(number);
-            } else if let Ok(float) = item.extract::<f64>() {
-                floats.push(float);
-            } else {
-                return Err(OpsmlError::new_err(
-                    "Tuple must contain only strings, numbers, or floats",
-                ));
-            }
-        }
-
-        Ok(TupleData {
-            strings: Some(strings),
-            numbers: Some(numbers),
-            floats: Some(floats),
-        })
-    }
-}
-
-pub struct DictData {
-    pub dict: PyObject,
-}
-
 pub enum SampleData {
-    Pandas(PandasData),
-    Polars(PolarsData),
-    Numpy(NumpyData),
-    Arrow(ArrowData),
-    List(ListData),
-    Tuple(TupleData),
-    Dict(DictData),
+    Pandas(PyObject),
+    Polars(PyObject),
+    Numpy(PyObject),
+    Arrow(PyObject),
+    List(Py<PyList>),
+    Tuple(Py<PyTuple>),
+    Dict(Py<PyDict>),
 }
 
 impl SampleData {
+    /// Create a new SampleData object
+    ///
+    /// Overview:
+    ///     1. Check if the data is a DataInterface object
+    ///         - If it is, slice the data and return the object
+    ///     2. Check if the data is a supported interface type
+    ///         - If it is, slice the data and coerce into the appropriate interface
+    ///     3. Check if the data is a list
+    ///         - If it is, slice the data and return the object
+    ///     4. Check if the data is a tuple
+    ///         - If it is, slice the data and return the object
+    ///     5. Check if the data is a dictionary
+    ///         - If it is, slice each item in the dictionary and return the object
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to create the SampleData object from
+    ///
+    /// # Returns
+    ///
     pub fn new<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
         if data.is_instance_of::<DataInterface>() {
-            let data_type = data.getattr("data_type")?.extract::<DataType>()?;
-            // match data_type and extract interface
-            match data_type {
-                DataType::Pandas => {
-                    let extracted_data = data.extract::<PandasData>()?;
-                    return Ok(SampleData::Pandas(extracted_data));
-                }
-                DataType::Polars => {
-                    let extracted_data = data.extract::<PolarsData>()?;
-                    return Ok(SampleData::Polars(extracted_data));
-                }
-                DataType::Numpy => {
-                    let extracted_data = data.extract::<NumpyData>()?;
-                    return Ok(SampleData::Numpy(extracted_data));
-                }
-                DataType::Arrow => {
-                    let extracted_data = data.extract::<ArrowData>()?;
-                    return Ok(SampleData::Arrow(extracted_data));
-                }
-
-                _ => return Err(OpsmlError::new_err("Data type not supported")),
-            }
+            return Self::handle_data_interface(data);
         }
+
+        if let Some(interface) = Self::get_interface_for_sample(data)? {
+            return Ok(interface);
+        }
+
+        if data.is_instance_of::<PyList>() {
+            return Self::handle_pylist(data);
+        }
+
+        if data.is_instance_of::<PyTuple>() {
+            return Self::handle_pytuple(data);
+        }
+
+        if data.is_instance_of::<PyDict>() {
+            return Self::handle_pydict(data);
+        }
+
         Err(OpsmlError::new_err("Data type not supported"))
+    }
+
+    fn get_interface_for_sample<'py>(data: &Bound<'py, PyAny>) -> PyResult<Option<Self>> {
+        let py = data.py();
+        let class = data.getattr("__class__")?;
+        let module = class.getattr("__module__")?.str()?.to_string();
+        let name = class.getattr("__name__")?.str()?.to_string();
+        let full_class_name = format!("{}.{}", module, name);
+
+        let interface_type = InterfaceDataType::from_module_name(&full_class_name).ok();
+
+        if let Some(interface_type) = interface_type {
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_data = data.get_item(slice)?;
+            match interface_type {
+                InterfaceDataType::Pandas => {
+                    let interface =
+                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(SampleData::Pandas(bound)));
+                }
+                InterfaceDataType::Polars => {
+                    let interface =
+                        PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(SampleData::Polars(bound)));
+                }
+                InterfaceDataType::Numpy => {
+                    let interface =
+                        NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(SampleData::Numpy(bound)));
+                }
+                InterfaceDataType::Arrow => {
+                    let interface =
+                        ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    return Ok(Some(SampleData::Arrow(bound)));
+                }
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn handle_data_interface<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let data_type = data.getattr("data_type")?.extract::<DataType>()?;
+
+        match data_type {
+            DataType::Pandas => Self::slice_and_return(data, SampleData::Pandas),
+            DataType::Polars => Self::slice_and_return(data, SampleData::Polars),
+            DataType::Numpy => Self::slice_and_return(data, SampleData::Numpy),
+            DataType::Arrow => Self::slice_and_return(data, SampleData::Arrow),
+            _ => Err(OpsmlError::new_err("Data type not supported")),
+        }
+    }
+
+    fn slice_and_return<'py, F>(data: &Bound<'py, PyAny>, constructor: F) -> PyResult<Self>
+    where
+        F: FnOnce(PyObject) -> SampleData,
+    {
+        let py = data.py();
+        let slice = PySlice::new(py, 0, 1, 1);
+        let sliced_data = data.getattr("data")?.get_item(slice)?;
+        data.setattr("data", sliced_data)?;
+        Ok(constructor(data.clone().unbind()))
+    }
+
+    fn handle_pylist<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let py = data.py();
+        let py_list = data.downcast::<PyList>()?;
+
+        for (idx, item) in py_list.iter().enumerate() {
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_item = item.get_item(&slice)?;
+            py_list.set_item(idx, sliced_item)?;
+        }
+
+        Ok(SampleData::List(py_list.clone().unbind()))
+    }
+
+    fn handle_pytuple<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let py = data.py();
+        let py_tuple = data.downcast::<PyTuple>()?;
+
+        for (idx, item) in py_tuple.iter().enumerate() {
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_item = item.get_item(&slice)?;
+            py_tuple.set_item(idx, sliced_item)?;
+        }
+
+        Ok(SampleData::Tuple(py_tuple.clone().unbind()))
+    }
+
+    fn handle_pydict<'py>(data: &Bound<'py, PyAny>) -> PyResult<Self> {
+        let py = data.py();
+        let py_dict = data.downcast::<PyDict>()?;
+
+        for (k, v) in py_dict.iter() {
+            let slice = PySlice::new(py, 0, 1, 1);
+            let sliced_item = v.get_item(slice)?;
+            py_dict.set_item(k, sliced_item)?;
+        }
+
+        Ok(SampleData::Dict(py_dict.clone().unbind()))
     }
 }
