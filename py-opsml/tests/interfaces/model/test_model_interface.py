@@ -1,5 +1,5 @@
 from opsml.model import ModelInterface, TaskType
-from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData
+from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData, TorchData
 from numpy.typing import NDArray
 from pathlib import Path
 import numpy as np
@@ -167,4 +167,24 @@ def test_model_interface_sample_data_torch(tmp_path: Path, torch_tensor: torch.T
     ##1
     assert torch_tensor.shape == (2, 3)
     model_interface = ModelInterface(sample_data=torch_tensor)
-    a
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, TorchData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 3)
+
+    ##2
+    assert torch_tensor.shape == (2, 3)
+    data_interface = TorchData(data=torch_tensor)
+    model_interface = ModelInterface(sample_data=data_interface)
+
+    assert model_interface.sample_data is not None
+    assert isinstance(model_interface.sample_data, TorchData)
+
+    assert model_interface.sample_data.data is not None
+    assert model_interface.sample_data.data.shape == (1, 3)
+    assert id(model_interface.sample_data) == id(data_interface)
+
+    assert model_interface.task_type == TaskType.Other
+    assert model_interface.data_type == DataType.TorchTensor
