@@ -97,7 +97,7 @@ pub enum ModelInterfaceType {
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum TrainedModelType {
+pub enum ModelType {
     Transformers,
     SklearnPipeline,
     SklearnEstimator,
@@ -125,42 +125,42 @@ pub enum HuggingFaceModuleType {
     TransformerPipeline,
 }
 
-pub const SKLEARN_SUPPORTED_MODEL_TYPES: &[TrainedModelType] = &[
-    TrainedModelType::SklearnEstimator,
-    TrainedModelType::StackingRegressor,
-    TrainedModelType::StackingClassifier,
-    TrainedModelType::SklearnPipeline,
-    TrainedModelType::LgbmRegressor,
-    TrainedModelType::LgbmClassifier,
-    TrainedModelType::XgbRegressor,
-    TrainedModelType::CalibratedClassifier,
+pub const SKLEARN_SUPPORTED_MODEL_TYPES: &[ModelType] = &[
+    ModelType::SklearnEstimator,
+    ModelType::StackingRegressor,
+    ModelType::StackingClassifier,
+    ModelType::SklearnPipeline,
+    ModelType::LgbmRegressor,
+    ModelType::LgbmClassifier,
+    ModelType::XgbRegressor,
+    ModelType::CalibratedClassifier,
 ];
 
-pub const LIGHTGBM_SUPPORTED_MODEL_TYPES: &[TrainedModelType] = &[TrainedModelType::LgbmBooster];
+pub const LIGHTGBM_SUPPORTED_MODEL_TYPES: &[ModelType] = &[ModelType::LgbmBooster];
 
-pub const UPDATE_REGISTRY_MODELS: &[TrainedModelType] = &[
-    TrainedModelType::LgbmClassifier,
-    TrainedModelType::LgbmRegressor,
-    TrainedModelType::XgbRegressor,
+pub const UPDATE_REGISTRY_MODELS: &[ModelType] = &[
+    ModelType::LgbmClassifier,
+    ModelType::LgbmRegressor,
+    ModelType::XgbRegressor,
 ];
 
-pub const AVAILABLE_MODEL_TYPES: &[TrainedModelType] = &[
-    TrainedModelType::Transformers,
-    TrainedModelType::SklearnPipeline,
-    TrainedModelType::SklearnEstimator,
-    TrainedModelType::StackingRegressor,
-    TrainedModelType::StackingClassifier,
-    TrainedModelType::StackingEstimator,
-    TrainedModelType::CalibratedClassifier,
-    TrainedModelType::LgbmRegressor,
-    TrainedModelType::LgbmClassifier,
-    TrainedModelType::XgbRegressor,
-    TrainedModelType::XgbClassifier,
-    TrainedModelType::XgbBooster,
-    TrainedModelType::LgbmBooster,
-    TrainedModelType::TfKeras,
-    TrainedModelType::Pytorch,
-    TrainedModelType::PytorchLightning,
-    TrainedModelType::Catboost,
-    TrainedModelType::Vowpal,
+pub const AVAILABLE_MODEL_TYPES: &[ModelType] = &[
+    ModelType::Transformers,
+    ModelType::SklearnPipeline,
+    ModelType::SklearnEstimator,
+    ModelType::StackingRegressor,
+    ModelType::StackingClassifier,
+    ModelType::StackingEstimator,
+    ModelType::CalibratedClassifier,
+    ModelType::LgbmRegressor,
+    ModelType::LgbmClassifier,
+    ModelType::XgbRegressor,
+    ModelType::XgbClassifier,
+    ModelType::XgbBooster,
+    ModelType::LgbmBooster,
+    ModelType::TfKeras,
+    ModelType::Pytorch,
+    ModelType::PytorchLightning,
+    ModelType::Catboost,
+    ModelType::Vowpal,
 ];
