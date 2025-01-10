@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa  # type: ignore
+import torch
 
 
 def test_model_interface_sample_data_numpy(
@@ -152,3 +153,18 @@ def test_model_interface_sample_data_arrow(tmp_path: Path, arrow_num: pa.Table):
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.Arrow
+
+
+def test_model_interface_sample_data_torch(tmp_path: Path, torch_tensor: torch.Tensor):
+    """Test logic
+
+    1. Create a ModelInterface object with sample_data as numpy_array
+        - This sample data should be converted to TorchData Interface with sampled data
+
+    2. Create new model interface with TorchData, should return same interface with sampled data
+    """
+
+    ##1
+    assert torch_tensor.shape == (2, 3)
+    model_interface = ModelInterface(sample_data=torch_tensor)
+    a

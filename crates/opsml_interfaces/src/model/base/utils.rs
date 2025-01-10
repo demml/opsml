@@ -1,4 +1,4 @@
-use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData};
+use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
@@ -12,6 +12,7 @@ pub enum SampleData {
     Polars(PyObject),
     Numpy(PyObject),
     Arrow(PyObject),
+    Torch(PyObject),
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
@@ -102,6 +103,12 @@ impl SampleData {
                     let bound = Py::new(py, interface)?.as_any().clone_ref(py);
                     Ok(Some(SampleData::Arrow(bound)))
                 }
+                InterfaceDataType::Torch => {
+                    let interface =
+                        TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                    Ok(Some(SampleData::Numpy(bound)))
+                }
             }
         } else {
             Ok(None)
@@ -116,6 +123,7 @@ impl SampleData {
             DataType::Polars => Self::slice_and_return(data, SampleData::Polars),
             DataType::Numpy => Self::slice_and_return(data, SampleData::Numpy),
             DataType::Arrow => Self::slice_and_return(data, SampleData::Arrow),
+            DataType::TorchTensor => Self::slice_and_return(data, SampleData::Torch),
             _ => Err(OpsmlError::new_err("Data type not supported")),
         }
     }
@@ -179,6 +187,7 @@ impl SampleData {
             SampleData::List(_) => DataType::List,
             SampleData::Tuple(_) => DataType::Tuple,
             SampleData::Dict(_) => DataType::Dict,
+            SampleData::Torch(_) => DataType::TorchTensor,
             SampleData::None => DataType::NotProvided,
         }
     }
@@ -189,6 +198,7 @@ impl SampleData {
             SampleData::Polars(data) => Ok(data.clone_ref(py)),
             SampleData::Numpy(data) => Ok(data.clone_ref(py)),
             SampleData::Arrow(data) => Ok(data.clone_ref(py)),
+            SampleData::Torch(data) => Ok(data.clone_ref(py)),
             SampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
