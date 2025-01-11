@@ -198,30 +198,24 @@ impl ModelType {
             .extract::<String>()
             .unwrap();
 
-        match model_type.as_str() {
-            "transformers" => ModelType::Transformers,
-            "Pipeline" => ModelType::SklearnPipeline,
-            "SklearnEstimator" => ModelType::SklearnEstimator,
-            "StackingRegressor" => ModelType::StackingRegressor,
-            "StackingClassifier" => ModelType::StackingClassifier,
-            "StackingEstimator" => ModelType::StackingEstimator,
-            "CalibratedClassifierCV" => ModelType::CalibratedClassifier,
-            "LGBMRegressor" => ModelType::LgbmRegressor,
-            "LGBMClassifier" => ModelType::LgbmClassifier,
-            "XGBRegressor" => ModelType::XgbRegressor,
-            "XGBClassifier" => ModelType::XgbClassifier,
-            "Booster" => ModelType::XgbBooster,
-            "keras" => ModelType::TfKeras,
-            "pytorch" => ModelType::Pytorch,
-            "pytorch_lightning" => ModelType::PytorchLightning,
-            "CatBoost" => ModelType::Catboost,
-            "VowpalWabbit" => ModelType::Vowpal,
-            _ => ModelType::Unknown,
-        }
+        ModelType::get_type(&model_type)
     }
 
     pub fn in_update_registry(&self) -> bool {
         UPDATE_REGISTRY_MODELS.contains(&self)
+    }
+
+    pub fn in_sklearn_registry(&self) -> bool {
+        SKLEARN_SUPPORTED_MODEL_TYPES.contains(&self)
+    }
+
+    pub fn get_onnx_update_type(&self) -> ModelType {
+        match self {
+            ModelType::StackingRegressor => ModelType::StackingEstimator,
+            ModelType::StackingClassifier => ModelType::StackingEstimator,
+            ModelType::StackingEstimator => ModelType::StackingEstimator,
+            _ => self.clone(),
+        }
     }
 }
 
