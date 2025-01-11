@@ -1,3 +1,4 @@
+use crate::model::onnx::OnnxRegistryUpdater;
 use crate::{
     types::{ModelType, UPDATE_REGISTRY_MODELS},
     Feature, FeatureSchema, OnnxSchema, SampleData,
@@ -45,10 +46,11 @@ impl SklearnOnnxModelConverter {
         matches!(self.model_type, ModelType::SklearnPipeline)
     }
 
-    fn update_onnx_calibrated_classifier_registries(
+    fn update_onnx_calibrated_classifier_registries<'py>(
         &self,
-        model: &Bound<'_, PyAny>,
-        estimator: &Bound<'_, PyAny>,
+        py: Python<'py>,
+        model: &Bound<'py, PyAny>,
+        estimator: &Bound<'py, PyAny>,
     ) -> PyResult<bool> {
         let mut updated = false;
 
@@ -64,38 +66,46 @@ impl SklearnOnnxModelConverter {
 
         if onnx_type.in_update_registry() {
             // update the registry
+            OnnxRegistryUpdater::update_registry(py, &onnx_type)?;
             updated = true;
         }
 
         Ok(updated)
     }
 
-    fn update_onnx_pipeline_registries(&self, model: &Bound<'_, PyAny>) -> PyResult<()> {
-        let mut updated = false;
-
+    fn update_onnx_pipeline_registries(
+        &self,
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<()> {
         for model_step in model.getattr("steps") {
-            // estimator_name = model_step[1].__class__.__name__
-            let estimator_name = model_step
-                .get_item(1)?
-                .getattr("__class__")?
-                .getattr("__name__")?
-                .extract::<String>()?;
-
-            if estimator_name == ModelType::CalibratedClassifier.to_string() {
-                self.update_onnx_calibrated_classifier_registries(
-                    model,
-                    &model_step.get_item(1)?.getattr("estimator")?,
-                )?;
+            let estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
+            match estimator_type {
+                ModelType::CalibratedClassifier => {
+                    self.update_onnx_calibrated_classifier_registries(
+                        py,
+                        model,
+                        &model_step.get_item(1)?.getattr("estimator")?,
+                    )?;
+                }
+                _ => {
+                    // check if the model type is in the update registry models
+                    if estimator_type.in_update_registry() {
+                        // update the registry
+                        OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
+                    }
+                }
             }
         }
 
         Ok(())
     }
 
-    fn update_sklearn_onnx_registries(&self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn update_sklearn_onnx_registries(&self, py: Python, model: &Bound<'_, PyAny>) -> PyResult<()> {
         // update the sklearn-onnx registry
 
         if self.is_pipeline_model_type() {
+            self.update_onnx_pipeline_registries(py, model)?
             // update the pipeline registry
         } else if self.is_stacking_model_type() {
             // update the stacking registry
@@ -182,7 +192,7 @@ impl SklearnOnnxModelConverter {
     ) -> PyResult<OnnxSchema> {
         info!("Converting model to ONNX");
 
-        self.update_sklearn_onnx_registries(model)?;
+        self.update_sklearn_onnx_registries(py, model)?;
 
         //self.update_sklearn_onnx_registries(py)?;
         let skl2onnx = py

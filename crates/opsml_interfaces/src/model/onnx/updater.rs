@@ -146,3 +146,17 @@ impl XGBoostRegistryUpdater {
         Ok(())
     }
 }
+
+pub struct OnnxRegistryUpdater {}
+
+impl OnnxRegistryUpdater {
+    pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
+        match model_type {
+            ModelType::LgbmClassifier | ModelType::LgbmRegressor => {
+                LightGBMRegistryUpdater::update_registry(py, model_type)
+            }
+            ModelType::XgbClassifier => XGBoostRegistryUpdater::update_registry(py, model_type),
+            _ => Ok(()),
+        }
+    }
+}
