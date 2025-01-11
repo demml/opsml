@@ -244,25 +244,27 @@ impl SampleData {
 
     pub fn get_data_for_onnx<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         match self {
-            SampleData::Pandas(data) => Ok(data.bind(py).clone()),
+            SampleData::Pandas(data) => Ok(data.bind(py).getattr("data")?),
             SampleData::Polars(data) => Ok({
-                let converted_data = data.bind(py).call_method0("to_pandas");
+                let data = data.bind(py).getattr("data")?;
+                let converted_data = data.call_method0("to_pandas");
                 // if data is err, try converting to numpy
                 match converted_data {
                     Ok(converted_data) => converted_data,
-                    Err(_) => data.bind(py).call_method0("to_numpy")?,
+                    Err(_) => data.call_method0("to_numpy")?,
                 }
             }),
-            SampleData::Numpy(data) => Ok(data.bind(py).clone()),
+            SampleData::Numpy(data) => Ok(data.bind(py).getattr("data")?),
             SampleData::Arrow(data) => Ok({
-                let converted_data = data.bind(py).call_method0("to_pandas");
+                let data = data.bind(py).getattr("data")?;
+                let converted_data = data.call_method0("to_pandas");
                 // if data is err, try converting to numpy
                 match converted_data {
                     Ok(converted_data) => converted_data,
-                    Err(_) => data.bind(py).call_method0("to_numpy")?,
+                    Err(_) => data.call_method0("to_numpy")?,
                 }
             }),
-            SampleData::Torch(data) => Ok(data.bind(py).clone()),
+            SampleData::Torch(data) => Ok(data.bind(py).getattr("data")?),
             SampleData::List(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),

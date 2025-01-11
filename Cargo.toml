@@ -60,6 +60,7 @@ google-cloud-auth = "0.*"
 google-cloud-token = "0.*"
 indicatif = "0.*"
 jsonwebtoken = "9.*"
+ort = "2.0.0-rc.9"
 owo-colors = "4.*"
 password-auth = "1.*"
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }

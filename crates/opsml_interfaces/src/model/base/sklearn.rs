@@ -1,8 +1,8 @@
 use crate::model::ModelInterface;
-use crate::model::{SampleData, TaskType};
-use crate::types::{FeatureSchema, ModelInterfaceType, ModelType};
+use crate::model::TaskType;
+use crate::types::{FeatureSchema, ModelInterfaceType};
 use opsml_error::OpsmlError;
-use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::prelude::*;
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug, Clone)]
