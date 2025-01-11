@@ -1,10 +1,15 @@
 use crate::{
     types::{ModelType, UPDATE_REGISTRY_MODELS},
-    SampleData,
+    Feature, FeatureSchema, OnnxSchema, SampleData,
 };
 use opsml_error::OpsmlError;
+use ort::session::{builder::GraphOptimizationLevel, Session};
+use ort::tensor::TensorElementType;
+use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use std::path::PathBuf;
+use tempfile::tempdir;
 use tracing::info;
 
 pub struct SklearnPipeline {}
@@ -104,6 +109,74 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
+    fn get_onnx_schema(&self, onnx_model: &Bound<'_, PyAny>) -> PyResult<OnnxSchema> {
+        let py = onnx_model.py();
+
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
+        let onnx_bytes = onnx_model
+            .call_method("SerializeToString", (), None)
+            .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
+
+        // extract onnx_bytes
+
+        let ort_session = Session::builder()
+            .map_err(|e| OpsmlError::new_err(format!("Failed to create onnx session: {}", e)))?
+            .commit_from_memory(&onnx_bytes.extract::<Vec<u8>>()?)
+            .map_err(|e| OpsmlError::new_err(format!("Failed to commit onnx session: {}", e)))?;
+
+        let input_schema = ort_session
+            .inputs
+            .iter()
+            .map(|input| {
+                let name = input.name.clone();
+                let input_type = input.input_type.clone();
+
+                let feature = match input_type {
+                    ValueType::Tensor {
+                        ty,
+                        dimensions,
+                        dimension_symbols: _,
+                    } => Feature::new(ty.to_string(), dimensions, None),
+                    _ => Feature::new("Unknown".to_string(), vec![], None),
+                };
+
+                Ok((name, feature))
+            })
+            .collect::<Result<FeatureSchema, OpsmlError>>()
+            .map_err(|_| OpsmlError::new_err("Failed to collect feature schema"))?;
+
+        let output_schema = ort_session
+            .outputs
+            .iter()
+            .map(|output| {
+                let name = output.name.clone();
+                let input_type = output.output_type.clone();
+
+                let feature = match input_type {
+                    ValueType::Tensor {
+                        ty,
+                        dimensions,
+                        dimension_symbols: _,
+                    } => Feature::new(ty.to_string(), dimensions, None),
+                    _ => Feature::new("Unknown".to_string(), vec![], None),
+                };
+
+                Ok((name, feature))
+            })
+            .collect::<Result<FeatureSchema, OpsmlError>>()
+            .map_err(|_| OpsmlError::new_err("Failed to collect feature schema"))?;
+
+        Ok(OnnxSchema {
+            input_features: input_schema,
+            output_features: output_schema,
+            onnx_version,
+        })
+    }
+
     pub fn convert_model<'py>(
         &self,
         py: Python<'py>,
@@ -124,11 +197,9 @@ impl SklearnOnnxModelConverter {
             .call_method("to_onnx", args, kwargs)
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        // save to tmp path for loading
+        let onnx_schema = self.get_onnx_schema(&onnx_model)?;
 
-        // create onnx session
-
-        // get feature dictionary from session
+        println!("Onnx schema: {:?}", onnx_schema);
 
         Ok(())
     }

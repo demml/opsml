@@ -107,7 +107,7 @@ class TorchSaveArgs:
         """
 
 # Define interface save and metadata arguments
-class ModelDataInterfaceSaveMetadata:
+class ModelInterfaceSaveMetadata:
     trained_model_uri: str
     sample_data_uri: str
     preprocessor_uri: Optional[str]
@@ -146,13 +146,13 @@ class ModelInterfaceMetadata:
     modelcard_uid: str
     feature_map: FeatureSchema
     sample_data_interface_type: str
-    save_metadata: ModelDataInterfaceSaveMetadata
+    save_metadata: ModelInterfaceSaveMetadata
     extra_metadata: dict[str, str]
 
     def __init__(
         self,
         interface: Any,
-        save_metadata: ModelDataInterfaceSaveMetadata,
+        save_metadata: ModelInterfaceSaveMetadata,
         extra_metadata: Optional[dict[str, str]] = None,
     ) -> None:
         """Define a model interface
@@ -208,7 +208,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -440,7 +442,7 @@ class TaskType:
 class ModelInterface:
     def __init__(
         self,
-        data: Optional[Any] = None,
+        model: Optional[Any] = None,
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
@@ -474,3 +476,12 @@ class ModelInterface:
     @sample_data.setter
     def sample_data(self, data: Any) -> None:
         """Sets the data"""
+
+    def convert_to_onnx(self, **kwargs) -> None:
+        """Convert the model to onnx
+
+        **kwargs:
+            Optional arguments to pass to the onnx converter
+        """
+
+class SklearnModel(ModelInterface): ...

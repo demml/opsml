@@ -13,7 +13,7 @@ pub struct Feature {
     #[pyo3(get, set)]
     feature_type: String,
     #[pyo3(get, set)]
-    shape: Vec<usize>,
+    shape: Vec<i64>,
     #[pyo3(get, set)]
     extra_args: HashMap<String, String>,
 }
@@ -24,7 +24,7 @@ impl Feature {
     #[pyo3(signature = (feature_type, shape, extra_args=None))]
     pub fn new(
         feature_type: String,
-        shape: Vec<usize>,
+        shape: Vec<i64>,
         extra_args: Option<HashMap<String, String>>,
     ) -> Self {
         Feature {
@@ -81,6 +81,19 @@ impl FromIterator<(String, Feature)> for FeatureSchema {
         }
         FeatureSchema { items }
     }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub struct OnnxSchema {
+    #[pyo3(get, set)]
+    pub input_features: FeatureSchema,
+
+    #[pyo3(get, set)]
+    pub output_features: FeatureSchema,
+
+    #[pyo3(get, set)]
+    pub onnx_version: String,
 }
 
 #[pyclass(eq, eq_int)]
