@@ -19,7 +19,9 @@ impl OnnxModelConverter {
             ModelInterfaceType::Sklearn => {
                 println!("Converting sklearn model to onnx");
                 let converter = SklearnOnnxModelConverter::new(model_type);
-                converter.convert_model(py, model, sample_data, kwargs)
+                let schema = converter.convert_model(py, model, sample_data, kwargs)?;
+                println!("Schema: {:?}", schema);
+                Ok(())
             }
             _ => Ok(()),
         }
