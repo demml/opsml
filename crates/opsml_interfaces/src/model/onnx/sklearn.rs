@@ -49,7 +49,7 @@ impl SklearnOnnxModelConverter {
         &self,
         model: &Bound<'_, PyAny>,
         estimator: &Bound<'_, PyAny>,
-    ) -> PyResult<()> {
+    ) -> PyResult<bool> {
         let mut updated = false;
 
         // if estimator is none, set it to the model
@@ -59,19 +59,15 @@ impl SklearnOnnxModelConverter {
             estimator
         };
 
-        let estimator_name = estimator
-            .getattr("__class__")?
-            .getattr("__name__")?
-            .extract::<String>()?;
+        let model_type = ModelType::from_pyobject(estimator);
+        let onnx_type = model_type.get_onnx_update_type();
 
-        let model_type = ModelType::get_type(&estimator_name);
-
-        if model_type.in_update_registry() {
+        if onnx_type.in_update_registry() {
             // update the registry
             updated = true;
         }
 
-        Ok(())
+        Ok(updated)
     }
 
     fn update_onnx_pipeline_registries(&self, model: &Bound<'_, PyAny>) -> PyResult<()> {
