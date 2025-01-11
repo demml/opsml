@@ -359,7 +359,6 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        println!("Converting model to ONNX");
         OnnxModelConverter::convert_model(
             py,
             &self.model.bind(py),

@@ -627,6 +627,23 @@ wheels = [
 ]
 
 [[package]]
+name = "lightgbm"
+version = "4.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4d/e6/41be1f8642257e21b4170e798c9a84e4268656ebfa3019586d82bfd281c9/lightgbm-4.5.0.tar.gz", hash = "sha256:e1cd7baf0318d4e308a26575a63a4635f08df866ad3622a9d8e3d71d9637a1ba", size = 1701072 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/d2/46520b6e255298e920df26ff6e5e4fc788c927886e1e30a96b27c2f94924/lightgbm-4.5.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:2212e2166af6379bc005e6f7041dd2dcba3750238eccbc55d09d3c0717c51187", size = 1923168 },
+    { url = "https://files.pythonhosted.org/packages/11/3f/49913ed111286e23bcc40daab54542d80924264dca8ae371514039ab83ab/lightgbm-4.5.0-py3-none-macosx_12_0_arm64.whl", hash = "sha256:1301aa853e1fe4bf318539aa132f373862b04aa537af502508711ce03dffff09", size = 1575672 },
+    { url = "https://files.pythonhosted.org/packages/84/6a/10c4921526600559530d49d70553d1bc1bd84c616808c629a620a6160305/lightgbm-4.5.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7f0a3dded769d83560845f2c3fe1966630ec1ca527c380d9d48d9b35579a796e", size = 3425739 },
+    { url = "https://files.pythonhosted.org/packages/4e/19/1b928cad70a4e1a3e2c37d5417ca2182510f2451eaadb6c91cd9ec692cae/lightgbm-4.5.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:960a0e7c077de0ca3053f1325d3edfc92ea815acf5176adcacdea0f635aeef9b", size = 3552481 },
+    { url = "https://files.pythonhosted.org/packages/d9/28/3be76b591a2e14a031b681b8283acf1dec2ad521f6f1701b7957df68c466/lightgbm-4.5.0-py3-none-win_amd64.whl", hash = "sha256:7ccb73ee9fb74fbbf89ad24c57a6edad505aa8f2165d02b999a082dbbbb0ee57", size = 1444319 },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1260,6 +1277,7 @@ dev = [
     { name = "black", version = "24.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "black", version = "24.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "isort" },
+    { name = "lightgbm" },
     { name = "maturin" },
     { name = "mypy" },
     { name = "optimum" },
@@ -1290,13 +1308,14 @@ requires-dist = [
     { name = "onnxruntime", marker = "python_full_version >= '3.12' and extra == 'onnxruntime'", specifier = ">=1.18.0" },
     { name = "onnxruntime", marker = "python_full_version < '3.12' and extra == 'onnxruntime'", specifier = "~=1.16.0" },
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'sklearn-onnx'" },
-    { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = "==1.16.0" },
+    { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = ">=1.16.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=24.3.0,<25.0.0" },
     { name = "isort", specifier = ">=5.13.2,<6.0.0" },
+    { name = "lightgbm", specifier = ">=4.0.0" },
     { name = "maturin", specifier = ">=1.4.0,<2.0.0" },
     { name = "mypy", specifier = ">=1.0.0,<2.0.0" },
     { name = "optimum", specifier = ">=1.23.3" },
@@ -2059,7 +2078,7 @@ wheels = [
 
 [[package]]
 name = "skl2onnx"
-version = "1.16.0"
+version = "1.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "onnx", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_system == 'Windows'" },
@@ -2068,9 +2087,9 @@ dependencies = [
     { name = "onnxconverter-common" },
     { name = "scikit-learn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/3f/f624c1d30324597c419006a826ad095345c7457f75a2e23a65cfb2118cb1/skl2onnx-1.16.0.tar.gz", hash = "sha256:3370b3d4065ce2dc5933878c3273f4aea41f945cc6514543b13ad2d57f369ce5", size = 925936 }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/fb/f91b284365bab4ddcb0f77f573e60dc96bc232648de997814e3ddd832e97/skl2onnx-1.18.0.tar.gz", hash = "sha256:39ea4ae30c5c182355a1824467013158214444e0ce0b18f33338bd827d4fb00f", size = 935240 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/26/80/836824c62ff0923b4c3b8af8332170bdc3ccb469a220535b40405a93b4fb/skl2onnx-1.16.0-py2.py3-none-any.whl", hash = "sha256:7de548580c625bfa5893fe79c9dd3213c3720b12e1ff8e3fd28967da0698242d", size = 298473 },
+    { url = "https://files.pythonhosted.org/packages/08/de/e8825727acd80484aa28080de62e4dc21f076d6887c10db49e2c8a66578f/skl2onnx-1.18.0-py2.py3-none-any.whl", hash = "sha256:1345d8a1d3aa4a11abfbed4bc984b777023dad85e1c9fe4eb727cba5ee0fcaa8", size = 300310 },
 ]
 
 [[package]]

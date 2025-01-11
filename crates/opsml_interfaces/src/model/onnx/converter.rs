@@ -3,6 +3,7 @@ use crate::types::{ModelInterfaceType, ModelType};
 use crate::SampleData;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use tracing::info;
 
 pub struct OnnxModelConverter {}
 
@@ -17,10 +18,9 @@ impl OnnxModelConverter {
     ) -> PyResult<()> {
         match model_interface_type {
             ModelInterfaceType::Sklearn => {
-                println!("Converting sklearn model to onnx");
                 let converter = SklearnOnnxModelConverter::new(model_type);
                 let schema = converter.convert_model(py, model, sample_data, kwargs)?;
-                println!("Schema: {:?}", schema);
+                info!("Schema: {:?}", schema);
                 Ok(())
             }
             _ => Ok(()),

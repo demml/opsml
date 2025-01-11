@@ -27,7 +27,7 @@ onnxruntime = [
     "onnxruntime>=1.18.0; python_version >= '3.12'",
 ]
 sklearn_onnx = [
-    "skl2onnx==1.16.0",
+    "skl2onnx>=1.16.0",
     "onnxmltools~=1.12",
     "opsml[onnx,onnxruntime]",
 ]
@@ -53,6 +53,7 @@ dev = [
     "polars>=1.10.0",
     "pyarrow>=15.0.0",
     "pydantic>=2.10.5",
+    "lightgbm>=4.0.0",
 ]
 
 
