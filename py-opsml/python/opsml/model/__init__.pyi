@@ -484,4 +484,36 @@ class ModelInterface:
             Optional arguments to pass to the onnx converter
         """
 
-class SklearnModel(ModelInterface): ...
+class SklearnModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+    ) -> None:
+        """Base class for ModelInterface
+
+        Args:
+            model:
+                Model to associate with interface. This model must be from the
+                scikit-learn ecosystem
+            preprocessor:
+                Preprocessor to associate with interface. This preprocessor must be from the
+                scikit-learn ecosystem
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
