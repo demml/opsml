@@ -183,8 +183,10 @@ impl SklearnOnnxModelConverter {
         model: &Bound<'py, PyAny>,
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> PyResult<OnnxSchema> {
         info!("Converting model to ONNX");
+
+        self.update_sklearn_onnx_registries(model)?;
 
         //self.update_sklearn_onnx_registries(py)?;
         let skl2onnx = py
@@ -197,10 +199,6 @@ impl SklearnOnnxModelConverter {
             .call_method("to_onnx", args, kwargs)
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        let onnx_schema = self.get_onnx_schema(&onnx_model)?;
-
-        println!("Onnx schema: {:?}", onnx_schema);
-
-        Ok(())
+        self.get_onnx_schema(&onnx_model)
     }
 }
