@@ -9,9 +9,10 @@ use ort::tensor::TensorElementType;
 use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use pyo3::types::PyList;
 use std::path::PathBuf;
 use tempfile::tempdir;
-use tracing::info;
+use tracing::{debug, info};
 
 pub struct SklearnPipeline {}
 
@@ -78,8 +79,16 @@ impl SklearnOnnxModelConverter {
         py: Python,
         model: &Bound<'_, PyAny>,
     ) -> PyResult<()> {
-        for model_step in model.getattr("steps") {
+        let model_steps = model.getattr("steps")?;
+        println!("Model steps: {:?}", model_steps);
+
+        for model_step in model_steps.downcast::<PyList>()?.iter() {
             let estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
+
+            debug!(
+                "Updating pipeline registries for ONNX: {:?}",
+                estimator_type
+            );
             match estimator_type {
                 ModelType::CalibratedClassifier => {
                     self.update_onnx_calibrated_classifier_registries(
@@ -105,6 +114,7 @@ impl SklearnOnnxModelConverter {
         // update the sklearn-onnx registry
 
         if self.is_pipeline_model_type() {
+            debug!("Updating pipeline registries for ONNX");
             self.update_onnx_pipeline_registries(py, model)?
             // update the pipeline registry
         } else if self.is_stacking_model_type() {
@@ -190,7 +200,9 @@ impl SklearnOnnxModelConverter {
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSchema> {
-        info!("Converting model to ONNX");
+        let model_type = ModelType::from_pyobject(model);
+
+        info!("Converting model to ONNX for model type: {:?}", model_type);
 
         self.update_sklearn_onnx_registries(py, model)?;
 
@@ -199,7 +211,7 @@ impl SklearnOnnxModelConverter {
             .import("skl2onnx")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import skl2onnx: {}", e)))?;
 
-        let args = (model, sample_data.get_data_for_onnx(py)?);
+        let args = (model, sample_data.get_data_for_onnx(py, &model_type)?);
 
         let onnx_model = skl2onnx
             .call_method("to_onnx", args, kwargs)

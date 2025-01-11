@@ -1,5 +1,6 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
+use crate::ModelType;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -242,15 +243,28 @@ impl SampleData {
         }
     }
 
-    pub fn get_data_for_onnx<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>> {
         match self {
-            SampleData::Pandas(data) => Ok(data.bind(py).getattr("data")?),
+            SampleData::Pandas(data) => Ok({
+                let data = data.bind(py).getattr("data")?;
+                match model_type {
+                    ModelType::SklearnPipeline => data,
+                    _ => data.call_method0("to_numpy")?,
+                }
+            }),
             SampleData::Polars(data) => Ok({
                 let data = data.bind(py).getattr("data")?;
                 let converted_data = data.call_method0("to_pandas");
                 // if data is err, try converting to numpy
                 match converted_data {
-                    Ok(converted_data) => converted_data,
+                    Ok(converted_data) => match model_type {
+                        ModelType::SklearnPipeline => converted_data,
+                        _ => data.call_method0("to_numpy")?,
+                    },
                     Err(_) => data.call_method0("to_numpy")?,
                 }
             }),
