@@ -7,9 +7,9 @@ use opsml_error::OpsmlError;
 use ort::session::{builder::GraphOptimizationLevel, Session};
 use ort::tensor::TensorElementType;
 use ort::value::ValueType;
-use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::tempdir;
@@ -19,14 +19,14 @@ pub struct SklearnPipeline {}
 
 pub struct SklearnOnnxModelConverter {
     model_type: ModelType,
-    opsets: HashMap<String, i64>,
+    opsets: Py<PyDict>,
 }
 
 impl SklearnOnnxModelConverter {
-    pub fn new(model_type: &ModelType) -> Self {
+    pub fn new(py: Python, model_type: &ModelType) -> Self {
         SklearnOnnxModelConverter {
             model_type: model_type.clone(),
-            opsets: HashMap::new(),
+            opsets: PyDict::new(py).unbind(),
         }
     }
 
@@ -50,10 +50,24 @@ impl SklearnOnnxModelConverter {
         matches!(self.model_type, ModelType::SklearnPipeline)
     }
 
+    fn is_sklearn_classifier(&self, py: Python, model: &Bound<'_, PyAny>) -> PyResult<bool> {
+        // check if the model type is a classifier
+
+        let is_classifier = py
+            .import("sklearn")?
+            .getattr("base")?
+            .getattr("is_classifier")?;
+
+        is_classifier.call1((model,))?.extract::<bool>()
+    }
+
     fn update_registry(&mut self, py: Python<'_>, estimator_type: &ModelType) -> PyResult<()> {
         if estimator_type.in_update_registry() {
-            self.opsets.insert("ai.onnx.ml".to_string(), 3);
-            self.opsets.insert("".to_string(), 19);
+            self.opsets
+                .clone_ref(py)
+                .into_bound(py)
+                .set_item("ai.onnx.ml", 3);
+            self.opsets.clone_ref(py).into_bound(py).set_item("", 9);
             OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
         }
 
@@ -156,7 +170,15 @@ impl SklearnOnnxModelConverter {
             self.update_onnx_calibrated_classifier_registries(py, model)?;
             // update the calibrated classifier registry
         }
-        Ok(())
+
+        let estimator_type = ModelType::from_pyobject(model);
+        if self.is_sklearn_classifier(py, model)? {
+            self.opsets
+                .clone_ref(py)
+                .into_bound(py)
+                .set_item("zipmap".to_string(), false);
+        }
+        self.update_registry(py, &estimator_type)
     }
 
     fn get_onnx_schema(

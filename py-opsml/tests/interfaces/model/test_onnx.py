@@ -34,3 +34,8 @@ def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
 def test_stacking_regressor(stacking_regressor: SklearnModel):
     model = stacking_regressor
     model.convert_to_onnx()
+
+
+def test_sklearn_pipeline_xgb_classifier(sklearn_pipeline_xgb_classifier: SklearnModel):
+    model = sklearn_pipeline_xgb_classifier
+    model.convert_to_onnx()
