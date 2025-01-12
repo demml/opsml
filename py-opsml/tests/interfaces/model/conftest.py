@@ -12,6 +12,22 @@ from sklearn.compose import ColumnTransformer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
 import lightgbm as lgb  # type: ignore
 from sklearn.calibration import CalibratedClassifierCV  # type: ignore
+from sklearn import (
+    cross_decomposition,
+    ensemble,
+    gaussian_process,
+    linear_model,
+    multioutput,
+    naive_bayes,
+    neighbors,
+    neural_network,
+    svm,
+    tree,
+)
+from sklearn.feature_selection import SelectPercentile, chi2  # type: ignore
+from sklearn.impute import SimpleImputer  # type: ignore
+from sklearn.model_selection import train_test_split  # type: ignore
+from sklearn.datasets import fetch_openml, load_iris  # type: ignore
 
 
 @pytest.fixture(scope="session")
@@ -103,3 +119,53 @@ def lgb_classifier_calibrated(example_dataframe):
     calibrated_model.fit(X_test, y_test)
 
     return SklearnModel(model=calibrated_model, sample_data=X_test[:10])
+
+
+@pytest.fixture
+def sklearn_pipeline_advanced() -> SklearnModel:
+    X, y = fetch_openml(
+        "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+    )
+
+    numeric_features = ["age", "fare"]
+    numeric_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler()),
+        ]
+    )
+
+    categorical_features = ["embarked", "sex", "pclass"]
+    categorical_transformer = Pipeline(
+        steps=[
+            ("encoder", OneHotEncoder(handle_unknown="ignore")),
+            ("selector", SelectPercentile(chi2, percentile=50)),
+        ]
+    )
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_features),
+            ("cat", categorical_transformer, categorical_features),
+        ]
+    )
+
+    clf = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("classifier", linear_model.LogisticRegression(max_iter=5)),
+        ]
+    )
+
+    X_train, _, y_train, _ = train_test_split(
+        X[:1000], y[:1000], test_size=0.2, random_state=0
+    )
+
+    assert isinstance(X_train, pd.DataFrame)
+    assert isinstance(y_train, pd.Series)
+
+    features = [*numeric_features, *categorical_features]
+    X_train = X_train[features]
+    y_train = y_train.to_numpy().astype(np.int32)
+
+    clf.fit(X_train, y_train)
+    return SklearnModel(model=clf, sample_data=X_train[:100])
