@@ -29,3 +29,8 @@ def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
 def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
     model = sklearn_pipeline_advanced
     model.convert_to_onnx()
+
+
+def test_stacking_regressor(stacking_regressor: SklearnModel):
+    model = stacking_regressor
+    model.convert_to_onnx()

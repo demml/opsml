@@ -12,6 +12,8 @@ from sklearn.compose import ColumnTransformer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
 import lightgbm as lgb  # type: ignore
 from sklearn.calibration import CalibratedClassifierCV  # type: ignore
+import numpy as np
+from xgboost import XGBRegressor
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -41,6 +43,9 @@ def example_dataframe():
 def regression_data() -> Tuple[np.ndarray, np.ndarray]:
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
     y = np.dot(X, np.array([1, 2])) + 3
+
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
 
     return X, y
 
@@ -169,3 +174,30 @@ def sklearn_pipeline_advanced() -> SklearnModel:
 
     clf.fit(X_train, y_train)
     return SklearnModel(model=clf, sample_data=X_train[:100])
+
+
+@pytest.fixture
+def stacking_regressor(regression_data) -> SklearnModel:
+    X, y = regression_data
+
+    estimators = [
+        ("lr", ensemble.RandomForestRegressor(n_estimators=5)),
+        ("svr", XGBRegressor(n_estimators=3, max_depth=3)),
+        (
+            "reg",
+            lgb.LGBMRegressor(
+                n_estimators=3,
+                max_depth=3,
+                num_leaves=5,
+                objective="quantile",
+                alpha="0.5",
+            ),
+        ),
+    ]
+    reg = ensemble.StackingRegressor(
+        estimators=estimators,
+        final_estimator=ensemble.RandomForestRegressor(n_estimators=5, random_state=42),
+        cv=2,
+    )
+    reg.fit(X, y)
+    return SklearnModel(model=reg, sample_data=X)
