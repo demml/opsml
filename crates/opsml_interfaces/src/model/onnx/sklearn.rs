@@ -125,7 +125,11 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
-    fn get_onnx_schema(&self, onnx_model: &Bound<'_, PyAny>) -> PyResult<OnnxSchema> {
+    fn get_onnx_schema(
+        &self,
+        onnx_model: &Bound<'_, PyAny>,
+        feature_names: Vec<String>,
+    ) -> PyResult<OnnxSchema> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -190,6 +194,7 @@ impl SklearnOnnxModelConverter {
             input_features: input_schema,
             output_features: output_schema,
             onnx_version,
+            feature_names,
         })
     }
 
@@ -217,6 +222,6 @@ impl SklearnOnnxModelConverter {
             .call_method("to_onnx", args, kwargs)
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        self.get_onnx_schema(&onnx_model)
+        self.get_onnx_schema(&onnx_model, sample_data.get_feature_names(py)?)
     }
 }

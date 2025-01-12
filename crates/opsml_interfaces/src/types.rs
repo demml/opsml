@@ -86,14 +86,17 @@ impl FromIterator<(String, Feature)> for FeatureSchema {
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct OnnxSchema {
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub input_features: FeatureSchema,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub output_features: FeatureSchema,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub onnx_version: String,
+
+    #[pyo3(get)]
+    pub feature_names: Vec<String>,
 }
 
 #[pyclass(eq, eq_int)]
