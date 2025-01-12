@@ -108,7 +108,7 @@ impl XGBoostRegistryUpdater {
 
         match model_type {
             ModelType::XgbRegressor => Ok(calculate_linear_regressor_output_shapes),
-            ModelType::LgbmClassifier => Ok(calculate_linear_classifier_output_shapes),
+            ModelType::XgbClassifier => Ok(calculate_linear_classifier_output_shapes),
             _ => Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
                 "Model type not supported",
             )),
@@ -117,19 +117,25 @@ impl XGBoostRegistryUpdater {
 
     pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
         // registry update only applies to XGBClassifier
-        if model_type != &ModelType::XgbClassifier {
+        if model_type == &ModelType::XgbClassifier {
             return Ok(());
         }
 
         let xgb = py.import("xgboost")?;
 
-        let convert_lightgbm = py
-            .import("onnxmltools")?
-            .getattr("convert")?
-            .getattr("lightgbm")?
-            .getattr("operator_converters")?
-            .getattr("XGBoost")?
-            .getattr("convert_xgboost")?;
+        let locals = PyDict::new(py);
+        py.run(
+            c_str!(
+                r#"
+from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgboost
+"#
+            ),
+            None,
+            Some(&locals),
+        )
+        .unwrap();
+
+        let convert_xgboost = locals.get_item("convert_xgboost")?.unwrap();
 
         let update_registered_converter = py
             .import("skl2onnx")?
@@ -142,7 +148,7 @@ impl XGBoostRegistryUpdater {
             model_class,
             model_type.to_string(),
             output_calculator,
-            convert_lightgbm,
+            convert_xgboost,
             true,
             py.None(),
             py.None(),
@@ -162,7 +168,9 @@ impl OnnxRegistryUpdater {
             ModelType::LgbmClassifier | ModelType::LgbmRegressor => {
                 LightGBMRegistryUpdater::update_registry(py, model_type)
             }
-            ModelType::XgbClassifier => XGBoostRegistryUpdater::update_registry(py, model_type),
+            ModelType::XgbClassifier | ModelType::XgbRegressor => {
+                XGBoostRegistryUpdater::update_registry(py, model_type)
+            }
             _ => Ok(()),
         }
     }

@@ -50,6 +50,16 @@ impl SklearnOnnxModelConverter {
         matches!(self.model_type, ModelType::SklearnPipeline)
     }
 
+    fn update_registry(&mut self, py: Python<'_>, estimator_type: &ModelType) -> PyResult<()> {
+        if estimator_type.in_update_registry() {
+            self.opsets.insert("ai.onnx.ml".to_string(), 3);
+            self.opsets.insert("".to_string(), 19);
+            OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
+        }
+
+        Ok(())
+    }
+
     /// Update the ONNX registries for calibrated classifiers
     ///
     /// # Arguments
@@ -60,22 +70,11 @@ impl SklearnOnnxModelConverter {
         &mut self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
-    ) -> PyResult<bool> {
-        let mut updated = false;
-
+    ) -> PyResult<()> {
         let model_type = ModelType::from_pyobject(&model.getattr("estimator")?);
-        if model_type.in_update_registry() {
-            // update the registry
-            OnnxRegistryUpdater::update_registry(py, &model_type)?;
+        self.update_registry(py, &model_type)?;
 
-            // lightgbm and xgboost require different opsets
-            self.opsets.insert("ai.onnx.ml".to_string(), 3);
-            self.opsets.insert("".to_string(), 19);
-
-            updated = true;
-        }
-
-        Ok(updated)
+        Ok(())
     }
 
     fn update_onnx_pipeline_registries(
@@ -86,7 +85,7 @@ impl SklearnOnnxModelConverter {
         let model_steps = model.getattr("steps")?;
 
         for model_step in model_steps.downcast::<PyList>()?.iter() {
-            let estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
+            let mut estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
 
             debug!(
                 "Updating pipeline registries for ONNX: {:?}",
@@ -96,20 +95,41 @@ impl SklearnOnnxModelConverter {
             match estimator_type {
                 ModelType::CalibratedClassifier => {
                     let calibrated_model = model_step.get_item(1)?;
-                    self.update_onnx_calibrated_classifier_registries(py, &calibrated_model)?;
+                    estimator_type =
+                        ModelType::from_pyobject(&calibrated_model.getattr("estimator")?);
                 }
-                _ => {
-                    // check if the model type is in the update registry models
-                    if estimator_type.in_update_registry() {
-                        // lightgbm and xgboost require different opsets
-                        self.opsets.insert("ai.onnx.ml".to_string(), 3);
-                        self.opsets.insert("".to_string(), 19);
-
-                        // update the registry
-                        OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
-                    }
-                }
+                _ => {}
             }
+            self.update_registry(py, &estimator_type)?;
+        }
+
+        Ok(())
+    }
+
+    fn update_onnx_stacking_registries(
+        &mut self,
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<()> {
+        // update the stacking registry
+        let estimators = model.getattr("estimators_")?;
+        let final_estimator = model.getattr("final_estimator")?;
+        let mut estimators_list = Vec::new();
+
+        estimators_list.extend(estimators.downcast::<PyList>()?.iter());
+        estimators_list.push(final_estimator);
+
+        for estimator in estimators_list {
+            let mut estimator_type = ModelType::from_pyobject(&estimator);
+
+            match estimator_type {
+                ModelType::CalibratedClassifier => {
+                    estimator_type = ModelType::from_pyobject(&estimator.getattr("estimator")?);
+                }
+                _ => {}
+            }
+
+            self.update_registry(py, &estimator_type)?;
         }
 
         Ok(())
@@ -127,6 +147,8 @@ impl SklearnOnnxModelConverter {
             self.update_onnx_pipeline_registries(py, model)?
             // update the pipeline registry
         } else if self.is_stacking_model_type() {
+            debug!("Updating stacking registries for ONNX");
+            self.update_onnx_stacking_registries(py, model)?;
 
             // update the stacking registry
         } else if self.is_calibrated_classifier() {
