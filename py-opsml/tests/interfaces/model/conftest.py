@@ -11,6 +11,7 @@ from sklearn import ensemble
 from sklearn.compose import ColumnTransformer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
 import lightgbm as lgb  # type: ignore
+from sklearn.calibration import CalibratedClassifierCV  # type: ignore
 
 
 @pytest.fixture(scope="session")
@@ -86,3 +87,19 @@ def sklearn_pipeline() -> Tuple[SklearnModel, PandasData]:
         data=train_data, sql_logic=sql_logic, dependent_vars=["y"]
     )
     return model, data_interface
+
+
+@pytest.fixture
+def lgb_classifier_calibrated(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    reg = lgb.LGBMClassifier(
+        n_estimators=3,
+        max_depth=3,
+        num_leaves=5,
+    )
+    reg.fit(X_train.to_numpy(), y_train)
+
+    calibrated_model = CalibratedClassifierCV(reg, method="isotonic", cv="prefit")
+    calibrated_model.fit(X_test, y_test)
+
+    return SklearnModel(model=calibrated_model, sample_data=X_test[:10])

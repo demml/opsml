@@ -8,9 +8,6 @@ import polars as pl
 import pyarrow as pa  # type: ignore
 import torch
 from typing import List, Dict
-from onnxmltools.convert.lightgbm.operator_converters.LightGbm import (
-    convert_lightgbm,
-)
 
 
 def test_model_interface_sample_data_numpy(
