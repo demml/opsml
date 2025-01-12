@@ -1,7 +1,8 @@
 use crate::types::ModelType;
+use pyo3::ffi::c_str;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
-
+use tracing::debug;
 pub struct LightGBMRegistryUpdater {}
 
 impl LightGBMRegistryUpdater {
@@ -50,13 +51,19 @@ impl LightGBMRegistryUpdater {
     pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
         let lgb = py.import("lightgbm")?;
 
-        let convert_lightgbm = py
-            .import("onnxmltools")?
-            .getattr("convert")?
-            .getattr("lightgbm")?
-            .getattr("operator_converters")?
-            .getattr("LightGbm")?
-            .getattr("convert_lightgbm")?;
+        let locals = PyDict::new(py);
+        py.run(
+            c_str!(
+                r#"
+from onnxmltools.convert.lightgbm.operator_converters.LightGbm import convert_lightgbm
+"#
+            ),
+            None,
+            Some(&locals),
+        )
+        .unwrap();
+
+        let convert_lightgbm = locals.get_item("convert_lightgbm")?.unwrap();
 
         let update_registered_converter = py
             .import("skl2onnx")?
