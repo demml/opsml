@@ -10,6 +10,7 @@ use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tempfile::tempdir;
 use tracing::{debug, info};
@@ -18,12 +19,14 @@ pub struct SklearnPipeline {}
 
 pub struct SklearnOnnxModelConverter {
     model_type: ModelType,
+    opsets: HashMap<String, i64>,
 }
 
 impl SklearnOnnxModelConverter {
     pub fn new(model_type: &ModelType) -> Self {
         SklearnOnnxModelConverter {
             model_type: model_type.clone(),
+            opsets: HashMap::new(),
         }
     }
 
@@ -48,7 +51,7 @@ impl SklearnOnnxModelConverter {
     }
 
     fn update_onnx_calibrated_classifier_registries<'py>(
-        &self,
+        &mut self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
         estimator: &Bound<'py, PyAny>,
@@ -68,6 +71,11 @@ impl SklearnOnnxModelConverter {
         if onnx_type.in_update_registry() {
             // update the registry
             OnnxRegistryUpdater::update_registry(py, &onnx_type)?;
+
+            // lightgbm and xgboost require different opsets
+            self.opsets.insert("ai.onnx.ml".to_string(), 3);
+            self.opsets.insert("".to_string(), 19);
+
             updated = true;
         }
 
@@ -75,12 +83,11 @@ impl SklearnOnnxModelConverter {
     }
 
     fn update_onnx_pipeline_registries(
-        &self,
+        &mut self,
         py: Python,
         model: &Bound<'_, PyAny>,
     ) -> PyResult<()> {
         let model_steps = model.getattr("steps")?;
-        println!("Model steps: {:?}", model_steps);
 
         for model_step in model_steps.downcast::<PyList>()?.iter() {
             let estimator_type = ModelType::from_pyobject(&model_step.get_item(1)?);
@@ -89,6 +96,7 @@ impl SklearnOnnxModelConverter {
                 "Updating pipeline registries for ONNX: {:?}",
                 estimator_type
             );
+
             match estimator_type {
                 ModelType::CalibratedClassifier => {
                     self.update_onnx_calibrated_classifier_registries(
@@ -100,6 +108,11 @@ impl SklearnOnnxModelConverter {
                 _ => {
                     // check if the model type is in the update registry models
                     if estimator_type.in_update_registry() {
+                        // lightgbm and xgboost require different opsets
+                        // lightgbm and xgboost require different opsets
+                        self.opsets.insert("ai.onnx.ml".to_string(), 3);
+                        self.opsets.insert("".to_string(), 19);
+
                         // update the registry
                         OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
                     }
@@ -110,7 +123,11 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
-    fn update_sklearn_onnx_registries(&self, py: Python, model: &Bound<'_, PyAny>) -> PyResult<()> {
+    fn update_sklearn_onnx_registries(
+        &mut self,
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<()> {
         // update the sklearn-onnx registry
 
         if self.is_pipeline_model_type() {
@@ -199,13 +216,19 @@ impl SklearnOnnxModelConverter {
     }
 
     pub fn convert_model<'py>(
-        &self,
+        &mut self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSchema> {
         let model_type = ModelType::from_pyobject(model);
+
+        let mut kwargs = if kwargs.is_none() {
+            PyDict::new(py)
+        } else {
+            kwargs.unwrap().clone()
+        };
 
         info!("Converting model to ONNX for model type: {:?}", model_type);
 
@@ -216,12 +239,17 @@ impl SklearnOnnxModelConverter {
             .import("skl2onnx")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import skl2onnx: {}", e)))?;
 
+        if !self.opsets.is_empty() {
+            kwargs.set_item("target_opset", self.opsets.clone())?;
+        }
+
         let args = (model, sample_data.get_data_for_onnx(py, &model_type)?);
 
         let onnx_model = skl2onnx
-            .call_method("to_onnx", args, kwargs)
+            .call_method("to_onnx", args, Some(&kwargs))
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
+        debug!("ONNX model converted");
         self.get_onnx_schema(&onnx_model, sample_data.get_feature_names(py)?)
     }
 }

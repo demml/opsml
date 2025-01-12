@@ -243,6 +243,24 @@ impl SampleData {
         }
     }
 
+    // helper method for converting all pandas numeric types to f32
+    // primarily used with sklearn pipelines and onnx
+    fn convert_pandas_to_f32<'py>(&self, data: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        let py = data.py();
+        let npfloat32 = py.import("numpy")?.getattr("float32")?;
+        let numeric_cols = data
+            .call_method1("select_dtypes", ("number",))?
+            .getattr("columns")?
+            .extract::<Vec<String>>()?;
+
+        let df_numeric_cols = data.get_item(&numeric_cols)?;
+        let df_numeric_cols_float = df_numeric_cols.call_method1("astype", (npfloat32,))?;
+
+        data.set_item(&numeric_cols, df_numeric_cols_float)?;
+
+        Ok(data)
+    }
+
     pub fn get_data_for_onnx<'py>(
         &self,
         py: Python<'py>,
@@ -252,7 +270,7 @@ impl SampleData {
             SampleData::Pandas(data) => Ok({
                 let data = data.bind(py).getattr("data")?;
                 match model_type {
-                    ModelType::SklearnPipeline => data,
+                    ModelType::SklearnPipeline => self.convert_pandas_to_f32(data)?,
                     _ => data.call_method0("to_numpy")?,
                 }
             }),
@@ -262,7 +280,7 @@ impl SampleData {
                 // if data is err, try converting to numpy
                 match converted_data {
                     Ok(converted_data) => match model_type {
-                        ModelType::SklearnPipeline => converted_data,
+                        ModelType::SklearnPipeline => self.convert_pandas_to_f32(converted_data)?,
                         _ => data.call_method0("to_numpy")?,
                     },
                     Err(_) => data.call_method0("to_numpy")?,
@@ -290,20 +308,20 @@ impl SampleData {
         match self {
             SampleData::Pandas(data) => {
                 let data = data.bind(py).getattr("data")?;
-                let columns = data.call_method0("columns")?;
+                let columns = data.getattr("columns")?;
                 let columns = columns.extract::<Vec<String>>()?;
                 Ok(columns)
             }
             SampleData::Polars(data) => {
                 let data = data.bind(py).getattr("data")?;
-                let columns = data.call_method0("columns")?;
+                let columns = data.getattr("columns")?;
                 let columns = columns.extract::<Vec<String>>()?;
                 Ok(columns)
             }
             SampleData::Numpy(_) => Ok(vec![]),
             SampleData::Arrow(data) => {
                 let data = data.bind(py).getattr("data")?;
-                let columns = data.call_method0("column_names")?;
+                let columns = data.getattr("column_names")?;
                 let columns = columns.extract::<Vec<String>>()?;
                 Ok(columns)
             }

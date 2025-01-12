@@ -19,3 +19,4 @@ def test_random_forest_classifier(random_forest_classifier: SklearnModel):
 def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
     model, _ = sklearn_pipeline
     model.convert_to_onnx()
+    a
