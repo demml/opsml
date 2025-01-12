@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline  # type: ignore
 import lightgbm as lgb  # type: ignore
 from sklearn.calibration import CalibratedClassifierCV  # type: ignore
 import numpy as np
-from xgboost import XGBRegressor
+from xgboost import XGBRegressor, XGBClassifier  # type: ignore
 from sklearn import (
     cross_decomposition,
     ensemble,
@@ -201,3 +201,22 @@ def stacking_regressor(regression_data) -> SklearnModel:
     )
     reg.fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
+
+
+@pytest.fixture
+def sklearn_pipeline_xgb_classifier():
+    data = load_iris()
+    X = data.data[:, :2]
+    y = data.target
+
+    ind = np.arange(X.shape[0])
+    np.random.shuffle(ind)
+    X = X[ind, :].copy().astype(np.float32)
+    y = y[ind].copy()
+
+    pipe = Pipeline(
+        [("scaler", StandardScaler()), ("xgb", XGBClassifier(n_estimators=3))]
+    )
+    pipe.fit(X, y)
+
+    SklearnModel(model=pipe, sample_data=X)
