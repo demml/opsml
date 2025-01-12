@@ -24,3 +24,8 @@ def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
 def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
     model = lgb_classifier_calibrated
     model.convert_to_onnx()
+
+
+def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
+    model = sklearn_pipeline_advanced
+    model.convert_to_onnx()
