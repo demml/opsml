@@ -285,4 +285,33 @@ impl SampleData {
             SampleData::None => Ok(py.None().bind(py).clone()),
         }
     }
+
+    pub fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+        match self {
+            SampleData::Pandas(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.call_method0("columns")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Polars(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.call_method0("columns")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Numpy(_) => Ok(vec![]),
+            SampleData::Arrow(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.call_method0("column_names")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Torch(_) => Ok(vec![]),
+            SampleData::List(_) => Ok(vec![]),
+            SampleData::Tuple(_) => Ok(vec![]),
+            SampleData::Dict(_) => Ok(vec![]),
+            SampleData::None => Ok(vec![]),
+        }
+    }
 }
