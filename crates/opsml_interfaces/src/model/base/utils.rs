@@ -1,6 +1,7 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
 use crate::ModelType;
+use core::num;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -271,7 +272,11 @@ impl SampleData {
                 let data = data.bind(py).getattr("data")?;
                 match model_type {
                     ModelType::SklearnPipeline => self.convert_pandas_to_f32(data)?,
-                    _ => data.call_method0("to_numpy")?,
+                    _ => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
                 }
             }),
             SampleData::Polars(data) => Ok({
@@ -281,9 +286,17 @@ impl SampleData {
                 match converted_data {
                     Ok(converted_data) => match model_type {
                         ModelType::SklearnPipeline => self.convert_pandas_to_f32(converted_data)?,
-                        _ => data.call_method0("to_numpy")?,
+                        _ => {
+                            let numpy_data = data.call_method0("to_numpy")?;
+                            // convert to float32
+                            numpy_data.call_method1("astype", ("float32",))?
+                        }
                     },
-                    Err(_) => data.call_method0("to_numpy")?,
+                    Err(_) => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
                 }
             }),
             SampleData::Numpy(data) => Ok(data.bind(py).getattr("data")?),
@@ -292,8 +305,12 @@ impl SampleData {
                 let converted_data = data.call_method0("to_pandas");
                 // if data is err, try converting to numpy
                 match converted_data {
-                    Ok(converted_data) => converted_data,
-                    Err(_) => data.call_method0("to_numpy")?,
+                    Ok(converted_data) => self.convert_pandas_to_f32(converted_data)?,
+                    Err(_) => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
                 }
             }),
             SampleData::Torch(data) => Ok(data.bind(py).getattr("data")?),

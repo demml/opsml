@@ -19,4 +19,8 @@ def test_random_forest_classifier(random_forest_classifier: SklearnModel):
 def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
     model, _ = sklearn_pipeline
     model.convert_to_onnx()
-    a
+
+
+def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
+    model = lgb_classifier_calibrated
+    model.convert_to_onnx()

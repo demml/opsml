@@ -50,27 +50,23 @@ impl SklearnOnnxModelConverter {
         matches!(self.model_type, ModelType::SklearnPipeline)
     }
 
+    /// Update the ONNX registries for calibrated classifiers
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `model` - Model object (this is the calibrated classifier model)
     fn update_onnx_calibrated_classifier_registries<'py>(
         &mut self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
-        estimator: &Bound<'py, PyAny>,
     ) -> PyResult<bool> {
         let mut updated = false;
 
-        // if estimator is none, set it to the model
-        let estimator = if estimator.is_none() {
-            model
-        } else {
-            estimator
-        };
-
-        let model_type = ModelType::from_pyobject(estimator);
-        let onnx_type = model_type.get_onnx_update_type();
-
-        if onnx_type.in_update_registry() {
+        let model_type = ModelType::from_pyobject(&model.getattr("estimator")?);
+        if model_type.in_update_registry() {
             // update the registry
-            OnnxRegistryUpdater::update_registry(py, &onnx_type)?;
+            OnnxRegistryUpdater::update_registry(py, &model_type)?;
 
             // lightgbm and xgboost require different opsets
             self.opsets.insert("ai.onnx.ml".to_string(), 3);
@@ -99,16 +95,12 @@ impl SklearnOnnxModelConverter {
 
             match estimator_type {
                 ModelType::CalibratedClassifier => {
-                    self.update_onnx_calibrated_classifier_registries(
-                        py,
-                        model,
-                        &model_step.get_item(1)?.getattr("estimator")?,
-                    )?;
+                    let calibrated_model = model_step.get_item(1)?;
+                    self.update_onnx_calibrated_classifier_registries(py, &calibrated_model)?;
                 }
                 _ => {
                     // check if the model type is in the update registry models
                     if estimator_type.in_update_registry() {
-                        // lightgbm and xgboost require different opsets
                         // lightgbm and xgboost require different opsets
                         self.opsets.insert("ai.onnx.ml".to_string(), 3);
                         self.opsets.insert("".to_string(), 19);
@@ -135,8 +127,11 @@ impl SklearnOnnxModelConverter {
             self.update_onnx_pipeline_registries(py, model)?
             // update the pipeline registry
         } else if self.is_stacking_model_type() {
+
             // update the stacking registry
         } else if self.is_calibrated_classifier() {
+            debug!("Updating calibrated registries for ONNX");
+            self.update_onnx_calibrated_classifier_registries(py, model)?;
             // update the calibrated classifier registry
         }
         Ok(())
@@ -224,7 +219,7 @@ impl SklearnOnnxModelConverter {
     ) -> PyResult<OnnxSchema> {
         let model_type = ModelType::from_pyobject(model);
 
-        let mut kwargs = if kwargs.is_none() {
+        let kwargs = if kwargs.is_none() {
             PyDict::new(py)
         } else {
             kwargs.unwrap().clone()
