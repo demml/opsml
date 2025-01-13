@@ -11,9 +11,9 @@ use std::fmt::Formatter;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct Feature {
     #[pyo3(get, set)]
-    feature_type: String,
+    pub feature_type: String,
     #[pyo3(get, set)]
-    shape: Vec<i64>,
+    pub shape: Vec<i64>,
     #[pyo3(get, set)]
     extra_args: HashMap<String, String>,
 }
@@ -102,18 +102,18 @@ pub struct OnnxSchema {
 #[pymethods]
 impl OnnxSchema {
     #[new]
-    #[pyo3(signature = (input_features, output_features, onnx_version, feature_names))]
+    #[pyo3(signature = (input_features, output_features, onnx_version, feature_names=None))]
     fn new(
         input_features: FeatureSchema,
         output_features: FeatureSchema,
         onnx_version: String,
-        feature_names: Vec<String>,
+        feature_names: Option<Vec<String>>,
     ) -> Self {
         OnnxSchema {
             input_features,
             output_features,
             onnx_version,
-            feature_names,
+            feature_names: feature_names.unwrap_or_default(),
         }
     }
     pub fn __str__(&self) -> String {

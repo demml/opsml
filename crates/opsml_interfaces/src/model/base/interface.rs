@@ -5,6 +5,7 @@ use crate::model::{SampleData, TaskType};
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSchema;
 use crate::OnnxSession;
+
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;

@@ -2,14 +2,18 @@ use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_error::OnnxError;
 use ort::session::Session;
 use ort::value::ValueType;
+use pyo3::prelude::*;
+
+use pyo3::types::PyDict;
 
 pub struct OnnxSession {
     pub schema: OnnxSchema,
-    pub session: Session,
+    pub session: PyObject,
 }
 
 impl OnnxSession {
     pub fn new(
+        py: Python,
         onnx_version: String,
         model_bytes: &Vec<u8>,
         feature_names: Option<&Vec<String>>,
@@ -68,6 +72,25 @@ impl OnnxSession {
             onnx_version,
             feature_names: feature_names.unwrap_or(&vec![]).to_vec(),
         };
+
+        // setup python onnxruntime
+
+        let rt = py
+            .import("onnxruntime")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
+
+        let providers = rt
+            .call_method0("get_available_providers")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
+
+        let args = (model_bytes,);
+        let kwargs = PyDict::new(py);
+        kwargs.set_item("providers", providers).unwrap();
+
+        let session = rt
+            .call_method("InferenceSession", args, Some(&kwargs))
+            .map_err(|e| OnnxError::Error(e.to_string()))?
+            .unbind();
 
         Ok(OnnxSession { session, schema })
     }

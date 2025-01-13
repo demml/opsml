@@ -161,6 +161,7 @@ impl SklearnOnnxModelConverter {
             .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
 
         Ok(OnnxSession::new(
+            py,
             onnx_version,
             &onnx_bytes.extract::<Vec<u8>>()?,
             Some(&feature_names),

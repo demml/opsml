@@ -376,19 +376,20 @@ class OnnxSchema:
         input_features: FeatureSchema,
         output_features: FeatureSchema,
         onnx_version: str,
-        feature_names: List[str],
+        feature_names: Optional[List[str]] = None,
     ) -> None:
         """Define an onnx schema
 
         Args:
-            input_features:
+            input_features (FeatureSchema):
                 The input features of the onnx schema
-            output_features:
+            output_features (FeatureSchema):
                 The output features of the onnx schema
-            onnx_version:
+            onnx_version (str):
                 The onnx version of the schema
-            feature_names:
-                The feature names and order for onnx
+            feature_names (List[str] | None):
+                The feature names and order for onnx.
+
         """
 
     def __str__(self) -> str:
