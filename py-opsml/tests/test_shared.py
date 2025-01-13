@@ -50,7 +50,7 @@ def test_common_kwargs_as_string(variant, expected_string):
         (SaveName.Audit, "audit"),
         (SaveName.PipelineCard, "pipelinecard"),
         (SaveName.ModelMetadata, "model-metadata"),
-        (SaveName.TrainedModel, "trained-model"),
+        (SaveName.Model, "model"),
         (SaveName.Preprocessor, "preprocessor"),
         (SaveName.OnnxModel, "onnx-model"),
         (SaveName.SampleModelData, "sample-model-data"),
