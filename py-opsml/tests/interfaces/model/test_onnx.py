@@ -3,7 +3,7 @@ from opsml.core import OpsmlLogger, LogLevel
 from opsml.model import SklearnModel
 from opsml.data import NumpyData, PandasData
 import pytest
-from pytest_lazyfixture import lazy_fixture
+from pytest_lazyfixture import lazy_fixture  # type: ignore
 import warnings
 
 
