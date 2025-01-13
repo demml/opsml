@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from ..core import CommonKwargs, FeatureSchema
+from ..core import CommonKwargs, FeatureSchema, OnnxSchema
 from ..data import DataType
 
 class HuggingFaceORTModel:
@@ -208,7 +208,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -481,6 +483,10 @@ class ModelInterface:
         **kwargs:
             Optional arguments to pass to the onnx converter
         """
+
+    @property
+    def onnx_schema(self) -> Optional[OnnxSchema]:
+        """Returns the onnx schema if it exists"""
 
 class SklearnModel(ModelInterface):
     def __init__(

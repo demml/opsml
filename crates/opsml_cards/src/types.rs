@@ -1,6 +1,6 @@
 use opsml_error::error::CardError;
 use opsml_error::OpsmlError;
-use opsml_interfaces::FeatureSchema;
+use opsml_interfaces::{FeatureSchema, OnnxSchema};
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -95,40 +95,6 @@ impl Description {
         // raise error if file not found
         let msg = format!("File not found: {}", filepath);
         Err(CardError::Error(msg))
-    }
-}
-
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct OnnxSchema {
-    #[pyo3(get, set)]
-    pub input_features: FeatureSchema,
-
-    #[pyo3(get, set)]
-    pub output_features: FeatureSchema,
-
-    #[pyo3(get, set)]
-    pub onnx_version: String,
-}
-
-#[pymethods]
-impl OnnxSchema {
-    #[new]
-    #[pyo3(signature = (input_features, output_features, onnx_version))]
-    fn new(
-        input_features: FeatureSchema,
-        output_features: FeatureSchema,
-        onnx_version: String,
-    ) -> Self {
-        OnnxSchema {
-            input_features,
-            output_features,
-            onnx_version,
-        }
-    }
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
     }
 }
 
