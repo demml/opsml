@@ -86,13 +86,13 @@ impl FromIterator<(String, Feature)> for FeatureSchema {
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct OnnxSchema {
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub input_features: FeatureSchema,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub output_features: FeatureSchema,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub onnx_version: String,
 
     #[pyo3(get)]
@@ -101,6 +101,21 @@ pub struct OnnxSchema {
 
 #[pymethods]
 impl OnnxSchema {
+    #[new]
+    #[pyo3(signature = (input_features, output_features, onnx_version, feature_names))]
+    fn new(
+        input_features: FeatureSchema,
+        output_features: FeatureSchema,
+        onnx_version: String,
+        feature_names: Vec<String>,
+    ) -> Self {
+        OnnxSchema {
+            input_features,
+            output_features,
+            onnx_version,
+            feature_names,
+        }
+    }
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
