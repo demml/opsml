@@ -248,6 +248,7 @@ pub const UPDATE_REGISTRY_MODELS: &[ModelType] = &[
     ModelType::LgbmClassifier,
     ModelType::LgbmRegressor,
     ModelType::XgbRegressor,
+    ModelType::XgbClassifier,
 ];
 
 pub const AVAILABLE_MODEL_TYPES: &[ModelType] = &[

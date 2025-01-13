@@ -7,7 +7,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use tracing::debug;
-
 pub struct SklearnPipeline {}
 
 pub struct SklearnOnnxModelConverter {}
@@ -37,7 +36,7 @@ impl SklearnOnnxModelConverter {
         matches!(model_type, ModelType::SklearnPipeline)
     }
 
-    fn update_registry(&self, py: Python<'_>, estimator_type: &ModelType) -> PyResult<()> {
+    fn update_registry<'py>(&self, py: Python<'py>, estimator_type: &ModelType) -> PyResult<()> {
         if estimator_type.in_update_registry() {
             OnnxRegistryUpdater::update_registry(py, &estimator_type)?;
         }
@@ -62,10 +61,10 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
-    fn update_onnx_pipeline_registries(
+    fn update_onnx_pipeline_registries<'py>(
         &self,
         py: Python,
-        model: &Bound<'_, PyAny>,
+        model: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
         let model_steps = model.getattr("steps")?;
 
@@ -91,10 +90,10 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
-    fn update_onnx_stacking_registries(
+    fn update_onnx_stacking_registries<'py>(
         &self,
         py: Python,
-        model: &Bound<'_, PyAny>,
+        model: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
         // update the stacking registry
         let estimators = model.getattr("estimators_")?;
@@ -120,31 +119,31 @@ impl SklearnOnnxModelConverter {
         Ok(())
     }
 
-    fn update_sklearn_onnx_registries(
+    fn update_sklearn_onnx_registries<'py>(
         &self,
         py: Python,
-        model: &Bound<'_, PyAny>,
+        model: &Bound<'py, PyAny>,
         model_type: &ModelType,
     ) -> PyResult<()> {
         // update the sklearn-onnx registry
 
         if self.is_pipeline_model_type(model_type) {
             debug!("Updating pipeline registries for ONNX");
-            self.update_onnx_pipeline_registries(py, model)?
+            self.update_onnx_pipeline_registries(py, model)
             // update the pipeline registry
         } else if self.is_stacking_model_type(model_type) {
             debug!("Updating stacking registries for ONNX");
-            self.update_onnx_stacking_registries(py, model)?;
+            self.update_onnx_stacking_registries(py, model)
 
             // update the stacking registry
         } else if self.is_calibrated_classifier(model_type) {
             debug!("Updating calibrated registries for ONNX");
-            self.update_onnx_calibrated_classifier_registries(py, model)?;
+            self.update_onnx_calibrated_classifier_registries(py, model)
             // update the calibrated classifier registry
+        } else {
+            let estimator_type = ModelType::from_pyobject(model);
+            self.update_registry(py, &estimator_type)
         }
-
-        let estimator_type = ModelType::from_pyobject(model);
-        self.update_registry(py, &estimator_type)
     }
 
     fn get_onnx_schema(
@@ -229,13 +228,13 @@ impl SklearnOnnxModelConverter {
     ) -> PyResult<OnnxSchema> {
         self.update_sklearn_onnx_registries(py, model, &model_type)?;
 
-        //self.update_sklearn_onnx_registries(py)?;
         let skl2onnx = py
             .import("skl2onnx")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import skl2onnx: {}", e)))?;
 
         let args = (model, sample_data.get_data_for_onnx(py, &model_type)?);
 
+        println!("kwargs: {:?}", kwargs);
         let onnx_model = skl2onnx
             .call_method("to_onnx", args, kwargs)
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
