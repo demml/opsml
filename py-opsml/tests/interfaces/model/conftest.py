@@ -219,4 +219,4 @@ def sklearn_pipeline_xgb_classifier():
     )
     pipe.fit(X, y)
 
-    SklearnModel(model=pipe, sample_data=X)
+    return SklearnModel(model=pipe, sample_data=X)

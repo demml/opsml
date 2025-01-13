@@ -18,29 +18,39 @@ def test_random_forest_classifier(random_forest_classifier: SklearnModel):
 
 def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
     model, _ = sklearn_pipeline
-    kwargs = {"ai.onnx.ml": 3, "": 9}
-    model.convert_to_onnx()
+    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
+    model.convert_to_onnx(**kwargs)
 
 
 def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
     model = lgb_classifier_calibrated
-    kwargs = {"ai.onnx.ml": 3, "": 9}
-    model.convert_to_onnx()
+    kwargs = {
+        "target_opset": {"ai.onnx.ml": 3, "": 9},
+        "options": {
+            "zipmap": False,
+        },
+    }
+    model.convert_to_onnx(**kwargs)
 
 
 def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
     model = sklearn_pipeline_advanced
-    kwargs = {"ai.onnx.ml": 3, "": 9}
-    model.convert_to_onnx()
+    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
+    model.convert_to_onnx(**kwargs)
 
 
 def test_stacking_regressor(stacking_regressor: SklearnModel):
     model = stacking_regressor
-    kwargs = {"zipmap": False}
-    model.convert_to_onnx()
+    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
+    model.convert_to_onnx(**kwargs)
 
 
-def test_sklearn_pipeline_xgb_classifier(sklearn_pipeline_xgb_classifier: SklearnModel):
+def test_sklearn_pipeline_xgb_classifier(
+    sklearn_pipeline_xgb_classifier: SklearnModel,
+):
     model = sklearn_pipeline_xgb_classifier
-    kwargs = {"zipmap": False}
-    model.convert_to_onnx()
+    kwargs = {
+        "options": {"zipmap": False},
+        "target_opset": {"ai.onnx.ml": 3, "": 9},
+    }
+    model.convert_to_onnx(**kwargs)

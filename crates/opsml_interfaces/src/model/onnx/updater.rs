@@ -9,7 +9,7 @@ impl LightGBMRegistryUpdater {
     fn get_output_tools<'py>(
         py: Python<'py>,
         model_type: &ModelType,
-    ) -> PyResult<(Bound<'py, PyAny>, Bound<'py, PyAny>)> {
+    ) -> PyResult<Bound<'py, PyAny>> {
         let shape_calculator = py
             .import("skl2onnx")?
             .getattr("common")?
@@ -22,12 +22,19 @@ impl LightGBMRegistryUpdater {
             shape_calculator.getattr("calculate_linear_regressor_output_shapes")?;
 
         match model_type {
-            ModelType::LgbmRegressor => Ok((
-                calculate_linear_regressor_output_shapes,
-                py.None().bind(py).clone(),
+            ModelType::LgbmRegressor => Ok(calculate_linear_regressor_output_shapes),
+            ModelType::LgbmClassifier => Ok(calculate_linear_classifier_output_shapes),
+            _ => Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                "Model type not supported",
             )),
+        }
+    }
+
+    fn get_options<'py>(py: Python<'py>, model_type: &ModelType) -> PyResult<PyObject> {
+        // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
+
+        match model_type {
             ModelType::LgbmClassifier => {
-                // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
                 let pydict = PyDict::new(py);
 
                 let nocl_list = PyList::new(py, vec![true, false])?;
@@ -37,14 +44,9 @@ impl LightGBMRegistryUpdater {
                 pydict.set_item("nocl", nocl_list)?;
                 pydict.set_item("zipmap", zipmap_list)?;
 
-                Ok((
-                    calculate_linear_classifier_output_shapes,
-                    pydict.into_bound_py_any(py)?,
-                ))
+                pydict.into_py_any(py)
             }
-            _ => Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                "Model type not supported",
-            )),
+            _ => Ok(py.None()),
         }
     }
 
@@ -70,12 +72,13 @@ from onnxmltools.convert.lightgbm.operator_converters.LightGbm import convert_li
             .getattr("update_registered_converter")?;
 
         let model_class = lgb.getattr(model_type.to_string())?;
-        let (output_calculator, options) = Self::get_output_tools(py, model_type)?;
+        let output_shape_calculator = Self::get_output_tools(py, model_type)?;
+        let options = Self::get_options(py, model_type)?;
 
         let args = (
             model_class,
             model_type.to_string(),
-            output_calculator,
+            output_shape_calculator,
             convert_lightgbm,
             true,
             py.None(),
@@ -115,11 +118,28 @@ impl XGBoostRegistryUpdater {
         }
     }
 
+    fn get_options<'py>(py: Python<'py>, model_type: &ModelType) -> PyResult<PyObject> {
+        // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
+
+        match model_type {
+            ModelType::XgbClassifier => {
+                let pydict = PyDict::new(py);
+
+                let nocl_list = PyList::new(py, vec![true, false])?;
+                let zipmap_list = PyList::new(py, vec![true, false])?;
+                zipmap_list.append("columns")?;
+
+                pydict.set_item("nocl", nocl_list)?;
+                pydict.set_item("zipmap", zipmap_list)?;
+
+                pydict.into_py_any(py)
+            }
+            _ => Ok(py.None()),
+        }
+    }
+
     pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
         // registry update only applies to XGBClassifier
-        if model_type == &ModelType::XgbClassifier {
-            return Ok(());
-        }
 
         let xgb = py.import("xgboost")?;
 
@@ -142,16 +162,17 @@ from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgbo
             .getattr("update_registered_converter")?;
 
         let model_class = xgb.getattr(model_type.to_string())?;
-        let output_calculator = Self::get_output_tools(py, model_type)?;
+        let output_shape_calculator = Self::get_output_tools(py, model_type)?;
+        let options = Self::get_options(py, model_type)?;
 
         let args = (
             model_class,
             model_type.to_string(),
-            output_calculator,
+            output_shape_calculator,
             convert_xgboost,
             true,
             py.None(),
-            py.None(),
+            options,
         );
 
         update_registered_converter.call(args, None)?;
