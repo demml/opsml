@@ -359,7 +359,7 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let onnx_schema = OnnxModelConverter::convert_model(
+        let _onnx_schema = OnnxModelConverter::convert_model(
             py,
             &self.model.bind(py),
             &self.sample_data,
@@ -367,8 +367,6 @@ impl ModelInterface {
             &self.model_type,
             kwargs,
         )?;
-
-        println!("{:?}", onnx_schema);
 
         Ok(())
     }

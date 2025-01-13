@@ -2,7 +2,7 @@ use crate::types::ModelType;
 use pyo3::ffi::c_str;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
-use tracing::debug;
+
 pub struct LightGBMRegistryUpdater {}
 
 impl LightGBMRegistryUpdater {
