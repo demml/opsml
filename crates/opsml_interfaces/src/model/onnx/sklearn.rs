@@ -125,8 +125,6 @@ impl SklearnOnnxModelConverter {
         model: &Bound<'py, PyAny>,
         model_type: &ModelType,
     ) -> PyResult<()> {
-        // update the sklearn-onnx registry
-
         if self.is_pipeline_model_type(model_type) {
             debug!("Updating pipeline registries for ONNX");
             self.update_onnx_pipeline_registries(py, model)
@@ -226,6 +224,7 @@ impl SklearnOnnxModelConverter {
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSchema> {
+        debug!("Step 1: Updating registries for ONNX");
         self.update_sklearn_onnx_registries(py, model, &model_type)?;
 
         let skl2onnx = py
@@ -234,12 +233,15 @@ impl SklearnOnnxModelConverter {
 
         let args = (model, sample_data.get_data_for_onnx(py, &model_type)?);
 
-        println!("kwargs: {:?}", kwargs);
+        debug!("Step 2: Converting model to ONNX");
         let onnx_model = skl2onnx
             .call_method("to_onnx", args, kwargs)
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        debug!("ONNX model converted");
-        self.get_onnx_schema(&onnx_model, sample_data.get_feature_names(py)?)
+        debug!("Step 3: Extracting ONNX schema");
+        let schema = self.get_onnx_schema(&onnx_model, sample_data.get_feature_names(py)?);
+        debug!("ONNX model conversion complete");
+
+        schema
     }
 }
