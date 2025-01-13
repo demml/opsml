@@ -176,7 +176,7 @@ class SaveName:
     Audit: "SaveName"
     PipelineCard: "SaveName"
     ModelMetadata: "SaveName"
-    TrainedModel: "SaveName"
+    Model: "SaveName"
     Preprocessor: "SaveName"
     OnnxModel: "SaveName"
     SampleModelData: "SaveName"
