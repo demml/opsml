@@ -99,6 +99,14 @@ pub struct OnnxSchema {
     pub feature_names: Vec<String>,
 }
 
+#[pymethods]
+impl OnnxSchema {
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelInterfaceType {

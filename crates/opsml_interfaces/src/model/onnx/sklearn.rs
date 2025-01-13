@@ -1,12 +1,12 @@
-use crate::model::onnx::OnnxRegistryUpdater;
-use crate::{types::ModelType, Feature, FeatureSchema, OnnxSchema, SampleData};
+use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
+use crate::{types::ModelType, SampleData};
+
 use opsml_error::OpsmlError;
-use ort::session::Session;
-use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use tracing::debug;
+
 pub struct SklearnPipeline {}
 
 pub struct SklearnOnnxModelConverter {}
@@ -144,11 +144,11 @@ impl SklearnOnnxModelConverter {
         }
     }
 
-    fn get_onnx_schema(
+    fn get_onnx_session(
         &self,
         onnx_model: &Bound<'_, PyAny>,
         feature_names: Vec<String>,
-    ) -> PyResult<OnnxSchema> {
+    ) -> PyResult<OnnxSession> {
         let py = onnx_model.py();
 
         let onnx_version = py
@@ -160,60 +160,12 @@ impl SklearnOnnxModelConverter {
             .call_method("SerializeToString", (), None)
             .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
 
-        // extract onnx_bytes
-        let ort_session = Session::builder()
-            .map_err(|e| OpsmlError::new_err(format!("Failed to create onnx session: {}", e)))?
-            .commit_from_memory(&onnx_bytes.extract::<Vec<u8>>()?)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to commit onnx session: {}", e)))?;
-
-        let input_schema = ort_session
-            .inputs
-            .iter()
-            .map(|input| {
-                let name = input.name.clone();
-                let input_type = input.input_type.clone();
-
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OpsmlError>>()
-            .map_err(|_| OpsmlError::new_err("Failed to collect feature schema"))?;
-
-        let output_schema = ort_session
-            .outputs
-            .iter()
-            .map(|output| {
-                let name = output.name.clone();
-                let input_type = output.output_type.clone();
-
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OpsmlError>>()
-            .map_err(|_| OpsmlError::new_err("Failed to collect feature schema"))?;
-
-        Ok(OnnxSchema {
-            input_features: input_schema,
-            output_features: output_schema,
+        Ok(OnnxSession::new(
             onnx_version,
-            feature_names,
-        })
+            &onnx_bytes.extract::<Vec<u8>>()?,
+            Some(&feature_names),
+        )
+        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))?)
     }
 
     pub fn convert_model<'py>(
@@ -223,7 +175,7 @@ impl SklearnOnnxModelConverter {
         model_type: &ModelType,
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSchema> {
+    ) -> PyResult<OnnxSession> {
         debug!("Step 1: Updating registries for ONNX");
         self.update_sklearn_onnx_registries(py, model, model_type)?;
 
@@ -239,9 +191,9 @@ impl SklearnOnnxModelConverter {
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
         debug!("Step 3: Extracting ONNX schema");
-        let schema = self.get_onnx_schema(&onnx_model, sample_data.get_feature_names(py)?);
+        let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
         debug!("ONNX model conversion complete");
 
-        schema
+        onnx_session
     }
 }
