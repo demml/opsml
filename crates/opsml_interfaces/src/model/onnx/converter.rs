@@ -19,8 +19,9 @@ impl OnnxModelConverter {
     ) -> PyResult<OnnxSchema> {
         match model_interface_type {
             ModelInterfaceType::Sklearn => {
-                let mut converter = SklearnOnnxModelConverter::new(model_type);
-                converter.convert_model(py, model, sample_data, kwargs)
+                info!("Converting Sklearn model to ONNX");
+                let converter = SklearnOnnxModelConverter::new();
+                converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }
