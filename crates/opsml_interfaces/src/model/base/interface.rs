@@ -3,6 +3,8 @@ use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
+use crate::OnnxSchema;
+use crate::OnnxSession;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -164,6 +166,7 @@ pub struct ModelInterface {
     #[pyo3(get)]
     pub model_interface_type: ModelInterfaceType,
 
+    pub onnx_session: Option<OnnxSession>,
     pub sample_data: SampleData,
 }
 
@@ -213,6 +216,7 @@ impl ModelInterface {
             sample_data,
             model_type,
             model_interface_type: ModelInterfaceType::Base,
+            onnx_session: None,
         })
     }
 
@@ -359,15 +363,24 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let _onnx_schema = OnnxModelConverter::convert_model(
+        self.onnx_session = Some(OnnxModelConverter::convert_model(
             py,
             self.model.bind(py),
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,
             kwargs,
-        )?;
+        )?);
 
         Ok(())
+    }
+
+    #[getter]
+    pub fn onnx_schema(&self) -> PyResult<Option<OnnxSchema>> {
+        if let Some(onnx_session) = &self.onnx_session {
+            Ok(Some(onnx_session.schema.clone()))
+        } else {
+            Ok(None)
+        }
     }
 }

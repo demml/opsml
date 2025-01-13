@@ -1,6 +1,6 @@
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
 use crate::types::{ModelInterfaceType, ModelType};
-use crate::{OnnxSchema, SampleData};
+use crate::{OnnxSession, SampleData};
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -16,7 +16,7 @@ impl OnnxModelConverter {
         model_interface_type: &ModelInterfaceType,
         model_type: &ModelType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSchema> {
+    ) -> PyResult<OnnxSession> {
         match model_interface_type {
             ModelInterfaceType::Sklearn => {
                 info!("Converting Sklearn model to ONNX");

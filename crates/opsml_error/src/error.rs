@@ -256,4 +256,16 @@ impl From<RunError> for PyErr {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum OnnxError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<OnnxError> for PyErr {
+    fn from(err: OnnxError) -> PyErr {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+    }
+}
+
 create_exception!(opsml_error, OpsmlError, PyException);
