@@ -30,7 +30,7 @@ impl LightGBMRegistryUpdater {
         }
     }
 
-    fn get_options<'py>(py: Python<'py>, model_type: &ModelType) -> PyResult<PyObject> {
+    fn get_options(py: Python, model_type: &ModelType) -> PyResult<PyObject> {
         // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
         match model_type {
@@ -50,7 +50,7 @@ impl LightGBMRegistryUpdater {
         }
     }
 
-    pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
+    pub fn update_registry(py: Python, model_type: &ModelType) -> PyResult<()> {
         let lgb = py.import("lightgbm")?;
 
         let locals = PyDict::new(py);
@@ -118,7 +118,7 @@ impl XGBoostRegistryUpdater {
         }
     }
 
-    fn get_options<'py>(py: Python<'py>, model_type: &ModelType) -> PyResult<PyObject> {
+    fn get_options(py: Python, model_type: &ModelType) -> PyResult<PyObject> {
         // make new pydict {"nocl": [True, False], "zipmap": [True, False, "columns"]}
 
         match model_type {
@@ -138,7 +138,7 @@ impl XGBoostRegistryUpdater {
         }
     }
 
-    pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
+    pub fn update_registry(py: Python, model_type: &ModelType) -> PyResult<()> {
         // registry update only applies to XGBClassifier
 
         let xgb = py.import("xgboost")?;
@@ -184,7 +184,7 @@ from onnxmltools.convert.xgboost.operator_converters.XGBoost import convert_xgbo
 pub struct OnnxRegistryUpdater {}
 
 impl OnnxRegistryUpdater {
-    pub fn update_registry<'py>(py: Python, model_type: &ModelType) -> PyResult<()> {
+    pub fn update_registry(py: Python, model_type: &ModelType) -> PyResult<()> {
         match model_type {
             ModelType::LgbmClassifier | ModelType::LgbmRegressor => {
                 LightGBMRegistryUpdater::update_registry(py, model_type)

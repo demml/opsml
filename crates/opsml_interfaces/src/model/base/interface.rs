@@ -361,7 +361,7 @@ impl ModelInterface {
     ) -> PyResult<()> {
         let _onnx_schema = OnnxModelConverter::convert_model(
             py,
-            &self.model.bind(py),
+            self.model.bind(py),
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,

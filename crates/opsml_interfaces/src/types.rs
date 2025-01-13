@@ -205,11 +205,11 @@ impl ModelType {
     }
 
     pub fn in_update_registry(&self) -> bool {
-        UPDATE_REGISTRY_MODELS.contains(&self)
+        UPDATE_REGISTRY_MODELS.contains(self)
     }
 
     pub fn in_sklearn_registry(&self) -> bool {
-        SKLEARN_SUPPORTED_MODEL_TYPES.contains(&self)
+        SKLEARN_SUPPORTED_MODEL_TYPES.contains(self)
     }
 
     pub fn get_onnx_update_type(&self) -> ModelType {
