@@ -5,7 +5,7 @@ use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 
-use pyo3::types::{PyBool, PyDict, PyDictMethods, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyBool, PyDict, PyDictMethods, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::IntoPyObjectExt;
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -231,6 +231,13 @@ pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
         let list = obj.downcast::<PyList>()?;
         let mut vec = Vec::new();
         for item in list.iter() {
+            vec.push(pyobject_to_json(&item)?);
+        }
+        Ok(Value::Array(vec))
+    } else if obj.is_instance_of::<PyTuple>() {
+        let tuple = obj.downcast::<PyTuple>()?;
+        let mut vec = Vec::new();
+        for item in tuple.iter() {
             vec.push(pyobject_to_json(&item)?);
         }
         Ok(Value::Array(vec))
