@@ -62,7 +62,7 @@ pub enum TaskType {
 }
 
 #[pyclass]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SaveArgs {
     onnx: Option<PyObject>,
     model: Option<PyObject>,
@@ -100,14 +100,14 @@ impl Serialize for SaveArgs {
     {
         Python::with_gil(|py| {
             let mut state = serializer.serialize_struct("SaveArgs", 2)?;
-            let onnx = match &self.onnx {
-                Some(onnx) => Some(pyobject_to_json(onnx.bind(py)).unwrap()),
-                None => None,
-            };
-            let model = match &self.model {
-                Some(model) => Some(pyobject_to_json(model.bind(py)).unwrap()),
-                None => None,
-            };
+            let onnx = self
+                .onnx
+                .as_ref()
+                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
+            let model = self
+                .model
+                .as_ref()
+                .map(|model| pyobject_to_json(model.bind(py)).unwrap());
 
             state.serialize_field("onnx", &onnx)?;
             state.serialize_field("model", &model)?;
@@ -176,25 +176,10 @@ impl<'de> Deserialize<'de> for SaveArgs {
 impl Clone for SaveArgs {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
-            let onnx = match &self.onnx {
-                Some(onnx) => Some(onnx.clone_ref(py)),
-                None => None,
-            };
-            let model = match &self.model {
-                Some(model) => Some(model.clone_ref(py)),
-                None => None,
-            };
+            let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
+            let model = self.model.as_ref().map(|model| model.clone_ref(py));
 
             SaveArgs { onnx, model }
         })
-    }
-}
-
-impl Default for SaveArgs {
-    fn default() -> Self {
-        SaveArgs {
-            onnx: None,
-            model: None,
-        }
     }
 }
