@@ -1,5 +1,8 @@
 use opsml_error::TypeError;
+use opsml_utils::{json_to_pyobject_value, pyobject_to_json};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
 #[pyclass(eq)]
@@ -56,4 +59,148 @@ pub enum TaskType {
     TimeSeriesGraph,
     TimeSeriesTabular,
     Other,
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct SaveArgs {
+    onnx: Option<PyObject>,
+    model: Option<PyObject>,
+}
+
+#[pymethods]
+impl SaveArgs {
+    #[new]
+    #[pyo3(signature = (onnx=None, model=None))]
+    pub fn new(onnx: Option<PyObject>, model: Option<PyObject>) -> Self {
+        SaveArgs { onnx, model }
+    }
+}
+
+impl SaveArgs {
+    pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        Some(
+            self.onnx
+                .as_ref()
+                .map(|onnx| onnx.bind(py).downcast::<PyDict>().unwrap())
+                .unwrap(),
+        )
+    }
+
+    pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        Some(
+            self.onnx
+                .as_ref()
+                .map(|onnx| onnx.bind(py).downcast::<PyDict>().unwrap())
+                .unwrap(),
+        )
+    }
+}
+
+impl Serialize for SaveArgs {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        Python::with_gil(|py| {
+            let mut state = serializer.serialize_struct("SaveArgs", 2)?;
+            let onnx = match &self.onnx {
+                Some(onnx) => Some(pyobject_to_json(onnx.bind(py)).unwrap()),
+                None => None,
+            };
+            let model = match &self.model {
+                Some(model) => Some(pyobject_to_json(model.bind(py)).unwrap()),
+                None => None,
+            };
+
+            state.serialize_field("onnx", &onnx)?;
+            state.serialize_field("model", &model)?;
+            state.end()
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for SaveArgs {
+    fn deserialize<D>(deserializer: D) -> Result<SaveArgs, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct SaveArgsVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for SaveArgsVisitor {
+            type Value = SaveArgs;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct SaveArgs")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<SaveArgs, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                Python::with_gil(|py| {
+                    let mut onnx = None;
+                    let mut model = None;
+
+                    while let Some(key) = map.next_key::<String>()? {
+                        match key.as_str() {
+                            "onnx" => {
+                                onnx = Some(
+                                    json_to_pyobject_value(
+                                        py,
+                                        &map.next_value::<serde_json::Value>()?,
+                                    )
+                                    .unwrap(),
+                                );
+                            }
+                            "model" => {
+                                model = Some(
+                                    json_to_pyobject_value(
+                                        py,
+                                        &map.next_value::<serde_json::Value>()?,
+                                    )
+                                    .unwrap(),
+                                );
+                            }
+                            _ => {
+                                let _: serde::de::IgnoredAny = map.next_value()?;
+                            }
+                        }
+                    }
+
+                    Ok(SaveArgs { onnx, model })
+                })
+            }
+        }
+
+        deserializer.deserialize_struct("SaveArgs", &["onnx", "model"], SaveArgsVisitor)
+    }
+}
+
+impl Clone for SaveArgs {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let onnx = match &self.onnx {
+                Some(onnx) => Some(onnx.clone_ref(py)),
+                None => None,
+            };
+            let model = match &self.model {
+                Some(model) => Some(model.clone_ref(py)),
+                None => None,
+            };
+
+            SaveArgs { onnx, model }
+        })
+    }
+}
+
+impl Default for SaveArgs {
+    fn default() -> Self {
+        SaveArgs {
+            onnx: None,
+            model: None,
+        }
+    }
 }

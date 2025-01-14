@@ -3042,6 +3042,7 @@ dependencies = [
  "pyo3",
  "scouter-client",
  "serde",
+ "serde_json",
  "tempfile",
  "tracing",
 ]
