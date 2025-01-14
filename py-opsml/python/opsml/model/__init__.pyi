@@ -231,9 +231,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -514,6 +512,14 @@ class ModelInterface:
         """
 
     @property
+    def model(self) -> Optional[Any]:
+        """Returns the model"""
+
+    @model.setter
+    def model(self, model: Any) -> None:
+        """Sets the model"""
+
+    @property
     def task_type(self) -> TaskType:
         """Returns the task type"""
 
@@ -532,6 +538,31 @@ class ModelInterface:
     @property
     def onnx_session(self) -> Optional[OnnxSession]:
         """Returns the onnx schema if it exists"""
+
+    def save_model(self, path: Path, **kwargs) -> str:
+        """Save the model
+
+        Args:
+            path (Path):
+                Path to save the model
+
+            **kwargs:
+                Optional arguments to pass to the model saver
+
+        Returns:
+            Path to the saved model
+        """
+
+    def load_model(self, path: Path, **kwargs) -> None:
+        """Load the model
+
+        Args:
+            path (Path):
+                Path to load the model
+
+            **kwargs:
+                Optional arguments to pass to the model loader
+        """
 
     def convert_to_onnx(self, **kwargs) -> None:
         """Convert the model to onnx

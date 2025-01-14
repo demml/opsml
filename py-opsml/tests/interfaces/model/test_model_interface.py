@@ -269,6 +269,15 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
     metadata = model.save(save_path, True)
     assert metadata.save_args is None
 
+    model.model = None
+
+    assert model.model is None
+
+    # load model
+    model.load_model(save_path)
+
+    assert model.model is not None
+
 
 def test_save_model_interface_with_args(
     tmp_path: Path, stacking_regressor: SklearnModel
@@ -282,3 +291,14 @@ def test_save_model_interface_with_args(
     metadata = model.save(save_path, True, args)
 
     assert metadata.save_args is not None
+
+    model.model = None
+
+    assert model.model is None
+
+    # load model
+    model.load_model(save_path)
+
+    assert model.model is not None
+
+    model.load_onnx_model(save_path)
