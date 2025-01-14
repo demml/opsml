@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ..core import CommonKwargs, FeatureSchema
+from ..core import CommonKwargs, FeatureSchema, OnnxSchema
+from ..data import DataType
 
 class HuggingFaceORTModel:
     OrtAudioClassification = "ORTModelForAudioClassification"
@@ -105,14 +107,30 @@ class TorchSaveArgs:
                 Whether to save the model as a state dict. Default is False
         """
 
+class SaveArgs:
+    def __init__(
+        self,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            onnx (Dict):
+                Optional onnx arguments
+            model (Dict):
+                Optional model arguments
+        """
+
 # Define interface save and metadata arguments
-class ModelDataInterfaceSaveMetadata:
+class ModelInterfaceSaveMetadata:
     trained_model_uri: str
     sample_data_uri: str
     preprocessor_uri: Optional[str]
     preprocessor_name: Optional[str]
     onnx_model_uri: Optional[str]
     extra_metadata: Optional[Dict[str, str]]
+    save_args: Optional[SaveArgs]
 
     def __init__(
         self,
@@ -122,6 +140,7 @@ class ModelDataInterfaceSaveMetadata:
         preprocessor_name: Optional[str] = None,
         onnx_model_uri: Optional[str] = None,
         extra_metadata: Optional[Dict[str, str]] = None,
+        save_args: Optional[SaveArgs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -136,7 +155,12 @@ class ModelDataInterfaceSaveMetadata:
                 The onnx model uri
             extra_metadata:
                 The save metadata
+            save_args:
+                Optional save args for the model and onnx model
         """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
 
 class ModelInterfaceMetadata:
     task_type: str
@@ -145,13 +169,13 @@ class ModelInterfaceMetadata:
     modelcard_uid: str
     feature_map: FeatureSchema
     sample_data_interface_type: str
-    save_metadata: ModelDataInterfaceSaveMetadata
+    save_metadata: ModelInterfaceSaveMetadata
     extra_metadata: dict[str, str]
 
     def __init__(
         self,
         interface: Any,
-        save_metadata: ModelDataInterfaceSaveMetadata,
+        save_metadata: ModelInterfaceSaveMetadata,
         extra_metadata: Optional[dict[str, str]] = None,
     ) -> None:
         """Define a model interface
@@ -405,3 +429,219 @@ class ModelInterfaceType:
     TensorFlow: "ModelInterfaceType"
     VowpalWabbit: "ModelInterfaceType"
     XGBoost: "ModelInterfaceType"
+
+class TaskType:
+    Classification: "TaskType"
+    Regression: "TaskType"
+    Clustering: "TaskType"
+    AnomalyDetection: "TaskType"
+    TimeSeries: "TaskType"
+    Forecasting: "TaskType"
+    Recommendation: "TaskType"
+    Ranking: "TaskType"
+    NLP: "TaskType"
+    Image: "TaskType"
+    Audio: "TaskType"
+    Video: "TaskType"
+    Graph: "TaskType"
+    Tabular: "TaskType"
+    TimeSeriesForecasting: "TaskType"
+    TimeSeriesAnomalyDetection: "TaskType"
+    TimeSeriesClassification: "TaskType"
+    TimeSeriesRegression: "TaskType"
+    TimeSeriesClustering: "TaskType"
+    TimeSeriesRecommendation: "TaskType"
+    TimeSeriesRanking: "TaskType"
+    TimeSeriesNLP: "TaskType"
+    TimeSeriesImage: "TaskType"
+    TimeSeriesAudio: "TaskType"
+    TimeSeriesVideo: "TaskType"
+    TimeSeriesGraph: "TaskType"
+    TimeSeriesTabular: "TaskType"
+    Other: "TaskType"
+
+class OnnxSession:
+    @property
+    def onnx_schema(self) -> OnnxSchema:
+        """Returns the onnx schema"""
+
+    @property
+    def session(self) -> Any:
+        """Returns the onnx session"""
+
+    def run(
+        self,
+        input_data: Dict[str, Any],
+        output_names: Optional[list[str]] = None,
+        run_options: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """Run the onnx session
+
+        Args:
+            output_names:
+                List of output names
+            input_data:
+                Dictionary of input data
+            run_options:
+                Optional run options
+
+        Returns:
+            Output data
+        """
+
+class ModelInterface:
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+    ) -> None:
+        """Base class for ModelInterface
+
+        Args:
+            data:
+                Data. Can be a pyarrow table, pandas dataframe, polars dataframe
+                or numpy array
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+        """
+
+    @property
+    def model(self) -> Optional[Any]:
+        """Returns the model"""
+
+    @model.setter
+    def model(self, model: Any) -> None:
+        """Sets the model"""
+
+    @property
+    def task_type(self) -> TaskType:
+        """Returns the task type"""
+
+    @property
+    def data_type(self) -> DataType:
+        """Returns the task type"""
+
+    @property
+    def sample_data(self) -> Optional[Any]:
+        """Returns the data"""
+
+    @sample_data.setter
+    def sample_data(self, data: Any) -> None:
+        """Sets the data"""
+
+    @property
+    def onnx_session(self) -> Optional[OnnxSession]:
+        """Returns the onnx schema if it exists"""
+
+    def save_model(self, path: Path, **kwargs) -> str:
+        """Save the model
+
+        Args:
+            path (Path):
+                Path to save the model
+
+            **kwargs:
+                Optional arguments to pass to the model saver
+
+        Returns:
+            Path to the saved model
+        """
+
+    def load_model(self, path: Path, **kwargs) -> None:
+        """Load the model
+
+        Args:
+            path (Path):
+                Path to load the model
+
+            **kwargs:
+                Optional arguments to pass to the model loader
+        """
+
+    def convert_to_onnx(self, **kwargs) -> None:
+        """Convert the model to onnx
+
+        **kwargs:
+            Optional arguments to pass to the onnx converter
+        """
+
+    def save_onnx_model(self, path: Path, **kwargs) -> None:
+        """Save the onnx model
+
+        Args:
+            path (Path):
+                Path to save the model
+
+            **kwargs:
+                Optional arguments to pass to the onnx converter
+
+        """
+
+    def load_onnx_model(self, path: Path, **kwargs) -> None:
+        """Load the onnx model
+
+        Args:
+            path (Path):
+                Path to load the model
+
+            **kwargs:
+                Optional arguments to pass to the onnx converter
+
+        """
+
+    def save(
+        self,
+        path: Path,
+        to_onnx: bool = False,
+        save_args: Optional[SaveArgs] = None,
+    ) -> ModelInterfaceSaveMetadata:
+        """Save the model interface
+
+        Args:
+            path (Path):
+                Path to save the model
+            to_onnx (bool):
+                Whether to save the model to onnx
+            save_args (SaveArgs):
+                Optional save args
+        """
+
+class SklearnModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+    ) -> None:
+        """Base class for ModelInterface
+
+        Args:
+            model:
+                Model to associate with interface. This model must be from the
+                scikit-learn ecosystem
+            preprocessor:
+                Preprocessor to associate with interface. This preprocessor must be from the
+                scikit-learn ecosystem
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""

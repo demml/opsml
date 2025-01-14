@@ -73,7 +73,7 @@ class ModelInterface(BaseModel):
         """
         assert self.model is not None, "No model detected in interface"
 
-        save_path = (path / SaveName.TrainedModel.as_string()).with_suffix(
+        save_path = (path / SaveName.Model.as_string()).with_suffix(
             f".{Suffix.Joblib.as_string()}"
         )
         # joblib.dump(self.model, save_path)
