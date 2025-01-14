@@ -1,5 +1,4 @@
 from typing import Tuple
-from opsml.core import OpsmlLogger, LogLevel
 from opsml.model import SklearnModel
 from opsml.data import NumpyData, PandasData
 import pytest
@@ -12,9 +11,6 @@ def warn(*args, **kwargs):
 
 
 warnings.warn = warn
-
-
-OpsmlLogger.setup_logging(LogLevel.Debug)
 
 
 def test_linear_regression_numpy(linear_regression: Tuple[SklearnModel, NumpyData]):

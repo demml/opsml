@@ -122,7 +122,7 @@ impl OnnxSession {
     pub fn model_bytes(&self, py: Python) -> PyResult<Vec<u8>> {
         self.session
             .bind(py)
-            .getattr("model_bytes")
+            .getattr("_model_bytes")
             .map_err(|e| OnnxError::Error(e.to_string()))?
             .extract()
     }

@@ -80,22 +80,16 @@ impl SaveArgs {
 impl SaveArgs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        Some(
-            self.onnx
-                .as_ref()
-                .map(|onnx| onnx.bind(py).downcast::<PyDict>().unwrap())
-                .unwrap(),
-        )
+        self.onnx
+            .as_ref()
+            .and_then(|onnx| onnx.bind(py).downcast::<PyDict>().ok())
     }
 
     pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        Some(
-            self.onnx
-                .as_ref()
-                .map(|onnx| onnx.bind(py).downcast::<PyDict>().unwrap())
-                .unwrap(),
-        )
+        self.model
+            .as_ref()
+            .and_then(|model| model.bind(py).downcast::<PyDict>().ok())
     }
 }
 

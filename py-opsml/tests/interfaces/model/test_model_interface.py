@@ -1,4 +1,4 @@
-from opsml.model import ModelInterface, TaskType
+from opsml.model import ModelInterface, TaskType, SklearnModel, SaveArgs
 from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData, TorchData
 from numpy.typing import NDArray
 from pathlib import Path
@@ -10,9 +10,7 @@ import torch
 from typing import List, Dict
 
 
-def test_model_interface_sample_data_numpy(
-    tmp_path: Path, numpy_array: NDArray[np.float64]
-):
+def test_model_interface_sample_data_numpy(numpy_array: NDArray[np.float64]):
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
@@ -47,9 +45,7 @@ def test_model_interface_sample_data_numpy(
     assert model_interface.data_type == DataType.Numpy
 
 
-def test_model_interface_sample_data_pandas(
-    tmp_path: Path, pandas_dataframe_num: pd.DataFrame
-):
+def test_model_interface_sample_data_pandas(pandas_dataframe_num: pd.DataFrame):
     """Test logic
 
     1. Create a ModelInterface object with sample_data as numpy_array
@@ -262,3 +258,27 @@ def test_model_interface_sample_data_dict(numpy_dict: Dict[str, NDArray[np.float
 
     assert model_interface.task_type == TaskType.Other
     assert model_interface.data_type == DataType.Dict
+
+
+def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnModel):
+    model = random_forest_classifier
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    metadata = model.save(save_path, True)
+    assert metadata.save_args is None
+
+
+def test_save_model_interface_with_args(
+    tmp_path: Path, stacking_regressor: SklearnModel
+):
+    model = stacking_regressor
+
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    args = SaveArgs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    metadata = model.save(save_path, True, args)
+
+    assert metadata.save_args is not None
