@@ -9,6 +9,7 @@ use pyo3::types::PyList;
 #[pyclass]
 #[derive(Debug)]
 pub struct OnnxSession {
+    #[pyo3(get)]
     pub schema: OnnxSchema,
     pub session: PyObject,
 }

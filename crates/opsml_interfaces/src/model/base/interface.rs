@@ -377,13 +377,4 @@ impl ModelInterface {
 
         Ok(())
     }
-
-    #[getter]
-    pub fn onnx_schema(&self) -> PyResult<Option<OnnxSchema>> {
-        if let Some(onnx_session) = &self.onnx_session {
-            Ok(Some(onnx_session.schema.clone()))
-        } else {
-            Ok(None)
-        }
-    }
 }
