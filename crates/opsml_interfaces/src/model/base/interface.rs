@@ -2,8 +2,8 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
+use crate::onnx;
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
-use crate::OnnxSchema;
 use crate::OnnxSession;
 
 use opsml_error::error::OpsmlError;
@@ -14,7 +14,9 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
+use tracing::debug;
 use tracing::warn;
 
 #[pyclass]
@@ -325,21 +327,31 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, **kwargs))]
+    #[pyo3(signature = (path, to_onnx=false, **kwargs))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
+        to_onnx: bool,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        // save data
+        // save model
         let model_uri = self.save_model(py, path.clone(), kwargs)?;
 
         // if sample_data is not None, save the sample data
-        let sample_data_uri = self.sample_data.save_data(py, path).unwrap_or_else(|e| {
-            warn!("Failed to save sample data. Defaulting to None: {}", e);
-            None
-        });
+        let sample_data_uri = self
+            .sample_data
+            .save_data(py, path.clone())
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
+
+        // if to_onnx is true, convert the model to onnx
+        let mut onnx_model_uri = None;
+        if to_onnx {
+            onnx_model_uri = Some(self.save_onnx(py, path.clone(), kwargs)?);
+        }
 
         self.schema = self.create_feature_schema(py)?;
 
@@ -348,7 +360,7 @@ impl ModelInterface {
             preprocessor_uri: None,
             preprocessor_name: None,
             sample_data_uri,
-            onnx_model_uri: None,
+            onnx_model_uri,
             extra_metadata: HashMap::new(),
         })
     }
@@ -366,6 +378,11 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        if self.onnx_session.is_some() {
+            warn!("Model has already been converted to ONNX. Skipping conversion.");
+            return Ok(());
+        }
+
         self.onnx_session = Some(OnnxModelConverter::convert_model(
             py,
             self.model.bind(py),
@@ -376,5 +393,31 @@ impl ModelInterface {
         )?);
 
         Ok(())
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_onnx(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        if self.onnx_session.is_none() {
+            self.convert_to_onnx(py, kwargs)?;
+        }
+
+        let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
+        let full_save_path = path.join(&save_path);
+        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+        fs::write(&full_save_path, bytes)?;
+
+        Ok(save_path)
     }
 }
