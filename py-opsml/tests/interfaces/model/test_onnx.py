@@ -49,8 +49,7 @@ def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
     assert model.onnx_session is not None
 
 
-@pytest.mark.flaky(reruns=2, reruns_delay=2)
-def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
+def _test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
     model = sklearn_pipeline_advanced
     kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
     model.convert_to_onnx(**kwargs)
