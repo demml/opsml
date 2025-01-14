@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_error::OnnxError;
 use ort::session::Session;
@@ -123,6 +125,40 @@ impl OnnxSession {
             .getattr("model_bytes")
             .map_err(|e| OnnxError::Error(e.to_string()))?
             .extract()
+    }
+
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_onnx_model(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let rt = py
+            .import("onnxruntime")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
+
+        let providers = rt
+            .call_method0("get_available_providers")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
+
+        let args = (path,);
+
+        if let Some(kwargs) = kwargs {
+            kwargs.set_item("providers", providers).unwrap();
+        } else {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("providers", providers).unwrap();
+        };
+
+        let session = rt
+            .call_method("InferenceSession", args, kwargs)
+            .map_err(|e| OnnxError::Error(e.to_string()))?
+            .unbind();
+
+        self.session = session;
+
+        Ok(())
     }
 }
 

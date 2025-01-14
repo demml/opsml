@@ -1,14 +1,14 @@
+use crate::base::SaveArgs;
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
-use crate::onnx;
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
+use opsml_utils::PyHelperFuncs;
 
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
-use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -16,7 +16,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use tracing::debug;
 use tracing::warn;
 
 #[pyclass]
@@ -39,12 +38,15 @@ pub struct ModelInterfaceSaveMetadata {
 
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
+
+    #[pyo3(get)]
+    pub save_args: Option<SaveArgs>,
 }
 
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, extra_metadata=HashMap::new()))]
+    #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, extra_metadata=HashMap::new(), save_args=None))]
     pub fn new(
         model_uri: PathBuf,
         sample_data_uri: Option<PathBuf>,
@@ -52,6 +54,7 @@ impl ModelInterfaceSaveMetadata {
         preprocessor_name: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
+        save_args: Option<SaveArgs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -60,12 +63,18 @@ impl ModelInterfaceSaveMetadata {
             preprocessor_name,
             onnx_model_uri,
             extra_metadata,
+            save_args,
         }
     }
 
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__json__(self)
     }
 }
 
@@ -327,16 +336,27 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, **kwargs))]
+    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        save_args: Option<SaveArgs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        // get onnx and model kwargs
+        let onnx_kwargs = save_args
+            .as_ref()
+            .and_then(|args| args.onnx_kwargs(py))
+            .cloned();
+
+        let model_kwargs = save_args
+            .as_ref()
+            .and_then(|args| args.model_kwargs(py))
+            .cloned();
+
         // save model
-        let model_uri = self.save_model(py, path.clone(), kwargs)?;
+        let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;
 
         // if sample_data is not None, save the sample data
         let sample_data_uri = self
@@ -350,7 +370,7 @@ impl ModelInterface {
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self.save_onnx(py, path.clone(), kwargs)?);
+            onnx_model_uri = Some(self.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
         }
 
         self.schema = self.create_feature_schema(py)?;
@@ -362,6 +382,7 @@ impl ModelInterface {
             sample_data_uri,
             onnx_model_uri,
             extra_metadata: HashMap::new(),
+            save_args,
         })
     }
 
@@ -403,7 +424,7 @@ impl ModelInterface {
     /// * `kwargs` - Additional kwargs
     ///
     #[pyo3(signature = (path, **kwargs))]
-    pub fn save_onnx(
+    pub fn save_onnx_model(
         &mut self,
         py: Python,
         path: PathBuf,
@@ -419,5 +440,33 @@ impl ModelInterface {
         fs::write(&full_save_path, bytes)?;
 
         Ok(save_path)
+    }
+
+    /// Load the model from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_onnx_model(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        if self.onnx_session.is_none() {
+            return Err(OpsmlError::new_err(
+                "No ONNX model detected in interface for loading",
+            ));
+        }
+
+        self.onnx_session
+            .as_mut()
+            .unwrap()
+            .load_onnx_model(py, path, kwargs)?;
+
+        Ok(())
     }
 }

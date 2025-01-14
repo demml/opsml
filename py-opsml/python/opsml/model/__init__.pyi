@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..core import CommonKwargs, FeatureSchema, OnnxSchema
@@ -106,6 +107,17 @@ class TorchSaveArgs:
                 Whether to save the model as a state dict. Default is False
         """
 
+class SaveArgs:
+    def __init__(self, onnx: Optional[Dict], model: Optional[Dict]) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            onnx (Dict):
+                Optional onnx arguments
+            model (Dict):
+                Optional model arguments
+        """
+
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
     trained_model_uri: str
@@ -114,6 +126,7 @@ class ModelInterfaceSaveMetadata:
     preprocessor_name: Optional[str]
     onnx_model_uri: Optional[str]
     extra_metadata: Optional[Dict[str, str]]
+    save_args: Optional[SaveArgs]
 
     def __init__(
         self,
@@ -123,6 +136,7 @@ class ModelInterfaceSaveMetadata:
         preprocessor_name: Optional[str] = None,
         onnx_model_uri: Optional[str] = None,
         extra_metadata: Optional[Dict[str, str]] = None,
+        save_args: Optional[SaveArgs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -137,6 +151,8 @@ class ModelInterfaceSaveMetadata:
                 The onnx model uri
             extra_metadata:
                 The save metadata
+            save_args:
+                Optional save args for the model and onnx model
         """
 
 class ModelInterfaceMetadata:
@@ -208,7 +224,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -509,6 +527,50 @@ class ModelInterface:
 
         **kwargs:
             Optional arguments to pass to the onnx converter
+        """
+
+    def save_onnx_model(self, path: Path, **kwargs) -> None:
+        """Save the onnx model
+
+        Args:
+            path (Path):
+                Path to save the model
+
+        **kwargs:
+            Optional arguments to pass to the onnx converter
+
+        """
+
+    def load_onnx_model(self, path: Path, **kwargs) -> None:
+        """Load the onnx model
+
+        Args:
+            path (Path):
+                Path to load the model
+
+        **kwargs:
+            Optional arguments to pass to the onnx converter
+
+        """
+
+    def save(
+        self,
+        path: Path,
+        model_kwargs: Optional[Dict] = None,
+        to_onnx: bool = False,
+        onnx_kwargs: Optional[Dict] = None,
+    ) -> ModelInterfaceMetadata:
+        """Save the model interface
+
+        Args:
+            path (Path):
+                Path to save the model
+            to_onnx (bool):
+                Whether to save the model to onnx
+            onnx_kwargs (Optional[Dict]):
+                Optional onnx arguments to pass to the onnx converter
+            model_kwargs (Optional[Dict]):
+                Optional model arguments to pass to save_model
         """
 
     @property
