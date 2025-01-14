@@ -208,9 +208,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -439,6 +437,35 @@ class TaskType:
     TimeSeriesTabular: "TaskType"
     Other: "TaskType"
 
+class OnnxSession:
+    @property
+    def onnx_schema(self) -> OnnxSchema:
+        """Returns the onnx schema"""
+
+    @property
+    def session(self) -> Any:
+        """Returns the onnx session"""
+
+    def run(
+        self,
+        input_data: Dict[str, Any],
+        output_names: Optional[list[str]] = None,
+        run_options: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """Run the onnx session
+
+        Args:
+            output_names:
+                List of output names
+            input_data:
+                Dictionary of input data
+            run_options:
+                Optional run options
+
+        Returns:
+            Output data
+        """
+
 class ModelInterface:
     def __init__(
         self,
@@ -485,7 +512,7 @@ class ModelInterface:
         """
 
     @property
-    def onnx_schema(self) -> Optional[OnnxSchema]:
+    def onnx_session(self) -> Optional[OnnxSession]:
         """Returns the onnx schema if it exists"""
 
 class SklearnModel(ModelInterface):

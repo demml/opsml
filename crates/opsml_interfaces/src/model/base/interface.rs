@@ -167,7 +167,9 @@ pub struct ModelInterface {
     #[pyo3(get)]
     pub model_interface_type: ModelInterfaceType,
 
+    #[pyo3(get)]
     pub onnx_session: Option<OnnxSession>,
+
     pub sample_data: SampleData,
 }
 

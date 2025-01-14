@@ -35,7 +35,6 @@ from sklearn.datasets import fetch_openml, load_iris  # type: ignore
 @pytest.fixture(scope="session")
 def example_dataframe():
     X, y = create_fake_data(n_samples=1200)
-
     return X, y, X, y
 
 

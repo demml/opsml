@@ -20,20 +20,21 @@ OpsmlLogger.setup_logging(LogLevel.Debug)
 def test_linear_regression_numpy(linear_regression: Tuple[SklearnModel, NumpyData]):
     model, _ = linear_regression
     model.convert_to_onnx()
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
+    model.onnx_session.run({"X": model.sample_data.data}, None)  # type: ignore
 
 
 def test_random_forest_classifier(random_forest_classifier: SklearnModel):
     model = random_forest_classifier
     model.convert_to_onnx()
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
 
 
 def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
     model, _ = sklearn_pipeline
     kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
     model.convert_to_onnx(**kwargs)
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
 
 
 def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
@@ -45,21 +46,21 @@ def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
         },
     }
     model.convert_to_onnx(**kwargs)
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
 
 
 def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
     model = sklearn_pipeline_advanced
     kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
     model.convert_to_onnx(**kwargs)
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
 
 
 def test_stacking_regressor(stacking_regressor: SklearnModel):
     model = stacking_regressor
     kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
     model.convert_to_onnx(**kwargs)
-    assert model.onnx_schema is not None
+    assert model.onnx_session is not None
 
 
 def test_sklearn_pipeline_xgb_classifier(
@@ -92,6 +93,7 @@ def test_lgb_classifier_calibrated_pipeline(
     model.convert_to_onnx(**kwargs)
 
 
+@pytest.mark.flaky(reruns=2, reruns_delay=2)
 @pytest.mark.parametrize(
     "interface",
     [

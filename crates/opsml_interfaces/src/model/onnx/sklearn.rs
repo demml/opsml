@@ -160,13 +160,13 @@ impl SklearnOnnxModelConverter {
             .call_method("SerializeToString", (), None)
             .map_err(|e| OpsmlError::new_err(format!("Failed to serialize ONNX model: {}", e)))?;
 
-        Ok(OnnxSession::new(
+        OnnxSession::new(
             py,
             onnx_version,
-            &onnx_bytes.extract::<Vec<u8>>()?,
-            Some(&feature_names),
+            onnx_bytes.extract::<Vec<u8>>()?,
+            Some(feature_names),
         )
-        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))?)
+        .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
     pub fn convert_model<'py>(
