@@ -3,9 +3,9 @@ from typing import Tuple
 from sklearn import linear_model  # type: ignore
 import numpy as np
 import pandas as pd
-from opsml.model import SklearnModel, TaskType
-from opsml.data import NumpyData, PandasData, SqlLogic
-from opsml.helpers.data import create_fake_data
+from opsml.model import SklearnModel, TaskType  # type: ignore
+from opsml.data import NumpyData, PandasData, SqlLogic  # type: ignore
+from opsml.helpers.data import create_fake_data  # type: ignore
 from sklearn.preprocessing import OneHotEncoder, StandardScaler  # type: ignore
 from sklearn import ensemble
 from sklearn.compose import ColumnTransformer  # type: ignore
@@ -127,9 +127,9 @@ def lgb_classifier_calibrated(example_dataframe):
 
 @pytest.fixture
 def sklearn_pipeline_advanced() -> SklearnModel:
-    X, y = fetch_openml(
-        "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-    )
+    X = pd.read_csv("tests/assets/titanic.csv")
+
+    y = X.pop("survived")
 
     numeric_features = ["age", "fare"]
     numeric_transformer = Pipeline(
