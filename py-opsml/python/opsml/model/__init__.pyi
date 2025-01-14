@@ -108,7 +108,11 @@ class TorchSaveArgs:
         """
 
 class SaveArgs:
-    def __init__(self, onnx: Optional[Dict], model: Optional[Dict]) -> None:
+    def __init__(
+        self,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+    ) -> None:
         """Optional arguments to pass to save_model
 
         Args:
@@ -154,6 +158,9 @@ class ModelInterfaceSaveMetadata:
             save_args:
                 Optional save args for the model and onnx model
         """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
 
 class ModelInterfaceMetadata:
     task_type: str
@@ -522,6 +529,10 @@ class ModelInterface:
     def sample_data(self, data: Any) -> None:
         """Sets the data"""
 
+    @property
+    def onnx_session(self) -> Optional[OnnxSession]:
+        """Returns the onnx schema if it exists"""
+
     def convert_to_onnx(self, **kwargs) -> None:
         """Convert the model to onnx
 
@@ -536,8 +547,8 @@ class ModelInterface:
             path (Path):
                 Path to save the model
 
-        **kwargs:
-            Optional arguments to pass to the onnx converter
+            **kwargs:
+                Optional arguments to pass to the onnx converter
 
         """
 
@@ -548,18 +559,17 @@ class ModelInterface:
             path (Path):
                 Path to load the model
 
-        **kwargs:
-            Optional arguments to pass to the onnx converter
+            **kwargs:
+                Optional arguments to pass to the onnx converter
 
         """
 
     def save(
         self,
         path: Path,
-        model_kwargs: Optional[Dict] = None,
         to_onnx: bool = False,
-        onnx_kwargs: Optional[Dict] = None,
-    ) -> ModelInterfaceMetadata:
+        save_args: Optional[SaveArgs] = None,
+    ) -> ModelInterfaceSaveMetadata:
         """Save the model interface
 
         Args:
@@ -567,15 +577,9 @@ class ModelInterface:
                 Path to save the model
             to_onnx (bool):
                 Whether to save the model to onnx
-            onnx_kwargs (Optional[Dict]):
-                Optional onnx arguments to pass to the onnx converter
-            model_kwargs (Optional[Dict]):
-                Optional model arguments to pass to save_model
+            save_args (SaveArgs):
+                Optional save args
         """
-
-    @property
-    def onnx_session(self) -> Optional[OnnxSession]:
-        """Returns the onnx schema if it exists"""
 
 class SklearnModel(ModelInterface):
     def __init__(

@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use tracing::debug;
 use tracing::warn;
 
 #[pyclass]
@@ -354,6 +355,11 @@ impl ModelInterface {
             .as_ref()
             .and_then(|args| args.model_kwargs(py))
             .cloned();
+
+        debug!(
+            "Saving model to: {:?} with save_args: {:?}",
+            path, save_args
+        );
 
         // save model
         let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;

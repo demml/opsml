@@ -10,7 +10,9 @@ pub mod torch;
 pub mod vowpal;
 pub mod xgboost;
 
-pub use base::{InterfaceDataType, ModelInterface, ModelInterfaceMetadata, SampleData, TaskType};
+pub use base::{
+    InterfaceDataType, ModelInterface, ModelInterfaceMetadata, SampleData, SaveArgs, TaskType,
+};
 pub use catboost::CatBoostModelInterfaceMetadata;
 pub use huggingface::{
     HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel, HuggingFaceOnnxArgs,

@@ -21,6 +21,7 @@ ModelInterfaceType = model.ModelInterfaceType
 ModelInterface = model.ModelInterface
 TaskType = model.TaskType
 SklearnModel = model.SklearnModel
+SaveArgs = model.SaveArgs
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -43,4 +44,5 @@ __all__ = [
     "ModelInterface",
     "TaskType",
     "SklearnModel",
+    "SaveArgs",
 ]
