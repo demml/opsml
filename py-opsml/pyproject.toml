@@ -23,8 +23,7 @@ onnx = [
     "onnx>=1.17.0; (platform_system == 'Linux' or platform_system == 'Darwin') and python_version >= '3.12'",
 ]
 onnxruntime = [
-    "onnxruntime~=1.16.0; python_version <= '3.11'",
-    "onnxruntime>=1.18.0; python_version >= '3.12'",
+    "onnxruntime>=1.18.0",
 ]
 sklearn_onnx = [
     "skl2onnx>=1.16.0",
