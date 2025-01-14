@@ -3,25 +3,30 @@ use opsml_error::OnnxError;
 use ort::session::Session;
 use ort::value::ValueType;
 use pyo3::prelude::*;
-
 use pyo3::types::PyDict;
+use pyo3::types::PyList;
 
+#[pyclass]
+#[derive(Debug)]
 pub struct OnnxSession {
     pub schema: OnnxSchema,
     pub session: PyObject,
 }
 
+#[pymethods]
 impl OnnxSession {
+    #[new]
+    #[pyo3(signature = (onnx_version, model_bytes, feature_names=None))]
     pub fn new(
         py: Python,
         onnx_version: String,
-        model_bytes: &Vec<u8>,
-        feature_names: Option<&Vec<String>>,
+        model_bytes: Vec<u8>,
+        feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
         // extract onnx_bytes
         let session = Session::builder()
             .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
-            .commit_from_memory(model_bytes)
+            .commit_from_memory(&model_bytes)
             .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
 
         let input_schema = session
@@ -70,7 +75,7 @@ impl OnnxSession {
             input_features: input_schema,
             output_features: output_schema,
             onnx_version,
-            feature_names: feature_names.unwrap_or(&vec![]).to_vec(),
+            feature_names: feature_names.unwrap_or_default(),
         };
 
         // setup python onnxruntime
@@ -93,5 +98,33 @@ impl OnnxSession {
             .unbind();
 
         Ok(OnnxSession { session, schema })
+    }
+
+    #[pyo3(signature = (input_feed, output_names=None, run_options=None))]
+    pub fn run<'py>(
+        &self,
+        py: Python<'py>,
+        input_feed: &Bound<'py, PyDict>,
+        output_names: Option<&Bound<'py, PyList>>,
+        run_options: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let result = self
+            .session
+            .call_method(py, "run", (output_names, input_feed), run_options)
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
+
+        Ok(result)
+    }
+}
+
+impl Clone for OnnxSession {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let new_session = self.session.clone_ref(py);
+            OnnxSession {
+                session: new_session,
+                schema: self.schema.clone(),
+            }
+        })
     }
 }
