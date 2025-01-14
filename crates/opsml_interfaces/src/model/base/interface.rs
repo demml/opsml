@@ -235,6 +235,21 @@ impl ModelInterface {
         })
     }
 
+    #[setter]
+    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = model.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(model) {
+            self.model = py.None();
+            return Ok(());
+        } else {
+            self.model = model.into_py_any(py)?;
+        };
+
+        Ok(())
+    }
+
     #[getter]
     pub fn get_sample_data(&self, py: Python<'_>) -> PyResult<PyObject> {
         self.sample_data.get_data(py)
@@ -244,6 +259,32 @@ impl ModelInterface {
     pub fn set_sample_data(&mut self, sample_data: &Bound<'_, PyAny>) -> PyResult<()> {
         self.sample_data = SampleData::new(sample_data)?;
         Ok(())
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+
+        let mut data = self.sample_data.get_data(py)?.bind(py).clone();
+
+        // if data is instance of DataInterface, get the data
+        if data.is_instance_of::<DataInterface>() {
+            data = data.getattr("data")?;
+        }
+
+        let feature_map = generate_feature_schema(&data, &self.data_type)?;
+
+        self.schema = feature_map.clone();
+
+        Ok(feature_map)
     }
 
     /// Save the model to a file
@@ -291,39 +332,13 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
         self.model = joblib.call_method("load", (load_path,), kwargs)?.into();
 
         Ok(())
-    }
-
-    /// Create a feature schema
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Name of the feature
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
-        // Create and insert the feature
-
-        let mut data = self.sample_data.get_data(py)?.bind(py).clone();
-
-        // if data is instance of DataInterface, get the data
-        if data.is_instance_of::<DataInterface>() {
-            data = data.getattr("data")?;
-        }
-
-        let feature_map = generate_feature_schema(&data, &self.data_type)?;
-
-        self.schema = feature_map.clone();
-
-        Ok(feature_map)
     }
 
     /// Save the interface model
@@ -468,10 +483,14 @@ impl ModelInterface {
             ));
         }
 
+        let load_path = path
+            .join(SaveName::OnnxModel.to_string())
+            .with_extension(Suffix::Onnx);
+
         self.onnx_session
             .as_mut()
             .unwrap()
-            .load_onnx_model(py, path, kwargs)?;
+            .load_onnx_model(py, load_path, kwargs)?;
 
         Ok(())
     }
