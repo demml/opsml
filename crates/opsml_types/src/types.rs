@@ -253,6 +253,7 @@ pub enum SaveName {
     OnnxConfig,
     Dataset,
     DriftProfile,
+    Drift,
     Sql,
 }
 
@@ -282,6 +283,7 @@ impl SaveName {
             "dataset" => Some(SaveName::Dataset),
             "drift-profile" => Some(SaveName::DriftProfile),
             "sql" => Some(SaveName::Sql),
+            "drift" => Some(SaveName::Drift),
             _ => None,
         }
     }
@@ -309,6 +311,7 @@ impl SaveName {
             SaveName::Dataset => "dataset",
             SaveName::DriftProfile => "drift-profile",
             SaveName::Sql => "sql",
+            SaveName::Drift => "drift",
         }
     }
 
@@ -347,6 +350,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Dataset => Path::new("dataset"),
             SaveName::DriftProfile => Path::new("drift-profile"),
             SaveName::Sql => Path::new("sql"),
+            SaveName::Drift => Path::new("drift"),
         }
     }
 }
