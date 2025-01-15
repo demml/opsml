@@ -5,6 +5,7 @@ use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
+use opsml_utils::file;
 use opsml_utils::PyHelperFuncs;
 
 use opsml_error::error::OpsmlError;
@@ -537,5 +538,28 @@ impl ModelInterface {
         self.drift_profile.push(profile);
 
         Ok(py_profile)
+    }
+
+    pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
+        let save_dir = PathBuf::from(SaveName::Drift.to_string());
+        if !save_dir.exists() {
+            fs::create_dir_all(&save_dir).unwrap();
+        }
+
+        let save_path = path.join(save_dir.clone());
+        for profile in self.drift_profile.iter() {
+            let drift_type = profile.drift_type();
+
+            let filename = format!(
+                "{}_{}",
+                drift_type.to_string(),
+                SaveName::DriftProfile.to_string()
+            );
+            let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
+
+            profile.save_to_json(Some(profile_save_path))?
+        }
+
+        Ok(save_dir)
     }
 }
