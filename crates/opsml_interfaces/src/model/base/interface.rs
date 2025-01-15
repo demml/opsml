@@ -12,13 +12,13 @@ use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use scouter_client::DriftProfile;
+use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use tracing::debug;
-use tracing::warn;
+use tracing::{info, warn};
 
 use super::utils;
 
@@ -512,5 +512,30 @@ impl ModelInterface {
             .load_onnx_model(py, load_path, kwargs)?;
 
         Ok(())
+    }
+
+    /// Create drift profile
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Data to create drift profile from
+    /// * `config` - Configuration for drift profile
+    /// * `data_type` - Data type for drift profile
+    ///
+    #[pyo3(signature = (data, config=None, data_type=None))]
+    pub fn create_drift_profile<'py>(
+        &mut self,
+        py: Python<'py>,
+        data: &Bound<'py, PyAny>,
+        config: Option<&Bound<'py, PyAny>>,
+        data_type: Option<&DriftDataType>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        debug!("Creating drift profile");
+        let drifter = PyDrifter::new();
+        let profile = drifter.internal_create_drift_profile(py, data, config, data_type)?;
+        let py_profile = profile.profile(py)?;
+        self.drift_profile.push(profile);
+
+        Ok(py_profile)
     }
 }
