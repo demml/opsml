@@ -353,6 +353,7 @@ impl DataInterface {
         };
 
         let profile = profiler.create_data_profile(
+            py,
             self.data.bind(py),
             data_type,
             bin_size,
