@@ -20,6 +20,8 @@ use std::path::PathBuf;
 use tracing::debug;
 use tracing::warn;
 
+use super::utils;
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelInterfaceSaveMetadata {
@@ -228,6 +230,11 @@ impl ModelInterface {
             None => py.None(),
         };
 
+        let profiles = match drift_profile {
+            Some(profile) => utils::extract_drift_profile(profile)?,
+            None => vec![],
+        };
+
         Ok(ModelInterface {
             model,
             data_type: sample_data.get_data_type(),
@@ -237,6 +244,7 @@ impl ModelInterface {
             model_type,
             model_interface_type: ModelInterfaceType::Base,
             onnx_session: None,
+            drift_profile: profiles,
         })
     }
 
@@ -252,6 +260,12 @@ impl ModelInterface {
             self.model = model.into_py_any(py)?;
         };
 
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_drift_profile(&mut self, drift_profile: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.drift_profile = utils::extract_drift_profile(drift_profile)?;
         Ok(())
     }
 
