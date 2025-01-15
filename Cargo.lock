@@ -2421,15 +2421,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2730,7 +2721,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17ebbe97acce52d06aebed4cd4a87c0941f4b2519b59b82b4feb5bd0ce003dfd"
 dependencies = [
  "indexmap",
- "itertools 0.13.0",
+ "itertools",
  "ndarray",
  "noisy_float",
  "num-integer",
@@ -4188,8 +4179,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "ndarray",
  "ndarray-stats",
@@ -4207,8 +4198,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-contracts"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "chrono",
  "scouter-types",
@@ -4218,8 +4209,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "futures",
  "pyo3",
@@ -4233,13 +4224,13 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4259,8 +4250,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-error"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "pyo3",
  "serde",
@@ -4269,10 +4260,10 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4286,12 +4277,12 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -4308,8 +4299,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.4.0"
-source = "git+https://github.com/demml/scouter.git?branch=update-data-profiler#b5b4b2ff413b55be139c2f89744dcf3cc72a1262"
+version = "0.4.1"
+source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#91a50cdf2b11102380cf79f1fcda1ba6945c5ad7"
 dependencies = [
  "chrono",
  "colored_json",

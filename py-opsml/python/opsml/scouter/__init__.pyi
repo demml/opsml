@@ -95,7 +95,9 @@ class ServerRecord:
     @property
     def record(
         self,
-    ) -> Union[SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics]:
+    ) -> Union[
+        SpcServerRecord, PsiServerRecord, CustomMetricServerRecord, ObservabilityMetrics
+    ]:
         """Return the drift server record."""
 
 class ServerRecords:
@@ -123,117 +125,16 @@ class ServerRecords:
     def __str__(self) -> str:
         """Return the string representation of the record."""
 
-class Every1Minute:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class Every5Minutes:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class Every15Minutes:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class Every30Minutes:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class EveryHour:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class Every6Hours:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class Every12Hours:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class EveryDay:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class EveryWeek:
-    def __init__(self) -> None:
-        """Initialize the cron schedule"""
-
-    @property
-    def cron(self) -> str:
-        """Return the cron schedule"""
-
-class CommonCron:
-    def __init__(self) -> None:
-        """Initialize the common cron class from rust"""
-
-    @property
-    def EVERY_1_MINUTE(self) -> str:
-        """Every 1 minute cron schedule"""
-
-    @property
-    def EVERY_5_MINUTES(self) -> str:
-        """Every 5 minutes cron schedule"""
-
-    @property
-    def EVERY_15_MINUTES(self) -> str:
-        """Every 15 minutes cron schedule"""
-
-    @property
-    def EVERY_30_MINUTES(self) -> str:
-        """Every 30 minutes cron schedule"""
-
-    @property
-    def EVERY_HOUR(self) -> str:
-        """Every hour cron schedule"""
-
-    @property
-    def EVERY_6_HOURS(self) -> str:
-        """Every 6 hours cron schedule"""
-
-    @property
-    def EVERY_12_HOURS(self) -> str:
-        """Every 12 hours cron schedule"""
-
-    @property
-    def EVERY_DAY(self) -> str:
-        """Every day cron schedule"""
-
-    @property
-    def EVERY_WEEK(self) -> str:
-        """Every week cron schedule"""
+class CommonCrons:
+    Every1Minute: "CommonCrons"
+    Every5Minutes: "CommonCrons"
+    Every15Minutes: "CommonCrons"
+    Every30Minutes: "CommonCrons"
+    EveryHour: "CommonCrons"
+    Every6Hours: "CommonCrons"
+    Every12Hours: "CommonCrons"
+    EveryDay: "CommonCrons"
+    EveryWeek: "CommonCrons"
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -1144,208 +1045,6 @@ class SpcDriftMap:
     def to_numpy(self) -> Tuple[NDArray, NDArray, List[str]]:
         """Return drift map as a a tuple of sample_array, drift_array and list of features"""
 
-class SpcDrifter:
-    def __init__(self) -> None:
-        """Instantiate Rust ScouterMonitor class that is
-        used to create monitoring profiles and compute drifts.
-        """
-
-    def convert_strings_to_numpy_f32(
-        self,
-        features: List[str],
-        array: List[List[str]],
-        drift_profile: SpcDriftProfile,
-    ) -> NDArray[Any]:
-        """Convert string array to numpy f32 array
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to convert.
-            drift_profile:
-                Monitoring profile.
-        """
-
-    def convert_strings_to_numpy_f64(
-        self,
-        features: List[str],
-        array: List[List[str]],
-        drift_profile: SpcDriftProfile,
-    ) -> NDArray[Any]:
-        """Convert string array to numpy f64 array
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to convert.
-            drift_profile:
-                Monitoring profile.
-        """
-
-    def create_string_drift_profile(
-        self,
-        array: List[List[str]],
-        drift_config: SpcDriftConfig,
-        features: List[str],
-    ) -> SpcDriftProfile:
-        """Create a monitoring profile from a f32 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to profile.
-            drift_config:
-                Monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def create_numeric_drift_profile_f32(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_config: SpcDriftConfig,
-    ) -> SpcDriftProfile:
-        """Create a monitoring profile from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_config:
-                Monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def create_numeric_drift_profile_f64(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_config: SpcDriftConfig,
-    ) -> SpcDriftProfile:
-        """Create a monitoring profile from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_config:
-                monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def compute_drift_f32(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: SpcDriftProfile,
-    ) -> SpcDriftMap:
-        """Compute drift from a f32 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-
-        Returns:
-            DriftMap
-        """
-
-    def compute_drift_f64(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: SpcDriftProfile,
-    ) -> SpcDriftMap:
-        """Compute drift from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-
-        Returns:
-            DriftMap.
-        """
-
-    def generate_alerts(
-        self,
-        drift_array: NDArray,
-        features: List[str],
-        alert_rule: SpcAlertRule,
-    ) -> SpcFeatureAlerts:
-        """Generate alerts from a drift array and feature list
-
-        Args:
-            drift_array:
-                Numpy array of drift values.
-            features:
-                List of feature names. Must match drift array.
-            alert_rule:
-                Alert rule to use.
-
-        Returns:
-            List of alerts.
-        """
-
-    def sample_data_f32(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: SpcDriftProfile,
-    ) -> ServerRecords:
-        """Sample data from a f32 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-        Returns:
-            List of server records
-        """
-
-    def sample_data_f64(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: SpcDriftProfile,
-    ) -> ServerRecords:
-        """Sample data from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-        Returns:
-            List of server records
-        """
-
 class PsiDriftProfile:
     def __init__(
         self,
@@ -1744,148 +1443,6 @@ class PsiDriftMap:
 
         """
 
-class PsiDrifter:
-    def __init__(self) -> None:
-        """Instantiate Rust ScouterMonitor class that is
-        used to create monitoring profiles and compute drifts.
-        """
-
-    def convert_strings_to_numpy_f32(
-        self,
-        features: List[str],
-        array: List[List[str]],
-        drift_profile: PsiDriftProfile,
-    ) -> NDArray[Any]:
-        """Convert string array to numpy f32 array
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to convert.
-            drift_profile:
-                Monitoring profile.
-        """
-
-    def convert_strings_to_numpy_f64(
-        self,
-        features: List[str],
-        array: List[List[str]],
-        drift_profile: PsiDriftProfile,
-    ) -> NDArray[Any]:
-        """Convert string array to numpy f64 array
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to convert.
-            drift_profile:
-                Monitoring profile.
-        """
-
-    def create_string_drift_profile(
-        self,
-        array: List[List[str]],
-        drift_config: PsiDriftConfig,
-        features: List[str],
-    ) -> PsiDriftProfile:
-        """Create a monitoring profile from a f32 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                List of string arrays to profile.
-            drift_config:
-                Monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def create_numeric_drift_profile_f32(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_config: PsiDriftConfig,
-    ) -> PsiDriftProfile:
-        """Create a monitoring profile from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_config:
-                Monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def create_numeric_drift_profile_f64(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_config: PsiDriftConfig,
-    ) -> PsiDriftProfile:
-        """Create a monitoring profile from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_config:
-                monitor config.
-
-        Returns:
-            Monitoring profile.
-        """
-
-    def compute_drift_f32(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: PsiDriftProfile,
-    ) -> PsiDriftMap:
-        """Compute drift from a f32 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-
-        Returns:
-            DriftMap
-        """
-
-    def compute_drift_f64(
-        self,
-        array: NDArray,
-        features: List[str],
-        drift_profile: PsiDriftProfile,
-    ) -> PsiDriftMap:
-        """Compute drift from a f64 numpy array.
-
-        Args:
-            features:
-                List of feature names.
-            array:
-                Numpy array to profile.
-            drift_profile:
-                Monitoring profile.
-
-
-        Returns:
-            DriftMap.
-        """
-
 class PsiServerRecord:
     def __init__(
         self,
@@ -2065,7 +1622,9 @@ class CustomMetricAlertConfig:
         """Return the alert_condition that were set during metric definition"""
 
     @alert_conditions.setter
-    def alert_conditions(self, alert_conditions: dict[str, CustomMetricAlertCondition]) -> None:
+    def alert_conditions(
+        self, alert_conditions: dict[str, CustomMetricAlertCondition]
+    ) -> None:
         """Update the alert_condition that were set during metric definition"""
 
 class CustomMetricDriftConfig:
@@ -2314,36 +1873,6 @@ class CustomDriftProfile:
         Returns:
             None
         """
-    # @property # hide this for now until we need it
-    # def custom_metrics(self) -> list[CustomMetric]:
-    #    """Return custom metric objects that were used to create the drift profile"""
-
-class CustomDrifter:
-    def __init__(self) -> None:
-        """Instantiate Rust CustomMonitor class that is
-        used to create monitoring profiles and compute drifts.
-        """
-
-    def create_drift_profile(
-        self,
-        config: CustomMetricDriftConfig,
-        metrics: list[CustomMetric],
-        scouter_version: Optional[str] = None,
-    ) -> CustomDriftProfile:
-        """Create a monitoring profile.
-
-        Args:
-            config:
-                Custom metric drift config.
-            metrics:
-                List of custom metrics.
-            scouter_version:
-                Scouter version used to create DriftProfile
-
-
-        Returns:
-            Monitoring profile.
-        """
 
 class CustomMetricServerRecord:
     def __init__(
@@ -2437,6 +1966,67 @@ class DataProfiler:
 
         Returns:
             DataProfile
+        """
+
+class DriftProfile:
+    Spc = "DriftProfile"
+    Psi = "DriftProfile"
+    Custom = "DriftProfile"
+
+    @property
+    def profile(self) -> Any:
+        """Return the drift profile"""
+
+class Drifter:
+    def __init__(self) -> None:
+        """Instantiate Rust Drifter class that is
+        used to create monitoring profiles and compute drifts.
+        """
+
+    def create_drift_profile(
+        self,
+        data: Any,
+        config: Optional[
+            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
+        ] = None,
+        data_type: Optional[DataType] = None,
+    ) -> Any:
+        """Create a drift profile from data.
+
+        Args:
+            data:
+                Data to create a data profile from. Data can be a numpy array,
+                a polars dataframe, pandas dataframe or a list of CustomMetric if creating
+                a custom metric profile.
+            config:
+                Drift config that will be used for monitoring
+            data_type:
+                Optional data type. Inferred from data if not provided.
+
+        Returns:
+            SpcDriftProfile, PsiDriftProfile or CustomMetricDriftProfile
+        """
+
+    def compute_drift(
+        self,
+        data: Any,
+        drift_profile: Union[SpcDriftProfile, PsiDriftProfile],
+        data_type: Optional[DataType] = None,
+    ) -> Any:
+        """Create a drift profile from data.
+
+        Args:
+            data:
+                Data to create a data profile from. Data can be a numpy array,
+                a polars dataframe, pandas dataframe or a list of CustomMetric if creating
+                a custom metric profile.
+            drift_profile:
+                Drift profile to use to compute drift map
+            data_type:
+                Optional data type. Inferred from data if not provided.
+
+        Returns:
+            SpcDriftMap or PsiDriftMap
         """
 
 # Errors
