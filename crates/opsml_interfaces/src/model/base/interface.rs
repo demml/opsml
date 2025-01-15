@@ -12,6 +12,7 @@ use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use scouter_client::DriftProfile;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -182,6 +183,9 @@ pub struct ModelInterface {
     #[pyo3(get)]
     pub onnx_session: Option<OnnxSession>,
 
+    #[pyo3(get)]
+    pub drift_profile: Vec<DriftProfile>,
+
     pub sample_data: SampleData,
 }
 
@@ -189,13 +193,14 @@ pub struct ModelInterface {
 impl ModelInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,))]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         task_type: TaskType,
         schema: Option<FeatureSchema>,
+        drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Self> {
         // Extract the sample data
         let sample_data = match sample_data {

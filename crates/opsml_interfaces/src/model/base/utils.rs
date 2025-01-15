@@ -6,6 +6,9 @@ use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
+use scouter_client::{
+    CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
+};
 use std::path::PathBuf;
 
 #[derive(Default)]
@@ -347,5 +350,29 @@ impl SampleData {
             SampleData::Dict(_) => Ok(vec![]),
             SampleData::None => Ok(vec![]),
         }
+    }
+}
+
+pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
+    if py_profiles.is_instance_of::<PyList>() {
+        let py_profiles = py_profiles.downcast::<PyList>()?;
+        py_profiles
+            .iter()
+            .map(|profile| extract_drift_profile(&profile))
+            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
+            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
+    } else {
+        let drift_type = py_profiles
+            .getattr("config")?
+            .getattr("drift_type")?
+            .extract::<DriftType>()?;
+
+        let profile = match drift_type {
+            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
+            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
+            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
+        };
+
+        Ok(vec![profile])
     }
 }

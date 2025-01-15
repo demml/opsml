@@ -50,6 +50,7 @@ DataProfiler = scouter.DataProfiler
 DataType = scouter.DataType
 ScouterError = scouter.ScouterError
 Drifter = scouter.Drifter
+DriftProfile = scouter.DriftProfile
 
 
 __all__ = [
@@ -101,4 +102,5 @@ __all__ = [
     "DataType",
     "ScouterError",
     "Drifter",
+    "DriftProfile",
 ]
