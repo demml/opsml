@@ -3014,7 +3014,6 @@ dependencies = [
  "indicatif",
  "mockito",
  "opsml-colors",
- "opsml-contracts",
  "opsml-error",
  "opsml-semver",
  "opsml-settings",
@@ -3033,22 +3032,6 @@ name = "opsml-colors"
 version = "0.1.0"
 dependencies = [
  "owo-colors",
-]
-
-[[package]]
-name = "opsml-contracts"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "colored_json",
- "opsml-colors",
- "opsml-error",
- "opsml-semver",
- "opsml-types",
- "opsml-utils",
- "pyo3",
- "serde",
- "tabled",
 ]
 
 [[package]]
@@ -3100,7 +3083,6 @@ dependencies = [
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
- "opsml-contracts",
  "opsml-error",
  "opsml-interfaces",
  "opsml-logging",
@@ -3149,7 +3131,6 @@ dependencies = [
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
- "opsml-contracts",
  "opsml-error",
  "opsml-logging",
  "opsml-registry",
@@ -3196,8 +3177,6 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "opsml-cards",
- "opsml-contracts",
  "opsml-error",
  "opsml-logging",
  "opsml-semver",
@@ -3640,7 +3619,6 @@ name = "py-opsml"
 version = "0.1.0"
 dependencies = [
  "opsml-cards",
- "opsml-contracts",
  "opsml-error",
  "opsml-interfaces",
  "opsml-logging",

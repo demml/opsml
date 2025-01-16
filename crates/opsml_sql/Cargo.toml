@@ -10,7 +10,6 @@ description = "Core rust library for the opsml project"
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
-opsml-cards = { workspace = true }
 opsml-error = { workspace = true }
 opsml-logging = { workspace = true }
 opsml-semver = { workspace = true }
