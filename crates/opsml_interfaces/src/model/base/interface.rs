@@ -5,7 +5,7 @@ use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
 use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
-use opsml_utils::file;
+use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 
 use opsml_error::error::OpsmlError;
@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use tracing::debug;
-use tracing::{info, warn};
+use tracing::warn;
 
 use super::utils;
 
@@ -540,6 +540,15 @@ impl ModelInterface {
         Ok(py_profile)
     }
 
+    /// Save drift profile
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save drift profile
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<PathBuf>` - Path to saved drift profile
     pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
         let save_dir = PathBuf::from(SaveName::Drift.to_string());
         if !save_dir.exists() {
@@ -563,16 +572,35 @@ impl ModelInterface {
         Ok(save_dir)
     }
 
-    //pub fn load_drift_profile(&mut self, path: PathBuf) -> PyResult<()> {
-    //    let load_dir = path.join(SaveName::Drift.to_string());
-    //
-    //    if !load_dir.exists() {
-    //        return Ok(());
-    //    }
-    //
-    //    // list all files in dir
-    //    let files = file::list_files(&load_dir)?;
-    //
-    //    Ok(())
-    //}
+    /// Load drift profile
+    ///     
+    /// # Arguments
+    ///
+    /// * `path` - Path to load drift profile
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<()>` - Result of loading drift profile
+    pub fn load_drift_profile(&mut self, path: PathBuf) -> PyResult<()> {
+        let load_dir = path.join(SaveName::Drift.to_string());
+
+        if !load_dir.exists() {
+            return Ok(());
+        }
+
+        // list all files in dir
+        let files = FileUtils::list_files(load_dir)?;
+
+        for filepath in files {
+            let drift_profile = DriftProfile::load_from_json(filepath).map_err(|e| {
+                OpsmlError::new_err(format!(
+                    "Failed to load drift profile. Error: {}",
+                    e.to_string()
+                ))
+            })?;
+            self.drift_profile.push(drift_profile);
+        }
+
+        Ok(())
+    }
 }
