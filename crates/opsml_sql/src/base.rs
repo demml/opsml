@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::{CardQueryArgs, CardTable};
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
     let version_bounds = VersionParser::get_version_to_search(version)

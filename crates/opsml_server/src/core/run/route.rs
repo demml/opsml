@@ -11,7 +11,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::{
     CardResults, HardwareMetricsRecord, MetricRecord, ParameterRecord,
 };
-use opsml_types::*;
+use opsml_types::{cards::*, contracts::*, *};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};

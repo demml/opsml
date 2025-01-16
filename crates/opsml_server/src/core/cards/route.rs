@@ -8,11 +8,10 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
-use opsml_cards::CardTable;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
-use opsml_types::*;
+use opsml_types::{cards::*, contracts::*};
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};

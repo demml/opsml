@@ -2,7 +2,7 @@ use opsml_error::error::SqlError;
 
 use opsml_semver::VersionParser;
 /// this file contains helper logic for generating sql queries across different databases
-use opsml_types::{CardQueryArgs, CardTable};
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use opsml_utils::utils::is_valid_uuid4;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {

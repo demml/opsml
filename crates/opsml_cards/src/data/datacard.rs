@@ -2,7 +2,10 @@ use crate::{BaseArgs, CardInfo, Description};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
-use opsml_types::{CardTable, CardType, DataType, InterfaceType};
+use opsml_types::{
+    cards::{CardTable, CardType},
+    DataType, InterfaceType,
+};
 use pyo3::types::PyDict;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
 use crate::base::add_version_bounds;
 
 use opsml_error::error::SqlError;
-use opsml_types::{CardQueryArgs, CardTable};
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use opsml_utils::utils::is_valid_uuid4;
 pub struct MySQLQueryHelper;
 

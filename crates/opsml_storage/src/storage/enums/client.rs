@@ -5,9 +5,9 @@ use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_client::OpsmlApiClient;
-use opsml_types::FileInfo;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
+use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 

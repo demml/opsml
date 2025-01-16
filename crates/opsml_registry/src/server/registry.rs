@@ -11,7 +11,7 @@ pub mod server_logic {
         enums::client::{get_sql_client, SqlClientEnum},
         schemas::*,
     };
-    use opsml_types::*;
+    use opsml_types::{cards::CardTable, contracts::*, *};
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
