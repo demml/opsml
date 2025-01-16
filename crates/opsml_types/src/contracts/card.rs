@@ -1,7 +1,7 @@
+use crate::RegistryType;
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
-use opsml_types::RegistryType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};

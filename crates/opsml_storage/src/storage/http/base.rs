@@ -4,7 +4,7 @@ use bytes::BytesMut;
 use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
-use opsml_contracts::*;
+use opsml_types::*;
 use opsml_error::error::ApiError;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};

@@ -91,7 +91,7 @@ mod tests {
     use opsml_types::*;
 
     use opsml_cards::*;
-    use opsml_contracts::*;
+    use opsml_types::*;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::{env, vec};

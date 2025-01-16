@@ -562,4 +562,17 @@ impl ModelInterface {
 
         Ok(save_dir)
     }
+
+    //pub fn load_drift_profile(&mut self, path: PathBuf) -> PyResult<()> {
+    //    let load_dir = path.join(SaveName::Drift.to_string());
+    //
+    //    if !load_dir.exists() {
+    //        return Ok(());
+    //    }
+    //
+    //    // list all files in dir
+    //    let files = file::list_files(&load_dir)?;
+    //
+    //    Ok(())
+    //}
 }

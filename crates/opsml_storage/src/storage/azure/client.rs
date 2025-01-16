@@ -11,7 +11,7 @@ use base64::prelude::*;
 use futures::stream::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use opsml_colors::Colorize;
-use opsml_contracts::{FileInfo, UploadPartArgs};
+use opsml_types::{FileInfo, UploadPartArgs};
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};

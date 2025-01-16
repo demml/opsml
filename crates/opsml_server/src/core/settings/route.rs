@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use axum::extract::State;
 use axum::Json;
 use axum::{routing::get, Router};
-use opsml_contracts::StorageSettings;
+use opsml_types::StorageSettings;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::error;

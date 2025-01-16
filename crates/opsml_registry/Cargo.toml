@@ -12,7 +12,6 @@ anyhow = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
-opsml-contracts = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-logging = { workspace = true }
