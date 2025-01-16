@@ -12,12 +12,6 @@ use opsml_sql::schemas::schema::{
     CardResults, HardwareMetricsRecord, MetricRecord, ParameterRecord,
 };
 use opsml_types::*;
-
-use opsml_cards::{
-    CPUMetrics, CardTable, GPUMetrics, HardwareMetrics, MemoryMetrics, Metric, NetworkRates,
-    Parameter, RunGraph,
-};
-use opsml_types::*;
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};

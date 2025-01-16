@@ -9,11 +9,10 @@ use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
-use opsml_cards::CardTable;
-use opsml_types::CardQueryArgs;
 use opsml_error::error::SqlError;
 use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
 use opsml_types::SqlType;
+use opsml_types::{CardQueryArgs, CardTable};
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {
