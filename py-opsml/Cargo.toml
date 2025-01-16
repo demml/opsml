@@ -10,7 +10,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 opsml-cards = { workspace = true }
-opsml-contracts = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-logging = { workspace = true }
