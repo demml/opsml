@@ -16,7 +16,6 @@ futures = { workspace = true }
 opsml-auth = { workspace = true }
 opsml-client = { workspace = true }
 opsml-cards = { workspace = true }
-opsml-contracts = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-logging = { workspace = true }
 opsml-registry = { workspace = true, features = ["server"] }
