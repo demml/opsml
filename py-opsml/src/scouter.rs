@@ -2,7 +2,7 @@ use pyo3::prelude::*;
 use scouter_client::*;
 
 #[pymodule]
-fn _scouter(m: &Bound<'_, PyModule>) -> PyResult<()> {
+pub fn scouter(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_errors
     m.add("ScouterError", m.py().get_type::<PyScouterError>())?;
     m.add_class::<PyDrifter>()?;

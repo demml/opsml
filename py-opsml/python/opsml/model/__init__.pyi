@@ -1,8 +1,16 @@
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from ..core import CommonKwargs, FeatureSchema, OnnxSchema
 from ..data import DataType
+from ..scouter import (
+    SpcDriftProfile,
+    PsiDriftProfile,
+    CustomDriftProfile,
+    SpcDriftConfig,
+    PsiDriftConfig,
+    CustomMetricDriftConfig,
+)
 
 class HuggingFaceORTModel:
     OrtAudioClassification = "ORTModelForAudioClassification"
@@ -231,7 +239,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -492,10 +502,12 @@ class OnnxSession:
 class ModelInterface:
     def __init__(
         self,
-        model: Optional[Any] = None,
-        sample_data: Optional[Any] = None,
-        task_type: Optional[TaskType] = None,
-        schema: Optional[FeatureSchema] = None,
+        model: None | Any = None,
+        sample_data: None | Any = None,
+        task_type: None | TaskType = None,
+        schema: None | FeatureSchema = None,
+        drift_profile: None
+        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -512,7 +524,7 @@ class ModelInterface:
         """
 
     @property
-    def model(self) -> Optional[Any]:
+    def model(self) -> None | Any:
         """Returns the model"""
 
     @model.setter
@@ -528,7 +540,7 @@ class ModelInterface:
         """Returns the task type"""
 
     @property
-    def sample_data(self) -> Optional[Any]:
+    def sample_data(self) -> None | Any:
         """Returns the data"""
 
     @sample_data.setter
@@ -536,10 +548,23 @@ class ModelInterface:
         """Sets the data"""
 
     @property
-    def onnx_session(self) -> Optional[OnnxSession]:
+    def drift_profile(
+        self,
+    ) -> List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]:
+        """Returns the drift profile"""
+
+    @drift_profile.setter
+    def drift_profile(
+        self,
+        profile: List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile],
+    ) -> None:
+        """Sets the drift profile"""
+
+    @property
+    def onnx_session(self) -> None | OnnxSession:
         """Returns the onnx schema if it exists"""
 
-    def save_model(self, path: Path, **kwargs) -> str:
+    def save_model(self, path: Path, **kwargs) -> Path:
         """Save the model
 
         Args:
@@ -599,7 +624,7 @@ class ModelInterface:
         self,
         path: Path,
         to_onnx: bool = False,
-        save_args: Optional[SaveArgs] = None,
+        save_args: None | SaveArgs = None,
     ) -> ModelInterfaceSaveMetadata:
         """Save the model interface
 
@@ -610,6 +635,40 @@ class ModelInterface:
                 Whether to save the model to onnx
             save_args (SaveArgs):
                 Optional save args
+        """
+
+    def create_drift_profile(
+        self,
+        data: Any,
+        config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
+        data_type: None | DataType = None,
+    ) -> None:
+        """Create a drift profile
+
+        Args:
+            data:
+                Data to use to create the drift profile. Can be a pandas dataframe,
+                polars dataframe, pyarrow table or numpy array.
+            config:
+                Drift config to use. If None, defaults to SpcDriftConfig.
+            data_type:
+                Data type to use. If None, data_type will be inferred from the data.
+        """
+
+    def save_drift_profile(self, path: Path) -> Path:
+        """Save the drift profile
+
+        Args:
+            path (Path):
+                Path to save the drift profile
+        """
+
+    def load_drift_profile(self, path: Path) -> None:
+        """Load the drift profile
+
+        Args:
+            path (Path):
+                Path to load the drift profile
         """
 
 class SklearnModel(ModelInterface):
