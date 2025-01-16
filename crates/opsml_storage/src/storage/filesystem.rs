@@ -1,9 +1,9 @@
 use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
-use opsml_types::FileInfo;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
+use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 

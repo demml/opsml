@@ -11,8 +11,10 @@ use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
-use opsml_types::SqlType;
-use opsml_types::{CardQueryArgs, CardTable};
+use opsml_types::{
+    SqlType,
+    {cards::CardTable, contracts::CardQueryArgs},
+};
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {

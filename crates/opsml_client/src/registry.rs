@@ -3,7 +3,7 @@ use crate::types::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::*;
+use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
 
 // TODO: Add trait for client and server registry
 #[derive(Debug)]

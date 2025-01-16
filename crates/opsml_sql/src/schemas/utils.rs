@@ -2,7 +2,11 @@ use crate::schemas::schema::{
     AuditCardRecord, DataCardRecord, ModelCardRecord, PipelineCardRecord, ProjectCardRecord,
     RunCardRecord,
 };
-use opsml_types::*;
+
+use opsml_types::contracts::{
+    AuditCardClientRecord, Card, DataCardClientRecord, ModelCardClientRecord,
+    PipelineCardClientRecord, ProjectCardClientRecord, RunCardClientRecord,
+};
 
 pub fn convert_datacard(record: DataCardRecord) -> Card {
     let card = DataCardClientRecord {

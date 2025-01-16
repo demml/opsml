@@ -10,7 +10,10 @@ use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::{FileInfo, StorageType, UploadResponse};
+use opsml_types::{
+    contracts::{FileInfo, UploadResponse},
+    StorageType,
+};
 use reqwest::multipart::{Form, Part};
 use std::fs::{self};
 use std::path::{Path, PathBuf};
