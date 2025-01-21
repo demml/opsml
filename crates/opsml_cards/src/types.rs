@@ -7,7 +7,6 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
-use std::fmt;
 use walkdir::WalkDir;
 
 #[pyclass(eq)]

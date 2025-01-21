@@ -11,11 +11,11 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
 opsml-error = { workspace = true }
-opsml-logging = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+rusty-logging = { workspace = true }
 semver = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

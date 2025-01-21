@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from ..core import CommonKwargs, FeatureSchema, OnnxSchema
 from ..data import DataType
-from ..scouter import (
+from ..scouter.drift import (
     CustomDriftProfile,
     CustomMetricDriftConfig,
     PsiDriftConfig,

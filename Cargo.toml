@@ -23,7 +23,6 @@ opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
 opsml-error = { path = "crates/opsml_error" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
-opsml-logging = { path = "crates/opsml_logging" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
@@ -68,6 +67,7 @@ rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots" ], default-features = false }
 reqwest-middleware = "0.*"
+rusty-logging = { git = "https://github.com/demml/rusty-logger.git", version = "0.4.0", branch = "add-serialization" }
 scouter-client = { git = "https://github.com/demml/scouter.git", version = "0.4.0", branch = "feature/refactor-drift-profiles" }
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
