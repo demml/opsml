@@ -18,6 +18,8 @@ TensorFlowInterfaceMetadata = model.TensorFlowInterfaceMetadata
 VowpalWabbitInterfaceMetadata = model.VowpalWabbitInterfaceMetadata
 XGBoostModelInterfaceMetadata = model.XGBoostModelInterfaceMetadata
 ModelInterfaceType = model.ModelInterfaceType
+ModelInterface = model.ModelInterface
+TaskType = model.TaskType
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -36,4 +38,7 @@ __all__ = [
     "VowpalWabbitInterfaceMetadata",
     "XGBoostModelInterfaceMetadata",
     "ModelInterfaceType",
+    # WIP
+    "ModelInterface",
+    "TaskType",
 ]
