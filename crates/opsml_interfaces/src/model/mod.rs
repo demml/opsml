@@ -1,26 +1,28 @@
 pub mod base;
 pub mod catboost;
 pub mod huggingface;
-pub mod interface;
 pub mod lightgbm;
 pub mod lightning;
+pub mod onnx;
 pub mod sklearn;
 pub mod tensorflow;
 pub mod torch;
 pub mod vowpal;
 pub mod xgboost;
 
-pub use base::*;
-pub use catboost::*;
+pub use base::{
+    InterfaceDataType, ModelInterface, ModelInterfaceMetadata, SampleData, SaveArgs, TaskType,
+};
+pub use catboost::CatBoostModelInterfaceMetadata;
 pub use huggingface::{
     HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel, HuggingFaceOnnxArgs,
     HuggingFaceOnnxSaveArgs, HuggingFaceTask,
 };
-pub use interface::*;
-pub use lightgbm::*;
-pub use lightning::*;
-pub use sklearn::*;
-pub use tensorflow::*;
+pub use lightgbm::LightGBMModelInterfaceMetadata;
+pub use lightning::LightningInterfaceMetadata;
+pub use onnx::*;
+pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
+pub use tensorflow::TensorFlowInterfaceMetadata;
 pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};
-pub use vowpal::*;
-pub use xgboost::*;
+pub use vowpal::VowpalWabbitInterfaceMetadata;
+pub use xgboost::XGBoostModelInterfaceMetadata;

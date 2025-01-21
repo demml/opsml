@@ -20,6 +20,8 @@ XGBoostModelInterfaceMetadata = model.XGBoostModelInterfaceMetadata
 ModelInterfaceType = model.ModelInterfaceType
 ModelInterface = model.ModelInterface
 TaskType = model.TaskType
+SklearnModel = model.SklearnModel
+SaveArgs = model.SaveArgs
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -41,4 +43,6 @@ __all__ = [
     # WIP
     "ModelInterface",
     "TaskType",
+    "SklearnModel",
+    "SaveArgs",
 ]
