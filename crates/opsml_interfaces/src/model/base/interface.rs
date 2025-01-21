@@ -13,6 +13,7 @@ use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use rand::Rng;
 use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -550,7 +551,7 @@ impl ModelInterface {
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
     pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
-        let save_dir = PathBuf::from(SaveName::Drift.to_string());
+        let save_dir = PathBuf::from(SaveName::Drift);
         if !save_dir.exists() {
             fs::create_dir_all(&save_dir).unwrap();
         }
@@ -559,7 +560,21 @@ impl ModelInterface {
         for profile in self.drift_profile.iter() {
             let drift_type = profile.drift_type();
 
-            let filename = format!("{}_{}", drift_type.to_string(), SaveName::DriftProfile);
+            // add small hex to filename to avoid overwriting
+            // this would only have if someone creates multiple drift profiles of the same type
+            // probably won't happen, but lets be a little safe
+            let random_hex: String = rand::thread_rng()
+                .sample_iter(&rand::distributions::Alphanumeric)
+                .take(3)
+                .map(char::from)
+                .collect();
+
+            let filename = format!(
+                "{}_{}_{}",
+                drift_type.to_string(),
+                SaveName::DriftProfile,
+                random_hex
+            );
             let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
 
             profile.save_to_json(Some(profile_save_path))?
@@ -578,7 +593,7 @@ impl ModelInterface {
     ///
     /// * `PyResult<()>` - Result of loading drift profile
     pub fn load_drift_profile(&mut self, path: PathBuf) -> PyResult<()> {
-        let load_dir = path.join(SaveName::Drift.to_string());
+        let load_dir = path.join(SaveName::Drift);
 
         if !load_dir.exists() {
             return Ok(());

@@ -355,6 +355,13 @@ impl AsRef<Path> for SaveName {
     }
 }
 
+// impl PathBuf: From<SaveName>
+impl From<SaveName> for PathBuf {
+    fn from(save_name: SaveName) -> Self {
+        PathBuf::from(save_name.as_ref())
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Suffix {

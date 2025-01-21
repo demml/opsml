@@ -3461,6 +3461,7 @@ dependencies = [
  "opsml-utils",
  "ort",
  "pyo3",
+ "rand 0.8.5",
  "scouter-client",
  "serde",
  "serde_json",
