@@ -3,7 +3,7 @@ use opsml_colors::Colorize;
 use opsml_settings::config::OpsmlConfig;
 use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnum};
-use rusty_logging::logger::{LoggingConfig, RustyLogger};
+use rusty_logging::setup_logging;
 use tracing::{debug, info};
 
 pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum, SqlClientEnum)> {
@@ -11,12 +11,7 @@ pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum,
     let config = OpsmlConfig::default();
 
     // start logging
-    let logging = RustyLogger::setup_logging(Some(LoggingConfig::new(
-        Some(true),
-        Some(config.log_level.to_owned()),
-        None,
-        Some(true),
-    )));
+    let logging = setup_logging(&config.logging_config);
 
     if logging.is_err() {
         debug!("Failed to setup logging");
