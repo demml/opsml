@@ -176,7 +176,7 @@ class SaveName:
     Audit: "SaveName"
     PipelineCard: "SaveName"
     ModelMetadata: "SaveName"
-    TrainedModel: "SaveName"
+    Model: "SaveName"
     Preprocessor: "SaveName"
     OnnxModel: "SaveName"
     SampleModelData: "SaveName"
@@ -371,25 +371,25 @@ class FeatureSchema:
 # Utils
 
 class OnnxSchema:
-    input_features: FeatureSchema
-    output_features: FeatureSchema
-    onnx_version: str
-
     def __init__(
         self,
         input_features: FeatureSchema,
         output_features: FeatureSchema,
         onnx_version: str,
+        feature_names: Optional[List[str]] = None,
     ) -> None:
         """Define an onnx schema
 
         Args:
-            input_features:
+            input_features (FeatureSchema):
                 The input features of the onnx schema
-            output_features:
+            output_features (FeatureSchema):
                 The output features of the onnx schema
-            onnx_version:
+            onnx_version (str):
                 The onnx version of the schema
+            feature_names (List[str] | None):
+                The feature names and order for onnx.
+
         """
 
     def __str__(self) -> str:
@@ -398,6 +398,22 @@ class OnnxSchema:
         Returns:
             String representation of the OnnxSchema.
         """
+
+    @property
+    def input_features(self) -> FeatureSchema:
+        """Return the input features of the OnnxSchema."""
+
+    @property
+    def output_features(self) -> FeatureSchema:
+        """Return the output features of the OnnxSchema."""
+
+    @property
+    def onnx_version(self) -> str:
+        """Return the onnx version of the OnnxSchema."""
+
+    @property
+    def feature_names(self) -> List[str]:
+        """Return the feature names and order for onnx."""
 
 class DataSchema:
     data_type: str

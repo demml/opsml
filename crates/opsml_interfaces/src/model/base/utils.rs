@@ -1,10 +1,12 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
+use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
+use std::path::PathBuf;
 
 #[derive(Default)]
 pub enum SampleData {
@@ -207,6 +209,143 @@ impl SampleData {
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::None => Ok(py.None()),
+        }
+    }
+
+    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+        let py = data.py();
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+        joblib.call_method1("dump", (data, full_save_path))?;
+
+        Ok(path)
+    }
+
+    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+        let path = data.call_method1("save_data", (path,))?;
+        // convert pyany to pathbuf
+        let path = path.extract::<PathBuf>()?;
+        Ok(path)
+    }
+
+    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        match self {
+            SampleData::Pandas(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Polars(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Numpy(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Arrow(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::Torch(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
+            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::None => Ok(None),
+        }
+    }
+
+    // helper method for converting all pandas numeric types to f32
+    // primarily used with sklearn pipelines and onnx
+    fn convert_pandas_to_f32<'py>(&self, data: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
+        let py = data.py();
+        let npfloat32 = py.import("numpy")?.getattr("float32")?;
+        let numeric_cols = data
+            .call_method1("select_dtypes", ("number",))?
+            .getattr("columns")?
+            .extract::<Vec<String>>()?;
+
+        let df_numeric_cols = data.get_item(&numeric_cols)?;
+        let df_numeric_cols_float = df_numeric_cols.call_method1("astype", (npfloat32,))?;
+
+        data.set_item(&numeric_cols, df_numeric_cols_float)?;
+
+        Ok(data)
+    }
+
+    pub fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            SampleData::Pandas(data) => Ok({
+                let data = data.bind(py).getattr("data")?;
+                match model_type {
+                    ModelType::SklearnPipeline => self.convert_pandas_to_f32(data)?,
+                    _ => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
+                }
+            }),
+            SampleData::Polars(data) => Ok({
+                let data = data.bind(py).getattr("data")?;
+                let converted_data = data.call_method0("to_pandas");
+                // if data is err, try converting to numpy
+                match converted_data {
+                    Ok(converted_data) => match model_type {
+                        ModelType::SklearnPipeline => self.convert_pandas_to_f32(converted_data)?,
+                        _ => {
+                            let numpy_data = data.call_method0("to_numpy")?;
+                            // convert to float32
+                            numpy_data.call_method1("astype", ("float32",))?
+                        }
+                    },
+                    Err(_) => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
+                }
+            }),
+            SampleData::Numpy(data) => Ok(data.bind(py).getattr("data")?),
+            SampleData::Arrow(data) => Ok({
+                let data = data.bind(py).getattr("data")?;
+                let converted_data = data.call_method0("to_pandas");
+                // if data is err, try converting to numpy
+                match converted_data {
+                    Ok(converted_data) => self.convert_pandas_to_f32(converted_data)?,
+                    Err(_) => {
+                        let numpy_data = data.call_method0("to_numpy")?;
+                        // convert to float32
+                        numpy_data.call_method1("astype", ("float32",))?
+                    }
+                }
+            }),
+            SampleData::Torch(data) => Ok(data.bind(py).getattr("data")?),
+            SampleData::List(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
+            SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
+            SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
+            SampleData::None => Ok(py.None().bind(py).clone()),
+        }
+    }
+
+    pub fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+        match self {
+            SampleData::Pandas(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.getattr("columns")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Polars(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.getattr("columns")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Numpy(_) => Ok(vec![]),
+            SampleData::Arrow(data) => {
+                let data = data.bind(py).getattr("data")?;
+                let columns = data.getattr("column_names")?;
+                let columns = columns.extract::<Vec<String>>()?;
+                Ok(columns)
+            }
+            SampleData::Torch(_) => Ok(vec![]),
+            SampleData::List(_) => Ok(vec![]),
+            SampleData::Tuple(_) => Ok(vec![]),
+            SampleData::Dict(_) => Ok(vec![]),
+            SampleData::None => Ok(vec![]),
         }
     }
 }

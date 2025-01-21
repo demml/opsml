@@ -4,8 +4,8 @@ use opsml_logging::logging::{LogLevel, OpsmlLogger};
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 
-use opsml_cards::{DataSchema, OnnxSchema};
-use opsml_interfaces::{Feature, FeatureSchema};
+use opsml_cards::DataSchema;
+use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
 use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
