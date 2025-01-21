@@ -16,6 +16,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+fastapi = [
+    "fastapi >= 0.113.0, < 1.0.0",
+    ]
 onnx = [
     "onnx~=1.16.0; platform_system == 'Linux' and python_version <= '3.11'",
     "onnx==1.16.1; platform_system == 'Windows'",
