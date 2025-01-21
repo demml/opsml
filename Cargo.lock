@@ -4777,7 +4777,7 @@ dependencies = [
 [[package]]
 name = "rusty-logging"
 version = "0.4.0"
-source = "git+https://github.com/demml/rusty-logger.git?branch=add-serialization#5c9c71b5e3d5d044d07ec3cbe8a0eddd1aeb3a6e"
+source = "git+https://github.com/demml/rusty-logger.git?branch=add-serialization#1281773cd01da1ef6641ebacbe84a1f7df694a1c"
 dependencies = [
  "dynfmt",
  "owo-colors",
