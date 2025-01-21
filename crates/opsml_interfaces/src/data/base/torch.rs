@@ -16,7 +16,7 @@ impl TorchData {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
-    fn new<'py>(
+    pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //

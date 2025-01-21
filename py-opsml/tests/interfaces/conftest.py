@@ -10,6 +10,7 @@ from opsml.core import SaveName, Suffix, SaverPath
 from pathlib import Path
 import joblib  # type: ignore
 import torch
+from typing import Dict
 
 
 @pytest.fixture
@@ -76,6 +77,37 @@ def pandas_dataframe_profile(numpy_array: NDArray) -> pd.DataFrame:
     df.columns = df.columns.astype(str)
 
     return df
+
+
+@pytest.fixture
+def pandas_dataframe_num(numpy_array: NDArray) -> pd.DataFrame:
+    df = pd.DataFrame(numpy_array)
+
+    cols = [f"column_{i}" for i in range(df.shape[1])]
+
+    # update column names
+    df.columns = cols  # type: ignore
+
+    return df
+
+
+@pytest.fixture
+def polars_dataframe_num(numpy_array: NDArray) -> pl.DataFrame:
+    df = pl.from_numpy(numpy_array)
+
+    df.columns = [f"column_{i}" for i in range(df.shape[1])]
+
+    return df
+
+
+@pytest.fixture
+def arrow_num(numpy_array: NDArray) -> pa.Table:
+    arrays = [pa.array(numpy_array[:, i]) for i in range(numpy_array.shape[1])]
+    table = pa.Table.from_arrays(
+        arrays, names=[f"column_{i}" for i in range(numpy_array.shape[1])]
+    )
+
+    return table
 
 
 # create a multi-type polars dataframe
@@ -250,3 +282,21 @@ def custom_data_interface() -> type[DataInterface]:
 @pytest.fixture
 def torch_tensor() -> torch.Tensor:
     return torch.tensor(np.array([[1, 2, 3], [4, 5, 6]]))
+
+
+@pytest.fixture
+def numpy_list() -> list:
+    return [np.array([[1, 2, 3], [4, 5, 6]]), np.array([[1, 2, 3], [4, 5, 6]])]
+
+
+@pytest.fixture
+def numpy_tuple() -> tuple:
+    return (np.array([[1, 2, 3], [4, 5, 6]]), np.array([[1, 2, 3], [4, 5, 6]]))
+
+
+@pytest.fixture
+def numpy_dict() -> Dict[str, np.ndarray]:
+    return {
+        "a": np.array([[1, 2, 3], [4, 5, 6]]),
+        "b": np.array([[1, 2, 3], [4, 5, 6]]),
+    }

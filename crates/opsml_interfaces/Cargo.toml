@@ -14,3 +14,4 @@ opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 scouter-client = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }

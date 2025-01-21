@@ -2992,6 +2992,7 @@ dependencies = [
  "pyo3",
  "scouter-client",
  "serde",
+ "tracing",
 ]
 
 [[package]]
