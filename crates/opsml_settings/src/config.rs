@@ -1,8 +1,8 @@
-use opsml_logging::LogLevel;
 use opsml_types::{SqlType, StorageType};
 pub use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use rand::Rng;
+use rusty_logging::logger::{LogLevel, LoggingConfig};
 use serde::Serialize;
 use std::default::Default;
 use std::env;
@@ -74,7 +74,7 @@ pub struct OpsmlConfig {
     pub auth_settings: AuthSettings,
     pub database_settings: DatabaseSettings,
     pub client_mode: bool,
-    pub log_level: LogLevel,
+    pub logging_config: LoggingConfig,
 }
 
 impl Default for OpsmlConfig {
@@ -131,9 +131,7 @@ impl Default for OpsmlConfig {
             sql_type: OpsmlConfig::get_sql_type(&opsml_tracking_uri),
         };
 
-        let log_level =
-            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
-                .unwrap();
+        let logging_config = LoggingConfig::json_default();
 
         OpsmlConfig {
             app_name: "opsml".to_string(),
@@ -150,7 +148,7 @@ impl Default for OpsmlConfig {
             scouter_settings,
             auth_settings,
             client_mode: using_client,
-            log_level,
+            logging_config,
         }
     }
 }

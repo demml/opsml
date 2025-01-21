@@ -17,7 +17,6 @@ opsml-auth = { workspace = true }
 opsml-client = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-colors = { workspace = true }
-opsml-logging = { workspace = true }
 opsml-registry = { workspace = true, features = ["server"] }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
@@ -27,6 +26,7 @@ opsml-utils = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 password-auth = { workspace = true }
+rusty-logging = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 semver = { workspace = true }
