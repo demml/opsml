@@ -559,11 +559,7 @@ impl ModelInterface {
         for profile in self.drift_profile.iter() {
             let drift_type = profile.drift_type();
 
-            let filename = format!(
-                "{}_{}",
-                drift_type.to_string(),
-                SaveName::DriftProfile.to_string()
-            );
+            let filename = format!("{}_{}", drift_type.to_string(), SaveName::DriftProfile);
             let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
 
             profile.save_to_json(Some(profile_save_path))?
@@ -593,10 +589,7 @@ impl ModelInterface {
 
         for filepath in files {
             let drift_profile = DriftProfile::load_from_json(filepath).map_err(|e| {
-                OpsmlError::new_err(format!(
-                    "Failed to load drift profile. Error: {}",
-                    e.to_string()
-                ))
+                OpsmlError::new_err(format!("Failed to load drift profile. Error: {}", e))
             })?;
             self.drift_profile.push(drift_profile);
         }

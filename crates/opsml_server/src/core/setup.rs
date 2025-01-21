@@ -14,7 +14,7 @@ pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum,
     let logging = setup_logging(&config.logging_config);
 
     if logging.is_err() {
-        debug!("Failed to setup logging");
+        debug!("Failed to setup logging. {:?}", logging.err());
     }
 
     info!("Starting OpsML Server ....");
