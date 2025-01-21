@@ -2,12 +2,11 @@ use opsml_types::{SqlType, StorageType};
 pub use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use rand::Rng;
-use rusty_logging::logger::{LogLevel, LoggingConfig};
+use rusty_logging::logger::LoggingConfig;
 use serde::Serialize;
 use std::default::Default;
 use std::env;
 use std::path::PathBuf;
-use std::str::FromStr;
 
 /// ApiSettings for use with ApiClient
 #[derive(Debug, Clone)]
@@ -60,8 +59,8 @@ pub struct ScouterSettings {
 /// OpsmlConfig for use with both server and client implementations
 /// OpsmlConfig is the main primary configuration struct for the Opsml system
 /// Based on provided env variables, it will be used to determine if opsml is running in client or server mode.
-#[derive(Debug, Clone, Serialize)]
 #[pyclass]
+#[derive(Debug, Clone, Serialize)]
 pub struct OpsmlConfig {
     pub app_name: String,
     pub app_env: String,
