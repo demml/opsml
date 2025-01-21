@@ -1,8 +1,8 @@
 use opsml_cards::Description;
 use opsml_error::error::OpsmlError;
-use opsml_logging::logging::{LogLevel, OpsmlLogger};
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
+use rusty_logging::{LogLevel, LoggingConfig, RustyLogger};
 
 use opsml_cards::DataSchema;
 use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
@@ -10,10 +10,14 @@ use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 
+#[pyclass(name = "OpsmlLogger")]
+struct OpsmlLogger(RustyLogger);
+
 #[pymodule]
 pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_logging
     m.add_class::<LogLevel>()?;
+    m.add_class::<LoggingConfig>()?;
     m.add_class::<OpsmlLogger>()?;
 
     // opsml_errors
