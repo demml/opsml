@@ -6,6 +6,9 @@
 
 <h2 align="center">OSS Version 3.0.0 Coming Soon!</h2>
 
+## **Note from maintainers**
+
+We are currently in the process of re-writing all of OpsML in rust! Be on the lookout in the next month or 2 for some initial release candidates!
 
 <h2 align="center">Universal Machine Learning Artifact Registration Platform</h2>
 
