@@ -85,6 +85,7 @@ disable = [
     "import-outside-toplevel",
     "import-self",
     "too-many-lines",
+    "cyclic-import",
 ]
 
 [tool.flake8]
