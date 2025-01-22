@@ -104,7 +104,7 @@ class LoggingConfig:
                 The default JSON configuration.
         """
 
-class OpsmlLogger:
+class RustyLogger:
     """The Rusty Logger class to use with your python and rust-backed projects."""
 
     @staticmethod
@@ -117,7 +117,7 @@ class OpsmlLogger:
         """
 
     @staticmethod
-    def get_logger(config: Optional[LoggingConfig] = None) -> "OpsmlLogger":
+    def get_logger(config: Optional[LoggingConfig] = None) -> "RustyLogger":
         """Gets the logger instance.
 
         Args:

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..core import FeatureSchema
-from ..scouter import DataProfile
+from ..scouter.profile import DataProfile
 
 class Inequality:
     Equal: "Inequality"

@@ -10,15 +10,12 @@ use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 
-#[pyclass(name = "OpsmlLogger")]
-struct OpsmlLogger(RustyLogger);
-
 #[pymodule]
 pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_logging
     m.add_class::<LogLevel>()?;
     m.add_class::<LoggingConfig>()?;
-    m.add_class::<OpsmlLogger>()?;
+    m.add_class::<RustyLogger>()?;
 
     // opsml_errors
     m.add("OpsmlError", m.py().get_type::<OpsmlError>())?;

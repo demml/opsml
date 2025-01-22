@@ -3,8 +3,9 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Awaitable, Callable, Union
 
 from pydantic import BaseModel
-from opsml.scouter.drift import PsiDriftProfile, SpcDriftProfile
-from opsml.scouter.queue import ScouterQueue
+
+from ..scouter.drift import PsiDriftProfile, SpcDriftProfile  # type: ignore
+from ..scouter.queue import ScouterQueue  # type: ignore
 
 try:
     from fastapi import APIRouter, BackgroundTasks, FastAPI, Request
@@ -24,9 +25,7 @@ class ScouterMixin:
     ) -> None:
         self._queue = ScouterQueue(drift_profile, config)
 
-    def add_api_route(
-        self, path: str, endpoint: Callable[..., Awaitable[Any]], **kwargs: Any
-    ) -> None:
+    def add_api_route(self, path: str, endpoint: Callable[..., Awaitable[Any]], **kwargs: Any) -> None:
         if "request" not in endpoint.__code__.co_varnames:
             raise ValueError("Request object must be passed to the endpoint function")
 
