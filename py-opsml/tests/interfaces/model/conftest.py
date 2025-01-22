@@ -12,13 +12,10 @@ from sklearn.compose import ColumnTransformer  # type: ignore
 from sklearn.pipeline import Pipeline  # type: ignore
 import lightgbm as lgb  # type: ignore
 from sklearn.calibration import CalibratedClassifierCV  # type: ignore
-import numpy as np
 from xgboost import XGBRegressor, XGBClassifier  # type: ignore
 from sklearn import (
     cross_decomposition,
-    ensemble,
     gaussian_process,
-    linear_model,
     multioutput,
     naive_bayes,
     neighbors,
@@ -29,7 +26,7 @@ from sklearn import (
 from sklearn.feature_selection import SelectPercentile, chi2  # type: ignore
 from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.model_selection import train_test_split  # type: ignore
-from sklearn.datasets import fetch_openml, load_iris  # type: ignore
+from sklearn.datasets import load_iris  # type: ignore
 
 
 @pytest.fixture(scope="session")

@@ -1,19 +1,19 @@
 # type: ignore
-from .. import drift
+from .. import scouter
 
-FeatureMap = drift.FeatureMap
-SpcFeatureDriftProfile = drift.SpcFeatureDriftProfile
-SpcDriftConfig = drift.SpcDriftConfig
-SpcDriftProfile = drift.SpcDriftProfile
-SpcFeatureDrift = drift.SpcFeatureDrift
-SpcDriftMap = drift.SpcDriftMap
-PsiDriftConfig = drift.PsiDriftConfig
-PsiDriftProfile = drift.PsiDriftProfile
-PsiDriftMap = drift.PsiDriftMap
-CustomMetricDriftConfig = drift.CustomMetricDriftConfig
-CustomMetric = drift.CustomMetric
-CustomDriftProfile = drift.CustomDriftProfile
-Drifter = drift.Drifter
+FeatureMap = scouter.drift.FeatureMap
+SpcFeatureDriftProfile = scouter.drift.SpcFeatureDriftProfile
+SpcDriftConfig = scouter.drift.SpcDriftConfig
+SpcDriftProfile = scouter.drift.SpcDriftProfile
+SpcFeatureDrift = scouter.drift.SpcFeatureDrift
+SpcDriftMap = scouter.drift.SpcDriftMap
+PsiDriftConfig = scouter.drift.PsiDriftConfig
+PsiDriftProfile = scouter.drift.PsiDriftProfile
+PsiDriftMap = scouter.drift.PsiDriftMap
+CustomMetricDriftConfig = scouter.drift.CustomMetricDriftConfig
+CustomMetric = scouter.drift.CustomMetric
+CustomDriftProfile = scouter.drift.CustomDriftProfile
+Drifter = scouter.drift.Drifter
 
 __all__ = [
     "FeatureMap",

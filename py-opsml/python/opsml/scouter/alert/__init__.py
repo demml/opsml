@@ -1,19 +1,19 @@
 # type: ignore
 
-from .. import alert
+from .. import scouter
 
-AlertDispatchType = alert.AlertDispatchType
-AlertThreshold = alert.AlertThreshold
-AlertZone = alert.AlertZone
-CustomMetricAlertCondition = alert.CustomMetricAlertCondition
-CustomMetricAlertConfig = alert.CustomMetricAlertConfig
-PsiAlertConfig = alert.PsiAlertConfig
-SpcAlert = alert.SpcAlert
-SpcAlertConfig = alert.SpcAlertConfig
-SpcAlertRule = alert.SpcAlertRule
-SpcAlertType = alert.SpcAlertType
-SpcFeatureAlert = alert.SpcFeatureAlert
-SpcFeatureAlerts = alert.SpcFeatureAlerts
+AlertDispatchType = scouter.alert.AlertDispatchType
+AlertThreshold = scouter.alert.AlertThreshold
+AlertZone = scouter.alert.AlertZone
+CustomMetricAlertCondition = scouter.alert.CustomMetricAlertCondition
+CustomMetricAlertConfig = scouter.alert.CustomMetricAlertConfig
+PsiAlertConfig = scouter.alert.PsiAlertConfig
+SpcAlert = scouter.alert.SpcAlert
+SpcAlertConfig = scouter.alert.SpcAlertConfig
+SpcAlertRule = scouter.alert.SpcAlertRule
+SpcAlertType = scouter.alert.SpcAlertType
+SpcFeatureAlert = scouter.alert.SpcFeatureAlert
+SpcFeatureAlerts = scouter.alert.SpcFeatureAlerts
 
 
 __all__ = [

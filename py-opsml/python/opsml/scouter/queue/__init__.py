@@ -1,21 +1,21 @@
 # type: ignore
 
-from .. import queue  # noqa: F401
+from .. import scouter  # noqa: F401
 
-ScouterQueue = queue.ScouterQueue
-ScouterProducer = queue.ScouterProducer
-KafkaConfig = queue.KafkaConfig
-RabbitMQConfig = queue.RabbitMQConfig
-SpcServerRecord = queue.SpcServerRecord
-PsiServerRecord = queue.PsiServerRecord
-CustomMetricServerRecord = queue.CustomMetricServerRecord
-ServerRecord = queue.ServerRecord
-ServerRecords = queue.ServerRecords
-Feature = queue.Feature
-Features = queue.Features
-PsiFeatureQueue = queue.PsiFeatureQueue
-SpcFeatureQueue = queue.SpcFeatureQueue
-RecordType = queue.RecordType
+ScouterQueue = scouter.queue.ScouterQueue
+ScouterProducer = scouter.queue.ScouterProducer
+KafkaConfig = scouter.queue.KafkaConfig
+RabbitMQConfig = scouter.queue.RabbitMQConfig
+SpcServerRecord = scouter.queue.SpcServerRecord
+PsiServerRecord = scouter.queue.PsiServerRecord
+CustomMetricServerRecord = scouter.queue.CustomMetricServerRecord
+ServerRecord = scouter.queue.ServerRecord
+ServerRecords = scouter.queue.ServerRecords
+Feature = scouter.queue.Feature
+Features = scouter.queue.Features
+PsiFeatureQueue = scouter.queue.PsiFeatureQueue
+SpcFeatureQueue = scouter.queue.SpcFeatureQueue
+RecordType = scouter.queue.RecordType
 
 __all__ = [
     "ScouterQueue",

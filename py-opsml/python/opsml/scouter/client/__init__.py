@@ -1,21 +1,21 @@
 # type: ignore
 
-from .. import client  # noqa: F401
+from .. import scouter  # noqa: F401
 
-TimeInterval = client.TimeInterval
-DriftRequest = client.DriftRequest
-ScouterClient = client.ScouterClient
-BinnedCustomMetricStats = client.BinnedCustomMetricStats
-BinnedCustomMetric = client.BinnedCustomMetric
-BinnedCustomMetrics = client.BinnedCustomMetrics
-BinnedPsiMetric = client.BinnedPsiMetric
-BinnedPsiFeatureMetrics = client.BinnedPsiFeatureMetrics
-SpcDriftFeature = client.SpcDriftFeature
-BinnedSpcFeatureMetrics = client.BinnedSpcFeatureMetrics
-HTTPConfig = client.HTTPConfig
-ProfileStatusRequest = client.ProfileStatusRequest
-Alert = client.Alert
-DriftAlertRequest = client.DriftAlertRequest
+TimeInterval = scouter.client.TimeInterval
+DriftRequest = scouter.client.DriftRequest
+ScouterClient = scouter.client.ScouterClient
+BinnedCustomMetricStats = scouter.client.BinnedCustomMetricStats
+BinnedCustomMetric = scouter.client.BinnedCustomMetric
+BinnedCustomMetrics = scouter.client.BinnedCustomMetrics
+BinnedPsiMetric = scouter.client.BinnedPsiMetric
+BinnedPsiFeatureMetrics = scouter.client.BinnedPsiFeatureMetrics
+SpcDriftFeature = scouter.client.SpcDriftFeature
+BinnedSpcFeatureMetrics = scouter.client.BinnedSpcFeatureMetrics
+HTTPConfig = scouter.client.HTTPConfig
+ProfileStatusRequest = scouter.client.ProfileStatusRequest
+Alert = scouter.client.Alert
+DriftAlertRequest = scouter.client.DriftAlertRequest
 
 __all__ = [
     "TimeInterval",

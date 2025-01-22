@@ -239,9 +239,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -506,8 +504,7 @@ class ModelInterface:
         sample_data: None | Any = None,
         task_type: None | TaskType = None,
         schema: None | FeatureSchema = None,
-        drift_profile: None
-        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
+        drift_profile: None | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -550,7 +547,7 @@ class ModelInterface:
     @property
     def drift_profile(
         self,
-    ) -> List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]:
+    ) -> List[Any]:
         """Returns the drift profile"""
 
     @drift_profile.setter

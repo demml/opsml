@@ -1,17 +1,17 @@
 # type: ignore
 
-from .. import profile
+from .. import scouter
 
-CharStats = profile.CharStats
-DataProfile = profile.DataProfile
-DataProfiler = profile.DataProfiler
-Distinct = profile.Distinct
-FeatureProfile = profile.FeatureProfile
-Histogram = profile.Histogram
-NumericStats = profile.NumericStats
-Quantiles = profile.Quantiles
-StringStats = profile.StringStats
-WordStats = profile.WordStats
+CharStats = scouter.profile.CharStats
+DataProfile = scouter.profile.DataProfile
+DataProfiler = scouter.profile.DataProfiler
+Distinct = scouter.profile.Distinct
+FeatureProfile = scouter.profile.FeatureProfile
+Histogram = scouter.profile.Histogram
+NumericStats = scouter.profile.NumericStats
+Quantiles = scouter.profile.Quantiles
+StringStats = scouter.profile.StringStats
+WordStats = scouter.profile.WordStats
 
 
 __all__ = [

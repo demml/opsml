@@ -1,13 +1,13 @@
 import pytest
 
-from opsml.core import Feature, OpsmlLogger, LogLevel
+from opsml.core import Feature, RustyLogger
 from opsml.card import RegistryTestHelper
 
 from typing import Tuple, Dict
 from pydantic import BaseModel
 
 # Sets up logging for tests
-OpsmlLogger.setup_logging(LogLevel.Debug)
+RustyLogger.setup_logging()
 
 
 class MockInterface(BaseModel):

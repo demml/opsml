@@ -1,11 +1,11 @@
 # type: ignore
 
-from .. import logging  # noqa: F401
+from .. import scouter  # noqa: F401
 
-LogLevel = logging.LogLevel
-WriteLevel = logging.WriteLevel
-LoggingConfig = logging.LoggingConfig
-RustyLogger = logging.RustyLogger
+LogLevel = scouter.logging.LogLevel
+WriteLevel = scouter.logging.WriteLevel
+LoggingConfig = scouter.logging.LoggingConfig
+RustyLogger = scouter.logging.RustyLogger
 
 __all__ = [
     "LogLevel",
