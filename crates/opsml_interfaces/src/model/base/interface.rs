@@ -81,7 +81,6 @@ impl ModelInterfaceSaveMetadata {
         data_processor_map: Option<HashMap<String, DataProcessor>>,
         sample_data_uri: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
-        data_processor_map: Option<HashMap<String, Processor>>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
         save_args: Option<SaveArgs>,
