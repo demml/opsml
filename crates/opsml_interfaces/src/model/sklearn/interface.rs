@@ -128,6 +128,43 @@ impl SklearnModel {
         ))
     }
 
+    #[getter]
+    pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
+        if self.preprocessor.is_none(py) {
+            None
+        } else {
+            Some(
+                self.preprocessor
+                    .clone_ref(py)
+                    .into_bound_py_any(py)
+                    .unwrap(),
+            )
+        }
+    }
+
+    #[setter]
+    #[allow(clippy::needless_lifetimes)]
+    pub fn set_preprocessor<'py>(
+        &mut self,
+        py: Python,
+        preprocessor: &Bound<'py, PyAny>,
+    ) -> PyResult<()> {
+        if PyAnyMethods::is_none(preprocessor) {
+            self.preprocessor = py.None();
+            self.preprocessor_name = CommonKwargs::Undefined.to_string();
+            Ok(())
+        } else {
+            let preprocessor_name = preprocessor
+                .getattr("__class__")?
+                .getattr("__name__")?
+                .to_string();
+
+            self.preprocessor = preprocessor.into_py_any(py)?;
+            self.preprocessor_name = preprocessor_name;
+            Ok(())
+        }
+    }
+
     /// Save the preprocessor to a file
     ///
     /// # Arguments
@@ -167,7 +204,7 @@ impl SklearnModel {
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
     #[pyo3(signature = (path, **kwargs))]
-    pub fn load_model(
+    pub fn load_preprocessor(
         &mut self,
         py: Python,
         path: PathBuf,
