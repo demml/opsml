@@ -752,6 +752,38 @@ class SklearnModel(ModelInterface):
     def preprocessor(self) -> Optional[Any]:
         """Returns the preprocessor"""
 
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with interface. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
+
+    def save_preprocessor(self, path: Path, **kwargs) -> Path:
+        """Save the preprocessor as a joblib file
+
+        Args:
+            path (Path):
+                Path to save the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor saver
+        """
+
+    def load_preprocessor(self, path: Path, **kwargs) -> None:
+        """Load the preprocessor from a joblib file
+
+        Args:
+            path (Path):
+                Path to load the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor loader
+        """

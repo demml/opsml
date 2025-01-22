@@ -63,5 +63,13 @@ def test_model_interface_drift_profile(
     # save
     metadata = model.save(tmp_path)
 
-    print(metadata)
-    a
+    assert metadata.data_processor_map.get("preprocessor") is not None
+
+    model.preprocessor = None
+
+    assert model.preprocessor is None
+
+    # load preprocessor
+    model.load_preprocessor(tmp_path)
+
+    assert model.preprocessor is not None
