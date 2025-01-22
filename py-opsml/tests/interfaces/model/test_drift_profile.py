@@ -62,3 +62,6 @@ def test_model_interface_drift_profile(
 
     # save
     metadata = model.save(tmp_path)
+
+    print(metadata)
+    a

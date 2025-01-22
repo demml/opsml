@@ -131,41 +131,49 @@ class SaveArgs:
                 Optional model arguments
         """
 
+class DataProcessor:
+    name: str
+    uri: Path
+
+    def __str__(self): ...
+
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
-    trained_model_uri: str
-    sample_data_uri: str
-    preprocessor_uri: Optional[str]
-    preprocessor_name: Optional[str]
-    onnx_model_uri: Optional[str]
-    extra_metadata: Optional[Dict[str, str]]
+    model_uri: Path
+    data_processor_map: Dict[str, DataProcessor]
+    sample_data_uri: Path
+    onnx_model_uri: Optional[Path]
+    drift_profile_uri: Optional[Path]
+    extra_metadata: Dict[str, str]
     save_args: Optional[SaveArgs]
 
     def __init__(
         self,
-        trained_model_uri: str,
-        sample_data_uri: str,
-        preprocessor_uri: Optional[str] = None,
-        preprocessor_name: Optional[str] = None,
-        onnx_model_uri: Optional[str] = None,
-        extra_metadata: Optional[Dict[str, str]] = None,
+        model_uri: Path,
+        data_processor_map: Optional[Dict[str, DataProcessor]] = {},  # type: ignore
+        sample_data_uri: Optional[Path] = None,
+        onnx_model_uri: Optional[Path] = None,
+        drift_profile_uri: Optional[Path] = None,
+        extra_metadata: Optional[Dict[str, str]] = {},  # type: ignore
         save_args: Optional[SaveArgs] = None,
     ) -> None:
         """Define model interface save arguments
 
         Args:
-            trained_model_uri:
-                The trained model uri
+            model_uri:
+                Path to the model
+            data_processor_map:
+                Dictionary of data processors
             sample_data_uri:
-                The sample data uri
-            preprocessor_uri:
-                The preprocessor uri
+                Path to the sample data
             onnx_model_uri:
-                The onnx model uri
+                Path to the onnx model
+            drift_profile_uri:
+                Path to the drift profile
             extra_metadata:
-                The save metadata
+                Extra metadata
             save_args:
-                Optional save args for the model and onnx model
+                Optional save args
         """
 
     def __str__(self): ...
@@ -240,7 +248,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
