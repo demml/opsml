@@ -27,7 +27,7 @@ use super::utils;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Processor {
+pub struct DataProcessor {
     #[pyo3(get)]
     pub name: String,
     #[pyo3(get)]
@@ -35,10 +35,15 @@ pub struct Processor {
 }
 
 #[pymethods]
-impl Processor {
+impl DataProcessor {
     #[new]
     pub fn new(name: String, uri: PathBuf) -> Self {
-        Processor { name, uri }
+        DataProcessor { name, uri }
+    }
+
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
     }
 }
 
@@ -49,7 +54,7 @@ pub struct ModelInterfaceSaveMetadata {
     pub model_uri: PathBuf,
 
     #[pyo3(get)]
-    pub data_processor_map: HashMap<String, Processor>,
+    pub data_processor_map: HashMap<String, DataProcessor>,
 
     #[pyo3(get)]
     pub sample_data_uri: Option<PathBuf>,
@@ -70,12 +75,12 @@ pub struct ModelInterfaceSaveMetadata {
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, sample_data_uri, onnx_model_uri=None,   data_processor_map=HashMap::new(), drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
+    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
     pub fn new(
         model_uri: PathBuf,
+        data_processor_map: Option<HashMap<String, DataProcessor>>,
         sample_data_uri: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
-        data_processor_map: Option<HashMap<String, Processor>>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
         save_args: Option<SaveArgs>,

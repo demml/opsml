@@ -22,6 +22,7 @@ ModelInterface = model.ModelInterface
 TaskType = model.TaskType
 SklearnModel = model.SklearnModel
 SaveArgs = model.SaveArgs
+DataProcessor = model.DataProcessor
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -45,4 +46,5 @@ __all__ = [
     "TaskType",
     "SklearnModel",
     "SaveArgs",
+    "DataProcessor",
 ]

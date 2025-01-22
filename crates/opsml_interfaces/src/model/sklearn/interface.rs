@@ -1,5 +1,5 @@
+use crate::base::DataProcessor;
 use crate::base::ModelInterfaceSaveMetadata;
-use crate::base::Processor;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -213,7 +213,7 @@ impl SklearnModel {
                 save_args.as_ref().and_then(|args| args.model_kwargs(py)),
             )?;
 
-            Some(Processor {
+            Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri: uri,
             })
