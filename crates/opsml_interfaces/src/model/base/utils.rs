@@ -1,6 +1,6 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::ModelType;
+use crate::{ModelType, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -375,4 +375,21 @@ pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<Dri
 
         Ok(vec![profile])
     }
+}
+
+pub fn parse_save_args<'py>(
+    py: Python<'py>,
+    save_args: &Option<SaveArgs>,
+) -> (Option<Bound<'py, PyDict>>, Option<Bound<'py, PyDict>>) {
+    let onnx_kwargs = save_args
+        .as_ref()
+        .and_then(|args| args.onnx_kwargs(py))
+        .cloned();
+
+    let model_kwargs = save_args
+        .as_ref()
+        .and_then(|args| args.model_kwargs(py))
+        .cloned();
+
+    (onnx_kwargs, model_kwargs)
 }

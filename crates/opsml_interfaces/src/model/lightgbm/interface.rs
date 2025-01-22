@@ -1,4 +1,4 @@
-use crate::base::ModelInterfaceSaveMetadata;
+use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -11,6 +11,7 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tracing::{debug, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -173,7 +174,7 @@ impl LightGBMModel {
     ///
     #[pyo3(signature = (path, **kwargs))]
     pub fn save_preprocessor(
-        &mut self,
+        &self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
@@ -253,6 +254,30 @@ impl LightGBMModel {
         Ok(save_path)
     }
 
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_model<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let super_ = self_.as_super();
+
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
+
+        let booster = py.import("lightgbm")?.getattr("Booster")?;
+
+        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
+        kwargs.set_item("model_file", load_path)?;
+
+        let model = booster.call((), Some(&kwargs))?;
+
+        // Save the data using joblib
+        super_.model = model.into();
+
+        Ok(())
+    }
+
     /// Save the interface model
     ///
     /// # Arguments
@@ -272,6 +297,14 @@ impl LightGBMModel {
         to_onnx: bool,
         save_args: Option<SaveArgs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        // parse the save args
+        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
+
+        debug!(
+            "Saving model to: {:?} with save_args: {:?}",
+            path, save_args
+        );
+
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
@@ -288,15 +321,54 @@ impl LightGBMModel {
             })
         };
 
-        // call the super save method
-        let mut metadata = self_.as_super().save(py, path, to_onnx, save_args)?;
+        let sample_data_uri = self_
+            .as_super()
+            .sample_data
+            .save_data(py, path.clone())
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
 
-        // add the preprocessor to the metadata
-        preprocessor_entity.map(|preprocessor| {
-            metadata
-                .data_processor_map
-                .insert("preprocessor".to_string(), preprocessor)
-        });
+        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+
+        let mut onnx_model_uri = None;
+        if to_onnx {
+            onnx_model_uri = Some(self_.as_super().save_onnx_model(
+                py,
+                path.clone(),
+                onnx_kwargs.as_ref(),
+            )?);
+        }
+
+        // save drift profile
+        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
+            None
+        } else {
+            Some(self_.as_super().save_drift_profile(path.clone())?)
+        };
+
+        // save model
+        let model_uri = LightGBMModel::save_model(self_, py, path.clone(), model_kwargs.as_ref())?;
+
+        // create the data processor map
+        let data_processor_map = preprocessor_entity
+            .map(|preprocessor| {
+                let mut map = HashMap::new();
+                map.insert(preprocessor.name.clone(), preprocessor);
+                map
+            })
+            .unwrap_or_default();
+
+        let metadata = ModelInterfaceSaveMetadata {
+            model_uri,
+            data_processor_map,
+            sample_data_uri,
+            onnx_model_uri,
+            drift_profile_uri,
+            extra_metadata: HashMap::new(),
+            save_args,
+        };
 
         Ok(metadata)
     }

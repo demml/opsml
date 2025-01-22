@@ -840,3 +840,5 @@ def lgb_booster_model(example_dataframe):
             lgb.early_stopping(stopping_rounds=5),
         ],
     )
+
+    gbm.save_model()
