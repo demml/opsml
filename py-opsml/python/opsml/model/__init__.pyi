@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, overload, Union
 
 from ..core import CommonKwargs, FeatureSchema, OnnxSchema
 from ..data import DataType
@@ -10,6 +10,7 @@ from ..scouter.drift import (
     PsiDriftProfile,
     SpcDriftConfig,
     SpcDriftProfile,
+    CustomMetric,
 )
 
 class HuggingFaceORTModel:
@@ -239,7 +240,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -504,7 +507,9 @@ class ModelInterface:
         sample_data: None | Any = None,
         task_type: None | TaskType = None,
         schema: None | FeatureSchema = None,
-        drift_profile: None | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
+        drift_profile: None
+        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -518,6 +523,8 @@ class ModelInterface:
                 The type of task the model performs
             schema:
                 Feature schema for model features
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
     @property
@@ -634,13 +641,40 @@ class ModelInterface:
                 Optional save args
         """
 
+    @overload
     def create_drift_profile(
+        self,
+        data: CustomMetric | List[CustomMetric],
+        config: CustomMetricDriftConfig,
+        data_type: Optional[DataType] = None,
+    ) -> CustomDriftProfile: ...
+    @overload
+    def create_drift_profile(
+        self,
+        data: Any,
+        config: SpcDriftConfig,
+        data_type: Optional[DataType] = None,
+    ) -> SpcDriftProfile: ...
+    @overload
+    def create_drift_profile(
+        self,
+        data: Any,
+        config: PsiDriftConfig,
+        data_type: Optional[DataType] = None,
+    ) -> PsiDriftProfile: ...
+    @overload
+    def create_drift_profile(
+        self,
+        data: Any,
+        data_type: Optional[DataType] = None,
+    ) -> SpcDriftProfile: ...
+    def create_drift_profile(  # type: ignore
         self,
         data: Any,
         config: None | SpcDriftConfig | PsiDriftConfig | CustomMetricDriftConfig = None,
         data_type: None | DataType = None,
-    ) -> None:
-        """Create a drift profile
+    ) -> Any:
+        """Create a drift profile and append it to the drift profile list
 
         Args:
             data:
@@ -650,6 +684,9 @@ class ModelInterface:
                 Drift config to use. If None, defaults to SpcDriftConfig.
             data_type:
                 Data type to use. If None, data_type will be inferred from the data.
+
+        Returns:
+            Drift profile SPcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
     def save_drift_profile(self, path: Path) -> Path:
@@ -676,6 +713,9 @@ class SklearnModel(ModelInterface):
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
+        drift_profile: None
+        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -692,6 +732,8 @@ class SklearnModel(ModelInterface):
                 The type of task the model performs
             schema:
                 Feature schema for model features
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
     @property
