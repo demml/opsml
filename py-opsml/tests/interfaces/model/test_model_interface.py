@@ -278,6 +278,17 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
 
     assert model.model is not None
 
+    assert metadata.data_processor_map.get("preprocessor") is not None
+
+    model.preprocessor = None
+
+    assert model.preprocessor is None
+
+    # load preprocessor
+    model.load_preprocessor(save_path)
+
+    assert model.preprocessor is not None
+
 
 def test_save_model_interface_with_args(
     tmp_path: Path, stacking_regressor: SklearnModel
