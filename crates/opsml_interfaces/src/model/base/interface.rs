@@ -27,15 +27,29 @@ use super::utils;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Processor {
+    #[pyo3(get)]
+    pub name: String,
+    #[pyo3(get)]
+    pub uri: PathBuf,
+}
+
+#[pymethods]
+impl Processor {
+    #[new]
+    pub fn new(name: String, uri: PathBuf) -> Self {
+        Processor { name, uri }
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelInterfaceSaveMetadata {
     #[pyo3(get)]
     pub model_uri: PathBuf,
 
     #[pyo3(get)]
-    pub preprocessor_uri: Option<PathBuf>,
-
-    #[pyo3(get)]
-    pub preprocessor_name: Option<PathBuf>,
+    pub data_processor_map: HashMap<String, Processor>,
 
     #[pyo3(get)]
     pub sample_data_uri: Option<PathBuf>,
@@ -56,13 +70,12 @@ pub struct ModelInterfaceSaveMetadata {
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
+    #[pyo3(signature = (model_uri, sample_data_uri, onnx_model_uri=None,   data_processor_map=HashMap::new(), drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
     pub fn new(
         model_uri: PathBuf,
         sample_data_uri: Option<PathBuf>,
-        preprocessor_uri: Option<PathBuf>,
-        preprocessor_name: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
+        data_processor_map: Option<HashMap<String, Processor>>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
         save_args: Option<SaveArgs>,
@@ -70,9 +83,8 @@ impl ModelInterfaceSaveMetadata {
         ModelInterfaceSaveMetadata {
             model_uri,
             sample_data_uri,
-            preprocessor_uri,
-            preprocessor_name,
             onnx_model_uri,
+            data_processor_map: data_processor_map.unwrap_or_default(),
             drift_profile_uri,
             extra_metadata,
             save_args,
@@ -335,7 +347,7 @@ impl ModelInterface {
             ));
         }
 
-        let save_path = PathBuf::from(SaveName::Model.to_string()).with_extension(Suffix::Joblib);
+        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Joblib);
         let full_save_path = path.join(&save_path);
         let joblib = py.import("joblib")?;
 
@@ -431,8 +443,7 @@ impl ModelInterface {
 
         Ok(ModelInterfaceSaveMetadata {
             model_uri,
-            preprocessor_uri: None,
-            preprocessor_name: None,
+            data_processor_map: HashMap::new(),
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,

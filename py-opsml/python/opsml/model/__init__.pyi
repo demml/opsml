@@ -1,16 +1,16 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, overload, Union
+from typing import Any, Dict, List, Optional, Union, overload
 
 from ..core import CommonKwargs, FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
+    CustomMetric,
     CustomMetricDriftConfig,
     PsiDriftConfig,
     PsiDriftProfile,
     SpcDriftConfig,
     SpcDriftProfile,
-    CustomMetric,
 )
 
 class HuggingFaceORTModel:
@@ -240,9 +240,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -507,9 +505,11 @@ class ModelInterface:
         sample_data: None | Any = None,
         task_type: None | TaskType = None,
         schema: None | FeatureSchema = None,
-        drift_profile: None
-        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
     ) -> None:
         """Base class for ModelInterface
 
@@ -713,9 +713,11 @@ class SklearnModel(ModelInterface):
         sample_data: Optional[Any] = None,
         task_type: Optional[TaskType] = None,
         schema: Optional[FeatureSchema] = None,
-        drift_profile: None
-        | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
-        | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
     ) -> None:
         """Base class for ModelInterface
 

@@ -1,12 +1,18 @@
+use crate::base::ModelInterfaceSaveMetadata;
+use crate::base::Processor;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::SaveArgs;
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
+use opsml_types::{SaveName, Suffix};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -120,5 +126,109 @@ impl SklearnModel {
             },
             model_interface,
         ))
+    }
+
+    /// Save the preprocessor to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to save the model to
+    /// * `kwargs` - Additional keyword arguments to pass to the save
+    ///
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_preprocessor(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        // check if data is None
+        if self.preprocessor.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
+
+        Ok(save_path)
+    }
+
+    /// Load the preprocessor from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_model(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let load_path = path
+            .join(SaveName::Preprocessor)
+            .with_extension(Suffix::Joblib);
+        let joblib = py.import("joblib")?;
+
+        // Load the data using joblib
+        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+
+        Ok(())
+    }
+
+    /// Save the interface model
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    pub fn save<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        to_onnx: bool,
+        save_args: Option<SaveArgs>,
+    ) -> PyResult<ModelInterfaceSaveMetadata> {
+        // save the preprocessor if it exists
+        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+            None
+        } else {
+            let uri = self_.save_preprocessor(
+                py,
+                path.clone(),
+                save_args.as_ref().and_then(|args| args.model_kwargs(py)),
+            )?;
+
+            Some(Processor {
+                name: self_.preprocessor_name.clone(),
+                uri: uri,
+            })
+        };
+
+        // call the super save method
+        let mut metadata = self_.as_super().save(py, path, to_onnx, save_args)?;
+
+        // add the preprocessor to the metadata
+        preprocessor_entity.map(|preprocessor| {
+            metadata
+                .data_processor_map
+                .insert("preprocessor".to_string(), preprocessor)
+        });
+
+        Ok(metadata)
     }
 }
