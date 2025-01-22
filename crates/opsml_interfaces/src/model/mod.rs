@@ -19,7 +19,7 @@ pub use huggingface::{
     HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel, HuggingFaceOnnxArgs,
     HuggingFaceOnnxSaveArgs, HuggingFaceTask,
 };
-pub use lightgbm::LightGBMModelInterfaceMetadata;
+pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
 pub use lightning::LightningInterfaceMetadata;
 pub use onnx::*;
 pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
