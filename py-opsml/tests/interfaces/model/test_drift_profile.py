@@ -61,4 +61,4 @@ def test_model_interface_drift_profile(
     model.create_drift_profile([metric], CustomMetricDriftConfig())
 
     # save
-    model.save(tmp_path)
+    metadata = model.save(tmp_path)
