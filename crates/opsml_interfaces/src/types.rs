@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use tracing::debug;
 
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
@@ -223,6 +224,8 @@ impl ModelType {
             .unwrap()
             .extract::<String>()
             .unwrap();
+
+        debug!("ModelType: {}", model_type);
 
         ModelType::get_type(&model_type)
     }

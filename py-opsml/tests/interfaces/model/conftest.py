@@ -810,3 +810,33 @@ def voting_regressor(example_dataframe):
     )
     reg = eclf1.fit(X_train, y_train)
     return SklearnModel(model=reg, sample_data=X_train)
+
+
+@pytest.fixture
+def lgb_booster_model(example_dataframe):
+    X_train, y_train, X_test, y_test = example_dataframe
+    # create dataset for lightgbm
+    lgb_train = lgb.Dataset(X_train, y_train)
+    lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
+    # specify your configurations as a dict
+    params = {
+        "boosting_type": "gbdt",
+        "objective": "regression",
+        "metric": {"l2", "l1"},
+        "num_leaves": 31,
+        "learning_rate": 0.05,
+        "feature_fraction": 0.9,
+        "bagging_fraction": 0.8,
+        "bagging_freq": 5,
+        "verbose": 0,
+    }
+    # train
+    gbm = lgb.train(
+        params,
+        lgb_train,
+        num_boost_round=20,
+        valid_sets=lgb_eval,
+        callbacks=[
+            lgb.early_stopping(stopping_rounds=5),
+        ],
+    )
