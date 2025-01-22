@@ -9,7 +9,8 @@ use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 
 use opsml_error::error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::DataType;
+use opsml_types::{SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -530,10 +531,19 @@ impl ModelInterface {
         py: Python<'py>,
         data: &Bound<'py, PyAny>,
         config: Option<&Bound<'py, PyAny>>,
-        data_type: Option<&DriftDataType>,
+        data_type: Option<&DataType>,
     ) -> PyResult<Bound<'py, PyAny>> {
         debug!("Creating drift profile");
         let drifter = PyDrifter::new();
+
+        let data_type = data_type.and_then(|dt| match dt {
+            DataType::Pandas => Some(&DriftDataType::Pandas),
+            DataType::Numpy => Some(&DriftDataType::Numpy),
+            DataType::Polars => Some(&DriftDataType::Polars),
+            DataType::Arrow => Some(&DriftDataType::Arrow),
+            _ => None,
+        });
+
         let profile = drifter.internal_create_drift_profile(py, data, config, data_type)?;
         let py_profile = profile.profile(py)?;
         self.drift_profile.push(profile);
