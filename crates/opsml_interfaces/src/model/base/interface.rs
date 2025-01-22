@@ -44,6 +44,9 @@ pub struct ModelInterfaceSaveMetadata {
     pub onnx_model_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    pub drift_profile_uri: Option<PathBuf>,
+
+    #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
 
     #[pyo3(get)]
@@ -53,13 +56,14 @@ pub struct ModelInterfaceSaveMetadata {
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, extra_metadata=HashMap::new(), save_args=None))]
+    #[pyo3(signature = (model_uri, sample_data_uri,  preprocessor_uri=None, preprocessor_name=None, onnx_model_uri=None, drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
     pub fn new(
         model_uri: PathBuf,
         sample_data_uri: Option<PathBuf>,
         preprocessor_uri: Option<PathBuf>,
         preprocessor_name: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
+        drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
         save_args: Option<SaveArgs>,
     ) -> Self {
@@ -69,6 +73,7 @@ impl ModelInterfaceSaveMetadata {
             preprocessor_uri,
             preprocessor_name,
             onnx_model_uri,
+            drift_profile_uri,
             extra_metadata,
             save_args,
         }
@@ -416,6 +421,12 @@ impl ModelInterface {
             onnx_model_uri = Some(self.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
         }
 
+        let drift_profile_uri = if self.drift_profile.is_empty() {
+            None
+        } else {
+            Some(self.save_drift_profile(path.clone())?)
+        };
+
         self.schema = self.create_feature_schema(py)?;
 
         Ok(ModelInterfaceSaveMetadata {
@@ -424,6 +435,7 @@ impl ModelInterface {
             preprocessor_name: None,
             sample_data_uri,
             onnx_model_uri,
+            drift_profile_uri,
             extra_metadata: HashMap::new(),
             save_args,
         })

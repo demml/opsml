@@ -59,3 +59,6 @@ def test_model_interface_drift_profile(
         name="custom", value=0.5, alert_threshold=AlertThreshold.Above
     )
     model.create_drift_profile([metric], CustomMetricDriftConfig())
+
+    # save
+    model.save(tmp_path)
