@@ -3,12 +3,16 @@ use crate::model::InterfaceDataType;
 use crate::{ModelType, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
-use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
+use opsml_utils::PyHelperFuncs;
+use pyo3::types::{
+    PyDict, PyFloat, PyInt, PyList, PyListMethods, PyString, PyTuple, PyTupleMethods,
+};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
 use scouter_client::{
     CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
 };
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Default)]
@@ -240,7 +244,6 @@ impl SampleData {
     }
 
     fn save_binary(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
-        let py = data.py();
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
         let full_save_path = path.join(&save_path);
         data.call_method("save_binary", (full_save_path,), None)?;
@@ -480,4 +483,63 @@ fn load_dmatrix<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyA
     let xgb = py.import("xgboost")?;
     let data = xgb.call_method1("DMatrix", (path,))?;
     Ok(data)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum Key {
+    Str(String),
+    Int(i64),
+    Unknown,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+enum Schema {
+    Int,
+    Float,
+    String,
+    List(Box<Schema>),
+    Dict(Vec<(Key, Schema)>),
+    Unknown,
+}
+
+fn get_schema(py: Python, obj: &Bound<'_, PyAny>) -> Schema {
+    if obj.is_instance_of::<PyInt>() {
+        Schema::Int
+    } else if obj.is_instance_of::<PyFloat>() {
+        Schema::Float
+    } else if obj.is_instance_of::<PyString>() {
+        Schema::String
+    } else if obj.is_instance_of::<PyList>() {
+        let list = obj.downcast::<PyList>().unwrap();
+        let item = list.get_item(0);
+
+        if item.is_ok() {
+            Schema::List(Box::new(get_schema(py, &item.unwrap())))
+        } else {
+            Schema::List(Box::new(Schema::Unknown))
+        }
+    } else if obj.is_instance_of::<PyDict>() {
+        let dict = obj.downcast::<PyDict>().unwrap();
+        let mut schema_vec = Vec::new();
+
+        for (key, value) in dict.iter() {
+            let key_schema = if let Ok(key_str) = key.extract::<String>() {
+                Key::Str(key_str)
+            } else if let Ok(key_int) = key.extract::<i64>() {
+                Key::Int(key_int)
+            } else {
+                Key::Unknown
+            };
+            schema_vec.push((key_schema, get_schema(py, &value)));
+        }
+        Schema::Dict(schema_vec)
+    } else {
+        Schema::Unknown
+    }
+}
+
+#[pyfunction]
+pub fn parse_variable_schema(py: Python, obj: &Bound<'_, PyAny>) -> String {
+    let schema = get_schema(py, obj);
+    PyHelperFuncs::__json__(schema)
 }

@@ -2,7 +2,7 @@ use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, ModelType, SaveArgs};
+use crate::{DataProcessor, SampleData, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -260,6 +260,9 @@ impl LightGBMModel {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let super_ = self_.as_super();
+
+        // get sample_data
+        super_.sample_data = SampleData::load_data(py, &path, &super_.data_type, kwargs)?;
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
 
