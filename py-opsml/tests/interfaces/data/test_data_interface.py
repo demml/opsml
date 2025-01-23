@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 import torch
 import pandas as pd
+from typing import Tuple, Any
 
 
 def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
@@ -255,16 +256,32 @@ def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
     assert data_profile is not None
 
 
-def test_torch_dataset(torch_dataset: torch.utils.data.Dataset):
-    module = torch_dataset.__class__.__module__
-    name = torch_dataset.__class__.__name__
-    parent_class = torch_dataset.__class__.__bases__[0]
-    parent_class_full_name = f"{parent_class.__module__}.{parent_class.__name__}"
+def test_torch_dataset(
+    tmp_path: Path, torch_dataset: Tuple[torch.utils.data.Dataset, Any]
+):
+    dataset, custom_class = torch_dataset
+    interface = TorchData(data=dataset)
 
-    print(f"module: {module}")
-    print(f"name: {name}")
-    print(f"parent class full name: {parent_class_full_name}")
+    assert interface.data is not None
+    assert interface.data_type == DataType.TorchDataset
+    assert interface.dependent_vars is not None
+    assert interface.data_splits is not None
+    assert interface.sql_logic is not None
 
-    a = 10
-    a.__bases__
-    a
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    metadata = interface.save(path=save_path, **{"torch_dataset": custom_class})
+
+    # assert metadata.data_type == DataType.TorchDataset
+
+
+#
+## set data to none
+# interface.data = None
+#
+# assert interface.data is None
+#
+# interface.load_data(path=save_path,
+#
+# assert interface.data is not None
