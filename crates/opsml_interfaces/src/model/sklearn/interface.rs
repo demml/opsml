@@ -252,7 +252,7 @@ impl SklearnModel {
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
-                uri: uri,
+                uri,
             })
         };
 
