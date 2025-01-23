@@ -20,8 +20,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use tracing::debug;
 use tracing::warn;
+use tracing::{debug, span};
 
 use super::utils;
 
@@ -286,6 +286,15 @@ impl ModelInterface {
         };
 
         Ok(())
+    }
+
+    #[setter]
+    pub fn set_onnx_session(&mut self, onnx_session: Option<&OnnxSession>) {
+        if let Some(onnx_session) = onnx_session {
+            self.onnx_session = Some(onnx_session.clone());
+        } else {
+            self.onnx_session = None;
+        }
     }
 
     #[setter]
@@ -584,6 +593,9 @@ impl ModelInterface {
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
     pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
+        let span = span!(tracing::Level::DEBUG, "Save Drift Profile");
+        let _enter = span.enter();
+
         let save_dir = PathBuf::from(SaveName::Drift);
         if !save_dir.exists() {
             fs::create_dir_all(&save_dir).unwrap();
@@ -612,6 +624,7 @@ impl ModelInterface {
 
             profile.save_to_json(Some(profile_save_path))?
         }
+        debug!("Drift profile saved to: {:?}", save_dir);
 
         Ok(save_dir)
     }

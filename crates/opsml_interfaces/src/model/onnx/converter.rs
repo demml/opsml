@@ -6,7 +6,7 @@ use crate::{OnnxSession, SampleData};
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use tracing::info;
+use tracing::{info, span, Level};
 
 pub struct OnnxModelConverter {}
 
@@ -19,6 +19,8 @@ impl OnnxModelConverter {
         model_type: &ModelType,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession> {
+        let span = span!(Level::INFO, "Onnx Conversion");
+        let _enter = span.enter();
         match model_interface_type {
             ModelInterfaceType::Sklearn => {
                 info!("Converting Sklearn model to ONNX");

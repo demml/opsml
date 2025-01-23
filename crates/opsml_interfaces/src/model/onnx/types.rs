@@ -7,12 +7,15 @@ use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
+use tracing::debug;
 
 #[pyclass]
 #[derive(Debug)]
 pub struct OnnxSession {
     #[pyo3(get)]
     pub schema: OnnxSchema,
+
+    #[pyo3(get)]
     pub session: PyObject,
 }
 
@@ -156,6 +159,7 @@ impl OnnxSession {
             .map_err(|e| OnnxError::Error(e.to_string()))?
             .unbind();
 
+        debug!("Loaded ONNX model");
         self.session = session;
 
         Ok(())

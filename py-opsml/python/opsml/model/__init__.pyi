@@ -609,7 +609,17 @@ class ModelInterface:
 
     @property
     def onnx_session(self) -> None | OnnxSession:
-        """Returns the onnx schema if it exists"""
+        """Returns the onnx session if it exists"""
+
+    @onnx_session.setter
+    def onnx_session(self, session: None | OnnxSession) -> None:
+        """Sets the onnx session
+
+
+        Args:
+            session:
+                Onnx session
+        """
 
     def save_model(self, path: Path, **kwargs) -> Path:
         """Save the model
