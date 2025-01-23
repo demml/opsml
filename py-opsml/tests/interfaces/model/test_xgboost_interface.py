@@ -4,6 +4,8 @@ from typing import Tuple
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler  # type: ignore
 
+from onnxmltools import convert_xgboost
+
 
 def test_xgboost_model_interface(
     tmp_path: Path,

@@ -346,7 +346,12 @@ impl SampleData {
             SampleData::List(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
-            SampleData::DMatrix(data) => Ok(data.bind(py).clone()),
+            SampleData::DMatrix(data) => Ok({
+                // need to convert DMatriz to csr and then numpy array
+                let dmatrix = data.bind(py);
+                let array = dmatrix.call_method0("get_data")?.call_method0("toarray")?;
+                array
+            }),
             SampleData::None => Ok(py.None().bind(py).clone()),
         }
     }
