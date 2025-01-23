@@ -1,5 +1,5 @@
 # type: ignore
-
+# pylint: disable=no-name-in-module
 from .. import scouter
 
 AlertDispatchType = scouter.alert.AlertDispatchType

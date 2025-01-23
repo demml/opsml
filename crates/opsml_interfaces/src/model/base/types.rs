@@ -23,7 +23,6 @@ impl InterfaceDataType {
             "numpy.ndarray" => Ok(InterfaceDataType::Numpy),
             "pyarrow.lib.Table" => Ok(InterfaceDataType::Arrow),
             "torch.Tensor" => Ok(InterfaceDataType::Torch),
-            "torch.utils.data.dataset.Dataset" => Ok(InterfaceDataType::Torch),
             _ => Err(TypeError::Error("Invalid data type".to_string())),
         }
     }

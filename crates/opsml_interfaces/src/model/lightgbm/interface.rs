@@ -229,9 +229,9 @@ impl LightGBMModel {
     #[pyo3(signature = (path, **kwargs))]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
-        py: Python,
+        py: Python<'py>,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
         let super_ = self_.as_ref();
         // check if data is None
@@ -255,9 +255,9 @@ impl LightGBMModel {
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
-        py: Python,
+        py: Python<'py>,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         let super_ = self_.as_super();
 
@@ -293,7 +293,7 @@ impl LightGBMModel {
     #[pyo3(signature = (path, to_onnx=false, save_args=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
-        py: Python,
+        py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
         save_args: Option<SaveArgs>,
@@ -318,7 +318,7 @@ impl LightGBMModel {
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
-                uri: uri,
+                uri,
             })
         };
 

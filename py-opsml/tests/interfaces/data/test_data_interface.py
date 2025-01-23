@@ -21,7 +21,6 @@ from pathlib import Path
 import pytest
 import torch
 import pandas as pd
-from typing import Tuple, Any
 
 
 def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
@@ -254,34 +253,3 @@ def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
     interface = PandasData(data=pandas_dataframe_profile)
     data_profile = interface.create_data_profile(compute_correlations=True)
     assert data_profile is not None
-
-
-def test_torch_dataset(
-    tmp_path: Path, torch_dataset: Tuple[torch.utils.data.Dataset, Any]
-):
-    dataset, custom_class = torch_dataset
-    interface = TorchData(data=dataset)
-
-    assert interface.data is not None
-    assert interface.data_type == DataType.TorchDataset
-    assert interface.dependent_vars is not None
-    assert interface.data_splits is not None
-    assert interface.sql_logic is not None
-
-    save_path = tmp_path / "test"
-    save_path.mkdir()
-
-    metadata = interface.save(path=save_path, **{"torch_dataset": custom_class})
-
-    # assert metadata.data_type == DataType.TorchDataset
-
-
-#
-## set data to none
-# interface.data = None
-#
-# assert interface.data is None
-#
-# interface.load_data(path=save_path,
-#
-# assert interface.data is not None

@@ -1,3 +1,5 @@
+# pylint: disable=dangerous-default-value
+
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
@@ -970,14 +972,3 @@ class XGBoostModel(ModelInterface):
             **kwargs:
                 Optional arguments to pass to the preprocessor loader
         """
-
-def parse_variable_schema(obj: Any) -> str:
-    """Parse a variable's schema
-
-    Args:
-        obj:
-            Object to parse
-
-    Returns:
-        Json
-    """
