@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(extends=DataInterface, subclass)]
 #[derive(Debug, Clone)]
@@ -160,7 +160,7 @@ impl PolarsData {
 impl PolarsData {
     pub fn from_path(
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);

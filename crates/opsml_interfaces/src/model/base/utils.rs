@@ -3,16 +3,13 @@ use crate::model::InterfaceDataType;
 use crate::{ModelType, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
-use opsml_utils::PyHelperFuncs;
-use pyo3::types::{
-    PyDict, PyFloat, PyInt, PyList, PyListMethods, PyString, PyTuple, PyTupleMethods,
-};
+use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
 use scouter_client::{
     CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
 };
-use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::path::PathBuf;
 use tracing::{error, span};
 
@@ -135,26 +132,8 @@ impl SampleData {
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
 
-        if let Some(interface_type) = InterfaceDataType::from_module_name(&full_class_name).ok() {
+        if let Ok(interface_type) = InterfaceDataType::from_module_name(&full_class_name) {
             return Self::match_interface_type(py, &interface_type, data).map(Some);
-        }
-
-        // attempt to get parent type
-        let base_classes = class.getattr("__bases__").ok();
-
-        let base_classes = match base_classes {
-            Some(base_classes) => base_classes,
-            None => return Ok(None),
-        };
-
-        let base_list = base_classes.downcast::<PyList>()?;
-        if let Some(base) = base_list.get_item(0).ok() {
-            let parent_full_name = get_class_full_name(&base)?;
-            if let Some(parent_interface_type) =
-                InterfaceDataType::from_module_name(&parent_full_name).ok()
-            {
-                return Self::match_interface_type(py, &parent_interface_type, data).map(Some);
-            }
         }
 
         Ok(None)
@@ -420,8 +399,7 @@ impl SampleData {
             SampleData::DMatrix(data) => Ok({
                 // need to convert DMatriz to csr and then numpy array
                 let dmatrix = data.bind(py);
-                let array = dmatrix.call_method0("get_data")?.call_method0("toarray")?;
-                array
+                dmatrix.call_method0("get_data")?.call_method0("toarray")?
             }),
             SampleData::None => Ok(py.None().bind(py).clone()),
         }
@@ -464,21 +442,11 @@ impl SampleData {
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<SampleData> {
         match data_type {
-            DataType::Pandas => {
-                PandasData::from_path(py, path, kwargs).map(|data| SampleData::Pandas(data))
-            }
-            DataType::Polars => {
-                PolarsData::from_path(py, path, kwargs).map(|data| SampleData::Polars(data))
-            }
-            DataType::Numpy => {
-                NumpyData::from_path(py, path, kwargs).map(|data| SampleData::Numpy(data))
-            }
-            DataType::Arrow => {
-                ArrowData::from_path(py, path, kwargs).map(|data| SampleData::Arrow(data))
-            }
-            DataType::TorchTensor => {
-                TorchData::from_path(py, path, kwargs).map(|data| SampleData::Torch(data))
-            }
+            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
+            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
+            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
+            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
+            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(SampleData::List(
@@ -555,72 +523,13 @@ fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py,
     Ok(data)
 }
 
-fn load_dmatrix<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
     let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
     let full_save_path = path.join(&save_path);
 
     let xgb = py.import("xgboost")?;
     let data = xgb.call_method1("DMatrix", (full_save_path,))?;
     Ok(data)
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum Key {
-    Str(String),
-    Int(i64),
-    Unknown,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-enum Schema {
-    Int,
-    Float,
-    String,
-    List(Box<Schema>),
-    Dict(Vec<(Key, Schema)>),
-    Unknown,
-}
-
-fn get_schema(py: Python, obj: &Bound<'_, PyAny>) -> Schema {
-    if obj.is_instance_of::<PyInt>() {
-        Schema::Int
-    } else if obj.is_instance_of::<PyFloat>() {
-        Schema::Float
-    } else if obj.is_instance_of::<PyString>() {
-        Schema::String
-    } else if obj.is_instance_of::<PyList>() {
-        let list = obj.downcast::<PyList>().unwrap();
-        let item = list.get_item(0);
-
-        if item.is_ok() {
-            Schema::List(Box::new(get_schema(py, &item.unwrap())))
-        } else {
-            Schema::List(Box::new(Schema::Unknown))
-        }
-    } else if obj.is_instance_of::<PyDict>() {
-        let dict = obj.downcast::<PyDict>().unwrap();
-        let mut schema_vec = Vec::new();
-
-        for (key, value) in dict.iter() {
-            let key_schema = if let Ok(key_str) = key.extract::<String>() {
-                Key::Str(key_str)
-            } else if let Ok(key_int) = key.extract::<i64>() {
-                Key::Int(key_int)
-            } else {
-                Key::Unknown
-            };
-            schema_vec.push((key_schema, get_schema(py, &value)));
-        }
-        Schema::Dict(schema_vec)
-    } else {
-        Schema::Unknown
-    }
-}
-
-#[pyfunction]
-pub fn parse_variable_schema(py: Python, obj: &Bound<'_, PyAny>) -> String {
-    let schema = get_schema(py, obj);
-    PyHelperFuncs::__json__(schema)
 }
 
 fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {

@@ -25,7 +25,6 @@ SaveArgs = model.SaveArgs
 DataProcessor = model.DataProcessor
 LightGBMModel = model.LightGBMModel
 ModelType = model.ModelType
-parse_variable_schema = model.parse_variable_schema
 XGBoostModel = model.XGBoostModel
 
 __all__ = [
@@ -53,6 +52,5 @@ __all__ = [
     "DataProcessor",
     "LightGBMModel",
     "ModelType",
-    "parse_variable_schema",
     "XGBoostModel",
 ]

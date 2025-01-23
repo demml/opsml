@@ -235,7 +235,7 @@ impl SklearnModel {
     #[pyo3(signature = (path, to_onnx=false, save_args=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
-        py: Python,
+        py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
         save_args: Option<SaveArgs>,
@@ -252,7 +252,7 @@ impl SklearnModel {
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
-                uri: uri,
+                uri,
             })
         };
 

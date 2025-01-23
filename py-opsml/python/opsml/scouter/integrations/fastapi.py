@@ -1,3 +1,5 @@
+# pylint: disable=import-error
+
 import functools
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Awaitable, Callable, Union
