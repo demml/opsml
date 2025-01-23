@@ -1,5 +1,6 @@
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
+use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
 use crate::types::{ModelInterfaceType, ModelType};
 use crate::{OnnxSession, SampleData};
 use opsml_error::OpsmlError;
@@ -27,6 +28,11 @@ impl OnnxModelConverter {
             ModelInterfaceType::LightGBM => {
                 info!("Converting LightGBM model to ONNX");
                 let converter = LightGBMOnnxModelConverter::default();
+                converter.convert_model(py, model, model_type, sample_data, kwargs)
+            }
+            ModelInterfaceType::XGBoost => {
+                info!("Converting XGBoost model to ONNX");
+                let converter = XGBoostOnnxModelConverter::default();
                 converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
