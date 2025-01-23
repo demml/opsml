@@ -28,6 +28,7 @@ from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.model_selection import train_test_split  # type: ignore
 from sklearn.datasets import load_iris  # type: ignore
 import xgboost as xgb  # type: ignore
+import torch
 
 
 @pytest.fixture(scope="session")

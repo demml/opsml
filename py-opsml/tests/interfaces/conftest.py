@@ -11,6 +11,8 @@ from pathlib import Path
 import joblib  # type: ignore
 import torch
 from typing import Dict
+import torch
+from torch.utils.data import Dataset
 
 
 @pytest.fixture
@@ -300,3 +302,26 @@ def numpy_dict() -> Dict[str, np.ndarray]:
         "a": np.array([[1, 2, 3], [4, 5, 6]]),
         "b": np.array([[1, 2, 3], [4, 5, 6]]),
     }
+
+
+@pytest.fixture
+def torch_dataset():
+    class SimpleDataset(Dataset):
+        def __init__(self, data, labels):
+            self.data = data
+            self.labels = labels
+
+        def __len__(self):
+            return len(self.data)
+
+        def __getitem__(self, idx):
+            sample = self.data[idx]
+            label = self.labels[idx]
+            return sample, label
+
+    data = torch.tensor([[1, 2], [3, 4], [5, 6], [7, 8]])
+    labels = torch.tensor([0, 1, 0, 1])
+
+    dataset = SimpleDataset(data, labels)
+
+    return dataset

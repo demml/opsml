@@ -26,13 +26,25 @@ impl TorchData {
         data_profile: Option<DataProfile>,
     ) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
+        let mut data_type = DataType::TorchTensor;
         let data = match data {
             Some(data) => {
                 // check if data is a numpy array
                 // get type name of data
-                let torch = py.import("torch")?.getattr("Tensor")?;
+                let torch = py.import("torch")?;
                 // check if data is a numpy array
-                if data.is_instance(&torch).unwrap() {
+                if data.is_instance(&torch.getattr("Tensor")?).unwrap() {
+                    data.into_py_any(py)?
+                } else if data
+                    .is_instance(
+                        &torch
+                            .getattr("utils")?
+                            .getattr("data")?
+                            .getattr("Dataset")?,
+                    )
+                    .unwrap()
+                {
+                    data_type = DataType::TorchDataset;
                     data.into_py_any(py)?
                 } else {
                     return Err(OpsmlError::new_err("Data must be a Torch tensor"));
@@ -51,7 +63,7 @@ impl TorchData {
             data_profile,
         )?;
 
-        data_interface.data_type = DataType::TorchTensor;
+        data_interface.data_type = data_type;
         data_interface.data = data;
 
         Ok((TorchData {}, data_interface))
@@ -75,10 +87,23 @@ impl TorchData {
         } else {
             // check if data is a numpy array
             // get type name of data
-            let numpy = py.import("torch")?.getattr("Tensor")?;
+            let torch = py.import("torch")?;
 
             // check if data is a numpy array
-            if data.is_instance(&numpy).unwrap() {
+            if data.is_instance(&torch.getattr("Tensor")?).unwrap() {
+                parent.data_type = DataType::TorchTensor;
+                parent.data = data.into_py_any(py)?;
+                Ok(())
+            } else if {
+                data.is_instance(
+                    &torch
+                        .getattr("utils")?
+                        .getattr("data")?
+                        .getattr("Dataset")?,
+                )
+                .unwrap()
+            } {
+                parent.data_type = DataType::TorchDataset;
                 parent.data = data.into_py_any(py)?;
                 Ok(())
             } else {

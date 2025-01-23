@@ -5,7 +5,6 @@ use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::{DataProcessor, SampleData, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
-use ort::info;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
