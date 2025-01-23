@@ -26,4 +26,4 @@ pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
 pub use tensorflow::TensorFlowInterfaceMetadata;
 pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};
 pub use vowpal::VowpalWabbitInterfaceMetadata;
-pub use xgboost::XGBoostModelInterfaceMetadata;
+pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};

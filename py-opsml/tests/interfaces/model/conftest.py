@@ -27,6 +27,7 @@ from sklearn.feature_selection import SelectPercentile, chi2  # type: ignore
 from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.model_selection import train_test_split  # type: ignore
 from sklearn.datasets import load_iris  # type: ignore
+import xgboost as xgb  # type: ignore
 
 
 @pytest.fixture(scope="session")
@@ -842,3 +843,23 @@ def lgb_booster_model(example_dataframe) -> Tuple[lgb.Booster, pd.DataFrame]:
     )
 
     return gbm, X_train
+
+
+@pytest.fixture
+def xgb_booster_regressor_model(
+    example_dataframe,
+) -> Tuple[xgb.Booster, xgb.DMatrix, StandardScaler]:
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    dtrain = xgb.DMatrix(X_train.to_numpy(), y_train.to_numpy())
+    dtest = xgb.DMatrix(X_test.to_numpy(), y_test.to_numpy())
+
+    param = {"max_depth": 2, "eta": 1, "objective": "reg:tweedie"}
+    # specify validations set to watch performance
+    watchlist = [(dtest, "eval"), (dtrain, "train")]
+
+    # number of boosting rounds
+    num_round = 2
+    bst = xgb.train(param, dtrain, num_boost_round=num_round, evals=watchlist)
+
+    return (bst, dtrain, StandardScaler())
