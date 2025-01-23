@@ -139,24 +139,6 @@ impl SampleData {
             return Self::match_interface_type(py, &interface_type, data).map(Some);
         }
 
-        // attempt to get parent type
-        let base_classes = class.getattr("__bases__").ok();
-
-        let base_classes = match base_classes {
-            Some(base_classes) => base_classes,
-            None => return Ok(None),
-        };
-
-        let base_list = base_classes.downcast::<PyList>()?;
-        if let Some(base) = base_list.get_item(0).ok() {
-            let parent_full_name = get_class_full_name(&base)?;
-            if let Some(parent_interface_type) =
-                InterfaceDataType::from_module_name(&parent_full_name).ok()
-            {
-                return Self::match_interface_type(py, &parent_interface_type, data).map(Some);
-            }
-        }
-
         Ok(None)
     }
 
