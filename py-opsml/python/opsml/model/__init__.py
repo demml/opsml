@@ -26,6 +26,7 @@ DataProcessor = model.DataProcessor
 LightGBMModel = model.LightGBMModel
 ModelType = model.ModelType
 parse_variable_schema = model.parse_variable_schema
+XGBoostModel = model.XGBoostModel
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -53,4 +54,5 @@ __all__ = [
     "LightGBMModel",
     "ModelType",
     "parse_variable_schema",
+    "XGBoostModel",
 ]

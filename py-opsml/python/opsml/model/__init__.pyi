@@ -892,6 +892,77 @@ class LightGBMModel(ModelInterface):
                 Optional arguments to pass to the preprocessor loader
         """
 
+class XGBoostModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Base class for ModelInterface
+
+        Args:
+            model:
+                Model to associate with interface. This model must be an xgboost booster.
+            preprocessor:
+                Preprocessor to associate with interface.
+            sample_data:
+                Sample data to use to make predictions.
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with interface. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
+
+    def save_preprocessor(self, path: Path, **kwargs) -> Path:
+        """Save the preprocessor as a joblib file
+
+        Args:
+            path (Path):
+                Path to save the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor saver
+        """
+
+    def load_preprocessor(self, path: Path, **kwargs) -> None:
+        """Load the preprocessor from a joblib file
+
+        Args:
+            path (Path):
+                Path to load the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor loader
+        """
+
 def parse_variable_schema(obj: Any) -> str:
     """Parse a variable's schema
 
