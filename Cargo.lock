@@ -3456,6 +3456,7 @@ dependencies = [
 name = "opsml-interfaces"
 version = "0.1.0"
 dependencies = [
+ "opsml-colors",
  "opsml-error",
  "opsml-types",
  "opsml-utils",

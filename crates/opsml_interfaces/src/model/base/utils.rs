@@ -14,8 +14,9 @@ use scouter_client::{
 };
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use tracing::{error, span};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub enum SampleData {
     Pandas(PyObject),
     Polars(PyObject),
@@ -248,7 +249,7 @@ impl SampleData {
         let full_save_path = path.join(&save_path);
         data.call_method("save_binary", (full_save_path,), None)?;
 
-        Ok(path)
+        Ok(save_path)
     }
 
     fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
@@ -259,16 +260,63 @@ impl SampleData {
     }
 
     pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        let span = span!(tracing::Level::DEBUG, "Save Sample Data");
+        let _enter = span.enter();
         match self {
-            SampleData::Pandas(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
-            SampleData::Polars(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
-            SampleData::Numpy(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
-            SampleData::Arrow(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
-            SampleData::Torch(data) => Ok(Some(self.save_interface_data(data.bind(py), path)?)),
-            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
-            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
-            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
-            SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path)?)),
+            SampleData::Pandas(data) => Ok(Some(
+                self.save_interface_data(data.bind(py), path).map_err(|e| {
+                    error!("Error saving pandas data: {}", e);
+                    e
+                })?,
+            )),
+            SampleData::Polars(data) => Ok(Some(
+                self.save_interface_data(data.bind(py), path).map_err(|e| {
+                    error!("Error saving polars data: {}", e);
+                    e
+                })?,
+            )),
+            SampleData::Numpy(data) => Ok(Some(
+                self.save_interface_data(data.bind(py), path).map_err(|e| {
+                    error!("Error saving numpy data: {}", e);
+                    e
+                })?,
+            )),
+            SampleData::Arrow(data) => Ok(Some(
+                self.save_interface_data(data.bind(py), path).map_err(|e| {
+                    error!("Error saving arrow data: {}", e);
+                    e
+                })?,
+            )),
+            SampleData::Torch(data) => Ok(Some(
+                self.save_interface_data(data.bind(py), path).map_err(|e| {
+                    error!("Error saving torch data: {}", e);
+                    e
+                })?,
+            )),
+            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
+                |e| {
+                    error!("Error saving list data: {}", e);
+                    e
+                },
+            )?)),
+            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
+                |e| {
+                    error!("Error saving tuple data: {}", e);
+                    e
+                },
+            )?)),
+            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
+                |e| {
+                    error!("Error saving dict data: {}", e);
+                    e
+                },
+            )?)),
+            SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path).map_err(
+                |e| {
+                    error!("Error saving dmatrix data: {}", e);
+                    e
+                },
+            )?)),
             SampleData::None => Ok(None),
         }
     }
@@ -485,8 +533,11 @@ fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py,
 }
 
 fn load_dmatrix<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+    let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
+    let full_save_path = path.join(&save_path);
+
     let xgb = py.import("xgboost")?;
-    let data = xgb.call_method1("DMatrix", (path,))?;
+    let data = xgb.call_method1("DMatrix", (full_save_path,))?;
     Ok(data)
 }
 

@@ -4,8 +4,6 @@ from typing import Tuple
 from pathlib import Path
 from sklearn.preprocessing import StandardScaler  # type: ignore
 
-from onnxmltools import convert_xgboost
-
 
 def test_xgboost_model_interface(
     tmp_path: Path,
@@ -20,15 +18,15 @@ def test_xgboost_model_interface(
 
     assert interface.model_type == ModelType.XgbBooster
 
-    interface.save(save_path, False)
+    interface.save(save_path, True)
 
+    interface.model = None
 
-# interface.model = None
+    assert interface.model is None
 
-# assert interface.model is None
+    interface.load_model(save_path)
 
-# interface.load_model(save_path)
+    assert interface.model is not None
 
-# assert interface.model is not None
-
-# interface.load_onnx_model(save_path)
+    interface.load_onnx_model(save_path)
+    a

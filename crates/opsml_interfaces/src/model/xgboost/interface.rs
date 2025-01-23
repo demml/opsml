@@ -5,13 +5,14 @@ use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::{DataProcessor, SampleData, SaveArgs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use ort::info;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, warn};
+use tracing::{debug, error, info, span, warn, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -177,6 +178,9 @@ impl XGBoostModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::DEBUG, "Save Preprocessor").entered();
+        let _ = span.enter();
+
         // check if data is None
         if self.preprocessor.is_none(py) {
             return Err(OpsmlError::new_err(
@@ -189,7 +193,12 @@ impl XGBoostModel {
         let joblib = py.import("joblib")?;
 
         // Save the data using joblib
-        joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
+        joblib
+            .call_method("dump", (&self.preprocessor, full_save_path), kwargs)
+            .map_err(|e| {
+                error!("Failed to save preprocessor: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         Ok(save_path)
     }
@@ -208,13 +217,22 @@ impl XGBoostModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::DEBUG, "Load Preprocessor").entered();
+        let _ = span.enter();
+
         let load_path = path
             .join(SaveName::Preprocessor)
             .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+        self.preprocessor = joblib
+            .call_method("load", (load_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to load preprocessor: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?
+            .into();
 
         Ok(())
     }
@@ -232,6 +250,9 @@ impl XGBoostModel {
         py: Python,
         path: PathBuf,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::DEBUG, "Save Model").entered();
+        let _ = span.enter();
+
         let super_ = self_.as_ref();
         // check if data is None
         if super_.model.is_none(py) {
@@ -246,7 +267,11 @@ impl XGBoostModel {
         // Save the data using joblib
         super_
             .model
-            .call_method1(py, "save_model", (full_save_path,))?;
+            .call_method1(py, "save_model", (full_save_path,))
+            .map_err(|e| {
+                error!("Failed to save model: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         Ok(save_path)
     }
@@ -258,19 +283,28 @@ impl XGBoostModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::DEBUG, "Load Model").entered();
+        let _ = span.enter();
+
         let super_ = self_.as_super();
 
         // get sample_data
-        super_.sample_data = SampleData::load_data(py, &path, &super_.data_type, kwargs)?;
+        super_.sample_data =
+            SampleData::load_data(py, &path, &super_.data_type, kwargs).map_err(|e| {
+                error!("Failed to load sample data: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
 
         let booster = py.import("xgboost")?.getattr("Booster")?;
-
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("model_file", load_path)?;
 
-        let model = booster.call((), Some(&kwargs))?;
+        let model = booster.call((), Some(&kwargs)).map_err(|e| {
+            error!("Failed to load model: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         // Save the data using joblib
         super_.model = model.into();
@@ -297,15 +331,15 @@ impl XGBoostModel {
         to_onnx: bool,
         save_args: Option<SaveArgs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        // color text
+        let span = span!(Level::INFO, "XGBoost Save").entered();
+        let _ = span.enter();
+
+        info!("Saving XGBoost model");
+
         // parse the save args
         let (onnx_kwargs, _model_kwargs) = parse_save_args(py, &save_args);
 
-        debug!(
-            "Saving model to: {:?} with save_args: {:?}",
-            path, save_args
-        );
-
-        // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
@@ -330,28 +364,34 @@ impl XGBoostModel {
                 None
             });
 
-        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+        self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
+            error!("Failed to create feature schema: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self_.as_super().save_onnx_model(
-                py,
-                path.clone(),
-                onnx_kwargs.as_ref(),
-            )?);
+            onnx_model_uri = Some(
+                self_
+                    .as_super()
+                    .save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())
+                    .map_err(|e| {
+                        error!("Failed to save ONNX model: {}", e);
+                        OpsmlError::new_err(e.to_string())
+                    })?,
+            );
         }
 
-        // save drift profile
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(path.clone())?)
         };
 
-        // save model
         let model_uri = XGBoostModel::save_model(self_, py, path.clone())?;
 
         // create the data processor map
+        debug!("Creating data processor map");
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {
                 let mut map = HashMap::new();
@@ -369,6 +409,8 @@ impl XGBoostModel {
             extra_metadata: HashMap::new(),
             save_args,
         };
+
+        info!("XGBoost model saved");
 
         Ok(metadata)
     }

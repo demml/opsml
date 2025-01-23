@@ -51,8 +51,6 @@ impl XGBoostOnnxModelConverter {
         sample_data: &SampleData,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession> {
-        debug!("Step 1: Converting lightgbm model to ONNX");
-
         let onnxmltools = py
             .import("onnxmltools")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import onnxmltools: {}", e)))?;
@@ -65,7 +63,7 @@ impl XGBoostOnnxModelConverter {
             .getattr("type_helper")
             .unwrap();
 
-        debug!("Step 2: Guessing initial types");
+        debug!("Step 1: Guessing initial types");
         let initial_types = type_helper
             .call_method1(
                 "guess_initial_types",
@@ -73,15 +71,15 @@ impl XGBoostOnnxModelConverter {
             )
             .unwrap();
 
-        debug!("Step 3: Converting lightgbm model to ONNX");
+        debug!("Step 2: Converting XGBoost model to ONNX");
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("initial_types", initial_types).unwrap();
 
         let onnx_model = onnxmltools
-            .call_method("convert_lightgbm", (model,), Some(&kwargs))
+            .call_method("convert_xgboost", (model,), Some(&kwargs))
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        debug!("Step 4: Extracting ONNX schema");
+        debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
         debug!("ONNX model conversion complete");
 
