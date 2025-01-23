@@ -362,7 +362,7 @@ impl ModelInterface {
         Ok(save_path)
     }
 
-    /// Load the model from a file
+    /// Load the model from a file as well as sample data
     ///
     /// # Arguments
     ///
@@ -381,6 +381,9 @@ impl ModelInterface {
 
         // Load the data using joblib
         self.model = joblib.call_method("load", (load_path,), kwargs)?.into();
+
+        // load sample data
+        self.sample_data = SampleData::load_data(py, &path, &self.data_type, kwargs)?;
 
         Ok(())
     }

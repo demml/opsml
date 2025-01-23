@@ -269,7 +269,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -563,6 +565,14 @@ class ModelInterface:
     @model.setter
     def model(self, model: Any) -> None:
         """Sets the model"""
+
+    @property
+    def sample_data(self) -> None | Any:
+        """Returns the sample data"""
+
+    @sample_data.setter
+    def sample_data(self, sample_data: Any) -> None:
+        """Sets the sample data"""
 
     @property
     def data_type(self) -> DataType:
@@ -881,3 +891,14 @@ class LightGBMModel(ModelInterface):
             **kwargs:
                 Optional arguments to pass to the preprocessor loader
         """
+
+def parse_variable_schema(obj: Any) -> str:
+    """Parse a variable's schema
+
+    Args:
+        obj:
+            Object to parse
+
+    Returns:
+        Json
+    """
