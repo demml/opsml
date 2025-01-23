@@ -29,4 +29,3 @@ def test_xgboost_model_interface(
     assert interface.model is not None
 
     interface.load_onnx_model(save_path)
-    a
