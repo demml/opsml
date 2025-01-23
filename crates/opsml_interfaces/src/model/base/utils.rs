@@ -132,7 +132,7 @@ impl SampleData {
         let class = data.getattr("__class__")?;
         let full_class_name = get_class_full_name(&class)?;
 
-        if let Some(interface_type) = InterfaceDataType::from_module_name(&full_class_name).ok() {
+        if let Ok(interface_type) = InterfaceDataType::from_module_name(&full_class_name) {
             return Self::match_interface_type(py, &interface_type, data).map(Some);
         }
 
@@ -399,8 +399,7 @@ impl SampleData {
             SampleData::DMatrix(data) => Ok({
                 // need to convert DMatriz to csr and then numpy array
                 let dmatrix = data.bind(py);
-                let array = dmatrix.call_method0("get_data")?.call_method0("toarray")?;
-                array
+                dmatrix.call_method0("get_data")?.call_method0("toarray")?
             }),
             SampleData::None => Ok(py.None().bind(py).clone()),
         }
@@ -443,21 +442,11 @@ impl SampleData {
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<SampleData> {
         match data_type {
-            DataType::Pandas => {
-                PandasData::from_path(py, path, kwargs).map(|data| SampleData::Pandas(data))
-            }
-            DataType::Polars => {
-                PolarsData::from_path(py, path, kwargs).map(|data| SampleData::Polars(data))
-            }
-            DataType::Numpy => {
-                NumpyData::from_path(py, path, kwargs).map(|data| SampleData::Numpy(data))
-            }
-            DataType::Arrow => {
-                ArrowData::from_path(py, path, kwargs).map(|data| SampleData::Arrow(data))
-            }
-            DataType::TorchTensor => {
-                TorchData::from_path(py, path, kwargs).map(|data| SampleData::Torch(data))
-            }
+            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
+            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
+            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
+            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
+            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
             DataType::List => {
                 let data = load_from_joblib(py, path)?;
                 Ok(SampleData::List(
