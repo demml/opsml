@@ -2,6 +2,7 @@ use crate::model::onnx::OnnxSession;
 use crate::{types::ModelType, SampleData};
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use tracing::debug;
 
 pub struct LightGBMOnnxModelConverter {}
@@ -48,6 +49,7 @@ impl LightGBMOnnxModelConverter {
         model: &Bound<'py, PyAny>,
         model_type: &ModelType,
         sample_data: &SampleData,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession> {
         debug!("Step 1: Converting lightgbm model to ONNX");
 
@@ -63,20 +65,23 @@ impl LightGBMOnnxModelConverter {
             .getattr("type_helper")
             .unwrap();
 
-        // should return a numpy array
-        let onnx_data = sample_data.get_data_for_onnx(py, model_type)?;
-
         debug!("Step 2: Guessing initial types");
         let initial_types = type_helper
-            .call_method1("guess_initial_types", (onnx_data,))
+            .call_method1(
+                "guess_initial_types",
+                (sample_data.get_data_for_onnx(py, model_type)?,),
+            )
             .unwrap();
 
-        debug!("Step 4: Converting lightgbm model to ONNX");
+        debug!("Step 3: Converting lightgbm model to ONNX");
+        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
+        kwargs.set_item("initial_types", initial_types).unwrap();
+
         let onnx_model = onnxmltools
-            .call_method("convert_lightgbm", (model, initial_types), None)
+            .call_method("convert_lightgbm", (model,), Some(&kwargs))
             .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
 
-        debug!("Step 5: Extracting ONNX schema");
+        debug!("Step 4: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&onnx_model, sample_data.get_feature_names(py)?);
         debug!("ONNX model conversion complete");
 

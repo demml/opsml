@@ -27,7 +27,7 @@ impl OnnxModelConverter {
             ModelInterfaceType::LightGBM => {
                 info!("Converting LightGBM model to ONNX");
                 let converter = LightGBMOnnxModelConverter::default();
-                converter.convert_model(py, model, model_type, sample_data)
+                converter.convert_model(py, model, model_type, sample_data, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

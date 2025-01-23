@@ -813,7 +813,7 @@ def voting_regressor(example_dataframe):
 
 
 @pytest.fixture
-def lgb_booster_model(example_dataframe):
+def lgb_booster_model(example_dataframe) -> Tuple[lgb.Booster, pd.DataFrame]:
     X_train, y_train, X_test, y_test = example_dataframe
     # create dataset for lightgbm
     lgb_train = lgb.Dataset(X_train, y_train)
@@ -835,10 +835,10 @@ def lgb_booster_model(example_dataframe):
         params,
         lgb_train,
         num_boost_round=20,
-        valid_sets=lgb_eval,
+        valid_sets=[lgb_eval],
         callbacks=[
             lgb.early_stopping(stopping_rounds=5),
         ],
     )
 
-    gbm.save_model()
+    return gbm, X_train

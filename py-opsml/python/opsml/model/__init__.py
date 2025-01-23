@@ -23,6 +23,8 @@ TaskType = model.TaskType
 SklearnModel = model.SklearnModel
 SaveArgs = model.SaveArgs
 DataProcessor = model.DataProcessor
+LightGBMModel = model.LightGBMModel
+ModelType = model.ModelType
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -47,4 +49,6 @@ __all__ = [
     "SklearnModel",
     "SaveArgs",
     "DataProcessor",
+    "LightGBMModel",
+    "ModelType",
 ]

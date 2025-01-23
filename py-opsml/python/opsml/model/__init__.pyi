@@ -13,6 +13,27 @@ from ..scouter.drift import (
     SpcDriftProfile,
 )
 
+class ModelType:
+    Transformers: "ModelType"
+    SklearnPipeline: "ModelType"
+    SklearnEstimator: "ModelType"
+    StackingRegressor: "ModelType"
+    StackingClassifier: "ModelType"
+    StackingEstimator: "ModelType"
+    CalibratedClassifier: "ModelType"
+    LgbmRegressor: "ModelType"
+    LgbmClassifier: "ModelType"
+    XgbRegressor: "ModelType"
+    XgbClassifier: "ModelType"
+    XgbBooster: "ModelType"
+    LgbmBooster: "ModelType"
+    TfKeras: "ModelType"
+    Pytorch: "ModelType"
+    PytorchLightning: "ModelType"
+    Catboost: "ModelType"
+    Vowpal: "ModelType"
+    Unknown: "ModelType"
+
 class HuggingFaceORTModel:
     OrtAudioClassification = "ORTModelForAudioClassification"
     OrtAudioFrameClassification = "ORTModelForAudioFrameClassification"
@@ -546,20 +567,24 @@ class ModelInterface:
         """Sets the model"""
 
     @property
-    def task_type(self) -> TaskType:
-        """Returns the task type"""
-
-    @property
     def data_type(self) -> DataType:
         """Returns the task type"""
 
     @property
-    def sample_data(self) -> None | Any:
-        """Returns the data"""
+    def task_type(self) -> TaskType:
+        """Returns the task type"""
 
-    @sample_data.setter
-    def sample_data(self, data: Any) -> None:
-        """Sets the data"""
+    @property
+    def schema(self) -> FeatureSchema:
+        """Returns the feature schema"""
+
+    @property
+    def model_type(self) -> ModelType:
+        """Returns the model type"""
+
+    @property
+    def model_interface_type(self) -> ModelInterfaceType:
+        """Returns the model type"""
 
     @property
     def drift_profile(
@@ -738,6 +763,77 @@ class SklearnModel(ModelInterface):
             preprocessor:
                 Preprocessor to associate with interface. This preprocessor must be from the
                 scikit-learn ecosystem
+            sample_data:
+                Sample data to use to make predictions
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with interface. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
+
+    def save_preprocessor(self, path: Path, **kwargs) -> Path:
+        """Save the preprocessor as a joblib file
+
+        Args:
+            path (Path):
+                Path to save the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor saver
+        """
+
+    def load_preprocessor(self, path: Path, **kwargs) -> None:
+        """Load the preprocessor from a joblib file
+
+        Args:
+            path (Path):
+                Path to load the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor loader
+        """
+
+class LightGBMModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Base class for ModelInterface
+
+        Args:
+            model:
+                Model to associate with interface. This model must be a lightgbm booster.
+            preprocessor:
+                Preprocessor to associate with interface.
             sample_data:
                 Sample data to use to make predictions
             task_type:

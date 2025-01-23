@@ -193,7 +193,7 @@ impl Display for ModelType {
 }
 
 impl ModelType {
-    pub fn get_type(model_type: &str) -> ModelType {
+    pub fn get_type(model_type: &str, module: &str) -> ModelType {
         match model_type {
             "transformers" => ModelType::Transformers,
             "Pipeline" => ModelType::SklearnPipeline,
@@ -206,7 +206,13 @@ impl ModelType {
             "LGBMClassifier" => ModelType::LgbmClassifier,
             "XGBRegressor" => ModelType::XgbRegressor,
             "XGBClassifier" => ModelType::XgbClassifier,
-            "Booster" => ModelType::XgbBooster,
+            "Booster" => {
+                if module.contains("lightgbm") {
+                    ModelType::LgbmBooster
+                } else {
+                    ModelType::XgbBooster
+                }
+            }
             "keras" => ModelType::TfKeras,
             "pytorch" => ModelType::Pytorch,
             "pytorch_lightning" => ModelType::PytorchLightning,
@@ -225,9 +231,17 @@ impl ModelType {
             .extract::<String>()
             .unwrap();
 
-        debug!("ModelType: {}", model_type);
+        let module = object
+            .getattr("__class__")
+            .unwrap()
+            .getattr("__module__")
+            .unwrap()
+            .extract::<String>()
+            .unwrap();
 
-        ModelType::get_type(&model_type)
+        debug!("ModelType: {}, Module type: {}", model_type, module);
+
+        ModelType::get_type(&model_type, &module)
     }
 
     pub fn in_update_registry(&self) -> bool {
