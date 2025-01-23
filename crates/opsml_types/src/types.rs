@@ -381,6 +381,7 @@ pub enum Suffix {
     Model,
     Numpy,
     Sql,
+    Bin,
 }
 
 #[pymethods]
@@ -404,6 +405,7 @@ impl Suffix {
             "model" => Some(Suffix::Model),
             "npy" => Some(Suffix::Numpy),
             "sql" => Some(Suffix::Sql),
+            "bin" => Some(Suffix::Bin),
             _ => None,
         }
     }
@@ -426,6 +428,7 @@ impl Suffix {
             Suffix::Model => "model",
             Suffix::Numpy => "npy",
             Suffix::Sql => "sql",
+            Suffix::Bin => "bin",
         }
     }
 
@@ -551,6 +554,7 @@ pub enum DataType {
     TorchTensor,
     TorchDataset,
     TensorflowTensor,
+    DMatrix,
     Tuple,
     List,
     Str,

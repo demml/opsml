@@ -21,6 +21,7 @@ pub enum SampleData {
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
+    DMatrix(PyObject),
 
     #[default]
     None,
@@ -48,6 +49,8 @@ impl SampleData {
     /// # Returns
     ///
     pub fn new(data: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let py = data.py();
+
         if data.is_instance_of::<DataInterface>() {
             return Self::handle_data_interface(data);
         }
@@ -66,6 +69,15 @@ impl SampleData {
 
         if data.is_instance_of::<PyDict>() {
             return Self::handle_pydict(data);
+        }
+
+        if let Ok(xgb) = py.import("xgboost") {
+            if let Ok(matrix) = xgb.getattr("DMatrix") {
+                if data.is_instance(&matrix).unwrap() {
+                    let slice = data.call_method("slice", ([0],), None)?;
+                    return Ok(SampleData::DMatrix(slice.into_py_any(py)?));
+                }
+            }
         }
 
         Ok(SampleData::None)
@@ -197,6 +209,7 @@ impl SampleData {
             SampleData::Tuple(_) => DataType::Tuple,
             SampleData::Dict(_) => DataType::Dict,
             SampleData::Torch(_) => DataType::TorchTensor,
+            SampleData::DMatrix(_) => DataType::DMatrix,
             SampleData::None => DataType::NotProvided,
         }
     }
@@ -211,6 +224,7 @@ impl SampleData {
             SampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
+            SampleData::DMatrix(data) => Ok(data.clone_ref(py)),
             SampleData::None => Ok(py.None()),
         }
     }
@@ -221,6 +235,15 @@ impl SampleData {
         let full_save_path = path.join(&save_path);
         let joblib = py.import("joblib")?;
         joblib.call_method1("dump", (data, full_save_path))?;
+
+        Ok(path)
+    }
+
+    fn save_binary(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+        let py = data.py();
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
+        let full_save_path = path.join(&save_path);
+        data.call_method("save_binary", (full_save_path,), None)?;
 
         Ok(path)
     }
@@ -242,6 +265,7 @@ impl SampleData {
             SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
             SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
             SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path)?)),
+            SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path)?)),
             SampleData::None => Ok(None),
         }
     }
@@ -319,6 +343,7 @@ impl SampleData {
             SampleData::List(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
             SampleData::Dict(data) => Ok(data.into_py_any(py).unwrap().bind(py).clone()),
+            SampleData::DMatrix(data) => Ok(data.bind(py).clone()),
             SampleData::None => Ok(py.None().bind(py).clone()),
         }
     }
@@ -349,6 +374,56 @@ impl SampleData {
             SampleData::Tuple(_) => Ok(vec![]),
             SampleData::Dict(_) => Ok(vec![]),
             SampleData::None => Ok(vec![]),
+            SampleData::DMatrix(_) => Ok(vec![]),
+        }
+    }
+
+    pub fn load_data<'py>(
+        py: Python<'py>,
+        path: &PathBuf,
+        data_type: &DataType,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<SampleData> {
+        match data_type {
+            DataType::Pandas => {
+                PandasData::from_path(py, path, kwargs).map(|data| SampleData::Pandas(data))
+            }
+            DataType::Polars => {
+                PolarsData::from_path(py, path, kwargs).map(|data| SampleData::Polars(data))
+            }
+            DataType::Numpy => {
+                NumpyData::from_path(py, path, kwargs).map(|data| SampleData::Numpy(data))
+            }
+            DataType::Arrow => {
+                ArrowData::from_path(py, path, kwargs).map(|data| SampleData::Arrow(data))
+            }
+            DataType::TorchTensor => {
+                TorchData::from_path(py, path, kwargs).map(|data| SampleData::Torch(data))
+            }
+            DataType::List => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::List(
+                    data.downcast::<PyList>()?.clone().unbind(),
+                ))
+            }
+            DataType::Tuple => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Tuple(
+                    data.downcast::<PyTuple>()?.clone().unbind(),
+                ))
+            }
+            DataType::Dict => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Dict(
+                    data.downcast::<PyDict>()?.clone().unbind(),
+                ))
+            }
+            DataType::DMatrix => {
+                let data = load_dmatrix(py, path)?;
+                Ok(SampleData::DMatrix(data.unbind()))
+            }
+
+            _ => Ok(SampleData::None),
         }
     }
 }
@@ -392,4 +467,17 @@ pub fn parse_save_args<'py>(
         .cloned();
 
     (onnx_kwargs, model_kwargs)
+}
+
+fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+    let joblib = py.import("joblib")?;
+    let data = joblib.call_method1("load", (path,))?;
+
+    Ok(data)
+}
+
+fn load_dmatrix<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+    let xgb = py.import("xgboost")?;
+    let data = xgb.call_method1("DMatrix", (path,))?;
+    Ok(data)
 }

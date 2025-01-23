@@ -156,3 +156,24 @@ impl PolarsData {
         Ok(())
     }
 }
+
+impl PolarsData {
+    pub fn from_path(
+        py: Python,
+        path: &PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+
+        let polars = PyModule::import(py, "polars")?;
+
+        // Load the data using polars
+        let data = polars.call_method("read_parquet", (load_path,), kwargs)?;
+
+        let interface = PolarsData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
+    }
+}
