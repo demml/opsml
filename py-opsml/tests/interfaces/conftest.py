@@ -324,4 +324,4 @@ def torch_dataset():
 
     dataset = SimpleDataset(data, labels)
 
-    return dataset
+    return dataset, SimpleDataset
