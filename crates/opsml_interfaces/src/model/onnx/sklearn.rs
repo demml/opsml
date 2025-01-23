@@ -7,8 +7,6 @@ use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use tracing::debug;
 
-pub struct SklearnPipeline {}
-
 pub struct SklearnOnnxModelConverter {}
 
 impl Default for SklearnOnnxModelConverter {
