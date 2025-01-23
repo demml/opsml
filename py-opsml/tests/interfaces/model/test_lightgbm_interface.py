@@ -26,3 +26,5 @@ def test_lightgbm_model_interface(
     interface.load_model(save_path)
 
     assert interface.model is not None
+
+    interface.load_onnx_model(save_path)
