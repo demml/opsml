@@ -253,3 +253,18 @@ def test_pandas_data_profile(pandas_dataframe_profile: pd.DataFrame):
     interface = PandasData(data=pandas_dataframe_profile)
     data_profile = interface.create_data_profile(compute_correlations=True)
     assert data_profile is not None
+
+
+def test_torch_dataset(torch_dataset: torch.utils.data.Dataset):
+    module = torch_dataset.__class__.__module__
+    name = torch_dataset.__class__.__name__
+    parent_class = torch_dataset.__class__.__bases__[0]
+    parent_class_full_name = f"{parent_class.__module__}.{parent_class.__name__}"
+
+    print(f"module: {module}")
+    print(f"name: {name}")
+    print(f"parent class full name: {parent_class_full_name}")
+
+    a = 10
+    a.__bases__
+    a

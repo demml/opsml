@@ -88,53 +88,76 @@ impl SampleData {
         Ok(SampleData::None)
     }
 
+    fn match_interface_type(
+        py: Python,
+        interface_type: &InterfaceDataType,
+        data: &Bound<'_, PyAny>,
+    ) -> PyResult<Self> {
+        let slice = PySlice::new(py, 0, 1, 1);
+        let sliced_data = data.get_item(slice)?;
+
+        match interface_type {
+            InterfaceDataType::Pandas => {
+                let interface =
+                    PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                Ok(SampleData::Pandas(bound))
+            }
+            InterfaceDataType::Polars => {
+                let interface =
+                    PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                Ok(SampleData::Polars(bound))
+            }
+            InterfaceDataType::Numpy => {
+                let interface =
+                    NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                Ok(SampleData::Numpy(bound))
+            }
+            InterfaceDataType::Arrow => {
+                let interface =
+                    ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                Ok(SampleData::Arrow(bound))
+            }
+            InterfaceDataType::Torch => {
+                let interface =
+                    TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
+                let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+                Ok(SampleData::Numpy(bound))
+            }
+        }
+    }
+
     fn get_interface_for_sample(data: &Bound<'_, PyAny>) -> PyResult<Option<Self>> {
         let py = data.py();
         let class = data.getattr("__class__")?;
-        let module = class.getattr("__module__")?.str()?.to_string();
-        let name = class.getattr("__name__")?.str()?.to_string();
-        let full_class_name = format!("{}.{}", module, name);
+        let full_class_name = get_class_full_name(&class)?;
 
-        let interface_type = InterfaceDataType::from_module_name(&full_class_name).ok();
-
-        if let Some(interface_type) = interface_type {
-            let slice = PySlice::new(py, 0, 1, 1);
-            let sliced_data = data.get_item(slice)?;
-            match interface_type {
-                InterfaceDataType::Pandas => {
-                    let interface =
-                        PandasData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    Ok(Some(SampleData::Pandas(bound)))
-                }
-                InterfaceDataType::Polars => {
-                    let interface =
-                        PolarsData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    Ok(Some(SampleData::Polars(bound)))
-                }
-                InterfaceDataType::Numpy => {
-                    let interface =
-                        NumpyData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    Ok(Some(SampleData::Numpy(bound)))
-                }
-                InterfaceDataType::Arrow => {
-                    let interface =
-                        ArrowData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    Ok(Some(SampleData::Arrow(bound)))
-                }
-                InterfaceDataType::Torch => {
-                    let interface =
-                        TorchData::new(py, Some(&sliced_data), None, None, None, None, None)?;
-                    let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-                    Ok(Some(SampleData::Numpy(bound)))
-                }
-            }
-        } else {
-            Ok(None)
+        if let Some(interface_type) = InterfaceDataType::from_module_name(&full_class_name).ok() {
+            return Self::match_interface_type(py, &interface_type, data).map(Some);
         }
+
+        // attempt to get parent type
+        let base_classes = class.getattr("__bases__").ok();
+
+        let base_classes = match base_classes {
+            Some(base_classes) => base_classes,
+            None => return Ok(None),
+        };
+
+        let base_list = base_classes.downcast::<PyList>()?;
+        if let Some(base) = base_list.get_item(0).ok() {
+            let parent_full_name = get_class_full_name(&base)?;
+            if let Some(parent_interface_type) =
+                InterfaceDataType::from_module_name(&parent_full_name).ok()
+            {
+                return Self::match_interface_type(py, &parent_interface_type, data).map(Some);
+            }
+        }
+
+        Ok(None)
     }
 
     fn handle_data_interface(data: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -598,4 +621,10 @@ fn get_schema(py: Python, obj: &Bound<'_, PyAny>) -> Schema {
 pub fn parse_variable_schema(py: Python, obj: &Bound<'_, PyAny>) -> String {
     let schema = get_schema(py, obj);
     PyHelperFuncs::__json__(schema)
+}
+
+fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
+    let module = class.getattr("__module__")?.str()?.to_string();
+    let name = class.getattr("__name__")?.str()?.to_string();
+    Ok(format!("{}.{}", module, name))
 }
