@@ -154,3 +154,24 @@ impl TorchData {
         Ok(())
     }
 }
+
+impl TorchData {
+    pub fn from_path(
+        py: Python,
+        path: &PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
+
+        let numpy = PyModule::import(py, "torch")?;
+
+        // Load the data using numpy
+        let data = numpy.call_method("load", (load_path,), kwargs)?;
+
+        let interface = TorchData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
+    }
+}
