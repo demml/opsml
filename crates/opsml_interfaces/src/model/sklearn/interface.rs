@@ -13,6 +13,7 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -179,8 +180,12 @@ impl SklearnModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving preprocessor").entered();
+        let _ = span.enter();
+
         // check if data is None
         if self.preprocessor.is_none(py) {
+            error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -192,6 +197,8 @@ impl SklearnModel {
 
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
+
+        info!("Preprocessor saved");
 
         Ok(save_path)
     }
@@ -240,6 +247,11 @@ impl SklearnModel {
         to_onnx: bool,
         save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        let span = span!(Level::INFO, "Saving SklearnModel Interface").entered();
+        let _ = span.enter();
+
+        debug!("Saving model interface");
+
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
