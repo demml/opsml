@@ -1,4 +1,3 @@
-use crate::data::schema::torch;
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;

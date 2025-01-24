@@ -1,4 +1,4 @@
-use crate::base::{parse_save_args, SaveArgs};
+use crate::base::{parse_save_args, SaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
@@ -69,7 +69,7 @@ pub struct ModelInterfaceSaveMetadata {
     pub extra_metadata: HashMap<String, String>,
 
     #[pyo3(get)]
-    pub save_args: Option<SaveArgs>,
+    pub save_args: Option<SaveKwargs>,
 }
 
 #[pymethods]
@@ -83,7 +83,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
-        save_args: Option<SaveArgs>,
+        save_args: Option<SaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -414,7 +414,7 @@ impl ModelInterface {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveArgs>,
+        save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // get onnx and model kwargs
         let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
