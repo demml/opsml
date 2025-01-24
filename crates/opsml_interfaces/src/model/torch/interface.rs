@@ -1,5 +1,4 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
-use crate::model::torch::types::{TorchOnnxArgs, TorchSaveArgs};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
@@ -10,67 +9,9 @@ use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::{error, info, span, warn, Level};
-
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TorchInterfaceMetadata {
-    #[pyo3(get)]
-    pub task_type: String,
-    #[pyo3(get)]
-    pub model_type: String,
-    #[pyo3(get)]
-    pub data_type: String,
-    #[pyo3(get)]
-    pub modelcard_uid: String,
-    #[pyo3(get)]
-    pub feature_map: FeatureSchema,
-    #[pyo3(get)]
-    pub sample_data_interface_type: String,
-    #[pyo3(get)]
-    pub preprocessor_name: String,
-    #[pyo3(get)]
-    pub onnx_args: Option<TorchOnnxArgs>,
-    #[pyo3(get)]
-    pub save_args: TorchSaveArgs,
-    #[pyo3(get)]
-    pub metadata: HashMap<String, String>,
-}
-
-#[pymethods]
-impl TorchInterfaceMetadata {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (task_type, model_type, data_type, modelcard_uid, feature_map, sample_data_interface_type, preprocessor_name, onnx_args=None, save_args=None, metadata=None))]
-    pub fn new(
-        task_type: String,
-        model_type: String,
-        data_type: String,
-        modelcard_uid: String,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: String,
-        preprocessor_name: String,
-        onnx_args: Option<TorchOnnxArgs>,
-        save_args: Option<TorchSaveArgs>,
-        metadata: Option<HashMap<String, String>>,
-    ) -> Self {
-        TorchInterfaceMetadata {
-            task_type,
-            model_type,
-            data_type,
-            modelcard_uid,
-            feature_map,
-            sample_data_interface_type,
-            preprocessor_name,
-            save_args: save_args.unwrap_or(TorchSaveArgs::new(None)),
-            onnx_args,
-            metadata: metadata.unwrap_or_default(),
-        }
-    }
-}
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -380,13 +321,21 @@ impl TorchModel {
     }
 
     /// Saves the sample data
-    #[pyo3(signature = (path))]
-    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
-        let sample_data_uri = self.sample_data.save_data(py, &path).unwrap_or_else(|e| {
-            warn!("Failed to save sample data. Defaulting to None: {}", e);
-            None
-        });
+        let sample_data_uri = self
+            .sample_data
+            .save_data(py, &path, kwargs)
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
 
         Ok(sample_data_uri)
     }
@@ -425,7 +374,7 @@ impl TorchModel {
                 uri: uri,
             })
         };
-        let sample_data_uri = self_.save_data(py, path.clone())?;
+        let sample_data_uri = self_.save_data(py, path.clone(), None)?;
         self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;

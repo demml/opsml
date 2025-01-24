@@ -411,13 +411,21 @@ impl ModelInterface {
     }
 
     /// Saves the sample data
-    #[pyo3(signature = (path))]
-    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
-        let sample_data_uri = self.sample_data.save_data(py, &path).unwrap_or_else(|e| {
-            warn!("Failed to save sample data. Defaulting to None: {}", e);
-            None
-        });
+        let sample_data_uri = self
+            .sample_data
+            .save_data(py, &path, kwargs)
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
 
         Ok(sample_data_uri)
     }
@@ -472,7 +480,7 @@ impl ModelInterface {
             onnx_model_uri = Some(self.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
         }
 
-        let sample_data_uri = self.save_data(py, path.clone())?;
+        let sample_data_uri = self.save_data(py, path.clone(), None)?;
 
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None

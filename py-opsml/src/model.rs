@@ -1,11 +1,10 @@
 use opsml_interfaces::{
     CatBoostModelInterfaceMetadata, DataProcessor, HuggingFaceModelInterfaceMetadata,
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModel,
-    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterface,
-    ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession,
-    SaveKwargs, SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata,
-    TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs, VowpalWabbitInterfaceMetadata,
-    XGBoostModel, XGBoostModelInterfaceMetadata,
+    LightGBMModelInterfaceMetadata, ModelInterface, ModelInterfaceMetadata,
+    ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession, SaveKwargs,
+    SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata, TorchModel,
+    VowpalWabbitInterfaceMetadata, XGBoostModel, XGBoostModelInterfaceMetadata,
 };
 
 use pyo3::prelude::*;
@@ -16,8 +15,6 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<HuggingFaceOnnxArgs>()?;
     m.add_class::<HuggingFaceORTModel>()?;
     m.add_class::<HuggingFaceOnnxSaveArgs>()?;
-    m.add_class::<TorchOnnxArgs>()?;
-    m.add_class::<TorchSaveArgs>()?;
     m.add_class::<TaskType>()?;
 
     // helper types
@@ -34,15 +31,14 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SklearnModel>()?;
     m.add_class::<LightGBMModel>()?;
     m.add_class::<XGBoostModel>()?;
+    m.add_class::<TorchModel>()?;
 
     // Model Interface args
     m.add_class::<CatBoostModelInterfaceMetadata>()?;
     m.add_class::<HuggingFaceModelInterfaceMetadata>()?;
     m.add_class::<LightGBMModelInterfaceMetadata>()?;
-    m.add_class::<LightningInterfaceMetadata>()?;
     m.add_class::<SklearnModelInterfaceMetadata>()?;
     m.add_class::<TensorFlowInterfaceMetadata>()?;
-    m.add_class::<TorchInterfaceMetadata>()?;
     m.add_class::<VowpalWabbitInterfaceMetadata>()?;
     m.add_class::<XGBoostModelInterfaceMetadata>()?;
 
