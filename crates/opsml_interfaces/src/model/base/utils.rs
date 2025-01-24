@@ -236,17 +236,17 @@ impl SampleData {
         }
     }
 
-    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
         let py = data.py();
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
         let full_save_path = path.join(&save_path);
         let joblib = py.import("joblib")?;
         joblib.call_method1("dump", (data, full_save_path))?;
 
-        Ok(path)
+        Ok(save_path)
     }
 
-    fn save_binary(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+    fn save_binary(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
         let full_save_path = path.join(&save_path);
         data.call_method("save_binary", (full_save_path,), None)?;
@@ -254,14 +254,14 @@ impl SampleData {
         Ok(save_path)
     }
 
-    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
-        let path = data.call_method1("save_data", (path,))?;
+    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
+        let save_path = data.call_method1("save_data", (path,))?;
         // convert pyany to pathbuf
-        let path = path.extract::<PathBuf>()?;
-        Ok(path)
+        let save_path = save_path.extract::<PathBuf>()?;
+        Ok(save_path)
     }
 
-    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+    pub fn save_data(&self, py: Python, path: &Path) -> PyResult<Option<PathBuf>> {
         let span = span!(tracing::Level::DEBUG, "Save Sample Data");
         let _enter = span.enter();
         match self {

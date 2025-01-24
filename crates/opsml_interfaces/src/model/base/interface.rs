@@ -8,6 +8,7 @@ use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 
+use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_types::{SaveName, Suffix};
@@ -22,8 +23,6 @@ use std::fs;
 use std::path::PathBuf;
 use tracing::warn;
 use tracing::{debug, span};
-
-use super::utils;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -391,6 +390,29 @@ impl ModelInterface {
         // Load the data using joblib
         self.model = joblib.call_method("load", (load_path,), kwargs)?.into();
 
+        Ok(())
+    }
+
+    /// Saves the sample data
+    #[pyo3(signature = (path))]
+    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        // if sample_data is not None, save the sample data
+        let sample_data_uri = self.sample_data.save_data(py, &path).unwrap_or_else(|e| {
+            warn!("Failed to save sample data. Defaulting to None: {}", e);
+            None
+        });
+
+        Ok(sample_data_uri)
+    }
+
+    /// Load the sample data
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_data(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
         // load sample data
         self.sample_data = SampleData::load_data(py, &path, &self.data_type, kwargs)?;
 
@@ -427,20 +449,13 @@ impl ModelInterface {
         // save model
         let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;
 
-        // if sample_data is not None, save the sample data
-        let sample_data_uri = self
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
-
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if to_onnx {
             onnx_model_uri = Some(self.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
         }
+
+        let sample_data_uri = self.save_data(py, path.clone())?;
 
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None

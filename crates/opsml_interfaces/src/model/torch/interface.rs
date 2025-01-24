@@ -12,7 +12,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{self, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
 
 #[pyclass]
@@ -112,6 +112,7 @@ impl TorchModel {
         let mut model_interface =
             ModelInterface::new(py, model, None, task_type, schema, drift_profile)?;
 
+        // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
             // attempt to create sample data. If it fails, return default sample data and log a warning
             Some(data) => TorchSampleData::new(data).unwrap_or_else(|e| {
@@ -123,6 +124,7 @@ impl TorchModel {
 
         model_interface.model_interface_type = ModelInterfaceType::Torch;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
+
         let preprocessor = match preprocessor {
             Some(preprocessor) => {
                 preprocessor_name = preprocessor
@@ -257,7 +259,8 @@ impl TorchModel {
         let span = span!(Level::DEBUG, "Save Model").entered();
         let _ = span.enter();
         let super_ = self_.as_ref();
-        // check if data is None
+
+        // check if model is None
         if super_.model.is_none(py) {
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -266,6 +269,7 @@ impl TorchModel {
 
         let torch = py.import("torch")?;
 
+        // TOrch can be saved as a model or as a state dict
         let save_as_state_dict = kwargs.map_or(false, |kwargs| {
             kwargs
                 .get_item("save_as_state_dict")
@@ -294,15 +298,11 @@ impl TorchModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Model").entered();
+        let span = span!(Level::DEBUG, "Load Model");
         let _ = span.enter();
+
         let super_ = self_.as_super();
-        // get sample_data
-        super_.sample_data =
-            SampleData::load_data(py, &path, &super_.data_type, kwargs).map_err(|e| {
-                error!("Failed to load sample data: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
         let booster = py.import("xgboost")?.getattr("Booster")?;
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
@@ -315,6 +315,24 @@ impl TorchModel {
         super_.model = model.into();
         Ok(())
     }
+
+    pub fn save_sample_data<'py>(
+        self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+    ) -> PyResult<Option<PathBuf>> {
+        let sample_data_uri = self_
+            .as_super()
+            .sample_data
+            .save_data(py, path.clone())
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
+
+        Ok(sample_data_uri)
+    }
+
     /// Save the interface model
     ///
     /// # Arguments
