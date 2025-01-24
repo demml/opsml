@@ -346,7 +346,7 @@ impl XGBoostModel {
             })
         };
 
-        let sample_data_uri = self_.as_super().save_data(py, path.clone())?;
+        let sample_data_uri = self_.as_super().save_data(py, path.clone(), None)?;
 
         self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
             error!("Failed to create feature schema: {}", e);

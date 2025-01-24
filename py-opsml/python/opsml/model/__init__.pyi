@@ -91,67 +91,22 @@ class HuggingFaceOnnxArgs:
                 Optional optimum config to use
         """
 
-class TorchOnnxArgs:
-    input_names: list[str]
-    output_names: list[str]
-    dynamic_axes: Optional[Dict[str, Dict[int, str]]]
-    do_constant_folding: bool
-    export_params: bool
-    verbose: bool
-
-    def __init__(
-        self,
-        input_names: list[str],
-        output_names: list[str],
-        dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None,
-        do_constant_folding: bool = True,
-        export_params: bool = True,
-        verbose: bool = True,
-    ) -> None:
-        """Optional arguments to pass to torch when converting to onnx
-
-        Args:
-            input_names:
-                Optional list containing input names for model inputs.
-            output_names:
-                Optional list containing output names for model outputs.
-            dynamic_axes:
-                Optional PyTorch attribute that defines dynamic axes
-            constant_folding:
-                Whether to use constant folding optimization. Default is True
-        """
-
-    def model_dump(self) -> dict[str, Any]:
-        """Dump onnx args to dictionary
-
-        Returns:
-            Dictionary containing model information
-        """
-
-class TorchSaveArgs:
-    as_state_dict: bool
-
-    def __init__(self, as_state_dict: bool = False) -> None:
-        """Optional arguments to pass to torch when saving a model
-
-        Args:
-            as_state_dict:
-                Whether to save the model as a state dict. Default is False
-        """
-
 class SaveKwargs:
     def __init__(
         self,
         onnx: Optional[Dict] = None,
         model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
     ) -> None:
         """Optional arguments to pass to save_model
 
         Args:
             onnx (Dict):
-                Optional onnx arguments
+                Optional onnx arguments to use when saving
             model (Dict):
-                Optional model arguments
+                Optional model arguments to use when saving
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when saving
         """
 
     def __str__(self): ...
@@ -276,7 +231,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -343,87 +300,6 @@ class HuggingFaceModelInterfaceMetadata(SklearnModelInterfaceMetadata):
         """
 
 class LightGBMModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-
-class LightningInterfaceMetadata(SklearnModelInterfaceMetadata):
-    onnx_args: Optional[TorchOnnxArgs]
-
-    def __init__(
-        self,
-        task_type: str,
-        model_type: str,
-        data_type: str,
-        modelcard_uid: str,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: str,
-        preprocessor_name: str,
-        onnx_args: Optional[TorchOnnxArgs] = None,
-        metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            task_type:
-                The type of task the model performs
-            model_type:
-                The type of model
-            data_type:
-                The type of data the model uses
-            modelcard_uid:
-                The modelcard uid
-            feature_map:
-                A dictionary of features
-            sample_data_interface_type:
-                The type of sample data interface
-            preprocessor_name:
-                The name of the preprocessor
-            onnx_args:
-                The onnx args to use
-            metadata:
-                Any additional metadata
-        """
-
-class TorchInterfaceMetadata(SklearnModelInterfaceMetadata):
-    onnx_args: Optional[TorchOnnxArgs]
-    save_args: TorchSaveArgs
-
-    def __init__(
-        self,
-        task_type: str,
-        model_type: str,
-        data_type: str,
-        modelcard_uid: str,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: str,
-        preprocessor_name: str,
-        onnx_args: Optional[TorchOnnxArgs] = None,
-        save_args: Optional[TorchSaveArgs] = None,
-        metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            task_type:
-                The type of task the model performs
-            model_type:
-                The type of model
-            data_type:
-                The type of data the model uses
-            modelcard_uid:
-                The modelcard uid
-            feature_map:
-                A dictionary of features
-            sample_data_interface_type:
-                The type of sample data interface
-            preprocessor_name:
-                The name of the preprocessor
-            onnx_args:
-                The onnx args to use
-            save_args:
-                The save args to use
-            metadata:
-                Any additional metadata
-        """
-
 class TensorFlowInterfaceMetadata(SklearnModelInterfaceMetadata): ...
 
 class VowpalWabbitInterfaceMetadata(ModelInterfaceMetadata):
@@ -682,6 +558,12 @@ class ModelInterface:
 
         """
 
+    def save_data(self, path: Path, **kwargs) -> Path:
+        """saves the sample data"""
+
+    def load_data(self, path: Path, **kwargs) -> None:
+        """loads the sample data"""
+
     def save(
         self,
         path: Path,
@@ -784,7 +666,7 @@ class SklearnModel(ModelInterface):
                 Model to associate with interface. This model must be from the
                 scikit-learn ecosystem
             preprocessor:
-                Preprocessor to associate with interface. This preprocessor must be from the
+                Preprocessor to associate with the model. This preprocessor must be from the
                 scikit-learn ecosystem
             sample_data:
                 Sample data to use to make predictions
@@ -806,7 +688,7 @@ class SklearnModel(ModelInterface):
 
         Args:
             preprocessor:
-                Preprocessor to associate with interface. This preprocessor must be from the
+                Preprocessor to associate with the model. This preprocessor must be from the
                 scikit-learn ecosystem
         """
 
@@ -856,7 +738,7 @@ class LightGBMModel(ModelInterface):
             model:
                 Model to associate with interface. This model must be a lightgbm booster.
             preprocessor:
-                Preprocessor to associate with interface.
+                Preprocessor to associate with the model.
             sample_data:
                 Sample data to use to make predictions
             task_type:
@@ -877,7 +759,7 @@ class LightGBMModel(ModelInterface):
 
         Args:
             preprocessor:
-                Preprocessor to associate with interface. This preprocessor must be from the
+                Preprocessor to associate with the model. This preprocessor must be from the
                 scikit-learn ecosystem
         """
 
@@ -921,13 +803,13 @@ class XGBoostModel(ModelInterface):
             | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
         ) = None,
     ) -> None:
-        """Base class for ModelInterface
+        """Interface for saving XGBoost Booster models
 
         Args:
             model:
                 Model to associate with interface. This model must be an xgboost booster.
             preprocessor:
-                Preprocessor to associate with interface.
+                Preprocessor to associate with the model.
             sample_data:
                 Sample data to use to make predictions.
             task_type:
@@ -948,7 +830,7 @@ class XGBoostModel(ModelInterface):
 
         Args:
             preprocessor:
-                Preprocessor to associate with interface. This preprocessor must be from the
+                Preprocessor to associate with the model. This preprocessor must be from the
                 scikit-learn ecosystem
         """
 
@@ -977,3 +859,54 @@ class XGBoostModel(ModelInterface):
             **kwargs:
                 Optional arguments to pass to the preprocessor loader
         """
+
+class TorchModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Interface for saving PyTorch models
+
+        Args:
+            model:
+                Model to associate with interface. This model must inherit from torch.nn.Module.
+            preprocessor:
+                Preprocessor to associate with model.
+            sample_data:
+                Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                pytorch-supported type. TorchData interface, torch tensor, torch dataset, Dict[str, torch.Tensor],
+                List[torch.Tensor], Tuple[torch.Tensor].
+            task_type:
+                The intended task type of the model.
+            schema:
+                Feature schema for model features. Will be inferred from the sample data if not provided.
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""

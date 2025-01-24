@@ -244,46 +244,61 @@ impl SampleData {
         Ok(save_path)
     }
 
-    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
-        let save_path = data.call_method1("save_data", (path,))?;
+    fn save_interface_data(
+        &self,
+        data: &Bound<'_, PyAny>,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let save_path = data.call_method("save_data", (path,), kwargs)?;
         // convert pyany to pathbuf
         let save_path = save_path.extract::<PathBuf>()?;
         Ok(save_path)
     }
 
-    pub fn save_data(&self, py: Python, path: &Path) -> PyResult<Option<PathBuf>> {
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
         let span = span!(tracing::Level::DEBUG, "Save Sample Data");
         let _enter = span.enter();
         match self {
             SampleData::Pandas(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving pandas data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving pandas data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Polars(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving polars data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving polars data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Numpy(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving numpy data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving numpy data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Arrow(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving arrow data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving arrow data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Torch(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving torch data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving torch data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::List(data) => {
                 Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {

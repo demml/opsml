@@ -207,11 +207,16 @@ impl TorchSampleData {
         }
     }
 
-    pub fn save_data(&self, py: Python, path: &Path) -> PyResult<Option<PathBuf>> {
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
         match self {
             TorchSampleData::Torch(data) => {
                 let bound = data.bind(py);
-                let save_path = bound.call_method1("save_data", (path,))?;
+                let save_path = bound.call_method("save_data", (path,), kwargs)?;
                 // convert pyany to pathbuf
                 let save_path = save_path.extract::<PathBuf>()?;
                 Ok(Some(save_path))

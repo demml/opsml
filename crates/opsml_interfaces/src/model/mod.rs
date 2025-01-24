@@ -20,10 +20,9 @@ pub use huggingface::{
     HuggingFaceOnnxSaveArgs, HuggingFaceTask,
 };
 pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
-pub use lightning::LightningInterfaceMetadata;
 pub use onnx::*;
 pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
 pub use tensorflow::TensorFlowInterfaceMetadata;
-pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};
+pub use torch::TorchModel;
 pub use vowpal::VowpalWabbitInterfaceMetadata;
 pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};
