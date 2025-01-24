@@ -7,12 +7,13 @@ use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::{DataProcessor, SampleData, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use ort::info;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{self, PathBuf};
+use std::path::PathBuf;
 use tracing::{debug, error, info, span, warn, Level};
 
 #[pyclass]
@@ -123,6 +124,7 @@ impl TorchModel {
         };
 
         model_interface.model_interface_type = ModelInterfaceType::Torch;
+        model_interface.data_type = sample_data.get_data_type();
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
 
         let preprocessor = match preprocessor {
@@ -144,6 +146,25 @@ impl TorchModel {
             model_interface,
         ))
     }
+
+    #[setter]
+    pub fn set_sample_data<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        sample_data: &Bound<'py, PyAny>,
+    ) -> PyResult<()> {
+        self_.sample_data = TorchSampleData::new(sample_data)?;
+
+        // set the data type
+        self_.as_super().data_type = self_.sample_data.get_data_type();
+
+        Ok(())
+    }
+
+    #[getter]
+    pub fn get_sample_data(&self, py: Python<'_>) -> PyResult<PyObject> {
+        self.sample_data.get_data(py)
+    }
+
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
         if self.preprocessor.is_none(py) {
@@ -192,10 +213,11 @@ impl TorchModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Save Preprocessor").entered();
+        let span = span!(Level::INFO, "Save Preprocessor").entered();
         let _ = span.enter();
-        // check if data is None
+
         if self.preprocessor.is_none(py) {
+            error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -210,6 +232,8 @@ impl TorchModel {
                 error!("Failed to save preprocessor: {}", e);
                 OpsmlError::new_err(e.to_string())
             })?;
+
+        info!("Preprocessor saved");
         Ok(save_path)
     }
     /// Load the preprocessor from a file
@@ -226,7 +250,7 @@ impl TorchModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Preprocessor").entered();
+        let span = span!(Level::INFO, "Load Preprocessor").entered();
         let _ = span.enter();
         let load_path = path
             .join(SaveName::Preprocessor)
@@ -240,6 +264,8 @@ impl TorchModel {
                 OpsmlError::new_err(e.to_string())
             })?
             .into();
+
+        info!("Preprocessor loaded");
         Ok(())
     }
     /// Save the model to a file
@@ -256,12 +282,13 @@ impl TorchModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Save Model").entered();
+        let span = span!(Level::INFO, "Save Model").entered();
         let _ = span.enter();
         let super_ = self_.as_ref();
 
         // check if model is None
         if super_.model.is_none(py) {
+            error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -287,10 +314,18 @@ impl TorchModel {
         let full_save_path = path.join(&save_path);
 
         // Save torch model
-        torch.call_method("save", (model, full_save_path), kwargs)?;
+        torch
+            .call_method("save", (model, full_save_path), kwargs)
+            .map_err(|e| {
+                error!("Failed to save model: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        info!("Model saved");
 
         Ok(save_path)
     }
+
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
@@ -316,19 +351,14 @@ impl TorchModel {
         Ok(())
     }
 
-    pub fn save_sample_data<'py>(
-        self_: PyRefMut<'py, Self>,
-        py: Python,
-        path: PathBuf,
-    ) -> PyResult<Option<PathBuf>> {
-        let sample_data_uri = self_
-            .as_super()
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
+    /// Saves the sample data
+    #[pyo3(signature = (path))]
+    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        // if sample_data is not None, save the sample data
+        let sample_data_uri = self.sample_data.save_data(py, &path).unwrap_or_else(|e| {
+            warn!("Failed to save sample data. Defaulting to None: {}", e);
+            None
+        });
 
         Ok(sample_data_uri)
     }
