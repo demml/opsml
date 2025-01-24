@@ -15,7 +15,14 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     assert isinstance(interface.sample_data, dict)
     assert interface.data_type == DataType.Dict
 
-    metadata = interface.save(save_path, False)
+    interface.save(save_path, False)
 
-    print(metadata)
-    a
+    interface.model = None
+
+    assert interface.model is None
+
+    interface.load_model(save_path, model)
+
+    assert interface.model is not None
+
+    interface.model(**data)
