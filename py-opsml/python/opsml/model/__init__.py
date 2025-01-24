@@ -26,6 +26,7 @@ DataProcessor = model.DataProcessor
 LightGBMModel = model.LightGBMModel
 ModelType = model.ModelType
 XGBoostModel = model.XGBoostModel
+TorchModel = model.TorchModel
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -53,4 +54,5 @@ __all__ = [
     "LightGBMModel",
     "ModelType",
     "XGBoostModel",
+    "TorchModel",
 ]
