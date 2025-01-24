@@ -332,21 +332,50 @@ impl TorchModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Model");
+        let span = span!(Level::INFO, "Load Model");
         let _ = span.enter();
-
         let super_ = self_.as_super();
 
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
-        let booster = py.import("xgboost")?.getattr("Booster")?;
-        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
-        kwargs.set_item("model_file", load_path)?;
-        let model = booster.call((), Some(&kwargs)).map_err(|e| {
-            error!("Failed to load model: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
-        // Save the data using joblib
-        super_.model = model.into();
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Pt);
+        let torch = py.import("torch")?;
+
+        let load_state_dict = kwargs.map_or(false, |kwargs| {
+            kwargs
+                .get_item("weights_only")
+                .unwrap()
+                .map_or(false, |item| item.extract::<bool>().unwrap_or(false))
+        });
+
+        match load_state_dict {
+            true => {
+                // kwargs should not be none
+                let kwargs = kwargs.ok_or_else(|| {
+                    error!("weights_only requires kwargs with weights_only set");
+                    OpsmlError::new_err("weights_only requires kwargs with weights_only")
+                })?;
+
+                let model_arch = kwargs.get_item("model_arch").unwrap().ok_or_else(|| {
+                error!("Instantiated model must be passed as 'model_arch' in kwargs when loading weights only");
+                OpsmlError::new_err("Instantiated model must be passed as 'model_arch' in kwargs when loading weights only")
+            })?;
+
+                let state_dict = torch.call_method("load", (load_path,), Some(kwargs))?;
+
+                // load state dict
+                model_arch.call_method("load_state_dict", (state_dict,), Some(kwargs))?;
+
+                // set model to eval mode
+                model_arch.call_method0("eval")?;
+
+                super_.model = model_arch.into();
+            }
+
+            false => {
+                let model = torch.call_method("load", (load_path,), kwargs)?;
+                super_.model = model.into();
+            }
+        }
+
         Ok(())
     }
 

@@ -153,6 +153,7 @@ class SaveKwargs:
             model (Dict):
                 Optional model arguments
         """
+
     def __str__(self): ...
     def model_dump_json(self) -> str: ...
     @staticmethod
@@ -275,9 +276,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
