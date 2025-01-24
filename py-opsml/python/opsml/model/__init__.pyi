@@ -231,9 +231,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -383,7 +381,7 @@ class TaskType:
 
 class OnnxSession:
     @property
-    def onnx_schema(self) -> OnnxSchema:
+    def schema(self) -> OnnxSchema:
         """Returns the onnx schema"""
 
     @property
