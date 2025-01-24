@@ -2,7 +2,7 @@ use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SampleData, SaveKwargs};
+use crate::{DataProcessor, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -11,7 +11,7 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -253,8 +253,8 @@ impl XGBoostModel {
         let _ = span.enter();
 
         let super_ = self_.as_ref();
-        // check if data is None
         if super_.model.is_none(py) {
+            error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -272,6 +272,7 @@ impl XGBoostModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
+        info!("Model saved");
         Ok(save_path)
     }
 
@@ -282,17 +283,10 @@ impl XGBoostModel {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Model").entered();
+        let span = span!(Level::INFO, "Loading Model").entered();
         let _ = span.enter();
 
         let super_ = self_.as_super();
-
-        // get sample_data
-        super_.sample_data =
-            SampleData::load_data(py, &path, &super_.data_type, kwargs).map_err(|e| {
-                error!("Failed to load sample data: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
 
@@ -307,6 +301,8 @@ impl XGBoostModel {
 
         // Save the data using joblib
         super_.model = model.into();
+
+        info!("Model loaded");
 
         Ok(())
     }
@@ -334,7 +330,7 @@ impl XGBoostModel {
         let span = span!(Level::INFO, "XGBoost Save").entered();
         let _ = span.enter();
 
-        info!("Saving XGBoost model");
+        debug!("Saving XGBoost model");
 
         // parse the save args
         let (onnx_kwargs, _model_kwargs) = parse_save_args(py, &save_args);
@@ -354,14 +350,7 @@ impl XGBoostModel {
             })
         };
 
-        let sample_data_uri = self_
-            .as_super()
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
+        let sample_data_uri = self_.as_super().save_data(py, path.clone())?;
 
         self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
             error!("Failed to create feature schema: {}", e);
@@ -370,15 +359,11 @@ impl XGBoostModel {
 
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(
-                self_
-                    .as_super()
-                    .save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())
-                    .map_err(|e| {
-                        error!("Failed to save ONNX model: {}", e);
-                        OpsmlError::new_err(e.to_string())
-                    })?,
-            );
+            onnx_model_uri = Some(self_.as_super().save_onnx_model(
+                py,
+                path.clone(),
+                onnx_kwargs.as_ref(),
+            )?);
         }
 
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
@@ -408,8 +393,6 @@ impl XGBoostModel {
             extra_metadata: HashMap::new(),
             save_args,
         };
-
-        info!("XGBoost model saved");
 
         Ok(metadata)
     }
