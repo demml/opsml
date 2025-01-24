@@ -391,7 +391,7 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Loading Model").entered();
+        let span = span!(Level::INFO, "Loading Model").entered();
         let _ = span.enter();
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
@@ -406,7 +406,7 @@ impl ModelInterface {
             })?
             .into();
 
-        debug!("Model loaded");
+        info!("Model loaded");
 
         Ok(())
     }
@@ -456,7 +456,7 @@ impl ModelInterface {
         to_onnx: bool,
         save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::DEBUG, "Saving Model Interface").entered();
+        let span = span!(Level::INFO, "Saving Model Interface").entered();
         let _ = span.enter();
 
         debug!("Saving model interface");
@@ -507,11 +507,11 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Saving Onnx Model").entered();
+        let span = span!(Level::INFO, "Converting model to ONNX").entered();
         let _ = span.enter();
 
         if self.onnx_session.is_some() {
-            warn!("Model has already been converted to ONNX. Skipping conversion.");
+            info!("Model has already been converted to ONNX. Skipping conversion.");
             return Ok(());
         }
 
@@ -524,7 +524,7 @@ impl ModelInterface {
             kwargs,
         )?);
 
-        debug!("Model converted to ONNX");
+        info!("Model converted to ONNX");
 
         Ok(())
     }
@@ -543,7 +543,7 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Saving Onnx Model").entered();
+        let span = span!(Level::INFO, "Saving ONNX Model").entered();
         let _ = span.enter();
 
         if self.onnx_session.is_none() {
@@ -555,7 +555,7 @@ impl ModelInterface {
         let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
         fs::write(&full_save_path, bytes)?;
 
-        debug!("Onnx model saved");
+        info!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -636,7 +636,7 @@ impl ModelInterface {
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
     pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
-        let span = span!(tracing::Level::DEBUG, "Save Drift Profile");
+        let span = span!(tracing::Level::INFO, "Save Drift Profile");
         let _enter = span.enter();
 
         let save_dir = PathBuf::from(SaveName::Drift);
@@ -667,7 +667,7 @@ impl ModelInterface {
 
             profile.save_to_json(Some(profile_save_path))?
         }
-        debug!("Drift profile saved to: {:?}", save_dir);
+        info!("Drift profile saved");
 
         Ok(save_dir)
     }
