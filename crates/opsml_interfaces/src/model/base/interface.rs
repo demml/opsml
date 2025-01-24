@@ -7,7 +7,6 @@ use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
-use ort::error;
 
 use crate::model::base::utils;
 use opsml_error::error::OpsmlError;

@@ -1,4 +1,4 @@
-use opsml_error::{OpsmlError, TypeError};
+use opsml_error::TypeError;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
