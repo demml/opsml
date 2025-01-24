@@ -236,16 +236,6 @@ impl SampleData {
         }
     }
 
-    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
-        let py = data.py();
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-        joblib.call_method1("dump", (data, full_save_path))?;
-
-        Ok(save_path)
-    }
-
     fn save_binary(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
         let full_save_path = path.join(&save_path);
@@ -295,24 +285,24 @@ impl SampleData {
                     e
                 })?,
             )),
-            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+            SampleData::List(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving list data: {}", e);
                     e
-                },
-            )?)),
-            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+                })?))
+            }
+            SampleData::Tuple(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving tuple data: {}", e);
                     e
-                },
-            )?)),
-            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+                })?))
+            }
+            SampleData::Dict(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving dict data: {}", e);
                     e
-                },
-            )?)),
+                })?))
+            }
             SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path).map_err(
                 |e| {
                     error!("Error saving dmatrix data: {}", e);
@@ -516,7 +506,17 @@ pub fn parse_save_args<'py>(
     (onnx_kwargs, model_kwargs)
 }
 
-fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
+    let py = data.py();
+    let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+    let full_save_path = path.join(&save_path);
+    let joblib = py.import("joblib")?;
+    joblib.call_method1("dump", (data, full_save_path))?;
+
+    Ok(save_path)
+}
+
+pub fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
     let joblib = py.import("joblib")?;
     let data = joblib.call_method1("load", (path,))?;
 

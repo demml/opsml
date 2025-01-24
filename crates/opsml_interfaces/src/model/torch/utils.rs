@@ -1,18 +1,16 @@
-use crate::data::schema::torch;
-use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
-use crate::model::{base::get_class_full_name, InterfaceDataType};
-use crate::{ModelType, SaveKwargs};
+use crate::data::{DataInterface, TorchData};
+use crate::model::{
+    base::{get_class_full_name, load_from_joblib, save_to_joblib},
+    InterfaceDataType,
+};
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::DataType;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
-use scouter_client::{
-    CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
-};
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::{error, span};
+use tracing::error;
 
 #[derive(Default, Debug)]
 pub enum TorchSampleData {
@@ -27,7 +25,7 @@ pub enum TorchSampleData {
 }
 
 impl TorchSampleData {
-    /// Create a new SampleData object
+    /// Create a new TorchSampleData object from the given data
     ///
     /// Overview:
     ///     1. Check if the data is a DataInterface object
@@ -206,6 +204,110 @@ impl TorchSampleData {
             }
 
             _ => Err(OpsmlError::new_err("Data type not supported")),
+        }
+    }
+
+    pub fn save_data(&self, py: Python, path: &Path) -> PyResult<Option<PathBuf>> {
+        match self {
+            TorchSampleData::Torch(data) => {
+                let bound = data.bind(py);
+                let save_path = bound.call_method1("save_data", (path,))?;
+                // convert pyany to pathbuf
+                let save_path = save_path.extract::<PathBuf>()?;
+                Ok(Some(save_path))
+            }
+
+            TorchSampleData::List(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                    error!("Error saving list data: {}", e);
+                    e
+                })?))
+            }
+
+            TorchSampleData::Tuple(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                    error!("Error saving list data: {}", e);
+                    e
+                })?))
+            }
+
+            TorchSampleData::Dict(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                    error!("Error saving list data: {}", e);
+                    e
+                })?))
+            }
+
+            TorchSampleData::DataSet(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                    error!("Error saving list data: {}", e);
+                    e
+                })?))
+            }
+
+            TorchSampleData::None => Ok(None),
+        }
+    }
+
+    pub fn load_data<'py>(
+        py: Python<'py>,
+        path: &PathBuf,
+        data_type: &DataType,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<TorchSampleData> {
+        match data_type {
+            DataType::TorchTensor => {
+                TorchData::from_path(py, path, kwargs).map(TorchSampleData::Torch)
+            }
+
+            DataType::List => {
+                let data = load_from_joblib(py, path)?;
+                Ok(TorchSampleData::List(
+                    data.downcast::<PyList>()?.clone().unbind(),
+                ))
+            }
+
+            DataType::Tuple => {
+                let data = load_from_joblib(py, path)?;
+                Ok(TorchSampleData::Tuple(
+                    data.downcast::<PyTuple>()?.clone().unbind(),
+                ))
+            }
+            DataType::Dict => {
+                let data = load_from_joblib(py, path)?;
+                Ok(TorchSampleData::Dict(
+                    data.downcast::<PyDict>()?.clone().unbind(),
+                ))
+            }
+
+            DataType::TorchDataset => {
+                let data = load_from_joblib(py, path)?;
+                Ok(TorchSampleData::DataSet(data.clone().unbind()))
+            }
+
+            _ => Err(OpsmlError::new_err("Data type not supported")),
+        }
+    }
+
+    pub fn get_data_type(&self) -> DataType {
+        match self {
+            TorchSampleData::Torch(_) => DataType::TorchTensor,
+            TorchSampleData::List(_) => DataType::List,
+            TorchSampleData::Tuple(_) => DataType::Tuple,
+            TorchSampleData::Dict(_) => DataType::Dict,
+            TorchSampleData::DataSet(_) => DataType::TorchDataset,
+            TorchSampleData::None => DataType::NotProvided,
+        }
+    }
+
+    pub fn get_data(&self, py: Python) -> PyResult<PyObject> {
+        match self {
+            TorchSampleData::Torch(data) => Ok(data.into_py_any(py).unwrap()),
+            TorchSampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
+            TorchSampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
+            TorchSampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
+            TorchSampleData::DataSet(data) => Ok(data.into_py_any(py).unwrap()),
+            TorchSampleData::None => Ok(py.None()),
         }
     }
 }
