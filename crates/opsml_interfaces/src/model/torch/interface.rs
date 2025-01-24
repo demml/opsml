@@ -1,5 +1,6 @@
 use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::torch::types::{TorchOnnxArgs, TorchSaveArgs};
+use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -79,6 +80,8 @@ pub struct TorchModel {
 
     #[pyo3(get, set)]
     preprocessor_name: String,
+
+    pub sample_data: TorchSampleData,
 }
 
 #[pymethods]
@@ -107,7 +110,17 @@ impl TorchModel {
             }
         }
         let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, model, None, task_type, schema, drift_profile)?;
+
+        let sample_data = match sample_data {
+            // attempt to create sample data. If it fails, return default sample data and log a warning
+            Some(data) => TorchSampleData::new(data).unwrap_or_else(|e| {
+                warn!("Failed to create sample data. Defaulting to None: {}", e);
+                TorchSampleData::default()
+            }),
+            None => TorchSampleData::default(),
+        };
+
         model_interface.model_interface_type = ModelInterfaceType::Torch;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
         let preprocessor = match preprocessor {
@@ -124,6 +137,7 @@ impl TorchModel {
             TorchModel {
                 preprocessor,
                 preprocessor_name,
+                sample_data,
             },
             model_interface,
         ))

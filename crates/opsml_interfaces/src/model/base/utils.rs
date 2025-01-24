@@ -532,7 +532,7 @@ fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>
     Ok(data)
 }
 
-fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
+pub fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
     let module = class.getattr("__module__")?.str()?.to_string();
     let name = class.getattr("__name__")?.str()?.to_string();
     Ok(format!("{}.{}", module, name))
