@@ -7,7 +7,7 @@ from typing import Tuple, Dict
 from pydantic import BaseModel
 
 # Sets up logging for tests
-RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Info))
+RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
 
 
 class MockInterface(BaseModel):

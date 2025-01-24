@@ -22,10 +22,12 @@ impl OnnxModelConverter {
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession>
     where
-        T: OnnxExtension,
+        T: OnnxExtension + std::fmt::Debug,
     {
-        let span = span!(Level::DEBUG, "Onnx Conversion");
+        let span = span!(Level::INFO, "Onnx Conversion");
         let _enter = span.enter();
+
+        debug!("sample_data: {:?}", sample_data);
 
         // check if sample data is none
         if sample_data.is_none() {
