@@ -11,7 +11,7 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, warn};
+use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -177,8 +177,12 @@ impl LightGBMModel {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving preprocessor").entered();
+        let _ = span.enter();
+
         // check if data is None
         if self.preprocessor.is_none(py) {
+            error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -190,6 +194,8 @@ impl LightGBMModel {
 
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
+
+        info!("Preprocessor saved");
 
         Ok(save_path)
     }
@@ -233,9 +239,13 @@ impl LightGBMModel {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving Model").entered();
+        let _ = span.enter();
+
         let super_ = self_.as_ref();
         // check if data is None
         if super_.model.is_none(py) {
+            error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -249,9 +259,20 @@ impl LightGBMModel {
             .model
             .call_method(py, "save_model", (full_save_path,), kwargs)?;
 
+        info!("Model saved");
         Ok(save_path)
     }
 
+    /// Load the model from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<()>` - Result of the load
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
@@ -259,6 +280,9 @@ impl LightGBMModel {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Loading Model").entered();
+        let _ = span.enter();
+
         let super_ = self_.as_super();
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
@@ -268,10 +292,15 @@ impl LightGBMModel {
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
         kwargs.set_item("model_file", load_path)?;
 
-        let model = booster.call((), Some(&kwargs))?;
+        let model = booster.call((), Some(&kwargs)).map_err(|e| {
+            error!("Failed to load model from file: {}", e);
+            OpsmlError::new_err(format!("Failed to load model from file: {}", e))
+        })?;
 
         // Save the data using joblib
         super_.model = model.into();
+
+        info!("Model loaded");
 
         Ok(())
     }
@@ -295,13 +324,13 @@ impl LightGBMModel {
         to_onnx: bool,
         save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
+        let _ = span.enter();
+
+        debug!("Saving lightgbm interface");
+
         // parse the save args
         let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
-
-        debug!(
-            "Saving model to: {:?} with save_args: {:?}",
-            path, save_args
-        );
 
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
