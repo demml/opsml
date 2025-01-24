@@ -341,4 +341,8 @@ impl OnnxExtension for TorchSampleData {
             TorchSampleData::None => Ok(py.None().into_bound_py_any(py).unwrap()),
         }
     }
+
+    fn is_none(&self) -> bool {
+        matches!(self, TorchSampleData::None)
+    }
 }

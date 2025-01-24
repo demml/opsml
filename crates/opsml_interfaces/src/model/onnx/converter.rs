@@ -8,7 +8,7 @@ use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use tracing::{debug, span, Level};
+use tracing::{debug, error, span, Level};
 
 pub struct OnnxModelConverter {}
 
@@ -26,6 +26,14 @@ impl OnnxModelConverter {
     {
         let span = span!(Level::DEBUG, "Onnx Conversion");
         let _enter = span.enter();
+
+        // check if sample data is none
+        if sample_data.is_none() {
+            error!("Cannot save ONNX model without sample data");
+            return Err(OpsmlError::new_err(
+                "Cannot save ONNX model without sample data",
+            ));
+        }
 
         match model_interface_type {
             ModelInterfaceType::Sklearn => {
