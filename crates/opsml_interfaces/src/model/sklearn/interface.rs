@@ -3,7 +3,7 @@ use crate::base::ModelInterfaceSaveMetadata;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::SaveArgs;
+use crate::SaveKwargs;
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
 use opsml_types::{SaveName, Suffix};
@@ -238,7 +238,7 @@ impl SklearnModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveArgs>,
+        save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {

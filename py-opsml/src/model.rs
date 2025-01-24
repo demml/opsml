@@ -3,7 +3,7 @@ use opsml_interfaces::{
     HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModel,
     LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterface,
     ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession,
-    SaveArgs, SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata,
+    SaveKwargs, SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata,
     TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs, VowpalWabbitInterfaceMetadata,
     XGBoostModel, XGBoostModelInterfaceMetadata,
 };
@@ -23,7 +23,7 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // helper types
     m.add_class::<DataProcessor>()?;
     m.add_class::<OnnxSession>()?;
-    m.add_class::<SaveArgs>()?;
+    m.add_class::<SaveKwargs>()?;
     m.add_class::<ModelInterfaceType>()?;
     m.add_class::<ModelType>()?;
 

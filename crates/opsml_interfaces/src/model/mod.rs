@@ -12,7 +12,7 @@ pub mod xgboost;
 
 pub use base::{
     DataProcessor, InterfaceDataType, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, SampleData, SaveArgs, TaskType,
+    ModelInterfaceSaveMetadata, SampleData, SaveKwargs, TaskType,
 };
 pub use catboost::CatBoostModelInterfaceMetadata;
 pub use huggingface::{

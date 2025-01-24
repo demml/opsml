@@ -1,4 +1,4 @@
-from opsml.model import ModelInterface, TaskType, SklearnModel, SaveArgs
+from opsml.model import ModelInterface, TaskType, SklearnModel, SaveKwargs
 from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData, TorchData
 from numpy.typing import NDArray
 from pathlib import Path
@@ -298,7 +298,7 @@ def test_save_model_interface_with_args(
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    args = SaveArgs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    args = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
     metadata = model.save(save_path, True, args)
 
     assert metadata.save_args is not None
@@ -313,3 +313,16 @@ def test_save_model_interface_with_args(
     assert model.model is not None
 
     model.load_onnx_model(save_path)
+
+
+def test_save_kwargs_serialization():
+    kwargs = SaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}},
+        model={"test": 1},
+    )
+
+    json_string = kwargs.model_dump_json()
+
+    loaded_kwargs = SaveKwargs.model_validate_json(json_string)
+
+    assert loaded_kwargs.model_dump_json() == json_string

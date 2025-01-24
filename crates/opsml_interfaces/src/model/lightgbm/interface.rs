@@ -2,7 +2,7 @@ use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SampleData, SaveArgs};
+use crate::{DataProcessor, SampleData, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -296,7 +296,7 @@ impl LightGBMModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveArgs>,
+        save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // parse the save args
         let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);

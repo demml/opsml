@@ -139,7 +139,7 @@ class TorchSaveArgs:
                 Whether to save the model as a state dict. Default is False
         """
 
-class SaveArgs:
+class SaveKwargs:
     def __init__(
         self,
         onnx: Optional[Dict] = None,
@@ -153,6 +153,10 @@ class SaveArgs:
             model (Dict):
                 Optional model arguments
         """
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "SaveKwargs": ...
 
 class DataProcessor:
     name: str
@@ -168,7 +172,7 @@ class ModelInterfaceSaveMetadata:
     onnx_model_uri: Optional[Path]
     drift_profile_uri: Optional[Path]
     extra_metadata: Dict[str, str]
-    save_args: Optional[SaveArgs]
+    save_args: Optional[SaveKwargs]
 
     def __init__(
         self,
@@ -178,7 +182,7 @@ class ModelInterfaceSaveMetadata:
         onnx_model_uri: Optional[Path] = None,
         drift_profile_uri: Optional[Path] = None,
         extra_metadata: Optional[Dict[str, str]] = {},  # type: ignore
-        save_args: Optional[SaveArgs] = None,
+        save_args: Optional[SaveKwargs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -271,7 +275,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -681,7 +687,7 @@ class ModelInterface:
         self,
         path: Path,
         to_onnx: bool = False,
-        save_args: None | SaveArgs = None,
+        save_args: None | SaveKwargs = None,
     ) -> ModelInterfaceSaveMetadata:
         """Save the model interface
 

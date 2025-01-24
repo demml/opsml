@@ -148,7 +148,11 @@ impl PyHelperFuncs {
     }
 }
 
-pub fn json_to_pyobject(py: Python, value: &Value, dict: &Bound<'_, PyDict>) -> PyResult<()> {
+pub fn json_to_pyobject<'py>(
+    py: Python,
+    value: &Value,
+    dict: &Bound<'py, PyDict>,
+) -> PyResult<Bound<'py, PyDict>> {
     match value {
         Value::Object(map) => {
             for (k, v) in map {
@@ -184,7 +188,8 @@ pub fn json_to_pyobject(py: Python, value: &Value, dict: &Bound<'_, PyDict>) -> 
         }
         _ => return Err(PyValueError::new_err("Root must be an object")),
     }
-    Ok(())
+
+    Ok(dict.clone())
 }
 
 pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
