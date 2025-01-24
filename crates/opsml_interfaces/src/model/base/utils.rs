@@ -417,9 +417,11 @@ pub trait OnnxExtension {
         model_type: &ModelType,
     ) -> PyResult<Bound<'py, PyAny>>;
 
-    fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, _py: Python) -> PyResult<Vec<String>> {
         Ok(vec![])
     }
+
+    fn is_none(&self) -> bool;
 }
 
 impl OnnxExtension for SampleData {
@@ -515,6 +517,10 @@ impl OnnxExtension for SampleData {
             SampleData::None => Ok(vec![]),
             SampleData::DMatrix(_) => Ok(vec![]),
         }
+    }
+
+    fn is_none(&self) -> bool {
+        matches!(self, SampleData::None)
     }
 }
 
