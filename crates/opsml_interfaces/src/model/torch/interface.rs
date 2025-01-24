@@ -383,9 +383,9 @@ impl TorchModel {
         save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // color text
-        let span = span!(Level::INFO, "XGBoost Save").entered();
+        let span = span!(Level::INFO, "Saving TorchModel interface").entered();
         let _ = span.enter();
-        info!("Saving XGBoost model");
+
         // parse the save args
         let (onnx_kwargs, _model_kwargs) = parse_save_args(py, &save_args);
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
@@ -401,38 +401,26 @@ impl TorchModel {
                 uri: uri,
             })
         };
-        let sample_data_uri = self_
-            .as_super()
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
-        self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
-            error!("Failed to create feature schema: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let sample_data_uri = self_.save_data(py, path.clone())?;
+        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(
-                self_
-                    .as_super()
-                    .save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())
-                    .map_err(|e| {
-                        error!("Failed to save ONNX model: {}", e);
-                        OpsmlError::new_err(e.to_string())
-                    })?,
-            );
+            onnx_model_uri = Some(self_.as_super().save_onnx_model(
+                py,
+                path.clone(),
+                onnx_kwargs.as_ref(),
+            )?);
         }
+
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(path.clone())?)
         };
+
         let model_uri = TorchModel::save_model(self_, py, path.clone(), None)?;
-        // create the data processor map
-        debug!("Creating data processor map");
+
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {
                 let mut map = HashMap::new();
@@ -440,6 +428,7 @@ impl TorchModel {
                 map
             })
             .unwrap_or_default();
+
         let metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
@@ -449,7 +438,7 @@ impl TorchModel {
             extra_metadata: HashMap::new(),
             save_args,
         };
-        info!("XGBoost model saved");
+
         Ok(metadata)
     }
 }

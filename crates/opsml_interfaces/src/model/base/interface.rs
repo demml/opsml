@@ -68,13 +68,13 @@ pub struct ModelInterfaceSaveMetadata {
     pub extra_metadata: HashMap<String, String>,
 
     #[pyo3(get)]
-    pub save_args: Option<SaveKwargs>,
+    pub save_kwargs: Option<SaveKwargs>,
 }
 
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
+    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_kwargs=None))]
     pub fn new(
         model_uri: PathBuf,
         data_processor_map: Option<HashMap<String, DataProcessor>>,
@@ -82,7 +82,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
-        save_args: Option<SaveKwargs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -91,7 +91,7 @@ impl ModelInterfaceSaveMetadata {
             data_processor_map: data_processor_map.unwrap_or_default(),
             drift_profile_uri,
             extra_metadata,
-            save_args,
+            save_kwargs,
         }
     }
 
@@ -447,13 +447,13 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveKwargs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         let span = span!(Level::INFO, "Saving Model Interface").entered();
         let _ = span.enter();
@@ -461,7 +461,7 @@ impl ModelInterface {
         debug!("Saving model interface");
 
         // get onnx and model kwargs
-        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
+        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_kwargs);
 
         // save model
         let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;
@@ -489,7 +489,7 @@ impl ModelInterface {
             onnx_model_uri,
             drift_profile_uri,
             extra_metadata: HashMap::new(),
-            save_args,
+            save_kwargs,
         })
     }
 

@@ -316,13 +316,13 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveKwargs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
         let _ = span.enter();
@@ -330,7 +330,7 @@ impl LightGBMModel {
         debug!("Saving lightgbm interface");
 
         // parse the save args
-        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
+        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_kwargs);
 
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
@@ -339,7 +339,7 @@ impl LightGBMModel {
             let uri = self_.save_preprocessor(
                 py,
                 path.clone(),
-                save_args.as_ref().and_then(|args| args.model_kwargs(py)),
+                save_kwargs.as_ref().and_then(|args| args.model_kwargs(py)),
             )?;
 
             Some(DataProcessor {
@@ -387,7 +387,7 @@ impl LightGBMModel {
             onnx_model_uri,
             drift_profile_uri,
             extra_metadata: HashMap::new(),
-            save_args,
+            save_kwargs,
         };
 
         Ok(metadata)
