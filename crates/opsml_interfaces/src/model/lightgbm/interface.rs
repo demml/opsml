@@ -2,7 +2,7 @@ use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SampleData, SaveKwargs};
+use crate::{DataProcessor, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
