@@ -1,13 +1,14 @@
 use crate::data::{DataInterface, TorchData};
 use crate::model::{
-    base::{get_class_full_name, load_from_joblib, save_to_joblib},
+    base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
+use crate::ModelType;
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
-use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
+use pyo3::{BoundObject, IntoPyObjectExt};
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::error;
@@ -313,6 +314,31 @@ impl TorchSampleData {
             TorchSampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
             TorchSampleData::DataSet(data) => Ok(data.into_py_any(py).unwrap()),
             TorchSampleData::None => Ok(py.None()),
+        }
+    }
+}
+
+impl OnnxExtension for TorchSampleData {
+    fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        _model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            TorchSampleData::Torch(data) => Ok(data.bind(py).getattr("data")?),
+            TorchSampleData::List(data) => Ok({
+                let data = data.bind(py);
+                // convert list to tuple
+                PyTuple::new(py, data.iter())?.into_any()
+            }),
+            TorchSampleData::Tuple(data) => Ok(data.into_bound_py_any(py).unwrap()),
+            TorchSampleData::Dict(data) => Ok({
+                let data = data.bind(py);
+                // convert dict to tuple
+                PyTuple::new(py, data.call_method0("values"))?.into_any()
+            }),
+            TorchSampleData::DataSet(data) => Ok(data.into_bound_py_any(py).unwrap()),
+            TorchSampleData::None => Ok(py.None().into_bound_py_any(py).unwrap()),
         }
     }
 }

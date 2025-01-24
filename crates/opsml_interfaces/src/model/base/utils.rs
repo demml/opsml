@@ -346,7 +346,84 @@ impl SampleData {
         Ok(data)
     }
 
-    pub fn get_data_for_onnx<'py>(
+    pub fn load_data<'py>(
+        py: Python<'py>,
+        path: &PathBuf,
+        data_type: &DataType,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<SampleData> {
+        match data_type {
+            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
+            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
+            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
+            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
+            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
+            DataType::List => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::List(
+                    data.downcast::<PyList>()?.clone().unbind(),
+                ))
+            }
+            DataType::Tuple => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Tuple(
+                    data.downcast::<PyTuple>()?.clone().unbind(),
+                ))
+            }
+            DataType::Dict => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Dict(
+                    data.downcast::<PyDict>()?.clone().unbind(),
+                ))
+            }
+            DataType::DMatrix => {
+                let data = load_dmatrix(py, path)?;
+                Ok(SampleData::DMatrix(data.unbind()))
+            }
+
+            _ => Ok(SampleData::None),
+        }
+    }
+}
+
+pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
+    if py_profiles.is_instance_of::<PyList>() {
+        let py_profiles = py_profiles.downcast::<PyList>()?;
+        py_profiles
+            .iter()
+            .map(|profile| extract_drift_profile(&profile))
+            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
+            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
+    } else {
+        let drift_type = py_profiles
+            .getattr("config")?
+            .getattr("drift_type")?
+            .extract::<DriftType>()?;
+
+        let profile = match drift_type {
+            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
+            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
+            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
+        };
+
+        Ok(vec![profile])
+    }
+}
+
+pub trait OnnxExtension {
+    fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>>;
+
+    fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+        Ok(vec![])
+    }
+}
+
+impl OnnxExtension for SampleData {
+    fn get_data_for_onnx<'py>(
         &self,
         py: Python<'py>,
         model_type: &ModelType,
@@ -410,7 +487,7 @@ impl SampleData {
         }
     }
 
-    pub fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
         match self {
             SampleData::Pandas(data) => {
                 let data = data.bind(py).getattr("data")?;
@@ -438,69 +515,6 @@ impl SampleData {
             SampleData::None => Ok(vec![]),
             SampleData::DMatrix(_) => Ok(vec![]),
         }
-    }
-
-    pub fn load_data<'py>(
-        py: Python<'py>,
-        path: &PathBuf,
-        data_type: &DataType,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<SampleData> {
-        match data_type {
-            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
-            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
-            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
-            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
-            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
-            DataType::List => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::List(
-                    data.downcast::<PyList>()?.clone().unbind(),
-                ))
-            }
-            DataType::Tuple => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Tuple(
-                    data.downcast::<PyTuple>()?.clone().unbind(),
-                ))
-            }
-            DataType::Dict => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Dict(
-                    data.downcast::<PyDict>()?.clone().unbind(),
-                ))
-            }
-            DataType::DMatrix => {
-                let data = load_dmatrix(py, path)?;
-                Ok(SampleData::DMatrix(data.unbind()))
-            }
-
-            _ => Ok(SampleData::None),
-        }
-    }
-}
-
-pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
-    if py_profiles.is_instance_of::<PyList>() {
-        let py_profiles = py_profiles.downcast::<PyList>()?;
-        py_profiles
-            .iter()
-            .map(|profile| extract_drift_profile(&profile))
-            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
-            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
-    } else {
-        let drift_type = py_profiles
-            .getattr("config")?
-            .getattr("drift_type")?
-            .extract::<DriftType>()?;
-
-        let profile = match drift_type {
-            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
-            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
-            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
-        };
-
-        Ok(vec![profile])
     }
 }
 

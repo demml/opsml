@@ -1,10 +1,10 @@
+use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::OnnxSession;
 use crate::{types::ModelType, SampleData};
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
-
 pub struct LightGBMOnnxModelConverter {}
 
 impl Default for LightGBMOnnxModelConverter {
@@ -43,14 +43,17 @@ impl LightGBMOnnxModelConverter {
         .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
-    pub fn convert_model<'py>(
+    pub fn convert_model<'py, T>(
         &self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
         model_type: &ModelType,
-        sample_data: &SampleData,
+        sample_data: &T,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> PyResult<OnnxSession>
+    where
+        T: OnnxExtension,
+    {
         let onnxmltools = py
             .import("onnxmltools")
             .map_err(|e| OpsmlError::new_err(format!("Failed to import onnxmltools: {}", e)))?;

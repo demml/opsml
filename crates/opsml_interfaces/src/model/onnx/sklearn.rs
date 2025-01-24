@@ -1,6 +1,6 @@
+use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
 use crate::{types::ModelType, SampleData};
-
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -167,14 +167,17 @@ impl SklearnOnnxModelConverter {
         .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
-    pub fn convert_model<'py>(
+    pub fn convert_model<'py, T>(
         &self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
         model_type: &ModelType,
-        sample_data: &SampleData,
+        sample_data: &T,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> PyResult<OnnxSession>
+    where
+        T: OnnxExtension,
+    {
         debug!("Step 1: Updating registries for ONNX");
         self.update_sklearn_onnx_registries(py, model, model_type)?;
 

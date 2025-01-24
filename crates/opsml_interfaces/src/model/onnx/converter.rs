@@ -1,5 +1,7 @@
+use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
+use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
 use crate::types::{ModelInterfaceType, ModelType};
 use crate::{OnnxSession, SampleData};
@@ -11,14 +13,17 @@ use tracing::{debug, span, Level};
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
-    pub fn convert_model<'py>(
+    pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,
-        sample_data: &SampleData,
+        sample_data: &T,
         model_interface_type: &ModelInterfaceType,
         model_type: &ModelType,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession> {
+    ) -> PyResult<OnnxSession>
+    where
+        T: OnnxExtension,
+    {
         let span = span!(Level::DEBUG, "Onnx Conversion");
         let _enter = span.enter();
 
@@ -37,6 +42,11 @@ impl OnnxModelConverter {
                 debug!("Converting XGBoost model to ONNX");
                 let converter = XGBoostOnnxModelConverter::default();
                 converter.convert_model(py, model, model_type, sample_data, kwargs)
+            }
+            ModelInterfaceType::Torch => {
+                debug!("Converting Torch model to ONNX");
+                let converter = TorchOnnxModelConverter::default();
+                converter.convert_model(py, model, sample_data, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }
