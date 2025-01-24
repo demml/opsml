@@ -1,6 +1,6 @@
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
-use crate::{types::ModelType, SampleData};
+use crate::types::ModelType;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

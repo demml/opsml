@@ -4,7 +4,7 @@ use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
 use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
 use crate::types::{ModelInterfaceType, ModelType};
-use crate::{OnnxSession, SampleData};
+use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
