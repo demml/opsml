@@ -334,8 +334,11 @@ impl OnnxExtension for TorchSampleData {
             TorchSampleData::Tuple(data) => Ok(data.into_bound_py_any(py).unwrap()),
             TorchSampleData::Dict(data) => Ok({
                 let data = data.bind(py);
-                // convert dict to tuple
-                PyTuple::new(py, data.call_method0("values"))?.into_any()
+
+                // collect all values from dict into a list
+                let dict_value_list = PyList::new(py, data.values())?;
+
+                PyTuple::new(py, dict_value_list.iter())?.into_any()
             }),
             TorchSampleData::DataSet(data) => Ok(data.into_bound_py_any(py).unwrap()),
             TorchSampleData::None => Ok(py.None().into_bound_py_any(py).unwrap()),

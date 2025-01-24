@@ -3,24 +3,38 @@ use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::ModelType;
 use crate::{DataProcessor, SaveKwargs};
+use crate::{OnnxModelConverter, OnnxSession};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
+use std::fs;
 use std::path::PathBuf;
-use tracing::{error, info, span, warn, Level};
-
+use tracing::{debug, error, info, span, warn, Level};
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
 pub struct TorchModel {
+    #[pyo3(get)]
+    pub model: PyObject,
+
     #[pyo3(get)]
     pub preprocessor: PyObject,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
+
+    #[pyo3(get)]
+    pub onnx_session: Option<OnnxSession>,
+
+    #[pyo3(get)]
+    pub model_type: ModelType,
+
+    #[pyo3(get)]
+    pub model_interface_type: ModelInterfaceType,
 
     pub sample_data: TorchSampleData,
 }
@@ -40,18 +54,21 @@ impl TorchModel {
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is base estimator for sklearn validation
-        if let Some(model) = model {
+        let model = if let Some(model) = model {
             let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
             if model.is_instance(&torch_module).unwrap() {
-                //
+                model.into_py_any(py)?
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of torch.nn.Module",
                 ));
             }
-        }
+        } else {
+            py.None()
+        };
+
         let mut model_interface =
-            ModelInterface::new(py, model, None, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, None, None, task_type, schema, drift_profile)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -63,8 +80,8 @@ impl TorchModel {
             None => TorchSampleData::default(),
         };
 
-        model_interface.model_interface_type = ModelInterfaceType::Torch;
         model_interface.data_type = sample_data.get_data_type();
+
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
 
         let preprocessor = match preprocessor {
@@ -82,9 +99,45 @@ impl TorchModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
+                model,
+                model_interface_type: ModelInterfaceType::Torch,
+                model_type: ModelType::Pytorch,
+                onnx_session: None,
             },
+            // pass all the arguments to the ModelInterface
             model_interface,
         ))
+    }
+
+    #[setter]
+    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = model.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(model) {
+            self.model = py.None();
+            return Ok(());
+        } else {
+            let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
+            if model.is_instance(&torch_module).unwrap() {
+                model.into_py_any(py)?
+            } else {
+                return Err(OpsmlError::new_err(
+                    "Model must be an instance of torch.nn.Module",
+                ));
+            }
+        };
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_onnx_session(&mut self, onnx_session: Option<&OnnxSession>) {
+        if let Some(onnx_session) = onnx_session {
+            self.onnx_session = Some(onnx_session.clone());
+        } else {
+            self.onnx_session = None;
+        }
     }
 
     #[setter]
@@ -217,17 +270,16 @@ impl TorchModel {
     ///
     #[pyo3(signature = (path, **kwargs))]
     pub fn save_model<'py>(
-        self_: PyRefMut<'py, Self>,
+        &self,
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Save Model").entered();
         let _ = span.enter();
-        let super_ = self_.as_ref();
 
         // check if model is None
-        if super_.model.is_none(py) {
+        if self.model.is_none(py) {
             error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -236,7 +288,7 @@ impl TorchModel {
 
         let torch = py.import("torch")?;
 
-        let state_dict = super_.model.getattr(py, "state_dict")?.call0(py)?;
+        let state_dict = self.model.getattr(py, "state_dict")?.call0(py)?;
 
         let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Pt);
         let full_save_path = path.join(&save_path);
@@ -256,7 +308,7 @@ impl TorchModel {
 
     #[pyo3(signature = (path, model, **kwargs))]
     pub fn load_model<'py>(
-        mut self_: PyRefMut<'py, Self>,
+        &mut self,
         py: Python,
         path: PathBuf,
         model: &Bound<'py, PyAny>,
@@ -264,7 +316,6 @@ impl TorchModel {
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Load Model");
         let _ = span.enter();
-        let super_ = self_.as_super();
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Pt);
         let torch = py.import("torch")?;
@@ -290,7 +341,7 @@ impl TorchModel {
         // set model to eval mode
         model.call_method0("eval")?;
 
-        super_.model = model.clone().unbind();
+        self.model = model.clone().unbind();
 
         Ok(())
     }
@@ -313,6 +364,83 @@ impl TorchModel {
             });
 
         Ok(sample_data_uri)
+    }
+
+    /// Load the sample data
+    #[pyo3(signature = (path, **kwargs))]
+    pub fn load_data<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<()> {
+        // load sample data
+        self_.sample_data =
+            TorchSampleData::load_data(py, &path, &self_.as_super().data_type, kwargs)?;
+
+        Ok(())
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (**kwargs))]
+    pub fn convert_to_onnx<'py>(
+        &mut self,
+        py: Python,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Converting model to ONNX").entered();
+        let _ = span.enter();
+
+        self.onnx_session = Some(OnnxModelConverter::convert_model(
+            py,
+            &self.model.bind(py),
+            &self.sample_data,
+            &self.model_interface_type,
+            &self.model_type,
+            kwargs,
+        )?);
+
+        info!("Model converted to ONNX");
+
+        Ok(())
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (path, **kwargs))]
+    fn save_onnx_model<'py>(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving ONNX Model").entered();
+        let _ = span.enter();
+
+        if !self.onnx_session.is_some() {
+            self.convert_to_onnx(py, kwargs)?;
+        }
+
+        let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
+        let full_save_path = path.join(&save_path);
+        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+
+        fs::write(&full_save_path, bytes)?;
+
+        info!("ONNX model saved");
+
+        Ok(save_path)
     }
 
     /// Save the interface model
@@ -338,8 +466,17 @@ impl TorchModel {
         let span = span!(Level::INFO, "Saving TorchModel interface").entered();
         let _ = span.enter();
 
+        debug!("Saving drift profile");
+        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
+            None
+        } else {
+            Some(self_.as_super().save_drift_profile(path.clone())?)
+        };
+
         // parse the save args
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+
+        debug!("Saving preprocessor");
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
@@ -349,25 +486,22 @@ impl TorchModel {
                 uri: uri,
             })
         };
+
+        debug!("Saving sample data");
         let sample_data_uri = self_.save_data(py, path.clone(), None)?;
+
+        debug!("Creating feature schema");
         self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
+
         if to_onnx {
-            onnx_model_uri = Some(self_.as_super().save_onnx_model(
-                py,
-                path.clone(),
-                onnx_kwargs.as_ref(),
-            )?);
+            debug!("Saving ONNX model");
+            onnx_model_uri = Some(self_.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
         }
 
-        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
-            None
-        } else {
-            Some(self_.as_super().save_drift_profile(path.clone())?)
-        };
-
-        let model_uri = TorchModel::save_model(self_, py, path.clone(), model_kwargs.as_ref())?;
+        debug!("Saving model");
+        let model_uri = self_.save_model(py, path.clone(), model_kwargs.as_ref())?;
 
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {
