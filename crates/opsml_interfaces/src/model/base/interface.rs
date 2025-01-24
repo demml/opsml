@@ -7,6 +7,7 @@ use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
+use ort::error;
 
 use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
@@ -21,8 +22,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use tracing::warn;
-use tracing::{debug, span};
+
+use tracing::{debug, error, info, span, warn, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -353,8 +354,12 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving model").entered();
+        let _ = span.enter();
+
         // check if data is None
         if self.model.is_none(py) {
+            error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
             ));
@@ -366,6 +371,8 @@ impl ModelInterface {
 
         // Save the data using joblib
         joblib.call_method("dump", (&self.model, full_save_path), kwargs)?;
+
+        info!("Model saved");
 
         Ok(save_path)
     }
@@ -384,11 +391,22 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::DEBUG, "Loading Model").entered();
+        let _ = span.enter();
+
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.model = joblib.call_method("load", (load_path,), kwargs)?.into();
+        self.model = joblib
+            .call_method("load", (load_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to load model. Error: {}", e);
+                OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
+            })?
+            .into();
+
+        debug!("Model loaded");
 
         Ok(())
     }
@@ -438,13 +456,13 @@ impl ModelInterface {
         to_onnx: bool,
         save_args: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
+        let span = span!(Level::DEBUG, "Saving Model Interface").entered();
+        let _ = span.enter();
+
+        debug!("Saving model interface");
+
         // get onnx and model kwargs
         let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
-
-        debug!(
-            "Saving model to: {:?} with save_args: {:?}",
-            path, save_args
-        );
 
         // save model
         let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;
@@ -489,6 +507,9 @@ impl ModelInterface {
         py: Python,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::DEBUG, "Saving Onnx Model").entered();
+        let _ = span.enter();
+
         if self.onnx_session.is_some() {
             warn!("Model has already been converted to ONNX. Skipping conversion.");
             return Ok(());
@@ -502,6 +523,8 @@ impl ModelInterface {
             &self.model_type,
             kwargs,
         )?);
+
+        debug!("Model converted to ONNX");
 
         Ok(())
     }
@@ -520,6 +543,9 @@ impl ModelInterface {
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
+        let span = span!(Level::DEBUG, "Saving Onnx Model").entered();
+        let _ = span.enter();
+
         if self.onnx_session.is_none() {
             self.convert_to_onnx(py, kwargs)?;
         }
@@ -528,6 +554,8 @@ impl ModelInterface {
         let full_save_path = path.join(&save_path);
         let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
         fs::write(&full_save_path, bytes)?;
+
+        debug!("Onnx model saved");
 
         Ok(save_path)
     }
