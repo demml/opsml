@@ -4,17 +4,16 @@ use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SampleData, SaveKwargs};
+use crate::{DataProcessor, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
-use ort::info;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{error, info, span, warn, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
