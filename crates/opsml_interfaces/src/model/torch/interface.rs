@@ -236,26 +236,14 @@ impl TorchModel {
 
         let torch = py.import("torch")?;
 
-        // TOrch can be saved as a model or as a state dict
-        let save_as_state_dict = kwargs.map_or(false, |kwargs| {
-            kwargs
-                .get_item("save_as_state_dict")
-                .unwrap()
-                .map_or(false, |item| item.extract::<bool>().unwrap_or(false))
-        });
-
-        let model = if save_as_state_dict {
-            super_.model.getattr(py, "state_dict")?.call0(py)?
-        } else {
-            super_.model.clone_ref(py)
-        };
+        let state_dict = super_.model.getattr(py, "state_dict")?.call0(py)?;
 
         let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Pt);
         let full_save_path = path.join(&save_path);
 
         // Save torch model
         torch
-            .call_method("save", (model, full_save_path), kwargs)
+            .call_method("save", (state_dict, full_save_path), kwargs)
             .map_err(|e| {
                 error!("Failed to save model: {}", e);
                 OpsmlError::new_err(e.to_string())
@@ -266,12 +254,13 @@ impl TorchModel {
         Ok(save_path)
     }
 
-    #[pyo3(signature = (path, **kwargs))]
+    #[pyo3(signature = (path, model, **kwargs))]
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        model: &Bound<'py, PyAny>,
+        kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Load Model");
         let _ = span.enter();
@@ -280,42 +269,28 @@ impl TorchModel {
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Pt);
         let torch = py.import("torch")?;
 
-        let load_state_dict = kwargs.map_or(false, |kwargs| {
-            kwargs
-                .get_item("weights_only")
-                .unwrap()
-                .map_or(false, |item| item.extract::<bool>().unwrap_or(false))
-        });
-
-        match load_state_dict {
-            true => {
-                // kwargs should not be none
-                let kwargs = kwargs.ok_or_else(|| {
-                    error!("weights_only requires kwargs with weights_only set");
-                    OpsmlError::new_err("weights_only requires kwargs with weights_only")
-                })?;
-
-                let model_arch = kwargs.get_item("model_arch").unwrap().ok_or_else(|| {
-                error!("Instantiated model must be passed as 'model_arch' in kwargs when loading weights only");
-                OpsmlError::new_err("Instantiated model must be passed as 'model_arch' in kwargs when loading weights only")
-            })?;
-
-                let state_dict = torch.call_method("load", (load_path,), Some(kwargs))?;
-
-                // load state dict
-                model_arch.call_method("load_state_dict", (state_dict,), Some(kwargs))?;
-
-                // set model to eval mode
-                model_arch.call_method0("eval")?;
-
-                super_.model = model_arch.into();
-            }
-
-            false => {
-                let model = torch.call_method("load", (load_path,), kwargs)?;
-                super_.model = model.into();
-            }
+        // check if model is None. Return error
+        if model.is_none() {
+            error!("No model detected in interface for loading. TorchModel loading requires model to be passed");
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for loading",
+            ));
         }
+
+        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
+
+        // ensure weights only
+        kwargs.set_item("weights_only", true)?;
+
+        let state_dict = torch.call_method("load", (load_path,), Some(&kwargs))?;
+
+        // load state dict
+        model.call_method("load_state_dict", (state_dict,), None)?;
+
+        // set model to eval mode
+        model.call_method0("eval")?;
+
+        super_.model = model.clone().unbind();
 
         Ok(())
     }
@@ -364,7 +339,7 @@ impl TorchModel {
         let _ = span.enter();
 
         // parse the save args
-        let (onnx_kwargs, _model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
@@ -392,7 +367,7 @@ impl TorchModel {
             Some(self_.as_super().save_drift_profile(path.clone())?)
         };
 
-        let model_uri = TorchModel::save_model(self_, py, path.clone(), None)?;
+        let model_uri = TorchModel::save_model(self_, py, path.clone(), model_kwargs.as_ref())?;
 
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {
