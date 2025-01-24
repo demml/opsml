@@ -231,7 +231,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -945,7 +947,7 @@ class TorchModel(ModelInterface):
             Path to the saved model
         """
 
-    def load_model(self, path: Path, model: Any, **kwargs) -> None:  # type: ignore
+    def load_model(self, path: Path, model: Any, **kwargs) -> None:  # type: ignore # pylint: disable=arguments-differ
         """Load the model state dict into the model
         Args:
             path (Path):
