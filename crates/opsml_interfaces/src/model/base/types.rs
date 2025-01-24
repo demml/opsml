@@ -66,16 +66,26 @@ pub enum TaskType {
 pub struct SaveKwargs {
     onnx: Option<Py<PyDict>>,
     model: Option<Py<PyDict>>,
+    preprocessor: Option<Py<PyDict>>,
 }
 
 #[pymethods]
 impl SaveKwargs {
     #[new]
-    #[pyo3(signature = (onnx=None, model=None))]
-    pub fn new<'py>(onnx: Option<Bound<'py, PyDict>>, model: Option<Bound<'py, PyDict>>) -> Self {
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
+    pub fn new<'py>(
+        onnx: Option<Bound<'py, PyDict>>,
+        model: Option<Bound<'py, PyDict>>,
+        preprocessor: Option<Bound<'py, PyDict>>,
+    ) -> Self {
         let onnx = onnx.map(|onnx| onnx.unbind());
         let model = model.map(|model| model.unbind());
-        Self { onnx, model }
+        let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
+        Self {
+            onnx,
+            model,
+            preprocessor,
+        }
     }
 
     pub fn __str__(&self) -> String {
@@ -102,6 +112,13 @@ impl SaveKwargs {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.model.as_ref().and_then(|model| Some(model.bind(py)))
     }
+
+    pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.preprocessor
+            .as_ref()
+            .and_then(|preprocessor| Some(preprocessor.bind(py)))
+    }
 }
 
 impl Serialize for SaveKwargs {
@@ -110,7 +127,7 @@ impl Serialize for SaveKwargs {
         S: serde::Serializer,
     {
         Python::with_gil(|py| {
-            let mut state = serializer.serialize_struct("SaveKwargs", 2)?;
+            let mut state = serializer.serialize_struct("SaveKwargs", 3)?;
             let onnx = self
                 .onnx
                 .as_ref()
@@ -119,9 +136,14 @@ impl Serialize for SaveKwargs {
                 .model
                 .as_ref()
                 .map(|model| pyobject_to_json(model.bind(py)).unwrap());
+            let preprocessor = self
+                .preprocessor
+                .as_ref()
+                .map(|preprocessor| pyobject_to_json(preprocessor.bind(py)).unwrap());
 
             state.serialize_field("onnx", &onnx)?;
             state.serialize_field("model", &model)?;
+            state.serialize_field("preprocessor", &preprocessor)?;
             state.end()
         })
     }
@@ -148,6 +170,7 @@ impl<'de> Deserialize<'de> for SaveKwargs {
                 Python::with_gil(|py| {
                     let mut onnx = None;
                     let mut model = None;
+                    let mut preprocessor = None;
 
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
@@ -169,12 +192,25 @@ impl<'de> Deserialize<'de> for SaveKwargs {
                                 .unwrap();
                                 model = Some(dict.unbind());
                             }
+                            "preprocessor" => {
+                                let dict = json_to_pyobject(
+                                    py,
+                                    &map.next_value::<serde_json::Value>()?,
+                                    &PyDict::new(py),
+                                )
+                                .unwrap();
+                                preprocessor = Some(dict.unbind());
+                            }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;
                             }
                         }
                     }
-                    let kwargs = SaveKwargs { onnx, model };
+                    let kwargs = SaveKwargs {
+                        onnx,
+                        model,
+                        preprocessor,
+                    };
                     Ok(kwargs)
                 })
             }
@@ -189,8 +225,16 @@ impl Clone for SaveKwargs {
         Python::with_gil(|py| {
             let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
             let model = self.model.as_ref().map(|model| model.clone_ref(py));
+            let preprocessor = self
+                .preprocessor
+                .as_ref()
+                .map(|preprocessor| preprocessor.clone_ref(py));
 
-            SaveKwargs { onnx, model }
+            SaveKwargs {
+                onnx,
+                model,
+                preprocessor,
+            }
         })
     }
 }
