@@ -1,4 +1,4 @@
-use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::model::torch::types::{TorchOnnxArgs, TorchSaveArgs};
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
@@ -374,28 +374,24 @@ impl TorchModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveKwargs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // color text
         let span = span!(Level::INFO, "Saving TorchModel interface").entered();
         let _ = span.enter();
 
         // parse the save args
-        let (onnx_kwargs, _model_kwargs) = parse_save_args(py, &save_args);
+        let (onnx_kwargs, _model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
-            let uri = self_.save_preprocessor(
-                py,
-                path.clone(),
-                save_args.as_ref().and_then(|args| args.model_kwargs(py)),
-            )?;
+            let uri = self_.save_preprocessor(py, path.clone(), preprocessor_kwargs.as_ref())?;
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri: uri,
@@ -436,7 +432,7 @@ impl TorchModel {
             onnx_model_uri,
             drift_profile_uri,
             extra_metadata: HashMap::new(),
-            save_args,
+            save_kwargs,
         };
 
         Ok(metadata)

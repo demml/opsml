@@ -1,4 +1,4 @@
-use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -330,17 +330,13 @@ impl LightGBMModel {
         debug!("Saving lightgbm interface");
 
         // parse the save args
-        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_kwargs);
+        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
         // save the preprocessor if it exists
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
-            let uri = self_.save_preprocessor(
-                py,
-                path.clone(),
-                save_kwargs.as_ref().and_then(|args| args.model_kwargs(py)),
-            )?;
+            let uri = self_.save_preprocessor(py, path.clone(), preprocessor_kwargs.as_ref())?;
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
