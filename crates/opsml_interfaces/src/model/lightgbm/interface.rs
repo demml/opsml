@@ -261,9 +261,6 @@ impl LightGBMModel {
     ) -> PyResult<()> {
         let super_ = self_.as_super();
 
-        // get sample_data
-        super_.sample_data = SampleData::load_data(py, &path, &super_.data_type, kwargs)?;
-
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
 
         let booster = py.import("lightgbm")?.getattr("Booster")?;
@@ -322,14 +319,7 @@ impl LightGBMModel {
             })
         };
 
-        let sample_data_uri = self_
-            .as_super()
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
+        let sample_data_uri = self_.as_super().save_data(py, path.clone())?;
 
         self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
