@@ -910,3 +910,91 @@ class TorchModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
+
+    def save_preprocessor(self, path: Path, **kwargs) -> Path:
+        """Save the preprocessor as a joblib file
+
+        Args:
+            path (Path):
+                Path to save the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor saver
+        """
+
+    def load_preprocessor(self, path: Path, **kwargs) -> None:
+        """Load the preprocessor from a joblib file
+
+        Args:
+            path (Path):
+                Path to load the preprocessor
+
+            **kwargs:
+                Optional arguments to pass to the preprocessor loader
+        """
+
+    def save_model(self, path: Path, **kwargs) -> Path:
+        """Save the pytorch model.
+
+        Options for saving:
+            - Save entire model. This is the default behavior and is equivalent to
+                torch.save(model, path, **kwargs)
+            - Save model state dict. This is equivalent to torch.save(model.state_dict(), path **kwargs).
+
+            If saving as a state dict, kwargs must be passed in with {"save_as_state_dict": True}.
+
+        Args:
+            path (Path):
+                Path to save the model
+
+            **kwargs:
+                Optional arguments to pass to the model saver.
+                Use {"save_as_state_dict": True} to save the model as a state dict.
+
+        Returns:
+            Path to the saved model
+        """
+
+    def load_model(self, path: Path, **kwargs) -> None:
+        """Load the model from path.
+
+        Options for loading:
+            - Load entire model. This is the default behavior and is equivalent to
+                torch.load(path, **kwargs)
+            - Load model state dict. This is equivalent to torch.load(path, **kwargs) and then
+                model.load_state_dict(state_dict).
+
+            If loading a state dict, kwargs must be passed in with
+            {"weights_only": True, "model_arch": {{Your instantiated model}}}.
+
+        Args:
+            path (Path):
+                Path to load the model
+
+            **kwargs:
+                Optional arguments to pass to the model loader.
+                Use {"weights_only": True, "model_arch": {{Your instantiated model}}} to load a state dict.
+        """
+
+    def save(
+        self,
+        path: Path,
+        to_onnx: bool = False,
+        save_args: None | SaveKwargs = None,
+    ) -> ModelInterfaceSaveMetadata:
+        """Save the TorchModel interface
+
+        Args:
+            path (Path):
+                Base path to save artifacts
+            to_onnx (bool):
+                Whether to save the model to onnx
+            save_args (SaveKwargs):
+                Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                the underlying library.
+
+                - model: Kwargs that will be passed to save_model. See save_model for more details.
+                - preprocessor: Kwargs that will be passed to save_preprocessor
+                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+        """
