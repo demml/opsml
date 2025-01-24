@@ -243,7 +243,7 @@ impl LightGBMModel {
         let _ = span.enter();
 
         let super_ = self_.as_ref();
-        // check if data is None
+
         if super_.model.is_none(py) {
             error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
