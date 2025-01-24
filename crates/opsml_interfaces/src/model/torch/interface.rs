@@ -263,16 +263,28 @@ impl TorchModel {
                 "No model detected in interface for saving",
             ));
         }
-        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Json);
+
+        let torch = py.import("torch")?;
+
+        let save_as_state_dict = kwargs.map_or(false, |kwargs| {
+            kwargs
+                .get_item("save_as_state_dict")
+                .unwrap()
+                .map_or(false, |item| item.extract::<bool>().unwrap_or(false))
+        });
+
+        let model = if save_as_state_dict {
+            super_.model.getattr(py, "state_dict")?.call0(py)?
+        } else {
+            super_.model.clone_ref(py)
+        };
+
+        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Pt);
         let full_save_path = path.join(&save_path);
-        // Save the data using joblib
-        super_
-            .model
-            .call_method1(py, "save_model", (full_save_path,))
-            .map_err(|e| {
-                error!("Failed to save model: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+
+        // Save torch model
+        torch.call_method("save", (model, full_save_path), kwargs)?;
+
         Ok(save_path)
     }
     #[pyo3(signature = (path, **kwargs))]
