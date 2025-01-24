@@ -1,4 +1,4 @@
-use crate::base::{parse_save_args, SaveKwargs};
+use crate::base::{parse_save_kwargs, SaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
@@ -461,7 +461,7 @@ impl ModelInterface {
         debug!("Saving model interface");
 
         // get onnx and model kwargs
-        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_kwargs);
+        let (onnx_kwargs, model_kwargs, _) = parse_save_kwargs(py, &save_kwargs);
 
         // save model
         let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;

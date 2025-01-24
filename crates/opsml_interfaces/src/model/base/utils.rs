@@ -489,21 +489,30 @@ pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<Dri
     }
 }
 
-pub fn parse_save_args<'py>(
+pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
-    save_args: &Option<SaveKwargs>,
-) -> (Option<Bound<'py, PyDict>>, Option<Bound<'py, PyDict>>) {
-    let onnx_kwargs = save_args
+    save_kwargs: &Option<SaveKwargs>,
+) -> (
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+) {
+    let onnx_kwargs = save_kwargs
         .as_ref()
         .and_then(|args| args.onnx_kwargs(py))
         .cloned();
 
-    let model_kwargs = save_args
+    let model_kwargs = save_kwargs
         .as_ref()
         .and_then(|args| args.model_kwargs(py))
         .cloned();
 
-    (onnx_kwargs, model_kwargs)
+    let preprocessor_kwargs = save_kwargs
+        .as_ref()
+        .and_then(|args| args.preprocessor_kwargs(py))
+        .cloned();
+
+    (onnx_kwargs, model_kwargs, preprocessor_kwargs)
 }
 
 pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
