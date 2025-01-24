@@ -128,7 +128,7 @@ class ModelInterfaceSaveMetadata:
     onnx_model_uri: Optional[Path]
     drift_profile_uri: Optional[Path]
     extra_metadata: Dict[str, str]
-    save_args: Optional[SaveKwargs]
+    save_kwargs: Optional[SaveKwargs]
 
     def __init__(
         self,
@@ -138,7 +138,7 @@ class ModelInterfaceSaveMetadata:
         onnx_model_uri: Optional[Path] = None,
         drift_profile_uri: Optional[Path] = None,
         extra_metadata: Optional[Dict[str, str]] = {},  # type: ignore
-        save_args: Optional[SaveKwargs] = None,
+        save_kwargs: Optional[SaveKwargs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -155,7 +155,7 @@ class ModelInterfaceSaveMetadata:
                 Path to the drift profile
             extra_metadata:
                 Extra metadata
-            save_args:
+            save_kwargs:
                 Optional save args
         """
 
@@ -568,7 +568,7 @@ class ModelInterface:
         self,
         path: Path,
         to_onnx: bool = False,
-        save_args: None | SaveKwargs = None,
+        save_kwargs: None | SaveKwargs = None,
     ) -> ModelInterfaceSaveMetadata:
         """Save the model interface
 
@@ -577,7 +577,7 @@ class ModelInterface:
                 Path to save the model
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_args (SaveArgs):
+            save_kwargs (SaveArgs):
                 Optional save args
         """
 
@@ -934,53 +934,36 @@ class TorchModel(ModelInterface):
         """
 
     def save_model(self, path: Path, **kwargs) -> Path:
-        """Save the pytorch model.
-
-        Options for saving:
-            - Save entire model. This is the default behavior and is equivalent to
-                torch.save(model, path, **kwargs)
-            - Save model state dict. This is equivalent to torch.save(model.state_dict(), path **kwargs).
-
-            If saving as a state dict, kwargs must be passed in with {"save_as_state_dict": True}.
+        """Save the pytorch model as a state dictionary as recommended by the pytorch team.
 
         Args:
             path (Path):
                 Path to save the model
 
             **kwargs:
-                Optional arguments to pass to the model saver.
-                Use {"save_as_state_dict": True} to save the model as a state dict.
+                Optional arguments to pass to torch save function
 
         Returns:
             Path to the saved model
         """
 
-    def load_model(self, path: Path, **kwargs) -> None:
-        """Load the model from path.
-
-        Options for loading:
-            - Load entire model. This is the default behavior and is equivalent to
-                torch.load(path, **kwargs)
-            - Load model state dict. This is equivalent to torch.load(path, **kwargs) and then
-                model.load_state_dict(state_dict).
-
-            If loading a state dict, kwargs must be passed in with
-            {"weights_only": True, "model_arch": {{Your instantiated model}}}.
-
+    def load_model(self, path: Path, model: Any, **kwargs) -> None:  # type: ignore
+        """Load the model state dict into the model
         Args:
             path (Path):
-                Path to load the model
-
+                Path to load the model.
+            model (Any):
+                The model to load the state dict into.
             **kwargs:
-                Optional arguments to pass to the model loader.
-                Use {"weights_only": True, "model_arch": {{Your instantiated model}}} to load a state dict.
+                Optional arguments to pass to torch load function.
+                weights_only = True is automatically injected into kwargs.
         """
 
     def save(
         self,
         path: Path,
         to_onnx: bool = False,
-        save_args: None | SaveKwargs = None,
+        save_kwargs: None | SaveKwargs = None,
     ) -> ModelInterfaceSaveMetadata:
         """Save the TorchModel interface
 
@@ -989,7 +972,7 @@ class TorchModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_args (SaveKwargs):
+            save_kwargs (SaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.

@@ -28,6 +28,7 @@ from sklearn.impute import SimpleImputer  # type: ignore
 from sklearn.model_selection import train_test_split  # type: ignore
 from sklearn.datasets import load_iris  # type: ignore
 import xgboost as xgb  # type: ignore
+import torch
 
 
 @pytest.fixture(scope="session")
@@ -863,3 +864,29 @@ def xgb_booster_regressor_model(
     bst = xgb.train(param, dtrain, num_boost_round=num_round, evals=watchlist)
 
     return (bst, dtrain, StandardScaler())
+
+
+@pytest.fixture(scope="module")
+def pytorch_simple() -> Tuple[torch.nn.Module, dict]:
+    class Polynomial3(torch.nn.Module):
+        def __init__(self):
+            """
+            In the constructor we instantiate four parameters and assign them as
+            member parameters.
+            """
+            super().__init__()
+            self.x1 = torch.nn.Parameter(torch.randn(()))
+            self.x2 = torch.nn.Parameter(torch.randn(()))
+
+        def forward(self, x1: torch.Tensor, x2: torch.Tensor):
+            """
+            In the forward function we accept a Tensor of input data and we must return
+            a Tensor of output data. We can use Modules defined in the constructor as
+            well as arbitrary operators on Tensors.
+            """
+            return self.x1 + self.x2 * x1 * x2
+
+    model = Polynomial3()
+    inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
+
+    return (model, inputs)
