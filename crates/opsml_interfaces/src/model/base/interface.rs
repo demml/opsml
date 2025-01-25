@@ -430,18 +430,22 @@ impl ModelInterface {
         Ok(py_profile)
     }
 
-    /// Save the interface model
+    /// Dynamically load the model interface components
     ///
     /// # Arguments
     ///
     /// * `py` - Python interpreter
-    /// * `path` - Path to save the data    
-    /// * `kwargs` - Additional save kwargs
+    /// * `path` - Path to load from
+    /// * `model` - Whether to load the model (default: true)
+    /// * `onnx` - Whether to load the onnx model (default: false)
+    /// * `drift_profile` - Whether to load the drift profile (default: false)
+    /// * `sample_data` - Whether to load the sample data (default: false)
+    /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=true, load_kwargs=None))]
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
     pub fn load(
         &mut self,
         py: Python,
