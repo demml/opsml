@@ -2,7 +2,7 @@ use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SaveKwargs};
+use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -163,6 +163,150 @@ impl LightGBMModel {
         }
     }
 
+    /// Save the interface model
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    pub fn save<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python<'py>,
+        path: PathBuf,
+        to_onnx: bool,
+        save_kwargs: Option<SaveKwargs>,
+    ) -> PyResult<ModelInterfaceSaveMetadata> {
+        let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
+        let _ = span.enter();
+
+        debug!("Saving lightgbm interface");
+
+        // parse the save args
+        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
+
+        // save the preprocessor if it exists
+        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+            None
+        } else {
+            let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
+
+            Some(DataProcessor {
+                name: self_.preprocessor_name.clone(),
+                uri,
+            })
+        };
+
+        let sample_data_uri = self_.as_super().save_data(py, &path, None)?;
+
+        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+
+        let mut onnx_model_uri = None;
+        if to_onnx {
+            onnx_model_uri = Some(self_.as_super().save_onnx_model(
+                py,
+                &path,
+                onnx_kwargs.as_ref(),
+            )?);
+        }
+
+        // save drift profile
+        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
+            None
+        } else {
+            Some(self_.as_super().save_drift_profile(&path)?)
+        };
+
+        // save model
+        let model_uri = LightGBMModel::save_model(self_, py, &path, model_kwargs.as_ref())?;
+
+        // create the data processor map
+        let data_processor_map = preprocessor_entity
+            .map(|preprocessor| {
+                let mut map = HashMap::new();
+                map.insert(preprocessor.name.clone(), preprocessor);
+                map
+            })
+            .unwrap_or_default();
+
+        let metadata = ModelInterfaceSaveMetadata {
+            model_uri,
+            data_processor_map,
+            sample_data_uri,
+            onnx_model_uri,
+            drift_profile_uri,
+            extra_metadata: HashMap::new(),
+            save_kwargs,
+        };
+
+        Ok(metadata)
+    }
+
+    /// Dynamically load the model interface components
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to load from
+    /// * `model` - Whether to load the model (default: true)
+    /// * `onnx` - Whether to load the onnx model (default: false)
+    /// * `drift_profile` - Whether to load the drift profile (default: false)
+    /// * `sample_data` - Whether to load the sample data (default: false)
+    /// * `preprocessor` - Whether to load the preprocessor (default: false)
+    /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    pub fn load<'py>(
+        mut self_: PyRefMut<'py, Self>,
+        py: Python,
+        path: PathBuf,
+        model: bool,
+        onnx: bool,
+        drift_profile: bool,
+        sample_data: bool,
+        preprocessor: bool,
+        load_kwargs: Option<LoadKwargs>,
+    ) -> PyResult<()> {
+        // if kwargs is not None, unwrap, else default to None
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        // parent scope - can only borrow mutable one at a time
+        {
+            let parent = self_.as_super();
+            if model {
+                parent.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+            }
+
+            if onnx {
+                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            }
+
+            if drift_profile {
+                parent.load_drift_profile(&path)?;
+            }
+
+            if sample_data {
+                parent.load_data(py, &path, None)?;
+            }
+        }
+
+        if preprocessor {
+            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        }
+
+        Ok(())
+    }
+}
+
+impl LightGBMModel {
     /// Save the preprocessor to a file
     ///
     /// # Arguments
@@ -170,11 +314,10 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[pyo3(signature = (path, **kwargs))]
     pub fn save_preprocessor(
         &self,
         py: Python,
-        path: PathBuf,
+        path: &PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving preprocessor").entered();
@@ -207,11 +350,10 @@ impl LightGBMModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[pyo3(signature = (path, **kwargs))]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
-        path: PathBuf,
+        path: &PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let load_path = path
@@ -232,11 +374,10 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[pyo3(signature = (path, **kwargs))]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
-        path: PathBuf,
+        path: &PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving Model").entered();
@@ -273,11 +414,10 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of the load
-    #[pyo3(signature = (path, **kwargs))]
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
-        path: PathBuf,
+        path: &PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Loading Model").entered();
@@ -303,89 +443,5 @@ impl LightGBMModel {
         info!("Model loaded");
 
         Ok(())
-    }
-
-    /// Save the interface model
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Python interpreter
-    /// * `path` - Path to save the data
-    /// * `kwargs` - Additional save kwargs
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python<'py>,
-        path: PathBuf,
-        to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
-        let _ = span.enter();
-
-        debug!("Saving lightgbm interface");
-
-        // parse the save args
-        let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
-
-        // save the preprocessor if it exists
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
-            None
-        } else {
-            let uri = self_.save_preprocessor(py, path.clone(), preprocessor_kwargs.as_ref())?;
-
-            Some(DataProcessor {
-                name: self_.preprocessor_name.clone(),
-                uri,
-            })
-        };
-
-        let sample_data_uri = self_.as_super().save_data(py, path.clone(), None)?;
-
-        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
-
-        let mut onnx_model_uri = None;
-        if to_onnx {
-            onnx_model_uri = Some(self_.as_super().save_onnx_model(
-                py,
-                path.clone(),
-                onnx_kwargs.as_ref(),
-            )?);
-        }
-
-        // save drift profile
-        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
-            None
-        } else {
-            Some(self_.as_super().save_drift_profile(path.clone())?)
-        };
-
-        // save model
-        let model_uri = LightGBMModel::save_model(self_, py, path.clone(), model_kwargs.as_ref())?;
-
-        // create the data processor map
-        let data_processor_map = preprocessor_entity
-            .map(|preprocessor| {
-                let mut map = HashMap::new();
-                map.insert(preprocessor.name.clone(), preprocessor);
-                map
-            })
-            .unwrap_or_default();
-
-        let metadata = ModelInterfaceSaveMetadata {
-            model_uri,
-            data_processor_map,
-            sample_data_uri,
-            onnx_model_uri,
-            drift_profile_uri,
-            extra_metadata: HashMap::new(),
-            save_kwargs,
-        };
-
-        Ok(metadata)
     }
 }

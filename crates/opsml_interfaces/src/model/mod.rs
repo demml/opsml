@@ -11,7 +11,7 @@ pub mod vowpal;
 pub mod xgboost;
 
 pub use base::{
-    DataProcessor, InterfaceDataType, ModelInterface, ModelInterfaceMetadata,
+    DataProcessor, InterfaceDataType, LoadKwargs, ModelInterface, ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata, SampleData, SaveKwargs, TaskType,
 };
 pub use catboost::CatBoostModelInterfaceMetadata;
