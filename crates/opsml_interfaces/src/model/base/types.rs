@@ -1,9 +1,7 @@
 use opsml_error::TypeError;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
-use pyo3::impl_::extract_argument::PyFunctionArgument;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::types::PyTuple;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
