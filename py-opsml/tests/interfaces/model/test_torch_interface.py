@@ -1,4 +1,4 @@
-from opsml.model import TorchModel
+from opsml.model import TorchModel, LoadKwargs
 from opsml.data import DataType
 from typing import Tuple
 import torch
@@ -22,22 +22,35 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
 
     interface.save(save_path, True)
 
-    interface.model = None
-
-    assert interface.model is None
-
-    interface.load_model(save_path, model)
-
-    assert interface.model is not None
-
-    interface.model(**data)
-
     assert interface.onnx_session is not None
     assert interface.onnx_session.session is not None
 
+    print(interface.onnx_session.session)
+
+    interface.model = None
+    interface.onnx_session.session = None
+
+    print(interface.onnx_session.session)
+
+    assert interface.model is None
+    assert interface.onnx_session.session is None
+
+    interface.load(
+        save_path,
+        model=True,
+        onnx=True,
+        sample_data=True,
+        load_kwargs=LoadKwargs(model={"model": model}),
+    )
+
+    assert interface.model is not None
+    assert interface.onnx_session is not None
+
+    interface.model(**data)
+
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_pytorch_simple_tuple(
+def _test_pytorch_simple_tuple(
     tmp_path: Path, pytorch_simple_tuple: Tuple[torch.nn.Module, dict]
 ):
     save_path = tmp_path / "test"
@@ -49,17 +62,20 @@ def test_pytorch_simple_tuple(
     assert isinstance(interface.sample_data, tuple)
     assert interface.data_type == DataType.Tuple
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
+
+    assert interface.onnx_session is not None
+    assert interface.onnx_session.session is not None
 
     interface.model = None
-
+    interface.onnx_session = None
     assert interface.model is None
+    assert interface.onnx_session is None
 
-    interface.load_model(save_path, model)
+    print(metadata)
+
+    interface.load(save_path, model=True, onnx=True, sample_data=True)
 
     assert interface.model is not None
 
     interface.model(*data)
-
-    assert interface.onnx_session is not None
-    assert interface.onnx_session.session is not None

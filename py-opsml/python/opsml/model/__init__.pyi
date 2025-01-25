@@ -412,6 +412,15 @@ class OnnxSession:
     def session(self) -> Any:
         """Returns the onnx session"""
 
+    @session.setter
+    def session(self, session: Any) -> None:
+        """Sets the onnx session
+
+        Args:
+            session:
+                Onnx session
+        """
+
     def run(
         self,
         input_data: Dict[str, Any],
