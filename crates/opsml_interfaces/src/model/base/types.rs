@@ -242,10 +242,36 @@ impl Clone for SaveKwargs {
 #[pyclass]
 #[derive(Debug, Default)]
 pub struct LoadKwargs {
+    #[pyo3(get, set)]
     onnx: Option<Py<PyDict>>,
+
+    #[pyo3(get, set)]
     model: Option<Py<PyDict>>,
+
+    #[pyo3(get, set)]
     preprocessor: Option<Py<PyDict>>,
 }
+
+#[pymethods]
+impl LoadKwargs {
+    #[new]
+    #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
+    pub fn new<'py>(
+        onnx: Option<Bound<'py, PyDict>>,
+        model: Option<Bound<'py, PyDict>>,
+        preprocessor: Option<Bound<'py, PyDict>>,
+    ) -> Self {
+        let onnx = onnx.map(|onnx| onnx.unbind());
+        let model = model.map(|model| model.unbind());
+        let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
+        Self {
+            onnx,
+            model,
+            preprocessor,
+        }
+    }
+}
+
 impl LoadKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>

@@ -114,6 +114,28 @@ class SaveKwargs:
     @staticmethod
     def model_validate_json(json_string: str) -> "SaveKwargs": ...
 
+class LoadKwargs:
+    onnx: Optional[Dict]
+    model: Optional[Dict]
+    preprocessor: Optional[Dict]
+
+    def __init__(
+        self,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            onnx (Dict):
+                Optional onnx arguments to use when loading
+            model (Dict):
+                Optional model arguments to use when loading
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when loading
+        """
+
 class DataProcessor:
     name: str
     uri: Path
@@ -231,7 +253,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -500,85 +524,6 @@ class ModelInterface:
                 Onnx session
         """
 
-    def save_model(self, path: Path, **kwargs) -> Path:
-        """Save the model
-
-        Args:
-            path (Path):
-                Path to save the model
-
-            **kwargs:
-                Optional arguments to pass to the model saver
-
-        Returns:
-            Path to the saved model
-        """
-
-    def load_model(self, path: Path, **kwargs) -> None:
-        """Load the model
-
-        Args:
-            path (Path):
-                Path to load the model
-
-            **kwargs:
-                Optional arguments to pass to the model loader
-        """
-
-    def convert_to_onnx(self, **kwargs) -> None:
-        """Convert the model to onnx
-
-        **kwargs:
-            Optional arguments to pass to the onnx converter
-        """
-
-    def save_onnx_model(self, path: Path, **kwargs) -> None:
-        """Save the onnx model
-
-        Args:
-            path (Path):
-                Path to save the model
-
-            **kwargs:
-                Optional arguments to pass to the onnx converter
-
-        """
-
-    def load_onnx_model(self, path: Path, **kwargs) -> None:
-        """Load the onnx model
-
-        Args:
-            path (Path):
-                Path to load the model
-
-            **kwargs:
-                Optional arguments to pass to the onnx converter
-
-        """
-
-    def save_data(self, path: Path, **kwargs) -> Path:
-        """saves the sample data"""
-
-    def load_data(self, path: Path, **kwargs) -> None:
-        """loads the sample data"""
-
-    def save(
-        self,
-        path: Path,
-        to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
-        """Save the model interface
-
-        Args:
-            path (Path):
-                Path to save the model
-            to_onnx (bool):
-                Whether to save the model to onnx
-            save_kwargs (SaveArgs):
-                Optional save args
-        """
-
     @overload
     def create_drift_profile(
         self,
@@ -627,20 +572,53 @@ class ModelInterface:
             Drift profile SPcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
-    def save_drift_profile(self, path: Path) -> Path:
-        """Save the drift profile
+    def save(
+        self,
+        path: Path,
+        to_onnx: bool = False,
+        save_kwargs: None | SaveKwargs = None,
+    ) -> ModelInterfaceSaveMetadata:
+        """Save the model interface
 
         Args:
             path (Path):
-                Path to save the drift profile
+                Path to save the model
+            to_onnx (bool):
+                Whether to save the model to onnx
+            save_kwargs (SaveKwargs):
+                Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                the underlying library.
+
+                - model: Kwargs that will be passed to save_model. See save_model for more details.
+                - preprocessor: Kwargs that will be passed to save_preprocessor
+                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details
         """
 
-    def load_drift_profile(self, path: Path) -> None:
-        """Load the drift profile
+    def load(
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load ModelInterface components
 
         Args:
             path (Path):
-                Path to load the drift profile
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
 
 class SklearnModel(ModelInterface):
@@ -657,7 +635,7 @@ class SklearnModel(ModelInterface):
             | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
         ) = None,
     ) -> None:
-        """Base class for ModelInterface
+        """Instantiate an SklearnModel interface
 
         Args:
             model:
@@ -694,26 +672,33 @@ class SklearnModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def save_preprocessor(self, path: Path, **kwargs) -> Path:
-        """Save the preprocessor as a joblib file
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load SklearnModel components
 
         Args:
             path (Path):
-                Path to save the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor saver
-        """
-
-    def load_preprocessor(self, path: Path, **kwargs) -> None:
-        """Load the preprocessor from a joblib file
-
-        Args:
-            path (Path):
-                Path to load the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor loader
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
 
 class LightGBMModel(ModelInterface):
@@ -730,7 +715,7 @@ class LightGBMModel(ModelInterface):
             | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
         ) = None,
     ) -> None:
-        """Base class for ModelInterface
+        """Instantiate a LightGBMModel interface
 
         Args:
             model:
@@ -765,26 +750,33 @@ class LightGBMModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def save_preprocessor(self, path: Path, **kwargs) -> Path:
-        """Save the preprocessor as a joblib file
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load LightGBMModel components
 
         Args:
             path (Path):
-                Path to save the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor saver
-        """
-
-    def load_preprocessor(self, path: Path, **kwargs) -> None:
-        """Load the preprocessor from a joblib file
-
-        Args:
-            path (Path):
-                Path to load the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor loader
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
 
 class XGBoostModel(ModelInterface):
@@ -836,26 +828,33 @@ class XGBoostModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def save_preprocessor(self, path: Path, **kwargs) -> Path:
-        """Save the preprocessor as a joblib file
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load XGBoostModel components
 
         Args:
             path (Path):
-                Path to save the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor saver
-        """
-
-    def load_preprocessor(self, path: Path, **kwargs) -> None:
-        """Load the preprocessor from a joblib file
-
-        Args:
-            path (Path):
-                Path to load the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor loader
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
 
 class TorchModel(ModelInterface):
@@ -909,61 +908,14 @@ class TorchModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def save_preprocessor(self, path: Path, **kwargs) -> Path:
-        """Save the preprocessor as a joblib file
-
-        Args:
-            path (Path):
-                Path to save the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor saver
-        """
-
-    def load_preprocessor(self, path: Path, **kwargs) -> None:
-        """Load the preprocessor from a joblib file
-
-        Args:
-            path (Path):
-                Path to load the preprocessor
-
-            **kwargs:
-                Optional arguments to pass to the preprocessor loader
-        """
-
-    def save_model(self, path: Path, **kwargs) -> Path:
-        """Save the pytorch model as a state dictionary as recommended by the pytorch team.
-
-        Args:
-            path (Path):
-                Path to save the model
-
-            **kwargs:
-                Optional arguments to pass to torch save function
-
-        Returns:
-            Path to the saved model
-        """
-
-    def load_model(self, path: Path, model: Any, **kwargs) -> None:  # type: ignore # pylint: disable=arguments-differ
-        """Load the model state dict into the model
-        Args:
-            path (Path):
-                Path to load the model.
-            model (Any):
-                The model to load the state dict into.
-            **kwargs:
-                Optional arguments to pass to torch load function.
-                weights_only = True is automatically injected into kwargs.
-        """
-
     def save(
         self,
         path: Path,
         to_onnx: bool = False,
         save_kwargs: None | SaveKwargs = None,
     ) -> ModelInterfaceSaveMetadata:
-        """Save the TorchModel interface
+        """Save the TorchModel interface. Torch models are saved
+        as state_dicts as is the standard for PyTorch.
 
         Args:
             path (Path):
@@ -978,4 +930,33 @@ class TorchModel(ModelInterface):
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+        """
+
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load TorchModel components
+
+        Args:
+            path (Path):
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
