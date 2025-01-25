@@ -701,6 +701,9 @@ impl ModelInterface {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Load ONNX Model");
+        let _ = span.enter();
+
         if self.onnx_session.is_none() {
             return Err(OpsmlError::new_err(
                 "No ONNX model detected in interface for loading",
@@ -715,6 +718,8 @@ impl ModelInterface {
             .as_mut()
             .unwrap()
             .load_onnx_model(py, load_path, kwargs)?;
+
+        info!("ONNX model loaded");
 
         Ok(())
     }

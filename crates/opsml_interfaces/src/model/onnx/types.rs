@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_error::OnnxError;
+use opsml_error::OpsmlError;
 use ort::session::Session;
 use ort::value::ValueType;
 use pyo3::prelude::*;
@@ -15,7 +16,6 @@ pub struct OnnxSession {
     #[pyo3(get)]
     pub schema: OnnxSchema,
 
-    #[pyo3(get)]
     pub session: PyObject,
 }
 
@@ -104,6 +104,36 @@ impl OnnxSession {
             .unbind();
 
         Ok(OnnxSession { session, schema })
+    }
+
+    #[setter]
+    pub fn set_session(&mut self, session: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = session.py();
+        if session.is_none() {
+            self.session = py.None();
+            Ok(())
+        } else {
+            let rt_session = py
+                .import("onnxruntime")
+                .unwrap()
+                .getattr("InferenceSession")
+                .unwrap();
+
+            // assert session is an instance of InferenceSession
+            if session.is_instance(&rt_session).unwrap() {
+                self.session = session.clone().unbind();
+                Ok(())
+            } else {
+                return Err(OpsmlError::new_err(
+                    "Session must be an instance of InferenceSession",
+                ));
+            }
+        }
+    }
+
+    #[getter]
+    pub fn get_session<'py>(&self, py: Python<'py>) -> PyResult<&Bound<'py, PyAny>> {
+        Ok(self.session.bind(py))
     }
 
     #[pyo3(signature = (input_feed, output_names=None, run_options=None))]
