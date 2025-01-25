@@ -20,7 +20,7 @@ use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tracing::{debug, error, info, span, warn, Level};
 
@@ -489,7 +489,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    pub fn save_drift_profile(&mut self, path: &PathBuf) -> PyResult<PathBuf> {
+    pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
         let span = span!(tracing::Level::INFO, "Save Drift Profile");
         let _enter = span.enter();
 
@@ -535,7 +535,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, path: &PathBuf) -> PyResult<()> {
+    pub fn load_drift_profile(&mut self, path: &Path) -> PyResult<()> {
         let load_dir = path.join(SaveName::Drift);
 
         if !load_dir.exists() {
@@ -565,7 +565,7 @@ impl ModelInterface {
     pub fn save_onnx_model(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving ONNX Model").entered();
@@ -629,7 +629,7 @@ impl ModelInterface {
     pub fn save_model(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving model").entered();
@@ -659,7 +659,7 @@ impl ModelInterface {
     pub fn save_data(
         &self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
@@ -678,7 +678,7 @@ impl ModelInterface {
     pub fn load_data(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         // load sample data
@@ -697,7 +697,7 @@ impl ModelInterface {
     pub fn load_onnx_model(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         if self.onnx_session.is_none() {
@@ -728,7 +728,7 @@ impl ModelInterface {
     pub fn load_model(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Loading Model").entered();

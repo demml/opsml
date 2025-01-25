@@ -10,7 +10,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
@@ -319,7 +319,7 @@ impl XGBoostModel {
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
-        path: &PathBuf,
+        path: &Path,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::DEBUG, "Save Model").entered();
         let _ = span.enter();
@@ -351,7 +351,7 @@ impl XGBoostModel {
     pub fn load_model<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Loading Model").entered();
@@ -388,7 +388,7 @@ impl XGBoostModel {
     pub fn save_preprocessor(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving preprocessor").entered();
@@ -424,7 +424,7 @@ impl XGBoostModel {
     pub fn load_preprocessor(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let load_path = path
