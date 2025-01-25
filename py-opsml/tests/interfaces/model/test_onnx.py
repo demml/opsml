@@ -4,7 +4,6 @@ from opsml.data import NumpyData, PandasData
 import pytest
 from pytest_lazyfixture import lazy_fixture  # type: ignore
 import warnings
-import torch
 
 
 def warn(*args, **kwargs):

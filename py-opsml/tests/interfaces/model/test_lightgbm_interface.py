@@ -20,11 +20,14 @@ def test_lightgbm_model_interface(
     interface.save(save_path, True)
 
     interface.model = None
-
     assert interface.model is None
 
-    interface.load_model(save_path)
+    interface.load(
+        save_path,
+        model=True,
+        onnx=True,
+        sample_data=True,
+    )
 
     assert interface.model is not None
-
-    interface.load_onnx_model(save_path)
+    assert interface.onnx_session is not None

@@ -430,6 +430,41 @@ impl ModelInterface {
         Ok(py_profile)
     }
 
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (**kwargs))]
+    pub fn convert_to_onnx(
+        &mut self,
+        py: Python,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Converting model to ONNX").entered();
+        let _ = span.enter();
+
+        if self.onnx_session.is_some() {
+            info!("Model has already been converted to ONNX. Skipping conversion.");
+            return Ok(());
+        }
+
+        self.onnx_session = Some(OnnxModelConverter::convert_model(
+            py,
+            self.model.bind(py),
+            &self.sample_data,
+            &self.model_interface_type,
+            &self.model_type,
+            kwargs,
+        )?);
+
+        info!("Model converted to ONNX");
+
+        Ok(())
+    }
+
     /// Dynamically load the model interface components
     ///
     /// # Arguments
@@ -584,40 +619,6 @@ impl ModelInterface {
         info!("ONNX model saved");
 
         Ok(save_path)
-    }
-
-    /// Converts the model to onnx
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    pub fn convert_to_onnx(
-        &mut self,
-        py: Python,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Converting model to ONNX").entered();
-        let _ = span.enter();
-
-        if self.onnx_session.is_some() {
-            info!("Model has already been converted to ONNX. Skipping conversion.");
-            return Ok(());
-        }
-
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
-            py,
-            self.model.bind(py),
-            &self.sample_data,
-            &self.model_interface_type,
-            &self.model_type,
-            kwargs,
-        )?);
-
-        info!("Model converted to ONNX");
-
-        Ok(())
     }
 
     /// Save the model to a file

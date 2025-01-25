@@ -563,8 +563,9 @@ pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf>
 }
 
 pub fn load_from_joblib<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
+    let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
     let joblib = py.import("joblib")?;
-    let data = joblib.call_method1("load", (path,))?;
+    let data = joblib.call_method1("load", (load_path,))?;
 
     Ok(data)
 }
