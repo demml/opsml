@@ -13,6 +13,12 @@ use std::path::Path;
 use std::path::PathBuf;
 use tracing::{error, span};
 
+type PyDictKwargs<'py> = (
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+);
+
 #[derive(Default, Debug)]
 pub enum SampleData {
     Pandas(PyObject),
@@ -527,11 +533,7 @@ impl OnnxExtension for SampleData {
 pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
     save_kwargs: &Option<SaveKwargs>,
-) -> (
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-) {
+) -> PyDictKwargs<'py> {
     let onnx_kwargs = save_kwargs
         .as_ref()
         .and_then(|args| args.onnx_kwargs(py))

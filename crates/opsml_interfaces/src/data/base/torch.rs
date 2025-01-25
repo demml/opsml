@@ -121,12 +121,12 @@ impl TorchData {
 
                 println!("torch_dataset: {:?}", torch_dataset);
 
-                if torch_dataset.is_none() {
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
                     return Err(OpsmlError::new_err(
                         "Torch dataset requires kwargs with torch_dataset",
                     ));
-                } else {
-                    torch_dataset.unwrap()
                 };
 
                 // pop torch_dataset from kwargs
@@ -140,7 +140,6 @@ impl TorchData {
                 torch
                     .call_method("save", args, kwargs)
                     .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-                ()
             }
         }
 
@@ -191,12 +190,12 @@ impl TorchData {
 
                 let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
 
-                if torch_dataset.is_none() {
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
                     return Err(OpsmlError::new_err(
                         "Torch dataset requires kwargs with torch_dataset",
                     ));
-                } else {
-                    torch_dataset.unwrap()
                 };
 
                 // pop torch_dataset from kwargs

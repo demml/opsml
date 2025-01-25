@@ -12,7 +12,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
@@ -236,8 +236,9 @@ impl SklearnModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
-    pub fn load<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         model: bool,
@@ -289,7 +290,7 @@ impl SklearnModel {
     pub fn save_preprocessor(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving preprocessor").entered();
@@ -325,7 +326,7 @@ impl SklearnModel {
     pub fn load_preprocessor(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let load_path = path

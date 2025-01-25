@@ -105,19 +105,19 @@ impl SaveKwargs {
 impl SaveKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        self.onnx.as_ref().and_then(|onnx| Some(onnx.bind(py)))
+        self.onnx.as_ref().map(|onnx| onnx.bind(py))
     }
 
     pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        self.model.as_ref().and_then(|model| Some(model.bind(py)))
+        self.model.as_ref().map(|model| model.bind(py))
     }
 
     pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.preprocessor
             .as_ref()
-            .and_then(|preprocessor| Some(preprocessor.bind(py)))
+            .map(|preprocessor| preprocessor.bind(py))
     }
 }
 
@@ -240,7 +240,7 @@ impl Clone for SaveKwargs {
 }
 
 #[pyclass]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LoadKwargs {
     onnx: Option<Py<PyDict>>,
     model: Option<Py<PyDict>>,
@@ -249,19 +249,19 @@ pub struct LoadKwargs {
 impl LoadKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        self.onnx.as_ref().and_then(|onnx| Some(onnx.bind(py)))
+        self.onnx.as_ref().map(|onnx| onnx.bind(py))
     }
 
     pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
-        self.model.as_ref().and_then(|model| Some(model.bind(py)))
+        self.model.as_ref().map(|model| model.bind(py))
     }
 
     pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.preprocessor
             .as_ref()
-            .and_then(|preprocessor| Some(preprocessor.bind(py)))
+            .map(|preprocessor| preprocessor.bind(py))
     }
 }
 
@@ -281,15 +281,5 @@ impl Clone for LoadKwargs {
                 preprocessor,
             }
         })
-    }
-}
-
-impl Default for LoadKwargs {
-    fn default() -> Self {
-        Self {
-            onnx: None,
-            model: None,
-            preprocessor: None,
-        }
     }
 }
