@@ -446,6 +446,7 @@ impl ModelInterface {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,

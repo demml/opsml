@@ -233,7 +233,7 @@ impl TorchModel {
             let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
-                uri: uri,
+                uri,
             })
         };
 
@@ -291,8 +291,9 @@ impl TorchModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
-    pub fn load<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         model: bool,
@@ -408,7 +409,7 @@ impl TorchModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    pub fn save_model<'py>(
+    pub fn save_model(
         &self,
         py: Python,
         path: &Path,
@@ -494,7 +495,7 @@ impl TorchModel {
         // if sample_data is not None, save the sample data
         let sample_data_uri = self
             .sample_data
-            .save_data(py, &path, kwargs)
+            .save_data(py, path, kwargs)
             .unwrap_or_else(|e| {
                 warn!("Failed to save sample data. Defaulting to None: {}", e);
                 None
@@ -534,7 +535,7 @@ impl TorchModel {
 
         self.onnx_session = Some(OnnxModelConverter::convert_model(
             py,
-            &self.model.bind(py),
+            self.model.bind(py),
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,

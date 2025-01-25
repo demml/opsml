@@ -264,8 +264,9 @@ impl LightGBMModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
-    pub fn load<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         model: bool,
