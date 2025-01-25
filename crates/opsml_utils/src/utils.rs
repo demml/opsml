@@ -152,6 +152,7 @@ pub fn json_to_pyobject<'py>(
     value: &Value,
     dict: &Bound<'py, PyDict>,
 ) -> PyResult<Bound<'py, PyDict>> {
+    println!("json_to_pyobject: {:?}", value);
     match value {
         Value::Object(map) => {
             for (k, v) in map {

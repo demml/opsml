@@ -16,7 +16,8 @@ pub struct OnnxSession {
     #[pyo3(get)]
     pub schema: OnnxSchema,
 
-    pub session: PyObject,
+    #[pyo3(get, set)]
+    pub session: Option<PyObject>,
 }
 
 #[pymethods]
@@ -103,14 +104,16 @@ impl OnnxSession {
             .map_err(|e| OnnxError::Error(e.to_string()))?
             .unbind();
 
-        Ok(OnnxSession { session, schema })
+        Ok(OnnxSession {
+            session: Some(session),
+            schema,
+        })
     }
 
     #[setter]
-    pub fn set_session(&mut self, session: &Bound<'_, PyAny>) -> PyResult<()> {
-        let py = session.py();
+    pub fn set_session(&mut self, py: Python, session: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if session.is_none() {
-            self.session = py.None();
+            self.session = None;
             Ok(())
         } else {
             let rt_session = py
@@ -120,20 +123,21 @@ impl OnnxSession {
                 .unwrap();
 
             // assert session is an instance of InferenceSession
+            let session = session.unwrap();
             if session.is_instance(&rt_session).unwrap() {
-                self.session = session.clone().unbind();
+                self.session = Some(session.clone().unbind());
                 Ok(())
             } else {
-                return Err(OpsmlError::new_err(
+                Err(OpsmlError::new_err(
                     "Session must be an instance of InferenceSession",
-                ));
+                ))
             }
         }
     }
 
     #[getter]
-    pub fn get_session<'py>(&self, py: Python<'py>) -> PyResult<&Bound<'py, PyAny>> {
-        Ok(self.session.bind(py))
+    pub fn get_session(&self, py: Python) -> Option<PyObject> {
+        self.session.as_ref().map(|session| session.clone_ref(py))
     }
 
     #[pyo3(signature = (input_feed, output_names=None, run_options=None))]
@@ -144,8 +148,10 @@ impl OnnxSession {
         output_names: Option<&Bound<'py, PyList>>,
         run_options: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PyObject> {
-        let result = self
-            .session
+        let sess = self.session.as_ref().ok_or_else(|| {
+            OnnxError::Error("Session is not set. Please load an onnx model first".to_string())
+        })?;
+        let result = sess
             .call_method(py, "run", (output_names, input_feed), run_options)
             .map_err(|e| OnnxError::Error(e.to_string()))?;
 
@@ -153,8 +159,11 @@ impl OnnxSession {
     }
 
     pub fn model_bytes(&self, py: Python) -> PyResult<Vec<u8>> {
-        self.session
-            .bind(py)
+        let sess = self.session.as_ref().ok_or_else(|| {
+            OnnxError::Error("Session is not set. Please load an onnx model first".to_string())
+        })?;
+
+        sess.bind(py)
             .getattr("_model_bytes")
             .map_err(|e| OnnxError::Error(e.to_string()))?
             .extract()
@@ -190,7 +199,7 @@ impl OnnxSession {
             .unbind();
 
         debug!("Loaded ONNX model");
-        self.session = session;
+        self.session = Some(session);
 
         Ok(())
     }
@@ -199,7 +208,7 @@ impl OnnxSession {
 impl Clone for OnnxSession {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
-            let new_session = self.session.clone_ref(py);
+            let new_session = self.session.as_ref().map(|session| session.clone_ref(py));
             OnnxSession {
                 session: new_session,
                 schema: self.schema.clone(),

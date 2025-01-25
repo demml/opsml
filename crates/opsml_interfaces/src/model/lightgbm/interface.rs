@@ -279,12 +279,18 @@ impl LightGBMModel {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
+        if model {
+            let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+            self_.as_super().model = model;
+        }
+
+        if preprocessor {
+            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        }
+
         // parent scope - can only borrow mutable one at a time
         {
             let parent = self_.as_super();
-            if model {
-                parent.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-            }
 
             if onnx {
                 parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
@@ -297,10 +303,6 @@ impl LightGBMModel {
             if sample_data {
                 parent.load_data(py, &path, None)?;
             }
-        }
-
-        if preprocessor {
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
         }
 
         Ok(())
@@ -416,15 +418,13 @@ impl LightGBMModel {
     ///
     /// * `PyResult<()>` - Result of the load
     pub fn load_model<'py>(
-        mut self_: PyRefMut<'py, Self>,
+        &self,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> PyResult<PyObject> {
         let span = span!(Level::INFO, "Loading Model").entered();
         let _ = span.enter();
-
-        let super_ = self_.as_super();
 
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
 
@@ -438,11 +438,8 @@ impl LightGBMModel {
             OpsmlError::new_err(format!("Failed to load model from file: {}", e))
         })?;
 
-        // Save the data using joblib
-        super_.model = model.into();
-
         info!("Model loaded");
 
-        Ok(())
+        model.into_py_any(py)
     }
 }

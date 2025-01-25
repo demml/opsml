@@ -98,6 +98,7 @@ impl SaveKwargs {
 
     #[staticmethod]
     pub fn model_validate_json(json_string: String) -> SaveKwargs {
+        println!("json_string: {:?}", json_string);
         serde_json::from_str(&json_string).unwrap()
     }
 }
@@ -175,31 +176,43 @@ impl<'de> Deserialize<'de> for SaveKwargs {
                     while let Some(key) = map.next_key::<String>()? {
                         match key.as_str() {
                             "onnx" => {
-                                let dict = json_to_pyobject(
-                                    py,
-                                    &map.next_value::<serde_json::Value>()?,
-                                    &PyDict::new(py),
-                                )
-                                .unwrap();
-                                onnx = Some(dict.unbind());
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        onnx = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        onnx = Some(dict.unbind());
+                                    }
+                                }
                             }
                             "model" => {
-                                let dict = json_to_pyobject(
-                                    py,
-                                    &map.next_value::<serde_json::Value>()?,
-                                    &PyDict::new(py),
-                                )
-                                .unwrap();
-                                model = Some(dict.unbind());
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        model = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        model = Some(dict.unbind());
+                                    }
+                                }
                             }
                             "preprocessor" => {
-                                let dict = json_to_pyobject(
-                                    py,
-                                    &map.next_value::<serde_json::Value>()?,
-                                    &PyDict::new(py),
-                                )
-                                .unwrap();
-                                preprocessor = Some(dict.unbind());
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        preprocessor = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        preprocessor = Some(dict.unbind());
+                                    }
+                                }
                             }
                             _ => {
                                 let _: serde::de::IgnoredAny = map.next_value()?;

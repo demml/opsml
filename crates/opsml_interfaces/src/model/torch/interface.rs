@@ -4,8 +4,9 @@ use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::ModelType;
+use crate::OnnxModelConverter;
+use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
-use crate::{OnnxModelConverter, OnnxSession};
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
@@ -16,6 +17,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
+
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
 pub struct TorchModel {
@@ -27,6 +29,9 @@ pub struct TorchModel {
 
     #[pyo3(get, set)]
     preprocessor_name: String,
+
+    #[pyo3(get, set)]
+    pub onnx_session: Option<OnnxSession>,
 
     #[pyo3(get)]
     pub model_type: ModelType,
@@ -94,10 +99,10 @@ impl TorchModel {
         };
         Ok((
             TorchModel {
+                model,
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model,
                 model_interface_type: ModelInterfaceType::Torch,
                 model_type: ModelType::Pytorch,
                 onnx_session: None,
@@ -118,7 +123,7 @@ impl TorchModel {
         } else {
             let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
             if model.is_instance(&torch_module).unwrap() {
-                model.into_py_any(py)?
+                self.model = model.into_py_any(py)?
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of torch.nn.Module",
@@ -130,11 +135,13 @@ impl TorchModel {
     }
 
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<&OnnxSession>) {
-        if let Some(onnx_session) = onnx_session {
-            self.onnx_session = Some(onnx_session.clone());
-        } else {
-            self.onnx_session = None;
+    pub fn set_onnx_session(&mut self, onnx_session: Option<OnnxSession>) {
+        self.onnx_session = onnx_session;
+    }
+
+    pub fn clear_onnx_runtime_sess(&mut self, py: Python) {
+        if let Some(ref mut sess) = self.onnx_session {
+            sess.set_session(py, None).unwrap();
         }
     }
 
@@ -152,8 +159,8 @@ impl TorchModel {
     }
 
     #[getter]
-    pub fn get_sample_data(&self, py: Python<'_>) -> PyResult<PyObject> {
-        self.sample_data.get_data(py)
+    pub fn get_sample_data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        Ok(self.sample_data.get_data(py).unwrap().bind(py).clone())
     }
 
     #[getter]
@@ -214,6 +221,13 @@ impl TorchModel {
         let span = span!(Level::INFO, "Saving TorchModel interface").entered();
         let _ = span.enter();
 
+        debug!("Saving drift profile");
+        let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
+            None
+        } else {
+            Some(self_.as_super().save_drift_profile(&path)?)
+        };
+
         // parse the save args
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
@@ -231,28 +245,18 @@ impl TorchModel {
         debug!("Saving sample data");
         let sample_data_uri = self_.save_data(py, &path, None)?;
 
-        debug!("Saving model");
-        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
+        debug!("Creating feature schema");
+        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
-        let mut drift_profile_uri = None;
-        // scope for parent
-        {
-            let parent = self_.as_super();
 
-            debug!("Saving drift profile");
-            if parent.drift_profile.is_empty() {
-                drift_profile_uri = Some(parent.save_drift_profile(&path)?);
-            };
-
-            debug!("Creating feature schema");
-            parent.schema = parent.create_feature_schema(py)?;
-
-            if to_onnx {
-                debug!("Saving ONNX model");
-                onnx_model_uri = Some(parent.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
-            }
+        if to_onnx {
+            debug!("Saving ONNX model");
+            onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
         }
+
+        debug!("Saving model");
+        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
 
         let data_processor_map = preprocessor_entity
             .map(|preprocessor| {
@@ -315,27 +319,57 @@ impl TorchModel {
             self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
         }
 
-        // parent scope - can only borrow mutable one at a time
-        {
-            let parent = self_.as_super();
-
-            if onnx {
-                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
-            }
-
-            if drift_profile {
-                parent.load_drift_profile(&path)?;
-            }
+        if onnx {
+            debug!("Loading ONNX model");
+            self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
         }
 
         if sample_data {
+            debug!("Loading sample data");
             let data_type = self_.as_super().data_type.clone();
+
             self_.load_data(py, &path, &data_type, None)?;
         }
 
         if preprocessor {
+            debug!("Loading preprocessor");
             self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
         }
+
+        if drift_profile {
+            debug!("Loading drift profile");
+            self_.as_super().load_drift_profile(&path)?;
+        }
+
+        Ok(())
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (**kwargs))]
+    pub fn convert_to_onnx(
+        &mut self,
+        py: Python,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Converting model to ONNX").entered();
+        let _ = span.enter();
+
+        self.onnx_session = Some(OnnxModelConverter::convert_model(
+            py,
+            self.model.bind(py),
+            &self.sample_data,
+            &self.model_interface_type,
+            &self.model_type,
+            kwargs,
+        )?);
+
+        info!("Model converted to ONNX");
 
         Ok(())
     }
@@ -453,11 +487,11 @@ impl TorchModel {
         Ok(save_path)
     }
 
-    pub fn load_model<'py>(
+    pub fn load_model(
         &mut self,
         py: Python,
         path: &Path,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Load Model");
         let _ = span.enter();
@@ -467,7 +501,7 @@ impl TorchModel {
 
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
 
-        // get model from kwargs:
+        // check if model is None. Return error
         let model = if let Ok(Some(model)) = kwargs.get_item("model") {
             kwargs.del_item("model")?;
             model
@@ -492,8 +526,6 @@ impl TorchModel {
 
         self.model = model.clone().unbind();
 
-        info!("Model loaded");
-
         Ok(())
     }
 
@@ -517,61 +549,33 @@ impl TorchModel {
     }
 
     /// Load the sample data
-    pub fn load_data<'py>(
+    pub fn load_data(
         &mut self,
         py: Python,
         path: &Path,
         data_type: &DataType,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Load Data");
         let _ = span.enter();
 
         // load sample data
-        self.sample_data = TorchSampleData::load_data(py, path, &data_type, kwargs)?;
+
+        self.sample_data = TorchSampleData::load_data(py, path, data_type, kwargs)?;
 
         info!("Sample data loaded");
 
         Ok(())
     }
 
-    /// Converts the model to onnx
+    /// Saves a model to onnx format
     ///
     /// # Arguments
     ///
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    pub fn _convert_to_onnx(
-        &mut self,
-        py: Python,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Converting model to ONNX").entered();
-        let _ = span.enter();
-
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
-            py,
-            self.model.bind(py),
-            &self.sample_data,
-            &self.model_interface_type,
-            &self.model_type,
-            kwargs,
-        )?);
-
-        info!("Model converted to ONNX");
-
-        Ok(())
-    }
-
-    /// Converts the model to onnx
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    fn _save_onnx_model(
+    fn save_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
@@ -593,5 +597,41 @@ impl TorchModel {
         info!("ONNX model saved");
 
         Ok(save_path)
+    }
+
+    /// Load the model from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    pub fn load_onnx_model(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Load ONNX Model");
+        let _ = span.enter();
+
+        if self.onnx_session.is_none() {
+            return Err(OpsmlError::new_err(
+                "No ONNX model detected in interface for loading",
+            ));
+        }
+
+        let load_path = path
+            .join(SaveName::OnnxModel.to_string())
+            .with_extension(Suffix::Onnx);
+
+        self.onnx_session
+            .as_mut()
+            .unwrap()
+            .load_onnx_model(py, load_path, kwargs)?;
+
+        info!("ONNX model loaded");
+
+        Ok(())
     }
 }

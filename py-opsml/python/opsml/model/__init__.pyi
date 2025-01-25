@@ -1,4 +1,4 @@
-# pylint: disable=dangerous-default-value
+# pylint: disable=dangerous-default-value, arguments-renamed
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
@@ -253,9 +253,7 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
+    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -630,6 +628,17 @@ class ModelInterface:
                 Optional load kwargs to pass to the different load methods
         """
 
+    def convert_to_onnx(
+        self,
+        **kwargs: Any,
+    ) -> None:
+        """Convert the model to onnx
+
+        Args:
+            kwargs:
+                Optional kwargs to pass to the underlying onnx conversion method
+        """
+
 class SklearnModel(ModelInterface):
     def __init__(
         self,
@@ -968,4 +977,15 @@ class TorchModel(ModelInterface):
                 Whether to load the preprocessor
             load_kwargs (LoadKwargs):
                 Optional load kwargs to pass to the different load methods
+        """
+
+    def convert_to_onnx(
+        self,
+        **kwargs: Any,
+    ) -> None:
+        """Convert the model to onnx
+
+        Args:
+            kwargs:
+                Optional kwargs to pass to the underlying onnx conversion method
         """

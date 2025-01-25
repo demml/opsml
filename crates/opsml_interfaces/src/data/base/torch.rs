@@ -119,8 +119,6 @@ impl TorchData {
 
                 let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
 
-                println!("torch_dataset: {:?}", torch_dataset);
-
                 if let Some(dataset) = torch_dataset {
                     dataset
                 } else {
