@@ -1,7 +1,9 @@
 use opsml_error::TypeError;
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
+use pyo3::impl_::extract_argument::PyFunctionArgument;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use pyo3::types::PyTuple;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
@@ -236,5 +238,60 @@ impl Clone for SaveKwargs {
                 preprocessor,
             }
         })
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct LoadKwargs {
+    onnx: Option<Py<PyDict>>,
+    model: Option<Py<PyDict>>,
+    preprocessor: Option<Py<PyDict>>,
+}
+impl LoadKwargs {
+    pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.onnx.as_ref().and_then(|onnx| Some(onnx.bind(py)))
+    }
+
+    pub fn model_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.model.as_ref().and_then(|model| Some(model.bind(py)))
+    }
+
+    pub fn preprocessor_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.preprocessor
+            .as_ref()
+            .and_then(|preprocessor| Some(preprocessor.bind(py)))
+    }
+}
+
+impl Clone for LoadKwargs {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
+            let model = self.model.as_ref().map(|model| model.clone_ref(py));
+            let preprocessor = self
+                .preprocessor
+                .as_ref()
+                .map(|preprocessor| preprocessor.clone_ref(py));
+
+            LoadKwargs {
+                onnx,
+                model,
+                preprocessor,
+            }
+        })
+    }
+}
+
+impl Default for LoadKwargs {
+    fn default() -> Self {
+        Self {
+            onnx: None,
+            model: None,
+            preprocessor: None,
+        }
     }
 }

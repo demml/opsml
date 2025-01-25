@@ -428,7 +428,7 @@ impl TorchModel {
         let span = span!(Level::INFO, "Saving ONNX Model").entered();
         let _ = span.enter();
 
-        if !self.onnx_session.is_some() {
+        if self.onnx_session.is_none() {
             self.convert_to_onnx(py, kwargs)?;
         }
 
@@ -455,8 +455,8 @@ impl TorchModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn save(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
