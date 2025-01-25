@@ -348,7 +348,7 @@ impl SampleData {
 
     pub fn load_data<'py>(
         py: Python<'py>,
-        path: &PathBuf,
+        path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<SampleData> {
@@ -560,7 +560,7 @@ pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf>
     Ok(save_path)
 }
 
-pub fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+pub fn load_from_joblib<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
     let joblib = py.import("joblib")?;
     let data = joblib.call_method1("load", (path,))?;
 

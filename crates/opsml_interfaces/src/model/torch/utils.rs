@@ -257,7 +257,7 @@ impl TorchSampleData {
 
     pub fn load_data<'py>(
         py: Python<'py>,
-        path: &PathBuf,
+        path: &Path,
         data_type: &DataType,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<TorchSampleData> {

@@ -13,7 +13,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -344,7 +344,7 @@ impl TorchModel {
     pub fn save_preprocessor(
         &self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Save Preprocessor").entered();
@@ -380,7 +380,7 @@ impl TorchModel {
     pub fn load_preprocessor(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Load Preprocessor").entered();
@@ -411,7 +411,7 @@ impl TorchModel {
     pub fn save_model<'py>(
         &self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Save Model").entered();
@@ -448,7 +448,7 @@ impl TorchModel {
     pub fn load_model<'py>(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         model: &Bound<'py, PyAny>,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
@@ -488,7 +488,7 @@ impl TorchModel {
     pub fn save_data(
         &self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
@@ -507,12 +507,12 @@ impl TorchModel {
     pub fn load_data<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<()> {
         // load sample data
         self_.sample_data =
-            TorchSampleData::load_data(py, &path, &self_.as_super().data_type, kwargs)?;
+            TorchSampleData::load_data(py, path, &self_.as_super().data_type, kwargs)?;
 
         Ok(())
     }
@@ -556,7 +556,7 @@ impl TorchModel {
     fn save_onnx_model(
         &mut self,
         py: Python,
-        path: &PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         let span = span!(Level::INFO, "Saving ONNX Model").entered();
