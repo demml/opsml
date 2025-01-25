@@ -17,6 +17,7 @@ ModelInterfaceType = model.ModelInterfaceType
 ModelInterface = model.ModelInterface
 TaskType = model.TaskType
 SklearnModel = model.SklearnModel
+LoadKwargs = model.LoadKwargs
 SaveKwargs = model.SaveKwargs
 DataProcessor = model.DataProcessor
 LightGBMModel = model.LightGBMModel
@@ -42,6 +43,7 @@ __all__ = [
     "TaskType",
     "SklearnModel",
     "SaveKwargs",
+    "LoadKwargs",
     "DataProcessor",
     "LightGBMModel",
     "ModelType",
