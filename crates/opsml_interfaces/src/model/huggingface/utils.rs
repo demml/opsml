@@ -6,19 +6,17 @@ use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
-use pyo3::{prelude::*, types::PySlice};
+use pyo3::{
+    prelude::*,
+    types::{PySlice, PyString},
+};
 use scouter_client::{
     CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
 };
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::{error, span};
 
-type PyDictKwargs<'py> = (
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-    Option<Bound<'py, PyDict>>,
-);
+use tracing::{error, span};
 
 #[derive(Default, Debug)]
 pub enum HuggingFaceSampleData {
@@ -30,6 +28,7 @@ pub enum HuggingFaceSampleData {
     List(Py<PyList>),
     Tuple(Py<PyTuple>),
     Dict(Py<PyDict>),
+    Str(Py<PyString>),
 
     #[default]
     None,
@@ -66,6 +65,12 @@ impl HuggingFaceSampleData {
 
         if data.is_instance_of::<PyDict>() {
             return Self::handle_pydict(data);
+        }
+
+        if data.is_instance_of::<PyString>() {
+            return Ok(HuggingFaceSampleData::Str(
+                data.downcast::<PyString>()?.clone().unbind(),
+            ));
         }
 
         if data.is_instance(&transformers.getattr("BatchEncoding")?)?
@@ -223,6 +228,7 @@ impl HuggingFaceSampleData {
             HuggingFaceSampleData::Tuple(_) => DataType::Tuple,
             HuggingFaceSampleData::Dict(_) => DataType::Dict,
             HuggingFaceSampleData::Torch(_) => DataType::TorchTensor,
+            HuggingFaceSampleData::Str(_) => DataType::Str,
             HuggingFaceSampleData::None => DataType::NotProvided,
         }
     }
@@ -237,6 +243,7 @@ impl HuggingFaceSampleData {
             HuggingFaceSampleData::List(data) => Ok(data.into_py_any(py).unwrap()),
             HuggingFaceSampleData::Tuple(data) => Ok(data.into_py_any(py).unwrap()),
             HuggingFaceSampleData::Dict(data) => Ok(data.into_py_any(py).unwrap()),
+            HuggingFaceSampleData::Str(data) => Ok(data.into_py_any(py).unwrap()),
             HuggingFaceSampleData::None => Ok(py.None()),
         }
     }
@@ -324,6 +331,13 @@ impl HuggingFaceSampleData {
                 })?))
             }
 
+            HuggingFaceSampleData::Str(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
+                    error!("Error saving string data: {}", e);
+                    e
+                })?))
+            }
+
             HuggingFaceSampleData::None => Ok(None),
         }
     }
@@ -384,6 +398,13 @@ impl HuggingFaceSampleData {
                 let data = load_from_joblib(py, path)?;
                 Ok(HuggingFaceSampleData::Dict(
                     data.downcast::<PyDict>()?.clone().unbind(),
+                ))
+            }
+
+            DataType::Str => {
+                let data = load_from_joblib(py, path)?;
+                Ok(HuggingFaceSampleData::Str(
+                    data.downcast::<PyString>()?.clone().unbind(),
                 ))
             }
 
