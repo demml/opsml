@@ -155,6 +155,7 @@ pub enum ModelType {
     XgbClassifier,
     XgbBooster,
     LgbmBooster,
+    TensorFlow,
     TfKeras,
     Pytorch,
     PytorchLightning,
@@ -180,6 +181,7 @@ impl Display for ModelType {
             ModelType::XgbClassifier => "XGBClassifier",
             ModelType::XgbBooster => "Booster",
             ModelType::LgbmBooster => "Booster",
+            ModelType::TensorFlow => "TensorFlow",
             ModelType::TfKeras => "keras",
             ModelType::Pytorch => "pytorch",
             ModelType::PytorchLightning => "pytorch_lightning",
@@ -213,6 +215,7 @@ impl ModelType {
                     ModelType::XgbBooster
                 }
             }
+            "tensorflow" => ModelType::TensorFlow,
             "keras" => ModelType::TfKeras,
             "pytorch" => ModelType::Pytorch,
             "pytorch_lightning" => ModelType::PytorchLightning,
