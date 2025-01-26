@@ -24,6 +24,7 @@ LightGBMModel = model.LightGBMModel
 ModelType = model.ModelType
 XGBoostModel = model.XGBoostModel
 TorchModel = model.TorchModel
+LightningModel = model.LightningModel
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -49,4 +50,5 @@ __all__ = [
     "ModelType",
     "XGBoostModel",
     "TorchModel",
+    "LightningModel",
 ]
