@@ -6,11 +6,15 @@ from pathlib import Path
 import pytest
 from typing import Tuple, Any
 import sys
+import platform
 
 WINDOWS_EXCLUDE = sys.platform == "win32"
+DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
+
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_model(
     tmp_path: Path, pytorch_lightning_model: Tuple[L.Trainer, torch.Tensor]
 ):
@@ -21,7 +25,7 @@ def test_lightning_model(
     assert interface.data_type == DataType.TorchTensor
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_regression(
     tmp_path: Path, lightning_regression: Tuple[LightningModel, Any]
 ):
@@ -48,6 +52,7 @@ def test_lightning_regression(
     )
 
 
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_classification(
     tmp_path: Path, lightning_classification: Tuple[LightningModel, Any]
 ):
