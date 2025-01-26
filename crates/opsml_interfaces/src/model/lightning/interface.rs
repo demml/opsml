@@ -1,4 +1,6 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::data::generate_feature_schema;
+use crate::data::DataInterface;
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
@@ -62,10 +64,7 @@ impl LightningModel {
         // check if model is a lightning Trainer
         // Trainer is needed to save model checkpoints
         let trainer = if let Some(trainer) = trainer {
-            let trainer_module = py
-                .import("Lightning")?
-                .getattr("LightningModule")?
-                .getattr("Trainer")?;
+            let trainer_module = py.import("lightning")?.getattr("Trainer")?;
             if trainer.is_instance(&trainer_module).unwrap() {
                 trainer.into_py_any(py)?
             } else {
@@ -104,6 +103,7 @@ impl LightningModel {
             }
             None => py.None(),
         };
+
         Ok((
             LightningModel {
                 trainer,
@@ -129,10 +129,7 @@ impl LightningModel {
             self.model = py.None();
             return Ok(());
         } else {
-            let lightning_module = py
-                .import("Lightning")?
-                .getattr("LightningModule")?
-                .getattr("Trainer")?;
+            let lightning_module = py.import("lightning")?.getattr("Trainer")?;
             if model.is_instance(&lightning_module).unwrap() {
                 self.model = model.into_py_any(py)?
             } else {
@@ -257,7 +254,7 @@ impl LightningModel {
         let sample_data_uri = self_.save_data(py, &path, None)?;
 
         debug!("Creating feature schema");
-        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+        self_.as_super().schema = self_.create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
 
@@ -373,7 +370,7 @@ impl LightningModel {
 
         self.onnx_session = Some(OnnxModelConverter::convert_model(
             py,
-            &self.model.bind(py).getattr("model")?, // need to get model from trainer
+            &self.trainer.bind(py).getattr("model")?, // need to get model from trainer
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,
@@ -471,10 +468,10 @@ impl LightningModel {
         let _ = span.enter();
 
         // check if model is None
-        if self.model.is_none(py) {
-            error!("No model detected in interface for saving");
+        if self.trainer.is_none(py) {
+            error!("No trainer detected in interface for saving");
             return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
+                "No trainer detected in interface for saving",
             ));
         }
 
@@ -489,7 +486,7 @@ impl LightningModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Model saved");
+        info!("Trainer model checkpoint saved");
 
         Ok(save_path)
     }
@@ -629,5 +626,27 @@ impl LightningModel {
         info!("ONNX model loaded");
 
         Ok(())
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+
+        let mut data = self.sample_data.get_data(py)?.bind(py).clone();
+
+        // if data is instance of DataInterface, get the data
+        if data.is_instance_of::<DataInterface>() {
+            data = data.getattr("data")?;
+        }
+
+        generate_feature_schema(&data, &self.sample_data.get_data_type())
     }
 }
