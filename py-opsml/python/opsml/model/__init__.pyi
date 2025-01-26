@@ -253,7 +253,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -961,6 +963,128 @@ class TorchModel(ModelInterface):
         load_kwargs: None | LoadKwargs = None,
     ) -> None:
         """Load TorchModel components
+
+        Args:
+            path (Path):
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
+        """
+
+    def convert_to_onnx(
+        self,
+        **kwargs: Any,
+    ) -> None:
+        """Convert the model to onnx
+
+        Args:
+            kwargs:
+                Optional kwargs to pass to the underlying onnx conversion method
+        """
+
+class LightningModel(ModelInterface):
+    def __init__(
+        self,
+        trainer: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Interface for saving PyTorch Lightning models
+
+        Args:
+            trainer:
+                Pytorch lightning trainer to associate with interface.
+            preprocessor:
+                Preprocessor to associate with model.
+            sample_data:
+                Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                pytorch-supported type. TorchData interface, torch tensor, torch dataset, Dict[str, torch.Tensor],
+                List[torch.Tensor], Tuple[torch.Tensor].
+            task_type:
+                The intended task type of the model.
+            schema:
+                Feature schema for model features. Will be inferred from the sample data if not provided.
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def trainer(self) -> None:
+        """Returns the trainer"""
+
+    @trainer.setter
+    def trainer(self, trainer: Any) -> None:
+        """Sets the trainer"""
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
+
+    def save(
+        self,
+        path: Path,
+        to_onnx: bool = False,
+        save_kwargs: None | SaveKwargs = None,
+    ) -> ModelInterfaceSaveMetadata:
+        """Save the LightningModel interface. Lightning models are saved via checkpoints.
+
+        Args:
+            path (Path):
+                Base path to save artifacts
+            to_onnx (bool):
+                Whether to save the model to onnx
+            save_kwargs (SaveKwargs):
+                Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                the underlying library.
+
+                - model: Kwargs that will be passed to save_model. See save_model for more details.
+                - preprocessor: Kwargs that will be passed to save_preprocessor
+                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+        """
+
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load LightningModel components
 
         Args:
             path (Path):

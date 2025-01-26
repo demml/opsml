@@ -121,7 +121,7 @@ impl LightningModel {
     }
 
     #[setter]
-    pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_trainer(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = model.py();
 
         // check if data is None
@@ -512,7 +512,7 @@ impl LightningModel {
             model
         } else {
             Err(OpsmlError::new_err(
-                "TorchModel loading requires model to be passed into model kwargs for loading
+                "LightningModel loading requires model to be passed into model kwargs for loading
                 {'model': {{your_model_architecture}}}
                 ",
             ))?

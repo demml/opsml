@@ -20,6 +20,7 @@ pub use huggingface::{
     HuggingFaceOnnxSaveArgs, HuggingFaceTask,
 };
 pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
+pub use lightning::LightningModel;
 pub use onnx::*;
 pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
 pub use tensorflow::TensorFlowInterfaceMetadata;
