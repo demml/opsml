@@ -1,9 +1,9 @@
 import pytest
-from typing import Tuple
+from typing import Tuple, Any, Generator
 from sklearn import linear_model  # type: ignore
 import numpy as np
 import pandas as pd
-from opsml.model import SklearnModel, TaskType  # type: ignore
+from opsml.model import SklearnModel, TaskType, LightningModel  # type: ignore
 from opsml.data import NumpyData, PandasData, SqlLogic  # type: ignore
 from opsml.helpers.data import create_fake_data  # type: ignore
 from sklearn.preprocessing import OneHotEncoder, StandardScaler  # type: ignore
@@ -29,6 +29,19 @@ from sklearn.model_selection import train_test_split  # type: ignore
 from sklearn.datasets import load_iris  # type: ignore
 import xgboost as xgb  # type: ignore
 import torch
+from torch import nn
+from torch.nn import MSELoss
+from torch.optim import Adam
+from torch.utils.data import DataLoader, Dataset, TensorDataset
+import lightning as L  # type: ignore
+import shutil
+
+
+def cleanup() -> None:
+    """Removes temp files"""
+
+    # delete lightning_logs
+    shutil.rmtree("lightning_logs", ignore_errors=True)
 
 
 @pytest.fixture(scope="session")
@@ -916,3 +929,123 @@ def pytorch_simple_tuple() -> Tuple[torch.nn.Module, tuple]:
     inputs = (torch.randn((1, 1)), torch.randn((1, 1)))
 
     return (model, inputs)
+
+
+@pytest.fixture(scope="module")
+def pytorch_lightning_model() -> Tuple[L.Trainer, torch.Tensor]:
+    # define any number of nn.Modules (or use your current ones)
+    nn.Sequential(nn.Linear(28 * 28, 64), nn.ReLU(), nn.Linear(64, 3))
+    nn.Sequential(nn.Linear(3, 64), nn.ReLU(), nn.Linear(64, 28 * 28))
+
+    # define the LightningModule
+    class SimpleModel(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.l1 = torch.nn.Linear(in_features=64, out_features=4)
+
+        def forward(self, x):
+            return torch.relu(self.l1(x.view(x.size(0), -1)))
+
+    trainer = L.Trainer()
+    model = SimpleModel()
+
+    # set model
+    trainer.strategy.model = model
+    input_sample = torch.randn((1, 64))
+    return (trainer, input_sample)
+
+
+@pytest.fixture(scope="module")
+def lightning_regression() -> Generator[Tuple[LightningModel, Any], None, None]:
+    class SimpleDataset(Dataset):  # type: ignore
+        def __init__(self) -> None:
+            X = np.arange(10000)
+            y = X * 2
+            X = [[_] for _ in X]  # type: ignore
+            y = [[_] for _ in y]  # type: ignore
+            self.X = torch.Tensor(X)
+            self.y = torch.Tensor(y)
+
+        def __len__(self) -> int:
+            return len(self.y)
+
+        def __getitem__(self, idx: Any) -> Any:
+            return {"X": self.X[idx], "y": self.y[idx]}
+
+    class MyModel(L.LightningModule):
+        def __init__(self) -> None:
+            super().__init__()
+            self.fc = nn.Linear(1, 1)
+            self.criterion = MSELoss()
+
+        def forward(self, inputs_id, labels=None) -> Any:
+            outputs = self.fc(inputs_id)
+            return outputs
+
+        def train_dataloader(self) -> Any:
+            dataset = SimpleDataset()
+            return DataLoader(dataset, batch_size=1000)
+
+        def training_step(self, batch, batch_idx) -> Any:
+            input_ids = batch["X"]
+            labels = batch["y"]
+            outputs = self(input_ids, labels)
+            loss = 0
+            if labels is not None:
+                loss = self.criterion(outputs, labels)
+            return {"loss": loss}
+
+        def configure_optimizers(self) -> Any:
+            optimizer = Adam(self.parameters())
+            return optimizer
+
+    model = MyModel()
+    trainer = L.Trainer(max_epochs=1)
+    trainer.fit(model)
+
+    X = torch.Tensor([[1.0], [51.0], [89.0]])
+
+    yield (
+        LightningModel(trainer=trainer, sample_data=X, preprocessor=StandardScaler()),
+        MyModel,
+    )
+    cleanup()
+
+
+@pytest.fixture(scope="module")
+def lightning_classification() -> Generator[Tuple[LightningModel, Any], None, None]:
+    class BinaryClassifier(L.LightningModule):
+        def __init__(self):
+            super().__init__()
+            self.model = nn.Sequential(
+                nn.Linear(5, 10), nn.ReLU(), nn.Linear(10, 1), nn.Sigmoid()
+            )
+
+        def forward(self, x):
+            return self.model(x)
+
+        def training_step(self, batch, batch_idx):
+            x, y = batch
+            y_hat = self(x).squeeze()
+            loss = nn.functional.binary_cross_entropy(y_hat, y)
+            return loss
+
+        def configure_optimizers(self):
+            return torch.optim.Adam(self.parameters(), lr=0.01)
+
+    # Create sample data
+    X = torch.randn(100, 5)
+    y = torch.randint(0, 2, (100,), dtype=torch.float32)
+    dataset = TensorDataset(X, y)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+    # Train the model
+    model = BinaryClassifier()
+    trainer = L.Trainer(max_epochs=1)
+    trainer.fit(model, dataloader)
+
+    yield (
+        LightningModel(trainer=trainer, sample_data=X),
+        BinaryClassifier,
+    )
+    cleanup()
