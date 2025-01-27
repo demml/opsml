@@ -1,6 +1,7 @@
-use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib};
+use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension};
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
+use crate::ModelType;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -407,5 +408,23 @@ impl HuggingFaceSampleData {
 
             _ => Ok(HuggingFaceSampleData::None),
         }
+    }
+}
+
+impl OnnxExtension for HuggingFaceSampleData {
+    fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        _model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        Ok(py.None().bind(py).clone())
+    }
+
+    fn get_feature_names(&self, _py: Python) -> PyResult<Vec<String>> {
+        Ok(vec![])
+    }
+
+    fn is_none(&self) -> bool {
+        matches!(self, HuggingFaceSampleData::None)
     }
 }
