@@ -460,7 +460,7 @@ impl HuggingFaceModel {
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // color text
-        let span = span!(Level::INFO, "Saving TorchModel interface").entered();
+        let span = span!(Level::INFO, "Saving HuggingFaceModel interface").entered();
         let _ = span.enter();
 
         debug!("Saving drift profile");
@@ -489,14 +489,14 @@ impl HuggingFaceModel {
 
         let onnx_model_uri = None;
 
+        debug!("Saving model");
+        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
+
         if to_onnx {
             debug!("Saving ONNX model");
             self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
             //onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
         }
-
-        debug!("Saving model");
-        let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
 
         let metadata = ModelInterfaceSaveMetadata {
             model_uri,
@@ -557,12 +557,16 @@ impl HuggingFaceModel {
         let span = span!(Level::INFO, "Converting model to ONNX").entered();
         let _ = span.enter();
 
-        let kwargs = kwargs.unwrap_or_else(|| {
-            Err(OpsmlError::new_err(
-                "Missing kwargs for HuggingFace onnx conversion",
-            ))
-            .unwrap()
-        });
+        let mut onnx_sess = OnnxModelConverter::convert_model(
+            py,
+            &py.None().bind(py),
+            &self.sample_data,
+            &ModelInterfaceType::HuggingFace,
+            &self.model_type,
+            path,
+            kwargs,
+        )
+        .unwrap();
 
         let model_save_path = path.join(SaveName::Model);
         let full_model_save_path = path.join(&model_save_path);
@@ -571,7 +575,7 @@ impl HuggingFaceModel {
         let full_onnx_save_path = path.join(&onnx_save_path);
 
         let onnx = py.import("onnx")?;
-        let opt_rt = py.import("optimum")?.getattr("onnxruntime")?;
+        let opt_rt = py.import("optimum.onnxruntime")?;
 
         // get the ort model type
         let ort_kwargs = PyDict::new(py);
@@ -588,16 +592,11 @@ impl HuggingFaceModel {
         // save the ort model
         kwargs.del_item("provider")?;
         kwargs.del_item("ort_type")?;
+
+        // saves to model.onnx
         ort_model.call_method("save_pretrained", (full_onnx_save_path.clone(),), None)?;
 
-        // list files in path and subdirectories
-        let files = fs::read_dir(&full_onnx_save_path).unwrap();
-        for file in files {
-            let file = file.unwrap();
-            let path = file.path();
-            let file_name = path.file_name().unwrap().to_str().unwrap();
-            debug!("File: {}", file_name);
-        }
+        // load onnx and get schema
 
         // if pipeline
         if self.base_args.is_pipeline {

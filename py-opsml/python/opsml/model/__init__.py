@@ -9,7 +9,7 @@ SklearnModelInterfaceMetadata = model.SklearnModelInterfaceMetadata
 CatBoostModelInterfaceMetadata = model.CatBoostModelInterfaceMetadata
 HuggingFaceOnnxSaveArgs = model.HuggingFaceOnnxSaveArgs
 HuggingFaceModelInterfaceMetadata = model.HuggingFaceModelInterfaceMetadata
-HuggingFaceTaskType = model.HuggingFaceTaskType
+HuggingFaceTask = model.HuggingFaceTask
 LightGBMModelInterfaceMetadata = model.LightGBMModelInterfaceMetadata
 TensorFlowInterfaceMetadata = model.TensorFlowInterfaceMetadata
 VowpalWabbitInterfaceMetadata = model.VowpalWabbitInterfaceMetadata
@@ -26,6 +26,7 @@ ModelType = model.ModelType
 XGBoostModel = model.XGBoostModel
 TorchModel = model.TorchModel
 LightningModel = model.LightningModel
+HuggingFaceModel = model.HuggingFaceModel
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -52,5 +53,6 @@ __all__ = [
     "XGBoostModel",
     "TorchModel",
     "LightningModel",
-    "HuggingFaceTaskType",
+    "HuggingFaceTask",
+    "HuggingFaceModel",
 ]

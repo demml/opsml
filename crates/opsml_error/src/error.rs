@@ -268,6 +268,12 @@ impl From<OnnxError> for PyErr {
     }
 }
 
+impl From<PyErr> for OnnxError {
+    fn from(err: PyErr) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum InterfaceError {
     #[error("{0}")]
