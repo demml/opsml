@@ -1,4 +1,5 @@
 use crate::model::base::utils::OnnxExtension;
+use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::lightning::LightningOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
@@ -9,6 +10,7 @@ use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use std::path::Path;
 use tracing::{debug, error, span, Level};
 
 pub struct OnnxModelConverter {}
@@ -20,6 +22,7 @@ impl OnnxModelConverter {
         sample_data: &T,
         model_interface_type: &ModelInterfaceType,
         model_type: &ModelType,
+        path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession>
     where
@@ -63,6 +66,11 @@ impl OnnxModelConverter {
                 debug!("Converting Lightning model to ONNX");
                 let converter = LightningOnnxModelConverter::default();
                 converter.convert_model(py, model, sample_data, kwargs)
+            }
+            ModelInterfaceType::HuggingFace => {
+                debug!("Converting HuggingFace model to ONNX");
+                let converter = HuggingFaceOnnxModelConverter::default();
+                converter.convert_model(py, path, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

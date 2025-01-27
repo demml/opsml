@@ -75,11 +75,23 @@ impl SaveKwargs {
     #[new]
     #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
     pub fn new<'py>(
-        onnx: Option<Bound<'py, PyDict>>,
+        onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
     ) -> Self {
-        let onnx = onnx.map(|onnx| onnx.unbind());
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let onnx = onnx.map(|onnx| {
+            if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
+                let onnx_dict = onnx.call_method0("to_dict").unwrap();
+                onnx_dict.downcast::<PyDict>().unwrap().clone().unbind()
+            } else if onnx.is_instance_of::<PyDict>() {
+                onnx.downcast::<PyDict>().unwrap().clone().unbind()
+            } else {
+                Err(OpsmlError::new_err("Invalid onnx type")).unwrap()
+            }
+        });
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
         Self {

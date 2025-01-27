@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::vec;
 
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_error::OnnxError;
@@ -8,6 +9,8 @@ use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
+use pyo3::IntoPyObjectExt;
+use std::path::Path;
 use tracing::debug;
 
 #[pyclass]
@@ -202,6 +205,79 @@ impl OnnxSession {
         self.session = Some(session);
 
         Ok(())
+    }
+}
+
+impl OnnxSession {
+    pub fn new_from_hf_session(
+        py: Python,
+        ort_model: &Bound<'_, PyAny>,
+        model_bytes: Vec<u8>,
+    ) -> Result<Self, OnnxError> {
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
+        // extract onnx_bytes
+        let session = Session::builder()
+            .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
+            .commit_from_memory(&model_bytes)
+            .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
+
+        let input_schema = session
+            .inputs
+            .iter()
+            .map(|input| {
+                let name = input.name.clone();
+                let input_type = input.input_type.clone();
+
+                let feature = match input_type {
+                    ValueType::Tensor {
+                        ty,
+                        dimensions,
+                        dimension_symbols: _,
+                    } => Feature::new(ty.to_string(), dimensions, None),
+                    _ => Feature::new("Unknown".to_string(), vec![], None),
+                };
+
+                Ok((name, feature))
+            })
+            .collect::<Result<FeatureSchema, OnnxError>>()
+            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
+
+        let output_schema = session
+            .outputs
+            .iter()
+            .map(|output| {
+                let name = output.name.clone();
+                let input_type = output.output_type.clone();
+
+                let feature = match input_type {
+                    ValueType::Tensor {
+                        ty,
+                        dimensions,
+                        dimension_symbols: _,
+                    } => Feature::new(ty.to_string(), dimensions, None),
+                    _ => Feature::new("Unknown".to_string(), vec![], None),
+                };
+
+                Ok((name, feature))
+            })
+            .collect::<Result<FeatureSchema, OnnxError>>()
+            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
+
+        let schema = OnnxSchema {
+            input_features: input_schema,
+            output_features: output_schema,
+            onnx_version,
+            feature_names: vec![],
+        };
+
+        Ok(OnnxSession {
+            session: Some(ort_model.into_py_any(py).unwrap()),
+            schema,
+        })
     }
 }
 

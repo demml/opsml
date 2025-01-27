@@ -35,6 +35,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 import lightning as L  # type: ignore
 import shutil
+from transformers import pipeline  # type: ignore
 
 
 def cleanup() -> None:
@@ -1049,3 +1050,13 @@ def lightning_classification() -> Generator[Tuple[LightningModel, Any], None, No
         BinaryClassifier,
     )
     cleanup()
+
+
+@pytest.fixture(scope="module")
+def huggingface_text_classification_pipeline() -> (
+    Generator[Tuple[Pipeline, str], None, None]
+):
+    pipe = pipeline("text-classification")
+    data = "This restaurant is awesome"
+
+    yield (pipe, data)
