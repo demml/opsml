@@ -565,56 +565,10 @@ impl HuggingFaceModel {
             &self.model_type,
             path,
             kwargs,
-        )
-        .unwrap();
-
-        let model_save_path = path.join(SaveName::Model);
-        let full_model_save_path = path.join(&model_save_path);
-
-        let onnx_save_path = PathBuf::from(SaveName::OnnxModel);
-        let full_onnx_save_path = path.join(&onnx_save_path);
-
-        let onnx = py.import("onnx")?;
-        let opt_rt = py.import("optimum.onnxruntime")?;
-
-        // get the ort model type
-        let ort_kwargs = PyDict::new(py);
-        ort_kwargs.set_item("provider", kwargs.get_item("provider").unwrap().unwrap())?;
-        ort_kwargs.set_item("export", true)?;
-
-        let ort_type = kwargs.get_item("ort_type").unwrap().unwrap().to_string();
-        let ort_model = opt_rt.getattr(&ort_type)?.call_method(
-            "from_pretrained",
-            (&full_model_save_path,),
-            Some(&ort_kwargs),
         )?;
 
-        // save the ort model
-        kwargs.del_item("provider")?;
-        kwargs.del_item("ort_type")?;
+        println!("{:?}", onnx_sess.schema);
 
-        // saves to model.onnx
-        ort_model.call_method("save_pretrained", (full_onnx_save_path.clone(),), None)?;
-
-        // load onnx and get schema
-
-        // if pipeline
-        if self.base_args.is_pipeline {
-            let pipeline = py.import("transformers")?.getattr("pipeline")?;
-            let provided_model = self.model.bind(py).clone();
-
-            // get the pipeline components
-            let tokenizer = provided_model.getattr("tokenizer")?;
-            let feature_extractor = provided_model.getattr("feature_extractor")?;
-            let image_processor = provided_model.getattr("image_processor")?;
-
-            kwargs.set_item("model", ort_model)?;
-            kwargs.set_item("tokenizer", tokenizer)?;
-            kwargs.set_item("feature_extractor", feature_extractor)?;
-            kwargs.set_item("image_processor", image_processor)?;
-
-            //let sess = pipeline.call((self.huggingface_task,), Some(&kwargs))?;
-        }
         // pipeline(task_type, ort_model, tokenizer, feature_extractor, image_processor)
 
         // OnnxSession (sess: ort_model)
