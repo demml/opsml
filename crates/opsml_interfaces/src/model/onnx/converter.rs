@@ -69,8 +69,8 @@ impl OnnxModelConverter {
             }
             ModelInterfaceType::HuggingFace => {
                 debug!("Converting HuggingFace model to ONNX");
-                let converter = HuggingFaceOnnxModelConverter::default();
-                converter.convert_model(py, path, kwargs)
+                let converter = HuggingFaceOnnxModelConverter::new(path);
+                converter.convert_model(py, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

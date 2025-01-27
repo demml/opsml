@@ -22,28 +22,34 @@ pub struct HuggingFaceOnnxArgs {
 
     #[pyo3(get)]
     pub config: Option<PyObject>,
+
+    #[pyo3(get)]
+    pub extra_kwargs: Py<PyDict>,
 }
 
 #[pymethods]
 impl HuggingFaceOnnxArgs {
     #[new]
-    #[pyo3(signature = (ort_type, provider=None, quantize=false, config=None))]
+    #[pyo3(signature = (ort_type, provider=None, quantize=false, config=None, extra_kwargs=None))]
     pub fn new(
         py: Python,
         ort_type: HuggingFaceORTModel,
         provider: Option<String>,
         quantize: Option<bool>,
         config: Option<&Bound<'_, PyAny>>,
+        extra_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         // check if ort_type is valid (does it match any of the HuggingFaceORTModel enum variants?)
 
         let config = HuggingFaceOnnxArgs::check_optimum_config(py, config)?;
+        let extra_kwargs = extra_kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
 
         Ok(HuggingFaceOnnxArgs {
             ort_type,
             provider: provider.unwrap_or_else(|| "CPUExecutionProvider".to_string()),
             quantize: quantize.unwrap_or(false),
             config,
+            extra_kwargs: extra_kwargs.unbind(),
         })
     }
 
@@ -53,6 +59,12 @@ impl HuggingFaceOnnxArgs {
         dict.set_item("provider", self.provider.clone())?;
         dict.set_item("quantize", self.quantize)?;
         dict.set_item("config", self.config.as_ref())?;
+
+        // add all items from extra_kwargs to the dict
+        for (key, value) in self.extra_kwargs.bind(py).iter() {
+            dict.set_item(key, value)?;
+        }
+
         Ok(dict)
     }
 }

@@ -102,7 +102,9 @@ class HuggingFaceOnnxArgs:
     ort_type: HuggingFaceORTModel
     provider: str
     quantize: bool
+    export: bool
     config: Optional[Any]
+    extra_kwargs: Optional[Dict[str, Any]]
 
     def __init__(
         self,
@@ -110,6 +112,7 @@ class HuggingFaceOnnxArgs:
         provider: str,
         quantize: bool = False,
         config: Optional[Any] = None,
+        extra_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Optional Args to use with a huggingface model
 
@@ -120,6 +123,11 @@ class HuggingFaceOnnxArgs:
                 Onnx runtime provider to use
             config:
                 Optional optimum config to use
+            quantize:
+                Whether to quantize the model
+            extra_kwargs:
+                Extra kwargs to pass to the onnx conversion (save_pretrained method for ort models)
+
         """
 
 class SaveKwargs:
