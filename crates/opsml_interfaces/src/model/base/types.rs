@@ -347,3 +347,89 @@ impl Clone for LoadKwargs {
         })
     }
 }
+
+#[pyclass]
+#[derive(Debug, Default)]
+pub struct ExtraMetadata {
+    metadata: Option<Py<PyDict>>,
+}
+
+impl Serialize for ExtraMetadata {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        Python::with_gil(|py| {
+            let mut state = serializer.serialize_struct("ExtraMetadata", 1)?;
+            let metadata = self
+                .metadata
+                .as_ref()
+                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
+
+            state.serialize_field("metadata", &metadata)?;
+            state.end()
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for ExtraMetadata {
+    fn deserialize<D>(deserializer: D) -> Result<ExtraMetadata, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct ExtraMetadataVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ExtraMetadataVisitor {
+            type Value = ExtraMetadata;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct ExtraMetadata")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<ExtraMetadata, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                Python::with_gil(|py| {
+                    let mut metadata = None;
+
+                    while let Some(key) = map.next_key::<String>()? {
+                        match key.as_str() {
+                            "metadata" => {
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        metadata = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        metadata = Some(dict.unbind());
+                                    }
+                                }
+                            }
+
+                            _ => {
+                                let _: serde::de::IgnoredAny = map.next_value()?;
+                            }
+                        }
+                    }
+                    let kwargs = ExtraMetadata { metadata };
+                    Ok(kwargs)
+                })
+            }
+        }
+
+        deserializer.deserialize_struct("SaveKwargs", &["onnx", "model"], ExtraMetadataVisitor)
+    }
+}
+
+impl Clone for ExtraMetadata {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let metadata = self.metadata.as_ref().map(|onnx| onnx.clone_ref(py));
+
+            ExtraMetadata { metadata }
+        })
+    }
+}
