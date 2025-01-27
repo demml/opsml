@@ -1236,7 +1236,7 @@ class HuggingFaceModel(ModelInterface):
             path (Path):
                 Base path to save artifacts
             to_onnx (bool):
-                Whether to save the model to onnx
+                Whether to save the model/pipeline to onnx
             save_kwargs (SaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
