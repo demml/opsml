@@ -8,6 +8,7 @@ from opsml.model import (
 from pathlib import Path
 from typing import Tuple
 from transformers import Pipeline  # type: ignore
+from optimum.onnxruntime.configuration import AutoQuantizationConfig
 
 
 def test_hugging_face_text_pipeline(
@@ -27,10 +28,14 @@ def test_hugging_face_text_pipeline(
     onnx_args = HuggingFaceOnnxArgs(
         ort_type=HuggingFaceORTModel.OrtSequenceClassification,
         provider="CPUExecutionProvider",
+        quantize=True,
+        config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
     )
 
     kwargs = SaveKwargs(
         onnx=onnx_args,
     )
-    interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
+
+    print(metadata)
     a

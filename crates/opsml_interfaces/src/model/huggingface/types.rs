@@ -9,7 +9,6 @@ use std::fmt::Display;
 
 #[pyclass]
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct HuggingFaceOnnxArgs {
     #[pyo3(get)]
     pub ort_type: HuggingFaceORTModel,

@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import CommonKwargs, FeatureSchema, OnnxSchema
+from ..core import FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -286,80 +286,6 @@ class SklearnModelInterfaceMetadata(ModelInterfaceMetadata):
         """
 
 class CatBoostModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-
-class HuggingFaceOnnxSaveArgs:
-    ort_type: HuggingFaceORTModel
-    provider: str
-    quantize: bool
-
-    def __init__(
-        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
-    ) -> None:
-        """Optional Args to use with a huggingface model
-
-        Args:
-            ort_type:
-                Optimum onnx class name
-            provider:
-                Onnx runtime provider to use
-            quantize:
-                Whether to quantize the model
-        """
-
-class HuggingFaceModelInterfaceMetadata(SklearnModelInterfaceMetadata):
-    is_pipeline: bool
-    backend: CommonKwargs
-    onnx_args: HuggingFaceOnnxSaveArgs
-    tokenizer_name: str
-    feature_extractor_name: str
-
-    def __init__(
-        self,
-        task_type: str,
-        model_type: str,
-        data_type: str,
-        modelcard_uid: str,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: str,
-        preprocessor_name: str,
-        is_pipeline: bool,
-        backend: CommonKwargs,
-        onnx_args: HuggingFaceOnnxSaveArgs,
-        tokenizer_name: str,
-        feature_extractor_name: str,
-        metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            task_type:
-                The type of task the model performs
-            model_type:
-                The type of model
-            data_type:
-                The type of data the model uses
-            modelcard_uid:
-                The modelcard uid
-            feature_map:
-                A dictionary of features
-            sample_data_interface_type:
-                The type of sample data interface
-            preprocessor_name:
-                The name of the preprocessor
-            is_pipeline:
-                Whether the model is a pipeline
-            backend:
-                The backend to use
-            onnx_args:
-                The onnx args to use
-            tokenizer_name:
-                The name of the tokenizer
-            feature_extractor_name:
-                The name of the feature extractor
-            metadata:
-                Any additional metadata
-        """
-
 class LightGBMModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
 class TensorFlowInterfaceMetadata(SklearnModelInterfaceMetadata): ...
 

@@ -111,7 +111,6 @@ impl SaveKwargs {
 
     #[staticmethod]
     pub fn model_validate_json(json_string: String) -> SaveKwargs {
-        println!("json_string: {:?}", json_string);
         serde_json::from_str(&json_string).unwrap()
     }
 }
@@ -349,14 +348,33 @@ impl Clone for LoadKwargs {
 }
 
 #[pyclass]
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ExtraMetadata {
-    metadata: Option<Py<PyDict>>,
+    metadata: Py<PyDict>,
 }
 
+#[pymethods]
 impl ExtraMetadata {
-    pub fn new(metadata: Option<Py<PyDict>>) -> Self {
+    #[new]
+    #[pyo3(signature = (metadata))]
+    pub fn new<'py>(metadata: Bound<'py, PyDict>) -> Self {
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let metadata = metadata.unbind();
         Self { metadata }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__json__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> SaveKwargs {
+        serde_json::from_str(&json_string).unwrap()
     }
 }
 
@@ -367,10 +385,7 @@ impl Serialize for ExtraMetadata {
     {
         Python::with_gil(|py| {
             let mut state = serializer.serialize_struct("ExtraMetadata", 1)?;
-            let metadata = self
-                .metadata
-                .as_ref()
-                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
+            let metadata = pyobject_to_json(self.metadata.bind(py)).unwrap();
 
             state.serialize_field("metadata", &metadata)?;
             state.end()
@@ -420,7 +435,9 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
                             }
                         }
                     }
-                    let kwargs = ExtraMetadata { metadata };
+                    let kwargs = ExtraMetadata {
+                        metadata: metadata.unwrap(),
+                    };
                     Ok(kwargs)
                 })
             }
@@ -433,7 +450,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
 impl Clone for ExtraMetadata {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
-            let metadata = self.metadata.as_ref().map(|onnx| onnx.clone_ref(py));
+            let metadata = self.metadata.clone_ref(py);
 
             ExtraMetadata { metadata }
         })

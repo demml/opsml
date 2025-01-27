@@ -16,8 +16,7 @@ pub use base::{
 };
 pub use catboost::CatBoostModelInterfaceMetadata;
 pub use huggingface::{
-    HuggingFaceModel, HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel, HuggingFaceOnnxArgs,
-    HuggingFaceOnnxSaveArgs, HuggingFaceTask,
+    HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask,
 };
 pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
 pub use lightning::LightningModel;
