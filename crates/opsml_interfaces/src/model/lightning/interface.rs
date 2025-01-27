@@ -280,7 +280,7 @@ impl LightningModel {
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
-            extra_metadata: HashMap::new(),
+            extra: None,
             save_kwargs,
         };
 
