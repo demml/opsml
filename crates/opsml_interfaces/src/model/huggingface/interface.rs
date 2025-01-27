@@ -5,7 +5,7 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ExtraMetadata, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::ModelInterface;
@@ -462,7 +462,7 @@ impl HuggingFaceModel {
         let span = span!(Level::INFO, "Saving HuggingFaceModel interface").entered();
         let _ = span.enter();
 
-        let mut extra_metadata = HashMap::new();
+        let mut extra = None;
 
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
@@ -500,10 +500,9 @@ impl HuggingFaceModel {
 
             // if quantized exists, add to extra metadata
             if let Some(quantized) = paths.get("quantized") {
-                extra_metadata.insert(
-                    "quantized".to_string(),
-                    quantized.to_string_lossy().to_string(),
-                );
+                let meta = PyDict::new(py);
+                meta.set_item("quantized_model_uri", quantized.to_str().unwrap())?;
+                extra = Some(ExtraMetadata::new(Some(meta.unbind())));
             }
         }
 
@@ -513,7 +512,7 @@ impl HuggingFaceModel {
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
-            extra_metadata,
+            extra,
             save_kwargs,
         };
 

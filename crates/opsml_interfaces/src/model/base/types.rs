@@ -354,6 +354,12 @@ pub struct ExtraMetadata {
     metadata: Option<Py<PyDict>>,
 }
 
+impl ExtraMetadata {
+    pub fn new(metadata: Option<Py<PyDict>>) -> Self {
+        Self { metadata }
+    }
+}
+
 impl Serialize for ExtraMetadata {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
