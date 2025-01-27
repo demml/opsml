@@ -1,4 +1,4 @@
-use crate::base::{parse_save_kwargs, LoadKwargs, SaveKwargs};
+use crate::base::{parse_save_kwargs, ExtraMetadata, LoadKwargs, SaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
@@ -65,7 +65,7 @@ pub struct ModelInterfaceSaveMetadata {
     pub drift_profile_uri: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub extra_metadata: HashMap<String, String>,
+    pub extra: Option<ExtraMetadata>,
 
     #[pyo3(get)]
     pub save_kwargs: Option<SaveKwargs>,
@@ -74,14 +74,14 @@ pub struct ModelInterfaceSaveMetadata {
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_kwargs=None))]
+    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra=None, save_kwargs=None))]
     pub fn new(
         model_uri: PathBuf,
         data_processor_map: Option<HashMap<String, DataProcessor>>,
         sample_data_uri: Option<PathBuf>,
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
-        extra_metadata: HashMap<String, String>,
+        extra: Option<ExtraMetadata>,
         save_kwargs: Option<SaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
@@ -90,7 +90,7 @@ impl ModelInterfaceSaveMetadata {
             onnx_model_uri,
             data_processor_map: data_processor_map.unwrap_or_default(),
             drift_profile_uri,
-            extra_metadata,
+            extra,
             save_kwargs,
         }
     }
@@ -391,7 +391,7 @@ impl ModelInterface {
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
-            extra_metadata: HashMap::new(),
+            extra: None,
             save_kwargs,
         })
     }

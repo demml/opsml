@@ -18,6 +18,7 @@ use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use serde_json::Value;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
 
@@ -461,6 +462,8 @@ impl HuggingFaceModel {
         let span = span!(Level::INFO, "Saving HuggingFaceModel interface").entered();
         let _ = span.enter();
 
+        let mut extra_metadata = HashMap::new();
+
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -485,15 +488,23 @@ impl HuggingFaceModel {
         debug!("Creating feature schema");
         self_.as_super().schema = self_.create_feature_schema(py)?;
 
-        let onnx_model_uri = None;
+        let mut onnx_model_uri = None;
 
         debug!("Saving model");
         let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
 
         if to_onnx {
             debug!("Saving ONNX model");
-            self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
-            //onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+            let paths = self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
+            onnx_model_uri = paths.get("onnx").map(|p| p.clone());
+
+            // if quantized exists, add to extra metadata
+            if let Some(quantized) = paths.get("quantized") {
+                extra_metadata.insert(
+                    "quantized".to_string(),
+                    quantized.to_string_lossy().to_string(),
+                );
+            }
         }
 
         let metadata = ModelInterfaceSaveMetadata {
@@ -502,7 +513,7 @@ impl HuggingFaceModel {
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
-            extra_metadata: HashMap::new(),
+            extra_metadata,
             save_kwargs,
         };
 
@@ -551,28 +562,36 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<(), OnnxError> {
+    ) -> Result<HashMap<String, PathBuf>, OnnxError> {
         let span = span!(Level::INFO, "Converting model to ONNX").entered();
         let _ = span.enter();
 
-        let session = Py::new(
+        let mut paths = HashMap::new();
+
+        let session = OnnxModelConverter::convert_model(
             py,
-            OnnxModelConverter::convert_model(
-                py,
-                &py.None().bind(py),
-                &self.sample_data,
-                &ModelInterfaceType::HuggingFace,
-                &self.model_type,
-                path,
-                kwargs,
-            )?,
+            &py.None().bind(py),
+            &self.sample_data,
+            &ModelInterfaceType::HuggingFace,
+            &self.model_type,
+            path,
+            kwargs,
         )?;
 
-        self.onnx_session = Some(session);
+        paths.insert("onnx".to_string(), PathBuf::from(SaveName::OnnxModel));
+
+        if session.quantized {
+            paths.insert(
+                "quantized".to_string(),
+                PathBuf::from(SaveName::QuantizedModel),
+            );
+        }
+
+        self.onnx_session = Some(Py::new(py, session)?);
 
         info!("Model converted to ONNX");
 
-        Ok(())
+        Ok(paths)
     }
 
     fn save_tokenizer(

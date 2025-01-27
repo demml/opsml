@@ -17,7 +17,6 @@ pub struct HuggingFaceOnnxModelConverter {
 impl HuggingFaceOnnxModelConverter {
     pub fn new(path: &Path) -> Self {
         let model_save_path = path.join(SaveName::Model);
-        let full_model_save_path = path.join(&model_save_path);
 
         let onnx_save_path = PathBuf::from(SaveName::OnnxModel);
         let full_onnx_save_path = path.join(&onnx_save_path);
@@ -26,7 +25,7 @@ impl HuggingFaceOnnxModelConverter {
         let full_quantize_save_path = path.join(&quantize_save_path);
 
         HuggingFaceOnnxModelConverter {
-            model_path: full_model_save_path,
+            model_path: model_save_path,
             onnx_path: full_onnx_save_path,
             quantize_path: full_quantize_save_path,
         }
