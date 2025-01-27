@@ -487,11 +487,12 @@ impl HuggingFaceModel {
         debug!("Creating feature schema");
         self_.as_super().schema = self_.create_feature_schema(py)?;
 
-        let mut onnx_model_uri = None;
+        let onnx_model_uri = None;
 
         if to_onnx {
             debug!("Saving ONNX model");
-            onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+            self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
+            //onnx_model_uri = Some(self_.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
         }
 
         debug!("Saving model");
@@ -542,36 +543,6 @@ impl HuggingFaceModel {
         let span = span!(Level::INFO, "Loading TorchModel components").entered();
         let _ = span.enter();
 
-        // if kwargs is not None, unwrap, else default to None
-        let load_kwargs = load_kwargs.unwrap_or_default();
-
-        if model {
-            debug!("Loading model");
-            self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
-
-        if onnx {
-            debug!("Loading ONNX model");
-            self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
-        }
-
-        if sample_data {
-            debug!("Loading sample data");
-            let data_type = self_.as_super().data_type.clone();
-
-            self_.load_data(py, &path, &data_type, None)?;
-        }
-
-        if preprocessor {
-            debug!("Loading preprocessor");
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-        }
-
-        if drift_profile {
-            debug!("Loading drift profile");
-            self_.as_super().load_drift_profile(&path)?;
-        }
-
         Ok(())
     }
 }
@@ -617,9 +588,34 @@ impl HuggingFaceModel {
         // save the ort model
         kwargs.del_item("provider")?;
         kwargs.del_item("ort_type")?;
-        ort_model.call_method("save_pretrained", (full_onnx_save_path,), None)?;
+        ort_model.call_method("save_pretrained", (full_onnx_save_path.clone(),), None)?;
+
+        // list files in path and subdirectories
+        let files = fs::read_dir(&full_onnx_save_path).unwrap();
+        for file in files {
+            let file = file.unwrap();
+            let path = file.path();
+            let file_name = path.file_name().unwrap().to_str().unwrap();
+            debug!("File: {}", file_name);
+        }
 
         // if pipeline
+        if self.base_args.is_pipeline {
+            let pipeline = py.import("transformers")?.getattr("pipeline")?;
+            let provided_model = self.model.bind(py).clone();
+
+            // get the pipeline components
+            let tokenizer = provided_model.getattr("tokenizer")?;
+            let feature_extractor = provided_model.getattr("feature_extractor")?;
+            let image_processor = provided_model.getattr("image_processor")?;
+
+            kwargs.set_item("model", ort_model)?;
+            kwargs.set_item("tokenizer", tokenizer)?;
+            kwargs.set_item("feature_extractor", feature_extractor)?;
+            kwargs.set_item("image_processor", image_processor)?;
+
+            //let sess = pipeline.call((self.huggingface_task,), Some(&kwargs))?;
+        }
         // pipeline(task_type, ort_model, tokenizer, feature_extractor, image_processor)
 
         // OnnxSession (sess: ort_model)
@@ -759,30 +755,30 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    pub fn load_preprocessor(
-        &mut self,
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Preprocessor").entered();
-        let _ = span.enter();
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
-        let joblib = py.import("joblib")?;
-        // Load the data using joblib
-        self.preprocessor = joblib
-            .call_method("load", (load_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to load preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?
-            .into();
-
-        info!("Preprocessor loaded");
-        Ok(())
-    }
+    //pub fn load_preprocessor(
+    //    &mut self,
+    //    py: Python,
+    //    path: &Path,
+    //    kwargs: Option<&Bound<'_, PyDict>>,
+    //) -> PyResult<()> {
+    //    let span = span!(Level::INFO, "Load Preprocessor").entered();
+    //    let _ = span.enter();
+    //    let load_path = path
+    //        .join(SaveName::Preprocessor)
+    //        .with_extension(Suffix::Joblib);
+    //    let joblib = py.import("joblib")?;
+    //    // Load the data using joblib
+    //    self.preprocessor = joblib
+    //        .call_method("load", (load_path,), kwargs)
+    //        .map_err(|e| {
+    //            error!("Failed to load preprocessor: {}", e);
+    //            OpsmlError::new_err(e.to_string())
+    //        })?
+    //        .into();
+    //
+    //    info!("Preprocessor loaded");
+    //    Ok(())
+    //}
 
     /// Save the model to a file
     ///
@@ -891,7 +887,7 @@ impl HuggingFaceModel {
 
         // load sample data
 
-        self.sample_data = TorchSampleData::load_data(py, path, data_type, kwargs)?;
+        self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
         info!("Sample data loaded");
 
@@ -905,29 +901,29 @@ impl HuggingFaceModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    fn save_onnx_model(
-        &mut self,
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving ONNX Model").entered();
-        let _ = span.enter();
-
-        if self.onnx_session.is_none() {
-            self.convert_to_onnx(py, kwargs)?;
-        }
-
-        let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
-        let full_save_path = path.join(&save_path);
-        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
-
-        fs::write(&full_save_path, bytes)?;
-
-        info!("ONNX model saved");
-
-        Ok(save_path)
-    }
+    //fn save_onnx_model(
+    //    &mut self,
+    //    py: Python,
+    //    path: &Path,
+    //    kwargs: Option<&Bound<'_, PyDict>>,
+    //) -> PyResult<PathBuf> {
+    //    let span = span!(Level::INFO, "Saving ONNX Model").entered();
+    //    let _ = span.enter();
+    //
+    //    if self.onnx_session.is_none() {
+    //        self.convert_to_onnx(py, kwargs)?;
+    //    }
+    //
+    //    let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
+    //    let full_save_path = path.join(&save_path);
+    //    let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+    //
+    //    fs::write(&full_save_path, bytes)?;
+    //
+    //    info!("ONNX model saved");
+    //
+    //    Ok(save_path)
+    //}
 
     /// Load the model from a file
     ///
@@ -936,34 +932,34 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    pub fn load_onnx_model(
-        &mut self,
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load ONNX Model");
-        let _ = span.enter();
-
-        if self.onnx_session.is_none() {
-            return Err(OpsmlError::new_err(
-                "No ONNX model detected in interface for loading",
-            ));
-        }
-
-        let load_path = path
-            .join(SaveName::OnnxModel.to_string())
-            .with_extension(Suffix::Onnx);
-
-        self.onnx_session
-            .as_mut()
-            .unwrap()
-            .load_onnx_model(py, load_path, kwargs)?;
-
-        info!("ONNX model loaded");
-
-        Ok(())
-    }
+    //pub fn load_onnx_model(
+    //    &mut self,
+    //    py: Python,
+    //    path: &Path,
+    //    kwargs: Option<&Bound<'_, PyDict>>,
+    //) -> PyResult<()> {
+    //    let span = span!(Level::INFO, "Load ONNX Model");
+    //    let _ = span.enter();
+    //
+    //    if self.onnx_session.is_none() {
+    //        return Err(OpsmlError::new_err(
+    //            "No ONNX model detected in interface for loading",
+    //        ));
+    //    }
+    //
+    //    let load_path = path
+    //        .join(SaveName::OnnxModel.to_string())
+    //        .with_extension(Suffix::Onnx);
+    //
+    //    self.onnx_session
+    //        .as_mut()
+    //        .unwrap()
+    //        .load_onnx_model(py, load_path, kwargs)?;
+    //
+    //    info!("ONNX model loaded");
+    //
+    //    Ok(())
+    //}
 
     /// Create a feature schema
     ///

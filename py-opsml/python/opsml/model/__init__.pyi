@@ -67,6 +67,38 @@ class HuggingFaceORTModel:
     OrtStableDiffusionXlPipeline = "ORTStableDiffusionXLPipeline"
     OrtStableDiffusionXlImg2ImgPipeline = "ORTStableDiffusionXLImg2ImgPipeline"
 
+class HuggingFaceTask:
+    AudioClassification = "HuggingFaceTask"
+    AutomaticSpeechRecognition = "HuggingFaceTask"
+    Conversational = "HuggingFaceTask"
+    DepthEstimation = "HuggingFaceTask"
+    DocumentQuestionAnswering = "HuggingFaceTask"
+    FeatureExtraction = "HuggingFaceTask"
+    FillMask = "HuggingFaceTask"
+    ImageClassification = "HuggingFaceTask"
+    ImageSegmentation = "HuggingFaceTask"
+    ImageToImage = "HuggingFaceTask"
+    ImageToText = "HuggingFaceTask"
+    MaskGeneration = "HuggingFaceTask"
+    ObjectDetection = "HuggingFaceTask"
+    QuestionAnswering = "HuggingFaceTask"
+    Summarization = "HuggingFaceTask"
+    TableQuestionAnswering = "HuggingFaceTask"
+    Text2TextGeneration = "HuggingFaceTask"
+    TextClassification = "HuggingFaceTask"
+    TextGeneration = "HuggingFaceTask"
+    TextToAudio = "HuggingFaceTask"
+    TokenClassification = "HuggingFaceTask"
+    Translation = "HuggingFaceTask"
+    TranslationXxToYy = "HuggingFaceTask"
+    VideoClassification = "HuggingFaceTask"
+    VisualQuestionAnswering = "HuggingFaceTask"
+    ZeroShotClassification = "HuggingFaceTask"
+    ZeroShotImageClassification = "HuggingFaceTask"
+    ZeroShotAudioClassification = "HuggingFaceTask"
+    ZeroShotObjectDetection = "HuggingFaceTask"
+    Undefined = "HuggingFaceTask"
+
 class HuggingFaceOnnxArgs:
     ort_type: HuggingFaceORTModel
     provider: str
@@ -253,7 +285,9 @@ class HuggingFaceOnnxSaveArgs:
     provider: str
     quantize: bool
 
-    def __init__(self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool) -> None:
+    def __init__(
+        self, ort_type: HuggingFaceORTModel, provider: str, quantize: bool
+    ) -> None:
         """Optional Args to use with a huggingface model
 
         Args:
@@ -1110,4 +1144,105 @@ class LightningModel(ModelInterface):
         Args:
             kwargs:
                 Optional kwargs to pass to the underlying onnx conversion method
+        """
+
+class HuggingFaceModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        tokenizer: Optional[Any] = None,
+        feature_extractor: Optional[Any] = None,
+        image_processor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        hf_task: Optional[HuggingFaceTask] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Interface for saving HuggingFace models and pipelines
+
+        Args:
+            model:
+                Model to associate with interface. This can be a HuggingFace pipeline (inherits from Pipeline),
+                or a HuggingFace model (inherits from PreTrainedModel or TFPreTrainedModel).
+            tokenizer:
+                Tokenizer to associate with the model. This must be a HuggingFace tokenizer (PreTrainedTokenizerBase).
+                If using a pipeline that already has a tokenizer, this can be None.
+            feature_extractor:
+                Feature extractor to associate with the model. This must be a HuggingFace feature extractor
+                (PreTrainedFeatureExtractor). If using a pipeline that already has a feature extractor,
+                this can be None.
+            image_processor:
+                Image processor to associate with the model. This must be a HuggingFace image processor
+                (BaseImageProcessor). If using a pipeline that already has an image processor,
+                this can be None.
+            sample_data:
+                Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                HuggingFace-supported type.
+            hf_task:
+                HuggingFace task to associate with the model. Defaults to Undefined. Accepted tasks are as follows (taken from HuggingFace pipeline docs):
+                    - `"audio-classification"`: will return a [`AudioClassificationPipeline`].
+                    - `"automatic-speech-recognition"`: will return a [`AutomaticSpeechRecognitionPipeline`].
+                    - `"depth-estimation"`: will return a [`DepthEstimationPipeline`].
+                    - `"document-question-answering"`: will return a [`DocumentQuestionAnsweringPipeline`].
+                    - `"feature-extraction"`: will return a [`FeatureExtractionPipeline`].
+                    - `"fill-mask"`: will return a [`FillMaskPipeline`]:.
+                    - `"image-classification"`: will return a [`ImageClassificationPipeline`].
+                    - `"image-feature-extraction"`: will return an [`ImageFeatureExtractionPipeline`].
+                    - `"image-segmentation"`: will return a [`ImageSegmentationPipeline`].
+                    - `"image-text-to-text"`: will return a [`ImageTextToTextPipeline`].
+                    - `"image-to-image"`: will return a [`ImageToImagePipeline`].
+                    - `"image-to-text"`: will return a [`ImageToTextPipeline`].
+                    - `"mask-generation"`: will return a [`MaskGenerationPipeline`].
+                    - `"object-detection"`: will return a [`ObjectDetectionPipeline`].
+                    - `"question-answering"`: will return a [`QuestionAnsweringPipeline`].
+                    - `"summarization"`: will return a [`SummarizationPipeline`].
+                    - `"table-question-answering"`: will return a [`TableQuestionAnsweringPipeline`].
+                    - `"text2text-generation"`: will return a [`Text2TextGenerationPipeline`].
+                    - `"text-classification"` (alias `"sentiment-analysis"` available): will return a
+                    [`TextClassificationPipeline`].
+                    - `"text-generation"`: will return a [`TextGenerationPipeline`]:.
+                    - `"text-to-audio"` (alias `"text-to-speech"` available): will return a [`TextToAudioPipeline`]:.
+                    - `"token-classification"` (alias `"ner"` available): will return a [`TokenClassificationPipeline`].
+                    - `"translation"`: will return a [`TranslationPipeline`].
+                    - `"translation_xx_to_yy"`: will return a [`TranslationPipeline`].
+                    - `"video-classification"`: will return a [`VideoClassificationPipeline`].
+                    - `"visual-question-answering"`: will return a [`VisualQuestionAnsweringPipeline`].
+                    - `"zero-shot-classification"`: will return a [`ZeroShotClassificationPipeline`].
+                    - `"zero-shot-image-classification"`: will return a [`ZeroShotImageClassificationPipeline`].
+                    - `"zero-shot-audio-classification"`: will return a [`ZeroShotAudioClassificationPipeline`].
+                    - `"zero-shot-object-detection"`: will return a [`ZeroShotObjectDetectionPipeline`].
+            task_type:
+                The intended task type for the model. Note: This is the OpsML task type, not the HuggingFace task type.
+            schema:
+                Feature schema for model features. Will be inferred from the sample data if not provided.
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    def save(
+        self,
+        path: Path,
+        to_onnx: bool = False,
+        save_kwargs: None | SaveKwargs = None,
+    ) -> ModelInterfaceSaveMetadata:
+        """Save the HuggingFaceModel interface
+
+        Args:
+            path (Path):
+                Base path to save artifacts
+            to_onnx (bool):
+                Whether to save the model to onnx
+            save_kwargs (SaveKwargs):
+                Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
+                that the kwargs will be passed to the underlying methods as is and are expected to be supported by
+                the underlying library.
+
+                - model: Kwargs that will be passed to save_model. See save_model for more details.
+                - preprocessor: Kwargs that will be passed to save_preprocessor
+                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
         """
