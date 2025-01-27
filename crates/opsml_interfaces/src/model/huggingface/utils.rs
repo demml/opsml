@@ -3,7 +3,7 @@ use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, T
 use crate::model::InterfaceDataType;
 use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::DataType;
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{
@@ -74,7 +74,7 @@ impl HuggingFaceSampleData {
         if data.is_instance(&transformers.getattr("BatchEncoding")?)?
             || data.is_instance(&transformers.getattr("BatchFeature")?)?
         {
-            return Self::handle_pydict(data);
+            return Self::handle_batch_data(data);
         }
 
         Ok(HuggingFaceSampleData::None)
@@ -246,14 +246,6 @@ impl HuggingFaceSampleData {
         }
     }
 
-    fn save_binary(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
-        let full_save_path = path.join(&save_path);
-        data.call_method("save_binary", (full_save_path,), None)?;
-
-        Ok(save_path)
-    }
-
     fn save_interface_data(
         &self,
         data: &Bound<'_, PyAny>,
@@ -338,24 +330,6 @@ impl HuggingFaceSampleData {
 
             HuggingFaceSampleData::None => Ok(None),
         }
-    }
-
-    // helper method for converting all pandas numeric types to f32
-    // primarily used with sklearn pipelines and onnx
-    fn convert_pandas_to_f32<'py>(&self, data: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyAny>> {
-        let py = data.py();
-        let npfloat32 = py.import("numpy")?.getattr("float32")?;
-        let numeric_cols = data
-            .call_method1("select_dtypes", ("number",))?
-            .getattr("columns")?
-            .extract::<Vec<String>>()?;
-
-        let df_numeric_cols = data.get_item(&numeric_cols)?;
-        let df_numeric_cols_float = df_numeric_cols.call_method1("astype", (npfloat32,))?;
-
-        data.set_item(&numeric_cols, df_numeric_cols_float)?;
-
-        Ok(data)
     }
 
     pub fn load_data<'py>(
