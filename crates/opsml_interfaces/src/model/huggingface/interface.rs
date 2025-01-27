@@ -1,5 +1,5 @@
-use crate::model::huggingface::HuggingFaceORTModel;
-use crate::{Feature, SampleData};
+use crate::model::huggingface::{HuggingFaceORTModel, HuggingFaceSampleData};
+use crate::Feature;
 use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ use crate::ModelType;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
-use opsml_error::OpsmlError;
+use opsml_error::{InterfaceError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::fs;
@@ -204,6 +204,26 @@ fn validate_feature_extractor(py: Python, tokenizer: &Bound<'_, PyAny>) -> PyRes
     }
 }
 
+fn is_pretrained_torch_model(py: Python, model: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let transformers = py.import("transformers")?.getattr("PreTrainedModel")?;
+
+    Ok(model.is_instance(&transformers).unwrap())
+}
+
+fn is_pretrained_tensorflow_model(py: Python, model: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let transformers = py.import("transformers")?.getattr("TFPreTrainedModel")?;
+
+    Ok(model.is_instance(&transformers).unwrap())
+}
+
+fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let transformers = py.import("transformers")?;
+
+    Ok(pipeline
+        .is_instance(&transformers.getattr("Pipeline")?)
+        .unwrap())
+}
+
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
 pub struct HuggingFaceModel {
@@ -219,8 +239,7 @@ pub struct HuggingFaceModel {
     #[pyo3(get)]
     pub image_processor: PyObject,
 
-    #[pyo3(get, set)]
-    pub onnx_session: Option<OnnxSession>,
+    pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
     pub model_type: ModelType,
@@ -228,14 +247,23 @@ pub struct HuggingFaceModel {
     #[pyo3(get)]
     pub model_interface_type: ModelInterfaceType,
 
+    #[pyo3(get)]
+    pub huggingface_task: HuggingFaceTask,
+
     pub processor_names: ProcessorNames,
+
+    pub is_pipeline: bool,
+
+    pub model_backend: ModelType,
+
+    pub sample_data: HuggingFaceSampleData,
 }
 
 #[pymethods]
 impl HuggingFaceModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task_type=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -243,40 +271,29 @@ impl HuggingFaceModel {
         feature_extractor: Option<&Bound<'py, PyAny>>,
         image_processor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        hf_task_type: Option<HuggingFaceTask>,
+        hf_task: Option<HuggingFaceTask>,
         task_type: TaskType,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
-        let mut hf_task = hf_task_type.unwrap_or(HuggingFaceTask::Undefined);
-        let mut model_type = ModelType::Transformers;
+        let mut hf_task = hf_task.unwrap_or(HuggingFaceTask::Undefined);
         let mut model_backend = ModelType::Pytorch;
         let mut is_pipeline = false;
+
         let mut processor_names =
             get_processor_names(tokenizer, feature_extractor, image_processor);
 
         // process model/pipeline
         let model = if let Some(model) = model {
-            let transformers = py.import("transformers")?;
-
-            if model
-                .is_instance(&transformers.getattr("Pipeline")?)
-                .unwrap()
-            {
+            if is_hf_pipeline(py, model)? {
                 // set model type to TransformersPipeline and get task
                 is_pipeline = true;
                 hf_task = HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
                 processor_names = get_processor_names_from_pipeline(model);
-            } else if model
-                .is_instance(&transformers.getattr("PreTrainedModel")?)
-                .unwrap()
-            {
+            } else if is_pretrained_torch_model(py, model)? {
                 model_backend = ModelType::Pytorch;
-            } else if model
-                .is_instance(&transformers.getattr("TFPreTrainedModel")?)
-                .unwrap()
-            {
+            } else if is_pretrained_tensorflow_model(py, model)? {
                 model_backend = ModelType::TensorFlow;
             } else {
                 return Err(OpsmlError::new_err(
@@ -319,11 +336,11 @@ impl HuggingFaceModel {
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
             // attempt to create sample data. If it fails, return default sample data and log a warning
-            Some(data) => TorchSampleData::new(data).unwrap_or_else(|e| {
+            Some(data) => HuggingFaceSampleData::new(data).unwrap_or_else(|e| {
                 warn!("Failed to create sample data. Defaulting to None: {}", e);
-                TorchSampleData::default()
+                HuggingFaceSampleData::default()
             }),
-            None => TorchSampleData::default(),
+            None => HuggingFaceSampleData::default(),
         };
 
         model_interface.data_type = sample_data.get_data_type();
@@ -334,11 +351,14 @@ impl HuggingFaceModel {
                 tokenizer,
                 feature_extractor,
                 image_processor,
-                //sample_data,
                 model_interface_type: ModelInterfaceType::Torch,
                 model_type: ModelType::Pytorch,
                 onnx_session: None,
+                huggingface_task: hf_task,
                 processor_names,
+                is_pipeline,
+                model_backend,
+                sample_data,
             },
             // pass all the arguments to the ModelInterface
             model_interface,
@@ -354,81 +374,36 @@ impl HuggingFaceModel {
             self.model = py.None();
             return Ok(());
         } else {
-            let torch_module = py.import("torch")?.getattr("nn")?.getattr("Module")?;
-            if model.is_instance(&torch_module).unwrap() {
-                self.model = model.into_py_any(py)?
+            if is_hf_pipeline(py, model)? {
+                // set model type to TransformersPipeline and get task
+                self.is_pipeline = true;
+                self.huggingface_task =
+                    HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
+                self.processor_names = get_processor_names_from_pipeline(model);
+            } else if is_pretrained_torch_model(py, model)? {
+                self.model_backend = ModelType::Pytorch;
+            } else if is_pretrained_tensorflow_model(py, model)? {
+                self.model_backend = ModelType::TensorFlow;
             } else {
                 return Err(OpsmlError::new_err(
-                    "Model must be an instance of torch.nn.Module",
+                    "Model must be an instance of transformers",
                 ));
             }
+            model.into_py_any(py)?
         };
 
         Ok(())
     }
 
-    #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<OnnxSession>) {
-        self.onnx_session = onnx_session;
-    }
-
-    pub fn clear_onnx_runtime_sess(&mut self, py: Python) {
-        if let Some(ref mut sess) = self.onnx_session {
-            sess.set_session(py, None).unwrap();
-        }
-    }
-
-    #[setter]
-    pub fn set_sample_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        sample_data: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
-        self_.sample_data = TorchSampleData::new(sample_data)?;
-
-        // set the data type
-        self_.as_super().data_type = self_.sample_data.get_data_type();
-
-        Ok(())
+    #[getter]
+    pub fn get_onnx_session(&self, py: Python) -> PyResult<Option<Py<OnnxSession>>> {
+        // return mutable reference to onnx session
+        Ok(self.onnx_session.as_ref().map(|sess| sess.clone_ref(py)))
     }
 
     #[getter]
     pub fn get_sample_data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         Ok(self.sample_data.get_data(py).unwrap().bind(py).clone())
-    }
-
-    #[getter]
-    pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none(py) {
-            None
-        } else {
-            Some(
-                self.preprocessor
-                    .clone_ref(py)
-                    .into_bound_py_any(py)
-                    .unwrap(),
-            )
-        }
-    }
-    #[setter]
-    #[allow(clippy::needless_lifetimes)]
-    pub fn set_preprocessor<'py>(
-        &mut self,
-        py: Python,
-        preprocessor: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
-        if PyAnyMethods::is_none(preprocessor) {
-            self.preprocessor = py.None();
-            self.preprocessor_name = CommonKwargs::Undefined.to_string();
-            Ok(())
-        } else {
-            let preprocessor_name = preprocessor
-                .getattr("__class__")?
-                .getattr("__name__")?
-                .to_string();
-            self.preprocessor = preprocessor.into_py_any(py)?;
-            self.preprocessor_name = preprocessor_name;
-            Ok(())
-        }
     }
 
     /// Save the interface model
@@ -608,7 +583,85 @@ impl HuggingFaceModel {
     }
 }
 
-impl TorchModel {
+impl HuggingFaceModel {
+    fn save_tokenizer(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<PathBuf, InterfaceError> {
+        let span = span!(Level::INFO, "Save Tokenizer").entered();
+        let _ = span.enter();
+
+        let save_path = PathBuf::from(SaveName::Tokenizer);
+        let full_save_path = path.join(&save_path);
+
+        // Save the data using joblib
+        self.tokenizer
+            .bind(py)
+            .call_method("save_pretrained", (full_save_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to save tokenizer: {}", e);
+                InterfaceError::Error(e.to_string())
+            })?;
+
+        info!("Tokenizer saved");
+
+        Ok(save_path)
+    }
+
+    fn save_feature_extractor(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<PathBuf, InterfaceError> {
+        let span = span!(Level::INFO, "Save Feature Extractor").entered();
+        let _ = span.enter();
+
+        let save_path = PathBuf::from(SaveName::FeatureExtractor);
+        let full_save_path = path.join(&save_path);
+
+        // Save the data using joblib
+        self.feature_extractor
+            .bind(py)
+            .call_method("save_pretrained", (full_save_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to save feature extractor: {}", e);
+                InterfaceError::Error(e.to_string())
+            })?;
+
+        info!("Feature Extractor saved");
+
+        Ok(save_path)
+    }
+
+    fn save_image_processor(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<PathBuf, InterfaceError> {
+        let span = span!(Level::INFO, "Save Image Processor").entered();
+        let _ = span.enter();
+
+        let save_path = PathBuf::from(SaveName::FeatureExtractor);
+        let full_save_path = path.join(&save_path);
+
+        // Save the data using joblib
+        self.image_processor
+            .bind(py)
+            .call_method("save_pretrained", (full_save_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to save image processor: {}", e);
+                InterfaceError::Error(e.to_string())
+            })?;
+
+        info!("Image Processor saved");
+
+        Ok(save_path)
+    }
+
     /// Save the preprocessor to a file
     ///
     /// # Arguments
@@ -616,7 +669,7 @@ impl TorchModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    pub fn save_preprocessor(
+    pub fn save_preprocessors(
         &self,
         py: Python,
         path: &Path,

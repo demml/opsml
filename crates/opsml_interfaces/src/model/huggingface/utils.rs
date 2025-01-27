@@ -1,7 +1,6 @@
 use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib};
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::{ModelType, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -10,9 +9,7 @@ use pyo3::{
     prelude::*,
     types::{PySlice, PyString},
 };
-use scouter_client::{
-    CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
-};
+
 use std::path::Path;
 use std::path::PathBuf;
 
