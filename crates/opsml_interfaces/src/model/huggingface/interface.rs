@@ -224,6 +224,41 @@ fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
         .unwrap())
 }
 
+#[derive(Debug, Clone)]
+struct HFBaseArgs {
+    pub hf_task: HuggingFaceTask,
+    pub model_backend: ModelType,
+    pub is_pipeline: bool,
+    pub has_tokenizer: bool,
+    pub has_feature_extractor: bool,
+    pub has_image_processor: bool,
+    pub tokenizer_name: String,
+    pub feature_extractor_name: String,
+    pub image_processor_name: String,
+}
+
+impl Default for HFBaseArgs {
+    fn default() -> Self {
+        HFBaseArgs {
+            hf_task: HuggingFaceTask::Undefined,
+            model_backend: ModelType::Pytorch,
+            is_pipeline: false,
+            has_tokenizer: false,
+            has_feature_extractor: false,
+            has_image_processor: false,
+            tokenizer_name: CommonKwargs::Undefined.to_string(),
+            feature_extractor_name: CommonKwargs::Undefined.to_string(),
+            image_processor_name: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
+impl HFBaseArgs {
+    pub fn has_processors(&self) -> bool {
+        self.has_tokenizer || self.has_feature_extractor || self.has_image_processor
+    }
+}
+
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
 pub struct HuggingFaceModel {
@@ -250,13 +285,9 @@ pub struct HuggingFaceModel {
     #[pyo3(get)]
     pub huggingface_task: HuggingFaceTask,
 
-    pub processor_names: ProcessorNames,
-
-    pub is_pipeline: bool,
-
-    pub model_backend: ModelType,
-
     pub sample_data: HuggingFaceSampleData,
+
+    pub base_args: HFBaseArgs,
 }
 
 #[pymethods]
@@ -277,9 +308,8 @@ impl HuggingFaceModel {
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
-        let mut hf_task = hf_task.unwrap_or(HuggingFaceTask::Undefined);
-        let mut model_backend = ModelType::Pytorch;
-        let mut is_pipeline = false;
+        let mut base_args = HFBaseArgs::default();
+        base_args.hf_task = hf_task.unwrap_or(HuggingFaceTask::Undefined);
 
         let mut processor_names =
             get_processor_names(tokenizer, feature_extractor, image_processor);
@@ -288,13 +318,13 @@ impl HuggingFaceModel {
         let model = if let Some(model) = model {
             if is_hf_pipeline(py, model)? {
                 // set model type to TransformersPipeline and get task
-                is_pipeline = true;
-                hf_task = HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
+                base_args.is_pipeline = true;
+                base_args.hf_task = HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
                 processor_names = get_processor_names_from_pipeline(model);
             } else if is_pretrained_torch_model(py, model)? {
-                model_backend = ModelType::Pytorch;
+                base_args.model_backend = ModelType::Pytorch;
             } else if is_pretrained_tensorflow_model(py, model)? {
-                model_backend = ModelType::TensorFlow;
+                base_args.model_backend = ModelType::TensorFlow;
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of transformers",
@@ -344,6 +374,9 @@ impl HuggingFaceModel {
         };
 
         model_interface.data_type = sample_data.get_data_type();
+        base_args.tokenizer_name = processor_names.0.clone();
+        base_args.feature_extractor_name = processor_names.1.clone();
+        base_args.image_processor_name = processor_names.2.clone();
 
         Ok((
             HuggingFaceModel {
@@ -354,11 +387,9 @@ impl HuggingFaceModel {
                 model_interface_type: ModelInterfaceType::Torch,
                 model_type: ModelType::Pytorch,
                 onnx_session: None,
-                huggingface_task: hf_task,
-                processor_names,
-                is_pipeline,
-                model_backend,
+                huggingface_task: base_args.hf_task.clone(),
                 sample_data,
+                base_args,
             },
             // pass all the arguments to the ModelInterface
             model_interface,
@@ -376,14 +407,17 @@ impl HuggingFaceModel {
         } else {
             if is_hf_pipeline(py, model)? {
                 // set model type to TransformersPipeline and get task
-                self.is_pipeline = true;
+                self.base_args.is_pipeline = true;
                 self.huggingface_task =
                     HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
-                self.processor_names = get_processor_names_from_pipeline(model);
+                let processor_names = get_processor_names_from_pipeline(model);
+                self.base_args.tokenizer_name = processor_names.0;
+                self.base_args.feature_extractor_name = processor_names.1;
+                self.base_args.image_processor_name = processor_names.2;
             } else if is_pretrained_torch_model(py, model)? {
-                self.model_backend = ModelType::Pytorch;
+                self.base_args.model_backend = ModelType::Pytorch;
             } else if is_pretrained_tensorflow_model(py, model)? {
-                self.model_backend = ModelType::TensorFlow;
+                self.base_args.model_backend = ModelType::TensorFlow;
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of transformers",
@@ -440,15 +474,12 @@ impl HuggingFaceModel {
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
         debug!("Saving preprocessor");
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
-            None
-        } else {
-            let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
-            Some(DataProcessor {
-                name: self_.preprocessor_name.clone(),
-                uri,
-            })
-        };
+        let processors = self_.save_processors(py, &path, preprocessor_kwargs.as_ref())?;
+
+        let data_processor_map = processors
+            .iter()
+            .map(|p| (p.name.clone(), p.clone()))
+            .collect();
 
         debug!("Saving sample data");
         let sample_data_uri = self_.save_data(py, &path, None)?;
@@ -465,14 +496,6 @@ impl HuggingFaceModel {
 
         debug!("Saving model");
         let model_uri = self_.save_model(py, &path, model_kwargs.as_ref())?;
-
-        let data_processor_map = preprocessor_entity
-            .map(|preprocessor| {
-                let mut map = HashMap::new();
-                map.insert(preprocessor.name.clone(), preprocessor);
-                map
-            })
-            .unwrap_or_default();
 
         let metadata = ModelInterfaceSaveMetadata {
             model_uri,
@@ -551,39 +574,61 @@ impl HuggingFaceModel {
 
         Ok(())
     }
+}
 
-    /// Converts the model to onnx
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    #[pyo3(signature = (**kwargs))]
+impl HuggingFaceModel {
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         let span = span!(Level::INFO, "Converting model to ONNX").entered();
         let _ = span.enter();
 
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
-            py,
-            self.model.bind(py),
-            &self.sample_data,
-            &self.model_interface_type,
-            &self.model_type,
-            kwargs,
-        )?);
+        let kwargs = kwargs.unwrap_or_else(|| {
+            Err(OpsmlError::new_err(
+                "Missing kwargs for HuggingFace onnx conversion",
+            ))
+            .unwrap()
+        });
+
+        let model_save_path = path.join(SaveName::Model);
+        let full_model_save_path = path.join(&model_save_path);
+
+        let onnx_save_path = PathBuf::from(SaveName::OnnxModel);
+        let full_onnx_save_path = path.join(&onnx_save_path);
+
+        let onnx = py.import("onnx")?;
+        let opt_rt = py.import("optimum")?.getattr("onnxruntime")?;
+
+        // get the ort model type
+        let ort_kwargs = PyDict::new(py);
+        ort_kwargs.set_item("provider", kwargs.get_item("provider").unwrap().unwrap())?;
+        ort_kwargs.set_item("export", true)?;
+
+        let ort_type = kwargs.get_item("ort_type").unwrap().unwrap().to_string();
+        let ort_model = opt_rt.getattr(&ort_type)?.call_method(
+            "from_pretrained",
+            (&full_model_save_path,),
+            Some(&ort_kwargs),
+        )?;
+
+        // save the ort model
+        kwargs.del_item("provider")?;
+        kwargs.del_item("ort_type")?;
+        ort_model.call_method("save_pretrained", (full_onnx_save_path,), None)?;
+
+        // if pipeline
+        // pipeline(task_type, ort_model, tokenizer, feature_extractor, image_processor)
+
+        // OnnxSession (sess: ort_model)
 
         info!("Model converted to ONNX");
 
         Ok(())
     }
-}
 
-impl HuggingFaceModel {
     fn save_tokenizer(
         &self,
         py: Python,
@@ -669,34 +714,43 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    pub fn save_preprocessors(
+    pub fn save_processors(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<Vec<DataProcessor>, InterfaceError> {
         let span = span!(Level::INFO, "Save Preprocessor").entered();
         let _ = span.enter();
 
-        if self.preprocessor.is_none(py) {
-            error!("No preprocessor detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
+        let mut preprocessors = vec![];
+
+        if self.base_args.has_tokenizer {
+            let tokenizer_path = self.save_tokenizer(py, path, kwargs)?;
+            preprocessors.push(DataProcessor {
+                name: self.base_args.tokenizer_name.clone(),
+                uri: tokenizer_path,
+            });
         }
-        let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-        // Save the data using joblib
-        joblib
-            .call_method("dump", (&self.preprocessor, full_save_path), kwargs)
-            .map_err(|e| {
-                error!("Failed to save preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+
+        if self.base_args.has_feature_extractor {
+            let feature_extractor_path = self.save_feature_extractor(py, path, kwargs)?;
+            preprocessors.push(DataProcessor {
+                name: self.base_args.feature_extractor_name.clone(),
+                uri: feature_extractor_path,
+            });
+        }
+
+        if self.base_args.has_image_processor {
+            let image_processor_path = self.save_image_processor(py, path, kwargs)?;
+            preprocessors.push(DataProcessor {
+                name: self.base_args.image_processor_name.clone(),
+                uri: image_processor_path,
+            });
+        }
 
         info!("Preprocessor saved");
-        Ok(save_path)
+        Ok(preprocessors)
     }
     /// Load the preprocessor from a file
     ///
@@ -729,6 +783,7 @@ impl HuggingFaceModel {
         info!("Preprocessor loaded");
         Ok(())
     }
+
     /// Save the model to a file
     ///
     /// # Arguments
@@ -745,24 +800,13 @@ impl HuggingFaceModel {
         let span = span!(Level::INFO, "Save Model").entered();
         let _ = span.enter();
 
-        // check if model is None
-        if self.model.is_none(py) {
-            error!("No model detected in interface for saving");
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
-        }
-
-        let torch = py.import("torch")?;
-
-        let state_dict = self.model.getattr(py, "state_dict")?.call0(py)?;
-
-        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Pt);
+        let save_path = PathBuf::from(SaveName::Model);
         let full_save_path = path.join(&save_path);
 
-        // Save torch model
-        torch
-            .call_method("save", (state_dict, full_save_path), kwargs)
+        // Save the data using joblib
+        self.model
+            .bind(py)
+            .call_method("save_pretrained", (full_save_path,), kwargs)
             .map_err(|e| {
                 error!("Failed to save model: {}", e);
                 OpsmlError::new_err(e.to_string())

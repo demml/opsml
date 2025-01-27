@@ -1,5 +1,6 @@
 use opsml_error::error::OpsmlError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::types::PyType;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
@@ -44,6 +45,15 @@ impl HuggingFaceOnnxArgs {
             quantize: quantize.unwrap_or(false),
             config,
         })
+    }
+
+    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let dict = PyDict::new(py);
+        dict.set_item("ort_type", self.ort_type.to_string().clone());
+        dict.set_item("provider", self.provider.clone());
+        dict.set_item("quantize", self.quantize);
+        dict.set_item("config", self.config.as_ref());
+        Ok(dict)
     }
 }
 
