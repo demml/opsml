@@ -21,6 +21,8 @@ pub struct OnnxSession {
 
     #[pyo3(get, set)]
     pub session: Option<PyObject>,
+
+    pub quantized: bool,
 }
 
 #[pymethods]
@@ -110,6 +112,7 @@ impl OnnxSession {
         Ok(OnnxSession {
             session: Some(session),
             schema,
+            quantized: false,
         })
     }
 
@@ -277,6 +280,7 @@ impl OnnxSession {
         Ok(OnnxSession {
             session: Some(ort_model.into_py_any(py).unwrap()),
             schema,
+            quantized: false,
         })
     }
 }
@@ -288,6 +292,7 @@ impl Clone for OnnxSession {
             OnnxSession {
                 session: new_session,
                 schema: self.schema.clone(),
+                quantized: self.quantized,
             }
         })
     }
