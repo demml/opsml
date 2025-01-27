@@ -8,7 +8,6 @@ use std::collections::HashMap;
 use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
-use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -16,10 +15,9 @@ use crate::ModelType;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
-use opsml_error::{InterfaceError, OpsmlError};
+use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
 
@@ -225,7 +223,7 @@ fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
 }
 
 #[derive(Debug, Clone)]
-struct HFBaseArgs {
+pub struct HFBaseArgs {
     pub hf_task: HuggingFaceTask,
     pub model_backend: ModelType,
     pub is_pipeline: bool,
@@ -553,25 +551,24 @@ impl HuggingFaceModel {
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
+    ) -> Result<(), OnnxError> {
         let span = span!(Level::INFO, "Converting model to ONNX").entered();
         let _ = span.enter();
 
-        let mut onnx_sess = OnnxModelConverter::convert_model(
+        let session = Py::new(
             py,
-            &py.None().bind(py),
-            &self.sample_data,
-            &ModelInterfaceType::HuggingFace,
-            &self.model_type,
-            path,
-            kwargs,
+            OnnxModelConverter::convert_model(
+                py,
+                &py.None().bind(py),
+                &self.sample_data,
+                &ModelInterfaceType::HuggingFace,
+                &self.model_type,
+                path,
+                kwargs,
+            )?,
         )?;
 
-        println!("{:?}", onnx_sess.schema);
-
-        // pipeline(task_type, ort_model, tokenizer, feature_extractor, image_processor)
-
-        // OnnxSession (sess: ort_model)
+        self.onnx_session = Some(session);
 
         info!("Model converted to ONNX");
 
