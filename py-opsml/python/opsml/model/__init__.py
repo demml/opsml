@@ -7,8 +7,6 @@ HuggingFaceOnnxArgs = model.HuggingFaceOnnxArgs
 ModelInterfaceMetadata = model.ModelInterfaceMetadata
 SklearnModelInterfaceMetadata = model.SklearnModelInterfaceMetadata
 CatBoostModelInterfaceMetadata = model.CatBoostModelInterfaceMetadata
-HuggingFaceOnnxSaveArgs = model.HuggingFaceOnnxSaveArgs
-HuggingFaceModelInterfaceMetadata = model.HuggingFaceModelInterfaceMetadata
 HuggingFaceTask = model.HuggingFaceTask
 LightGBMModelInterfaceMetadata = model.LightGBMModelInterfaceMetadata
 TensorFlowInterfaceMetadata = model.TensorFlowInterfaceMetadata
@@ -34,8 +32,6 @@ __all__ = [
     "ModelInterfaceMetadata",
     "SklearnModelInterfaceMetadata",
     "CatBoostModelInterfaceMetadata",
-    "HuggingFaceOnnxSaveArgs",
-    "HuggingFaceModelInterfaceMetadata",
     "LightGBMModelInterfaceMetadata",
     "TensorFlowInterfaceMetadata",
     "VowpalWabbitInterfaceMetadata",

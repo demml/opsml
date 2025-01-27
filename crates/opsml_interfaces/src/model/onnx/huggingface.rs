@@ -56,8 +56,9 @@ impl HuggingFaceOnnxModelConverter {
     }
 
     pub fn parse_kwargs<'py>(
+        py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<(String, bool, Bound<'py, PyDict>)> {
+    ) -> PyResult<(String, bool, Bound<'py, PyDict>, Bound<'py, PyDict>)> {
         let kwargs = kwargs.ok_or_else(|| OpsmlError::new_err("ONNX kwargs are required"))?;
 
         let ort_type = kwargs
@@ -73,6 +74,11 @@ impl HuggingFaceOnnxModelConverter {
             .extract::<bool>()
             .unwrap();
 
+        let quantize_kwargs = PyDict::new(py);
+        let config = kwargs.get_item("config")?;
+
+        quantize_kwargs.set_item("quantization_config", config)?;
+
         // delete ort_type from kwargs
         kwargs
             .del_item("ort_type")
@@ -83,24 +89,22 @@ impl HuggingFaceOnnxModelConverter {
             .del_item("quantize")
             .map_err(|e| OpsmlError::new_err(format!("Failed to delete quantize: {}", e)))?;
 
-        Ok((ort_type, quantize, kwargs.clone()))
+        kwargs
+            .del_item("config")
+            .map_err(|e| OpsmlError::new_err(format!("Failed to delete config: {}", e)))?;
+
+        Ok((ort_type, quantize, kwargs.clone(), quantize_kwargs))
     }
 
     fn quantize_model<'py>(
         &self,
-        py: Python<'py>,
         ort_module: &Bound<'py, PyModule>,
         onnx_model: &Bound<'py, PyAny>,
-        kwargs: Bound<'py, PyDict>,
+        quantize_kwargs: Bound<'py, PyDict>,
     ) -> PyResult<()> {
         let quantizer = ort_module.getattr("ORTQuantizer")?;
-
         let quantizer = quantizer.call_method1("from_pretrained", (onnx_model,))?;
 
-        let quantize_kwargs = PyDict::new(py);
-        let config = kwargs.get_item("config")?;
-
-        quantize_kwargs.set_item("quantization_config", config)?;
         quantizer.call_method("quantize", (&self.quantize_path,), Some(&quantize_kwargs))?;
 
         Ok(())
@@ -113,26 +117,33 @@ impl HuggingFaceOnnxModelConverter {
     ) -> PyResult<OnnxSession> {
         debug!("Step 1: Converting HuggingFace model to ONNX");
 
-        let (ort_type, quantize, kwargs) = Self::parse_kwargs(kwargs)?;
+        let (ort_type, quantize, onnx_kwargs, quantize_kwargs) = Self::parse_kwargs(py, kwargs)?;
 
         let opt_rt = py.import("optimum.onnxruntime")?;
 
         // set export to true to convert model to onnx
         let ort_model = opt_rt
             .getattr(&ort_type)?
-            .call_method("from_pretrained", (&self.model_path, true), Some(&kwargs))
+            .call_method(
+                "from_pretrained",
+                (&self.model_path, true),
+                Some(&onnx_kwargs),
+            )
             .map_err(|e| {
                 OpsmlError::new_err(format!("Failed to load model for onnx conversion: {}", e))
             })?;
 
         // saves to model.onnx
-        ort_model.call_method("save_pretrained", (&self.onnx_path,), Some(&kwargs))?;
+        ort_model
+            .call_method("save_pretrained", (&self.onnx_path,), Some(&onnx_kwargs))
+            .map_err(|e| OpsmlError::new_err(format!("Failed to save ONNX model: {}", e)))?;
+
         debug!("Step 2: Extracting ONNX schema");
         let mut onnx_session = self.get_onnx_session(py, &ort_model)?;
 
         if quantize {
             debug!("Step 3: Quantizing ONNX model");
-            self.quantize_model(py, &opt_rt, &ort_model, kwargs)?;
+            self.quantize_model(&opt_rt, &ort_model, quantize_kwargs)?;
             onnx_session.quantized = true;
         }
 
