@@ -1,15 +1,11 @@
-use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::OnnxSession;
-use crate::types::ModelType;
 use opsml_error::OpsmlError;
 use opsml_types::SaveName;
 use pyo3::prelude::*;
-use pyo3::types::PyBool;
 use pyo3::types::PyDict;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
-use tempfile::tempdir;
 use tracing::debug;
 
 pub struct HuggingFaceOnnxModelConverter {
@@ -136,7 +132,7 @@ impl HuggingFaceOnnxModelConverter {
         let mut onnx_session = self.get_onnx_session(py, &ort_model)?;
 
         if quantize {
-            debug!("Quantizing ONNX model");
+            debug!("Step 3: Quantizing ONNX model");
             self.quantize_model(py, &opt_rt, &ort_model, kwargs)?;
             onnx_session.quantized = true;
         }
