@@ -33,7 +33,12 @@ impl HuggingFaceOnnxModelConverter {
         }
     }
 
-    fn get_onnx_session(&self, py: Python, ort_model: &Bound<'_, PyAny>) -> PyResult<OnnxSession> {
+    fn get_onnx_session(
+        &self,
+        py: Python,
+        ort_model: &Bound<'_, PyAny>,
+        ort_type: &str,
+    ) -> PyResult<OnnxSession> {
         //get path to file ending with .onnx
         let onnx_file = fs::read_dir(&self.onnx_path)?
             .filter_map(|entry| {
@@ -53,7 +58,7 @@ impl HuggingFaceOnnxModelConverter {
         let onnx_bytes = fs::read(&onnx_file)
             .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
 
-        OnnxSession::new_from_hf_session(py, ort_model, onnx_bytes)
+        OnnxSession::new_from_hf_session(py, ort_model, onnx_bytes, ort_type)
             .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
@@ -134,7 +139,7 @@ impl HuggingFaceOnnxModelConverter {
             .map_err(|e| OpsmlError::new_err(format!("Failed to save ONNX model: {}", e)))?;
 
         debug!("Step 2: Extracting ONNX schema");
-        let mut onnx_session = self.get_onnx_session(py, &ort_model)?;
+        let mut onnx_session = self.get_onnx_session(py, &ort_model, &kwargs.0)?;
 
         if kwargs.2 {
             debug!("Step 3: Quantizing ONNX model");

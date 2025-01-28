@@ -143,6 +143,7 @@ pub struct HFBaseArgs {
     pub feature_extractor_name: String,
     pub image_processor_name: String,
     pub hf_model_type: String,
+    pub ort_type: String,
 }
 
 impl Default for HFBaseArgs {
@@ -158,6 +159,7 @@ impl Default for HFBaseArgs {
             feature_extractor_name: CommonKwargs::Undefined.to_string(),
             image_processor_name: CommonKwargs::Undefined.to_string(),
             hf_model_type: CommonKwargs::Undefined.to_string(),
+            ort_type: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -852,25 +854,23 @@ impl HuggingFaceModel {
 
         let load_path = path.join(SaveName::OnnxModel.to_string());
 
-        let onnx_file = fs::read_dir(&load_path)?
-            .filter_map(|entry| {
-                entry.ok().and_then(|e| {
-                    let path = e.path();
-                    if path.is_file() && path.extension().unwrap() == "onnx" {
-                        Some(path)
-                    } else {
-                        None
-                    }
-                })
-            })
-            .next()
-            .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
+        let opt_rt = py.import("optimum.onnxruntime")?;
 
-        self.onnx_session.as_mut().unwrap().call_method1(
-            py,
-            "load_onnx_model",
-            (onnx_file, kwargs),
-        )?;
+        let ort_type = self
+            .onnx_session
+            .as_ref()
+            .unwrap()
+            .bind(py)
+            .getattr("schema")?
+            .getattr("onnx_type")?
+            .to_string();
+
+        let ort_model = opt_rt
+            .getattr(&ort_type)?
+            .call_method("from_pretrained", (&load_path, true), kwargs)
+            .map_err(|e| {
+                OpsmlError::new_err(format!("Failed to load model for onnx conversion: {}", e))
+            })?;
 
         info!("ONNX model loaded");
 
