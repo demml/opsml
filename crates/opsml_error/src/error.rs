@@ -286,4 +286,10 @@ impl From<InterfaceError> for PyErr {
     }
 }
 
+impl From<PyErr> for InterfaceError {
+    fn from(err: PyErr) -> Self {
+        InterfaceError::Error(err.to_string())
+    }
+}
+
 create_exception!(opsml_error, OpsmlError, PyException);

@@ -7,7 +7,7 @@ from opsml.model import (
 )
 from pathlib import Path
 from typing import Tuple
-from transformers import Pipeline  # type: ignore
+from transformers import Pipeline, pipeline  # type: ignore
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
 
 
@@ -36,8 +36,13 @@ def test_hugging_face_text_pipeline(
         onnx=onnx_args,
     )
 
-    print(kwargs)
     metadata = interface.save(save_path, True, save_kwargs=kwargs)
 
-    print(metadata)
+    assert interface.onnx_session is not None
+    print(interface.onnx_session.session)
+
+    interface.onnx_session.session = None
+
+    print(interface.onnx_session.session)
+
     a

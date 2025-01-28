@@ -1177,5 +1177,35 @@ class HuggingFaceModel(ModelInterface):
 
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
-                - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
+                - onnx: Kwargs that will be passed when saving the onnx model
+                    - For the HuggingFaceModel, this should be an instance of HuggingFaceOnnxArgs
+        """
+
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load HuggingFaceModel components
+
+        Args:
+            path (Path):
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
         """
