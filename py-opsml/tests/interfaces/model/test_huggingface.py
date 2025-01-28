@@ -36,13 +36,20 @@ def test_hugging_face_text_pipeline(
         onnx=onnx_args,
     )
 
-    metadata = interface.save(save_path, True, save_kwargs=kwargs)
+    interface.save(save_path, True, save_kwargs=kwargs)
 
     assert interface.onnx_session is not None
+
     print(interface.onnx_session.session)
 
     interface.onnx_session.session = None
+    assert interface.onnx_session.session is None
 
-    print(interface.onnx_session.session)
+    interface.load(
+        save_path,
+        model=True,
+        onnx=True,
+        sample_data=True,
+    )
 
     a

@@ -38,6 +38,7 @@ impl LightGBMOnnxModelConverter {
             py,
             onnx_version,
             onnx_bytes.extract::<Vec<u8>>()?,
+            "onnx".to_string(),
             Some(feature_names),
         )
         .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))

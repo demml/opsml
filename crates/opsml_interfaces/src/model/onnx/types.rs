@@ -27,11 +27,12 @@ pub struct OnnxSession {
 #[pymethods]
 impl OnnxSession {
     #[new]
-    #[pyo3(signature = (onnx_version, model_bytes, feature_names=None))]
+    #[pyo3(signature = (onnx_version, model_bytes, onnx_type, feature_names=None))]
     pub fn new(
         py: Python,
         onnx_version: String,
         model_bytes: Vec<u8>,
+        onnx_type: String,
         feature_names: Option<Vec<String>>,
     ) -> Result<Self, OnnxError> {
         // extract onnx_bytes
@@ -87,6 +88,7 @@ impl OnnxSession {
             output_features: output_schema,
             onnx_version,
             feature_names: feature_names.unwrap_or_default(),
+            onnx_type,
         };
 
         // setup python onnxruntime
@@ -215,6 +217,7 @@ impl OnnxSession {
         py: Python,
         ort_model: &Bound<'_, PyAny>,
         model_bytes: Vec<u8>,
+        onnx_type: &str,
     ) -> Result<Self, OnnxError> {
         let onnx_version = py
             .import("onnx")?
@@ -274,6 +277,7 @@ impl OnnxSession {
             output_features: output_schema,
             onnx_version,
             feature_names: vec![],
+            onnx_type: onnx_type.to_string(),
         };
 
         Ok(OnnxSession {
