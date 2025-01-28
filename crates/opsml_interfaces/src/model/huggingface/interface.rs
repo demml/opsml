@@ -377,11 +377,6 @@ impl HuggingFaceModel {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
-        println!(
-            "kwargs: {:?}",
-            cloned_kwargs.clone().unwrap().onnx.unwrap().bind(py)
-        );
-
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -423,11 +418,6 @@ impl HuggingFaceModel {
                 extra = Some(ExtraMetadata::new(meta));
             }
         }
-
-        println!(
-            "kwargs: {:?}",
-            cloned_kwargs.clone().unwrap().onnx.unwrap().bind(py)
-        );
 
         let metadata = ModelInterfaceSaveMetadata {
             model_uri,
