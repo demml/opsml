@@ -5,6 +5,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::Value;
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -65,9 +67,9 @@ pub enum TaskType {
 #[pyclass]
 #[derive(Debug, Default)]
 pub struct SaveKwargs {
-    onnx: Option<Py<PyDict>>,
-    model: Option<Py<PyDict>>,
-    preprocessor: Option<Py<PyDict>>,
+    pub onnx: Option<Py<PyDict>>,
+    pub model: Option<Py<PyDict>>,
+    pub preprocessor: Option<Py<PyDict>>,
 }
 
 #[pymethods]
@@ -101,8 +103,30 @@ impl SaveKwargs {
         }
     }
 
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__json__(self)
+    pub fn __str__(&self, py: Python) -> String {
+        let mut onnx = Value::Null;
+        let mut model = Value::Null;
+        let mut preprocessor = Value::Null;
+
+        if let Some(onnx_args) = &self.onnx {
+            onnx = pyobject_to_json(onnx_args.bind(py)).unwrap();
+        }
+
+        if let Some(model_args) = &self.model {
+            model = pyobject_to_json(model_args.bind(py)).unwrap();
+        }
+
+        if let Some(preprocessor_args) = &self.preprocessor {
+            preprocessor = pyobject_to_json(preprocessor_args.bind(py)).unwrap();
+        }
+
+        let json = json!({
+            "onnx": onnx,
+            "model": model,
+            "preprocessor": preprocessor,
+        });
+
+        PyHelperFuncs::__str__(json)
     }
 
     pub fn model_dump_json(&self) -> String {

@@ -35,6 +35,8 @@ def test_hugging_face_text_pipeline(
     kwargs = SaveKwargs(
         onnx=onnx_args,
     )
+
+    print(kwargs)
     metadata = interface.save(save_path, True, save_kwargs=kwargs)
 
     print(metadata)

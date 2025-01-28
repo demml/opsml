@@ -58,11 +58,7 @@ impl HuggingFaceOnnxArgs {
         dict.set_item("provider", self.provider.clone())?;
         dict.set_item("quantize", self.quantize)?;
         dict.set_item("config", self.config.as_ref())?;
-
-        // add all items from extra_kwargs to the dict
-        for (key, value) in self.extra_kwargs.bind(py).iter() {
-            dict.set_item(key, value)?;
-        }
+        dict.set_item("extra_kwargs", self.extra_kwargs.bind(py).clone())?;
 
         Ok(dict)
     }
