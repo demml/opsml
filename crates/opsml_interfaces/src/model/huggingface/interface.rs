@@ -1,11 +1,8 @@
-use crate::model::huggingface::{HuggingFaceORTModel, HuggingFaceSampleData};
-use crate::{onnx, Feature};
-use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
+use crate::model::huggingface::{HuggingFaceSampleData, HuggingFaceTask};
+use opsml_types::{CommonKwargs, DataType, SaveName};
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::HuggingFaceTask;
 use crate::base::{parse_save_kwargs, ExtraMetadata, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
@@ -19,7 +16,6 @@ use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, span, warn, Level};
@@ -724,37 +720,6 @@ impl HuggingFaceModel {
         info!("Preprocessor saved");
         Ok(preprocessors)
     }
-    /// Load the preprocessor from a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to load the model from
-    /// * `kwargs` - Additional keyword arguments to pass to the load
-    ///
-    //pub fn load_preprocessor(
-    //    &mut self,
-    //    py: Python,
-    //    path: &Path,
-    //    kwargs: Option<&Bound<'_, PyDict>>,
-    //) -> PyResult<()> {
-    //    let span = span!(Level::INFO, "Load Preprocessor").entered();
-    //    let _ = span.enter();
-    //    let load_path = path
-    //        .join(SaveName::Preprocessor)
-    //        .with_extension(Suffix::Joblib);
-    //    let joblib = py.import("joblib")?;
-    //    // Load the data using joblib
-    //    self.preprocessor = joblib
-    //        .call_method("load", (load_path,), kwargs)
-    //        .map_err(|e| {
-    //            error!("Failed to load preprocessor: {}", e);
-    //            OpsmlError::new_err(e.to_string())
-    //        })?
-    //        .into();
-    //
-    //    info!("Preprocessor loaded");
-    //    Ok(())
-    //}
 
     /// Save the model to a file
     ///
@@ -862,37 +827,6 @@ impl HuggingFaceModel {
 
         Ok(())
     }
-
-    /// Saves a model to onnx format
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    //fn save_onnx_model(
-    //    &mut self,
-    //    py: Python,
-    //    path: &Path,
-    //    kwargs: Option<&Bound<'_, PyDict>>,
-    //) -> PyResult<PathBuf> {
-    //    let span = span!(Level::INFO, "Saving ONNX Model").entered();
-    //    let _ = span.enter();
-    //
-    //    if self.onnx_session.is_none() {
-    //        self.convert_to_onnx(py, kwargs)?;
-    //    }
-    //
-    //    let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
-    //    let full_save_path = path.join(&save_path);
-    //    let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
-    //
-    //    fs::write(&full_save_path, bytes)?;
-    //
-    //    info!("ONNX model saved");
-    //
-    //    Ok(save_path)
-    //}
 
     /// Load the model from a file
     ///
