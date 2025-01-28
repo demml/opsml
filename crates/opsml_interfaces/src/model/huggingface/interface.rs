@@ -375,6 +375,12 @@ impl HuggingFaceModel {
         let _ = span.enter();
 
         let mut extra = None;
+        let cloned_kwargs = save_kwargs.clone();
+
+        println!(
+            "kwargs: {:?}",
+            cloned_kwargs.clone().unwrap().onnx.unwrap().bind(py)
+        );
 
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
@@ -418,6 +424,11 @@ impl HuggingFaceModel {
             }
         }
 
+        println!(
+            "kwargs: {:?}",
+            cloned_kwargs.clone().unwrap().onnx.unwrap().bind(py)
+        );
+
         let metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
@@ -425,7 +436,7 @@ impl HuggingFaceModel {
             onnx_model_uri,
             drift_profile_uri,
             extra,
-            save_kwargs,
+            save_kwargs: cloned_kwargs,
         };
 
         Ok(metadata)

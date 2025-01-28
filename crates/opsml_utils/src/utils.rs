@@ -152,7 +152,6 @@ pub fn json_to_pyobject<'py>(
     value: &Value,
     dict: &Bound<'py, PyDict>,
 ) -> PyResult<Bound<'py, PyDict>> {
-    println!("json_to_pyobject: {:?}", value);
     match value {
         Value::Object(map) => {
             for (k, v) in map {
@@ -261,10 +260,17 @@ pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
     } else if obj.is_none() {
         Ok(Value::Null)
     } else {
-        Err(PyTypeError::new_err(format!(
-            "Unsupported type: {}",
-            obj.get_type().name()?
-        )))
+        // display "cant show" for unsupported types
+        // call obj.str to get the string representation
+        // if error, default to "unsupported type"
+        let obj_str = match obj.str() {
+            Ok(s) => s
+                .extract::<String>()
+                .unwrap_or_else(|_| "unsupported type".to_string()),
+            Err(_) => "unsupported type".to_string(),
+        };
+
+        Ok(Value::String(obj_str))
     }
 }
 
