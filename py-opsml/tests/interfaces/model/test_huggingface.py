@@ -12,7 +12,7 @@ from transformers import Pipeline, BartModel, BartTokenizer  # type: ignore
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 
 
-def _test_hugging_face_text_pipeline(
+def test_hugging_face_text_pipeline(
     tmp_path: Path,
     huggingface_text_classification_pipeline: Tuple[Pipeline, str],
 ):
