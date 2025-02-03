@@ -40,8 +40,6 @@ def test_hugging_face_text_pipeline(
 
     assert interface.onnx_session is not None
 
-    print(interface.onnx_session.session)
-
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
@@ -52,4 +50,4 @@ def test_hugging_face_text_pipeline(
         sample_data=True,
     )
 
-    a
+    assert interface.onnx_session is not None

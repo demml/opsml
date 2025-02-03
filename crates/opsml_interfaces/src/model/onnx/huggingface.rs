@@ -39,6 +39,11 @@ impl HuggingFaceOnnxModelConverter {
         ort_model: &Bound<'_, PyAny>,
         ort_type: &str,
     ) -> PyResult<OnnxSession> {
+        let onnx_version = py
+            .import("onnx")?
+            .getattr("__version__")?
+            .extract::<String>()?;
+
         //get path to file ending with .onnx
         let onnx_file = fs::read_dir(&self.onnx_path)?
             .filter_map(|entry| {
@@ -58,7 +63,7 @@ impl HuggingFaceOnnxModelConverter {
         let onnx_bytes = fs::read(&onnx_file)
             .map_err(|e| OpsmlError::new_err(format!("Failed to read ONNX model: {}", e)))?;
 
-        OnnxSession::new_from_hf_session(py, ort_model, onnx_bytes, ort_type)
+        OnnxSession::new(py, onnx_version, onnx_bytes, ort_type.to_string(), None)
             .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 

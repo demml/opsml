@@ -213,79 +213,110 @@ impl OnnxSession {
 }
 
 impl OnnxSession {
-    pub fn new_from_hf_session(
+    pub fn load_onnx_session(
         py: Python,
-        ort_model: &Bound<'_, PyAny>,
-        model_bytes: Vec<u8>,
-        onnx_type: &str,
-    ) -> Result<Self, OnnxError> {
-        let onnx_version = py
-            .import("onnx")?
-            .getattr("__version__")?
-            .extract::<String>()?;
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let rt = py
+            .import("onnxruntime")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
 
-        // extract onnx_bytes
-        let session = Session::builder()
-            .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
-            .commit_from_memory(&model_bytes)
-            .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
+        let providers = rt
+            .call_method0("get_available_providers")
+            .map_err(|e| OnnxError::Error(e.to_string()))?;
 
-        let input_schema = session
-            .inputs
-            .iter()
-            .map(|input| {
-                let name = input.name.clone();
-                let input_type = input.input_type.clone();
+        let args = (path,);
 
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OnnxError>>()
-            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
-
-        let output_schema = session
-            .outputs
-            .iter()
-            .map(|output| {
-                let name = output.name.clone();
-                let input_type = output.output_type.clone();
-
-                let feature = match input_type {
-                    ValueType::Tensor {
-                        ty,
-                        dimensions,
-                        dimension_symbols: _,
-                    } => Feature::new(ty.to_string(), dimensions, None),
-                    _ => Feature::new("Unknown".to_string(), vec![], None),
-                };
-
-                Ok((name, feature))
-            })
-            .collect::<Result<FeatureSchema, OnnxError>>()
-            .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
-
-        let schema = OnnxSchema {
-            input_features: input_schema,
-            output_features: output_schema,
-            onnx_version,
-            feature_names: vec![],
-            onnx_type: onnx_type.to_string(),
+        if let Some(kwargs) = kwargs {
+            kwargs.set_item("providers", providers).unwrap();
+        } else {
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("providers", providers).unwrap();
         };
 
-        Ok(OnnxSession {
-            session: Some(ort_model.into_py_any(py).unwrap()),
-            schema,
-            quantized: false,
-        })
+        let session = rt
+            .call_method("InferenceSession", args, kwargs)
+            .map_err(|e| OnnxError::Error(e.to_string()))?
+            .unbind();
+
+        debug!("Loaded ONNX model");
+
+        Ok(session)
     }
+    //pub fn new_from_hf_session(
+    //    py: Python,
+    //    ort_model: &Bound<'_, PyAny>,
+    //    model_bytes: Vec<u8>,
+    //    onnx_type: &str,
+    //) -> Result<Self, OnnxError> {
+    //    let onnx_version = py
+    //        .import("onnx")?
+    //        .getattr("__version__")?
+    //        .extract::<String>()?;
+    //
+    //    // extract onnx_bytes
+    //    let session = Session::builder()
+    //        .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
+    //        .commit_from_memory(&model_bytes)
+    //        .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
+    //
+    //    let input_schema = session
+    //        .inputs
+    //        .iter()
+    //        .map(|input| {
+    //            let name = input.name.clone();
+    //            let input_type = input.input_type.clone();
+    //
+    //            let feature = match input_type {
+    //                ValueType::Tensor {
+    //                    ty,
+    //                    dimensions,
+    //                    dimension_symbols: _,
+    //                } => Feature::new(ty.to_string(), dimensions, None),
+    //                _ => Feature::new("Unknown".to_string(), vec![], None),
+    //            };
+    //
+    //            Ok((name, feature))
+    //        })
+    //        .collect::<Result<FeatureSchema, OnnxError>>()
+    //        .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
+    //
+    //    let output_schema = session
+    //        .outputs
+    //        .iter()
+    //        .map(|output| {
+    //            let name = output.name.clone();
+    //            let input_type = output.output_type.clone();
+    //
+    //            let feature = match input_type {
+    //                ValueType::Tensor {
+    //                    ty,
+    //                    dimensions,
+    //                    dimension_symbols: _,
+    //                } => Feature::new(ty.to_string(), dimensions, None),
+    //                _ => Feature::new("Unknown".to_string(), vec![], None),
+    //            };
+    //
+    //            Ok((name, feature))
+    //        })
+    //        .collect::<Result<FeatureSchema, OnnxError>>()
+    //        .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
+    //
+    //    let schema = OnnxSchema {
+    //        input_features: input_schema,
+    //        output_features: output_schema,
+    //        onnx_version,
+    //        feature_names: vec![],
+    //        onnx_type: onnx_type.to_string(),
+    //    };
+    //
+    //    Ok(OnnxSession {
+    //        session: Some(session.into_py(py)),
+    //        schema,
+    //        quantized: false,
+    //    })
+    //}
 }
 
 impl Clone for OnnxSession {

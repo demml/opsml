@@ -462,6 +462,20 @@ impl HuggingFaceModel {
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
+    #[instrument(
+        skip(
+            self_,
+            py,
+            path,
+            model,
+            onnx,
+            drift_profile,
+            sample_data,
+            preprocessor,
+            load_kwargs
+        ),
+        name = "load_huggingface_interface"
+    )]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -473,9 +487,6 @@ impl HuggingFaceModel {
         preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Loading HuggingFaceModel components").entered();
-        let _ = span.enter();
-
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -758,11 +769,7 @@ impl HuggingFaceModel {
         if self.base_args.is_pipeline {
             let pipeline = py.import("transformers")?.getattr("pipeline")?;
 
-            let model = pipeline.call_method(
-                "from_pretrained",
-                (&self.huggingface_task.to_string(), load_path),
-                kwargs,
-            )?;
+            let model = pipeline.call((&self.huggingface_task.to_string(), load_path), kwargs)?;
             self.model = model.unbind();
         } else {
             let model = py
@@ -845,25 +852,12 @@ impl HuggingFaceModel {
         }
 
         let load_path = path.join(SaveName::OnnxModel.to_string());
+        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
 
-        let opt_rt = py.import("optimum.onnxruntime")?;
-
-        let ort_type = self
-            .onnx_session
+        self.onnx_session
             .as_ref()
             .unwrap()
-            .bind(py)
-            .getattr("schema")?
-            .getattr("onnx_type")?
-            .to_string();
-
-        let ort_model = opt_rt.getattr(&ort_type)?;
-
-        ort_model
-            .call_method("from_pretrained", (&load_path, true), kwargs)
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Failed to load model for onnx conversion: {}", e))
-            })?;
+            .setattr(py, "session", Some(sess))?;
 
         info!("ONNX model loaded");
 
