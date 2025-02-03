@@ -1,5 +1,5 @@
 use crate::model::huggingface::{HuggingFaceSampleData, HuggingFaceTask};
-use opsml_types::{CommonKwargs, DataType, SaveName};
+use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use std::collections::HashMap;
 
@@ -852,7 +852,23 @@ impl HuggingFaceModel {
         }
 
         let load_path = path.join(SaveName::OnnxModel.to_string());
-        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
+
+        // get file path to onnx model
+        let file_path = std::fs::read_dir(&load_path)?
+            .filter_map(|entry| {
+                entry.ok().and_then(|e| {
+                    let path = e.path();
+                    if path.is_file() && path.extension().unwrap() == Suffix::Onnx.as_string() {
+                        Some(path)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .next()
+            .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
+
+        let sess = OnnxSession::load_onnx_session(py, file_path, kwargs)?;
 
         self.onnx_session
             .as_ref()
