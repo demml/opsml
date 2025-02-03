@@ -11,11 +11,15 @@ use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
-use tracing::{debug, error, span, Level};
+use tracing::{debug, error, instrument, span, Level};
 
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
+    #[instrument(
+        skip(py, model, sample_data, model_interface_type, model_type, path, kwargs),
+        name = "convert_model_to_onnx"
+    )]
     pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,
@@ -28,11 +32,6 @@ impl OnnxModelConverter {
     where
         T: OnnxExtension + std::fmt::Debug,
     {
-        let span = span!(Level::INFO, "Onnx Conversion");
-        let _enter = span.enter();
-
-        debug!("sample_data: {:?}", sample_data);
-
         // check if sample data is none
         if sample_data.is_none() {
             error!("Cannot save ONNX model without sample data");

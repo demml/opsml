@@ -35,7 +35,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 import lightning as L  # type: ignore
 import shutil
-from transformers import pipeline  # type: ignore
+from transformers import pipeline, BartModel, BartTokenizer  # type: ignore
 
 
 def cleanup() -> None:
@@ -1060,3 +1060,14 @@ def huggingface_text_classification_pipeline() -> (
     data = "This restaurant is awesome"
 
     yield (pipe, data)
+
+
+@pytest.fixture(scope="module")
+def huggingface_bart_model() -> (
+    Generator[Tuple[BartModel, BartTokenizer, torch.Tensor], None, None]
+):
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+    model = BartModel.from_pretrained("facebook/bart-base")
+    inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
+
+    yield (model, tokenizer, inputs)

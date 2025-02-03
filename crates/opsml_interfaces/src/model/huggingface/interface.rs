@@ -258,6 +258,7 @@ impl HuggingFaceModel {
 
         let tokenizer = if let Some(tokenizer) = tokenizer {
             validate_tokenizer(py, tokenizer)?;
+            base_args.has_tokenizer = true;
             tokenizer.into_py_any(py)?
         } else {
             py.None()
@@ -265,6 +266,7 @@ impl HuggingFaceModel {
 
         let feature_extractor = if let Some(feature_extractor) = feature_extractor {
             validate_feature_extractor(py, feature_extractor)?;
+            base_args.has_feature_extractor = true;
             feature_extractor.into_py_any(py)?
         } else {
             py.None()
@@ -272,6 +274,7 @@ impl HuggingFaceModel {
 
         let image_processor = if let Some(image_processor) = image_processor {
             validate_image_processor(py, image_processor)?;
+            base_args.has_image_processor = true;
             image_processor.into_py_any(py)?
         } else {
             py.None()
@@ -313,6 +316,54 @@ impl HuggingFaceModel {
             // pass all the arguments to the ModelInterface
             model_interface,
         ))
+    }
+
+    #[setter]
+    pub fn set_tokenizer(&mut self, tokenizer: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = tokenizer.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(tokenizer) {
+            self.tokenizer = py.None();
+            return Ok(());
+        } else {
+            validate_tokenizer(py, tokenizer)?;
+            tokenizer.into_py_any(py)?
+        };
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_feature_extractor(&mut self, feature_extractor: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = feature_extractor.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(feature_extractor) {
+            self.feature_extractor = py.None();
+            return Ok(());
+        } else {
+            validate_feature_extractor(py, feature_extractor)?;
+            feature_extractor.into_py_any(py)?
+        };
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_image_processor(&mut self, image_processor: &Bound<'_, PyAny>) -> PyResult<()> {
+        let py = image_processor.py();
+
+        // check if data is None
+        if PyAnyMethods::is_none(image_processor) {
+            self.image_processor = py.None();
+            return Ok(());
+        } else {
+            validate_image_processor(py, image_processor)?;
+            image_processor.into_py_any(py)?
+        };
+
+        Ok(())
     }
 
     #[setter]
@@ -604,15 +655,13 @@ impl HuggingFaceModel {
         Ok(paths)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     fn save_tokenizer(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<PathBuf, InterfaceError> {
-        let span = span!(Level::INFO, "Save Tokenizer").entered();
-        let _ = span.enter();
-
         let save_path = PathBuf::from(SaveName::Tokenizer);
         let full_save_path = path.join(&save_path);
 
@@ -630,15 +679,13 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     fn save_feature_extractor(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<PathBuf, InterfaceError> {
-        let span = span!(Level::INFO, "Save Feature Extractor").entered();
-        let _ = span.enter();
-
         let save_path = PathBuf::from(SaveName::FeatureExtractor);
         let full_save_path = path.join(&save_path);
 
@@ -656,15 +703,13 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     fn save_image_processor(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<PathBuf, InterfaceError> {
-        let span = span!(Level::INFO, "Save Image Processor").entered();
-        let _ = span.enter();
-
         let save_path = PathBuf::from(SaveName::ImageProcessor);
         let full_save_path = path.join(&save_path);
 
@@ -699,6 +744,7 @@ impl HuggingFaceModel {
         let mut preprocessors = vec![];
 
         if self.base_args.has_tokenizer {
+            debug!("Saving tokenizer");
             let tokenizer_path = self.save_tokenizer(py, path, kwargs)?;
             preprocessors.push(DataProcessor {
                 name: self.base_args.tokenizer_name.clone(),
@@ -707,6 +753,7 @@ impl HuggingFaceModel {
         }
 
         if self.base_args.has_feature_extractor {
+            debug!("Saving feature extractor");
             let feature_extractor_path = self.save_feature_extractor(py, path, kwargs)?;
             preprocessors.push(DataProcessor {
                 name: self.base_args.feature_extractor_name.clone(),
@@ -715,6 +762,7 @@ impl HuggingFaceModel {
         }
 
         if self.base_args.has_image_processor {
+            debug!("Saving image processor");
             let image_processor_path = self.save_image_processor(py, path, kwargs)?;
             preprocessors.push(DataProcessor {
                 name: self.base_args.image_processor_name.clone(),
@@ -771,17 +819,18 @@ impl HuggingFaceModel {
 
             let model = pipeline.call((&self.huggingface_task.to_string(), load_path), kwargs)?;
             self.model = model.unbind();
+
+            debug!("Model loaded");
         } else {
             let model = py
                 .import("transformers")?
-                .getattr(&self.base_args.hf_model_type)?
-                .call_method(
-                    "from_pretrained",
-                    (&self.huggingface_task.to_string(), load_path),
-                    kwargs,
-                )?;
+                .getattr(&self.base_args.hf_model_type)?;
 
-            self.model = model.unbind();
+            self.model = model
+                .call_method("from_pretrained", (load_path,), kwargs)?
+                .unbind();
+
+            debug!("Model loaded");
         }
 
         Ok(())
