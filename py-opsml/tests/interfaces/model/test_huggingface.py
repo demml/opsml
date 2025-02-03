@@ -93,4 +93,3 @@ def test_hugging_face_model(
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None
-    a
