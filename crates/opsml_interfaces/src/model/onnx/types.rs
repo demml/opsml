@@ -9,7 +9,6 @@ use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
-use pyo3::IntoPyObjectExt;
 use tracing::debug;
 
 #[pyclass]

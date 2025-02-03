@@ -33,8 +33,6 @@ impl ModelSaver {
                 )
             })?;
 
-        println!("{:?}", save_args);
-
         Ok(())
 
         // create te
