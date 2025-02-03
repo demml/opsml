@@ -16,9 +16,8 @@ use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
-use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, error, info, instrument, span, warn, Level};
 
 pub type ProcessorNames = (String, String, String);
 
@@ -381,6 +380,7 @@ impl HuggingFaceModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs) name = "save_huggingface")]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -388,14 +388,9 @@ impl HuggingFaceModel {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        // color text
-        let span = span!(Level::INFO, "Saving HuggingFaceModel interface").entered();
-        let _ = span.enter();
-
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
-        debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
@@ -405,7 +400,6 @@ impl HuggingFaceModel {
         // parse the save args
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
-        debug!("Saving preprocessor");
         let processors = self_.save_processors(py, &path, preprocessor_kwargs.as_ref())?;
 
         let data_processor_map = processors

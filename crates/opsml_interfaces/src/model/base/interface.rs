@@ -22,7 +22,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, error, info, instrument, span, warn, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -351,6 +351,7 @@ impl ModelInterface {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self, py, path, to_onnx, save_kwargs) name = "save_model_interface")]
     pub fn save(
         &mut self,
         py: Python,
@@ -358,9 +359,6 @@ impl ModelInterface {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::INFO, "Saving Model Interface").entered();
-        let _ = span.enter();
-
         debug!("Saving model interface");
 
         // get onnx and model kwargs
@@ -526,10 +524,8 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
+    #[instrument(skip(self, path) name = "save_driftprofile")]
     pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
-        let span = span!(tracing::Level::INFO, "Save Drift Profile");
-        let _enter = span.enter();
-
         let save_dir = PathBuf::from(SaveName::Drift);
         if !save_dir.exists() {
             fs::create_dir_all(&save_dir).unwrap();
@@ -629,15 +625,13 @@ impl ModelInterface {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving model").entered();
-        let _ = span.enter();
-
         // check if data is None
         if self.model.is_none(py) {
             error!("No model detected in interface for saving");
@@ -659,6 +653,14 @@ impl ModelInterface {
     }
 
     /// Saves the sample data
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional keyword arguments to pass to the save
+    ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_data(
         &self,
         py: Python,
@@ -697,15 +699,13 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load ONNX Model");
-        let _ = span.enter();
-
         if self.onnx_session.is_none() {
             return Err(OpsmlError::new_err(
                 "No ONNX model detected in interface for loading",
@@ -733,15 +733,13 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Loading Model").entered();
-        let _ = span.enter();
-
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
