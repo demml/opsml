@@ -22,6 +22,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use pyo3::gc::PyVisit;
+use pyo3::PyTraverseError;
 use tracing::{debug, error, info, instrument, span, warn, Level};
 
 #[pyclass]
@@ -189,7 +191,7 @@ impl ModelInterfaceMetadata {
 #[pyclass(subclass)]
 pub struct ModelInterface {
     #[pyo3(get)]
-    pub model: PyObject,
+    pub model: Option<PyObject>,
 
     #[pyo3(get, set)]
     pub data_type: DataType,
@@ -250,8 +252,8 @@ impl ModelInterface {
 
         // Convert the model to a PyObject for storing in struct
         let model = match model {
-            Some(model) => model.into_py_any(py)?,
-            None => py.None(),
+            Some(model) => Some(model.into_py_any(py)?),
+            None => None,
         };
 
         let profiles = match drift_profile {
@@ -278,10 +280,10 @@ impl ModelInterface {
 
         // check if data is None
         if PyAnyMethods::is_none(model) {
-            self.model = py.None();
+            self.model = None;
             return Ok(());
         } else {
-            self.model = model.into_py_any(py)?;
+            self.model = Some(model.into_py_any(py)?);
         };
 
         Ok(())
@@ -502,7 +504,7 @@ impl ModelInterface {
 
         self.onnx_session = Some(OnnxModelConverter::convert_model(
             py,
-            self.model.bind(py),
+            self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,
@@ -633,7 +635,7 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
-        if self.model.is_none(py) {
+        if self.model.is_none() {
             error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -744,16 +746,27 @@ impl ModelInterface {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.model = joblib
-            .call_method("load", (load_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to load model. Error: {}", e);
-                OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
-            })?
-            .into();
+        self.model = Some(
+            joblib
+                .call_method("load", (load_path,), kwargs)
+                .map_err(|e| {
+                    error!("Failed to load model. Error: {}", e);
+                    OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
+                })?
+                .unbind(),
+        );
 
         info!("Model loaded");
 
         Ok(())
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        visit.call(&self.model)?;
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.model = None;
     }
 }
