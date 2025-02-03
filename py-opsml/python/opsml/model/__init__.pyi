@@ -1181,6 +1181,72 @@ class HuggingFaceModel(ModelInterface):
                     - For the HuggingFaceModel, this should be an instance of HuggingFaceOnnxArgs
         """
 
+    @property
+    def model(self) -> Optional[Any]:
+        """Returns as HuggingFace model (PreTrainedModel, TFPreTrainedModel).
+        Can be None if the model is a pipeline.
+        """
+
+    @model.setter
+    def model(self, model: Any) -> None:
+        """Sets the model
+
+        Args:
+            model:
+                Model to associate with the interface. This must be a HuggingFace model (PreTrainedModel, TFPreTrainedModel).
+                If using a pipeline that already has a model, this can be None.
+        """
+
+    @property
+    def tokenizer(self) -> Optional[Any]:
+        """Returns the tokenizer. Can be None if the model is a pipeline.
+        If present, will be of type PreTrainedTokenizerBase
+        """
+
+    @tokenizer.setter
+    def tokenizer(self, tokenizer: Any) -> None:
+        """Sets the tokenizer
+
+        Args:
+            tokenizer:
+                Tokenizer to associate with the model. This must be a HuggingFace tokenizer (PreTrainedTokenizerBase).
+                If using a pipeline that already has a tokenizer, this can be None.
+        """
+
+    @property
+    def image_processor(self) -> Optional[Any]:
+        """Returns the image processor. Can be None if the model is a pipeline.
+        If present, will be of type BaseImageProcessor
+        """
+
+    @image_processor.setter
+    def image_processor(self, image_processor: Any) -> None:
+        """Sets the image processor
+
+        Args:
+            image_processor:
+                Image processor to associate with the model. This must be a HuggingFace image processor
+                (BaseImageProcessor). If using a pipeline that already has an image processor,
+                this can be None.
+        """
+
+    @property
+    def feature_extractor(self) -> Optional[Any]:
+        """Returns the feature extractor. Can be None if the model is a pipeline.
+        If present, will be of type PreTrainedFeatureExtractor
+        """
+
+    @feature_extractor.setter
+    def feature_extractor(self, feature_extractor: Any) -> None:
+        """Sets the feature extractor
+
+        Args:
+            feature_extractor:
+                Feature extractor to associate with the model. This must be a HuggingFace feature extractor
+                (PreTrainedFeatureExtractor). If using a pipeline that already has a feature extractor,
+                this can be None.
+        """
+
     def load(  # type: ignore
         self,
         path: Path,
