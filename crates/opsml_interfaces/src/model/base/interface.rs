@@ -208,8 +208,7 @@ pub struct ModelInterface {
     #[pyo3(get)]
     pub model_interface_type: ModelInterfaceType,
 
-    #[pyo3(get)]
-    pub onnx_session: Option<OnnxSession>,
+    pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
     pub drift_profile: Vec<DriftProfile>,
@@ -274,6 +273,12 @@ impl ModelInterface {
         })
     }
 
+    #[getter]
+    pub fn get_onnx_session(&self, py: Python) -> PyResult<Option<Py<OnnxSession>>> {
+        // return mutable reference to onnx session
+        Ok(self.onnx_session.as_ref().map(|sess| sess.clone_ref(py)))
+    }
+
     #[setter]
     pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = model.py();
@@ -287,15 +292,6 @@ impl ModelInterface {
         };
 
         Ok(())
-    }
-
-    #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<&OnnxSession>) {
-        if let Some(onnx_session) = onnx_session {
-            self.onnx_session = Some(onnx_session.clone());
-        } else {
-            self.onnx_session = None;
-        }
     }
 
     #[setter]
@@ -502,7 +498,7 @@ impl ModelInterface {
             return Ok(());
         }
 
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
+        let session = OnnxModelConverter::convert_model(
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
@@ -510,7 +506,9 @@ impl ModelInterface {
             &self.model_type,
             path,
             kwargs,
-        )?);
+        )?;
+
+        self.onnx_session = Some(Py::new(py, session)?);
 
         info!("Model converted to ONNX");
 
@@ -612,7 +610,15 @@ impl ModelInterface {
 
         let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
         let full_save_path = path.join(&save_path);
-        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+
+        let bytes: Vec<u8> = self
+            .onnx_session
+            .as_ref()
+            .unwrap()
+            .bind(py)
+            .call_method0("model_bytes")?
+            .extract()?;
+
         fs::write(&full_save_path, bytes)?;
 
         info!("ONNX model saved");
@@ -718,10 +724,12 @@ impl ModelInterface {
             .join(SaveName::OnnxModel.to_string())
             .with_extension(Suffix::Onnx);
 
+        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
+
         self.onnx_session
-            .as_mut()
+            .as_ref()
             .unwrap()
-            .load_onnx_model(py, load_path, kwargs)?;
+            .setattr(py, "session", Some(sess))?;
 
         info!("ONNX model loaded");
 
