@@ -380,7 +380,7 @@ impl HuggingFaceModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self_, py, path, to_onnx, save_kwargs) name = "save_huggingface")]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs) name = "save_huggingface_interface")]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -678,15 +678,13 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_processors(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Vec<DataProcessor>, InterfaceError> {
-        let span = span!(Level::INFO, "Save Preprocessor").entered();
-        let _ = span.enter();
-
         let mut preprocessors = vec![];
 
         if self.base_args.has_tokenizer {
@@ -724,15 +722,13 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_model(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Save Model").entered();
-        let _ = span.enter();
-
         let save_path = PathBuf::from(SaveName::Model);
         let full_save_path = path.join(&save_path);
 
@@ -750,15 +746,13 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Model");
-        let _ = span.enter();
-
         let load_path = path.join(SaveName::Model);
 
         if self.base_args.is_pipeline {
@@ -787,6 +781,14 @@ impl HuggingFaceModel {
     }
 
     /// Saves the sample data
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_data(
         &self,
         py: Python,
@@ -806,6 +808,7 @@ impl HuggingFaceModel {
     }
 
     /// Load the sample data
+    #[instrument(skip(self, py, path, data_type, kwargs))]
     pub fn load_data(
         &mut self,
         py: Python,
@@ -813,9 +816,6 @@ impl HuggingFaceModel {
         data_type: &DataType,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Data");
-        let _ = span.enter();
-
         // load sample data
         self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
@@ -831,15 +831,13 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load ONNX Model");
-        let _ = span.enter();
-
         if self.onnx_session.is_none() {
             return Err(OpsmlError::new_err(
                 "No ONNX model detected in interface for loading",
@@ -859,8 +857,9 @@ impl HuggingFaceModel {
             .getattr("onnx_type")?
             .to_string();
 
-        let ort_model = opt_rt
-            .getattr(&ort_type)?
+        let ort_model = opt_rt.getattr(&ort_type)?;
+
+        ort_model
             .call_method("from_pretrained", (&load_path, true), kwargs)
             .map_err(|e| {
                 OpsmlError::new_err(format!("Failed to load model for onnx conversion: {}", e))

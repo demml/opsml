@@ -14,7 +14,7 @@ use pyo3::{
 use std::path::Path;
 use std::path::PathBuf;
 
-use tracing::{error, span};
+use tracing::{error, instrument};
 
 #[derive(Default, Debug)]
 pub enum HuggingFaceSampleData {
@@ -258,14 +258,13 @@ impl HuggingFaceSampleData {
         Ok(save_path)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_data(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
-        let span = span!(tracing::Level::DEBUG, "Save Sample Data");
-        let _enter = span.enter();
         match self {
             HuggingFaceSampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
