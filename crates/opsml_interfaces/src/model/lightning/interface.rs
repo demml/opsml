@@ -15,28 +15,30 @@ use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use pyo3::PyTraverseError;
+use pyo3::PyVisit;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, warn, Level};
+use tracing::{debug, error, info, instrument, span, warn, Level};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
 pub struct LightningModel {
     #[pyo3(get)]
-    pub trainer: PyObject,
+    pub trainer: Option<PyObject>,
 
     #[pyo3(get)]
-    pub model: PyObject,
+    pub model: Option<PyObject>,
 
     #[pyo3(get)]
-    pub preprocessor: PyObject,
+    pub preprocessor: Option<PyObject>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
 
     #[pyo3(get, set)]
-    pub onnx_session: Option<OnnxSession>,
+    pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
     pub model_type: ModelType,
@@ -66,14 +68,14 @@ impl LightningModel {
         let trainer = if let Some(trainer) = trainer {
             let trainer_module = py.import("lightning")?.getattr("Trainer")?;
             if trainer.is_instance(&trainer_module).unwrap() {
-                trainer.into_py_any(py)?
+                Some(trainer.into_py_any(py)?)
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of a Lightning Trainer",
                 ));
             }
         } else {
-            py.None()
+            None
         };
 
         let mut model_interface =
@@ -99,15 +101,15 @@ impl LightningModel {
                     .getattr("__class__")?
                     .getattr("__name__")?
                     .to_string();
-                preprocessor.into_py_any(py)?
+                Some(preprocessor.into_py_any(py)?)
             }
-            None => py.None(),
+            None => None,
         };
 
         Ok((
             LightningModel {
                 trainer,
-                model: py.None(),
+                model: None,
                 preprocessor,
                 preprocessor_name,
                 sample_data,
@@ -126,12 +128,12 @@ impl LightningModel {
 
         // check if data is None
         if PyAnyMethods::is_none(model) {
-            self.model = py.None();
+            self.model = None;
             return Ok(());
         } else {
             let lightning_module = py.import("lightning")?.getattr("Trainer")?;
             if model.is_instance(&lightning_module).unwrap() {
-                self.model = model.into_py_any(py)?
+                self.model = Some(model.into_py_any(py)?)
             } else {
                 return Err(OpsmlError::new_err(
                     "Model must be an instance of a Lightning Trainer",
@@ -143,14 +145,8 @@ impl LightningModel {
     }
 
     #[setter]
-    pub fn set_onnx_session(&mut self, onnx_session: Option<OnnxSession>) {
+    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
         self.onnx_session = onnx_session;
-    }
-
-    pub fn clear_onnx_runtime_sess(&mut self, py: Python) {
-        if let Some(ref mut sess) = self.onnx_session {
-            sess.set_session(py, None).unwrap();
-        }
     }
 
     #[setter]
@@ -173,11 +169,13 @@ impl LightningModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             None
         } else {
             Some(
                 self.preprocessor
+                    .as_ref()
+                    .unwrap()
                     .clone_ref(py)
                     .into_bound_py_any(py)
                     .unwrap(),
@@ -192,7 +190,7 @@ impl LightningModel {
         preprocessor: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
         if PyAnyMethods::is_none(preprocessor) {
-            self.preprocessor = py.None();
+            self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
             Ok(())
         } else {
@@ -200,7 +198,7 @@ impl LightningModel {
                 .getattr("__class__")?
                 .getattr("__name__")?
                 .to_string();
-            self.preprocessor = preprocessor.into_py_any(py)?;
+            self.preprocessor = Some(preprocessor.into_py_any(py)?);
             self.preprocessor_name = preprocessor_name;
             Ok(())
         }
@@ -240,7 +238,7 @@ impl LightningModel {
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
         debug!("Saving preprocessor");
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+        let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
             let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
@@ -351,6 +349,32 @@ impl LightningModel {
 
         Ok(())
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref preprocessor) = self.preprocessor {
+            visit.call(preprocessor)?;
+        }
+
+        if let Some(ref trainer) = self.trainer {
+            visit.call(trainer)?;
+        }
+
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
+
+        if let Some(ref onnx_session) = self.onnx_session {
+            visit.call(onnx_session)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.preprocessor = None;
+        self.trainer = None;
+        self.model = None;
+        self.onnx_session = None;
+    }
 }
 
 impl LightningModel {
@@ -361,24 +385,25 @@ impl LightningModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Converting model to ONNX").entered();
-        let _ = span.enter();
-
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
+        let model = self.model.as_ref().unwrap().bind(py);
+        let session = OnnxModelConverter::convert_model(
             py,
-            &self.trainer.bind(py).getattr("model")?, // need to get model from trainer
+            &model.getattr("model")?, // need to get model from trainer
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,
             path,
             kwargs,
-        )?);
+        )?;
+
+        self.onnx_session = Some(Py::new(py, session)?);
 
         info!("Model converted to ONNX");
 
@@ -392,16 +417,14 @@ impl LightningModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_preprocessor(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Save Preprocessor").entered();
-        let _ = span.enter();
-
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -428,26 +451,26 @@ impl LightningModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Preprocessor").entered();
-        let _ = span.enter();
         let load_path = path
             .join(SaveName::Preprocessor)
             .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
         // Load the data using joblib
-        self.preprocessor = joblib
+        let preprocessor = joblib
             .call_method("load", (load_path,), kwargs)
             .map_err(|e| {
                 error!("Failed to load preprocessor: {}", e);
                 OpsmlError::new_err(e.to_string())
-            })?
-            .into();
+            })?;
+
+        self.preprocessor = Some(preprocessor.into_py_any(py)?);
 
         info!("Preprocessor loaded");
         Ok(())
@@ -459,17 +482,15 @@ impl LightningModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_model(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Save Model").entered();
-        let _ = span.enter();
-
         // check if model is None
-        if self.trainer.is_none(py) {
+        if self.trainer.is_none() {
             error!("No trainer detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No trainer detected in interface for saving",
@@ -481,6 +502,8 @@ impl LightningModel {
 
         // Save trainer checkpoint
         self.trainer
+            .as_ref()
+            .unwrap()
             .call_method(py, "save_checkpoint", (full_save_path,), kwargs)
             .map_err(|e| {
                 error!("Failed to save checkpoint: {}", e);
@@ -492,15 +515,13 @@ impl LightningModel {
         Ok(save_path)
     }
 
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Model");
-        let _ = span.enter();
-
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Ckpt);
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
 
@@ -518,7 +539,7 @@ impl LightningModel {
 
         // load state dict
         model.call_method("load_from_checkpoint", (load_path,), Some(&kwargs))?;
-        self.model = model.clone().unbind();
+        self.model = Some(model.clone().unbind());
 
         Ok(())
     }
@@ -543,6 +564,7 @@ impl LightningModel {
     }
 
     /// Load the sample data
+    #[instrument(skip(self, py, path, data_type, kwargs))]
     pub fn load_data(
         &mut self,
         py: Python,
@@ -550,9 +572,6 @@ impl LightningModel {
         data_type: &DataType,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load Data");
-        let _ = span.enter();
-
         // load sample data
 
         self.sample_data = TorchSampleData::load_data(py, path, data_type, kwargs)?;
@@ -569,22 +588,26 @@ impl LightningModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     fn save_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving ONNX Model").entered();
-        let _ = span.enter();
-
         if self.onnx_session.is_none() {
             self.convert_to_onnx(py, path, kwargs)?;
         }
 
         let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
         let full_save_path = path.join(&save_path);
-        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+        let bytes: Vec<u8> = self
+            .onnx_session
+            .as_ref()
+            .unwrap()
+            .bind(py)
+            .call_method0("model_bytes")?
+            .extract()?;
 
         fs::write(&full_save_path, bytes)?;
 
@@ -600,15 +623,13 @@ impl LightningModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Load ONNX Model");
-        let _ = span.enter();
-
         if self.onnx_session.is_none() {
             return Err(OpsmlError::new_err(
                 "No ONNX model detected in interface for loading",
@@ -619,10 +640,12 @@ impl LightningModel {
             .join(SaveName::OnnxModel.to_string())
             .with_extension(Suffix::Onnx);
 
+        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
+
         self.onnx_session
-            .as_mut()
+            .as_ref()
             .unwrap()
-            .load_onnx_model(py, load_path, kwargs)?;
+            .setattr(py, "session", Some(sess))?;
 
         info!("ONNX model loaded");
 
