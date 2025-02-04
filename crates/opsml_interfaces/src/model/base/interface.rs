@@ -653,7 +653,11 @@ impl ModelInterface {
         let joblib = py.import("joblib")?;
 
         // Save the data using joblib
-        joblib.call_method("dump", (&self.model, full_save_path), kwargs)?;
+        joblib.call_method(
+            "dump",
+            (self.model.as_ref().unwrap().bind(py), full_save_path),
+            kwargs,
+        )?;
 
         info!("Model saved");
 
@@ -770,7 +774,9 @@ impl ModelInterface {
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        visit.call(&self.model)?;
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
         Ok(())
     }
 
