@@ -189,6 +189,7 @@ impl ModelInterfaceMetadata {
 }
 
 #[pyclass(subclass)]
+#[derive(Debug)]
 pub struct ModelInterface {
     #[pyo3(get)]
     pub model: Option<PyObject>,
@@ -593,15 +594,13 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
+    #[instrument(skip(py, path, kwargs))]
     pub fn save_onnx_model(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving ONNX Model").entered();
-        let _ = span.enter();
-
         if self.onnx_session.is_none() {
             self.convert_to_onnx(py, path, kwargs)?;
         }

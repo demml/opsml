@@ -32,7 +32,7 @@ impl InterfaceDataType {
 }
 
 #[pyclass(eq)]
-#[derive(PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum TaskType {
     Classification,
     Regression,
