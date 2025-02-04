@@ -11,7 +11,7 @@ use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
-use tracing::{debug, error, instrument, span, Level};
+use tracing::{debug, error, instrument};
 
 pub struct OnnxModelConverter {}
 

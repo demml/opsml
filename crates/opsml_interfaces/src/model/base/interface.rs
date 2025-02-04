@@ -484,15 +484,13 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Converting model to ONNX").entered();
-        let _ = span.enter();
-
         if self.onnx_session.is_some() {
             info!("Model has already been converted to ONNX. Skipping conversion.");
             return Ok(());
