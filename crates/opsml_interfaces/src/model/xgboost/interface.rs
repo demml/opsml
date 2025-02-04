@@ -8,6 +8,8 @@ use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use pyo3::PyTraverseError;
+use pyo3::PyVisit;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -66,7 +68,7 @@ impl XGBoostModelInterfaceMetadata {
 #[derive(Debug)]
 pub struct XGBoostModel {
     #[pyo3(get)]
-    pub preprocessor: PyObject,
+    pub preprocessor: Option<PyObject>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -112,9 +114,9 @@ impl XGBoostModel {
                     .getattr("__class__")?
                     .getattr("__name__")?
                     .to_string();
-                preprocessor.into_py_any(py)?
+                Some(preprocessor.into_py_any(py)?)
             }
-            None => py.None(),
+            None => None,
         };
 
         Ok((
@@ -128,11 +130,13 @@ impl XGBoostModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             None
         } else {
             Some(
                 self.preprocessor
+                    .as_ref()
+                    .unwrap()
                     .clone_ref(py)
                     .into_bound_py_any(py)
                     .unwrap(),
@@ -148,7 +152,7 @@ impl XGBoostModel {
         preprocessor: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
         if PyAnyMethods::is_none(preprocessor) {
-            self.preprocessor = py.None();
+            self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
             Ok(())
         } else {
@@ -157,7 +161,7 @@ impl XGBoostModel {
                 .getattr("__name__")?
                 .to_string();
 
-            self.preprocessor = preprocessor.into_py_any(py)?;
+            self.preprocessor = Some(preprocessor.into_py_any(py)?);
             self.preprocessor_name = preprocessor_name;
             Ok(())
         }
@@ -191,7 +195,7 @@ impl XGBoostModel {
         // parse the save args
         let (onnx_kwargs, _model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+        let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
             let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
@@ -283,7 +287,7 @@ impl XGBoostModel {
 
         if model {
             let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-            self_.as_super().model = model;
+            self_.as_super().model = Some(model);
         }
 
         if preprocessor {
@@ -309,6 +313,17 @@ impl XGBoostModel {
 
         Ok(())
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref preprocessor) = self.preprocessor {
+            visit.call(preprocessor)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.preprocessor = None;
+    }
 }
 
 impl XGBoostModel {
@@ -328,7 +343,7 @@ impl XGBoostModel {
         let _ = span.enter();
 
         let super_ = self_.as_ref();
-        if super_.model.is_none(py) {
+        if super_.model.is_none() {
             error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -341,6 +356,8 @@ impl XGBoostModel {
         // Save the data using joblib
         super_
             .model
+            .as_ref()
+            .unwrap()
             .call_method1(py, "save_model", (full_save_path,))
             .map_err(|e| {
                 error!("Failed to save model: {}", e);
@@ -393,7 +410,7 @@ impl XGBoostModel {
         let _ = span.enter();
 
         // check if data is None
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -431,7 +448,9 @@ impl XGBoostModel {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+        let preprocessor = joblib.call_method("load", (load_path,), kwargs)?;
+
+        self.preprocessor = Some(preprocessor.unbind());
 
         Ok(())
     }
