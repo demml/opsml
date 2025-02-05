@@ -96,13 +96,13 @@ fn validate_tokenizer(py: Python, tokenizer: &Bound<'_, PyAny>) -> PyResult<bool
     }
 }
 
-fn validate_feature_extractor(py: Python, tokenizer: &Bound<'_, PyAny>) -> PyResult<bool> {
+fn validate_feature_extractor(py: Python, feature_extractor: &Bound<'_, PyAny>) -> PyResult<bool> {
     let base_processor = py
         .import("transformers")?
         .getattr("feature_extraction_utils")?
         .getattr("PreTrainedFeatureExtractor")?;
 
-    match tokenizer.is_instance(&base_processor).unwrap() {
+    match feature_extractor.is_instance(&base_processor).unwrap() {
         true => Ok(true),
         false => Err(OpsmlError::new_err(
             "Feature Extractor must be an instance of PreTrainedFeatureExtractor",
@@ -265,6 +265,7 @@ impl HuggingFaceModel {
         };
 
         let feature_extractor = if let Some(feature_extractor) = feature_extractor {
+            println!("{:?}", feature_extractor);
             validate_feature_extractor(py, feature_extractor)?;
             base_args.has_feature_extractor = true;
             feature_extractor.into_py_any(py)?

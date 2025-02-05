@@ -35,7 +35,10 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset, TensorDataset
 import lightning as L  # type: ignore
 import shutil
-from transformers import pipeline, BartModel, BartTokenizer  # type: ignore
+from transformers import pipeline, BartModel, BartTokenizer, TFBartModel  # type: ignore
+from PIL import Image
+from transformers import ViTFeatureExtractor, ViTForImageClassification
+from opsml.data import TorchData
 
 
 def cleanup() -> None:
@@ -1071,3 +1074,36 @@ def huggingface_bart_model() -> (
     inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
 
     yield (model, tokenizer, inputs)
+
+
+@pytest.fixture(scope="module")
+def huggingface_tf_bart_model() -> (
+    Generator[Tuple[TFBartModel, BartTokenizer, torch.Tensor], None, None]
+):
+    tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+    model = TFBartModel.from_pretrained("facebook/bart-base")
+    inputs = tokenizer(["Hello. How are you"], return_tensors="pt")
+
+    yield (model, tokenizer, inputs)
+
+
+@pytest.fixture(scope="module")
+def huggingface_vit() -> (
+    Generator[
+        Tuple[ViTForImageClassification, ViTFeatureExtractor, TorchData], None, None
+    ]
+):
+    image = Image.open("tests/assets/cats.jpg")
+
+    feature_extractor = ViTFeatureExtractor.from_pretrained(
+        "google/vit-base-patch16-224-in21k"
+    )
+    model = ViTForImageClassification.from_pretrained(
+        "google/vit-base-patch16-224-in21k"
+    )
+
+    inputs = feature_extractor(images=image, return_tensors="pt")
+
+    data = TorchData(data=inputs["pixel_values"])
+
+    yield (model, feature_extractor, data)
