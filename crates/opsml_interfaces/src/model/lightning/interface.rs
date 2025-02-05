@@ -397,10 +397,19 @@ impl LightningModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let model = self.model.as_ref().unwrap().bind(py);
+        let model = if self.trainer.is_some() {
+            self.trainer.as_ref().unwrap().bind(py).getattr("model")?
+        } else if self.model.is_some() {
+            self.model.as_ref().unwrap().bind(py).clone()
+        } else {
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for conversion to ONNX",
+            ));
+        };
+
         let session = OnnxModelConverter::convert_model(
             py,
-            &model.getattr("model")?, // need to get model from trainer
+            &model, // need to get model from trainer
             &self.sample_data,
             &self.model_interface_type,
             &self.model_type,
