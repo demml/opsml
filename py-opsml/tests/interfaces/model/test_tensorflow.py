@@ -76,12 +76,21 @@ def test_functional_model():
         interface.model = None
         assert interface.model is None
 
+        assert interface.onnx_session is not None
+        interface.onnx_session.session = None
+
+        assert interface.onnx_session.session is None
+
         interface.load(
             temp_path,
             model=True,
             onnx=True,
             sample_data=True,
         )
+
+        assert interface.model is not None
+        assert interface.onnx_session is not None
+        assert interface.onnx_session.session is not None
 
 
 # pytest doesn't appear to work with tensorflow, so we are running our own script

@@ -609,7 +609,7 @@ impl TensorFlowModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
