@@ -40,6 +40,14 @@ test.unit.numpy1: setup.project.numpy1
 		--cov-report xml:./coverage.xml \
 		--cov-report term \
 
+test.unit.tensorflow:
+	uv run pytest \
+		-m "tensorflow" \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report xml:./coverage.xml \
+		--cov-report term \
+
 test.unit:
 	uv run pytest \
 		-m "not numpy" \
