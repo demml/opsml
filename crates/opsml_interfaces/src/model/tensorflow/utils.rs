@@ -99,7 +99,8 @@ impl TensorFlowSampleData {
             let is_tensor = sliced_item.is_instance(&tf_tensor)?;
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
-            if !is_tensor || !is_ndarray {
+            if !is_tensor && !is_ndarray {
+                error!("Data must be of type tensorflow tensor or ndarray");
                 Err(OpsmlError::new_err(
                     "Data must be of type tensorflow tensor or ndarray",
                 ))?;
@@ -126,7 +127,7 @@ impl TensorFlowSampleData {
             let is_tensor = sliced_item.is_instance(&tf_tensor)?;
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
-            if !is_tensor || !is_ndarray {
+            if !is_tensor && !is_ndarray {
                 Err(OpsmlError::new_err(
                     "Data must be of type tensorflow tensor or ndarray",
                 ))?;
@@ -153,7 +154,7 @@ impl TensorFlowSampleData {
             let is_tensor = sliced_item.is_instance(&tf_tensor)?;
             let is_ndarray = sliced_item.is_instance(&ndarray)?;
 
-            if !is_tensor || !is_ndarray {
+            if !is_tensor && !is_ndarray {
                 Err(OpsmlError::new_err(
                     "Data must be of type tensorflow tensor or ndarray",
                 ))?;
