@@ -20,7 +20,7 @@ use pyo3::PyVisit;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, span, warn, Level};
+use tracing::{debug, error, info, instrument, warn};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -216,6 +216,7 @@ impl LightningModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -223,10 +224,6 @@ impl LightningModel {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        // color text
-        let span = span!(Level::INFO, "Saving LightningModel interface").entered();
-        let _ = span.enter();
-
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -303,6 +300,17 @@ impl LightningModel {
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
+    #[instrument(skip(
+        self_,
+        py,
+        path,
+        model,
+        onnx,
+        drift_profile,
+        sample_data,
+        preprocessor,
+        load_kwargs
+    ))]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -314,9 +322,6 @@ impl LightningModel {
         preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
-        let span = span!(Level::INFO, "Loading TorchModel components").entered();
-        let _ = span.enter();
-
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 

@@ -13,7 +13,7 @@ use pyo3::PyTraverseError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, Level};
+use tracing::{debug, error, info, instrument};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -179,6 +179,7 @@ impl LightGBMModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -186,9 +187,6 @@ impl LightGBMModel {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
-        let _ = span.enter();
-
         debug!("Saving lightgbm interface");
 
         // parse the save args
@@ -332,15 +330,13 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_preprocessor(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving preprocessor").entered();
-        let _ = span.enter();
-
         // check if data is None
         if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
@@ -394,15 +390,13 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self_, py, path, kwargs))]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving Model").entered();
-        let _ = span.enter();
-
         let super_ = self_.as_ref();
 
         if super_.model.is_none() {
@@ -436,15 +430,13 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of the load
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_model<'py>(
         &self,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PyObject> {
-        let span = span!(Level::INFO, "Loading Model").entered();
-        let _ = span.enter();
-
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
 
         let booster = py.import("lightgbm")?.getattr("Booster")?;
