@@ -18,7 +18,7 @@ impl ModelSaver {
         py_dict.set_item("path", lpath).unwrap();
         py_dict.set_item("to_onnx", card.to_onnx).unwrap();
 
-        let save_args: ModelInterfaceMetadata = card
+        let _save_args: ModelInterfaceMetadata = card
             .interface
             .call_method(py, "save_interface_artifacts", (), Some(&py_dict))
             .and_then(|result| result.extract(py))

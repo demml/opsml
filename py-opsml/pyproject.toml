@@ -61,6 +61,8 @@ dev = [
     "catboost>=1.2.5",
     "lightning>=2.4.0; python_version > '3.11'",
     "lightning~=2.1.2; python_version <= '3.11'",
+    "tensorflow>=2.16.0; platform_system == 'Linux'",
+    "tf-keras>=2.16.0; platform_system == 'Linux'",
 ]
 
 

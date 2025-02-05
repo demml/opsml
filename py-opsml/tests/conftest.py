@@ -5,6 +5,14 @@ from opsml.card import RegistryTestHelper
 
 from typing import Tuple, Dict
 from pydantic import BaseModel
+import sys
+import platform
+
+DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
+WINDOWS_EXCLUDE = sys.platform == "win32"
+
+EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
+
 
 # Sets up logging for tests
 RustyLogger.setup_logging(LoggingConfig(log_level=LogLevel.Debug))
