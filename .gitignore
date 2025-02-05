@@ -134,5 +134,7 @@ target/
 .DS_Store
 **/.DS_Store
 /opsml_registries
+/catboost_info
 local_test_db.db
 .git.bfg-report*
+
