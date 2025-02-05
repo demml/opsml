@@ -1642,7 +1642,7 @@ resolution-markers = [
 ]
 dependencies = [
     { name = "numpy", marker = "platform_system == 'Windows'" },
-    { name = "protobuf", marker = "platform_system == 'Windows'" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/74/be/242d02ebf7fe115bd695166eeea58b2206c9fa62de22cf9cbf8986fa8d27/onnx-1.16.1.tar.gz", hash = "sha256:8299193f0f2a3849bfc069641aa8e4f93696602da8d165632af8ee48ec7556b6", size = 12306956 }
 wheels = [
@@ -1666,7 +1666,7 @@ resolution-markers = [
 ]
 dependencies = [
     { name = "numpy", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
-    { name = "protobuf", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d8/83/09d7715612f72236b439eba6ebfecdaac59d99562dfc1d7a90dddb6168e1/onnx-1.16.2.tar.gz", hash = "sha256:b33a282b038813c4b69e73ea65c2909768e8dd6cc10619b70632335daf094646", size = 12308861 }
 wheels = [
@@ -1693,7 +1693,7 @@ resolution-markers = [
 ]
 dependencies = [
     { name = "numpy", marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows')" },
-    { name = "protobuf", marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows')" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9a/54/0e385c26bf230d223810a9c7d06628d954008a5e5e4b73ee26ef02327282/onnx-1.17.0.tar.gz", hash = "sha256:48ca1a91ff73c1d5e3ea2eef20ae5d0e709bb8a2355ed798ffc2169753013fd3", size = 12165120 }
 wheels = [
@@ -1718,7 +1718,8 @@ dependencies = [
     { name = "onnx", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
     { name = "onnx", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows')" },
     { name = "packaging" },
-    { name = "protobuf" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ec/44/54c6b7f1a28d919a15caf642113fb44651087d1bb0658f028c54b93df8e3/onnxconverter-common-1.13.0.tar.gz", hash = "sha256:03db8a6033a3d6590f22df3f64234079caa826375d1fcb0b37b8123c06bf598c", size = 73935 }
 wheels = [
@@ -1750,7 +1751,8 @@ dependencies = [
     { name = "flatbuffers" },
     { name = "numpy" },
     { name = "packaging" },
-    { name = "protobuf" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux')" },
     { name = "sympy" },
 ]
 wheels = [
@@ -1806,6 +1808,13 @@ sklearn-onnx = [
     { name = "onnxruntime" },
     { name = "skl2onnx" },
 ]
+tf-onnx = [
+    { name = "onnx", version = "1.16.1", source = { registry = "https://pypi.org/simple" }, marker = "platform_system == 'Windows'" },
+    { name = "onnx", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "onnx", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')" },
+    { name = "onnxruntime" },
+    { name = "tf2onnx", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1854,7 +1863,10 @@ requires-dist = [
     { name = "onnxmltools", marker = "extra == 'sklearn-onnx'", specifier = "~=1.12" },
     { name = "onnxruntime", marker = "extra == 'onnxruntime'", specifier = ">=1.18.0" },
     { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'sklearn-onnx'" },
+    { name = "opsml", extras = ["onnx", "onnxruntime"], marker = "extra == 'tf-onnx'" },
     { name = "skl2onnx", marker = "extra == 'sklearn-onnx'", specifier = ">=1.16.0" },
+    { name = "tf2onnx", marker = "python_full_version < '3.12' and platform_system == 'Darwin' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
+    { name = "tf2onnx", marker = "python_full_version < '3.12' and platform_system == 'Linux' and extra == 'tf-onnx'", specifier = "~=1.16.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -2259,8 +2271,34 @@ wheels = [
 
 [[package]]
 name = "protobuf"
+version = "3.20.3"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and platform_system == 'Linux'",
+    "python_full_version == '3.11.*' and platform_system == 'Linux'",
+    "python_full_version < '3.11' and platform_system == 'Darwin'",
+    "python_full_version == '3.11.*' and platform_system == 'Darwin'",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/5b/e3d951e34f8356e5feecacd12a8e3b258a1da6d9a03ad1770f28925f29bc/protobuf-3.20.3.tar.gz", hash = "sha256:2e3427429c9cffebf259491be0af70189607f365c2f41c7c3764af6f337105f2", size = 216768 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/28/55/b80e8567ec327c060fa39b242392e25690c8899c489ecd7bb65b46b7bb55/protobuf-3.20.3-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:f4bd856d702e5b0d96a00ec6b307b0f51c1982c2bf9c0052cf9019e9a544ba99", size = 918427 },
+    { url = "https://files.pythonhosted.org/packages/31/be/80a9c6f16dfa4d41be3edbe655349778ae30882407fa8275eb46b4d34854/protobuf-3.20.3-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:9aae4406ea63d825636cc11ffb34ad3379335803216ee3a856787bcf5ccc751e", size = 1051042 },
+    { url = "https://files.pythonhosted.org/packages/8d/14/619e24a4c70df2901e1f4dbc50a6291eb63a759172558df326347dce1f0d/protobuf-3.20.3-py2.py3-none-any.whl", hash = "sha256:a7ca6d488aa8ff7f329d4c545b2dbad8ac31464f1d8b1c87ad1346717731e4db", size = 162128 },
+]
+
+[[package]]
+name = "protobuf"
 version = "5.29.2"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and platform_system == 'Windows'",
+    "python_full_version == '3.11.*' and platform_system == 'Windows'",
+    "python_full_version < '3.11' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version == '3.11.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.12' and platform_system == 'Windows'",
+    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
+    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+]
 sdist = { url = "https://files.pythonhosted.org/packages/a5/73/4e6295c1420a9d20c9c351db3a36109b4c9aa601916cb7c6871e3196a1ca/protobuf-5.29.2.tar.gz", hash = "sha256:b2cc8e8bb7c9326996f0e160137b0861f1a82162502658df2951209d0cb0309e", size = 424901 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/42/6db5387124708d619ffb990a846fb123bee546f52868039f8fa964c5bc54/protobuf-5.29.2-cp310-abi3-win32.whl", hash = "sha256:c12ba8249f5624300cf51c3d0bfe5be71a60c63e4dcf51ffe9a68771d958c851", size = 422697 },
@@ -2911,7 +2949,8 @@ dependencies = [
     { name = "markdown", marker = "python_full_version < '3.12'" },
     { name = "numpy", marker = "python_full_version < '3.12'" },
     { name = "packaging", marker = "python_full_version < '3.12'" },
-    { name = "protobuf", marker = "python_full_version < '3.12'" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' and platform_system != 'Darwin' and platform_system != 'Linux'" },
     { name = "setuptools", marker = "python_full_version < '3.12'" },
     { name = "six", marker = "python_full_version < '3.12'" },
     { name = "tensorboard-data-server", marker = "python_full_version < '3.12'" },
@@ -2949,7 +2988,8 @@ dependencies = [
     { name = "numpy", marker = "python_full_version < '3.12'" },
     { name = "opt-einsum", marker = "python_full_version < '3.12'" },
     { name = "packaging", marker = "python_full_version < '3.12'" },
-    { name = "protobuf", marker = "python_full_version < '3.12'" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "5.29.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' and platform_system != 'Darwin' and platform_system != 'Linux'" },
     { name = "requests", marker = "python_full_version < '3.12'" },
     { name = "setuptools", marker = "python_full_version < '3.12'" },
     { name = "six", marker = "python_full_version < '3.12'" },
@@ -3026,6 +3066,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a9/a4/7d0acc28cde2b29b8114552ce3258dafdc6b2186d24bf8e912de713dd74f/tf_keras-2.18.0.tar.gz", hash = "sha256:ebf744519b322afead33086a2aba872245473294affd40973694f3eb7c7ad77d", size = 1260765 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/ed/e08afca471299b04a34cd548e64e89d0153eda0e6cf9b715356777e24774/tf_keras-2.18.0-py3-none-any.whl", hash = "sha256:c431d04027eef790fcd3261cf7fdf93eb74f3cb32e05078b57b7f5a54bd53262", size = 1725427 },
+]
+
+[[package]]
+name = "tf2onnx"
+version = "1.16.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flatbuffers", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "numpy", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "onnx", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "protobuf", version = "3.20.3", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "requests", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+    { name = "six", marker = "(python_full_version < '3.12' and platform_system == 'Darwin') or (python_full_version < '3.12' and platform_system == 'Linux')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/48/826db3d02645d84e7ee5d5ce8407f771057d40fe224d9c3e89536674ccef/tf2onnx-1.16.1-py3-none-any.whl", hash = "sha256:90fb5f62575896d47884d27dc313cfebff36b8783e1094335ad00824ce923a8a", size = 455820 },
 ]
 
 [[package]]
