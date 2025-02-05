@@ -60,7 +60,7 @@ def test_common_kwargs_as_string(variant, expected_string):
         (SaveName.Artifacts, "artifacts"),
         (SaveName.QuantizedModel, "quantized-model"),
         (SaveName.Tokenizer, "tokenizer"),
-        (SaveName.FeatureExtractor, "feature_extractor"),
+        (SaveName.FeatureExtractor, "feature-extractor"),
         (SaveName.Metadata, "metadata"),
         (SaveName.Graphs, "graphs"),
         (SaveName.OnnxConfig, "onnx-config"),

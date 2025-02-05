@@ -63,11 +63,4 @@ def test_model_interface_drift_profile(
     # save
     metadata = model.save(tmp_path)
 
-    print(metadata)
-
     assert metadata.drift_profile_uri is not None
-
-    for i in model.drift_profile:
-        print(i)
-
-    a
