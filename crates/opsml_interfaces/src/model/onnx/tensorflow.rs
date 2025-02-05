@@ -1,6 +1,4 @@
-use crate::base::OnnxExtension;
 use crate::model::onnx::OnnxSession;
-use crate::ModelType;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -53,8 +51,6 @@ impl TensorFlowOnnxModelConverter {
             .getattr("convert")?;
 
         debug!("Step 1: Converting tensorflow model to ONNX");
-
-        println!("kwargs: {:?}", kwargs);
 
         let onnx_tuple = tf_onnx
             .call_method("from_keras", (model,), kwargs)
