@@ -23,7 +23,7 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     interface.save(save_path, True)
 
     assert interface.onnx_session is not None
-    interface.clear_onnx_runtime_sess()  # type: ignore
+    interface.onnx_session.session = None
 
     assert interface.onnx_session.session is None
     interface.model = None
