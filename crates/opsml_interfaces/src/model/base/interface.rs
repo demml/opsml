@@ -24,7 +24,7 @@ use std::path::{Path, PathBuf};
 
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
-use tracing::{debug, error, info, instrument, span, warn, Level};
+use tracing::{debug, error, info, instrument, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]

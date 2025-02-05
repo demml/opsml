@@ -173,16 +173,16 @@ impl HFBaseArgs {
 #[derive(Debug)]
 pub struct HuggingFaceModel {
     #[pyo3(get)]
-    pub model: PyObject,
+    pub model: Option<PyObject>,
 
     #[pyo3(get)]
-    pub tokenizer: PyObject,
+    pub tokenizer: Option<PyObject>,
 
     #[pyo3(get)]
-    pub feature_extractor: PyObject,
+    pub feature_extractor: Option<PyObject>,
 
     #[pyo3(get)]
-    pub image_processor: PyObject,
+    pub image_processor: Option<PyObject>,
 
     pub onnx_session: Option<Py<OnnxSession>>,
 
@@ -249,9 +249,9 @@ impl HuggingFaceModel {
                     "Model must be an instance of transformers",
                 ));
             }
-            model.into_py_any(py)?
+            Some(model.into_py_any(py)?)
         } else {
-            py.None()
+            None
         };
 
         // validate processors
@@ -259,26 +259,25 @@ impl HuggingFaceModel {
         let tokenizer = if let Some(tokenizer) = tokenizer {
             validate_tokenizer(py, tokenizer)?;
             base_args.has_tokenizer = true;
-            tokenizer.into_py_any(py)?
+            Some(tokenizer.into_py_any(py)?)
         } else {
-            py.None()
+            None
         };
 
         let feature_extractor = if let Some(feature_extractor) = feature_extractor {
-            println!("{:?}", feature_extractor);
             validate_feature_extractor(py, feature_extractor)?;
             base_args.has_feature_extractor = true;
-            feature_extractor.into_py_any(py)?
+            Some(feature_extractor.into_py_any(py)?)
         } else {
-            py.None()
+            None
         };
 
         let image_processor = if let Some(image_processor) = image_processor {
             validate_image_processor(py, image_processor)?;
             base_args.has_image_processor = true;
-            image_processor.into_py_any(py)?
+            Some(image_processor.into_py_any(py)?)
         } else {
-            py.None()
+            None
         };
 
         // process preprocessor
@@ -325,11 +324,11 @@ impl HuggingFaceModel {
 
         // check if data is None
         if PyAnyMethods::is_none(tokenizer) {
-            self.tokenizer = py.None();
+            self.tokenizer = None;
             return Ok(());
         } else {
             validate_tokenizer(py, tokenizer)?;
-            tokenizer.into_py_any(py)?
+            self.tokenizer = Some(tokenizer.into_py_any(py)?)
         };
 
         Ok(())
@@ -341,11 +340,11 @@ impl HuggingFaceModel {
 
         // check if data is None
         if PyAnyMethods::is_none(feature_extractor) {
-            self.feature_extractor = py.None();
+            self.feature_extractor = None;
             return Ok(());
         } else {
             validate_feature_extractor(py, feature_extractor)?;
-            feature_extractor.into_py_any(py)?
+            self.feature_extractor = Some(feature_extractor.into_py_any(py)?)
         };
 
         Ok(())
@@ -357,11 +356,11 @@ impl HuggingFaceModel {
 
         // check if data is None
         if PyAnyMethods::is_none(image_processor) {
-            self.image_processor = py.None();
+            self.image_processor = None;
             return Ok(());
         } else {
             validate_image_processor(py, image_processor)?;
-            image_processor.into_py_any(py)?
+            self.image_processor = Some(image_processor.into_py_any(py)?)
         };
 
         Ok(())
@@ -373,7 +372,7 @@ impl HuggingFaceModel {
 
         // check if data is None
         if PyAnyMethods::is_none(model) {
-            self.model = py.None();
+            self.model = None;
             return Ok(());
         } else {
             if is_hf_pipeline(py, model)? {
@@ -403,7 +402,7 @@ impl HuggingFaceModel {
                     "Model must be an instance of transformers",
                 ));
             }
-            model.into_py_any(py)?
+            self.model = Some(model.into_py_any(py)?)
         };
 
         Ok(())
@@ -590,31 +589,34 @@ impl HuggingFaceModel {
         if self.base_args.has_tokenizer {
             let save_path = PathBuf::from(SaveName::Tokenizer);
             let full_save_path = path.join(&save_path);
-            self.tokenizer = py
-                .import("transformers")?
-                .getattr(&self.base_args.tokenizer_name)?
-                .call_method("from_pretrained", (full_save_path,), kwargs)?
-                .unbind();
+            self.tokenizer = Some(
+                py.import("transformers")?
+                    .getattr(&self.base_args.tokenizer_name)?
+                    .call_method("from_pretrained", (full_save_path,), kwargs)?
+                    .unbind(),
+            );
         }
 
         if self.base_args.has_feature_extractor {
             let save_path = PathBuf::from(SaveName::FeatureExtractor);
             let full_save_path = path.join(&save_path);
-            self.feature_extractor = py
-                .import("transformers")?
-                .getattr(&self.base_args.feature_extractor_name)?
-                .call_method("from_pretrained", (full_save_path,), kwargs)?
-                .unbind();
+            self.feature_extractor = Some(
+                py.import("transformers")?
+                    .getattr(&self.base_args.feature_extractor_name)?
+                    .call_method("from_pretrained", (full_save_path,), kwargs)?
+                    .unbind(),
+            );
         }
 
         if self.base_args.has_image_processor {
             let save_path = PathBuf::from(SaveName::ImageProcessor);
             let full_save_path = path.join(&save_path);
-            self.image_processor = py
-                .import("transformers")?
-                .getattr(&self.base_args.image_processor_name)?
-                .call_method("from_pretrained", (full_save_path,), kwargs)?
-                .unbind();
+            self.image_processor = Some(
+                py.import("transformers")?
+                    .getattr(&self.base_args.image_processor_name)?
+                    .call_method("from_pretrained", (full_save_path,), kwargs)?
+                    .unbind(),
+            );
         }
 
         Ok(())
@@ -668,6 +670,8 @@ impl HuggingFaceModel {
 
         // Save the data using joblib
         self.tokenizer
+            .as_ref()
+            .unwrap()
             .bind(py)
             .call_method("save_pretrained", (full_save_path,), kwargs)
             .map_err(|e| {
@@ -692,6 +696,8 @@ impl HuggingFaceModel {
 
         // Save the data using joblib
         self.feature_extractor
+            .as_ref()
+            .unwrap()
             .bind(py)
             .call_method("save_pretrained", (full_save_path,), kwargs)
             .map_err(|e| {
@@ -716,6 +722,8 @@ impl HuggingFaceModel {
 
         // Save the data using joblib
         self.image_processor
+            .as_ref()
+            .unwrap()
             .bind(py)
             .call_method("save_pretrained", (full_save_path,), kwargs)
             .map_err(|e| {
@@ -794,6 +802,8 @@ impl HuggingFaceModel {
 
         // Save the data using joblib
         self.model
+            .as_ref()
+            .unwrap()
             .bind(py)
             .call_method("save_pretrained", (full_save_path,), kwargs)
             .map_err(|e| {
@@ -819,7 +829,7 @@ impl HuggingFaceModel {
             let pipeline = py.import("transformers")?.getattr("pipeline")?;
 
             let model = pipeline.call((&self.huggingface_task.to_string(), load_path), kwargs)?;
-            self.model = model.unbind();
+            self.model = Some(model.unbind());
 
             debug!("Model loaded");
         } else {
@@ -827,9 +837,11 @@ impl HuggingFaceModel {
                 .import("transformers")?
                 .getattr(&self.base_args.hf_model_type)?;
 
-            self.model = model
-                .call_method("from_pretrained", (load_path,), kwargs)?
-                .unbind();
+            self.model = Some(
+                model
+                    .call_method("from_pretrained", (load_path,), kwargs)?
+                    .unbind(),
+            );
 
             debug!("Model loaded");
         }
