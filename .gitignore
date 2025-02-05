@@ -136,5 +136,4 @@ target/
 /opsml_registries
 local_test_db.db
 .git.bfg-report*
-
 /py-opsml/catboost_info

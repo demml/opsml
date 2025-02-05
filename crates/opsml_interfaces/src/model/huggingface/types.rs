@@ -190,7 +190,7 @@ impl HuggingFaceTask {
     }
 
     #[staticmethod]
-    pub fn from_str(task: &str) -> HuggingFaceTask {
+    pub fn from_string(task: &str) -> HuggingFaceTask {
         match task {
             "audio-classification" => HuggingFaceTask::AudioClassification,
             "automatic-speech-recognition" => HuggingFaceTask::AutomaticSpeechRecognition,

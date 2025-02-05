@@ -19,7 +19,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, span, warn, Level};
+use tracing::{debug, error, info, instrument, warn};
 
 pub type ProcessorNames = (String, String, String);
 
@@ -56,7 +56,7 @@ fn get_processor_names<'py>(
     )
 }
 
-fn get_processor_names_from_pipeline<'py>(pipeline: &Bound<'py, PyAny>) -> ProcessorNames {
+fn get_processor_names_from_pipeline(pipeline: &Bound<'_, PyAny>) -> ProcessorNames {
     let get_attr = |name: &str| {
         pipeline
             .getattr(name)
@@ -221,7 +221,10 @@ impl HuggingFaceModel {
     ) -> PyResult<(Self, ModelInterface)> {
         // check if model is a Transformers Pipeline, PreTrainedModel, or TFPPreTrainedModel
         let mut base_args = HFBaseArgs::default();
-        base_args.hf_task = hf_task.unwrap_or(HuggingFaceTask::Undefined);
+
+        if hf_task.is_some() {
+            base_args.hf_task = hf_task.unwrap();
+        }
 
         let mut processor_names =
             get_processor_names(tokenizer, feature_extractor, image_processor);
@@ -231,7 +234,8 @@ impl HuggingFaceModel {
             if is_hf_pipeline(py, model)? {
                 // set model type to TransformersPipeline and get task
                 base_args.is_pipeline = true;
-                base_args.hf_task = HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
+                base_args.hf_task =
+                    HuggingFaceTask::from_string(&model.getattr("task")?.to_string());
                 processor_names = get_processor_names_from_pipeline(model);
                 base_args.hf_model_type = model
                     .getattr("model")?
@@ -381,7 +385,7 @@ impl HuggingFaceModel {
                 // set model type to TransformersPipeline and get task
                 self.base_args.is_pipeline = true;
                 self.huggingface_task =
-                    HuggingFaceTask::from_str(&model.getattr("task")?.to_string());
+                    HuggingFaceTask::from_string(&model.getattr("task")?.to_string());
                 let processor_names = get_processor_names_from_pipeline(model);
                 self.base_args.tokenizer_name = processor_names.0;
                 self.base_args.feature_extractor_name = processor_names.1;
@@ -474,7 +478,7 @@ impl HuggingFaceModel {
         if to_onnx {
             debug!("Saving ONNX model");
             let paths = self_.convert_to_onnx(py, &path, onnx_kwargs.as_ref())?;
-            onnx_model_uri = paths.get("onnx").map(|p| p.clone());
+            onnx_model_uri = paths.get("onnx").cloned();
 
             // if quantized exists, add to extra metadata
             if let Some(quantized) = paths.get("quantized") {
@@ -581,6 +585,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -597,6 +602,8 @@ impl HuggingFaceModel {
                     .call_method("from_pretrained", (full_save_path,), kwargs)?
                     .unbind(),
             );
+
+            debug!("Tokenizer loaded");
         }
 
         if self.base_args.has_feature_extractor {
@@ -608,6 +615,8 @@ impl HuggingFaceModel {
                     .call_method("from_pretrained", (full_save_path,), kwargs)?
                     .unbind(),
             );
+
+            debug!("Feature Extractor loaded");
         }
 
         if self.base_args.has_image_processor {
@@ -619,24 +628,26 @@ impl HuggingFaceModel {
                     .call_method("from_pretrained", (full_save_path,), kwargs)?
                     .unbind(),
             );
+
+            debug!("Image Processor loaded");
         }
 
+        info!("Preprocessor loaded");
         Ok(())
     }
+
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<HashMap<String, PathBuf>, OnnxError> {
-        let span = span!(Level::INFO, "Converting model to ONNX").entered();
-        let _ = span.enter();
-
         let mut paths = HashMap::new();
 
         let session = OnnxModelConverter::convert_model(
             py,
-            &py.None().bind(py),
+            py.None().bind(py),
             &self.sample_data,
             &ModelInterfaceType::HuggingFace,
             &self.model_type,

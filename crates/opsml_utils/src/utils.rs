@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Timelike};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
 use opsml_error::error::UtilError;
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::exceptions::PyValueError;
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 
