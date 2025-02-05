@@ -1,0 +1,9 @@
+{
+"meta":{"test_sets":[],"test_metrics":[],"learn_metrics":[{"best_value":"Min","name":"RMSE"}],"launch_mode":"Train","parameters":"","iteration_count":5,"learn_sets":["learn"],"name":"experiment"},
+"iterations":[
+{"learn":[0.4972603828],"iteration":0,"passed_time":0.05776640723,"remaining_time":0.2310656289},
+{"learn":[0.496520148],"iteration":1,"passed_time":0.05796757256,"remaining_time":0.08695135884},
+{"learn":[0.4948392168],"iteration":2,"passed_time":0.05816461292,"remaining_time":0.03877640861},
+{"learn":[0.4918391478],"iteration":3,"passed_time":0.05837836149,"remaining_time":0.01459459037},
+{"learn":[0.4901496483],"iteration":4,"passed_time":0.05857686017,"remaining_time":0}
+]}

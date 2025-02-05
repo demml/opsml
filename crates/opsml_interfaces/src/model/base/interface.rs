@@ -281,6 +281,11 @@ impl ModelInterface {
     }
 
     #[setter]
+    pub fn set_onnx_session(&mut self, onnx_session: Option<Py<OnnxSession>>) {
+        self.onnx_session = onnx_session;
+    }
+
+    #[setter]
     pub fn set_model(&mut self, model: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = model.py();
 
@@ -594,7 +599,7 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_onnx_model(
         &mut self,
         py: Python,

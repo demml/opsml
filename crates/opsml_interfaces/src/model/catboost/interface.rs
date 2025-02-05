@@ -132,7 +132,7 @@ impl CatBoostModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self_, py, path, save_kwargs))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -140,7 +140,7 @@ impl CatBoostModel {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        debug!("Saving lightgbm interface");
+        debug!("Saving CatBoost interface");
 
         // parse the save args
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
@@ -163,11 +163,16 @@ impl CatBoostModel {
 
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self_.as_super().save_onnx_model(
-                py,
-                &path,
-                onnx_kwargs.as_ref(),
-            )?);
+            // bypassing save_onnx_model to avoid duplicate saving (catboost saves onnx model)
+            let save_path =
+                PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
+            let full_save_path = path.join(&save_path);
+
+            self_
+                .as_super()
+                .convert_to_onnx(py, &full_save_path, onnx_kwargs.as_ref())?;
+
+            onnx_model_uri = Some(save_path);
         }
 
         // save drift profile
@@ -386,7 +391,10 @@ impl CatBoostModel {
         let booster = py.import("catboost")?;
         let catboost = booster.getattr("CatBoost")?;
 
-        let model = booster.getattr(self.model_name.clone()).unwrap_or(catboost);
+        let model = booster
+            .getattr(self.model_name.clone())
+            .unwrap_or(catboost)
+            .call0()?;
 
         Ok(model
             .call_method("load_model", (load_path,), kwargs)?

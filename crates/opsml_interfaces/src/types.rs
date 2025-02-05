@@ -224,6 +224,9 @@ impl ModelType {
             "pytorch" => ModelType::Pytorch,
             "pytorch_lightning" => ModelType::PytorchLightning,
             "CatBoost" => ModelType::Catboost,
+            "CatBoostRegressor" => ModelType::Catboost,
+            "CatBoostClassifier" => ModelType::Catboost,
+            "CatBoostRanker" => ModelType::Catboost,
             "VowpalWabbit" => ModelType::Vowpal,
             _ => ModelType::Unknown,
         }

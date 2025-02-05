@@ -1,5 +1,5 @@
 import pytest
-from typing import Tuple, Any, Generator
+from typing import Tuple, Any, Generator, cast
 from sklearn import linear_model  # type: ignore
 import numpy as np
 import pandas as pd
@@ -39,6 +39,7 @@ from transformers import pipeline, BartModel, BartTokenizer, TFBartModel  # type
 from PIL import Image
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
+from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
 
 
 def cleanup() -> None:
@@ -49,8 +50,11 @@ def cleanup() -> None:
 
 
 @pytest.fixture(scope="session")
-def example_dataframe():
-    X, y = create_fake_data(n_samples=1200)
+def example_dataframe() -> (
+    Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
+):
+    X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
+
     return X, y, X, y
 
 
@@ -1107,3 +1111,58 @@ def huggingface_vit() -> (
     data = TorchData(data=inputs["pixel_values"])
 
     yield (model, feature_extractor, data)
+
+
+@pytest.fixture
+def catboost_regressor(
+    example_dataframe: Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame],
+) -> Generator[Tuple[CatBoostRegressor, pd.DataFrame], None, None]:
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostRegressor(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield (reg, X_train)
+
+
+@pytest.fixture
+def catboost_classifier(
+    example_dataframe: Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame],
+) -> Generator[Tuple[CatBoostClassifier, pd.DataFrame], None, None]:
+    X_train, y_train, X_test, y_test = example_dataframe
+
+    reg = CatBoostClassifier(n_estimators=5, max_depth=3)
+    reg.fit(X_train.to_numpy(), y_train)
+
+    yield (reg, X_train)
+
+
+@pytest.fixture
+def catboost_ranker() -> Generator[Tuple[CatBoostRanker, pd.DataFrame], None, None]:
+    from catboost.datasets import msrank_10k  # type: ignore
+
+    train_df, _ = msrank_10k()
+
+    X_train = train_df.drop([0, 1], axis=1).values
+    y_train = train_df[0].values
+    queries_train = train_df[1].values
+
+    max_relevance = np.max(y_train)
+    y_train /= max_relevance
+
+    train = Pool(
+        data=X_train[:1000], label=y_train[:1000], group_id=queries_train[:1000]
+    )
+
+    parameters = {
+        "iterations": 100,
+        "custom_metric": ["PrecisionAt:top=10", "RecallAt:top=10", "MAP:top=10"],
+        "loss_function": "RMSE",
+        "verbose": False,
+        "random_seed": 0,
+    }
+
+    model = CatBoostRanker(**parameters)
+    model.fit(train)
+
+    yield (model, X_train)
