@@ -99,47 +99,6 @@ jobs:
       - name: Run tests
         run: make test.utils
 
-  # tensorflow is practically impossible to run on any os other than linux
-  # need to run on ubuntu-latest
-  test-tensorflow:
-    name: test ${{ matrix.os }}-${{ matrix.python-version }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu]
-        python-version: ["3.11"]
-
-    runs-on: ${{ matrix.os }}-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: install rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: cache rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.os }}-${{ matrix.python-version }}-v1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-
-      - name: set up python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Create virtual environment
-        working-directory: ./py-opsml
-        run: make setup.project
-
-      - name: Run tensorflow tests
-        working-directory: ./py-opsml
-        run: make test.unit.tensorflow
-
   test-python:
     name: test ${{ matrix.os }}-${{ matrix.python-version }}
 
@@ -192,6 +151,12 @@ jobs:
       - name: Run numpy v1 tests
         working-directory: ./py-opsml
         run: make test.unit.numpy1
+
+      # if 3.11 and ubuntu, run numpy v1 tests
+      - name: Run TensorFlow tests
+        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.11' }}
+        working-directory: ./py-opsml
+        run: make test.unit.tensorflow
 
   test-python-windows:
     name: test ${{ matrix.os }}-${{ matrix.python-version }}
