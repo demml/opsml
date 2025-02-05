@@ -16,6 +16,8 @@ use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use pyo3::PyTraverseError;
+use pyo3::PyVisit;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, instrument, span, warn, Level};
 
@@ -962,5 +964,36 @@ impl HuggingFaceModel {
         }
 
         generate_feature_schema(&data, &self.sample_data.get_data_type())
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref tokenizer) = self.tokenizer {
+            visit.call(tokenizer)?;
+        }
+
+        if let Some(ref image_processor) = self.image_processor {
+            visit.call(image_processor)?;
+        }
+
+        if let Some(ref feature_extractor) = self.feature_extractor {
+            visit.call(feature_extractor)?;
+        }
+
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
+
+        if let Some(ref onnx_session) = self.onnx_session {
+            visit.call(onnx_session)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.tokenizer = None;
+        self.feature_extractor = None;
+        self.image_processor = None;
+        self.model = None;
+        self.onnx_session = None;
     }
 }
