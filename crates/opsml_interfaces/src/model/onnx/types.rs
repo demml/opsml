@@ -7,8 +7,8 @@ use opsml_error::OpsmlError;
 use ort::session::Session;
 use ort::value::ValueType;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
-use pyo3::types::PyList;
+use pyo3::types::{PyDict, PyList};
+use pyo3::{PyTraverseError, PyVisit};
 use tracing::debug;
 
 #[pyclass]
@@ -243,6 +243,19 @@ impl OnnxSession {
 
         Ok(session)
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref session) = self.session {
+            visit.call(session)?;
+        }
+
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.session = None;
+    }
+
     //pub fn new_from_hf_session(
     //    py: Python,
     //    ort_model: &Bound<'_, PyAny>,
