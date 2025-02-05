@@ -250,82 +250,6 @@ class ModelInterfaceMetadata:
                 Any additional metadata
         """
 
-class SklearnModelInterfaceMetadata(ModelInterfaceMetadata):
-    preprocessor_name: str
-
-    def __init__(
-        self,
-        task_type: str,
-        model_type: str,
-        data_type: str,
-        modelcard_uid: str,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: str,
-        preprocessor_name: str,
-        metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            task_type:
-                The type of task the model performs
-            model_type:
-                The type of model
-            data_type:
-                The type of data the model uses
-            modelcard_uid:
-                The modelcard uid
-            feature_map:
-                A dictionary of features
-            sample_data_interface_type:
-                The type of sample data interface
-            preprocessor_name:
-                The name of the preprocessor
-            metadata:
-                Any additional metadata
-        """
-
-class CatBoostModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-class LightGBMModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-class TensorFlowInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-
-class VowpalWabbitInterfaceMetadata(ModelInterfaceMetadata):
-    arguments: str
-
-    def __init__(
-        self,
-        task_type: str,
-        model_type: str,
-        data_type: str,
-        modelcard_uid: str,
-        feature_map: FeatureSchema,
-        arguments: str,
-        sample_data_interface_type: str,
-        metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            task_type:
-                The type of task the model performs
-            model_type:
-                The type of model
-            data_type:
-                The type of data the model uses
-            modelcard_uid:
-                The modelcard uid
-            feature_map:
-                A dictionary of features
-            arguments:
-                The arguments to use
-            sample_data_interface_type:
-                The type of sample data interface
-            metadata:
-                Any additional metadata
-        """
-
-class XGBoostModelInterfaceMetadata(SklearnModelInterfaceMetadata): ...
-
 class ModelInterfaceType:
     Base: "ModelInterfaceType"
     Sklearn: "ModelInterfaceType"
@@ -1246,6 +1170,84 @@ class HuggingFaceModel(ModelInterface):
                 (PreTrainedFeatureExtractor). If using a pipeline that already has a feature extractor,
                 this can be None.
         """
+
+    def load(  # type: ignore
+        self,
+        path: Path,
+        model: bool = True,
+        onnx: bool = False,
+        drift_profile: bool = False,
+        sample_data: bool = False,
+        preprocessor: bool = False,
+        load_kwargs: None | LoadKwargs = None,
+    ) -> None:
+        """Load HuggingFaceModel components
+
+        Args:
+            path (Path):
+                Path to load the model
+            model (bool):
+                Whether to load the model
+            onnx (bool):
+                Whether to load the onnx model
+            drift_profile (bool):
+                Whether to load the drift profile
+            sample_data (bool):
+                Whether to load the sample data
+            preprocessor (bool):
+                Whether to load the preprocessor
+            load_kwargs (LoadKwargs):
+                Optional load kwargs to pass to the different load methods
+        """
+
+class CatBoostModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Interface for saving CatBoost models
+
+        Args:
+            model:
+                Model to associate with interface. This model must be a CatBoost model.
+            preprocessor:
+                Preprocessor to associate with the model.
+            sample_data:
+                Sample data to use to make predictions.
+            task_type:
+                The type of task the model performs
+            schema:
+                Feature schema for model features
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
 
     def load(  # type: ignore
         self,
