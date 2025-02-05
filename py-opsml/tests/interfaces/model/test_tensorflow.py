@@ -1,16 +1,27 @@
 import tensorflow as tf  # type: ignore
-from typing import Tuple
 import numpy as np
-import sys
-from tests.conftest import EXCLUDE
-import pytest
-
-IS_312 = sys.version_info >= (3, 12)
 
 
-@pytest.mark.tensorflow
-@pytest.mark.skipif((EXCLUDE or IS_312), reason="skipping")
-def test_tensorflow_model(tf_sequential_model: Tuple[tf.keras.Sequential, np.ndarray]):
-    model, data = tf_sequential_model
+def build_model():
+    model = tf.keras.Sequential(
+        [
+            tf.keras.layers.Dense(10, activation="relu", input_shape=(10,)),
+            tf.keras.layers.Dense(1),
+        ]
+    )
+    # Compile
+    model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
-    print(model)
+    X = np.random.rand(100, 10)
+    y = np.random.randint(0, 2, 100)
+
+    # fit model
+    model.fit(X, y, epochs=2)
+
+    return model, X
+
+
+# pytest doesn't appear to work with tensorflow, so we are running our own script
+
+if __name__ == "__main__":
+    model, data = build_model()

@@ -22,7 +22,6 @@ pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
 pub use lightning::LightningModel;
 pub use onnx::*;
 pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
-pub use tensorflow::TensorFlowInterfaceMetadata;
 pub use torch::TorchModel;
 pub use vowpal::VowpalWabbitInterfaceMetadata;
 pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};
