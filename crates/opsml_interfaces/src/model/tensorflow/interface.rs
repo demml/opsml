@@ -215,7 +215,7 @@ impl TensorFlowModel {
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     #[instrument(
         skip(self_, py, path, to_onnx, save_kwargs),
-        name = "save_torch_interface"
+        name = "save_tensorflow_interface"
     )]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
@@ -573,7 +573,7 @@ impl TensorFlowModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip(self, py, path, kwargs))]
     fn save_onnx_model(
         &mut self,
         py: Python,
