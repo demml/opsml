@@ -110,8 +110,8 @@ impl TensorFlowModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model_interface_type: ModelInterfaceType::Torch,
-                model_type: ModelType::Pytorch,
+                model_interface_type: ModelInterfaceType::TensorFlow,
+                model_type: ModelType::TensorFlow,
                 onnx_session: None,
             },
             // pass all the arguments to the ModelInterface
@@ -479,7 +479,7 @@ impl TensorFlowModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_model(
         &self,
         py: Python,
@@ -494,25 +494,15 @@ impl TensorFlowModel {
             ));
         }
 
-        let torch = py.import("torch")?;
-
-        let state_dict = self
-            .model
-            .as_ref()
-            .unwrap()
-            .getattr(py, "state_dict")?
-            .call0(py)?;
-
-        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Pt);
+        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Keras);
         let full_save_path = path.join(&save_path);
 
         // Save torch model
-        torch
-            .call_method("save", (state_dict, full_save_path), kwargs)
-            .map_err(|e| {
-                error!("Failed to save model: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        self.model
+            .as_ref()
+            .unwrap()
+            .bind(py)
+            .call_method("save", (full_save_path,), kwargs)?;
 
         info!("Model saved");
 
@@ -526,33 +516,13 @@ impl TensorFlowModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Pt);
-        let torch = py.import("torch")?;
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Keras);
+        let tf_models = py
+            .import("tensorflow")?
+            .getattr("keras")?
+            .getattr("models")?;
 
-        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
-
-        // check if model is None. Return error
-        let model = if let Ok(Some(model)) = kwargs.get_item("model") {
-            kwargs.del_item("model")?;
-            model
-        } else {
-            Err(OpsmlError::new_err(
-                "TensorFlowModel loading requires model to be passed into model kwargs for loading
-                {'model': {{your_model_architecture}}}
-                ",
-            ))?
-        };
-
-        // ensure weights only
-        kwargs.set_item("weights_only", true)?;
-
-        let state_dict = torch.call_method("load", (load_path,), Some(&kwargs))?;
-
-        // load state dict
-        model.call_method("load_state_dict", (state_dict,), None)?;
-
-        // set model to eval mode
-        model.call_method0("eval")?;
+        let model = tf_models.call_method("load_model", (load_path,), kwargs)?;
 
         self.model = Some(model.clone().unbind());
 
@@ -579,7 +549,7 @@ impl TensorFlowModel {
     }
 
     /// Load the sample data
-    #[instrument(skip(py, path, data_type, kwargs))]
+    #[instrument(skip(self, py, path, data_type, kwargs))]
     pub fn load_data(
         &mut self,
         py: Python,
