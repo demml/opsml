@@ -1,4 +1,5 @@
 use crate::model::base::utils::OnnxExtension;
+use crate::model::onnx::catboost::CatBoostOnnxModelConverter;
 use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::lightning::LightningOnnxModelConverter;
@@ -11,6 +12,7 @@ use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
+
 use tracing::{debug, error, instrument};
 
 pub struct OnnxModelConverter {}
@@ -70,6 +72,11 @@ impl OnnxModelConverter {
                 debug!("Converting HuggingFace model to ONNX");
                 let converter = HuggingFaceOnnxModelConverter::new(path);
                 converter.convert_model(py, kwargs)
+            }
+            ModelInterfaceType::CatBoost => {
+                debug!("Converting CatBoost model to ONNX");
+                let converter = CatBoostOnnxModelConverter::default();
+                converter.convert_model(py, model, path, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

@@ -14,7 +14,7 @@ pub use base::{
     DataProcessor, InterfaceDataType, LoadKwargs, ModelInterface, ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata, SampleData, SaveKwargs, TaskType,
 };
-pub use catboost::CatBoostModelInterfaceMetadata;
+pub use catboost::CatBoostModel;
 pub use huggingface::{
     HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask,
 };
