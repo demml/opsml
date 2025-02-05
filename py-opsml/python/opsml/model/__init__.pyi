@@ -519,17 +519,6 @@ class ModelInterface:
                 Optional load kwargs to pass to the different load methods
         """
 
-    def convert_to_onnx(
-        self,
-        **kwargs: Any,
-    ) -> None:
-        """Convert the model to onnx
-
-        Args:
-            kwargs:
-                Optional kwargs to pass to the underlying onnx conversion method
-        """
-
 class SklearnModel(ModelInterface):
     def __init__(
         self,
@@ -870,17 +859,6 @@ class TorchModel(ModelInterface):
                 Optional load kwargs to pass to the different load methods
         """
 
-    def convert_to_onnx(
-        self,
-        **kwargs: Any,
-    ) -> None:
-        """Convert the model to onnx
-
-        Args:
-            kwargs:
-                Optional kwargs to pass to the underlying onnx conversion method
-        """
-
 class LightningModel(ModelInterface):
     def __init__(
         self,
@@ -992,17 +970,6 @@ class LightningModel(ModelInterface):
                 Optional load kwargs to pass to the different load methods
         """
 
-    def convert_to_onnx(
-        self,
-        **kwargs: Any,
-    ) -> None:
-        """Convert the model to onnx
-
-        Args:
-            kwargs:
-                Optional kwargs to pass to the underlying onnx conversion method
-        """
-
 class HuggingFaceModel(ModelInterface):
     def __init__(
         self,
@@ -1041,7 +1008,8 @@ class HuggingFaceModel(ModelInterface):
                 Sample data to use to convert to ONNX and make sample predictions. This data must be a
                 HuggingFace-supported type.
             hf_task:
-                HuggingFace task to associate with the model. Defaults to Undefined. Accepted tasks are as follows (taken from HuggingFace pipeline docs):
+                HuggingFace task to associate with the model. Defaults to Undefined.
+                Accepted tasks are as follows (taken from HuggingFace pipeline docs):
                     - `"audio-classification"`: will return a [`AudioClassificationPipeline`].
                     - `"automatic-speech-recognition"`: will return a [`AutomaticSpeechRecognitionPipeline`].
                     - `"depth-estimation"`: will return a [`DepthEstimationPipeline`].

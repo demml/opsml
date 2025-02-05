@@ -32,7 +32,7 @@ setup.project.numpy1:
 setup.docs:
 	uv sync --all-extras --group dev --group docs
 
-test.unit.numpy1:
+test.unit.numpy1: setup.project.numpy1
 	uv run pytest \
 		-m "numpy" \
 		--cov \

@@ -13,7 +13,8 @@ use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, Level};
+use tracing::instrument;
+use tracing::{debug, error, info};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -177,17 +178,15 @@ impl SklearnModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveKwargs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::INFO, "Saving SklearnModel Interface").entered();
-        let _ = span.enter();
-
         debug!("Saving model interface");
 
         // save the preprocessor if it exists
@@ -197,7 +196,7 @@ impl SklearnModel {
             let uri = self_.save_preprocessor(
                 py,
                 &path,
-                save_args.as_ref().and_then(|args| args.model_kwargs(py)),
+                save_kwargs.as_ref().and_then(|args| args.model_kwargs(py)),
             )?;
 
             Some(DataProcessor {
@@ -207,7 +206,7 @@ impl SklearnModel {
         };
 
         // call the super save method
-        let mut metadata = self_.as_super().save(py, path, to_onnx, save_args)?;
+        let mut metadata = self_.as_super().save(py, path, to_onnx, save_kwargs)?;
 
         // add the preprocessor to the metadata
         preprocessor_entity.map(|preprocessor| {
@@ -287,15 +286,13 @@ impl SklearnModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_preprocessor(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving preprocessor").entered();
-        let _ = span.enter();
-
         // check if data is None
         if self.preprocessor.is_none(py) {
             error!("No preprocessor detected in interface for saving");

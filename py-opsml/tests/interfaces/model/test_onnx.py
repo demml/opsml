@@ -1,9 +1,10 @@
 from typing import Tuple
-from opsml.model import SklearnModel
+from opsml.model import SklearnModel, SaveKwargs
 from opsml.data import NumpyData, PandasData
 import pytest
 from pytest_lazyfixture import lazy_fixture  # type: ignore
 import warnings
+from pathlib import Path
 
 
 def warn(*args, **kwargs):
@@ -13,80 +14,100 @@ def warn(*args, **kwargs):
 warnings.warn = warn
 
 
-def test_linear_regression_numpy(linear_regression: Tuple[SklearnModel, NumpyData]):
+def test_linear_regression_numpy(
+    tmp_path: Path, linear_regression: Tuple[SklearnModel, NumpyData]
+):
     model, _ = linear_regression
-    model.convert_to_onnx()
+    model.save(tmp_path, True)
     assert model.onnx_session is not None
     model.onnx_session.run({"X": model.sample_data.data}, None)  # type: ignore
 
 
-def test_random_forest_classifier(random_forest_classifier: SklearnModel):
+def test_random_forest_classifier(
+    tmp_path: Path, random_forest_classifier: SklearnModel
+):
     model = random_forest_classifier
-    model.convert_to_onnx()
+    model.save(tmp_path, True)
     assert model.onnx_session is not None
 
 
-def test_sklearn_pipeline(sklearn_pipeline: Tuple[SklearnModel, PandasData]):
+def test_sklearn_pipeline(
+    tmp_path: Path, sklearn_pipeline: Tuple[SklearnModel, PandasData]
+):
     model, _ = sklearn_pipeline
-    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
-def test_lgb_classifier_calibrated(lgb_classifier_calibrated: SklearnModel):
+def test_lgb_classifier_calibrated(
+    tmp_path: Path, lgb_classifier_calibrated: SklearnModel
+):
     model = lgb_classifier_calibrated
-    kwargs = {
-        "target_opset": {"ai.onnx.ml": 3, "": 9},
-        "options": {
-            "zipmap": False,
-        },
-    }
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(
+        onnx={
+            "target_opset": {"ai.onnx.ml": 3, "": 9},
+            "options": {
+                "zipmap": False,
+            },
+        }
+    )
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
-def test_sklearn_pipeline_advanced(sklearn_pipeline_advanced: SklearnModel):
+def test_sklearn_pipeline_advanced(
+    tmp_path: Path, sklearn_pipeline_advanced: SklearnModel
+):
     model = sklearn_pipeline_advanced
-    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
-def test_stacking_regressor(stacking_regressor: SklearnModel):
+def test_stacking_regressor(tmp_path: Path, stacking_regressor: SklearnModel):
     model = stacking_regressor
-    kwargs = {"target_opset": {"ai.onnx.ml": 3, "": 9}}
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
 def test_sklearn_pipeline_xgb_classifier(
+    tmp_path: Path,
     sklearn_pipeline_xgb_classifier: SklearnModel,
 ):
     model = sklearn_pipeline_xgb_classifier
-    kwargs = {
-        "options": {"zipmap": False},
-        "target_opset": {"ai.onnx.ml": 3, "": 9},
-    }
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(
+        onnx={
+            "options": {"zipmap": False},
+            "target_opset": {"ai.onnx.ml": 3, "": 9},
+        }
+    )
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
 
 
-def test_stacking_classifier(stacking_classifier: SklearnModel):
+def test_stacking_classifier(tmp_path: Path, stacking_classifier: SklearnModel):
     model = stacking_classifier
-    kwargs = {
-        "options": {"zipmap": False},
-    }
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(
+        onnx={
+            "options": {"zipmap": False},
+        }
+    )
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
 
 
 def test_lgb_classifier_calibrated_pipeline(
+    tmp_path: Path,
     lgb_classifier_calibrated_pipeline: SklearnModel,
 ):
     model = lgb_classifier_calibrated_pipeline
-    kwargs = {
-        "options": {"zipmap": False},
-        "target_opset": {"ai.onnx.ml": 3, "": 9},
-    }
-    model.convert_to_onnx(**kwargs)
+    save_kwargs = SaveKwargs(
+        onnx={
+            "options": {"zipmap": False},
+            "target_opset": {"ai.onnx.ml": 3, "": 9},
+        }
+    )
+    model.save(tmp_path, True, save_kwargs=save_kwargs)
 
 
 @pytest.mark.parametrize(
@@ -163,6 +184,6 @@ def test_lgb_classifier_calibrated_pipeline(
         lazy_fixture("voting_regressor"),
     ],
 )
-def test_sklearn_models(interface: SklearnModel):
+def test_sklearn_models(tmp_path: Path, interface: SklearnModel):
     model = interface
-    model.convert_to_onnx()
+    model.save(tmp_path, True)

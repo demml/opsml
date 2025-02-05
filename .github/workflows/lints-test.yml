@@ -148,6 +148,10 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Run numpy v1 tests
+        working-directory: ./py-opsml
+        run: make test.unit.numpy1
+
   test-python-windows:
     name: test ${{ matrix.os }}-${{ matrix.python-version }}
 
