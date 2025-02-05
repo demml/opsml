@@ -80,27 +80,33 @@ impl SaveKwargs {
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> Self {
+    ) -> PyResult<Self> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
             if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
                 let onnx_dict = onnx.call_method0("to_dict").unwrap();
-                onnx_dict.downcast::<PyDict>().unwrap().clone().unbind()
+                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
             } else if onnx.is_instance_of::<PyDict>() {
-                onnx.downcast::<PyDict>().unwrap().clone().unbind()
+                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
-                Err(OpsmlError::new_err("Invalid onnx type")).unwrap()
+                Err(OpsmlError::new_err("Invalid onnx type"))
             }
         });
 
+        let onnx = match onnx {
+            Some(Ok(onnx)) => Some(onnx),
+            Some(Err(e)) => return Err(e),
+            None => None,
+        };
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
-        Self {
+        Ok(Self {
             onnx,
             model,
             preprocessor,
-        }
+        })
     }
 
     pub fn __str__(&self, py: Python) -> String {
@@ -309,27 +315,35 @@ impl LoadKwargs {
         onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> Self {
+    ) -> PyResult<Self> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let onnx = onnx.map(|onnx| {
             if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
                 let onnx_dict = onnx.call_method0("to_dict").unwrap();
-                onnx_dict.downcast::<PyDict>().unwrap().clone().unbind()
+                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
             } else if onnx.is_instance_of::<PyDict>() {
-                onnx.downcast::<PyDict>().unwrap().clone().unbind()
+                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
             } else {
-                Err(OpsmlError::new_err("Invalid onnx type")).unwrap()
+                // return error
+                Err(OpsmlError::new_err("Invalid onnx type"))
             }
         });
 
+        // check for error
+        let onnx = match onnx {
+            Some(Ok(onnx)) => Some(onnx),
+            Some(Err(e)) => return Err(e),
+            None => None,
+        };
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
-        Self {
+        Ok(Self {
             onnx,
             model,
             preprocessor,
-        }
+        })
     }
 }
 
@@ -381,7 +395,7 @@ pub struct ExtraMetadata {
 impl ExtraMetadata {
     #[new]
     #[pyo3(signature = (metadata))]
-    pub fn new<'py>(metadata: Bound<'py, PyDict>) -> Self {
+    pub fn new(metadata: Bound<'_, PyDict>) -> Self {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let metadata = metadata.unbind();
