@@ -40,6 +40,7 @@ from PIL import Image
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
+import tensorflow as tf  # type: ignore
 
 
 def cleanup() -> None:
@@ -1166,3 +1167,25 @@ def catboost_ranker() -> Generator[Tuple[CatBoostRanker, pd.DataFrame], None, No
     model.fit(train)
 
     yield (model, X_train)
+
+
+@pytest.fixture
+def tf_sequential_model() -> (
+    Generator[Tuple[tf.keras.Sequential, np.ndarray], None, None]
+):
+    model = tf.keras.Sequential(
+        [
+            tf.keras.layers.Dense(10, activation="relu", input_shape=(10,)),
+            tf.keras.layers.Dense(1),
+        ]
+    )
+    # Compile
+    model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+
+    X = np.random.rand(100, 10)
+    y = np.random.randint(0, 2, 100)
+
+    # fit model
+    model.fit(X, y, epochs=2)
+
+    yield (model, X)
