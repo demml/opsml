@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use tracing::info;
 use uuid::Uuid;
 
+#[pyclass]
 #[derive(Debug)]
 pub struct CardRegistry {
     registry_type: RegistryType,
@@ -367,7 +368,7 @@ mod tests {
         setup();
 
         env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:3000");
-        let mut registry = CardRegistry::new(RegistryType::Data).await.unwrap();
+        let mut registry = CardRegistry::new(RegistryType::Data).unwrap();
 
         // Test mode
         assert_eq!(registry.mode(), RegistryMode::Client);
@@ -378,7 +379,6 @@ mod tests {
         // Test list cards
         let cards = registry
             .list_cards(None, None, None, None, None, None, None, None, None)
-            .await
             .unwrap();
 
         assert_eq!(cards.cards.len(), 10);

@@ -20,6 +20,7 @@ TorchModel = model.TorchModel
 LightningModel = model.LightningModel
 HuggingFaceModel = model.HuggingFaceModel
 CatBoostModel = model.CatBoostModel
+OnnxSession = model.OnnxSession
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -41,4 +42,5 @@ __all__ = [
     "HuggingFaceTask",
     "HuggingFaceModel",
     "CatBoostModel",
+    "OnnxSession",
 ]

@@ -29,7 +29,7 @@ impl CardSaver {
                 // data_card.save_artifacts(tmp_path)?;
             }
             CardEnum::Model(modelcard) => {
-                ModelSaver::save_artifacts(py, modelcard, tmp_path, save_kwargs)?;
+                //ModelSaver::save_artifacts(py, modelcard, tmp_path, save_kwargs)?;
                 // modelcard.interface.save() -> returns metadata
                 // modelcard.get_metadata() -> returns metadata
                 // modelcard.save_modelcard

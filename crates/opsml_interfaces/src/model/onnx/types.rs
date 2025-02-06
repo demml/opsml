@@ -4,6 +4,7 @@ use std::vec;
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_error::OnnxError;
 use opsml_error::OpsmlError;
+use opsml_utils::PyHelperFuncs;
 use ort::session::Session;
 use ort::value::ValueType;
 use pyo3::prelude::*;
@@ -215,6 +216,19 @@ impl OnnxSession {
         self.session = Some(session);
 
         Ok(())
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> OnnxSession {
+        serde_json::from_str(&json_string).unwrap()
     }
 }
 

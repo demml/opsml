@@ -330,6 +330,13 @@ class OnnxSession:
             Output data
         """
 
+    def model_dump_json(self) -> str:
+        """Dump the onnx model to json"""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "OnnxSession":
+        """Validate the onnx model json"""
+
 class ModelInterface:
     def __init__(
         self,
