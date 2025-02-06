@@ -3,6 +3,9 @@ use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
 use opsml_types::contracts::{PresignedQuery, PresignedUrl};
 
+use reqwest::blocking::{
+    multipart::Form as BlockingForm, Client as BlockingClient, Response as BlockingResponse,
+};
 use reqwest::multipart::Form;
 use reqwest::Response;
 use reqwest::{
@@ -291,6 +294,262 @@ impl OpsmlApiClient {
         let response = response
             .json::<Value>()
             .await
+            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
+
+        let response = serde_json::from_value::<PresignedUrl>(response)
+            .map_err(|e| ApiError::Error(format!("Failed to deserialize response: {}", e)))?;
+
+        Ok(response.url)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BlockingOpsmlApiClient {
+    pub client: BlockingClient,
+    settings: OpsmlStorageSettings,
+    base_path: String,
+}
+
+impl BlockingOpsmlApiClient {
+    pub fn new(settings: &OpsmlStorageSettings, client: &BlockingClient) -> Result<Self, ApiError> {
+        // setup headers
+
+        let mut api_client = Self {
+            client: client.clone(),
+            settings: settings.clone(),
+            base_path: format!(
+                "{}/{}",
+                settings.api_settings.base_url, settings.api_settings.opsml_dir
+            ),
+        };
+
+        if settings.api_settings.use_auth {
+            api_client.get_jwt_token()?;
+
+            // mask the username and password
+            api_client.settings.api_settings.username = REDACTED.to_string();
+            api_client.settings.api_settings.password = REDACTED.to_string();
+
+            // mask the env variables
+            std::env::set_var("OPSML_USERNAME", REDACTED);
+            std::env::set_var("OPSML_PASSWORD", REDACTED);
+        }
+
+        Ok(api_client)
+    }
+
+    fn get_jwt_token(&mut self) -> Result<(), ApiError> {
+        if !self.settings.api_settings.use_auth {
+            return Ok(());
+        }
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Username",
+            HeaderValue::from_str(&self.settings.api_settings.username).map_err(|e| {
+                ApiError::Error(format!("Failed to create header with error: {}", e))
+            })?,
+        );
+
+        headers.insert(
+            "Password",
+            HeaderValue::from_str(&self.settings.api_settings.password).map_err(|e| {
+                ApiError::Error(format!("Failed to create header with error: {}", e))
+            })?,
+        );
+
+        let url = format!("{}/{}", self.base_path, Routes::AuthApiLogin.as_str());
+        let response = self
+            .client
+            .get(url)
+            .headers(headers)
+            .send()
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?
+            .json::<JwtToken>()
+            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
+
+        self.settings.api_settings.auth_token = response.token;
+
+        Ok(())
+    }
+
+    /// Refresh the JWT token when it expires
+    /// This function is called with the old JWT token, which is then verified with the server refresh token
+    fn refresh_token(&mut self) -> Result<(), ApiError> {
+        if !self.settings.api_settings.use_auth {
+            return Ok(());
+        }
+
+        let url = format!("{}/{}", self.base_path, Routes::AuthApiRefresh.as_str());
+        let response = self
+            .client
+            .get(url)
+            .bearer_auth(&self.settings.api_settings.auth_token)
+            .send()
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?
+            .json::<JwtToken>()
+            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
+
+        self.settings.api_settings.auth_token = response.token;
+
+        Ok(())
+    }
+
+    fn request(
+        self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_string: Option<String>,
+        headers: Option<HeaderMap>,
+    ) -> Result<BlockingResponse, ApiError> {
+        let headers = headers.unwrap_or_default();
+
+        let url = format!("{}/{}", self.base_path, route.as_str());
+        let response = match request_type {
+            RequestType::Get => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{}?{}", url, query_string)
+                } else {
+                    url
+                };
+
+                self.client
+                    .get(url)
+                    .headers(headers)
+                    .bearer_auth(&self.settings.api_settings.auth_token)
+                    .send()
+                    .map_err(|e| {
+                        ApiError::Error(format!("Failed to send request with error: {}", e))
+                    })?
+            }
+            RequestType::Post => self
+                .client
+                .post(url)
+                .headers(headers)
+                .json(&body_params)
+                .bearer_auth(self.settings.api_settings.auth_token)
+                .send()
+                .map_err(|e| {
+                    ApiError::Error(format!("Failed to send request with error: {}", e))
+                })?,
+            RequestType::Put => self
+                .client
+                .put(url)
+                .headers(headers)
+                .json(&body_params)
+                .bearer_auth(self.settings.api_settings.auth_token)
+                .send()
+                .map_err(|e| {
+                    ApiError::Error(format!("Failed to send request with error: {}", e))
+                })?,
+            RequestType::Delete => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{}?{}", url, query_string)
+                } else {
+                    url
+                };
+                self.client
+                    .delete(url)
+                    .headers(headers)
+                    .bearer_auth(self.settings.api_settings.auth_token)
+                    .send()
+                    .map_err(|e| {
+                        ApiError::Error(format!("Failed to send request with error: {}", e))
+                    })?
+            }
+        };
+
+        Ok(response)
+    }
+
+    pub fn request_with_retry(
+        &mut self,
+        route: Routes,
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_params: Option<String>,
+        headers: Option<HeaderMap>,
+    ) -> Result<BlockingResponse, ApiError> {
+        // this will attempt to send a request. If the request fails, it will refresh the token and try again. If it fails all 3 times it will return an error
+        let mut attempts = 0;
+        let max_attempts = 3;
+        let mut response: Result<BlockingResponse, ApiError>;
+
+        loop {
+            attempts += 1;
+
+            let client = self.clone();
+            response = client.request(
+                route.clone(),
+                request_type.clone(),
+                body_params.clone(),
+                query_params.clone(),
+                headers.clone(),
+            );
+
+            if response.is_ok() || attempts >= max_attempts {
+                break;
+            }
+
+            if response.is_err() {
+                self.refresh_token().map_err(|e| {
+                    ApiError::Error(format!("Failed to refresh token with error: {}", e))
+                })?;
+            }
+        }
+
+        let response = response
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+
+        Ok(response)
+    }
+
+    // specific method for multipart uploads (mainly used for localstorageclient)
+    pub async fn multipart_upload(self, form: BlockingForm) -> Result<BlockingResponse, ApiError> {
+        let response = self
+            .client
+            .post(format!("{}/files/multipart", self.base_path))
+            .multipart(form)
+            .bearer_auth(self.settings.api_settings.auth_token)
+            .send()
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+        Ok(response)
+    }
+
+    // specific method for multipart uploads (mainly used for localstorageclient)
+    pub async fn generate_presigned_url_for_part(
+        &mut self,
+        path: &str,
+        session_url: &str,
+        part_number: i32,
+    ) -> Result<String, ApiError> {
+        let args = PresignedQuery {
+            path: path.to_string(),
+            session_url: Some(session_url.to_string()),
+            part_number: Some(part_number),
+            for_multi_part: Some(true),
+        };
+        let query_string = serde_qs::to_string(&args).map_err(|e| {
+            ApiError::Error(format!(
+                "Failed to serialize query string with error: {}",
+                e
+            ))
+        })?;
+
+        let response = self
+            .request_with_retry(
+                Routes::Presigned,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .map_err(|e| ApiError::Error(format!("Failed to generate presigned url: {}", e)))?;
+
+        // move response into PresignedUrl
+        let response = response
+            .json::<Value>()
             .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
 
         let response = serde_json::from_value::<PresignedUrl>(response)
