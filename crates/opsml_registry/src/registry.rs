@@ -171,8 +171,6 @@ impl CardRegistry {
 
         // set card uid
         let new_uid = Uuid::new_v4().to_string();
-        card.set_uid(py, &new_uid)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         CardSaver::save_card(py, &card, save_kwargs)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
