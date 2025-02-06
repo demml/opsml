@@ -1,4 +1,4 @@
-use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::torch::TorchSampleData;
@@ -220,7 +220,7 @@ impl TorchModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -266,7 +266,7 @@ impl TorchModel {
             })
             .unwrap_or_default();
 
-        let metadata = ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
             sample_data_uri,
@@ -275,6 +275,26 @@ impl TorchModel {
             extra: None,
             save_kwargs,
         };
+
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                let onnx_session = sess.extract::<OnnxSession>().unwrap();
+                onnx_session
+            })
+        };
+
+        let metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.model_type.clone(),
+            self_.sample_data.get_data_type(),
+            self_.as_super().schema.clone(),
+            onnx_session,
+            self_.as_super().sample_data.get_data_type(),
+            HashMap::new(),
+        );
 
         Ok(metadata)
     }
