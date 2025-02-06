@@ -1,5 +1,5 @@
 use crate::base::DataProcessor;
-use crate::base::ModelInterfaceSaveMetadata;
+use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
@@ -7,6 +7,7 @@ use crate::{LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
 use opsml_types::{SaveName, Suffix};
+use opsml_utils::pyobject_to_json;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -186,7 +187,7 @@ impl SklearnModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving model interface");
 
         // save the preprocessor if it exists
@@ -211,9 +212,13 @@ impl SklearnModel {
         // add the preprocessor to the metadata
         preprocessor_entity.map(|preprocessor| {
             metadata
+                .save_metadata
                 .data_processor_map
                 .insert("preprocessor".to_string(), preprocessor)
         });
+
+        let model = self_.as_super().model.as_ref().unwrap().bind(py);
+        metadata.model_specific_metadata = SklearnModel::extract_model_params(model)?;
 
         Ok(metadata)
     }
@@ -335,5 +340,11 @@ impl SklearnModel {
         self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
 
         Ok(())
+    }
+
+    pub fn extract_model_params(model: &Bound<'_, PyAny>) -> PyResult<serde_json::Value> {
+        let params = model.getattr("get_params")?;
+
+        Ok(pyobject_to_json(&params).map_err(OpsmlError::new_err)?)
     }
 }
