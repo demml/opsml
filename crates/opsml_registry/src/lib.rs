@@ -3,7 +3,7 @@ pub mod registry;
 pub mod saver;
 pub mod server;
 
-pub use registry::{CardRegistry, PyCardRegistry};
+pub use registry::CardRegistry;
 
 #[cfg(feature = "server")]
 pub use server::registry::server_logic::RegistryTestHelper;

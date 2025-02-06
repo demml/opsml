@@ -13,7 +13,7 @@ pub struct ModelSaver {}
 
 impl ModelSaver {
     #[instrument(skip(py, card, lpath, save_kwargs))]
-    pub fn save_artifacts(
+    pub fn save_interface_artifacts(
         py: Python,
         card: &ModelCard,
         lpath: PathBuf,

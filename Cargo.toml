@@ -62,7 +62,7 @@ ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
-rand = "0.8.5"
+rand = "0.*"
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
@@ -80,8 +80,8 @@ thiserror = "2.*"
 time = "0.*"
 
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
-tokio-util = { version = "0.7.12",  features = ["codec", "io"]}
-tower-http = { version = "0.5.0", features = ["cors"] }
+tokio-util = { version = "0.*",  features = ["codec", "io"]}
+tower-http = { version = "0.*", features = ["cors"] }
 tracing = "0.*"
 tracing-appender = "0.*"
 tracing-core = "0.*"
