@@ -115,7 +115,7 @@ impl ModelInterfaceSaveMetadata {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
     pub task_type: TaskType,
@@ -133,9 +133,6 @@ pub struct ModelInterfaceMetadata {
     pub schema: FeatureSchema,
 
     #[pyo3(get)]
-    pub sample_data_type: DataType,
-
-    #[pyo3(get)]
     pub save_metadata: ModelInterfaceSaveMetadata,
 
     #[pyo3(get)]
@@ -147,7 +144,7 @@ pub struct ModelInterfaceMetadata {
 #[pymethods]
 impl ModelInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, sample_data_type=DataType::NotProvided, extra_metadata=HashMap::new()))]
+    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, extra_metadata=HashMap::new()))]
     pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
         task_type: TaskType,
@@ -155,7 +152,6 @@ impl ModelInterfaceMetadata {
         data_type: DataType,
         schema: FeatureSchema,
         onnx_session: Option<OnnxSession>,
-        sample_data_type: DataType,
         extra_metadata: HashMap<String, String>,
     ) -> Self {
         ModelInterfaceMetadata {
@@ -164,7 +160,6 @@ impl ModelInterfaceMetadata {
             data_type,
             onnx_session,
             schema,
-            sample_data_type,
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
@@ -409,7 +404,6 @@ impl ModelInterface {
             self.data_type.clone(),
             self.schema.clone(),
             onnx_session,
-            self.sample_data.get_data_type(),
             HashMap::new(),
         );
 

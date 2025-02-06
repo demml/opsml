@@ -542,7 +542,7 @@ impl PresignableTypes {
 }
 
 #[pyclass(eq)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataType {
     Pandas,
     Arrow,
@@ -566,6 +566,8 @@ pub enum DataType {
     Joblib,
     Base,
     Dataset,
+
+    #[default]
     NotProvided,
 }
 

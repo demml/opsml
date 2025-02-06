@@ -212,7 +212,6 @@ impl LightGBMModel {
             self_.as_super().data_type.clone(),
             self_.as_super().schema.clone(),
             onnx_session,
-            self_.as_super().sample_data.get_data_type(),
             HashMap::new(),
         );
 

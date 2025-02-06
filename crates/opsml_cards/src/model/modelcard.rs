@@ -1,7 +1,7 @@
 use crate::types::{DataSchema, Description};
 use crate::{BaseArgs, CardInfo};
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::LoadKwargs;
+use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
 use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_types::cards::{CardTable, CardType};
 use pyo3::prelude::*;
@@ -14,13 +14,7 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelCardMetadata {
     #[pyo3(get, set)]
-    pub interface_type: ModelInterfaceType,
-
-    #[pyo3(get, set)]
     pub description: Description,
-
-    #[pyo3(get, set)]
-    pub data_schema: DataSchema,
 
     #[pyo3(get, set)]
     pub datacard_uid: Option<String>,
@@ -33,6 +27,8 @@ pub struct ModelCardMetadata {
 
     #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
+
+    pub interface_metadata: ModelInterfaceMetadata,
 }
 
 #[pyclass]

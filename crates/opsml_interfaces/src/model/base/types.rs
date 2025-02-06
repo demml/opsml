@@ -32,7 +32,7 @@ impl InterfaceDataType {
 }
 
 #[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub enum TaskType {
     Classification,
     Regression,
@@ -61,6 +61,7 @@ pub enum TaskType {
     TimeSeriesVideo,
     TimeSeriesGraph,
     TimeSeriesTabular,
+    #[default]
     Other,
 }
 
