@@ -25,6 +25,7 @@ use std::path::{Path, PathBuf};
 
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
+use serde_json::Value;
 use tracing::{debug, error, info, instrument, warn};
 
 #[pyclass]
@@ -138,6 +139,8 @@ pub struct ModelInterfaceMetadata {
 
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
+
+    pub model_specific_metadata: Value,
 }
 
 #[pymethods]
@@ -165,11 +168,21 @@ impl ModelInterfaceMetadata {
             sample_data_type,
             save_metadata,
             extra_metadata,
+            model_specific_metadata: Value::Null,
         }
     }
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> OnnxSession {
+        serde_json::from_str(&json_string).unwrap()
     }
 }
 
