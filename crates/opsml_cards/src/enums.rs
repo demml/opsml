@@ -2,6 +2,7 @@ use crate::{DataCard, ModelCard};
 use opsml_error::error::CardError;
 use opsml_types::{CommonKwargs, RegistryType};
 use pyo3::prelude::*;
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum CardEnum {
@@ -71,17 +72,10 @@ impl CardEnum {
         }
     }
 
-    pub fn uri(&self) -> String {
+    pub fn uri(&self) -> PathBuf {
         match self {
             CardEnum::Data(card) => card.uri(),
             CardEnum::Model(card) => card.uri(),
-        }
-    }
-
-    pub fn set_uid(&mut self, py: Python, uid: &str) -> Result<(), CardError> {
-        match self {
-            CardEnum::Data(_) => Ok(()),
-            CardEnum::Model(card) => card.set_uid(py, uid),
         }
     }
 }

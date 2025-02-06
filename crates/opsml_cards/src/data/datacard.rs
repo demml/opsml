@@ -1,3 +1,4 @@
+use crate::types::Tags;
 use crate::{BaseArgs, CardInfo, Description};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
@@ -19,10 +20,7 @@ pub struct DataCardMetadata {
     pub data_type: DataType,
 
     #[pyo3(get, set)]
-    pub description: Description,
-
-    #[pyo3(get, set)]
-    pub feature_map: FeatureSchema,
+    pub schema: FeatureSchema,
 
     #[pyo3(get, set)]
     pub runcard_uid: Option<String>,
@@ -38,19 +36,17 @@ pub struct DataCardMetadata {
 impl DataCardMetadata {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data_type, description=None, feature_map=None, runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
+    #[pyo3(signature = (data_type, schema=FeatureSchema::default(), runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
     pub fn new(
         data_type: DataType,
-        description: Option<Description>,
-        feature_map: Option<FeatureSchema>,
+        schema: FeatureSchema,
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
     ) -> Self {
         Self {
             data_type,
-            description: description.unwrap_or_default(),
-            feature_map: feature_map.unwrap_or_default(),
+            schema,
             runcard_uid,
             pipelinecard_uid,
             auditcard_uid,
@@ -80,7 +76,7 @@ pub struct DataCard {
     pub uid: String,
 
     #[pyo3(get, set)]
-    pub tags: HashMap<String, String>,
+    pub tags: Tags,
 
     #[pyo3(get, set)]
     pub metadata: DataCardMetadata,
@@ -102,18 +98,23 @@ impl DataCard {
         version: Option<String>,
         uid: Option<String>,
         info: Option<CardInfo>,
-        tags: Option<HashMap<String, String>>,
+        tags: Option<&Bound<'_, PyAny>>,
         metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
-        let base_args = BaseArgs::new(
-            name,
-            repository,
-            contact,
-            version,
-            uid,
-            info,
-            tags.unwrap_or_default(),
-        )?;
+        let tags = match tags {
+            None => Tags::new(None),
+            Some(t) => {
+                if t.is_instance_of::<PyDict>() {
+                    let dict = t.extract::<HashMap<String, String>>().unwrap();
+                    Tags::new(Some(dict))
+                } else {
+                    t.extract::<Tags>()
+                        .map_err(|e| OpsmlError::new_err(e.to_string()))?
+                }
+            }
+        };
+
+        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)?;
 
         let py = interface.py();
 
@@ -144,7 +145,11 @@ impl DataCard {
         }
 
         let metadata = metadata.unwrap_or(DataCardMetadata::new(
-            data_type, None, None, None, None, None,
+            data_type,
+            FeatureSchema::default(),
+            None,
+            None,
+            None,
         ));
 
         Ok(Self {
@@ -163,14 +168,16 @@ impl DataCard {
     }
 
     #[getter]
-    pub fn uri(&self) -> String {
-        format!(
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
             "{}/{}/{}/v{}",
             CardTable::Data,
             self.repository,
             self.name,
             self.version
-        )
+        );
+
+        PathBuf::from(uri)
     }
 
     #[pyo3(signature = (path, **kwargs))]

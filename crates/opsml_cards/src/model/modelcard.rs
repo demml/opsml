@@ -1,21 +1,27 @@
-use crate::types::{DataSchema, Description};
+use crate::types::Tags;
 use crate::{BaseArgs, CardInfo};
-use opsml_error::error::{CardError, OpsmlError};
+use opsml_error::error::OpsmlError;
+use opsml_interfaces::ModelInterface;
+use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
-use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_types::cards::{CardTable, CardType};
+use opsml_types::{SaveName, Suffix};
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::{intern, IntoPyObjectExt, PyObject};
-use serde::{Deserialize, Serialize};
+use pyo3::types::PyDict;
+use pyo3::{IntoPyObjectExt, PyObject};
+use serde::{
+    de::{self, MapAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use std::collections::HashMap;
+use std::fmt;
 use std::path::PathBuf;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelCardMetadata {
-    #[pyo3(get, set)]
-    pub description: Description,
-
     #[pyo3(get, set)]
     pub datacard_uid: Option<String>,
 
@@ -53,7 +59,7 @@ pub struct ModelCard {
     pub uid: String,
 
     #[pyo3(get, set)]
-    pub tags: HashMap<String, String>,
+    pub tags: Tags,
 
     #[pyo3(get, set)]
     pub metadata: ModelCardMetadata,
@@ -71,6 +77,7 @@ impl ModelCard {
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, metadata=None, to_onnx=None))]
     pub fn new(
+        py: Python,
         interface: &Bound<'_, PyAny>,
         name: Option<String>,
         repository: Option<String>,
@@ -78,33 +85,34 @@ impl ModelCard {
         version: Option<String>,
         uid: Option<String>,
         info: Option<CardInfo>,
-        tags: Option<HashMap<String, String>>,
+        tags: Option<&Bound<'_, PyAny>>,
         metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
-        let base_args = BaseArgs::new(
-            name,
-            repository,
-            contact,
-            version,
-            uid,
-            info,
-            tags.unwrap_or_default(),
-        )?;
-        let py = interface.py();
+        let tags = match tags {
+            None => Tags::new(None),
+            Some(t) => {
+                if t.is_instance_of::<PyDict>() {
+                    let dict = t.extract::<HashMap<String, String>>().unwrap();
+                    Tags::new(Some(dict))
+                } else {
+                    t.extract::<Tags>()
+                        .map_err(|e| OpsmlError::new_err(e.to_string()))?
+                }
+            }
+        };
+
+        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)?;
 
         if interface.is_instance_of::<ModelInterface>() {
+            //
         } else {
             return Err(OpsmlError::new_err(
                 "interface must be an instance of ModelInterface",
             ));
         }
 
-        let mut metadata = metadata.unwrap_or_default();
-        metadata.interface_type = interface
-            .getattr(intern!(py, "interface_type"))
-            .unwrap()
-            .extract()?;
+        let metadata = metadata.unwrap_or_default();
 
         Ok(Self {
             interface: Some(
@@ -125,14 +133,44 @@ impl ModelCard {
     }
 
     #[getter]
-    pub fn uri(&self) -> String {
-        format!(
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
             "{}/{}/{}/v{}",
             CardTable::Model,
             self.repository,
             self.name,
             self.version
-        )
+        );
+
+        PathBuf::from(uri)
+    }
+
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    pub fn save<'py>(
+        &mut self,
+        py: Python<'py>,
+        path: PathBuf,
+        to_onnx: bool,
+        save_kwargs: Option<SaveKwargs>,
+    ) -> PyResult<()> {
+        // save model interface
+        let metadata = self.interface.as_ref().unwrap().bind(py).call_method(
+            "save",
+            (path.clone(), to_onnx, save_kwargs),
+            None,
+        )?;
+
+        // extract into ModelInterfaceMetadata
+        let interface_metadata = metadata.extract::<ModelInterfaceMetadata>()?;
+
+        // update metadata
+        self.metadata.interface_metadata = interface_metadata;
+
+        // save modelcard
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+
+        Ok(())
     }
 
     #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
@@ -155,19 +193,35 @@ impl ModelCard {
 
         Ok(())
     }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> ModelInterfaceMetadata {
+        serde_json::from_str(&json_string).unwrap()
+    }
 }
 
-impl ModelCard {
-    pub fn set_uid(&mut self, py: Python, uid: &str) -> Result<(), CardError> {
-        self.interface
-            .as_ref()
-            .unwrap()
-            .setattr(py, intern!(py, "modelcard_uid"), uid)
-            .map_err(|e| CardError::Error(e.to_string()))?;
+impl Serialize for ModelCard {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("ModelCard", 10)?;
 
-        self.uid = uid.to_string();
-
-        Ok(())
+        // set session to none
+        state.serialize_field("name", &self.name)?;
+        state.serialize_field("repository", &self.repository)?;
+        state.serialize_field("contact", &self.contact)?;
+        state.serialize_field("version", &self.version)?;
+        state.serialize_field("uid", &self.uid)?;
+        state.serialize_field("tags", &self.tags)?;
+        state.serialize_field("metadata", &self.metadata)?;
+        state.serialize_field("card_type", &self.card_type)?;
+        state.serialize_field("to_onnx", &self.to_onnx)?;
+        state.end()
     }
 }
 
@@ -199,60 +253,124 @@ impl FromPyObject<'_> for ModelCard {
     }
 }
 
-//impl ModelCard {
-//    pub fn serialize(&self) -> Result<(), CardError> {
-//        Python::with_gil(|py| {
-//            let obj = &self.interface;
-//
-//            // Create the exclude dictionary
-//            let exclude_dict = PyDict::new(py);
-//            let exclude_set = PySet::new(
-//                py,
-//                &[
-//                    "model",
-//                    "preprocessor",
-//                    "sample_data",
-//                    "onnx_model",
-//                    "feature_extractor",
-//                    "tokenizer",
-//                    "drift_profile",
-//                ],
-//            )
-//            .map_err(|e| CardError::Error(e.to_string()))?;
-//            exclude_dict
-//                .set_item("exclude", exclude_set)
-//                .map_err(|e| CardError::Error(e.to_string()))?;
-//
-//            // Call the model_dump method with the exclude argument
-//            let result = obj
-//                .call_method(py, "model_dump", (), Some(&exclude_dict))
-//                .map_err(|e| {
-//                    CardError::Error(format!(
-//                        "Error calling model_dump method on interface: {}",
-//                        e
-//                    ))
-//                })?;
-//
-//            // cast to pydict
-//            let dumped_interface = result
-//                .downcast_bound::<PyDict>(py)
-//                .map_err(|e| CardError::Error(e.to_string()))?;
-//
-//            if let Ok(Some(onnx_args)) = dumped_interface.get_item("onnx_args") {
-//                let args = onnx_args
-//                    .downcast::<PyDict>()
-//                    .map_err(|e| CardError::Error(e.to_string()))?;
-//
-//                // check if config in args. if it is, pop it
-//                if let Ok(Some(_)) = args.get_item("config") {
-//                    args.del_item("config")
-//                        .map_err(|e| CardError::Error(e.to_string()))?;
-//                }
-//            }
-//
-//            println!("{:?}", result); // Print the result for debugging
-//
-//            Ok(())
-//        })
-//    }
-//}
+impl<'de> Deserialize<'de> for ModelCard {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "snake_case")]
+        enum Field {
+            Interface,
+            Name,
+            Repository,
+            Contact,
+            Version,
+            Uid,
+            Tags,
+            Metadata,
+            CardType,
+            ToOnnx,
+        }
+
+        struct ModelCardVisitor;
+
+        impl<'de> Visitor<'de> for ModelCardVisitor {
+            type Value = ModelCard;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct OnnxSession")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<ModelCard, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut interface = None;
+                let mut name = None;
+                let mut repository = None;
+                let mut contact = None;
+                let mut version = None;
+                let mut uid = None;
+                let mut tags = None;
+                let mut metadata = None;
+                let mut card_type = None;
+                let mut to_onnx = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Interface => {
+                            let _interface: Option<serde_json::Value> = map.next_value()?;
+                            interface = None; // Default to None always (pyobject)
+                        }
+                        Field::Name => {
+                            name = Some(map.next_value()?);
+                        }
+                        Field::Repository => {
+                            repository = Some(map.next_value()?);
+                        }
+                        Field::Contact => {
+                            contact = Some(map.next_value()?);
+                        }
+                        Field::Version => {
+                            version = Some(map.next_value()?);
+                        }
+                        Field::Uid => {
+                            uid = Some(map.next_value()?);
+                        }
+                        Field::Tags => {
+                            tags = Some(map.next_value()?);
+                        }
+                        Field::Metadata => {
+                            metadata = Some(map.next_value()?);
+                        }
+                        Field::CardType => {
+                            card_type = Some(map.next_value()?);
+                        }
+                        Field::ToOnnx => {
+                            to_onnx = Some(map.next_value()?);
+                        }
+                    }
+                }
+
+                let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
+                let repository =
+                    repository.ok_or_else(|| de::Error::missing_field("repository"))?;
+                let contact = contact.ok_or_else(|| de::Error::missing_field("contact"))?;
+                let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
+                let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
+                let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
+                let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
+                let card_type = card_type.ok_or_else(|| de::Error::missing_field("card_type"))?;
+                let to_onnx = to_onnx.ok_or_else(|| de::Error::missing_field("to_onnx"))?;
+
+                Ok(ModelCard {
+                    interface,
+                    name,
+                    repository,
+                    contact,
+                    version,
+                    uid,
+                    tags,
+                    metadata,
+                    card_type,
+                    to_onnx,
+                })
+            }
+        }
+
+        const FIELDS: &[&str] = &[
+            "interface",
+            "name",
+            "repository",
+            "contact",
+            "version",
+            "uid",
+            "tags",
+            "metadata",
+            "card_type",
+            "to_onnx",
+        ];
+        deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
+    }
+}
