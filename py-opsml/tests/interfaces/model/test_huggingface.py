@@ -19,7 +19,7 @@ from opsml.data import TorchData
 IS_312 = sys.version_info >= (3, 12)
 
 
-def _test_hugging_face_text_pipeline(
+def test_hugging_face_text_pipeline(
     tmp_path: Path,
     huggingface_text_classification_pipeline: Tuple[Pipeline, str],
 ):
@@ -59,7 +59,7 @@ def _test_hugging_face_text_pipeline(
     assert interface.onnx_session is not None
 
 
-def _test_hugging_face_model(
+def test_hugging_face_model(
     tmp_path: Path,
     huggingface_bart_model: Tuple[BartModel, BartTokenizer, torch.Tensor],
 ):
