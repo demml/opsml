@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import FeatureSchema, OnnxSchema
+from ..core import FeatureSchema, OnnxSchema, CommonKwargs
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -181,6 +181,9 @@ class DataProcessor:
 
     def __str__(self): ...
 
+class ExtraMetadata:
+    metadata: Dict[str, Any]
+
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
     model_uri: Path
@@ -188,7 +191,7 @@ class ModelInterfaceSaveMetadata:
     sample_data_uri: Path
     onnx_model_uri: Optional[Path]
     drift_profile_uri: Optional[Path]
-    extra_metadata: Dict[str, str]
+    extra: Optional[ExtraMetadata]
     save_kwargs: Optional[SaveKwargs]
 
     def __init__(
@@ -198,7 +201,7 @@ class ModelInterfaceSaveMetadata:
         sample_data_uri: Optional[Path] = None,
         onnx_model_uri: Optional[Path] = None,
         drift_profile_uri: Optional[Path] = None,
-        extra_metadata: Optional[Dict[str, str]] = {},  # type: ignore
+        extra: Optional[ExtraMetadata] = None,
         save_kwargs: Optional[SaveKwargs] = None,
     ) -> None:
         """Define model interface save arguments
@@ -222,33 +225,6 @@ class ModelInterfaceSaveMetadata:
 
     def __str__(self): ...
     def model_dump_json(self) -> str: ...
-
-class ModelInterfaceMetadata:
-    task_type: str
-    model_type: str
-    data_type: str
-    modelcard_uid: str
-    feature_map: FeatureSchema
-    sample_data_interface_type: str
-    save_metadata: ModelInterfaceSaveMetadata
-    extra_metadata: dict[str, str]
-
-    def __init__(
-        self,
-        interface: Any,
-        save_metadata: ModelInterfaceSaveMetadata,
-        extra_metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            interface:
-                The interface to use
-            save_metadata:
-                The save metadata
-            metadata:
-                Any additional metadata
-        """
 
 class ModelInterfaceType:
     Base: "ModelInterfaceType"
@@ -336,6 +312,62 @@ class OnnxSession:
     @staticmethod
     def model_validate_json(json_string: str) -> "OnnxSession":
         """Validate the onnx model json"""
+
+class ModelInterfaceMetadata:
+    task_type: TaskType
+    model_type: ModelType
+    data_type: DataType
+    onnx_session: Optional[OnnxSession]
+    modelcard_uid: str
+    schema: FeatureSchema
+    sample_data_type: DataType
+    save_metadata: ModelInterfaceSaveMetadata
+    extra_metadata: dict[str, str]
+
+    def __init__(
+        self,
+        save_metadata: ModelInterfaceSaveMetadata,
+        task_type: TaskType = TaskType.Other,
+        model_type: ModelType = ModelType.Unknown,
+        data_type: DataType = DataType.NotProvided,
+        schema: FeatureSchema = FeatureSchema(),
+        onnx_session: Optional[OnnxSession] = None,
+        modelcard_uid: str = CommonKwargs.Undefined.as_string(),
+        sample_data_type: DataType = DataType.NotProvided,
+        exra_metadata: dict[str, str] = {},  # type: ignore
+    ) -> None:
+        """Define a model interface
+
+        Args:
+            task_type:
+                Task type
+            model_type:
+                Model type
+            data_type:
+                Data type
+            onnx_session:
+                Onnx session
+            modelcard_uid:
+                Modelcard uid
+            schema:
+                Feature schema
+            sample_data_type:
+                Sample data type
+            save_metadata:
+                Save metadata
+            extra_metadata:
+                Extra metadata. Must be a dictionary of strings
+        """
+
+    def __str__(self) -> str:
+        """Return the string representation of the model interface metadata"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model interface metadata to json"""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ModelInterfaceMetadata":
+        """Validate the model interface metadata json"""
 
 class ModelInterface:
     def __init__(
@@ -482,7 +514,7 @@ class ModelInterface:
         path: Path,
         to_onnx: bool = False,
         save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+    ) -> ModelInterfaceMetadata:
         """Save the model interface
 
         Args:
@@ -818,7 +850,7 @@ class TorchModel(ModelInterface):
         path: Path,
         to_onnx: bool = False,
         save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+    ) -> ModelInterfaceMetadata:
         """Save the TorchModel interface. Torch models are saved
         as state_dicts as is the standard for PyTorch.
 
@@ -930,7 +962,7 @@ class LightningModel(ModelInterface):
         path: Path,
         to_onnx: bool = False,
         save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+    ) -> ModelInterfaceMetadata:
         """Save the LightningModel interface. Lightning models are saved via checkpoints.
 
         Args:
@@ -1061,7 +1093,7 @@ class HuggingFaceModel(ModelInterface):
         path: Path,
         to_onnx: bool = False,
         save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+    ) -> ModelInterfaceMetadata:
         """Save the HuggingFaceModel interface
 
         Args:
