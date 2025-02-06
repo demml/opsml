@@ -75,7 +75,7 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, metadata=None, to_onnx=None))]
+    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
@@ -86,7 +86,6 @@ impl ModelCard {
         uid: Option<String>,
         info: Option<CardInfo>,
         tags: Option<&Bound<'_, PyAny>>,
-        metadata: Option<ModelCardMetadata>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
         let tags = match tags {
@@ -112,8 +111,6 @@ impl ModelCard {
             ));
         }
 
-        let metadata = metadata.unwrap_or_default();
-
         Ok(Self {
             interface: Some(
                 interface
@@ -126,7 +123,7 @@ impl ModelCard {
             version: base_args.version,
             uid: base_args.uid,
             tags: base_args.tags,
-            metadata,
+            metadata: ModelCardMetadata::default(),
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
         })
@@ -145,18 +142,17 @@ impl ModelCard {
         PathBuf::from(uri)
     }
 
-    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save<'py>(
         &mut self,
         py: Python<'py>,
         path: PathBuf,
-        to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<()> {
         // save model interface
         let metadata = self.interface.as_ref().unwrap().bind(py).call_method(
             "save",
-            (path.clone(), to_onnx, save_kwargs),
+            (path.clone(), self.to_onnx, save_kwargs),
             None,
         )?;
 
@@ -199,7 +195,7 @@ impl ModelCard {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> ModelInterfaceMetadata {
+    pub fn model_validate_json(json_string: String) -> ModelCard {
         serde_json::from_str(&json_string).unwrap()
     }
 }
