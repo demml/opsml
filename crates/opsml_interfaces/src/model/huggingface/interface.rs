@@ -1,9 +1,12 @@
 use crate::model::huggingface::{HuggingFaceSampleData, HuggingFaceTask};
 use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::base::{parse_save_kwargs, ExtraMetadata, ModelInterfaceSaveMetadata};
+use crate::base::{
+    parse_save_kwargs, ExtraMetadata, ModelInterfaceMetadata, ModelInterfaceSaveMetadata,
+};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::ModelInterface;
@@ -132,7 +135,7 @@ fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
         .unwrap())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HFBaseArgs {
     pub hf_task: HuggingFaceTask,
     pub model_backend: ModelType,
@@ -168,6 +171,26 @@ impl Default for HFBaseArgs {
 impl HFBaseArgs {
     pub fn has_processors(&self) -> bool {
         self.has_tokenizer || self.has_feature_extractor || self.has_image_processor
+    }
+
+    pub fn model_dump_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "hf_task": self.hf_task,
+            "model_backend": self.model_backend,
+            "is_pipeline": self.is_pipeline,
+            "has_tokenizer": self.has_tokenizer,
+            "has_feature_extractor": self.has_feature_extractor,
+            "has_image_processor": self.has_image_processor,
+            "tokenizer_name": self.tokenizer_name,
+            "feature_extractor_name": self.feature_extractor_name,
+            "image_processor_name": self.image_processor_name,
+            "hf_model_type": self.hf_model_type,
+            "ort_type": self.ort_type,
+        })
+    }
+
+    pub fn model_validate_json(&self, record: String) -> HFBaseArgs {
+        serde_json::from_str(&record).unwrap_or_default()
     }
 }
 
@@ -444,7 +467,7 @@ impl HuggingFaceModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
@@ -488,7 +511,7 @@ impl HuggingFaceModel {
             }
         }
 
-        let metadata = ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
             sample_data_uri,
@@ -497,6 +520,28 @@ impl HuggingFaceModel {
             extra,
             save_kwargs: cloned_kwargs,
         };
+
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                let onnx_session = sess.extract::<OnnxSession>().unwrap();
+                onnx_session
+            })
+        };
+
+        let mut metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.model_type.clone(),
+            self_.sample_data.get_data_type(),
+            self_.as_super().schema.clone(),
+            onnx_session,
+            self_.as_super().sample_data.get_data_type(),
+            HashMap::new(),
+        );
+
+        metadata.model_specific_metadata = self_.base_args.model_dump_json();
 
         Ok(metadata)
     }

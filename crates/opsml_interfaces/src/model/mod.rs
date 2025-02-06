@@ -7,7 +7,6 @@ pub mod onnx;
 pub mod sklearn;
 pub mod tensorflow;
 pub mod torch;
-pub mod vowpal;
 pub mod xgboost;
 
 pub use base::{
@@ -24,5 +23,4 @@ pub use onnx::*;
 pub use sklearn::SklearnModel;
 pub use tensorflow::TensorFlowInterfaceMetadata;
 pub use torch::TorchModel;
-pub use vowpal::VowpalWabbitInterfaceMetadata;
 pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};
