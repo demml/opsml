@@ -9,6 +9,13 @@ use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{PyTraverseError, PyVisit};
+use serde;
+use serde::{
+    de::{self, MapAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Deserializer, Serialize, Serializer,
+};
+use std::fmt;
 use tracing::debug;
 
 #[pyclass]
@@ -255,80 +262,81 @@ impl OnnxSession {
     fn __clear__(&mut self) {
         self.session = None;
     }
+}
 
-    //pub fn new_from_hf_session(
-    //    py: Python,
-    //    ort_model: &Bound<'_, PyAny>,
-    //    model_bytes: Vec<u8>,
-    //    onnx_type: &str,
-    //) -> Result<Self, OnnxError> {
-    //    let onnx_version = py
-    //        .import("onnx")?
-    //        .getattr("__version__")?
-    //        .extract::<String>()?;
-    //
-    //    // extract onnx_bytes
-    //    let session = Session::builder()
-    //        .map_err(|e| OnnxError::Error(format!("Failed to create onnx session: {}", e)))?
-    //        .commit_from_memory(&model_bytes)
-    //        .map_err(|e| OnnxError::Error(format!("Failed to commit onnx session: {}", e)))?;
-    //
-    //    let input_schema = session
-    //        .inputs
-    //        .iter()
-    //        .map(|input| {
-    //            let name = input.name.clone();
-    //            let input_type = input.input_type.clone();
-    //
-    //            let feature = match input_type {
-    //                ValueType::Tensor {
-    //                    ty,
-    //                    dimensions,
-    //                    dimension_symbols: _,
-    //                } => Feature::new(ty.to_string(), dimensions, None),
-    //                _ => Feature::new("Unknown".to_string(), vec![], None),
-    //            };
-    //
-    //            Ok((name, feature))
-    //        })
-    //        .collect::<Result<FeatureSchema, OnnxError>>()
-    //        .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
-    //
-    //    let output_schema = session
-    //        .outputs
-    //        .iter()
-    //        .map(|output| {
-    //            let name = output.name.clone();
-    //            let input_type = output.output_type.clone();
-    //
-    //            let feature = match input_type {
-    //                ValueType::Tensor {
-    //                    ty,
-    //                    dimensions,
-    //                    dimension_symbols: _,
-    //                } => Feature::new(ty.to_string(), dimensions, None),
-    //                _ => Feature::new("Unknown".to_string(), vec![], None),
-    //            };
-    //
-    //            Ok((name, feature))
-    //        })
-    //        .collect::<Result<FeatureSchema, OnnxError>>()
-    //        .map_err(|_| OnnxError::Error("Failed to collect feature schema".to_string()))?;
-    //
-    //    let schema = OnnxSchema {
-    //        input_features: input_schema,
-    //        output_features: output_schema,
-    //        onnx_version,
-    //        feature_names: vec![],
-    //        onnx_type: onnx_type.to_string(),
-    //    };
-    //
-    //    Ok(OnnxSession {
-    //        session: Some(session.into_py(py)),
-    //        schema,
-    //        quantized: false,
-    //    })
-    //}
+impl Serialize for OnnxSession {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("OnnxSession", 2)?;
+        // set session to none
+
+        state.serialize_field("schema", &self.schema)?;
+        state.serialize_field("quantized", &self.quantized)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for OnnxSession {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "snake_case")]
+        enum Field {
+            Schema,
+            Session,
+            Quantized,
+        }
+
+        struct OnnxSessionVisitor;
+
+        impl<'de> Visitor<'de> for OnnxSessionVisitor {
+            type Value = OnnxSession;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct OnnxSession")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<OnnxSession, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut schema = None;
+                let mut session = None;
+                let mut quantized = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Schema => {
+                            schema = Some(map.next_value()?);
+                        }
+                        Field::Session => {
+                            let _session: Option<serde_json::Value> = map.next_value()?;
+                            session = None; // Default to None
+                        }
+                        Field::Quantized => {
+                            quantized = Some(map.next_value()?);
+                        }
+                    }
+                }
+
+                let schema = schema.ok_or_else(|| de::Error::missing_field("schema"))?;
+                let quantized = quantized.ok_or_else(|| de::Error::missing_field("quantized"))?;
+
+                Ok(OnnxSession {
+                    schema,
+                    session,
+                    quantized,
+                })
+            }
+        }
+
+        const FIELDS: &[&str] = &["schema", "session", "quantized"];
+        deserializer.deserialize_struct("OnnxSession", FIELDS, OnnxSessionVisitor)
+    }
 }
 
 impl Clone for OnnxSession {

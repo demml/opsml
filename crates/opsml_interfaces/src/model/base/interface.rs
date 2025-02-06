@@ -112,80 +112,47 @@ impl ModelInterfaceSaveMetadata {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
-    pub task_type: String,
+    pub task_type: TaskType,
     #[pyo3(get)]
-    pub model_type: String,
+    pub model_type: ModelType,
     #[pyo3(get)]
-    pub data_type: String,
+    pub data_type: DataType,
+
+    #[pyo3(get)]
+    pub onnx_session: Option<OnnxSession>,
+
     #[pyo3(get)]
     pub modelcard_uid: String,
+
     #[pyo3(get)]
     pub feature_map: HashMap<String, Feature>,
+
     #[pyo3(get)]
     pub sample_data_interface_type: String,
+
     #[pyo3(get)]
     pub save_metadata: ModelInterfaceSaveMetadata,
+
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
 }
 
 #[pymethods]
 impl ModelInterfaceMetadata {
-    #[new]
-    #[pyo3(signature = (interface, save_metadata, extra_metadata=None))]
-    fn new(
-        interface: &Bound<'_, PyAny>,
-        save_metadata: ModelInterfaceSaveMetadata,
-        extra_metadata: Option<HashMap<String, String>>,
-    ) -> PyResult<Self> {
-        let task_type: String = interface
-            .getattr("task_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let model_type: String = interface
-            .getattr("model_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let data_type: String = interface
-            .getattr("data_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let modelcard_uid: String = interface
-            .getattr("modelcard_uid")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let feature_map: HashMap<String, Feature> = interface
-            .getattr("feature_map")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get feature_map: {}", e)))?
-            .extract()?;
-
-        let sample_data_interface_type: String = interface
-            .getattr("sample_data_interface_type")
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Failed to get sample_data_interface_type: {}", e))
-            })?
-            .to_string();
-
-        Ok(ModelInterfaceMetadata {
-            task_type,
-            model_type,
-            data_type,
-            modelcard_uid,
-            feature_map,
-            sample_data_interface_type,
-            save_metadata,
-            extra_metadata: extra_metadata.unwrap_or_default(),
-        })
-    }
-
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
     }
+}
+
+pub struct ModelInterfaceMetaddata {
+    pub data_type: DataType,
+    pub task_type: TaskType,
+    pub schema: FeatureSchema,
+    pub model_type: ModelType,
+    pub model_interface_type: ModelInterfaceType,
+    pub onnx_session: Option<OnnxSession>,
+    pub drift_profile: Vec<DriftProfile>,
 }
 
 #[pyclass(subclass)]
