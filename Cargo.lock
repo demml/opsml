@@ -3412,6 +3412,7 @@ dependencies = [
  "pyo3",
  "serde",
  "serde_json",
+ "tracing",
  "walkdir",
 ]
 

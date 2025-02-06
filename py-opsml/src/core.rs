@@ -1,5 +1,4 @@
-use opsml_cards::DataSchema;
-use opsml_cards::Description;
+use opsml_cards::{DataSchema, Description, Tags};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
 use opsml_interfaces::{LoadKwargs, SaveKwargs};
@@ -25,6 +24,7 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<SaveKwargs>()?;
     m.add_class::<LoadKwargs>()?;
+    m.add_class::<Tags>()?;
 
     // opsml_types
     m.add_class::<CommonKwargs>()?;
