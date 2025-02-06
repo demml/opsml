@@ -303,6 +303,24 @@ impl OpsmlApiClient {
     }
 }
 
+/// Create a new HTTP client that can be shared across different clients
+pub fn build_blocking_http_client(settings: &ApiSettings) -> Result<BlockingClient, ApiError> {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "X-Prod-Token",
+        HeaderValue::from_str(settings.prod_token.as_deref().unwrap_or(""))
+            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+    );
+
+    let client_builder =
+        BlockingClient::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
+    let client = client_builder
+        .default_headers(headers)
+        .build()
+        .map_err(|e| ApiError::Error(format!("Failed to create client with error: {}", e)))?;
+    Ok(client)
+}
+
 #[derive(Debug, Clone)]
 pub struct BlockingOpsmlApiClient {
     pub client: BlockingClient,
