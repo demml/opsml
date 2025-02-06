@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import FeatureSchema, OnnxSchema, CommonKwargs
+from ..core import FeatureSchema, OnnxSchema, CommonKwargs, SaveKwargs, LoadKwargs
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -128,51 +128,6 @@ class HuggingFaceOnnxArgs:
             extra_kwargs:
                 Extra kwargs to pass to the onnx conversion (save_pretrained method for ort models)
 
-        """
-
-class SaveKwargs:
-    def __init__(
-        self,
-        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
-        model: Optional[Dict] = None,
-        preprocessor: Optional[Dict] = None,
-    ) -> None:
-        """Optional arguments to pass to save_model
-
-        Args:
-            onnx (Dict or HuggingFaceOnnxArgs):
-                Optional onnx arguments to use when saving model to onnx format
-            model (Dict):
-                Optional model arguments to use when saving
-            preprocessor (Dict):
-                Optional preprocessor arguments to use when saving
-        """
-
-    def __str__(self): ...
-    def model_dump_json(self) -> str: ...
-    @staticmethod
-    def model_validate_json(json_string: str) -> "SaveKwargs": ...
-
-class LoadKwargs:
-    onnx: Optional[Dict]
-    model: Optional[Dict]
-    preprocessor: Optional[Dict]
-
-    def __init__(
-        self,
-        onnx: Optional[Dict] = None,
-        model: Optional[Dict] = None,
-        preprocessor: Optional[Dict] = None,
-    ) -> None:
-        """Optional arguments to pass to load_model
-
-        Args:
-            onnx (Dict):
-                Optional onnx arguments to use when loading
-            model (Dict):
-                Optional model arguments to use when loading
-            preprocessor (Dict):
-                Optional preprocessor arguments to use when loading
         """
 
 class DataProcessor:
@@ -1225,7 +1180,7 @@ class CatBoostModel(ModelInterface):
 
         Args:
             model:
-                Model to associate with interface. This model must be a CatBoost model.
+                Model to associate with the interface. This model must be a CatBoost model.
             preprocessor:
                 Preprocessor to associate with the model.
             sample_data:
@@ -1283,96 +1238,4 @@ class CatBoostModel(ModelInterface):
                 Whether to load the preprocessor
             load_kwargs (LoadKwargs):
                 Optional load kwargs to pass to the different load methods
-        """
-
-class ModelCardMetadata:
-    @property
-    def datacard_uid(self) -> str:
-        """Returns the datacard uid"""
-
-    @property
-    def runcard_uid(self) -> str:
-        """Returns the runcard uid"""
-
-    @property
-    def pipelinecard_uid(self) -> str:
-        """Returns the runcard uid"""
-
-    @property
-    def auditcard_uid(self) -> str:
-        """Returns the runcard uid"""
-
-class ModelCard:
-    def __init__(self) -> None:
-        """Create a ModelCard from a machine learning model.
-
-        Cards are stored in the ModelCardRegistry and follow the naming convention of:
-        {registry}/{repository}/{name}/v{version}
-
-        Args:
-            interface:
-                `ModelInterface` class containing trained model
-            repository:
-                Repository to associate with `ModelCard`
-            name:
-                Name to associate with `ModelCard`
-            contact:
-                Contact to associate with `ModelCard`
-            version:
-                Current version (assigned if card has been registered). Follows
-                semantic versioning.
-            uid:
-                Unique id (assigned if card has been registered)
-            info:
-                `CardInfo` object containing additional metadata. If provided, it will override any
-                values provided for `name`, `repository`, `contact`, and `version`.
-
-                Name, repository, and contact are required arguments for all cards. They can be provided
-                directly or through a `CardInfo` object.
-            tags:
-                Tags to associate with `ModelCard`
-            to_onnx:
-                Whether to convert the model to onnx or not during registration
-        """
-
-    @property
-    def uri(self) -> Path:
-        """Returns the uri of the `ModelCard` in the
-        format of {registry}/{repository}/{name}/v{version}
-        """
-
-    def save(self, path: Path, save_kwargs: Optional[SaveKwargs] = None) -> None:
-        """Save the model card to a directory
-
-        Args:
-            path (Path):
-                Path to save the model card.
-            save_kwargs (SaveKwargs):
-                Optional kwargs to pass to `ModelInterface` save method.
-        """
-
-    def load(
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load ModelInterface components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model. Defaults to True.
-            onnx (bool):
-                Whether to load the onnx model. Defaults to False.
-            drift_profile (bool):
-                Whether to load the drift profile. Defaults to False.
-            sample_data (bool):
-                Whether to load the sample data. Defaults to False.
-            load_kwargs (LoadKwargs):
-                Optional kwargs to pass to `ModelInterface` load method.
         """

@@ -1,14 +1,14 @@
+use opsml_cards::DataSchema;
 use opsml_cards::Description;
 use opsml_error::error::OpsmlError;
+use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
+use opsml_interfaces::{LoadKwargs, SaveKwargs};
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use rusty_logging::{LogLevel, LoggingConfig, RustyLogger};
-
-use opsml_cards::DataSchema;
-use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
 use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
+use rusty_logging::{LogLevel, LoggingConfig, RustyLogger};
 
 #[pymodule]
 pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -22,6 +22,9 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // opsml_settings
     m.add_class::<OpsmlConfig>()?;
+
+    m.add_class::<SaveKwargs>()?;
+    m.add_class::<LoadKwargs>()?;
 
     // opsml_types
     m.add_class::<CommonKwargs>()?;

@@ -1,4 +1,4 @@
-use opsml_cards::{CardInfo, DataCard, DataCardMetadata};
+use opsml_cards::{CardInfo, DataCard, DataCardMetadata, ModelCard, ModelCardMetadata};
 use opsml_registry::CardRegistry;
 #[cfg(feature = "server")]
 use opsml_registry::RegistryTestHelper;
@@ -21,6 +21,10 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     #[cfg(feature = "server")]
     m.add_class::<RegistryTestHelper>()?;
+
+    // ModelCard
+    m.add_class::<ModelCard>()?;
+    m.add_class::<ModelCardMetadata>()?;
 
     Ok(())
 }

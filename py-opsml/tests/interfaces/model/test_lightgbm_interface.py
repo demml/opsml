@@ -1,4 +1,4 @@
-from opsml.model import LightGBMModel, ModelType, SaveKwargs
+from opsml.model import LightGBMModel, ModelType, SaveKwargs, SklearnModel
 import lightgbm as lgb
 import pandas as pd
 from typing import Tuple
@@ -34,7 +34,7 @@ def test_lightgbm_model_interface(
 
 
 def test_lightgbm_regression_metadata(
-    tmp_path: Path, lightgbm_regression: LightGBMModel
+    tmp_path: Path, lightgbm_regression: SklearnModel
 ):
     save_path = tmp_path / "test"
     save_path.mkdir()

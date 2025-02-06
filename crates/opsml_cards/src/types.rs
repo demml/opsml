@@ -380,10 +380,6 @@ impl Tags {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn get_tags(&self) -> HashMap<String, String> {
-        self.tags.clone()
-    }
-
     pub fn add_tag(&mut self, key: String, value: String) {
         self.tags.insert(key, value);
     }
