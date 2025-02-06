@@ -175,6 +175,34 @@ impl ModelCard {
     }
 }
 
+impl FromPyObject<'_> for ModelCard {
+    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let interface = ob.getattr("interface")?;
+        let name = ob.getattr("name")?.extract()?;
+        let repository = ob.getattr("repository")?.extract()?;
+        let contact = ob.getattr("contact")?.extract()?;
+        let version = ob.getattr("version")?.extract()?;
+        let uid = ob.getattr("uid")?.extract()?;
+        let tags = ob.getattr("tags")?.extract()?;
+        let metadata = ob.getattr("metadata")?.extract()?;
+        let card_type = ob.getattr("card_type")?.extract()?;
+        let to_onnx = ob.getattr("to_onnx")?.extract()?;
+
+        Ok(ModelCard {
+            interface: Some(interface.into()),
+            name,
+            repository,
+            contact,
+            version,
+            uid,
+            tags,
+            metadata,
+            card_type,
+            to_onnx,
+        })
+    }
+}
+
 //impl ModelCard {
 //    pub fn serialize(&self) -> Result<(), CardError> {
 //        Python::with_gil(|py| {

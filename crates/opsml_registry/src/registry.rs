@@ -4,6 +4,7 @@ use opsml_cards::*;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
+use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
@@ -17,109 +18,11 @@ pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
     registry: OpsmlRegistry,
-}
-
-impl CardRegistry {
-    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let registry = OpsmlRegistry::new(registry_type.clone()).await?;
-
-        Ok(Self {
-            registry_type: registry_type.clone(),
-            table_name: CardTable::from_registry_type(&registry_type).to_string(),
-            registry,
-        })
-    }
-
-    pub fn registry_type(&self) -> RegistryType {
-        self.registry_type.clone()
-    }
-
-    pub fn table_name(&self) -> &str {
-        self.table_name.as_str()
-    }
-
-    pub fn mode(&self) -> RegistryMode {
-        self.registry.mode()
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub async fn list_cards(
-        &mut self,
-        info: Option<CardInfo>,
-        uid: Option<String>,
-        name: Option<String>,
-        repository: Option<String>,
-        version: Option<String>,
-        max_date: Option<String>,
-        tags: Option<HashMap<String, String>>,
-        limit: Option<i32>,
-        sort_by_timestamp: Option<bool>,
-    ) -> Result<CardList, RegistryError> {
-        let mut uid = uid;
-        let mut name = name;
-        let mut repository = repository;
-        let mut version = version;
-        let mut tags = tags;
-
-        if let Some(info) = info {
-            name = name.or(info.name);
-            repository = repository.or(info.repository);
-            uid = uid.or(info.uid);
-            version = version.or(info.version);
-            tags = tags.or(info.tags);
-        }
-
-        if name.is_some() {
-            name = Some(name.unwrap().to_lowercase());
-        }
-
-        if repository.is_some() {
-            repository = Some(repository.unwrap().to_lowercase());
-        }
-
-        let limit_check = [
-            uid.is_some(),
-            name.is_some(),
-            repository.is_some(),
-            version.is_some(),
-            tags.is_some(),
-        ];
-
-        // check if any value is true. If not, set limit to 25
-        let limit = if limit_check.iter().any(|&x| x) {
-            limit
-        } else {
-            Some(25)
-        };
-
-        let query_args = CardQueryArgs {
-            uid,
-            name,
-            repository,
-            version,
-            max_date,
-            tags,
-            limit,
-            sort_by_timestamp,
-        };
-
-        let cards = self.registry.list_cards(query_args).await?;
-
-        Ok(CardList { cards })
-    }
-}
-
-#[pyclass(name = "CardRegistry")]
-#[derive(Debug)]
-pub struct PyCardRegistry {
-    registry_type: RegistryType,
-    table_name: String,
-    registry: OpsmlRegistry,
     runtime: tokio::runtime::Runtime,
 }
 
 #[pymethods]
-impl PyCardRegistry {
+impl CardRegistry {
     #[new]
     pub fn new(registry_type: RegistryType) -> PyResult<Self> {
         // Create a new tokio runtime for the registry (needed for async calls)
@@ -220,13 +123,14 @@ impl PyCardRegistry {
         Ok(CardList { cards })
     }
 
-    #[pyo3(signature = (card, version_type, pre_tag="rc".to_string(), build_tag="build".to_string()))]
+    #[pyo3(signature = (card, version_type, pre_tag="rc".to_string(), build_tag="build".to_string(), save_kwargs=None))]
     pub fn register_card(
         &mut self,
         card: &Bound<'_, PyAny>,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<()> {
         info!("Registering card");
         // card comes is
@@ -269,7 +173,8 @@ impl PyCardRegistry {
         card.set_uid(py, &new_uid)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
-        CardSaver::save_card(py, &card).map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        CardSaver::save_card(py, &card, save_kwargs)
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         // next steps
         // 1. verify card to registry type
@@ -295,7 +200,7 @@ impl PyCardRegistry {
     }
 }
 
-impl PyCardRegistry {
+impl CardRegistry {
     pub fn set_card_version(
         &mut self,
         card: &mut CardEnum,
