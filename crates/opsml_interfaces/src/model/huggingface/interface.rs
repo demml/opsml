@@ -192,7 +192,7 @@ pub struct HuggingFaceModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     #[pyo3(get)]
     pub huggingface_task: HuggingFaceTask,
@@ -312,7 +312,7 @@ impl HuggingFaceModel {
                 tokenizer,
                 feature_extractor,
                 image_processor,
-                model_interface_type: ModelInterfaceType::Torch,
+                interface_type: ModelInterfaceType::Torch,
                 model_type: ModelType::Pytorch,
                 onnx_session: None,
                 huggingface_task: base_args.hf_task.clone(),

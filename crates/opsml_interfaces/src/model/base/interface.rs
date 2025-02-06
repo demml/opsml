@@ -3,8 +3,9 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
-use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ModelType};
 use crate::OnnxSession;
+use opsml_types::CommonKwargs;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 
@@ -113,8 +114,10 @@ impl ModelInterfaceSaveMetadata {
 pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
     pub task_type: TaskType,
+
     #[pyo3(get)]
     pub model_type: ModelType,
+
     #[pyo3(get)]
     pub data_type: DataType,
 
@@ -125,10 +128,10 @@ pub struct ModelInterfaceMetadata {
     pub modelcard_uid: String,
 
     #[pyo3(get)]
-    pub feature_map: HashMap<String, Feature>,
+    pub schema: FeatureSchema,
 
     #[pyo3(get)]
-    pub sample_data_interface_type: String,
+    pub sample_data_type: DataType,
 
     #[pyo3(get)]
     pub save_metadata: ModelInterfaceSaveMetadata,
@@ -139,20 +142,35 @@ pub struct ModelInterfaceMetadata {
 
 #[pymethods]
 impl ModelInterfaceMetadata {
+    #[new]
+    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, modelcard_uid=CommonKwargs::Undefined.to_string(), sample_data_type=DataType::NotProvided, extra_metadata=HashMap::new()))]
+    pub fn new(
+        save_metadata: ModelInterfaceSaveMetadata,
+        task_type: TaskType,
+        model_type: ModelType,
+        data_type: DataType,
+        schema: FeatureSchema,
+        onnx_session: Option<OnnxSession>,
+        modelcard_uid: String,
+        sample_data_type: DataType,
+        extra_metadata: HashMap<String, String>,
+    ) -> Self {
+        ModelInterfaceMetadata {
+            task_type,
+            model_type,
+            data_type,
+            onnx_session,
+            modelcard_uid,
+            schema,
+            sample_data_type,
+            save_metadata,
+            extra_metadata,
+        }
+    }
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
     }
-}
-
-pub struct ModelInterfaceMetaddata {
-    pub data_type: DataType,
-    pub task_type: TaskType,
-    pub schema: FeatureSchema,
-    pub model_type: ModelType,
-    pub model_interface_type: ModelInterfaceType,
-    pub onnx_session: Option<OnnxSession>,
-    pub drift_profile: Vec<DriftProfile>,
 }
 
 #[pyclass(subclass)]
@@ -174,7 +192,7 @@ pub struct ModelInterface {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub onnx_session: Option<Py<OnnxSession>>,
 
@@ -235,7 +253,7 @@ impl ModelInterface {
             schema,
             sample_data,
             model_type,
-            model_interface_type: ModelInterfaceType::Base,
+            interface_type: ModelInterfaceType::Base,
             onnx_session: None,
             drift_profile: profiles,
         })
@@ -329,7 +347,7 @@ impl ModelInterface {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving model interface");
 
         // get onnx and model kwargs
@@ -354,7 +372,7 @@ impl ModelInterface {
 
         self.schema = self.create_feature_schema(py)?;
 
-        Ok(ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map: HashMap::new(),
             sample_data_uri,
@@ -362,7 +380,29 @@ impl ModelInterface {
             drift_profile_uri,
             extra: None,
             save_kwargs,
-        })
+        };
+
+        // if onnx session is not None, get the session and extract it from py
+        let onnx_session = self.onnx_session.as_ref().map(|sess| {
+            let sess = sess.bind(py);
+            // extract OnnxSession from py object
+            let onnx_session = sess.extract::<OnnxSession>().unwrap();
+            onnx_session
+        });
+
+        let metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self.task_type.clone(),
+            self.model_type.clone(),
+            self.data_type.clone(),
+            self.schema.clone(),
+            onnx_session,
+            CommonKwargs::Undefined.to_string(),
+            self.sample_data.get_data_type(),
+            HashMap::new(),
+        );
+
+        Ok(metadata)
     }
 
     /// Create drift profile
@@ -473,7 +513,7 @@ impl ModelInterface {
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,

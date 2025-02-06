@@ -41,7 +41,7 @@ pub struct TorchModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub sample_data: TorchSampleData,
 }
@@ -107,7 +107,7 @@ impl TorchModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model_interface_type: ModelInterfaceType::Torch,
+                interface_type: ModelInterfaceType::Torch,
                 model_type: ModelType::Pytorch,
                 onnx_session: None,
             },
@@ -393,7 +393,7 @@ impl TorchModel {
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,

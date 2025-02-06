@@ -105,7 +105,7 @@ impl LightGBMModel {
         let mut model_interface =
             ModelInterface::new(py, model, sample_data, task_type, schema, drift_profile)?;
 
-        model_interface.model_interface_type = ModelInterfaceType::LightGBM;
+        model_interface.interface_type = ModelInterfaceType::LightGBM;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
 
         let preprocessor = match preprocessor {
