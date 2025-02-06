@@ -18,10 +18,10 @@ pub use catboost::CatBoostModel;
 pub use huggingface::{
     HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask,
 };
-pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
+pub use lightgbm::LightGBMModel;
 pub use lightning::LightningModel;
 pub use onnx::*;
-pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
+pub use sklearn::SklearnModel;
 pub use tensorflow::TensorFlowInterfaceMetadata;
 pub use torch::TorchModel;
 pub use vowpal::VowpalWabbitInterfaceMetadata;
