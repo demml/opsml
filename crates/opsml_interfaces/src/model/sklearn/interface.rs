@@ -313,6 +313,7 @@ enum CommonSklearnAttributes {
     Coef,
     Intercept,
     FeatureImportances,
+    FeatureNamesIn,
     NFeaturesIn,
     NClasses,
     NOutputs,
@@ -320,6 +321,10 @@ enum CommonSklearnAttributes {
     DoEarlyStopping,
     Niter,
     IsCategorical,
+    BestScore,
+    NEstimators,
+    Classes,
+    Objective,
 }
 
 impl CommonSklearnAttributes {
@@ -329,12 +334,17 @@ impl CommonSklearnAttributes {
             CommonSklearnAttributes::Intercept => "intercept_",
             CommonSklearnAttributes::FeatureImportances => "feature_importances_",
             CommonSklearnAttributes::NFeaturesIn => "n_features_in_",
+            CommonSklearnAttributes::FeatureNamesIn => "feature_names_in_",
             CommonSklearnAttributes::NClasses => "n_classes_",
             CommonSklearnAttributes::NOutputs => "n_outputs_",
             CommonSklearnAttributes::NTreesPerIteration => "n_trees_per_iteration_",
             CommonSklearnAttributes::DoEarlyStopping => "do_early_stopping",
             CommonSklearnAttributes::Niter => "n_iter_",
             CommonSklearnAttributes::IsCategorical => "is_categorical",
+            CommonSklearnAttributes::BestScore => "best_score_",
+            CommonSklearnAttributes::NEstimators => "n_estimators_",
+            CommonSklearnAttributes::Classes => "classes_",
+            CommonSklearnAttributes::Objective => "objective_",
         }
     }
 
@@ -343,6 +353,7 @@ impl CommonSklearnAttributes {
             CommonSklearnAttributes::Coef,
             CommonSklearnAttributes::Intercept,
             CommonSklearnAttributes::FeatureImportances,
+            CommonSklearnAttributes::FeatureNamesIn,
             CommonSklearnAttributes::NFeaturesIn,
             CommonSklearnAttributes::NClasses,
             CommonSklearnAttributes::NOutputs,
@@ -350,6 +361,10 @@ impl CommonSklearnAttributes {
             CommonSklearnAttributes::DoEarlyStopping,
             CommonSklearnAttributes::Niter,
             CommonSklearnAttributes::IsCategorical,
+            CommonSklearnAttributes::BestScore,
+            CommonSklearnAttributes::NEstimators,
+            CommonSklearnAttributes::Classes,
+            CommonSklearnAttributes::Objective,
         ]
     }
 }

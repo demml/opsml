@@ -1,4 +1,4 @@
-from opsml.model import LightGBMModel, ModelType
+from opsml.model import LightGBMModel, ModelType, SaveKwargs
 import lightgbm as lgb
 import pandas as pd
 from typing import Tuple
@@ -31,3 +31,16 @@ def test_lightgbm_model_interface(
 
     assert interface.model is not None
     assert interface.onnx_session is not None
+
+
+def test_lightgbm_regression_metadata(
+    tmp_path: Path, lightgbm_regression: LightGBMModel
+):
+    save_path = tmp_path / "test"
+    save_path.mkdir()
+
+    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+
+    assert lightgbm_regression.model_type == ModelType.LgbmRegressor
+
+    lightgbm_regression.save(save_path, True, save_kwargs)

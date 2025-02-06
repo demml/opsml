@@ -1166,3 +1166,14 @@ def catboost_ranker() -> Generator[Tuple[CatBoostRanker, pd.DataFrame], None, No
     model.fit(train)
 
     yield (model, X_train)
+
+
+@pytest.fixture
+def lightgbm_regression(regression_data) -> SklearnModel:
+    X, y = regression_data
+    reg = lgb.LGBMRegressor().fit(X, y)
+    return SklearnModel(
+        model=reg,
+        sample_data=X,
+        task_type=TaskType.Regression,
+    )
