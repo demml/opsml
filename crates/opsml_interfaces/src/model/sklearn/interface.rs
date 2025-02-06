@@ -3,6 +3,7 @@ use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::ModelType;
 use crate::{LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
@@ -122,6 +123,10 @@ impl SklearnModel {
             None => py.None(),
         };
 
+        if model_interface.model_type == ModelType::Unknown {
+            model_interface.model_type = ModelType::SklearnEstimator;
+        }
+
         Ok((
             SklearnModel {
                 preprocessor,
@@ -218,7 +223,7 @@ impl SklearnModel {
         });
 
         let model = self_.as_super().model.as_ref().unwrap().bind(py);
-        metadata.model_specific_metadata = SklearnModel::extract_model_params(model)?;
+        metadata.model_specific_metadata = SklearnModel::extract_model_params(py, model)?;
 
         Ok(metadata)
     }
@@ -342,9 +347,75 @@ impl SklearnModel {
         Ok(())
     }
 
-    pub fn extract_model_params(model: &Bound<'_, PyAny>) -> PyResult<serde_json::Value> {
-        let params = model.getattr("get_params")?;
+    pub fn extract_model_params(
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<serde_json::Value> {
+        let new_dict = PyDict::new(py);
 
-        Ok(pyobject_to_json(&params).map_err(OpsmlError::new_err)?)
+        new_dict.set_item("params", model.call_method0("get_params")?)?;
+        set_sklearn_model_attribute(model, &new_dict)?;
+
+        Ok(pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)?)
     }
+}
+
+enum CommonSklearnAttributes {
+    Coef,
+    Intercept,
+    FeatureImportances,
+    NFeaturesIn,
+    NClasses,
+    NOutputs,
+    NTreesPerIteration,
+    DoEarlyStopping,
+    Niter,
+    IsCategorical,
+}
+
+impl CommonSklearnAttributes {
+    pub fn to_str(&self) -> &str {
+        match self {
+            CommonSklearnAttributes::Coef => "coef_",
+            CommonSklearnAttributes::Intercept => "intercept_",
+            CommonSklearnAttributes::FeatureImportances => "feature_importances_",
+            CommonSklearnAttributes::NFeaturesIn => "n_features_in_",
+            CommonSklearnAttributes::NClasses => "n_classes_",
+            CommonSklearnAttributes::NOutputs => "n_outputs_",
+            CommonSklearnAttributes::NTreesPerIteration => "n_trees_per_iteration_",
+            CommonSklearnAttributes::DoEarlyStopping => "do_early_stopping",
+            CommonSklearnAttributes::Niter => "n_iter_",
+            CommonSklearnAttributes::IsCategorical => "is_categorical",
+        }
+    }
+
+    pub fn to_vec() -> Vec<CommonSklearnAttributes> {
+        vec![
+            CommonSklearnAttributes::Coef,
+            CommonSklearnAttributes::Intercept,
+            CommonSklearnAttributes::FeatureImportances,
+            CommonSklearnAttributes::NFeaturesIn,
+            CommonSklearnAttributes::NClasses,
+            CommonSklearnAttributes::NOutputs,
+            CommonSklearnAttributes::NTreesPerIteration,
+            CommonSklearnAttributes::DoEarlyStopping,
+            CommonSklearnAttributes::Niter,
+            CommonSklearnAttributes::IsCategorical,
+        ]
+    }
+}
+
+pub fn set_sklearn_model_attribute(
+    model: &Bound<'_, PyAny>,
+    dict: &Bound<'_, PyDict>,
+) -> PyResult<()> {
+    let attributes = CommonSklearnAttributes::to_vec();
+
+    for attribute in attributes {
+        if model.hasattr(attribute.to_str())? {
+            dict.set_item(attribute.to_str(), model.getattr(attribute.to_str())?)?;
+        }
+    }
+
+    Ok(())
 }

@@ -25,7 +25,7 @@ class DataType:
     String: "DataType"
     TorchTensor: "DataType"
     TorchDataset: "DataType"
-    TensorflowTensor: "DataType"
+    TensorFlowTensor: "DataType"
     Tuple: "DataType"
     List: "DataType"
     Str: "DataType"
@@ -33,6 +33,7 @@ class DataType:
     Joblib: "DataType"
     Base: "DataType"
     Dataset: "DataType"
+    NotProvided: "DataType"
 
 class ColValType:
     String: "ColValType"

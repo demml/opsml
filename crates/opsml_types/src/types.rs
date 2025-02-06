@@ -557,7 +557,7 @@ pub enum DataType {
     String,
     TorchTensor,
     TorchDataset,
-    TensorflowTensor,
+    TensorFlowTensor,
     DMatrix,
     Tuple,
     List,

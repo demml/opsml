@@ -60,18 +60,23 @@ pub struct ModelInterfaceSaveMetadata {
     pub data_processor_map: HashMap<String, DataProcessor>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sample_data_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub onnx_model_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub drift_profile_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra: Option<ExtraMetadata>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub save_kwargs: Option<SaveKwargs>,
 }
 
@@ -181,7 +186,7 @@ impl ModelInterfaceMetadata {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> OnnxSession {
+    pub fn model_validate_json(json_string: String) -> ModelInterfaceMetadata {
         serde_json::from_str(&json_string).unwrap()
     }
 }
