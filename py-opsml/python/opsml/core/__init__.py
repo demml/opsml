@@ -17,6 +17,8 @@ Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
 DataSchema = core.DataSchema
+LoadKwargs = core.LoadKwargs
+SaveKwargs = core.SaveKwargs
 
 
 __all__ = [
@@ -33,4 +35,6 @@ __all__ = [
     "FeatureSchema",
     "OnnxSchema",
     "DataSchema",
+    "LoadKwargs",
+    "SaveKwargs",
 ]

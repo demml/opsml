@@ -75,12 +75,12 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, to_onnx=None))]
+    #[pyo3(signature = (interface, repository=None, name=None,  contact=None, version=None, uid=None, info=None, tags=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
-        name: Option<String>,
         repository: Option<String>,
+        name: Option<String>,
         contact: Option<String>,
         version: Option<String>,
         uid: Option<String>,

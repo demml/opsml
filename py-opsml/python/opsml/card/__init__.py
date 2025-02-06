@@ -10,6 +10,8 @@ DataCardMetadata = card.DataCardMetadata
 CardRegistry = card.CardRegistry
 RegistryTestHelper = card.RegistryTestHelper
 RegistryType = card.RegistryType
+ModelCard = card.ModelCard
+ModelCardMetadata = card.ModelCardMetadata
 
 
 __all__ = [
@@ -20,4 +22,6 @@ __all__ = [
     "DataCardMetadata",
     "CardRegistry",
     "RegistryType",
+    "ModelCard",
+    "ModelCardMetadata",
 ]

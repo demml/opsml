@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ..model import HuggingFaceOnnxArgs
+
 class Description:
     summary: Optional[str]
     sample_code: Optional[str]
@@ -530,4 +532,97 @@ class DataSchema:
 
         Returns:
             String representation of the DataSchema.
+        """
+
+class SaveKwargs:
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when saving
+            onnx (Dict or HuggingFaceOnnxArgs):
+                Optional onnx arguments to use when saving model to onnx format
+            model (Dict):
+                Optional model arguments to use when saving
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when saving
+        """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "SaveKwargs": ...
+
+class LoadKwargs:
+    data: Optional[Dict]
+    onnx: Optional[Dict]
+    model: Optional[Dict]
+    preprocessor: Optional[Dict]
+
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when loading
+            onnx (Dict):
+                Optional onnx arguments to use when loading
+            model (Dict):
+                Optional model arguments to use when loading
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when loading
+        """
+
+class Tags:
+    def __init__(self, tags: Optional[Dict[str, str]] = None) -> None:
+        """Instantiates a `Tags` object.
+
+        Args:
+            tags (Dict[str, str]):
+                The tags to use in the card. If not provided, a default
+                dictionary will be created.
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the Tags.
+
+        Returns:
+            String representation of the Tags.
+        """
+
+    @property
+    def tags(self) -> Dict[str, str]:
+        """Return the tags dictionary."""
+
+    @tags.setter
+    def tags(self, tags: Dict[str, str]) -> None:
+        """Set the tags dictionary.
+
+        Args:
+            tags (Dict[str, str]):
+                The tags to set.
+        """
+
+    def add_tag(self, key: str, value: str) -> None:
+        """Add a tag to the tags dictionary.
+
+        Args:
+            key (str):
+                The key of the tag.
+
+            value (str):
+                The value of the tag.
         """
