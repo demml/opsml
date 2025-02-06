@@ -51,7 +51,7 @@ impl DataProcessor {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceSaveMetadata {
     #[pyo3(get)]
     pub model_uri: PathBuf,

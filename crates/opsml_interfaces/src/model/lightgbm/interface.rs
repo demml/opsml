@@ -1,68 +1,20 @@
-use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use opsml_utils::pyobject_to_json;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, info, instrument};
-
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LightGBMModelInterfaceMetadata {
-    #[pyo3(get)]
-    pub task_type: String,
-    #[pyo3(get)]
-    pub model_type: String,
-    #[pyo3(get)]
-    pub data_type: String,
-    #[pyo3(get)]
-    pub modelcard_uid: String,
-    #[pyo3(get)]
-    pub feature_map: FeatureSchema,
-    #[pyo3(get)]
-    pub sample_data_interface_type: String,
-    #[pyo3(get)]
-    pub preprocessor_name: String,
-    #[pyo3(get)]
-    pub metadata: HashMap<String, String>,
-}
-
-#[pymethods]
-impl LightGBMModelInterfaceMetadata {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (task_type, model_type, data_type, modelcard_uid, feature_map, sample_data_interface_type, preprocessor_name, metadata=None))]
-    pub fn new(
-        task_type: String,
-        model_type: String,
-        data_type: String,
-        modelcard_uid: String,
-        feature_map: FeatureSchema,
-        sample_data_interface_type: String,
-        preprocessor_name: String,
-        metadata: Option<HashMap<String, String>>,
-    ) -> Self {
-        LightGBMModelInterfaceMetadata {
-            task_type,
-            model_type,
-            data_type,
-            modelcard_uid,
-            feature_map,
-            sample_data_interface_type,
-            preprocessor_name,
-            metadata: metadata.unwrap_or_default(),
-        }
-    }
-}
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -186,7 +138,7 @@ impl LightGBMModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving lightgbm interface");
 
         // parse the save args
@@ -205,8 +157,7 @@ impl LightGBMModel {
         };
 
         let sample_data_uri = self_.as_super().save_data(py, &path, None)?;
-
-        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+        self_.as_super().create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
         if to_onnx {
@@ -217,15 +168,21 @@ impl LightGBMModel {
             )?);
         }
 
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                let onnx_session = sess.extract::<OnnxSession>().unwrap();
+                onnx_session
+            })
+        };
+
         // save drift profile
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(&path)?)
         };
-
-        // save model
-        let model_uri = LightGBMModel::save_model(self_, py, &path, model_kwargs.as_ref())?;
 
         // create the data processor map
         let data_processor_map = preprocessor_entity
@@ -236,15 +193,34 @@ impl LightGBMModel {
             })
             .unwrap_or_default();
 
-        let metadata = ModelInterfaceSaveMetadata {
-            model_uri,
+        // create save metadata
+        let save_metadata = ModelInterfaceSaveMetadata {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
             extra: None,
             save_kwargs,
+            ..Default::default()
         };
+
+        // create interface metadata
+        let mut metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.as_super().model_type.clone(),
+            self_.as_super().data_type.clone(),
+            self_.as_super().schema.clone(),
+            onnx_session,
+            CommonKwargs::Undefined.to_string(),
+            self_.as_super().sample_data.get_data_type(),
+            HashMap::new(),
+        );
+
+        // save model (needs to be last because we pass self_ to save_model, which takes ownership)
+        let model_uri = LightGBMModel::save_model(self_, py, &path, model_kwargs.as_ref())?;
+
+        metadata.save_metadata.model_uri = model_uri;
 
         Ok(metadata)
     }
@@ -453,4 +429,73 @@ impl LightGBMModel {
 
         model.into_py_any(py)
     }
+
+    pub fn extract_model_params(
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<serde_json::Value> {
+        let new_dict = PyDict::new(py);
+
+        new_dict.set_item("params", model.call_method0("get_params")?)?;
+        set_lightgbm_model_attribute(model, &new_dict)?;
+
+        Ok(pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)?)
+    }
+}
+
+enum CommonLightGBMAttributes {
+    BestScore,
+    FeatureImportances,
+    FeatureNames,
+    FeatureNamesIn,
+    NEstimators,
+    NIter,
+    Objective,
+    NClasses,
+    Classes,
+}
+
+impl CommonLightGBMAttributes {
+    pub fn to_str(&self) -> &str {
+        match self {
+            CommonLightGBMAttributes::BestScore => "best_score_",
+            CommonLightGBMAttributes::FeatureImportances => "feature_importances_",
+            CommonLightGBMAttributes::FeatureNames => "feature_name_",
+            CommonLightGBMAttributes::FeatureNamesIn => "feature_names_in_",
+            CommonLightGBMAttributes::NEstimators => "n_estimators_",
+            CommonLightGBMAttributes::NIter => "n_iter_",
+            CommonLightGBMAttributes::Objective => "objective_",
+            CommonLightGBMAttributes::NClasses => "n_classes_",
+            CommonLightGBMAttributes::Classes => "classes_",
+        }
+    }
+
+    pub fn to_vec() -> Vec<CommonLightGBMAttributes> {
+        vec![
+            CommonLightGBMAttributes::BestScore,
+            CommonLightGBMAttributes::FeatureImportances,
+            CommonLightGBMAttributes::FeatureNames,
+            CommonLightGBMAttributes::FeatureNamesIn,
+            CommonLightGBMAttributes::NEstimators,
+            CommonLightGBMAttributes::NIter,
+            CommonLightGBMAttributes::Objective,
+            CommonLightGBMAttributes::NClasses,
+            CommonLightGBMAttributes::Classes,
+        ]
+    }
+}
+
+pub fn set_lightgbm_model_attribute(
+    model: &Bound<'_, PyAny>,
+    dict: &Bound<'_, PyDict>,
+) -> PyResult<()> {
+    let attributes = CommonLightGBMAttributes::to_vec();
+
+    for attribute in attributes {
+        if model.hasattr(attribute.to_str())? {
+            dict.set_item(attribute.to_str(), model.getattr(attribute.to_str())?)?;
+        }
+    }
+
+    Ok(())
 }
