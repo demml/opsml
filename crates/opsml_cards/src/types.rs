@@ -302,7 +302,7 @@ pub struct BaseArgs {
     pub contact: String,
     pub version: String,
     pub uid: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Tags,
 }
 
 impl BaseArgs {
@@ -313,7 +313,7 @@ impl BaseArgs {
         version: Option<String>,
         uid: Option<String>,
         info: Option<CardInfo>,
-        tags: HashMap<String, String>,
+        tags: Tags,
     ) -> Result<Self, CardError> {
         let name = clean_string(&Self::get_value(
             "NAME",
@@ -356,5 +356,35 @@ impl BaseArgs {
             .or(env_val.as_ref())
             .map(|s| s.to_string())
             .ok_or_else(|| CardError::Error(format!("{} not provided", key)))
+    }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub struct Tags {
+    #[pyo3(get, set)]
+    pub tags: HashMap<String, String>,
+}
+
+#[pymethods]
+impl Tags {
+    #[new]
+    #[pyo3(signature = (tags=None))]
+    pub fn new(tags: Option<HashMap<String, String>>) -> Self {
+        Tags {
+            tags: tags.unwrap_or_default(),
+        }
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn get_tags(&self) -> HashMap<String, String> {
+        self.tags.clone()
+    }
+
+    pub fn add_tag(&mut self, key: String, value: String) {
+        self.tags.insert(key, value);
     }
 }
