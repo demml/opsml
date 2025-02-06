@@ -1,7 +1,8 @@
-use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
@@ -185,7 +186,7 @@ impl XGBoostModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         // color text
         let span = span!(Level::INFO, "XGBoost Save").entered();
         let _ = span.enter();
@@ -222,13 +223,20 @@ impl XGBoostModel {
             )?);
         }
 
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                let onnx_session = sess.extract::<OnnxSession>().unwrap();
+                onnx_session
+            })
+        };
+
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
             Some(self_.as_super().save_drift_profile(&path)?)
         };
-
-        let model_uri = XGBoostModel::save_model(self_, py, &path)?;
 
         // create the data processor map
         debug!("Creating data processor map");
@@ -240,15 +248,32 @@ impl XGBoostModel {
             })
             .unwrap_or_default();
 
-        let metadata = ModelInterfaceSaveMetadata {
-            model_uri,
+        // create save metadata
+        let save_metadata = ModelInterfaceSaveMetadata {
             data_processor_map,
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
             extra: None,
             save_kwargs,
+            ..Default::default()
         };
+
+        // create interface metadata
+        let mut metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.as_super().model_type.clone(),
+            self_.as_super().data_type.clone(),
+            self_.as_super().schema.clone(),
+            onnx_session,
+            self_.as_super().sample_data.get_data_type(),
+            HashMap::new(),
+        );
+
+        let model_uri = XGBoostModel::save_model(self_, py, &path)?;
+
+        metadata.save_metadata.model_uri = model_uri;
 
         Ok(metadata)
     }

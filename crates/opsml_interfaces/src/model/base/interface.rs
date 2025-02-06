@@ -131,9 +131,6 @@ pub struct ModelInterfaceMetadata {
     pub onnx_session: Option<OnnxSession>,
 
     #[pyo3(get)]
-    pub modelcard_uid: String,
-
-    #[pyo3(get)]
     pub schema: FeatureSchema,
 
     #[pyo3(get)]
@@ -151,7 +148,7 @@ pub struct ModelInterfaceMetadata {
 #[pymethods]
 impl ModelInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, modelcard_uid=CommonKwargs::Undefined.to_string(), sample_data_type=DataType::NotProvided, extra_metadata=HashMap::new()))]
+    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, sample_data_type=DataType::NotProvided, extra_metadata=HashMap::new()))]
     pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
         task_type: TaskType,
@@ -159,7 +156,6 @@ impl ModelInterfaceMetadata {
         data_type: DataType,
         schema: FeatureSchema,
         onnx_session: Option<OnnxSession>,
-        modelcard_uid: String,
         sample_data_type: DataType,
         extra_metadata: HashMap<String, String>,
     ) -> Self {
@@ -168,7 +164,6 @@ impl ModelInterfaceMetadata {
             model_type,
             data_type,
             onnx_session,
-            modelcard_uid,
             schema,
             sample_data_type,
             save_metadata,
@@ -415,7 +410,6 @@ impl ModelInterface {
             self.data_type.clone(),
             self.schema.clone(),
             onnx_session,
-            CommonKwargs::Undefined.to_string(),
             self.sample_data.get_data_type(),
             HashMap::new(),
         );
