@@ -1,12 +1,14 @@
 use crate::types::{DataSchema, Description};
 use crate::{BaseArgs, CardInfo};
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::ModelInterfaceType;
+use opsml_interfaces::LoadKwargs;
+use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_types::cards::{CardTable, CardType};
 use pyo3::prelude::*;
 use pyo3::{intern, IntoPyObjectExt, PyObject};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -37,7 +39,7 @@ pub struct ModelCardMetadata {
 #[derive(Debug)]
 pub struct ModelCard {
     #[pyo3(get, set)]
-    pub interface: PyObject,
+    pub interface: Option<PyObject>,
 
     #[pyo3(get, set)]
     pub name: String,
@@ -94,31 +96,26 @@ impl ModelCard {
             tags.unwrap_or_default(),
         )?;
         let py = interface.py();
-        // check if interface is a model interface (should be a bool)
-        let is_interface: bool = interface
-            .call_method0("is_interface")
-            .and_then(|result| {
-                result
-                    .extract()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))
-            })
-            .unwrap_or(false);
 
-        if !is_interface {
+        if interface.is_instance_of::<ModelInterface>() {
+        } else {
             return Err(OpsmlError::new_err(
-                "Interface argument is not a model interface".to_string(),
+                "interface must be an instance of ModelInterface",
             ));
         }
+
         let mut metadata = metadata.unwrap_or_default();
         metadata.interface_type = interface
-            .getattr(intern!(py, "interface_type"))
+            .getattr(intern!(py, "model_interface_type"))
             .unwrap()
             .extract()?;
 
         Ok(Self {
-            interface: interface
-                .into_py_any(py)
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            interface: Some(
+                interface
+                    .into_py_any(py)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            ),
             name: base_args.name,
             repository: base_args.repository,
             contact: base_args.contact,
@@ -141,45 +138,40 @@ impl ModelCard {
             self.version
         )
     }
+
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        &self,
+        py: Python,
+        path: PathBuf,
+        model: bool,
+        onnx: bool,
+        drift_profile: bool,
+        sample_data: bool,
+        load_kwargs: Option<LoadKwargs>,
+    ) -> PyResult<()> {
+        self.interface.as_ref().unwrap().bind(py).call_method(
+            "load",
+            (path, model, onnx, drift_profile, sample_data, load_kwargs),
+            None,
+        )?;
+
+        Ok(())
+    }
 }
 
 impl ModelCard {
     pub fn set_uid(&mut self, py: Python, uid: &str) -> Result<(), CardError> {
         self.interface
+            .as_ref()
+            .unwrap()
             .setattr(py, intern!(py, "modelcard_uid"), uid)
             .map_err(|e| CardError::Error(e.to_string()))?;
 
         self.uid = uid.to_string();
 
         Ok(())
-    }
-}
-
-impl FromPyObject<'_> for ModelCard {
-    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
-        let interface = ob.getattr("interface")?;
-        let name = ob.getattr("name")?.extract()?;
-        let repository = ob.getattr("repository")?.extract()?;
-        let contact = ob.getattr("contact")?.extract()?;
-        let version = ob.getattr("version")?.extract()?;
-        let uid = ob.getattr("uid")?.extract()?;
-        let tags = ob.getattr("tags")?.extract()?;
-        let metadata = ob.getattr("metadata")?.extract()?;
-        let card_type = ob.getattr("card_type")?.extract()?;
-        let to_onnx = ob.getattr("to_onnx")?.extract()?;
-
-        Ok(ModelCard {
-            interface: interface.into(),
-            name,
-            repository,
-            contact,
-            version,
-            uid,
-            tags,
-            metadata,
-            card_type,
-            to_onnx,
-        })
     }
 }
 
