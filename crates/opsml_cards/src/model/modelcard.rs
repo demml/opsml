@@ -106,7 +106,7 @@ impl ModelCard {
 
         let mut metadata = metadata.unwrap_or_default();
         metadata.interface_type = interface
-            .getattr(intern!(py, "model_interface_type"))
+            .getattr(intern!(py, "interface_type"))
             .unwrap()
             .extract()?;
 

@@ -106,7 +106,7 @@ impl SklearnModel {
 
         let mut model_interface =
             ModelInterface::new(py, model, sample_data, task_type, schema, drift_profile)?;
-        model_interface.model_interface_type = ModelInterfaceType::Sklearn;
+        model_interface.interface_type = ModelInterfaceType::Sklearn;
 
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
 

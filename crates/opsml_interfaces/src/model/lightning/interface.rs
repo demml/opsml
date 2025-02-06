@@ -44,7 +44,7 @@ pub struct LightningModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub sample_data: TorchSampleData,
 }
@@ -113,7 +113,7 @@ impl LightningModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model_interface_type: ModelInterfaceType::Lightning,
+                interface_type: ModelInterfaceType::Lightning,
                 model_type: ModelType::PytorchLightning,
                 onnx_session: None,
             },
@@ -411,7 +411,7 @@ impl LightningModel {
             py,
             &model, // need to get model from trainer
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,

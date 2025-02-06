@@ -399,7 +399,7 @@ class ModelInterface:
         """Returns the model type"""
 
     @property
-    def model_interface_type(self) -> ModelInterfaceType:
+    def interface_type(self) -> ModelInterfaceType:
         """Returns the model type"""
 
     @property

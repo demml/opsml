@@ -19,14 +19,14 @@ pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
     #[instrument(
-        skip(py, model, sample_data, model_interface_type, model_type, path, kwargs),
+        skip(py, model, sample_data, interface_type, model_type, path, kwargs),
         name = "convert_model_to_onnx"
     )]
     pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,
         sample_data: &T,
-        model_interface_type: &ModelInterfaceType,
+        interface_type: &ModelInterfaceType,
         model_type: &ModelType,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
@@ -42,7 +42,7 @@ impl OnnxModelConverter {
             ));
         }
 
-        match model_interface_type {
+        match interface_type {
             ModelInterfaceType::Sklearn => {
                 debug!("Converting Sklearn model to ONNX");
                 let converter = SklearnOnnxModelConverter::default();
