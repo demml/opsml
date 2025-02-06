@@ -102,6 +102,7 @@ def _test_hugging_face_model(
     assert interface.tokenizer is not None
 
 
+@pytest.mark.numpy
 @pytest.mark.skipif((EXCLUDE or IS_312), reason="Test not supported")
 def test_hugging_face_tf_model(
     tmp_path: Path,
