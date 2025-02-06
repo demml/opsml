@@ -605,40 +605,40 @@ def multioutput_regression():
 
 @pytest.fixture
 def multitask_elasticnet():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskElasticNet(alpha=0.1).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_elasticnet_cv():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskElasticNetCV(max_iter=5, cv=2).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_lasso():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskLasso(alpha=0.1).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_lasso_cv():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskLassoCV(max_iter=5, cv=2).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multinomial_nb():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([1, 2, 3])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([1, 2, 3]).astype(np.int64)
     reg = naive_bayes.MultinomialNB().fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
