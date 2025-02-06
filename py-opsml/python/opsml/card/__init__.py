@@ -2,6 +2,7 @@
 
 from .. import card
 
+CardType = card.CardType
 CardInfo = card.CardInfo
 Card = card.Card
 CardRegistry = card.CardRegistry
@@ -15,6 +16,7 @@ ModelCardMetadata = card.ModelCardMetadata
 
 
 __all__ = [
+    "CardType",
     "CardInfo",
     "Card",
     "CardRegistry",

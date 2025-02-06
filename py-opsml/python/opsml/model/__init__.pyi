@@ -273,7 +273,6 @@ class ModelInterfaceMetadata:
     model_type: ModelType
     data_type: DataType
     onnx_session: Optional[OnnxSession]
-    modelcard_uid: str
     schema: FeatureSchema
     sample_data_type: DataType
     save_metadata: ModelInterfaceSaveMetadata
@@ -287,7 +286,6 @@ class ModelInterfaceMetadata:
         data_type: DataType = DataType.NotProvided,
         schema: FeatureSchema = FeatureSchema(),
         onnx_session: Optional[OnnxSession] = None,
-        modelcard_uid: str = CommonKwargs.Undefined.as_string(),
         sample_data_type: DataType = DataType.NotProvided,
         exra_metadata: dict[str, str] = {},  # type: ignore
     ) -> None:
@@ -302,8 +300,6 @@ class ModelInterfaceMetadata:
                 Data type
             onnx_session:
                 Onnx session
-            modelcard_uid:
-                Modelcard uid
             schema:
                 Feature schema
             sample_data_type:

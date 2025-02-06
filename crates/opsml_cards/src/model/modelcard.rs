@@ -1,5 +1,6 @@
 use crate::types::Tags;
 use crate::{BaseArgs, CardInfo};
+use core::error;
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::SaveKwargs;
@@ -18,6 +19,7 @@ use serde::{
 use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
+use tracing::error;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -101,7 +103,11 @@ impl ModelCard {
             }
         };
 
-        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)?;
+        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)
+            .map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         if interface.is_instance_of::<ModelInterface>() {
             //
@@ -196,7 +202,15 @@ impl ModelCard {
 
     #[staticmethod]
     pub fn model_validate_json(json_string: String) -> ModelCard {
-        serde_json::from_str(&json_string).unwrap()
+        let mut card: ModelCard = serde_json::from_str(&json_string).unwrap();
+
+        // match on interface type and use metadata to create interface
+
+        card
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(&self)
     }
 }
 

@@ -1,9 +1,17 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Union
 
 from ..core import Description, FeatureSchema, SaveKwargs, Tags, LoadKwargs
 from ..model import ModelInterface
 from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
+
+class CardType:
+    Data: "CardType"
+    Model: "CardType"
+    Run: "CardType"
+    Project: "CardType"
+    Audit: "CardType"
+    Pipeline: "CardType"
 
 class RegistryType:
     Data: "RegistryType"
@@ -240,7 +248,7 @@ class ModelCardMetadata:
 class ModelCard:
     def __init__(
         self,
-        interface: Type[ModelInterface],
+        interface: ModelInterface,
         repository: Optional[str] = None,
         name: Optional[str] = None,
         contact: Optional[str] = None,
@@ -288,6 +296,46 @@ class ModelCard:
         format of {registry}/{repository}/{name}/v{version}
         """
 
+    @property
+    def interface(self) -> ModelInterface:
+        """Returns the `ModelInterface` associated with the `ModelCard`"""
+
+    @interface.setter
+    def interface(self, interface: ModelInterface) -> None:
+        """Set the `ModelInterface` associated with the `ModelCard`"""
+
+    @property
+    def name(self) -> str:
+        """Returns the name of the `ModelCard`"""
+
+    @property
+    def repository(self) -> str:
+        """Returns the repository of the `ModelCard`"""
+
+    @property
+    def contact(self) -> str:
+        """Returns the contact of the `ModelCard`"""
+
+    @property
+    def version(self) -> str:
+        """Returns the version of the `ModelCard`"""
+
+    @property
+    def uid(self) -> str:
+        """Returns the uid of the `ModelCard`"""
+
+    @property
+    def tags(self) -> Tags:
+        """Returns the tags of the `ModelCard`"""
+
+    @property
+    def metadata(self) -> ModelCardMetadata:
+        """Returns the metadata of the `ModelCard`"""
+
+    @property
+    def card_type(self) -> CardType:
+        """Returns the card type of the `ModelCard`"""
+
     def save(self, path: Path, save_kwargs: Optional[SaveKwargs] = None) -> None:
         """Save the model card to a directory
 
@@ -322,4 +370,18 @@ class ModelCard:
                 Whether to load the sample data. Defaults to False.
             load_kwargs (LoadKwargs):
                 Optional kwargs to pass to `ModelInterface` load method.
+        """
+
+    def model_dump_json(self) -> str:
+        """Return the model dump as a json string"""
+
+    @staticmethod
+    def model_validate_json(json_str: str) -> "ModelCard":
+        """Validate the model json string"""
+
+    def __str__(self) -> str:
+        """Return a string representation of the ModelCard.
+
+        Returns:
+            String representation of the ModelCard.
         """
