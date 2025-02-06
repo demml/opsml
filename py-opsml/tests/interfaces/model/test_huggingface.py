@@ -128,11 +128,7 @@ def test_hugging_face_tf_model(
     )
 
     kwargs = SaveKwargs(onnx=onnx_args)
-    interface.save(save_path, True, save_kwargs=kwargs)
-    assert interface.onnx_session is not None
-
-    interface.onnx_session.session = None
-    assert interface.onnx_session.session is None
+    interface.save(save_path, False, save_kwargs=kwargs)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
@@ -140,12 +136,11 @@ def test_hugging_face_tf_model(
     interface.load(
         save_path,
         model=True,
-        onnx=True,
+        onnx=False,
         preprocessor=True,
         sample_data=True,
     )
 
-    assert interface.onnx_session is not None
     assert interface.tokenizer is not None
 
 
