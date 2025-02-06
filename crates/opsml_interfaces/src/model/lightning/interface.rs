@@ -295,7 +295,6 @@ impl LightningModel {
             self_.sample_data.get_data_type(),
             self_.as_super().schema.clone(),
             onnx_session,
-            self_.as_super().sample_data.get_data_type(),
             HashMap::new(),
         );
 

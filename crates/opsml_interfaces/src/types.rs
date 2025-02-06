@@ -144,7 +144,7 @@ pub enum ModelInterfaceType {
 }
 
 #[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelType {
     Transformers,
     SklearnPipeline,
@@ -165,6 +165,8 @@ pub enum ModelType {
     PytorchLightning,
     Catboost,
     Vowpal,
+
+    #[default]
     Unknown,
 }
 
