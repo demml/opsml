@@ -4,16 +4,12 @@ from .. import model  # noqa: F401
 
 HuggingFaceORTModel = model.HuggingFaceORTModel
 HuggingFaceOnnxArgs = model.HuggingFaceOnnxArgs
-TorchOnnxArgs = model.TorchOnnxArgs
-TorchSaveArgs = model.TorchSaveArgs
 ModelInterfaceMetadata = model.ModelInterfaceMetadata
 SklearnModelInterfaceMetadata = model.SklearnModelInterfaceMetadata
 CatBoostModelInterfaceMetadata = model.CatBoostModelInterfaceMetadata
 HuggingFaceOnnxSaveArgs = model.HuggingFaceOnnxSaveArgs
 HuggingFaceModelInterfaceMetadata = model.HuggingFaceModelInterfaceMetadata
 LightGBMModelInterfaceMetadata = model.LightGBMModelInterfaceMetadata
-LightningInterfaceMetadata = model.LightningInterfaceMetadata
-TorchInterfaceMetadata = model.TorchInterfaceMetadata
 TensorFlowInterfaceMetadata = model.TensorFlowInterfaceMetadata
 VowpalWabbitInterfaceMetadata = model.VowpalWabbitInterfaceMetadata
 XGBoostModelInterfaceMetadata = model.XGBoostModelInterfaceMetadata
@@ -21,25 +17,23 @@ ModelInterfaceType = model.ModelInterfaceType
 ModelInterface = model.ModelInterface
 TaskType = model.TaskType
 SklearnModel = model.SklearnModel
-SaveArgs = model.SaveArgs
+LoadKwargs = model.LoadKwargs
+SaveKwargs = model.SaveKwargs
 DataProcessor = model.DataProcessor
 LightGBMModel = model.LightGBMModel
 ModelType = model.ModelType
 XGBoostModel = model.XGBoostModel
+TorchModel = model.TorchModel
 
 __all__ = [
     "HuggingFaceORTModel",
     "HuggingFaceOnnxArgs",
-    "TorchOnnxArgs",
-    "TorchSaveArgs",
     "ModelInterfaceMetadata",
     "SklearnModelInterfaceMetadata",
     "CatBoostModelInterfaceMetadata",
     "HuggingFaceOnnxSaveArgs",
     "HuggingFaceModelInterfaceMetadata",
     "LightGBMModelInterfaceMetadata",
-    "LightningInterfaceMetadata",
-    "TorchInterfaceMetadata",
     "TensorFlowInterfaceMetadata",
     "VowpalWabbitInterfaceMetadata",
     "XGBoostModelInterfaceMetadata",
@@ -48,9 +42,11 @@ __all__ = [
     "ModelInterface",
     "TaskType",
     "SklearnModel",
-    "SaveArgs",
+    "SaveKwargs",
+    "LoadKwargs",
     "DataProcessor",
     "LightGBMModel",
     "ModelType",
     "XGBoostModel",
+    "TorchModel",
 ]

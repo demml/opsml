@@ -1,6 +1,6 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::{ModelType, SaveArgs};
+use crate::{ModelType, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -12,6 +12,12 @@ use scouter_client::{
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::{error, span};
+
+type PyDictKwargs<'py> = (
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+    Option<Bound<'py, PyDict>>,
+);
 
 #[derive(Default, Debug)]
 pub enum SampleData {
@@ -236,17 +242,7 @@ impl SampleData {
         }
     }
 
-    fn save_to_joblib(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
-        let py = data.py();
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-        joblib.call_method1("dump", (data, full_save_path))?;
-
-        Ok(path)
-    }
-
-    fn save_binary(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
+    fn save_binary(&self, data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
         let full_save_path = path.join(&save_path);
         data.call_method("save_binary", (full_save_path,), None)?;
@@ -254,65 +250,80 @@ impl SampleData {
         Ok(save_path)
     }
 
-    fn save_interface_data(&self, data: &Bound<'_, PyAny>, path: PathBuf) -> PyResult<PathBuf> {
-        let path = data.call_method1("save_data", (path,))?;
+    fn save_interface_data(
+        &self,
+        data: &Bound<'_, PyAny>,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let save_path = data.call_method("save_data", (path,), kwargs)?;
         // convert pyany to pathbuf
-        let path = path.extract::<PathBuf>()?;
-        Ok(path)
+        let save_path = save_path.extract::<PathBuf>()?;
+        Ok(save_path)
     }
 
-    pub fn save_data(&self, py: Python, path: PathBuf) -> PyResult<Option<PathBuf>> {
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
         let span = span!(tracing::Level::DEBUG, "Save Sample Data");
         let _enter = span.enter();
         match self {
             SampleData::Pandas(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving pandas data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving pandas data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Polars(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving polars data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving polars data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Numpy(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving numpy data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving numpy data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Arrow(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving arrow data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving arrow data: {}", e);
+                        e
+                    })?,
             )),
             SampleData::Torch(data) => Ok(Some(
-                self.save_interface_data(data.bind(py), path).map_err(|e| {
-                    error!("Error saving torch data: {}", e);
-                    e
-                })?,
+                self.save_interface_data(data.bind(py), path, kwargs)
+                    .map_err(|e| {
+                        error!("Error saving torch data: {}", e);
+                        e
+                    })?,
             )),
-            SampleData::List(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+            SampleData::List(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving list data: {}", e);
                     e
-                },
-            )?)),
-            SampleData::Tuple(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+                })?))
+            }
+            SampleData::Tuple(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving tuple data: {}", e);
                     e
-                },
-            )?)),
-            SampleData::Dict(data) => Ok(Some(self.save_to_joblib(data.bind(py), path).map_err(
-                |e| {
+                })?))
+            }
+            SampleData::Dict(data) => {
+                Ok(Some(save_to_joblib(data.bind(py), path).map_err(|e| {
                     error!("Error saving dict data: {}", e);
                     e
-                },
-            )?)),
+                })?))
+            }
             SampleData::DMatrix(data) => Ok(Some(self.save_binary(data.bind(py), path).map_err(
                 |e| {
                     error!("Error saving dmatrix data: {}", e);
@@ -341,7 +352,86 @@ impl SampleData {
         Ok(data)
     }
 
-    pub fn get_data_for_onnx<'py>(
+    pub fn load_data<'py>(
+        py: Python<'py>,
+        path: &Path,
+        data_type: &DataType,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<SampleData> {
+        match data_type {
+            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
+            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
+            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
+            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
+            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
+            DataType::List => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::List(
+                    data.downcast::<PyList>()?.clone().unbind(),
+                ))
+            }
+            DataType::Tuple => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Tuple(
+                    data.downcast::<PyTuple>()?.clone().unbind(),
+                ))
+            }
+            DataType::Dict => {
+                let data = load_from_joblib(py, path)?;
+                Ok(SampleData::Dict(
+                    data.downcast::<PyDict>()?.clone().unbind(),
+                ))
+            }
+            DataType::DMatrix => {
+                let data = load_dmatrix(py, path)?;
+                Ok(SampleData::DMatrix(data.unbind()))
+            }
+
+            _ => Ok(SampleData::None),
+        }
+    }
+}
+
+pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
+    if py_profiles.is_instance_of::<PyList>() {
+        let py_profiles = py_profiles.downcast::<PyList>()?;
+        py_profiles
+            .iter()
+            .map(|profile| extract_drift_profile(&profile))
+            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
+            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
+    } else {
+        let drift_type = py_profiles
+            .getattr("config")?
+            .getattr("drift_type")?
+            .extract::<DriftType>()?;
+
+        let profile = match drift_type {
+            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
+            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
+            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
+        };
+
+        Ok(vec![profile])
+    }
+}
+
+pub trait OnnxExtension {
+    fn get_data_for_onnx<'py>(
+        &self,
+        py: Python<'py>,
+        model_type: &ModelType,
+    ) -> PyResult<Bound<'py, PyAny>>;
+
+    fn get_feature_names(&self, _py: Python) -> PyResult<Vec<String>> {
+        Ok(vec![])
+    }
+
+    fn is_none(&self) -> bool;
+}
+
+impl OnnxExtension for SampleData {
+    fn get_data_for_onnx<'py>(
         &self,
         py: Python<'py>,
         model_type: &ModelType,
@@ -405,7 +495,7 @@ impl SampleData {
         }
     }
 
-    pub fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
+    fn get_feature_names(&self, py: Python) -> PyResult<Vec<String>> {
         match self {
             SampleData::Pandas(data) => {
                 let data = data.bind(py).getattr("data")?;
@@ -435,90 +525,47 @@ impl SampleData {
         }
     }
 
-    pub fn load_data<'py>(
-        py: Python<'py>,
-        path: &PathBuf,
-        data_type: &DataType,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<SampleData> {
-        match data_type {
-            DataType::Pandas => PandasData::from_path(py, path, kwargs).map(SampleData::Pandas),
-            DataType::Polars => PolarsData::from_path(py, path, kwargs).map(SampleData::Polars),
-            DataType::Numpy => NumpyData::from_path(py, path, kwargs).map(SampleData::Numpy),
-            DataType::Arrow => ArrowData::from_path(py, path, kwargs).map(SampleData::Arrow),
-            DataType::TorchTensor => TorchData::from_path(py, path, kwargs).map(SampleData::Torch),
-            DataType::List => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::List(
-                    data.downcast::<PyList>()?.clone().unbind(),
-                ))
-            }
-            DataType::Tuple => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Tuple(
-                    data.downcast::<PyTuple>()?.clone().unbind(),
-                ))
-            }
-            DataType::Dict => {
-                let data = load_from_joblib(py, path)?;
-                Ok(SampleData::Dict(
-                    data.downcast::<PyDict>()?.clone().unbind(),
-                ))
-            }
-            DataType::DMatrix => {
-                let data = load_dmatrix(py, path)?;
-                Ok(SampleData::DMatrix(data.unbind()))
-            }
-
-            _ => Ok(SampleData::None),
-        }
+    fn is_none(&self) -> bool {
+        matches!(self, SampleData::None)
     }
 }
 
-pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
-    if py_profiles.is_instance_of::<PyList>() {
-        let py_profiles = py_profiles.downcast::<PyList>()?;
-        py_profiles
-            .iter()
-            .map(|profile| extract_drift_profile(&profile))
-            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
-            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
-    } else {
-        let drift_type = py_profiles
-            .getattr("config")?
-            .getattr("drift_type")?
-            .extract::<DriftType>()?;
-
-        let profile = match drift_type {
-            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
-            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
-            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
-        };
-
-        Ok(vec![profile])
-    }
-}
-
-pub fn parse_save_args<'py>(
+pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
-    save_args: &Option<SaveArgs>,
-) -> (Option<Bound<'py, PyDict>>, Option<Bound<'py, PyDict>>) {
-    let onnx_kwargs = save_args
+    save_kwargs: &Option<SaveKwargs>,
+) -> PyDictKwargs<'py> {
+    let onnx_kwargs = save_kwargs
         .as_ref()
         .and_then(|args| args.onnx_kwargs(py))
         .cloned();
 
-    let model_kwargs = save_args
+    let model_kwargs = save_kwargs
         .as_ref()
         .and_then(|args| args.model_kwargs(py))
         .cloned();
 
-    (onnx_kwargs, model_kwargs)
+    let preprocessor_kwargs = save_kwargs
+        .as_ref()
+        .and_then(|args| args.preprocessor_kwargs(py))
+        .cloned();
+
+    (onnx_kwargs, model_kwargs, preprocessor_kwargs)
 }
 
-fn load_from_joblib<'py>(py: Python<'py>, path: &PathBuf) -> PyResult<Bound<'py, PyAny>> {
+pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf> {
+    let py = data.py();
+    let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+    let full_save_path = path.join(&save_path);
     let joblib = py.import("joblib")?;
-    let data = joblib.call_method1("load", (path,))?;
+    joblib.call_method1("dump", (data, full_save_path))?;
+
+    Ok(save_path)
+}
+
+pub fn load_from_joblib<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
+    let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+    let joblib = py.import("joblib")?;
+    let data = joblib.call_method1("load", (load_path,))?;
 
     Ok(data)
 }
@@ -532,7 +579,7 @@ fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>
     Ok(data)
 }
 
-fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
+pub fn get_class_full_name(class: &Bound<'_, PyAny>) -> PyResult<String> {
     let module = class.getattr("__module__")?.str()?.to_string();
     let name = class.getattr("__name__")?.str()?.to_string();
     Ok(format!("{}.{}", module, name))

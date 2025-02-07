@@ -11,8 +11,8 @@ pub mod vowpal;
 pub mod xgboost;
 
 pub use base::{
-    DataProcessor, InterfaceDataType, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, SampleData, SaveArgs, TaskType,
+    DataProcessor, InterfaceDataType, LoadKwargs, ModelInterface, ModelInterfaceMetadata,
+    ModelInterfaceSaveMetadata, SampleData, SaveKwargs, TaskType,
 };
 pub use catboost::CatBoostModelInterfaceMetadata;
 pub use huggingface::{
@@ -20,10 +20,9 @@ pub use huggingface::{
     HuggingFaceOnnxSaveArgs, HuggingFaceTask,
 };
 pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
-pub use lightning::LightningInterfaceMetadata;
 pub use onnx::*;
 pub use sklearn::{SklearnModel, SklearnModelInterfaceMetadata};
 pub use tensorflow::TensorFlowInterfaceMetadata;
-pub use torch::{TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs};
+pub use torch::TorchModel;
 pub use vowpal::VowpalWabbitInterfaceMetadata;
 pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};

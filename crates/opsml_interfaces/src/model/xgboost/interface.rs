@@ -1,8 +1,8 @@
-use crate::base::{parse_save_args, ModelInterfaceSaveMetadata};
+use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::{DataProcessor, SampleData, SaveArgs};
+use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::prelude::*;
@@ -10,8 +10,8 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::PathBuf;
-use tracing::{debug, error, info, span, warn, Level};
+use std::path::{Path, PathBuf};
+use tracing::{debug, error, info, span, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -163,154 +163,6 @@ impl XGBoostModel {
         }
     }
 
-    /// Save the preprocessor to a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to save the model to
-    /// * `kwargs` - Additional keyword arguments to pass to the save
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_preprocessor(
-        &self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Save Preprocessor").entered();
-        let _ = span.enter();
-
-        // check if data is None
-        if self.preprocessor.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
-        }
-
-        let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-
-        // Save the data using joblib
-        joblib
-            .call_method("dump", (&self.preprocessor, full_save_path), kwargs)
-            .map_err(|e| {
-                error!("Failed to save preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
-
-        Ok(save_path)
-    }
-
-    /// Load the preprocessor from a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to load the model from
-    /// * `kwargs` - Additional keyword arguments to pass to the load
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_preprocessor(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Preprocessor").entered();
-        let _ = span.enter();
-
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
-        let joblib = py.import("joblib")?;
-
-        // Load the data using joblib
-        self.preprocessor = joblib
-            .call_method("load", (load_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to load preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?
-            .into();
-
-        Ok(())
-    }
-
-    /// Save the model to a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to save the model to
-    /// * `kwargs` - Additional keyword arguments to pass to the save
-    ///
-    #[pyo3(signature = (path))]
-    pub fn save_model<'py>(
-        self_: PyRefMut<'py, Self>,
-        py: Python<'py>,
-        path: PathBuf,
-    ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Save Model").entered();
-        let _ = span.enter();
-
-        let super_ = self_.as_ref();
-        // check if data is None
-        if super_.model.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
-        }
-
-        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Json);
-        let full_save_path = path.join(&save_path);
-
-        // Save the data using joblib
-        super_
-            .model
-            .call_method1(py, "save_model", (full_save_path,))
-            .map_err(|e| {
-                error!("Failed to save model: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
-
-        Ok(save_path)
-    }
-
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_model<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python<'py>,
-        path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<()> {
-        let span = span!(Level::DEBUG, "Load Model").entered();
-        let _ = span.enter();
-
-        let super_ = self_.as_super();
-
-        // get sample_data
-        super_.sample_data =
-            SampleData::load_data(py, &path, &super_.data_type, kwargs).map_err(|e| {
-                error!("Failed to load sample data: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
-
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
-
-        let booster = py.import("xgboost")?.getattr("Booster")?;
-        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
-        kwargs.set_item("model_file", load_path)?;
-
-        let model = booster.call((), Some(&kwargs)).map_err(|e| {
-            error!("Failed to load model: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
-
-        // Save the data using joblib
-        super_.model = model.into();
-
-        Ok(())
-    }
-
     /// Save the interface model
     ///
     /// # Arguments
@@ -322,31 +174,27 @@ impl XGBoostModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveArgs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         // color text
         let span = span!(Level::INFO, "XGBoost Save").entered();
         let _ = span.enter();
 
-        info!("Saving XGBoost model");
+        debug!("Saving XGBoost model");
 
         // parse the save args
-        let (onnx_kwargs, _model_kwargs) = parse_save_args(py, &save_args);
+        let (onnx_kwargs, _model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
         let preprocessor_entity = if self_.preprocessor.is_none(py) {
             None
         } else {
-            let uri = self_.save_preprocessor(
-                py,
-                path.clone(),
-                save_args.as_ref().and_then(|args| args.model_kwargs(py)),
-            )?;
+            let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
 
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
@@ -354,14 +202,7 @@ impl XGBoostModel {
             })
         };
 
-        let sample_data_uri = self_
-            .as_super()
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
+        let sample_data_uri = self_.as_super().save_data(py, &path, None)?;
 
         self_.as_super().schema = self_.as_super().create_feature_schema(py).map_err(|e| {
             error!("Failed to create feature schema: {}", e);
@@ -370,24 +211,20 @@ impl XGBoostModel {
 
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(
-                self_
-                    .as_super()
-                    .save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())
-                    .map_err(|e| {
-                        error!("Failed to save ONNX model: {}", e);
-                        OpsmlError::new_err(e.to_string())
-                    })?,
-            );
+            onnx_model_uri = Some(self_.as_super().save_onnx_model(
+                py,
+                &path,
+                onnx_kwargs.as_ref(),
+            )?);
         }
 
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
-            Some(self_.as_super().save_drift_profile(path.clone())?)
+            Some(self_.as_super().save_drift_profile(&path)?)
         };
 
-        let model_uri = XGBoostModel::save_model(self_, py, path.clone())?;
+        let model_uri = XGBoostModel::save_model(self_, py, &path)?;
 
         // create the data processor map
         debug!("Creating data processor map");
@@ -406,11 +243,196 @@ impl XGBoostModel {
             onnx_model_uri,
             drift_profile_uri,
             extra_metadata: HashMap::new(),
-            save_args,
+            save_kwargs,
         };
 
-        info!("XGBoost model saved");
-
         Ok(metadata)
+    }
+
+    /// Dynamically load the model interface components
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to load from
+    /// * `model` - Whether to load the model (default: true)
+    /// * `onnx` - Whether to load the onnx model (default: false)
+    /// * `drift_profile` - Whether to load the drift profile (default: false)
+    /// * `sample_data` - Whether to load the sample data (default: false)
+    /// * `preprocessor` - Whether to load the preprocessor (default: false)
+    /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        path: PathBuf,
+        model: bool,
+        onnx: bool,
+        drift_profile: bool,
+        sample_data: bool,
+        preprocessor: bool,
+        load_kwargs: Option<LoadKwargs>,
+    ) -> PyResult<()> {
+        // if kwargs is not None, unwrap, else default to None
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        if model {
+            let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+            self_.as_super().model = model;
+        }
+
+        if preprocessor {
+            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        }
+
+        // parent scope - can only borrow mutable one at a time
+        {
+            let parent = self_.as_super();
+
+            if onnx {
+                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            }
+
+            if drift_profile {
+                parent.load_drift_profile(&path)?;
+            }
+
+            if sample_data {
+                parent.load_data(py, &path, None)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl XGBoostModel {
+    /// Save the model to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to save the model to
+    /// * `kwargs` - Additional keyword arguments to pass to the save
+    ///
+    pub fn save_model<'py>(
+        self_: PyRefMut<'py, Self>,
+        py: Python<'py>,
+        path: &Path,
+    ) -> PyResult<PathBuf> {
+        let span = span!(Level::DEBUG, "Save Model").entered();
+        let _ = span.enter();
+
+        let super_ = self_.as_ref();
+        if super_.model.is_none(py) {
+            error!("No model detected in interface for saving");
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Json);
+        let full_save_path = path.join(&save_path);
+
+        // Save the data using joblib
+        super_
+            .model
+            .call_method1(py, "save_model", (full_save_path,))
+            .map_err(|e| {
+                error!("Failed to save model: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        info!("Model saved");
+        Ok(save_path)
+    }
+
+    pub fn load_model<'py>(
+        &self,
+        py: Python<'py>,
+        path: &Path,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let span = span!(Level::INFO, "Loading Model").entered();
+        let _ = span.enter();
+
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
+
+        let booster = py.import("xgboost")?.getattr("Booster")?;
+        let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
+        kwargs.set_item("model_file", load_path)?;
+
+        let model = booster.call((), Some(&kwargs)).map_err(|e| {
+            error!("Failed to load model: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
+
+        info!("Model loaded");
+
+        model.into_py_any(py)
+    }
+
+    /// Save the preprocessor to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to save the model to
+    /// * `kwargs` - Additional keyword arguments to pass to the save
+    ///
+    pub fn save_preprocessor(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving preprocessor").entered();
+        let _ = span.enter();
+
+        // check if data is None
+        if self.preprocessor.is_none(py) {
+            error!("No preprocessor detected in interface for saving");
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Preprocessor).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
+
+        info!("Preprocessor saved");
+
+        Ok(save_path)
+    }
+
+    /// Load the preprocessor from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    pub fn load_preprocessor(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let load_path = path
+            .join(SaveName::Preprocessor)
+            .with_extension(Suffix::Joblib);
+        let joblib = py.import("joblib")?;
+
+        // Load the data using joblib
+        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+
+        Ok(())
     }
 }

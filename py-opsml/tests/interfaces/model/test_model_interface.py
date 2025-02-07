@@ -1,4 +1,4 @@
-from opsml.model import ModelInterface, TaskType, SklearnModel, SaveArgs
+from opsml.model import ModelInterface, TaskType, SklearnModel, SaveKwargs
 from opsml.data import NumpyData, DataType, PandasData, PolarsData, ArrowData, TorchData
 from numpy.typing import NDArray
 from pathlib import Path
@@ -261,55 +261,74 @@ def test_model_interface_sample_data_dict(numpy_dict: Dict[str, NDArray[np.float
 
 
 def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnModel):
-    model = random_forest_classifier
+    interface = random_forest_classifier
 
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    metadata = model.save(save_path, True)
-    assert metadata.save_args is None
+    metadata = interface.save(save_path, True)
+    assert metadata.save_kwargs is None
 
-    model.model = None
+    interface.model = None
 
-    assert model.model is None
-
-    # load model
-    model.load_model(save_path)
-
-    assert model.model is not None
-
+    assert interface.model is None
     assert metadata.data_processor_map.get("preprocessor") is not None
+    interface.preprocessor = None
+    assert interface.preprocessor is None
 
-    model.preprocessor = None
+    interface.load(
+        save_path,
+        model=True,
+        onnx=True,
+        sample_data=True,
+    )
 
-    assert model.preprocessor is None
+    assert interface.model is not None
 
-    # load preprocessor
-    model.load_preprocessor(save_path)
+    interface.load(
+        save_path,
+        model=False,
+        preprocessor=True,
+    )
 
-    assert model.preprocessor is not None
+    assert interface.preprocessor is not None
 
 
 def test_save_model_interface_with_args(
     tmp_path: Path, stacking_regressor: SklearnModel
 ):
-    model = stacking_regressor
+    interface = stacking_regressor
 
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    args = SaveArgs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
-    metadata = model.save(save_path, True, args)
+    args = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    metadata = interface.save(save_path, True, args)
 
-    assert metadata.save_args is not None
+    assert metadata.save_kwargs is not None
 
-    model.model = None
-
-    assert model.model is None
+    interface.model = None
+    assert interface.model is None
 
     # load model
-    model.load_model(save_path)
+    interface.load(
+        save_path,
+        model=True,
+        onnx=True,
+        sample_data=True,
+    )
 
-    assert model.model is not None
+    assert interface.model is not None
 
-    model.load_onnx_model(save_path)
+
+def test_save_kwargs_serialization():
+    kwargs = SaveKwargs(
+        onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}},
+        model={"test": 1},
+    )
+
+    json_string = kwargs.model_dump_json()
+
+    loaded_kwargs = SaveKwargs.model_validate_json(json_string)
+
+    assert loaded_kwargs.model_dump_json() == json_string

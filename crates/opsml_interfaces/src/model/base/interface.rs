@@ -1,4 +1,4 @@
-use crate::base::{parse_save_args, SaveArgs};
+use crate::base::{parse_save_kwargs, LoadKwargs, SaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
@@ -8,6 +8,7 @@ use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
 
+use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_types::{SaveName, Suffix};
@@ -19,11 +20,9 @@ use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
-use tracing::warn;
-use tracing::{debug, span};
+use std::path::{Path, PathBuf};
 
-use super::utils;
+use tracing::{debug, error, info, span, warn, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -69,13 +68,13 @@ pub struct ModelInterfaceSaveMetadata {
     pub extra_metadata: HashMap<String, String>,
 
     #[pyo3(get)]
-    pub save_args: Option<SaveArgs>,
+    pub save_kwargs: Option<SaveKwargs>,
 }
 
 #[pymethods]
 impl ModelInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_args=None))]
+    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None,  drift_profile_uri=None, extra_metadata=HashMap::new(), save_kwargs=None))]
     pub fn new(
         model_uri: PathBuf,
         data_processor_map: Option<HashMap<String, DataProcessor>>,
@@ -83,7 +82,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
         extra_metadata: HashMap<String, String>,
-        save_args: Option<SaveArgs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -92,7 +91,7 @@ impl ModelInterfaceSaveMetadata {
             data_processor_map: data_processor_map.unwrap_or_default(),
             drift_profile_uri,
             extra_metadata,
-            save_args,
+            save_kwargs,
         }
     }
 
@@ -340,63 +339,6 @@ impl ModelInterface {
         Ok(feature_map)
     }
 
-    /// Save the model to a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to save the model to
-    /// * `kwargs` - Additional keyword arguments to pass to the save
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_model(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        // check if data is None
-        if self.model.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No model detected in interface for saving",
-            ));
-        }
-
-        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-
-        // Save the data using joblib
-        joblib.call_method("dump", (&self.model, full_save_path), kwargs)?;
-
-        Ok(save_path)
-    }
-
-    /// Load the model from a file as well as sample data
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to load the model from
-    /// * `kwargs` - Additional keyword arguments to pass to the load
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_model(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
-        let joblib = py.import("joblib")?;
-
-        // Load the data using joblib
-        self.model = joblib.call_method("load", (load_path,), kwargs)?.into();
-
-        // load sample data
-        self.sample_data = SampleData::load_data(py, &path, &self.data_type, kwargs)?;
-
-        Ok(())
-    }
-
     /// Save the interface model
     ///
     /// # Arguments
@@ -408,44 +350,37 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, to_onnx=false, save_args=None))]
+    #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_args: Option<SaveArgs>,
+        save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        // get onnx and model kwargs
-        let (onnx_kwargs, model_kwargs) = parse_save_args(py, &save_args);
+        let span = span!(Level::INFO, "Saving Model Interface").entered();
+        let _ = span.enter();
 
-        debug!(
-            "Saving model to: {:?} with save_args: {:?}",
-            path, save_args
-        );
+        debug!("Saving model interface");
+
+        // get onnx and model kwargs
+        let (onnx_kwargs, model_kwargs, _) = parse_save_kwargs(py, &save_kwargs);
 
         // save model
-        let model_uri = self.save_model(py, path.clone(), model_kwargs.as_ref())?;
-
-        // if sample_data is not None, save the sample data
-        let sample_data_uri = self
-            .sample_data
-            .save_data(py, path.clone())
-            .unwrap_or_else(|e| {
-                warn!("Failed to save sample data. Defaulting to None: {}", e);
-                None
-            });
+        let model_uri = self.save_model(py, &path, model_kwargs.as_ref())?;
 
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self.save_onnx_model(py, path.clone(), onnx_kwargs.as_ref())?);
+            onnx_model_uri = Some(self.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
         }
+
+        let sample_data_uri = self.save_data(py, &path, None)?;
 
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(path.clone())?)
+            Some(self.save_drift_profile(&path)?)
         };
 
         self.schema = self.create_feature_schema(py)?;
@@ -457,96 +392,8 @@ impl ModelInterface {
             onnx_model_uri,
             drift_profile_uri,
             extra_metadata: HashMap::new(),
-            save_args,
+            save_kwargs,
         })
-    }
-
-    /// Converts the model to onnx
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    #[pyo3(signature = (**kwargs))]
-    pub fn convert_to_onnx(
-        &mut self,
-        py: Python,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        if self.onnx_session.is_some() {
-            warn!("Model has already been converted to ONNX. Skipping conversion.");
-            return Ok(());
-        }
-
-        self.onnx_session = Some(OnnxModelConverter::convert_model(
-            py,
-            self.model.bind(py),
-            &self.sample_data,
-            &self.model_interface_type,
-            &self.model_type,
-            kwargs,
-        )?);
-
-        Ok(())
-    }
-
-    /// Converts the model to onnx
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Link to python interpreter and lifetime
-    /// * `kwargs` - Additional kwargs
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_onnx_model(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        if self.onnx_session.is_none() {
-            self.convert_to_onnx(py, kwargs)?;
-        }
-
-        let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
-        let full_save_path = path.join(&save_path);
-        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
-        fs::write(&full_save_path, bytes)?;
-
-        Ok(save_path)
-    }
-
-    /// Load the model from a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to load the model from
-    /// * `kwargs` - Additional keyword arguments to pass to the load
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_onnx_model(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        if self.onnx_session.is_none() {
-            return Err(OpsmlError::new_err(
-                "No ONNX model detected in interface for loading",
-            ));
-        }
-
-        let load_path = path
-            .join(SaveName::OnnxModel.to_string())
-            .with_extension(Suffix::Onnx);
-
-        self.onnx_session
-            .as_mut()
-            .unwrap()
-            .load_onnx_model(py, load_path, kwargs)?;
-
-        Ok(())
     }
 
     /// Create drift profile
@@ -583,6 +430,92 @@ impl ModelInterface {
         Ok(py_profile)
     }
 
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    #[pyo3(signature = (**kwargs))]
+    pub fn convert_to_onnx(
+        &mut self,
+        py: Python,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Converting model to ONNX").entered();
+        let _ = span.enter();
+
+        if self.onnx_session.is_some() {
+            info!("Model has already been converted to ONNX. Skipping conversion.");
+            return Ok(());
+        }
+
+        self.onnx_session = Some(OnnxModelConverter::convert_model(
+            py,
+            self.model.bind(py),
+            &self.sample_data,
+            &self.model_interface_type,
+            &self.model_type,
+            kwargs,
+        )?);
+
+        info!("Model converted to ONNX");
+
+        Ok(())
+    }
+
+    /// Dynamically load the model interface components
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to load from
+    /// * `model` - Whether to load the model (default: true)
+    /// * `onnx` - Whether to load the onnx model (default: false)
+    /// * `drift_profile` - Whether to load the drift profile (default: false)
+    /// * `sample_data` - Whether to load the sample data (default: false)
+    /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn load(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        model: bool,
+        onnx: bool,
+        drift_profile: bool,
+        sample_data: bool,
+        load_kwargs: Option<LoadKwargs>,
+    ) -> PyResult<()> {
+        // if kwargs is not None, unwrap, else default to None
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        if model {
+            self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        }
+
+        if onnx {
+            self.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+        }
+
+        if drift_profile {
+            self.load_drift_profile(&path)?;
+        }
+
+        if sample_data {
+            self.load_data(py, &path, None)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl ModelInterface {
     /// Save drift profile
     ///
     /// # Arguments
@@ -592,8 +525,8 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    pub fn save_drift_profile(&mut self, path: PathBuf) -> PyResult<PathBuf> {
-        let span = span!(tracing::Level::DEBUG, "Save Drift Profile");
+    pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
+        let span = span!(tracing::Level::INFO, "Save Drift Profile");
         let _enter = span.enter();
 
         let save_dir = PathBuf::from(SaveName::Drift);
@@ -624,7 +557,7 @@ impl ModelInterface {
 
             profile.save_to_json(Some(profile_save_path))?
         }
-        debug!("Drift profile saved to: {:?}", save_dir);
+        info!("Drift profile saved");
 
         Ok(save_dir)
     }
@@ -638,7 +571,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, path: PathBuf) -> PyResult<()> {
+    pub fn load_drift_profile(&mut self, path: &Path) -> PyResult<()> {
         let load_dir = path.join(SaveName::Drift);
 
         if !load_dir.exists() {
@@ -654,6 +587,173 @@ impl ModelInterface {
             })?;
             self.drift_profile.push(drift_profile);
         }
+
+        Ok(())
+    }
+
+    /// Converts the model to onnx
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Link to python interpreter and lifetime
+    /// * `kwargs` - Additional kwargs
+    ///
+    pub fn save_onnx_model(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving ONNX Model").entered();
+        let _ = span.enter();
+
+        if self.onnx_session.is_none() {
+            self.convert_to_onnx(py, kwargs)?;
+        }
+
+        let save_path = PathBuf::from(SaveName::OnnxModel.to_string()).with_extension(Suffix::Onnx);
+        let full_save_path = path.join(&save_path);
+        let bytes = self.onnx_session.as_ref().unwrap().model_bytes(py)?;
+        fs::write(&full_save_path, bytes)?;
+
+        info!("ONNX model saved");
+
+        Ok(save_path)
+    }
+
+    /// Save the model to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to save the model to
+    /// * `kwargs` - Additional keyword arguments to pass to the save
+    ///
+    pub fn save_model(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let span = span!(Level::INFO, "Saving model").entered();
+        let _ = span.enter();
+
+        // check if data is None
+        if self.model.is_none(py) {
+            error!("No model detected in interface for saving");
+            return Err(OpsmlError::new_err(
+                "No model detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Model).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method("dump", (&self.model, full_save_path), kwargs)?;
+
+        info!("Model saved");
+
+        Ok(save_path)
+    }
+
+    /// Saves the sample data
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<Option<PathBuf>> {
+        // if sample_data is not None, save the sample data
+        let sample_data_uri = self
+            .sample_data
+            .save_data(py, path, kwargs)
+            .unwrap_or_else(|e| {
+                warn!("Failed to save sample data. Defaulting to None: {}", e);
+                None
+            });
+
+        Ok(sample_data_uri)
+    }
+
+    /// Load the sample data
+    pub fn load_data(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        // load sample data
+        self.sample_data = SampleData::load_data(py, path, &self.data_type, kwargs)?;
+
+        Ok(())
+    }
+
+    /// Load the model from a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    pub fn load_onnx_model(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Load ONNX Model");
+        let _ = span.enter();
+
+        if self.onnx_session.is_none() {
+            return Err(OpsmlError::new_err(
+                "No ONNX model detected in interface for loading",
+            ));
+        }
+
+        let load_path = path
+            .join(SaveName::OnnxModel.to_string())
+            .with_extension(Suffix::Onnx);
+
+        self.onnx_session
+            .as_mut()
+            .unwrap()
+            .load_onnx_model(py, load_path, kwargs)?;
+
+        info!("ONNX model loaded");
+
+        Ok(())
+    }
+
+    /// Load the model from a file as well as sample data
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to load the model from
+    /// * `kwargs` - Additional keyword arguments to pass to the load
+    ///
+    pub fn load_model(
+        &mut self,
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<()> {
+        let span = span!(Level::INFO, "Loading Model").entered();
+        let _ = span.enter();
+
+        let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
+        let joblib = py.import("joblib")?;
+
+        // Load the data using joblib
+        self.model = joblib
+            .call_method("load", (load_path,), kwargs)
+            .map_err(|e| {
+                error!("Failed to load model. Error: {}", e);
+                OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
+            })?
+            .into();
+
+        info!("Model loaded");
 
         Ok(())
     }

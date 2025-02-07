@@ -108,10 +108,40 @@ impl TorchData {
         let torch = py.import("torch")?;
         let args = (&parent.data, full_save_path);
 
+        match parent.data_type {
+            DataType::TorchDataset => {
+                // get "torch_dataset from kwargs"
+                // return error with kwargs is none
+
+                let kwargs = kwargs.ok_or_else(|| {
+                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
+                })?;
+
+                let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
+
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
+                    return Err(OpsmlError::new_err(
+                        "Torch dataset requires kwargs with torch_dataset",
+                    ));
+                };
+
+                // pop torch_dataset from kwargs
+                kwargs.del_item("torch_dataset")?;
+
+                torch
+                    .call_method("save", args, Some(kwargs))
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            }
+            _ => {
+                torch
+                    .call_method("save", args, kwargs)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            }
+        }
+
         // Save the data using joblib
-        torch
-            .call_method("save", args, kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(save_path)
     }
@@ -145,10 +175,34 @@ impl TorchData {
     ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
 
-        let numpy = PyModule::import(py, "torch")?;
+        let torch = PyModule::import(py, "torch")?;
 
-        // Load the data using numpy
-        let data = numpy.call_method("load", (load_path,), kwargs)?;
+        let data = match self_.as_super().data_type {
+            DataType::TorchDataset => {
+                // get "torch_dataset from kwargs"
+                // return error with kwargs is none
+
+                let kwargs = kwargs.ok_or_else(|| {
+                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
+                })?;
+
+                let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
+
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
+                    return Err(OpsmlError::new_err(
+                        "Torch dataset requires kwargs with torch_dataset",
+                    ));
+                };
+
+                // pop torch_dataset from kwargs
+                kwargs.del_item("torch_dataset")?;
+
+                torch.call_method("load", (load_path,), Some(kwargs))?
+            }
+            _ => torch.call_method("load", (load_path,), kwargs)?,
+        };
 
         self_.as_super().data = data.into();
 
