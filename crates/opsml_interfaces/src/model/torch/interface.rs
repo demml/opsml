@@ -50,13 +50,13 @@ pub struct TorchModel {
 impl TorchModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
@@ -75,7 +75,7 @@ impl TorchModel {
         };
 
         let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -431,8 +431,9 @@ impl TorchModel {
             py,
             None,
             None,
-            metadata.task_type.clone(),
+            Some(metadata.task_type.clone()),
             Some(metadata.schema.clone()),
+            None,
             None,
         )?;
 

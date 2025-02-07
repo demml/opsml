@@ -287,7 +287,7 @@ class ModelInterfaceMetadata:
         schema: FeatureSchema = FeatureSchema(),
         onnx_session: Optional[OnnxSession] = None,
         sample_data_type: DataType = DataType.NotProvided,
-        exra_metadata: dict[str, str] = {},  # type: ignore
+        extra_metadata: dict[str, str] = {},  # type: ignore
     ) -> None:
         """Define a model interface
 
@@ -507,6 +507,18 @@ class ModelInterface:
                 Whether to load the sample data
             load_kwargs (LoadKwargs):
                 Optional load kwargs to pass to the different load methods
+        """
+
+    @staticmethod
+    def from_metadata(metadata: ModelInterfaceMetadata) -> "ModelInterface":
+        """Create a ModelInterface from metadata
+
+        Args:
+            metadata:
+                Model interface metadata
+
+        Returns:
+            Model interface
         """
 
 class SklearnModel(ModelInterface):
@@ -1286,3 +1298,7 @@ class TensorFlowModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
+
+class ModelInterfaceTest:
+    def __init__(self, test="") -> None:
+        """Test class for ModelInterface"""
