@@ -4,6 +4,7 @@ use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::lightning::LightningOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
+use crate::model::onnx::tensorflow::TensorFlowOnnxModelConverter;
 use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
 use crate::types::{ModelInterfaceType, ModelType};
@@ -77,6 +78,11 @@ impl OnnxModelConverter {
                 debug!("Converting CatBoost model to ONNX");
                 let converter = CatBoostOnnxModelConverter::default();
                 converter.convert_model(py, model, path, kwargs)
+            }
+            ModelInterfaceType::TensorFlow => {
+                debug!("Converting TensorFlow model to ONNX");
+                let converter = TensorFlowOnnxModelConverter::default();
+                converter.convert_model(py, model, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

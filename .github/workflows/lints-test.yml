@@ -152,6 +152,12 @@ jobs:
         working-directory: ./py-opsml
         run: make test.unit.numpy1
 
+      # if 3.11 and ubuntu, run numpy v1 tests
+      - name: Run TensorFlow tests
+        if: ${{ matrix.os == 'ubuntu' && matrix.python-version == '3.11' }}
+        working-directory: ./py-opsml
+        run: make test.unit.tensorflow
+
   test-python-windows:
     name: test ${{ matrix.os }}-${{ matrix.python-version }}
 

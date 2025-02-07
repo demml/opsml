@@ -40,6 +40,7 @@ from PIL import Image
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
+import tensorflow as tf  # type: ignore
 
 
 def cleanup() -> None:

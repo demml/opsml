@@ -32,6 +32,11 @@ sklearn_onnx = [
     "onnxmltools~=1.12",
     "opsml[onnx,onnxruntime]",
 ]
+tf_onnx = [
+    "tf2onnx~=1.16.1; platform_system=='Linux' and python_version <= '3.11'",
+    "tf2onnx~=1.16.1; platform_system=='Darwin' and python_version <= '3.11'",
+    "opsml[onnx,onnxruntime]",
+]
 
 [dependency-groups]
 dev = [
@@ -59,8 +64,10 @@ dev = [
     "catboost>=1.2.5",
     "lightning>=2.4.0; python_version > '3.11'",
     "lightning~=2.1.2; python_version <= '3.11'",
-    "tensorflow>=2.16.0; platform_system == 'Linux'",
-    "tf-keras>=2.16.0; platform_system == 'Linux'",
+    "tensorflow>=2.16.0; platform_system=='Linux' and python_version <= '3.11'",
+    "tensorflow>=2.16.0; platform_system=='Darwin' and python_version <= '3.11'",
+    "tensorflow-metal==1.2.0; platform_system=='Darwin' and python_version <= '3.11'",
+    "tf-keras>=2.16.0; python_version <= '3.11'",
 ]
 
 numpy1 = [

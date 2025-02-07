@@ -21,6 +21,6 @@ pub use lightgbm::LightGBMModel;
 pub use lightning::LightningModel;
 pub use onnx::*;
 pub use sklearn::SklearnModel;
-pub use tensorflow::TensorFlowInterfaceMetadata;
+pub use tensorflow::TensorFlowModel;
 pub use torch::TorchModel;
 pub use xgboost::{XGBoostModel, XGBoostModelInterfaceMetadata};

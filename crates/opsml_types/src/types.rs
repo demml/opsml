@@ -386,6 +386,7 @@ pub enum Suffix {
     Numpy,
     Sql,
     Bin,
+    Keras,
 }
 
 #[pymethods]
@@ -410,6 +411,7 @@ impl Suffix {
             "npy" => Some(Suffix::Numpy),
             "sql" => Some(Suffix::Sql),
             "bin" => Some(Suffix::Bin),
+            "keras" => Some(Suffix::Keras),
             _ => None,
         }
     }
@@ -433,6 +435,7 @@ impl Suffix {
             Suffix::Numpy => "npy",
             Suffix::Sql => "sql",
             Suffix::Bin => "bin",
+            Suffix::Keras => "keras",
         }
     }
 

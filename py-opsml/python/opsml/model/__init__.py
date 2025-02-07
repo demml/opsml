@@ -19,6 +19,7 @@ LightningModel = model.LightningModel
 HuggingFaceModel = model.HuggingFaceModel
 CatBoostModel = model.CatBoostModel
 OnnxSession = model.OnnxSession
+TensorFlowModel = model.TensorFlowModel
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -38,4 +39,5 @@ __all__ = [
     "HuggingFaceModel",
     "CatBoostModel",
     "OnnxSession",
+    "TensorFlowModel",
 ]

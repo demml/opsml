@@ -9,7 +9,6 @@ from opsml.data import DataInterface
 from opsml.core import SaveName, Suffix, SaverPath
 from pathlib import Path
 import joblib  # type: ignore
-import torch
 from typing import Dict
 
 
@@ -280,7 +279,9 @@ def custom_data_interface() -> type[DataInterface]:
 
 
 @pytest.fixture
-def torch_tensor() -> torch.Tensor:
+def torch_tensor():
+    import torch
+
     return torch.tensor(np.array([[1, 2, 3], [4, 5, 6]]))
 
 

@@ -1235,3 +1235,54 @@ class CatBoostModel(ModelInterface):
             load_kwargs (LoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
+
+class TensorFlowModel(ModelInterface):
+    def __init__(
+        self,
+        model: Optional[Any] = None,
+        preprocessor: Optional[Any] = None,
+        sample_data: Optional[Any] = None,
+        task_type: Optional[TaskType] = None,
+        schema: Optional[FeatureSchema] = None,
+        drift_profile: (
+            None
+            | List[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+            | Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+        ) = None,
+    ) -> None:
+        """Interface for saving PyTorch models
+
+        Args:
+            model:
+                Model to associate with interface. This model must inherit from tensorflow.keras.Model
+            preprocessor:
+                Preprocessor to associate with model.
+            sample_data:
+                Sample data to use to convert to ONNX and make sample predictions. This data must be a
+                tensorflow-supported type. numpy array, tf.Tensor, torch dataset, Dict[str, tf.Tensor],
+                List[tf.Tensor], Tuple[tf.Tensor].
+            task_type:
+                The intended task type of the model.
+            schema:
+                Feature schema for model features. Will be inferred from the sample data if not provided.
+            drift_profile:
+                Drift profile to use. Can be a list of SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
+        """
+
+    @property
+    def preprocessor(self) -> Optional[Any]:
+        """Returns the preprocessor"""
+
+    @preprocessor.setter
+    def preprocessor(self, preprocessor: Any) -> None:
+        """Sets the preprocessor
+
+        Args:
+            preprocessor:
+                Preprocessor to associate with the model. This preprocessor must be from the
+                scikit-learn ecosystem
+        """
+
+    @property
+    def preprocessor_name(self) -> Optional[str]:
+        """Returns the preprocessor name"""
