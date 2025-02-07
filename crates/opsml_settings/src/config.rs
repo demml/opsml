@@ -26,9 +26,16 @@ pub struct ApiSettings {
 #[pyclass]
 #[derive(Debug, Clone)]
 pub struct OpsmlStorageSettings {
+    #[pyo3(get)]
     pub storage_uri: String,
+
+    #[pyo3(get)]
     pub client_mode: bool,
+
+    #[pyo3(get)]
     pub api_settings: ApiSettings,
+
+    #[pyo3(get)]
     pub storage_type: StorageType,
 }
 
