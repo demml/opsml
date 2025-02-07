@@ -3,7 +3,7 @@ use opsml_error::error::OpsmlError;
 use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
 use opsml_interfaces::{LoadKwargs, SaveKwargs};
 use opsml_semver::VersionType;
-use opsml_settings::config::OpsmlConfig;
+use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
@@ -44,6 +44,7 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FileUtils>()?;
 
     m.add_class::<Description>()?;
-
+    m.add_class::<ApiSettings>()?;
+    m.add_class::<OpsmlStorageSettings>()?;
     Ok(())
 }

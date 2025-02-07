@@ -9,6 +9,7 @@ use std::env;
 use std::path::PathBuf;
 
 /// ApiSettings for use with ApiClient
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct ApiSettings {
     pub base_url: String,
@@ -22,6 +23,7 @@ pub struct ApiSettings {
 }
 
 /// StorageSettings for used with all storage clients
+#[pyclass]
 #[derive(Debug, Clone)]
 pub struct OpsmlStorageSettings {
     pub storage_uri: String,
@@ -30,7 +32,36 @@ pub struct OpsmlStorageSettings {
     pub storage_type: StorageType,
 }
 
+#[pymethods]
+impl OpsmlStorageSettings {
+    /// Create a new OpsmlStorageSettings instance
+    ///
+    /// # Returns
+    ///
+    /// `OpsmlStorageSettings`: A new instance of OpsmlStorageSettings
+    #[new]
+    #[pyo3(signature = (storage_uri="./opsml_registries", client_mode=false))]
+    pub fn new(storage_uri: &str, client_mode: bool) -> Self {
+        OpsmlStorageSettings {
+            storage_uri: storage_uri.to_string(),
+            client_mode,
+            api_settings: ApiSettings {
+                base_url: "".to_string(),
+                use_auth: false,
+                opsml_dir: "".to_string(),
+                scouter_dir: "".to_string(),
+                username: "".to_string(),
+                password: "".to_string(),
+                auth_token: "".to_string(),
+                prod_token: None,
+            },
+            storage_type: StorageType::Local,
+        }
+    }
+}
+
 /// DatabaseSettings for used with all database clients
+#[pyclass]
 #[derive(Debug, Clone, Serialize)]
 pub struct DatabaseSettings {
     pub connection_uri: String,
@@ -38,6 +69,7 @@ pub struct DatabaseSettings {
     pub sql_type: SqlType,
 }
 
+#[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct AuthSettings {
     pub enabled: bool,
@@ -48,6 +80,7 @@ pub struct AuthSettings {
     pub prod_token: Option<String>,
 }
 
+#[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
     pub server_uri: Option<String>,
@@ -208,7 +241,7 @@ impl OpsmlConfig {
         if storage_uri_lower.starts_with("gs://") {
             StorageType::Google
         } else if storage_uri_lower.starts_with("s3://") {
-            StorageType::AWS
+            StorageType::Aws
         } else if storage_uri_lower.starts_with("az://") {
             StorageType::Azure
         } else {

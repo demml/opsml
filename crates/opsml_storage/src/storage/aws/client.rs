@@ -323,7 +323,7 @@ pub struct AWSStorageClient {
 #[async_trait]
 impl StorageClient for AWSStorageClient {
     fn storage_type(&self) -> StorageType {
-        StorageType::AWS
+        StorageType::Aws
     }
     async fn bucket(&self) -> &str {
         &self.bucket
@@ -710,7 +710,7 @@ impl FileSystem for S3FStorageClient {
     }
 
     fn storage_type(&self) -> StorageType {
-        StorageType::AWS
+        StorageType::Aws
     }
 
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {

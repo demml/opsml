@@ -3,6 +3,7 @@ pub mod core;
 pub mod data;
 pub mod model;
 pub mod scouter;
+pub mod storage;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pymodule;

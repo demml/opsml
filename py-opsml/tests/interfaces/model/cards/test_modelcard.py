@@ -32,13 +32,10 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
         tags=tags,
     )
 
+    # save all assets to path (including card)
     card.save(save_path)
 
-    modelcard_json = card.model_dump_json()
-
-    loaded_card = ModelCard.model_validate_json(modelcard_json)
-
-    print(loaded_card.interface)
+    # use storage client to upload assets to cloud storage
 
     a
 

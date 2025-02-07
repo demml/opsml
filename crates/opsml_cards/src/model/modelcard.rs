@@ -229,6 +229,7 @@ impl ModelCard {
         sample_data: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
+        //// download assets
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
             (path, model, onnx, drift_profile, sample_data, load_kwargs),
