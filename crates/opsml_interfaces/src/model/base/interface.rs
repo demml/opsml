@@ -468,7 +468,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, _preprocessor=false, load_kwargs=None, ))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
@@ -478,6 +478,7 @@ impl ModelInterface {
         onnx: bool,
         drift_profile: bool,
         sample_data: bool,
+        _preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None

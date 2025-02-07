@@ -217,7 +217,7 @@ impl ModelCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &self,
@@ -227,12 +227,21 @@ impl ModelCard {
         onnx: bool,
         drift_profile: bool,
         sample_data: bool,
+        preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
         //// download assets
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (path, model, onnx, drift_profile, sample_data, load_kwargs),
+            (
+                path,
+                model,
+                onnx,
+                drift_profile,
+                sample_data,
+                preprocessor,
+                load_kwargs,
+            ),
             None,
         )?;
 
