@@ -2,7 +2,7 @@ use crate::base::DataProcessor;
 use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
 use crate::ModelType;
 use crate::OnnxSession;
 use crate::{LoadKwargs, SaveKwargs};
@@ -161,6 +161,7 @@ impl SklearnModel {
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
+                r#type: ProcessorType::Preprocessor,
             })
         };
 
