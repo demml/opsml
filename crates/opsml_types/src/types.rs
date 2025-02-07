@@ -28,7 +28,7 @@ pub enum RegistryType {
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum StorageType {
     Google,
-    AWS,
+    Aws,
     Local,
     Azure,
 }

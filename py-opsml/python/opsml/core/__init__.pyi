@@ -210,6 +210,33 @@ class OpsmlConfig:
             String representation of the OpsmlConfig.
         """
 
+class ApiSettings:
+    base_url: str
+    use_auth: bool
+    opsml_dir: str
+    scouter_dir: str
+    username: str
+    password: str
+    auth_token: str
+    prod_token: Optional[str]
+
+class OpsmlStorageSettings:
+    storage_uri: str
+    client_mode: bool
+    storage_type: StorageType
+    api_settings: ApiSettings
+
+    def __init__(self, storage_uri="./opsml_registries", client_mode=False) -> None:
+        """Initialize the OpsmlStorageSettings.
+
+        Args:
+            storage_uri:
+                The URI for the storage. Default is "./opsml_registries".
+
+            client_mode:
+                Whether to use the client. Default is False.
+        """
+
 # shared
 class CommonKwargs:
     IsPipeline: "CommonKwargs"

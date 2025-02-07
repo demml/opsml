@@ -65,7 +65,7 @@ impl StorageClientEnum {
     pub fn storage_type(&self) -> StorageType {
         match self {
             StorageClientEnum::Google(_) => StorageType::Google,
-            StorageClientEnum::AWS(_) => StorageType::AWS,
+            StorageClientEnum::AWS(_) => StorageType::Aws,
             StorageClientEnum::Local(_) => StorageType::Local,
             StorageClientEnum::Azure(_) => StorageType::Azure,
         }
@@ -79,7 +79,7 @@ impl StorageClientEnum {
                 Ok(StorageClientEnum::Google(client))
             }
 
-            StorageType::AWS => {
+            StorageType::Aws => {
                 // strip the s3:// prefix
                 let client = S3FStorageClient::new(settings).await;
                 Ok(StorageClientEnum::AWS(client))
