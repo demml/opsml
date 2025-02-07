@@ -396,6 +396,51 @@ impl TorchModel {
 }
 
 impl TorchModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .iter()
+            .filter(|(_, v)| v.r#type == ProcessorType::Preprocessor)
+            .map(|(k, _)| k)
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let model_interface = TorchModel {
+            preprocessor: None,
+            preprocessor_name,
+            onnx_session,
+            model: None,
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            sample_data: TorchSampleData::default(),
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+
+        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Converts the model to onnx
     ///
     /// # Arguments
