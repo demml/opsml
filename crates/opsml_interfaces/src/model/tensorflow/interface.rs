@@ -5,6 +5,7 @@ use crate::model::tensorflow::TensorFlowSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
+use crate::ModelInterfaceMetadata;
 use crate::ModelType;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
@@ -41,7 +42,7 @@ pub struct TensorFlowModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub sample_data: TensorFlowSampleData,
 }
@@ -110,7 +111,7 @@ impl TensorFlowModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model_interface_type: ModelInterfaceType::TensorFlow,
+                interface_type: ModelInterfaceType::TensorFlow,
                 model_type: ModelType::TensorFlow,
                 onnx_session: None,
             },
@@ -379,6 +380,51 @@ impl TensorFlowModel {
 }
 
 impl TensorFlowModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .iter()
+            .filter(|(_, v)| v.r#type == ProcessorType::Preprocessor)
+            .map(|(k, _)| k)
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let model_interface = TensorFlowModel {
+            preprocessor: None,
+            preprocessor_name,
+            onnx_session,
+            model: None,
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            sample_data: TensorFlowSampleData::default(),
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+
+        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Converts the model to onnx
     ///
     /// # Arguments
@@ -397,7 +443,7 @@ impl TensorFlowModel {
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,
