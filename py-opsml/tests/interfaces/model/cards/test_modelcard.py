@@ -10,6 +10,8 @@ import polars as pl
 import pyarrow as pa  # type: ignore
 import torch
 from typing import List, Dict
+from opsml.storage import FileSystemStorage
+from opsml.core import OpsmlStorageSettings
 
 
 def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnModel):
@@ -34,6 +36,11 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
 
     # save all assets to path (including card)
     card.save(save_path)
+
+    settings = OpsmlStorageSettings()
+    fs = FileSystemStorage(settings)
+
+    print(fs.find(save_path))
 
     # use storage client to upload assets to cloud storage
 

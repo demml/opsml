@@ -1,6 +1,7 @@
-from ..core import OpsmlStorageSettings
 from pathlib import Path
 from typing import List
+
+from ..core import OpsmlStorageSettings
 
 class StorageType:
     Google: "StorageType"
