@@ -1,5 +1,6 @@
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
+use crate::model::onnx::lightning::LightningOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
 use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
@@ -56,6 +57,11 @@ impl OnnxModelConverter {
             ModelInterfaceType::Torch => {
                 debug!("Converting Torch model to ONNX");
                 let converter = TorchOnnxModelConverter::default();
+                converter.convert_model(py, model, sample_data, kwargs)
+            }
+            ModelInterfaceType::Lightning => {
+                debug!("Converting Lightning model to ONNX");
+                let converter = LightningOnnxModelConverter::default();
                 converter.convert_model(py, model, sample_data, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),

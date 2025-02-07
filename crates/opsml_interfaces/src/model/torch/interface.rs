@@ -1,4 +1,6 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceSaveMetadata};
+use crate::data::generate_feature_schema;
+use crate::data::DataInterface;
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
@@ -246,7 +248,7 @@ impl TorchModel {
         let sample_data_uri = self_.save_data(py, &path, None)?;
 
         debug!("Creating feature schema");
-        self_.as_super().schema = self_.as_super().create_feature_schema(py)?;
+        self_.as_super().schema = self_.create_feature_schema(py)?;
 
         let mut onnx_model_uri = None;
 
@@ -633,5 +635,27 @@ impl TorchModel {
         info!("ONNX model loaded");
 
         Ok(())
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+
+        let mut data = self.sample_data.get_data(py)?.bind(py).clone();
+
+        // if data is instance of DataInterface, get the data
+        if data.is_instance_of::<DataInterface>() {
+            data = data.getattr("data")?;
+        }
+
+        generate_feature_schema(&data, &self.sample_data.get_data_type())
     }
 }

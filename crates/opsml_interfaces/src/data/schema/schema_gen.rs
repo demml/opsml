@@ -19,7 +19,6 @@ pub fn generate_feature_schema(
         DataType::Pandas => PandasSchemaValidator::generate_feature_map(data)?,
         DataType::Arrow => ArrowSchemaValidator::generate_feature_map(data)?,
         DataType::TorchTensor => TorchTensorSchemaValidator::generate_feature_map(data)?,
-
         _ => FeatureSchema::new(None),
     };
     Ok(feature_map)
