@@ -376,8 +376,19 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str) -> "ModelCard":
-        """Validate the model json string"""
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
+        """Validate the model json string
+
+        Args:
+            json_str (str):
+                The json string to validate
+            interface (ModelInterface):
+                By default, the interface willbe inferred and insantiated
+                from the interface metdata. If an interface is provided
+                (as in the case of custom interfaces), it will be used.
+        """
 
     def __str__(self) -> str:
         """Return a string representation of the ModelCard.
