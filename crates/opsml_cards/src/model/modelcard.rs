@@ -32,6 +32,12 @@ fn interface_from_metadata<'py>(
 ) -> PyResult<Bound<'py, PyAny>> {
     match metadata.interface_type {
         ModelInterfaceType::Sklearn => SklearnModel::from_metadata(py, metadata),
+        ModelInterfaceType::CatBoost => CatBoostModel::from_metadata(py, metadata),
+        ModelInterfaceType::LightGBM => LightGBMModel::from_metadata(py, metadata),
+        ModelInterfaceType::XGBoost => XGBoostModel::from_metadata(py, metadata),
+        ModelInterfaceType::Torch => TorchModel::from_metadata(py, metadata),
+        ModelInterfaceType::Lightning => LightningModel::from_metadata(py, metadata),
+        ModelInterfaceType::HuggingFace => HuggingFaceModel::from_metadata(py, metadata),
 
         _ => {
             error!("Interface type not found");
