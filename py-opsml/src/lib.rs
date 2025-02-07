@@ -15,6 +15,7 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
+    m.add_wrapped(wrap_pymodule!(storage::storage))?;
 
     Ok(())
 }

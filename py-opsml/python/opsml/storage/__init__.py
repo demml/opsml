@@ -2,12 +2,12 @@
 from .. import storage  # noqa: F401
 
 StorageType = storage.StorageType
-FileStorageSystem = storage.FileStorageSystem
+FileSystemStorage = storage.FileSystemStorage
 FileInfo = storage.FileInfo
 
 
 __all__ = [
     "StorageType",
-    "FileStorageSystem",
+    "FileSystemStorage",
     "FileInfo",
 ]
