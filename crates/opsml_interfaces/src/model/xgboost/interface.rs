@@ -266,6 +266,7 @@ impl XGBoostModel {
             self_.as_super().model_type.clone(),
             self_.as_super().data_type.clone(),
             self_.as_super().schema.clone(),
+            self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
         );

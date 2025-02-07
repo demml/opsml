@@ -2,9 +2,14 @@ use crate::types::Tags;
 use crate::{BaseArgs, CardInfo};
 use core::error;
 use opsml_error::error::OpsmlError;
-use opsml_interfaces::ModelInterface;
+use opsml_interfaces::catboost::interface;
 use opsml_interfaces::SaveKwargs;
+use opsml_interfaces::{
+    CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
+    XGBoostModel,
+};
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
+use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -20,6 +25,20 @@ use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use tracing::error;
+
+fn interface_from_metadata<'py>(
+    py: Python<'py>,
+    metadata: &ModelInterfaceMetadata,
+) -> PyResult<Bound<'py, PyAny>> {
+    match metadata.interface_type {
+        ModelInterfaceType::Sklearn => SklearnModel::from_metadata(py, metadata),
+
+        _ => {
+            error!("Interface type not found");
+            Err(OpsmlError::new_err("Interface type not found"))
+        }
+    }
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -135,6 +154,23 @@ impl ModelCard {
         })
     }
 
+    #[setter]
+    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> PyResult<()> {
+        if interface.is_instance_of::<ModelInterface>() {
+            self.interface = Some(
+                interface
+                    .into_py_any(interface.py())
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))
+                    .unwrap(),
+            );
+            Ok(())
+        } else {
+            return Err(OpsmlError::new_err(
+                "interface must be an instance of ModelInterface",
+            ));
+        }
+    }
+
     #[getter]
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
@@ -201,12 +237,26 @@ impl ModelCard {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> ModelCard {
-        let mut card: ModelCard = serde_json::from_str(&json_string).unwrap();
+    pub fn model_validate_json(json_string: String) -> PyResult<ModelCard> {
+        Ok(serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?)
+    }
 
-        // match on interface type and use metadata to create interface
-
-        card
+    #[pyo3(signature = (interface=None))]
+    pub fn load_interface(
+        &mut self,
+        py: Python,
+        interface: Option<&Bound<'_, PyAny>>,
+    ) -> PyResult<()> {
+        if let Some(interface) = interface {
+            self.set_interface(interface)
+        } else {
+            // match interface type
+            let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
+            self.set_interface(&interface)
+        }
     }
 
     pub fn __str__(&self) -> String {

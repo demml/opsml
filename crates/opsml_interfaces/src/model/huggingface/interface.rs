@@ -536,6 +536,7 @@ impl HuggingFaceModel {
             self_.model_type.clone(),
             self_.sample_data.get_data_type(),
             self_.as_super().schema.clone(),
+            self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
         );
