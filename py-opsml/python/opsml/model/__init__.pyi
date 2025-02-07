@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import FeatureSchema, OnnxSchema, SaveKwargs, LoadKwargs
+from ..core import FeatureSchema, LoadKwargs, OnnxSchema, SaveKwargs
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,

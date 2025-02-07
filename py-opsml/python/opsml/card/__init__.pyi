@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from ..core import Description, FeatureSchema, SaveKwargs, Tags, LoadKwargs
-from ..model import ModelInterface
+from ..core import Description, FeatureSchema, LoadKwargs, SaveKwargs, Tags
 from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
+from ..model import ModelInterface
 
 class CardType:
     Data: "CardType"
@@ -376,9 +376,7 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_str: str, interface: Optional[ModelInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
