@@ -1,8 +1,10 @@
 use opsml_interfaces::{
     CatBoostModel, DataProcessor, HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs,
-    HuggingFaceTask, LightGBMModel, LightningModel, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession, SklearnModel, TaskType,
-    TorchModel, XGBoostModel,
+    HuggingFaceTask, HuggingFaceTask, LightGBMModel, LightGBMModel, LightningModel, LightningModel,
+    LoadKwargs, ModelInterface, ModelInterface, ModelInterfaceMetadata, ModelInterfaceMetadata,
+    ModelInterfaceSaveMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelInterfaceType,
+    ModelType, ModelType, OnnxSession, OnnxSession, SaveKwargs, SklearnModel, SklearnModel,
+    TaskType, TaskType, TensorFlowModel, TorchModel, TorchModel, XGBoostModel, XGBoostModel,
 };
 
 use pyo3::prelude::*;
@@ -32,6 +34,7 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LightningModel>()?;
     m.add_class::<HuggingFaceModel>()?;
     m.add_class::<CatBoostModel>()?;
+    m.add_class::<TensorFlowModel>()?;
 
     Ok(())
 }
