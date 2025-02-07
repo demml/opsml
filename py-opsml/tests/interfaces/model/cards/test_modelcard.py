@@ -38,9 +38,13 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
 
     loaded_card = ModelCard.model_validate_json(modelcard_json)
 
-    assert loaded_card.card_type == CardType.Model
-    assert loaded_card.interface is None
-    loaded_card.interface = SklearnModel()
+    print(loaded_card.interface)
+
+    a
+
+    # assert loaded_card.card_type == CardType.Model
+    # assert loaded_card.interface is None
+    # loaded_card.interface = SklearnModel()
 
     # metadata = interface.save(save_path, True)
     # assert metadata.save_metadata.save_kwargs is None

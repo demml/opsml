@@ -237,19 +237,29 @@ impl ModelCard {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> PyResult<ModelCard> {
-        Ok(serde_json::from_str(&json_string).map_err(|e| {
+    #[pyo3(signature = (json_string, interface=None))]
+    pub fn model_validate_json(
+        py: Python,
+        json_string: String,
+        interface: Option<&Bound<'_, PyAny>>,
+    ) -> PyResult<ModelCard> {
+        let mut card: ModelCard = serde_json::from_str(&json_string).map_err(|e| {
             error!("Failed to validate json: {}", e);
             OpsmlError::new_err(e.to_string())
-        })?)
+        })?;
+
+        card.load_interface(py, interface)?;
+
+        Ok(card)
     }
 
-    #[pyo3(signature = (interface=None))]
-    pub fn load_interface(
-        &mut self,
-        py: Python,
-        interface: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<()> {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(&self)
+    }
+}
+
+impl ModelCard {
+    fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
             self.set_interface(interface)
         } else {
@@ -257,10 +267,6 @@ impl ModelCard {
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
             self.set_interface(&interface)
         }
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(&self)
     }
 }
 

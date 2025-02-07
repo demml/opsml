@@ -4,16 +4,17 @@ use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::ModelType;
+use crate::OnnxSession;
 use crate::{LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::pyobject_to_json;
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::path::{Path, PathBuf};
-
 use tracing::instrument;
 use tracing::{debug, error, info};
 
@@ -21,7 +22,7 @@ use tracing::{debug, error, info};
 #[derive(Debug)]
 pub struct SklearnModel {
     #[pyo3(get)]
-    pub preprocessor: PyObject,
+    pub preprocessor: Option<PyObject>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -68,9 +69,9 @@ impl SklearnModel {
                     .getattr("__class__")?
                     .getattr("__name__")?
                     .to_string();
-                preprocessor.into_py_any(py)?
+                Some(preprocessor.into_py_any(py)?)
             }
-            None => py.None(),
+            None => None,
         };
 
         if model_interface.model_type == ModelType::Unknown {
@@ -88,11 +89,13 @@ impl SklearnModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             None
         } else {
             Some(
                 self.preprocessor
+                    .as_ref()
+                    .unwrap()
                     .clone_ref(py)
                     .into_bound_py_any(py)
                     .unwrap(),
@@ -105,20 +108,20 @@ impl SklearnModel {
     pub fn set_preprocessor<'py>(
         &mut self,
         py: Python,
-        preprocessor: &Bound<'py, PyAny>,
+        preprocessor: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<()> {
-        if PyAnyMethods::is_none(preprocessor) {
-            self.preprocessor = py.None();
-            self.preprocessor_name = CommonKwargs::Undefined.to_string();
-            Ok(())
-        } else {
+        if let Some(preprocessor) = preprocessor {
             let preprocessor_name = preprocessor
                 .getattr("__class__")?
                 .getattr("__name__")?
                 .to_string();
 
-            self.preprocessor = preprocessor.into_py_any(py)?;
+            self.preprocessor = Some(preprocessor.into_py_any(py)?);
             self.preprocessor_name = preprocessor_name;
+            Ok(())
+        } else {
+            self.preprocessor = None;
+            self.preprocessor_name = CommonKwargs::Undefined.to_string();
             Ok(())
         }
     }
@@ -146,7 +149,7 @@ impl SklearnModel {
         debug!("Saving model interface");
 
         // save the preprocessor if it exists
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+        let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
             let uri = self_.save_preprocessor(
@@ -237,14 +240,51 @@ impl SklearnModel {
         Ok(())
     }
 
-    #[staticmethod]
+    pub fn __str__(self_: PyRef<'_, Self>, py: Python) -> String {
+        let onnx_session_json = self_
+            .as_super()
+            .onnx_session
+            .as_ref()
+            .map(|session| {
+                let sess = session.extract::<OnnxSession>(py).unwrap();
+                serde_json::to_value(sess).unwrap_or_default()
+            })
+            .unwrap_or_default();
+
+        let json = serde_json::json!({
+            "preprocessor": self_.preprocessor_name,
+            "data_type": self_.as_super().data_type,
+            "task_type": self_.as_super().task_type,
+            "model_type": self_.as_super().model_type,
+            "schema": self_.as_super().schema,
+            "interface_type": self_.as_super().interface_type,
+            "onnx_session": onnx_session_json,
+        });
+
+        PyHelperFuncs::__str__(json)
+    }
+}
+
+impl SklearnModel {
     pub fn from_metadata<'py>(
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let interface = SklearnModel::new(
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .keys()
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+        let sklearn_interface = SklearnModel {
+            preprocessor: None,
+            preprocessor_name,
+        };
+
+        let mut interface = ModelInterface::new(
             py,
-            None,
             None,
             None,
             metadata.task_type.clone(),
@@ -252,11 +292,19 @@ impl SklearnModel {
             None,
         )?;
 
-        Ok(Py::new(py, interface)?.into_bound_py_any(py)?)
-    }
-}
+        interface.data_type = metadata.data_type.clone();
+        interface.model_type = metadata.model_type.clone();
+        interface.interface_type = metadata.interface_type.clone();
 
-impl SklearnModel {
+        // convert onnx session to to Py<OnnxSession>
+        interface.onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        Ok(Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Save the preprocessor to a file
     ///
     /// # Arguments
@@ -272,7 +320,7 @@ impl SklearnModel {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -310,7 +358,7 @@ impl SklearnModel {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+        self.preprocessor = Some(joblib.call_method("load", (load_path,), kwargs)?.unbind());
 
         Ok(())
     }
