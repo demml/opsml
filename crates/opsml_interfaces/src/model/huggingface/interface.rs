@@ -189,7 +189,7 @@ impl HFBaseArgs {
         })
     }
 
-    pub fn model_validate_json(&self, record: String) -> HFBaseArgs {
+    pub fn model_validate_json(record: String) -> HFBaseArgs {
         serde_json::from_str(&record).unwrap_or_default()
     }
 }
@@ -335,8 +335,8 @@ impl HuggingFaceModel {
                 tokenizer,
                 feature_extractor,
                 image_processor,
-                interface_type: ModelInterfaceType::Torch,
-                model_type: ModelType::Pytorch,
+                interface_type: ModelInterfaceType::HuggingFace,
+                model_type: base_args.model_backend.clone(),
                 onnx_session: None,
                 huggingface_task: base_args.hf_task.clone(),
                 sample_data,
@@ -627,17 +627,29 @@ impl HuggingFaceModel {
         py: Python<'py>,
         metadata: &ModelInterfaceMetadata,
     ) -> PyResult<Bound<'py, PyAny>> {
-        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
-        let preprocessor_name = metadata
-            .save_metadata
-            .data_processor_map
-            .keys()
-            .next()
-            .unwrap_or(&CommonKwargs::Undefined.to_string())
-            .to_string();
-        let sklearn_interface = SklearnModel {
-            preprocessor: None,
-            preprocessor_name,
+        let base_args: HFBaseArgs =
+            serde_json::from_value(metadata.model_specific_metadata.clone()).map_err(|e| {
+                error!("Failed to deserialize model specific metadata: {}", e);
+                OpsmlError::new_err("Failed to deserialize model specific metadata")
+            })?;
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let huggingface_interface = HuggingFaceModel {
+            model: None,
+            tokenizer: None,
+            feature_extractor: None,
+            image_processor: None,
+            onnx_session,
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            huggingface_task: base_args.hf_task.clone(),
+            sample_data: HuggingFaceSampleData::default(),
+            base_args,
         };
 
         let mut interface = ModelInterface::new(
@@ -653,13 +665,7 @@ impl HuggingFaceModel {
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();
 
-        // convert onnx session to to Py<OnnxSession>
-        interface.onnx_session = metadata
-            .onnx_session
-            .as_ref()
-            .map(|session| Py::new(py, session.clone()).unwrap());
-
-        Ok(Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?)
+        Ok(Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)?)
     }
 
     /// Load the preprocessor from a file
