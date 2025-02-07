@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from ..model import HuggingFaceOnnxArgs
+from ..storage import StorageType
 
 class Description:
     summary: Optional[str]

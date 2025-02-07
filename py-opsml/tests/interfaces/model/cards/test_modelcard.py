@@ -4,6 +4,7 @@ from opsml.card import ModelCard
 from pathlib import Path
 from opsml.storage import FileSystemStorage
 from opsml.core import OpsmlStorageSettings
+import shutil
 
 
 def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnModel):
@@ -64,3 +65,6 @@ def test_save_model_interface(tmp_path: Path, random_forest_classifier: SklearnM
 
     assert loaded_card.interface.model is not None
     assert loaded_card.interface.sample_data is not None
+
+    # delete ./opsml_repo
+    shutil.rmtree(settings.storage_uri)
