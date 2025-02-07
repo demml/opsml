@@ -138,19 +138,23 @@ pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
 
+    #[pyo3(get)]
+    pub interface_type: ModelInterfaceType,
+
     pub model_specific_metadata: Value,
 }
 
 #[pymethods]
 impl ModelInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(), onnx_session=None, extra_metadata=HashMap::new()))]
+    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(),interface_type=ModelInterfaceType::Base, onnx_session=None, extra_metadata=HashMap::new()))]
     pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
         task_type: TaskType,
         model_type: ModelType,
         data_type: DataType,
         schema: FeatureSchema,
+        interface_type: ModelInterfaceType,
         onnx_session: Option<OnnxSession>,
         extra_metadata: HashMap<String, String>,
     ) -> Self {
@@ -160,6 +164,7 @@ impl ModelInterfaceMetadata {
             data_type,
             onnx_session,
             schema,
+            interface_type,
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
@@ -403,6 +408,7 @@ impl ModelInterface {
             self.model_type.clone(),
             self.data_type.clone(),
             self.schema.clone(),
+            self.interface_type.clone(),
             onnx_session,
             HashMap::new(),
         );

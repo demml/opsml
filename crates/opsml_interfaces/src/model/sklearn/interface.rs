@@ -13,6 +13,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use std::path::{Path, PathBuf};
+
 use tracing::instrument;
 use tracing::{debug, error, info};
 
@@ -234,6 +235,24 @@ impl SklearnModel {
         }
 
         Ok(())
+    }
+
+    #[staticmethod]
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let interface = SklearnModel::new(
+            py,
+            None,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        Ok(Py::new(py, interface)?.into_bound_py_any(py)?)
     }
 }
 
