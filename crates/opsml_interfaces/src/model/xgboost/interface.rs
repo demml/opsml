@@ -353,6 +353,48 @@ impl XGBoostModel {
 }
 
 impl XGBoostModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .iter()
+            .filter(|(_, v)| v.r#type == ProcessorType::Preprocessor)
+            .map(|(k, _)| k)
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+
+        let model_interface = XGBoostModel {
+            preprocessor: None,
+            preprocessor_name,
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+        interface.model_type = metadata.model_type.clone();
+        interface.interface_type = metadata.interface_type.clone();
+
+        // convert onnx session to to Py<OnnxSession>
+        interface.onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Save the model to a file
     ///
     /// # Arguments
