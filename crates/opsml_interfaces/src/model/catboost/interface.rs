@@ -6,6 +6,7 @@ use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use crate::{OnnxSession, ProcessorType};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use opsml_utils::pyobject_to_json;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -214,6 +215,9 @@ impl CatBoostModel {
         };
 
         // create interface metadata
+        let mut extra = HashMap::new();
+        extra.insert("model_name".to_string(), self_.model_name.clone());
+
         let mut metadata = ModelInterfaceMetadata::new(
             save_metadata,
             self_.as_super().task_type.clone(),
@@ -222,7 +226,7 @@ impl CatBoostModel {
             self_.as_super().schema.clone(),
             self_.as_super().interface_type.clone(),
             onnx_session,
-            HashMap::new(),
+            extra,
         );
 
         // save model
@@ -293,9 +297,69 @@ impl CatBoostModel {
 
         Ok(())
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref preprocessor) = self.preprocessor {
+            visit.call(preprocessor)?;
+        }
+
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.preprocessor = None;
+    }
 }
 
 impl CatBoostModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .iter()
+            .filter(|(_, v)| v.r#type == ProcessorType::Preprocessor)
+            .map(|(k, _)| k)
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let model_name = metadata
+            .extra_metadata
+            .get("model_name")
+            .unwrap_or(&"".to_string())
+            .clone();
+
+        let model_interface = CatBoostModel {
+            preprocessor: None,
+            preprocessor_name,
+            model_name,
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+        interface.onnx_session = onnx_session;
+
+        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Save the preprocessor to a file
     ///
     /// # Arguments
@@ -427,15 +491,72 @@ impl CatBoostModel {
             .unbind())
     }
 
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        if let Some(ref preprocessor) = self.preprocessor {
-            visit.call(preprocessor)?;
+    pub fn extract_model_params(
+        py: Python,
+        model: &Bound<'_, PyAny>,
+    ) -> PyResult<serde_json::Value> {
+        let new_dict = PyDict::new(py);
+
+        new_dict.set_item(
+            "params",
+            model
+                .call_method0("get_all_params")
+                .unwrap_or("__missing__".to_string().into_bound_py_any(py)?),
+        )?;
+        new_dict.set_item(
+            "model_name",
+            model.getattr("__class__")?.getattr("__name__")?,
+        )?;
+        set_catboost_model_attribute(model, &new_dict)?;
+
+        Ok(pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)?)
+    }
+}
+
+enum CommonCatBoostAttributes {
+    TreeCount,
+    FeatureImportances,
+    LearningRate,
+    FeatureNames,
+    BestScore,
+    Classes,
+}
+
+impl CommonCatBoostAttributes {
+    pub fn to_str(&self) -> &str {
+        match self {
+            CommonCatBoostAttributes::TreeCount => "tree_count_",
+            CommonCatBoostAttributes::FeatureImportances => "feature_importances_",
+            CommonCatBoostAttributes::LearningRate => "learning_rate_",
+            CommonCatBoostAttributes::FeatureNames => "feature_names_",
+            CommonCatBoostAttributes::BestScore => "best_score_",
+            CommonCatBoostAttributes::Classes => "classes_",
         }
-
-        Ok(())
     }
 
-    fn __clear__(&mut self) {
-        self.preprocessor = None;
+    pub fn to_vec() -> Vec<CommonCatBoostAttributes> {
+        vec![
+            CommonCatBoostAttributes::TreeCount,
+            CommonCatBoostAttributes::FeatureImportances,
+            CommonCatBoostAttributes::LearningRate,
+            CommonCatBoostAttributes::FeatureNames,
+            CommonCatBoostAttributes::BestScore,
+            CommonCatBoostAttributes::Classes,
+        ]
     }
+}
+
+pub fn set_catboost_model_attribute(
+    model: &Bound<'_, PyAny>,
+    dict: &Bound<'_, PyDict>,
+) -> PyResult<()> {
+    let attributes = CommonCatBoostAttributes::to_vec();
+
+    for attribute in attributes {
+        if model.hasattr(attribute.to_str())? {
+            dict.set_item(attribute.to_str(), model.getattr(attribute.to_str())?)?;
+        }
+    }
+
+    Ok(())
 }
