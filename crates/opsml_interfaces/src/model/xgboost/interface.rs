@@ -1,7 +1,7 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
 use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
@@ -204,6 +204,7 @@ impl XGBoostModel {
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
+                r#type: ProcessorType::Preprocessor,
             })
         };
 

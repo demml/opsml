@@ -11,7 +11,7 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
 use crate::ModelType;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
@@ -623,6 +623,45 @@ impl HuggingFaceModel {
 }
 
 impl HuggingFaceModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .keys()
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+        let sklearn_interface = SklearnModel {
+            preprocessor: None,
+            preprocessor_name,
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            metadata.task_type.clone(),
+            Some(metadata.schema.clone()),
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+        interface.model_type = metadata.model_type.clone();
+        interface.interface_type = metadata.interface_type.clone();
+
+        // convert onnx session to to Py<OnnxSession>
+        interface.onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        Ok(Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     /// Load the preprocessor from a file
     ///
     /// # Arguments
@@ -816,6 +855,7 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.tokenizer_name.clone(),
                 uri: tokenizer_path,
+                r#type: ProcessorType::Tokenizer,
             });
         }
 
@@ -825,6 +865,7 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.feature_extractor_name.clone(),
                 uri: feature_extractor_path,
+                r#type: ProcessorType::FeatureExtractor,
             });
         }
 
@@ -834,6 +875,7 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.image_processor_name.clone(),
                 uri: image_processor_path,
+                r#type: ProcessorType::ImageProcessor,
             });
         }
 

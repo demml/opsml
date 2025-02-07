@@ -323,3 +323,23 @@ pub const AVAILABLE_MODEL_TYPES: &[ModelType] = &[
     ModelType::Catboost,
     ModelType::Vowpal,
 ];
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub enum ProcessorType {
+    Preprocessor,
+    Tokenizer,
+    FeatureExtractor,
+    ImageProcessor,
+}
+
+impl Display for ProcessorType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ProcessorType::Preprocessor => write!(f, "preprocessor"),
+            ProcessorType::Tokenizer => write!(f, "tokenizer"),
+            ProcessorType::FeatureExtractor => write!(f, "feature_extractor"),
+            ProcessorType::ImageProcessor => write!(f, "image_processor"),
+        }
+    }
+}

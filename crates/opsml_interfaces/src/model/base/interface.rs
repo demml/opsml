@@ -3,7 +3,7 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
-use crate::types::{FeatureSchema, ModelInterfaceType, ModelType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ModelType, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
@@ -34,13 +34,15 @@ pub struct DataProcessor {
     pub name: String,
     #[pyo3(get)]
     pub uri: PathBuf,
+    #[pyo3(get)]
+    pub r#type: ProcessorType,
 }
 
 #[pymethods]
 impl DataProcessor {
     #[new]
-    pub fn new(name: String, uri: PathBuf) -> Self {
-        DataProcessor { name, uri }
+    pub fn new(name: String, uri: PathBuf, r#type: ProcessorType) -> Self {
+        DataProcessor { name, uri, r#type }
     }
 
     pub fn __str__(&self) -> String {

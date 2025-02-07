@@ -2,8 +2,8 @@ use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveM
 use crate::model::ModelInterface;
 use crate::model::TaskType;
 use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{OnnxSession, ProcessorType};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use pyo3::gc::PyVisit;
@@ -155,6 +155,7 @@ impl CatBoostModel {
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
+                r#type: ProcessorType::Preprocessor,
             })
         };
 

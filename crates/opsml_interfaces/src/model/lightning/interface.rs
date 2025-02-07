@@ -4,7 +4,7 @@ use crate::data::DataInterface;
 use crate::model::torch::TorchSampleData;
 use crate::model::ModelInterface;
 use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
+use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
 use crate::ModelType;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
@@ -242,6 +242,7 @@ impl LightningModel {
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
+                r#type: ProcessorType::Preprocessor,
             })
         };
 
