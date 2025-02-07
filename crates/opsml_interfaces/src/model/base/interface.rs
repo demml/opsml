@@ -219,15 +219,16 @@ pub struct ModelInterface {
 #[pymethods]
 impl ModelInterface {
     #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,drift_profile=None))]
+    #[allow(clippy::too_many_arguments, clippy::unused_variables)]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, schema=None,drift_profile=None, **_kwargs))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         // Extract the sample data
         let sample_data = match sample_data {
@@ -263,7 +264,7 @@ impl ModelInterface {
         Ok(ModelInterface {
             model,
             data_type: sample_data.get_data_type(),
-            task_type,
+            task_type: task_type.unwrap_or(TaskType::Other),
             schema,
             sample_data,
             model_type,
@@ -499,6 +500,29 @@ impl ModelInterface {
         }
 
         Ok(())
+    }
+
+    #[staticmethod]
+    pub fn from_metadata(
+        py: Python,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<ModelInterface> {
+        let interface = ModelInterface {
+            model: None,
+            data_type: metadata.data_type.clone(),
+            task_type: metadata.task_type.clone(),
+            schema: metadata.schema.clone(),
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            onnx_session: metadata
+                .onnx_session
+                .as_ref()
+                .map(|session| Py::new(py, session.clone()).unwrap()),
+            drift_profile: vec![],
+            sample_data: SampleData::default(),
+        };
+
+        Ok(interface)
     }
 }
 

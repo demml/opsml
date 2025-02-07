@@ -229,7 +229,7 @@ pub struct HuggingFaceModel {
 impl HuggingFaceModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -238,7 +238,7 @@ impl HuggingFaceModel {
         image_processor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         hf_task: Option<HuggingFaceTask>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
@@ -312,7 +312,7 @@ impl HuggingFaceModel {
         // process preprocessor
 
         let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -656,8 +656,9 @@ impl HuggingFaceModel {
             py,
             None,
             None,
-            metadata.task_type.clone(),
+            Some(metadata.task_type.clone()),
             Some(metadata.schema.clone()),
+            None,
             None,
         )?;
 

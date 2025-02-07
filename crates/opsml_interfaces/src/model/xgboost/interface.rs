@@ -79,13 +79,13 @@ pub struct XGBoostModel {
 impl XGBoostModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
@@ -103,8 +103,15 @@ impl XGBoostModel {
             }
         }
 
-        let mut model_interface =
-            ModelInterface::new(py, model, sample_data, task_type, schema, drift_profile)?;
+        let mut model_interface = ModelInterface::new(
+            py,
+            model,
+            sample_data,
+            task_type,
+            schema,
+            drift_profile,
+            None,
+        )?;
 
         model_interface.interface_type = ModelInterfaceType::XGBoost;
         let mut preprocessor_name = CommonKwargs::Undefined.to_string();
@@ -377,8 +384,9 @@ impl XGBoostModel {
             py,
             None,
             None,
-            metadata.task_type.clone(),
+            Some(metadata.task_type.clone()),
             Some(metadata.schema.clone()),
+            None,
             None,
         )?;
 

@@ -5,6 +5,7 @@ from .. import model  # noqa: F401
 HuggingFaceORTModel = model.HuggingFaceORTModel
 HuggingFaceOnnxArgs = model.HuggingFaceOnnxArgs
 ModelInterfaceMetadata = model.ModelInterfaceMetadata
+ModelInterfaceSaveMetadata = model.ModelInterfaceSaveMetadata
 HuggingFaceTask = model.HuggingFaceTask
 ModelInterfaceType = model.ModelInterfaceType
 ModelInterface = model.ModelInterface
@@ -25,6 +26,7 @@ __all__ = [
     "HuggingFaceORTModel",
     "HuggingFaceOnnxArgs",
     "ModelInterfaceMetadata",
+    "ModelInterfaceSaveMetadata",
     "ModelInterfaceType",
     "ModelInterface",
     "TaskType",
