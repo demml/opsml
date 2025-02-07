@@ -1,4 +1,6 @@
 use crate::model::base::utils::OnnxExtension;
+use crate::model::onnx::catboost::CatBoostOnnxModelConverter;
+use crate::model::onnx::huggingface::HuggingFaceOnnxModelConverter;
 use crate::model::onnx::lightgbm::LightGBMOnnxModelConverter;
 use crate::model::onnx::lightning::LightningOnnxModelConverter;
 use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
@@ -9,27 +11,29 @@ use crate::OnnxSession;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use tracing::{debug, error, span, Level};
+use std::path::Path;
+
+use tracing::{debug, error, instrument};
 
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
+    #[instrument(
+        skip(py, model, sample_data, model_interface_type, model_type, path, kwargs),
+        name = "convert_model_to_onnx"
+    )]
     pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,
         sample_data: &T,
         model_interface_type: &ModelInterfaceType,
         model_type: &ModelType,
+        path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<OnnxSession>
     where
         T: OnnxExtension + std::fmt::Debug,
     {
-        let span = span!(Level::INFO, "Onnx Conversion");
-        let _enter = span.enter();
-
-        debug!("sample_data: {:?}", sample_data);
-
         // check if sample data is none
         if sample_data.is_none() {
             error!("Cannot save ONNX model without sample data");
@@ -63,6 +67,16 @@ impl OnnxModelConverter {
                 debug!("Converting Lightning model to ONNX");
                 let converter = LightningOnnxModelConverter::default();
                 converter.convert_model(py, model, sample_data, kwargs)
+            }
+            ModelInterfaceType::HuggingFace => {
+                debug!("Converting HuggingFace model to ONNX");
+                let converter = HuggingFaceOnnxModelConverter::new(path);
+                converter.convert_model(py, kwargs)
+            }
+            ModelInterfaceType::CatBoost => {
+                debug!("Converting CatBoost model to ONNX");
+                let converter = CatBoostOnnxModelConverter::default();
+                converter.convert_model(py, model, path, kwargs)
             }
             _ => Err(OpsmlError::new_err("Model type not supported")),
         }

@@ -14,10 +14,9 @@ pub use base::{
     DataProcessor, InterfaceDataType, LoadKwargs, ModelInterface, ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata, SampleData, SaveKwargs, TaskType,
 };
-pub use catboost::CatBoostModelInterfaceMetadata;
+pub use catboost::CatBoostModel;
 pub use huggingface::{
-    HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel, HuggingFaceOnnxArgs,
-    HuggingFaceOnnxSaveArgs, HuggingFaceTask,
+    HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceTask,
 };
 pub use lightgbm::{LightGBMModel, LightGBMModelInterfaceMetadata};
 pub use lightning::LightningModel;

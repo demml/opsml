@@ -5,13 +5,15 @@ use crate::types::{FeatureSchema, ModelInterfaceType};
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use pyo3::gc::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use pyo3::PyTraverseError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, Level};
+use tracing::{debug, error, info, instrument};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -66,7 +68,7 @@ impl LightGBMModelInterfaceMetadata {
 #[derive(Debug)]
 pub struct LightGBMModel {
     #[pyo3(get)]
-    pub preprocessor: PyObject,
+    pub preprocessor: Option<PyObject>,
 
     #[pyo3(get, set)]
     preprocessor_name: String,
@@ -112,9 +114,9 @@ impl LightGBMModel {
                     .getattr("__class__")?
                     .getattr("__name__")?
                     .to_string();
-                preprocessor.into_py_any(py)?
+                Some(preprocessor.into_py_any(py)?)
             }
-            None => py.None(),
+            None => None,
         };
 
         Ok((
@@ -128,11 +130,13 @@ impl LightGBMModel {
 
     #[getter]
     pub fn get_preprocessor<'py>(&self, py: Python<'py>) -> Option<Bound<'py, PyAny>> {
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             None
         } else {
             Some(
                 self.preprocessor
+                    .as_ref()
+                    .unwrap()
                     .clone_ref(py)
                     .into_bound_py_any(py)
                     .unwrap(),
@@ -148,7 +152,7 @@ impl LightGBMModel {
         preprocessor: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
         if PyAnyMethods::is_none(preprocessor) {
-            self.preprocessor = py.None();
+            self.preprocessor = None;
             self.preprocessor_name = CommonKwargs::Undefined.to_string();
             Ok(())
         } else {
@@ -157,7 +161,7 @@ impl LightGBMModel {
                 .getattr("__name__")?
                 .to_string();
 
-            self.preprocessor = preprocessor.into_py_any(py)?;
+            self.preprocessor = Some(preprocessor.into_py_any(py)?);
             self.preprocessor_name = preprocessor_name;
             Ok(())
         }
@@ -175,6 +179,7 @@ impl LightGBMModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -182,16 +187,13 @@ impl LightGBMModel {
         to_onnx: bool,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
-        let span = span!(Level::INFO, "Saving LightGBMModel Interface").entered();
-        let _ = span.enter();
-
         debug!("Saving lightgbm interface");
 
         // parse the save args
         let (onnx_kwargs, model_kwargs, preprocessor_kwargs) = parse_save_kwargs(py, &save_kwargs);
 
         // save the preprocessor if it exists
-        let preprocessor_entity = if self_.preprocessor.is_none(py) {
+        let preprocessor_entity = if self_.preprocessor.is_none() {
             None
         } else {
             let uri = self_.save_preprocessor(py, &path, preprocessor_kwargs.as_ref())?;
@@ -240,7 +242,7 @@ impl LightGBMModel {
             sample_data_uri,
             onnx_model_uri,
             drift_profile_uri,
-            extra_metadata: HashMap::new(),
+            extra: None,
             save_kwargs,
         };
 
@@ -281,7 +283,7 @@ impl LightGBMModel {
 
         if model {
             let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-            self_.as_super().model = model;
+            self_.as_super().model = Some(model);
         }
 
         if preprocessor {
@@ -307,6 +309,17 @@ impl LightGBMModel {
 
         Ok(())
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref preprocessor) = self.preprocessor {
+            visit.call(preprocessor)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.preprocessor = None;
+    }
 }
 
 impl LightGBMModel {
@@ -317,17 +330,15 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn save_preprocessor(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving preprocessor").entered();
-        let _ = span.enter();
-
         // check if data is None
-        if self.preprocessor.is_none(py) {
+        if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -365,7 +376,9 @@ impl LightGBMModel {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = joblib.call_method("load", (load_path,), kwargs)?.into();
+        let preprocessor = joblib.call_method("load", (load_path,), kwargs)?;
+
+        self.preprocessor = Some(preprocessor.unbind());
 
         Ok(())
     }
@@ -377,18 +390,16 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip(self_, py, path, kwargs))]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving Model").entered();
-        let _ = span.enter();
-
         let super_ = self_.as_ref();
 
-        if super_.model.is_none(py) {
+        if super_.model.is_none() {
             error!("No model detected in interface for saving");
             return Err(OpsmlError::new_err(
                 "No model detected in interface for saving",
@@ -401,6 +412,8 @@ impl LightGBMModel {
         // Save the data using joblib
         super_
             .model
+            .as_ref()
+            .unwrap()
             .call_method(py, "save_model", (full_save_path,), kwargs)?;
 
         info!("Model saved");
@@ -417,15 +430,13 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of the load
+    #[instrument(skip(self, py, path, kwargs))]
     pub fn load_model<'py>(
         &self,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PyObject> {
-        let span = span!(Level::INFO, "Loading Model").entered();
-        let _ = span.enter();
-
         let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
 
         let booster = py.import("lightgbm")?.getattr("Booster")?;

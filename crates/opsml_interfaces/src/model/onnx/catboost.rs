@@ -1,25 +1,22 @@
-use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::OnnxSession;
-use crate::types::ModelType;
 use opsml_error::OpsmlError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::fs;
-use std::path::PathBuf;
-use tempfile::tempdir;
+use std::path::{Path, PathBuf};
 use tracing::debug;
 
-pub struct LightningOnnxModelConverter {}
+pub struct CatBoostOnnxModelConverter {}
 
-impl Default for LightningOnnxModelConverter {
+impl Default for CatBoostOnnxModelConverter {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl LightningOnnxModelConverter {
+impl CatBoostOnnxModelConverter {
     pub fn new() -> Self {
-        LightningOnnxModelConverter {}
+        CatBoostOnnxModelConverter {}
     }
 
     fn get_onnx_session(&self, py: Python, model_path: &PathBuf) -> PyResult<OnnxSession> {
@@ -36,30 +33,24 @@ impl LightningOnnxModelConverter {
             .map_err(|e| OpsmlError::new_err(format!("Failed to create ONNX session: {}", e)))
     }
 
-    pub fn convert_model<'py, T>(
+    pub fn convert_model<'py>(
         &self,
         py: Python<'py>,
         model: &Bound<'py, PyAny>,
-        sample_data: &T,
+        path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<OnnxSession>
-    where
-        T: OnnxExtension,
-    {
-        debug!("Step 1: Converting torch model to ONNX");
+    ) -> PyResult<OnnxSession> {
+        debug!("Step 1: Converting CatBoost model to ONNX");
 
-        let onnx_data = sample_data.get_data_for_onnx(py, &ModelType::Pytorch)?;
-
-        let tmp_dir = tempdir()?;
-        // create path in temp dir
-        let tmp_path = tmp_dir.path().join("model.onnx");
-
-        model
-            .call_method("to_onnx", (&tmp_path, onnx_data), kwargs)
-            .map_err(|e| OpsmlError::new_err(format!("Failed to convert model to ONNX: {}", e)))?;
+        let args = (path,);
+        let onnx_kwargs = PyDict::new(py);
+        onnx_kwargs.set_item("format", "onnx")?;
+        onnx_kwargs.set_item("export_parameters", kwargs)?;
+        model.call_method("save_model", args, Some(&onnx_kwargs))?;
 
         debug!("Step 2: Extracting ONNX schema");
-        let onnx_session = self.get_onnx_session(py, &tmp_path);
+
+        let onnx_session = self.get_onnx_session(py, &path.to_path_buf());
         debug!("ONNX model conversion complete");
 
         onnx_session

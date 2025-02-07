@@ -98,6 +98,9 @@ pub struct OnnxSchema {
 
     #[pyo3(get)]
     pub feature_names: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub onnx_type: String,
 }
 
 #[pymethods]
@@ -115,6 +118,7 @@ impl OnnxSchema {
             output_features,
             onnx_version,
             feature_names: feature_names.unwrap_or_default(),
+            onnx_type: "onnx".to_string(),
         }
     }
     pub fn __str__(&self) -> String {
@@ -155,6 +159,7 @@ pub enum ModelType {
     XgbClassifier,
     XgbBooster,
     LgbmBooster,
+    TensorFlow,
     TfKeras,
     Pytorch,
     PytorchLightning,
@@ -180,6 +185,7 @@ impl Display for ModelType {
             ModelType::XgbClassifier => "XGBClassifier",
             ModelType::XgbBooster => "Booster",
             ModelType::LgbmBooster => "Booster",
+            ModelType::TensorFlow => "TensorFlow",
             ModelType::TfKeras => "keras",
             ModelType::Pytorch => "pytorch",
             ModelType::PytorchLightning => "pytorch_lightning",
@@ -213,10 +219,14 @@ impl ModelType {
                     ModelType::XgbBooster
                 }
             }
+            "tensorflow" => ModelType::TensorFlow,
             "keras" => ModelType::TfKeras,
             "pytorch" => ModelType::Pytorch,
             "pytorch_lightning" => ModelType::PytorchLightning,
             "CatBoost" => ModelType::Catboost,
+            "CatBoostRegressor" => ModelType::Catboost,
+            "CatBoostClassifier" => ModelType::Catboost,
+            "CatBoostRanker" => ModelType::Catboost,
             "VowpalWabbit" => ModelType::Vowpal,
             _ => ModelType::Unknown,
         }

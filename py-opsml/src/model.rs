@@ -1,10 +1,8 @@
 use opsml_interfaces::{
-    CatBoostModelInterfaceMetadata, DataProcessor, HuggingFaceModelInterfaceMetadata,
-    HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModel,
-    LightGBMModelInterfaceMetadata, LightningModel, LoadKwargs, ModelInterface,
+    CatBoostModel, DataProcessor, HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs,
+    HuggingFaceTask, LightGBMModel, LightningModel, LoadKwargs, ModelInterface,
     ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession,
-    SaveKwargs, SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata,
-    TorchModel, VowpalWabbitInterfaceMetadata, XGBoostModel, XGBoostModelInterfaceMetadata,
+    SaveKwargs, SklearnModel, TaskType, TorchModel, XGBoostModel,
 };
 
 use pyo3::prelude::*;
@@ -14,7 +12,6 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_interfaces
     m.add_class::<HuggingFaceOnnxArgs>()?;
     m.add_class::<HuggingFaceORTModel>()?;
-    m.add_class::<HuggingFaceOnnxSaveArgs>()?;
     m.add_class::<TaskType>()?;
 
     // helper types
@@ -24,6 +21,7 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<LoadKwargs>()?;
     m.add_class::<ModelInterfaceType>()?;
     m.add_class::<ModelType>()?;
+    m.add_class::<HuggingFaceTask>()?;
 
     // Model Interface
     m.add_class::<ModelInterfaceMetadata>()?;
@@ -34,15 +32,10 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<XGBoostModel>()?;
     m.add_class::<TorchModel>()?;
     m.add_class::<LightningModel>()?;
+    m.add_class::<HuggingFaceModel>()?;
+    m.add_class::<CatBoostModel>()?;
 
     // Model Interface args
-    m.add_class::<CatBoostModelInterfaceMetadata>()?;
-    m.add_class::<HuggingFaceModelInterfaceMetadata>()?;
-    m.add_class::<LightGBMModelInterfaceMetadata>()?;
-    m.add_class::<SklearnModelInterfaceMetadata>()?;
-    m.add_class::<TensorFlowInterfaceMetadata>()?;
-    m.add_class::<VowpalWabbitInterfaceMetadata>()?;
-    m.add_class::<XGBoostModelInterfaceMetadata>()?;
 
     Ok(())
 }

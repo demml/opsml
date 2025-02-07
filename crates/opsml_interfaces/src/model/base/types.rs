@@ -1,9 +1,12 @@
-use opsml_error::TypeError;
+use crate::model::huggingface::types::HuggingFaceOnnxArgs;
+use opsml_error::{OpsmlError, TypeError};
 use opsml_utils::{json_to_pyobject, pyobject_to_json, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::Value;
 
 #[pyclass(eq)]
 #[derive(PartialEq, Debug)]
@@ -29,7 +32,7 @@ impl InterfaceDataType {
 }
 
 #[pyclass(eq)]
-#[derive(PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum TaskType {
     Classification,
     Regression,
@@ -64,9 +67,9 @@ pub enum TaskType {
 #[pyclass]
 #[derive(Debug, Default)]
 pub struct SaveKwargs {
-    onnx: Option<Py<PyDict>>,
-    model: Option<Py<PyDict>>,
-    preprocessor: Option<Py<PyDict>>,
+    pub onnx: Option<Py<PyDict>>,
+    pub model: Option<Py<PyDict>>,
+    pub preprocessor: Option<Py<PyDict>>,
 }
 
 #[pymethods]
@@ -74,22 +77,62 @@ impl SaveKwargs {
     #[new]
     #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
     pub fn new<'py>(
-        onnx: Option<Bound<'py, PyDict>>,
+        onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> Self {
-        let onnx = onnx.map(|onnx| onnx.unbind());
+    ) -> PyResult<Self> {
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let onnx = onnx.map(|onnx| {
+            if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
+                let onnx_dict = onnx.call_method0("to_dict").unwrap();
+                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
+            } else if onnx.is_instance_of::<PyDict>() {
+                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
+            } else {
+                Err(OpsmlError::new_err("Invalid onnx type"))
+            }
+        });
+
+        let onnx = match onnx {
+            Some(Ok(onnx)) => Some(onnx),
+            Some(Err(e)) => return Err(e),
+            None => None,
+        };
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
-        Self {
+        Ok(Self {
             onnx,
             model,
             preprocessor,
-        }
+        })
     }
 
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__json__(self)
+    pub fn __str__(&self, py: Python) -> String {
+        let mut onnx = Value::Null;
+        let mut model = Value::Null;
+        let mut preprocessor = Value::Null;
+
+        if let Some(onnx_args) = &self.onnx {
+            onnx = pyobject_to_json(onnx_args.bind(py)).unwrap();
+        }
+
+        if let Some(model_args) = &self.model {
+            model = pyobject_to_json(model_args.bind(py)).unwrap();
+        }
+
+        if let Some(preprocessor_args) = &self.preprocessor {
+            preprocessor = pyobject_to_json(preprocessor_args.bind(py)).unwrap();
+        }
+
+        let json = json!({
+            "onnx": onnx,
+            "model": model,
+            "preprocessor": preprocessor,
+        });
+
+        PyHelperFuncs::__str__(json)
     }
 
     pub fn model_dump_json(&self) -> String {
@@ -98,7 +141,6 @@ impl SaveKwargs {
 
     #[staticmethod]
     pub fn model_validate_json(json_string: String) -> SaveKwargs {
-        println!("json_string: {:?}", json_string);
         serde_json::from_str(&json_string).unwrap()
     }
 }
@@ -270,18 +312,38 @@ impl LoadKwargs {
     #[new]
     #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
     pub fn new<'py>(
-        onnx: Option<Bound<'py, PyDict>>,
+        onnx: Option<Bound<'py, PyAny>>,
         model: Option<Bound<'py, PyDict>>,
         preprocessor: Option<Bound<'py, PyDict>>,
-    ) -> Self {
-        let onnx = onnx.map(|onnx| onnx.unbind());
+    ) -> PyResult<Self> {
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let onnx = onnx.map(|onnx| {
+            if onnx.is_instance_of::<HuggingFaceOnnxArgs>() {
+                let onnx_dict = onnx.call_method0("to_dict").unwrap();
+                Ok(onnx_dict.downcast::<PyDict>().unwrap().clone().unbind())
+            } else if onnx.is_instance_of::<PyDict>() {
+                Ok(onnx.downcast::<PyDict>().unwrap().clone().unbind())
+            } else {
+                // return error
+                Err(OpsmlError::new_err("Invalid onnx type"))
+            }
+        });
+
+        // check for error
+        let onnx = match onnx {
+            Some(Ok(onnx)) => Some(onnx),
+            Some(Err(e)) => return Err(e),
+            None => None,
+        };
+
         let model = model.map(|model| model.unbind());
         let preprocessor = preprocessor.map(|preprocessor| preprocessor.unbind());
-        Self {
+        Ok(Self {
             onnx,
             model,
             preprocessor,
-        }
+        })
     }
 }
 
@@ -319,6 +381,116 @@ impl Clone for LoadKwargs {
                 model,
                 preprocessor,
             }
+        })
+    }
+}
+
+#[pyclass]
+#[derive(Debug)]
+pub struct ExtraMetadata {
+    metadata: Py<PyDict>,
+}
+
+#[pymethods]
+impl ExtraMetadata {
+    #[new]
+    #[pyo3(signature = (metadata))]
+    pub fn new(metadata: Bound<'_, PyDict>) -> Self {
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let metadata = metadata.unbind();
+        Self { metadata }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__json__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> SaveKwargs {
+        serde_json::from_str(&json_string).unwrap()
+    }
+}
+
+impl Serialize for ExtraMetadata {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        Python::with_gil(|py| {
+            let mut state = serializer.serialize_struct("ExtraMetadata", 1)?;
+            let metadata = pyobject_to_json(self.metadata.bind(py)).unwrap();
+
+            state.serialize_field("metadata", &metadata)?;
+            state.end()
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for ExtraMetadata {
+    fn deserialize<D>(deserializer: D) -> Result<ExtraMetadata, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct ExtraMetadataVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ExtraMetadataVisitor {
+            type Value = ExtraMetadata;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct ExtraMetadata")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<ExtraMetadata, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                Python::with_gil(|py| {
+                    let mut metadata = None;
+
+                    while let Some(key) = map.next_key::<String>()? {
+                        match key.as_str() {
+                            "metadata" => {
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        metadata = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        metadata = Some(dict.unbind());
+                                    }
+                                }
+                            }
+
+                            _ => {
+                                let _: serde::de::IgnoredAny = map.next_value()?;
+                            }
+                        }
+                    }
+                    let kwargs = ExtraMetadata {
+                        metadata: metadata.unwrap(),
+                    };
+                    Ok(kwargs)
+                })
+            }
+        }
+
+        deserializer.deserialize_struct("SaveKwargs", &["onnx", "model"], ExtraMetadataVisitor)
+    }
+}
+
+impl Clone for ExtraMetadata {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let metadata = self.metadata.clone_ref(py);
+
+            ExtraMetadata { metadata }
         })
     }
 }

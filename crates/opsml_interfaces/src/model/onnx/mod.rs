@@ -1,4 +1,6 @@
+pub mod catboost;
 pub mod converter;
+pub mod huggingface;
 pub mod lightgbm;
 pub mod lightning;
 pub mod sklearn;
@@ -7,7 +9,9 @@ pub mod types;
 pub mod updater;
 pub mod xgboost;
 
+pub use catboost::*;
 pub use converter::*;
+pub use huggingface::*;
 pub use lightgbm::*;
 pub use lightning::*;
 pub use sklearn::*;

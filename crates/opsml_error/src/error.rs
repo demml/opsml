@@ -268,4 +268,28 @@ impl From<OnnxError> for PyErr {
     }
 }
 
+impl From<PyErr> for OnnxError {
+    fn from(err: PyErr) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum InterfaceError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<InterfaceError> for PyErr {
+    fn from(err: InterfaceError) -> PyErr {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+    }
+}
+
+impl From<PyErr> for InterfaceError {
+    fn from(err: PyErr) -> Self {
+        InterfaceError::Error(err.to_string())
+    }
+}
+
 create_exception!(opsml_error, OpsmlError, PyException);
