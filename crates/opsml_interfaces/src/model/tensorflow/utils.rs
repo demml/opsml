@@ -296,7 +296,7 @@ impl TensorFlowSampleData {
                 ))
             }
 
-            DataType::TensorflowTensor => {
+            DataType::TensorFlowTensor => {
                 let data = load_from_joblib(py, path)?;
                 Ok(TensorFlowSampleData::Tensor(data.clone().unbind()))
             }
@@ -307,7 +307,7 @@ impl TensorFlowSampleData {
 
     pub fn get_data_type(&self) -> DataType {
         match self {
-            TensorFlowSampleData::Tensor(_) => DataType::TensorflowTensor,
+            TensorFlowSampleData::Tensor(_) => DataType::TensorFlowTensor,
             TensorFlowSampleData::List(_) => DataType::List,
             TensorFlowSampleData::Tuple(_) => DataType::Tuple,
             TensorFlowSampleData::Dict(_) => DataType::Dict,
