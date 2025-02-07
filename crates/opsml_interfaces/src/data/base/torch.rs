@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(extends=DataInterface, subclass)]
 pub struct TorchData {}
@@ -26,13 +26,14 @@ impl TorchData {
         data_profile: Option<DataProfile>,
     ) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
+
         let data = match data {
             Some(data) => {
                 // check if data is a numpy array
                 // get type name of data
-                let torch = py.import("torch")?.getattr("Tensor")?;
+                let tensor = py.import("torch")?.getattr("Tensor")?;
                 // check if data is a numpy array
-                if data.is_instance(&torch).unwrap() {
+                if data.is_instance(&tensor).unwrap() {
                     data.into_py_any(py)?
                 } else {
                     return Err(OpsmlError::new_err("Data must be a Torch tensor"));
@@ -75,10 +76,10 @@ impl TorchData {
         } else {
             // check if data is a numpy array
             // get type name of data
-            let numpy = py.import("torch")?.getattr("Tensor")?;
+            let tensor = py.import("torch")?.getattr("Tensor")?;
 
             // check if data is a numpy array
-            if data.is_instance(&numpy).unwrap() {
+            if data.is_instance(&tensor).unwrap() {
                 parent.data = data.into_py_any(py)?;
                 Ok(())
             } else {
@@ -152,5 +153,26 @@ impl TorchData {
         self_.as_super().data = data.into();
 
         Ok(())
+    }
+}
+
+impl TorchData {
+    pub fn from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
+
+        let numpy = PyModule::import(py, "torch")?;
+
+        // Load the data using numpy
+        let data = numpy.call_method("load", (load_path,), kwargs)?;
+
+        let interface = TorchData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
     }
 }

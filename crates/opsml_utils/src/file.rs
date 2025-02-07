@@ -1,4 +1,6 @@
-use opsml_error::error::OpsmlError;
+use std::path::PathBuf;
+
+use opsml_error::error::{OpsmlError, UtilError};
 use pyo3::prelude::*;
 use walkdir::WalkDir;
 
@@ -35,5 +37,19 @@ impl FileUtils {
         // raise error if file not found
         let msg = format!("File not found: {}", filepath);
         Err(OpsmlError::new_err(msg))
+    }
+}
+
+impl FileUtils {
+    pub fn list_files(path: PathBuf) -> Result<Vec<PathBuf>, UtilError> {
+        let mut files = Vec::new();
+        for entry in WalkDir::new(path) {
+            let entry =
+                entry.map_err(|e| UtilError::Error(format!("Unable to read directory: {}", e)))?;
+            if entry.file_type().is_file() {
+                files.push(entry.path().to_path_buf());
+            }
+        }
+        Ok(files)
     }
 }

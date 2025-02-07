@@ -8,10 +8,12 @@ use futures_util::task::{Context, Poll};
 use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
-use opsml_contracts::{FileInfo, UploadResponse};
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::StorageType;
+use opsml_types::{
+    contracts::{FileInfo, UploadResponse},
+    StorageType,
+};
 use reqwest::multipart::{Form, Part};
 use std::fs::{self};
 use std::path::{Path, PathBuf};

@@ -1,10 +1,11 @@
 use opsml_interfaces::{
-    CatBoostModelInterfaceMetadata, HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel,
-    HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModelInterfaceMetadata,
-    LightningInterfaceMetadata, ModelDataInterfaceSaveMetadata, ModelInterface,
-    ModelInterfaceMetadata, ModelInterfaceType, ModelSaveMetadata, SklearnModelInterfaceMetadata,
-    TaskType, TensorFlowInterfaceMetadata, TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs,
-    VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
+    CatBoostModelInterfaceMetadata, DataProcessor, HuggingFaceModelInterfaceMetadata,
+    HuggingFaceORTModel, HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModel,
+    LightGBMModelInterfaceMetadata, LightningInterfaceMetadata, ModelInterface,
+    ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession,
+    SaveArgs, SklearnModel, SklearnModelInterfaceMetadata, TaskType, TensorFlowInterfaceMetadata,
+    TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs, VowpalWabbitInterfaceMetadata,
+    XGBoostModel, XGBoostModelInterfaceMetadata,
 };
 
 use pyo3::prelude::*;
@@ -19,10 +20,20 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TorchSaveArgs>()?;
     m.add_class::<TaskType>()?;
 
+    // helper types
+    m.add_class::<DataProcessor>()?;
+    m.add_class::<OnnxSession>()?;
+    m.add_class::<SaveArgs>()?;
+    m.add_class::<ModelInterfaceType>()?;
+    m.add_class::<ModelType>()?;
+
     // Model Interface
-    m.add_class::<ModelDataInterfaceSaveMetadata>()?;
     m.add_class::<ModelInterfaceMetadata>()?;
+    m.add_class::<ModelInterfaceSaveMetadata>()?;
     m.add_class::<ModelInterface>()?;
+    m.add_class::<SklearnModel>()?;
+    m.add_class::<LightGBMModel>()?;
+    m.add_class::<XGBoostModel>()?;
 
     // Model Interface args
     m.add_class::<CatBoostModelInterfaceMetadata>()?;
@@ -34,9 +45,6 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TorchInterfaceMetadata>()?;
     m.add_class::<VowpalWabbitInterfaceMetadata>()?;
     m.add_class::<XGBoostModelInterfaceMetadata>()?;
-    m.add_class::<ModelSaveMetadata>()?;
-    m.add_class::<ModelDataInterfaceSaveMetadata>()?;
-    m.add_class::<ModelInterfaceType>()?;
 
     Ok(())
 }

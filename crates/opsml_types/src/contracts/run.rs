@@ -1,4 +1,4 @@
-use opsml_cards::{HardwareMetrics, Metric, Parameter};
+use crate::cards::{HardwareMetrics, Metric, Parameter};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(extends=DataInterface, subclass)]
 #[derive(Debug, Clone)]
@@ -153,5 +153,26 @@ impl NumpyData {
         self_.as_super().data = data.into();
 
         Ok(())
+    }
+}
+
+impl NumpyData {
+    pub fn from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+
+        let numpy = PyModule::import(py, "numpy")?;
+
+        // Load the data using numpy
+        let data = numpy.call_method("load", (load_path,), kwargs)?;
+
+        let interface = NumpyData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
     }
 }

@@ -1,13 +1,12 @@
 use opsml_error::error::CardError;
 use opsml_error::OpsmlError;
-use opsml_interfaces::FeatureSchema;
+use opsml_interfaces::{FeatureSchema, OnnxSchema};
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
-use std::fmt;
 use walkdir::WalkDir;
 
 #[pyclass(eq)]
@@ -95,40 +94,6 @@ impl Description {
         // raise error if file not found
         let msg = format!("File not found: {}", filepath);
         Err(CardError::Error(msg))
-    }
-}
-
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct OnnxSchema {
-    #[pyo3(get, set)]
-    pub input_features: FeatureSchema,
-
-    #[pyo3(get, set)]
-    pub output_features: FeatureSchema,
-
-    #[pyo3(get, set)]
-    pub onnx_version: String,
-}
-
-#[pymethods]
-impl OnnxSchema {
-    #[new]
-    #[pyo3(signature = (input_features, output_features, onnx_version))]
-    fn new(
-        input_features: FeatureSchema,
-        output_features: FeatureSchema,
-        onnx_version: String,
-    ) -> Self {
-        OnnxSchema {
-            input_features,
-            output_features,
-            onnx_version,
-        }
-    }
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
     }
 }
 
@@ -392,65 +357,4 @@ impl BaseArgs {
             .map(|s| s.to_string())
             .ok_or_else(|| CardError::Error(format!("{} not provided", key)))
     }
-}
-
-#[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum CardTable {
-    Data,
-    Model,
-    Run,
-    Project,
-    Audit,
-    Pipeline,
-    Metrics,
-    HardwareMetrics,
-    Parameters,
-    Users,
-}
-
-impl fmt::Display for CardTable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let table_name = match self {
-            CardTable::Data => "opsml_data_registry",
-            CardTable::Model => "opsml_model_registry",
-            CardTable::Run => "opsml_run_registry",
-            CardTable::Project => "opsml_project_registry",
-            CardTable::Audit => "opsml_audit_registry",
-            CardTable::Pipeline => "opsml_pipeline_registry",
-            CardTable::Metrics => "opsml_run_metrics",
-            CardTable::HardwareMetrics => "opsml_run_hardware_metrics",
-            CardTable::Parameters => "opsml_run_parameters",
-            CardTable::Users => "opsml_users",
-        };
-        write!(f, "{}", table_name)
-    }
-}
-
-impl CardTable {
-    pub fn from_registry_type(registry_type: &RegistryType) -> Self {
-        match registry_type {
-            RegistryType::Data => CardTable::Data,
-            RegistryType::Model => CardTable::Model,
-            RegistryType::Run => CardTable::Run,
-            RegistryType::Project => CardTable::Project,
-            RegistryType::Audit => CardTable::Audit,
-            RegistryType::Pipeline => CardTable::Pipeline,
-            RegistryType::Metrics => CardTable::Metrics,
-            RegistryType::HardwareMetrics => CardTable::HardwareMetrics,
-            RegistryType::Parameters => CardTable::Parameters,
-            RegistryType::Users => CardTable::Users,
-        }
-    }
-}
-
-#[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum CardType {
-    Data,
-    Model,
-    Run,
-    Project,
-    Audit,
-    Pipeline,
 }

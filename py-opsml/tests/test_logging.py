@@ -1,8 +1,8 @@
-from opsml.core import LogLevel, OpsmlLogger
+from opsml.core import RustyLogger, LoggingConfig
 
 
 def test_loglevel():
-    logger = OpsmlLogger.get_logger(LogLevel.Info)
+    logger = RustyLogger.get_logger(LoggingConfig.default())
 
     logger.info("info")
     logger.debug("debug")

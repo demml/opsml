@@ -1,4 +1,4 @@
-use opsml_types::StorageType;
+use crate::StorageType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};

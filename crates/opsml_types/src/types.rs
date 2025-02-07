@@ -237,7 +237,7 @@ pub enum SaveName {
     Audit,
     PipelineCard,
     ModelMetadata,
-    TrainedModel,
+    Model,
     Preprocessor,
     OnnxModel,
     SampleModelData,
@@ -253,6 +253,7 @@ pub enum SaveName {
     OnnxConfig,
     Dataset,
     DriftProfile,
+    Drift,
     Sql,
 }
 
@@ -265,7 +266,7 @@ impl SaveName {
             "audit" => Some(SaveName::Audit),
             "pipelinecard" => Some(SaveName::PipelineCard),
             "model-metadata" => Some(SaveName::ModelMetadata),
-            "trained-model" => Some(SaveName::TrainedModel),
+            "model" => Some(SaveName::Model),
             "preprocessor" => Some(SaveName::Preprocessor),
             "onnx-model" => Some(SaveName::OnnxModel),
             "sample-model-data" => Some(SaveName::SampleModelData),
@@ -282,6 +283,7 @@ impl SaveName {
             "dataset" => Some(SaveName::Dataset),
             "drift-profile" => Some(SaveName::DriftProfile),
             "sql" => Some(SaveName::Sql),
+            "drift" => Some(SaveName::Drift),
             _ => None,
         }
     }
@@ -292,7 +294,7 @@ impl SaveName {
             SaveName::Audit => "audit",
             SaveName::PipelineCard => "pipelinecard",
             SaveName::ModelMetadata => "model-metadata",
-            SaveName::TrainedModel => "trained-model",
+            SaveName::Model => "model",
             SaveName::Preprocessor => "preprocessor",
             SaveName::OnnxModel => "onnx-model",
             SaveName::SampleModelData => "sample-model-data",
@@ -309,6 +311,7 @@ impl SaveName {
             SaveName::Dataset => "dataset",
             SaveName::DriftProfile => "drift-profile",
             SaveName::Sql => "sql",
+            SaveName::Drift => "drift",
         }
     }
 
@@ -330,7 +333,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Audit => Path::new("audit"),
             SaveName::PipelineCard => Path::new("pipelinecard"),
             SaveName::ModelMetadata => Path::new("model-metadata"),
-            SaveName::TrainedModel => Path::new("trained-model"),
+            SaveName::Model => Path::new("model"),
             SaveName::Preprocessor => Path::new("preprocessor"),
             SaveName::OnnxModel => Path::new("onnx-model"),
             SaveName::SampleModelData => Path::new("sample-model-data"),
@@ -347,7 +350,15 @@ impl AsRef<Path> for SaveName {
             SaveName::Dataset => Path::new("dataset"),
             SaveName::DriftProfile => Path::new("drift-profile"),
             SaveName::Sql => Path::new("sql"),
+            SaveName::Drift => Path::new("drift"),
         }
+    }
+}
+
+// impl PathBuf: From<SaveName>
+impl From<SaveName> for PathBuf {
+    fn from(save_name: SaveName) -> Self {
+        PathBuf::from(save_name.as_ref())
     }
 }
 
@@ -370,6 +381,7 @@ pub enum Suffix {
     Model,
     Numpy,
     Sql,
+    Bin,
 }
 
 #[pymethods]
@@ -393,6 +405,7 @@ impl Suffix {
             "model" => Some(Suffix::Model),
             "npy" => Some(Suffix::Numpy),
             "sql" => Some(Suffix::Sql),
+            "bin" => Some(Suffix::Bin),
             _ => None,
         }
     }
@@ -415,6 +428,7 @@ impl Suffix {
             Suffix::Model => "model",
             Suffix::Numpy => "npy",
             Suffix::Sql => "sql",
+            Suffix::Bin => "bin",
         }
     }
 
@@ -540,6 +554,7 @@ pub enum DataType {
     TorchTensor,
     TorchDataset,
     TensorflowTensor,
+    DMatrix,
     Tuple,
     List,
     Str,
