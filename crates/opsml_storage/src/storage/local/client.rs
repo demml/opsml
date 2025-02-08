@@ -19,7 +19,6 @@ use rayon::prelude::*;
 use reqwest::multipart::{Form, Part};
 use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::SystemTime;
@@ -28,8 +27,6 @@ use tokio::io::AsyncRead;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, instrument};
 use walkdir::WalkDir;
-
-const BUFFER_SIZE: usize = 1024 * 1024; // 1MB buffer
 
 // left off here
 // removed multiupload part and implemented put on each storage client
@@ -187,21 +184,11 @@ pub struct LocalStorageClient {
 impl LocalStorageClient {
     #[instrument(skip(self, path))]
     fn calculate_file_checksum(&self, path: &Path) -> Result<String, StorageError> {
-        let file = self.open(path)?;
-        let mut reader = BufReader::with_capacity(BUFFER_SIZE, file);
         let mut hasher = blake3::Hasher::new();
-        let mut buffer = vec![0; BUFFER_SIZE];
-
-        loop {
-            let bytes_read = reader.read(&mut buffer).map_err(|e| {
-                error!("Failed to read file: {}", e);
-                StorageError::Error(format!("Failed to read file: {}", e.to_string()))
-            })?;
-            if bytes_read == 0 {
-                break;
-            }
-            hasher.update(&buffer[..bytes_read]);
-        }
+        hasher.update_mmap(path).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            StorageError::Error(format!("Failed to read file: {}", e.to_string()))
+        })?;
 
         Ok(hasher.finalize().to_hex().to_string())
     }
@@ -836,7 +823,6 @@ mod tests {
 
         let nested_path = format!("nested/really/deep/file-{}.txt", rand_name);
         let rpath_nested = rpath.parent().unwrap().join(nested_path);
-
         storage_client.put(&lpath, &rpath_nested, false).await?;
 
         let path = storage_client.generate_presigned_url(&rpath, 10).await?;
@@ -856,10 +842,18 @@ mod tests {
         ];
 
         // calculate checksums
+        // time the checksum calculation
+        let start = std::time::Instant::now();
+
         let checksums =
             storage_client.calculate_dir_checksum(&storage_client.client.bucket.join(rpath_dir))?;
 
-        assert!(checksums.len() == 2);
+        let duration = start.elapsed();
+
+        println!("Time elapsed in checksum calculation: {:?}", duration);
+        println!("Checksums: {:?}", checksums);
+
+        assert!(checksums.len() == 3);
 
         // sort the blobs
         blobs.sort();
