@@ -15,6 +15,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyObject};
+use pyo3::{PyTraverseError, PyVisit};
 use serde::{
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
@@ -70,10 +71,10 @@ pub struct ModelCard {
     pub interface: Option<PyObject>,
 
     #[pyo3(get, set)]
-    pub name: String,
+    pub repository: String,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub name: String,
 
     #[pyo3(get, set)]
     pub contact: String,
@@ -267,6 +268,17 @@ impl ModelCard {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(&self)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref interface) = self.interface {
+            visit.call(interface)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.interface = None;
     }
 }
 
