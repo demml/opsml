@@ -324,7 +324,7 @@ impl PostgresQueryHelper {
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
                 for tag in tags.iter() {
-                    query.push_str(format!(" AND '{}' = ANY(tags)", tag).as_str());
+                    query.push_str(format!(" AND EXISTS(SELECT 1 FROM jsonb_array_elements(tags) WHERE value::text = '\"{}\"')", tag).as_str());
                 }
             }
 

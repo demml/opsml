@@ -162,6 +162,7 @@ impl SqlClient for PostgresClient {
         query_args: &CardQueryArgs,
     ) -> Result<CardResults, SqlError> {
         let query = PostgresQueryHelper::get_query_cards_query(table, query_args)?;
+
         match table {
             CardTable::Data => {
                 let card: Vec<DataCardRecord> = sqlx::query_as(&query)
