@@ -42,7 +42,7 @@ test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
 
 .PHONY: test.storage.local.server
 test.storage.local.server:
-	cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
+	cargo test --release -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
 
 ######## Server tests
 
