@@ -26,6 +26,7 @@ use std::time::SystemTime;
 use tokio::fs::File as TokioFile;
 use tokio::io::AsyncRead;
 use tokio_util::io::ReaderStream;
+use tracing::{debug, error, instrument};
 use walkdir::WalkDir;
 
 const BUFFER_SIZE: usize = 1024 * 1024; // 1MB buffer
@@ -184,6 +185,7 @@ pub struct LocalStorageClient {
 }
 
 impl LocalStorageClient {
+    #[instrument(skip(self, path))]
     fn calculate_file_checksum(&self, path: &Path) -> Result<String, StorageError> {
         let file = self.open(path)?;
         let mut reader = BufReader::with_capacity(BUFFER_SIZE, file);
@@ -192,6 +194,7 @@ impl LocalStorageClient {
 
         loop {
             let bytes_read = reader.read(&mut buffer).map_err(|e| {
+                error!("Failed to read file: {}", e);
                 StorageError::Error(format!("Failed to read file: {}", e.to_string()))
             })?;
             if bytes_read == 0 {
@@ -203,6 +206,7 @@ impl LocalStorageClient {
         Ok(hasher.finalize().to_hex().to_string())
     }
 
+    #[instrument(skip(self, path))]
     fn sync_find(&self, path: &Path) -> Result<Vec<PathBuf>, StorageError> {
         let mut files = Vec::new();
         let full_path = self.bucket.join(path);
@@ -211,18 +215,18 @@ impl LocalStorageClient {
         }
 
         for entry in WalkDir::new(full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                error!("Unable to read directory: {}", e);
+                StorageError::Error(format!("Unable to read directory: {}", e))
+            })?;
             if entry.file_type().is_file() {
                 let file_ = entry.path().to_path_buf();
-                let modified = file_
-                    .strip_prefix(&self.bucket)
-                    .map_err(|e| StorageError::Error(format!("Unable to strip prefix: {}", e)))?
-                    .strip_prefix("/")
-                    .map_err(|e| StorageError::Error(format!("Unable to strip prefix: {}", e)))?
+                let stripped_path = file_
+                    .strip_path(&self.bucket.to_str().unwrap())
+                    .strip_path("/")
                     .to_path_buf();
 
-                files.push(modified);
+                files.push(stripped_path);
             }
         }
 
@@ -235,6 +239,7 @@ impl LocalStorageClient {
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
     }
 
+    #[instrument(skip(self, dir_path))]
     pub fn calculate_dir_checksum(
         &self,
         dir_path: &Path,
@@ -245,14 +250,21 @@ impl LocalStorageClient {
             .into_par_iter()
             .map(|path| {
                 let checksum = self.calculate_file_checksum(&path)?;
+
+                // get
                 let path_str = path
                     .to_str()
-                    .ok_or_else(|| StorageError::Error("Invalid path".to_string()))?
+                    .ok_or_else(|| {
+                        error!("Invalid path");
+                        StorageError::Error("Invalid path".to_string())
+                    })?
                     .to_string();
                 Ok::<(String, String), StorageError>((path_str, checksum))
             })
             .filter_map(Result::ok)
             .collect();
+
+        debug!("Finished calculating checksums");
         // check for errors (raise on first error)
         Ok(checksums)
     }
@@ -282,11 +294,13 @@ impl StorageClient for LocalStorageClient {
         Ok(Self { bucket })
     }
 
+    #[instrument(skip(self, lpath, rpath))]
     async fn get_object(&self, lpath: &str, rpath: &str) -> Result<(), StorageError> {
         let src_path = self.bucket.join(rpath);
         let dest_path = Path::new(lpath);
 
         if !src_path.exists() {
+            error!("Source path does not exist: {}", src_path.display());
             return Err(StorageError::Error(format!(
                 "Source path does not exist: {}",
                 src_path.display()
@@ -294,16 +308,21 @@ impl StorageClient for LocalStorageClient {
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                error!("Unable to create directory: {}", e);
+                StorageError::Error(format!("Unable to create directory: {}", e))
+            })?;
         }
 
-        fs::copy(&src_path, dest_path)
-            .map_err(|e| StorageError::Error(format!("Unable to copy file: {}", e)))?;
+        fs::copy(&src_path, dest_path).map_err(|e| {
+            error!("Unable to copy file: {}", e);
+            StorageError::Error(format!("Unable to copy file: {}", e))
+        })?;
 
         Ok(())
     }
 
+    #[instrument(skip(self, path, _expiration))]
     async fn generate_presigned_url(
         &self,
         path: &str,
@@ -313,6 +332,7 @@ impl StorageClient for LocalStorageClient {
         if full_path.exists() {
             Ok(full_path.to_str().unwrap().to_string())
         } else {
+            error!("Path does not exist: {}", full_path.display());
             Err(StorageError::Error(format!(
                 "Path does not exist: {}",
                 full_path.display()
@@ -320,6 +340,7 @@ impl StorageClient for LocalStorageClient {
         }
     }
 
+    #[instrument(skip(self, path))]
     async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let mut files = Vec::new();
         let full_path = self.bucket.join(path);
@@ -328,8 +349,10 @@ impl StorageClient for LocalStorageClient {
         }
 
         for entry in WalkDir::new(full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                error!("Unable to read directory: {}", e);
+                StorageError::Error(format!("Unable to read directory: {}", e))
+            })?;
             if entry.file_type().is_file() {
                 files.push(entry.path().to_str().unwrap().to_string());
             }
@@ -347,9 +370,11 @@ impl StorageClient for LocalStorageClient {
         Ok(files)
     }
 
+    #[instrument(skip(self, path))]
     async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let full_path = self.bucket.join(path);
         if !full_path.exists() {
+            error!("Path does not exist: {}", full_path.display());
             return Err(StorageError::Error(format!(
                 "Path does not exist: {}",
                 full_path.display()
@@ -358,12 +383,15 @@ impl StorageClient for LocalStorageClient {
 
         let mut files_info = Vec::new();
         for entry in WalkDir::new(full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                error!("Unable to read directory: {}", e);
+                StorageError::Error(format!("Unable to read directory: {}", e))
+            })?;
             if entry.file_type().is_file() {
-                let metadata = entry
-                    .metadata()
-                    .map_err(|e| StorageError::Error(format!("Unable to read metadata: {}", e)))?;
+                let metadata = entry.metadata().map_err(|e| {
+                    error!("Unable to read metadata: {}", e);
+                    StorageError::Error(format!("Unable to read metadata: {}", e))
+                })?;
                 let created = metadata
                     .created()
                     .unwrap_or(SystemTime::now())
@@ -400,11 +428,13 @@ impl StorageClient for LocalStorageClient {
         Ok(files_info)
     }
 
+    #[instrument(skip(self, src, dest))]
     async fn copy_object(&self, src: &str, dest: &str) -> Result<bool, StorageError> {
         let src_path = self.bucket.join(src);
         let dest_path = self.bucket.join(dest);
 
         if !src_path.exists() {
+            error!("Source path does not exist: {}", src_path.display());
             return Err(StorageError::Error(format!(
                 "Source path does not exist: {}",
                 src_path.display()
@@ -412,12 +442,16 @@ impl StorageClient for LocalStorageClient {
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                error!("Unable to create directory: {}", e);
+                StorageError::Error(format!("Unable to create directory: {}", e))
+            })?;
         }
 
-        fs::copy(&src_path, &dest_path)
-            .map_err(|e| StorageError::Error(format!("Unable to copy file: {}", e)))?;
+        fs::copy(&src_path, &dest_path).map_err(|e| {
+            error!("Unable to copy file: {}", e);
+            StorageError::Error(format!("Unable to copy file: {}", e))
+        })?;
 
         Ok(true)
     }
@@ -457,6 +491,7 @@ impl StorageClient for LocalStorageClient {
         Ok(true)
     }
 
+    #[instrument(skip(self, path))]
     async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let full_path = self.bucket.join(path);
 
@@ -464,8 +499,10 @@ impl StorageClient for LocalStorageClient {
             return Ok(true);
         }
 
-        fs::remove_file(&full_path)
-            .map_err(|e| StorageError::Error(format!("Unable to delete file: {}", e)))?;
+        fs::remove_file(&full_path).map_err(|e| {
+            error!("Unable to delete file: {}", e);
+            StorageError::Error(format!("Unable to delete file: {}", e))
+        })?;
 
         Ok(true)
     }
@@ -779,7 +816,7 @@ mod tests {
         // calculate checksums
         let checksums = storage_client.calculate_dir_checksum(rpath_dir)?;
 
-        println!("{:?}", checksums);
+        assert!(checksums.len() == 2);
 
         // sort the blobs
         blobs.sort();

@@ -16,6 +16,7 @@ use reqwest::{
 use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
+use tracing::{error, instrument};
 
 const TIMEOUT_SECS: u64 = 30;
 
@@ -87,12 +88,14 @@ impl HttpStorageClient {
     /// # Returns
     ///
     /// * `StorageType` - The storage type
+    #[instrument(skip(client))]
     async fn get_storage_setting(client: &mut OpsmlApiClient) -> Result<StorageType, StorageError> {
         let response = client
             .request_with_retry(Routes::StorageSettings, RequestType::Get, None, None, None)
             .await
             .map_err(|e| {
                 let error = Colorize::alert(&format!("Failed to get storage settings: {}", e));
+                error!("{}", error);
                 StorageError::Error(error)
             })?;
 
@@ -102,19 +105,24 @@ impl HttpStorageClient {
             .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
 
         // convert Value to Vec<String>
-        let settings = serde_json::from_value::<StorageSettings>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let settings = serde_json::from_value::<StorageSettings>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         Ok(settings.storage_type)
     }
 
+    #[instrument(skip(self, path))]
     pub async fn find(&mut self, path: &str) -> Result<Vec<String>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
 
-        let query_string = serde_qs::to_string(&query)
-            .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+        let query_string = serde_qs::to_string(&query).map_err(|e| {
+            error!("Failed to serialize query: {}", e);
+            StorageError::Error(format!("Failed to serialize query: {}", e))
+        })?;
 
         // need to clone because self is borrowed
         let response = self
@@ -127,27 +135,35 @@ impl HttpStorageClient {
                 None,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to get files: {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to get files: {}", e);
+                StorageError::Error(format!("Failed to get files: {}", e))
+            })?;
 
-        let val = response
-            .json::<Value>()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+        let val = response.json::<Value>().await.map_err(|e| {
+            error!("Failed to parse response: {}", e);
+            StorageError::Error(format!("Failed to parse response: {}", e))
+        })?;
 
         // convert Value to Vec<String>
-        let response = serde_json::from_value::<ListFileResponse>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let response = serde_json::from_value::<ListFileResponse>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         Ok(response.files)
     }
 
+    #[instrument(skip(self, path))]
     pub async fn find_info(&mut self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
 
-        let query_string = serde_qs::to_string(&query)
-            .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+        let query_string = serde_qs::to_string(&query).map_err(|e| {
+            error!("Failed to serialize query: {}", e);
+            StorageError::Error(format!("Failed to serialize query: {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -159,19 +175,25 @@ impl HttpStorageClient {
                 None,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to get files: {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to get files: {}", e);
+                StorageError::Error(format!("Failed to get files: {}", e))
+            })?;
 
-        let val = response
-            .json::<Value>()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+        let val = response.json::<Value>().await.map_err(|e| {
+            error!("Failed to parse response: {}", e);
+            StorageError::Error(format!("Failed to parse response: {}", e))
+        })?;
 
-        let response = serde_json::from_value::<ListFileInfoResponse>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let response = serde_json::from_value::<ListFileInfoResponse>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         Ok(response.files)
     }
 
+    #[instrument(skip(self, local_path, remote_path))]
     pub async fn get_object(
         &mut self,
         local_path: &str,
@@ -182,8 +204,10 @@ impl HttpStorageClient {
         let local_path = Path::new(local_path);
 
         if !local_path.exists() {
-            std::fs::create_dir_all(local_path.parent().unwrap())
-                .map_err(|e| StorageError::Error(format!("Failed to create directory: {}", e)))?;
+            std::fs::create_dir_all(local_path.parent().unwrap()).map_err(|e| {
+                error!("Failed to create directory: {}", e);
+                StorageError::Error(format!("Failed to create directory: {}", e))
+            })?;
         }
 
         let chunk_count = ((file_size / DOWNLOAD_CHUNK_SIZE as i64) + 1) as u64;
@@ -205,8 +229,10 @@ impl HttpStorageClient {
         bar.set_style(style);
 
         // create local file
-        let mut file = std::fs::File::create(local_path)
-            .map_err(|e| StorageError::Error(format!("Failed to create file: {}", e)))?;
+        let mut file = std::fs::File::create(local_path).map_err(|e| {
+            error!("Failed to create file: {}", e);
+            StorageError::Error(format!("Failed to create file: {}", e))
+        })?;
 
         // generate presigned url for downloading the object
         let presigned_url = self.generate_presigned_url(remote_path).await?;
@@ -217,8 +243,10 @@ impl HttpStorageClient {
                 path: remote_path.to_string(),
             };
 
-            let query_string = serde_qs::to_string(&query)
-                .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+            let query_string = serde_qs::to_string(&query).map_err(|e| {
+                error!("Failed to serialize query: {}", e);
+                StorageError::Error(format!("Failed to serialize query: {}", e))
+            })?;
 
             self.api_client
                 .request_with_retry(
@@ -229,12 +257,17 @@ impl HttpStorageClient {
                     None,
                 )
                 .await
-                .map_err(|e| StorageError::Error(format!("Failed to get file: {}", e)))?
+                .map_err(|e| {
+                    error!("Failed to get file: {}", e);
+                    StorageError::Error(format!("Failed to get file: {}", e))
+                })?
         } else {
             // if storage clients are gcs, aws and azure, use presigned url to download the object
             // If local storage client, download the object from api route
-            let url = reqwest::Url::parse(&presigned_url)
-                .map_err(|e| StorageError::Error(format!("Invalid presigned URL: {}", e)))?;
+            let url = reqwest::Url::parse(&presigned_url).map_err(|e| {
+                error!("Invalid presigned URL: {}", e);
+                StorageError::Error(format!("Invalid presigned URL: {}", e))
+            })?;
 
             self.api_client.client.get(url).send().await.unwrap()
         };
@@ -243,15 +276,16 @@ impl HttpStorageClient {
         let mut buffer = BytesMut::with_capacity(DOWNLOAD_CHUNK_SIZE);
 
         // download the object in chunks
-        while let Some(chunk) = response
-            .chunk()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to get chunk from response: {}", e)))?
-        {
+        while let Some(chunk) = response.chunk().await.map_err(|e| {
+            error!("Failed to get chunk from response: {}", e);
+            StorageError::Error(format!("Failed to get chunk from response: {}", e))
+        })? {
             buffer.extend_from_slice(&chunk);
             if buffer.len() >= DOWNLOAD_CHUNK_SIZE {
-                file.write_all(&buffer)
-                    .map_err(|e| StorageError::Error(format!("Failed to write chunk: {}", e)))?;
+                file.write_all(&buffer).map_err(|e| {
+                    error!("Failed to write chunk: {}", e);
+                    StorageError::Error(format!("Failed to write chunk: {}", e))
+                })?;
                 buffer.clear();
                 bar.inc(1);
             }
@@ -260,6 +294,7 @@ impl HttpStorageClient {
         // Write any remaining data in the buffer
         if !buffer.is_empty() {
             file.write_all(&buffer).map_err(|e| {
+                error!("Failed to write remaining data: {}", e);
                 StorageError::Error(format!("Failed to write remaining data: {}", e))
             })?;
         }
@@ -268,14 +303,17 @@ impl HttpStorageClient {
         Ok(())
     }
 
+    #[instrument(skip(self, path))]
     pub async fn delete_object(&mut self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: false,
         };
 
-        let query_string = serde_qs::to_string(&query)
-            .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+        let query_string = serde_qs::to_string(&query).map_err(|e| {
+            error!("Failed to serialize query: {}", e);
+            StorageError::Error(format!("Failed to serialize query: {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -287,16 +325,21 @@ impl HttpStorageClient {
                 None,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to delete file: {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to delete file: {}", e);
+                StorageError::Error(format!("Failed to delete file: {}", e))
+            })?;
 
-        let val = response
-            .json::<Value>()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+        let val = response.json::<Value>().await.map_err(|e| {
+            error!("Failed to parse response: {}", e);
+            StorageError::Error(format!("Failed to parse response: {}", e))
+        })?;
 
         // load DeleteFileResponse from response
-        let response = serde_json::from_value::<DeleteFileResponse>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let response = serde_json::from_value::<DeleteFileResponse>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         Ok(response.deleted)
     }
@@ -333,13 +376,16 @@ impl HttpStorageClient {
         Ok(response.deleted)
     }
 
+    #[instrument(skip(self, path))]
     pub async fn create_multipart_upload(&mut self, path: &str) -> Result<String, StorageError> {
         let query = MultiPartQuery {
             path: path.to_string(),
         };
 
-        let query_string = serde_qs::to_string(&query)
-            .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+        let query_string = serde_qs::to_string(&query).map_err(|e| {
+            error!("Failed to serialize query: {}", e);
+            StorageError::Error(format!("Failed to serialize query: {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -352,17 +398,20 @@ impl HttpStorageClient {
             )
             .await
             .map_err(|e| {
+                error!("Failed to create multipart upload: {}", e);
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
         // deserialize response into MultiPartSession
-        let val = response
-            .json::<Value>()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+        let val = response.json::<Value>().await.map_err(|e| {
+            error!("Failed to parse response: {}", e);
+            StorageError::Error(format!("Failed to parse response: {}", e))
+        })?;
 
-        let session = serde_json::from_value::<MultiPartSession>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let session = serde_json::from_value::<MultiPartSession>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         let session_url = session.session_url;
 
@@ -387,14 +436,17 @@ impl HttpStorageClient {
         Ok(uploader)
     }
 
+    #[instrument(skip(self, path))]
     pub async fn generate_presigned_url(&mut self, path: &str) -> Result<String, StorageError> {
         let query = PresignedQuery {
             path: path.to_string(),
             ..Default::default()
         };
 
-        let query_string = serde_qs::to_string(&query)
-            .map_err(|e| StorageError::Error(format!("Failed to serialize query: {}", e)))?;
+        let query_string = serde_qs::to_string(&query).map_err(|e| {
+            error!("Failed to serialize query: {}", e);
+            StorageError::Error(format!("Failed to serialize query: {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -406,15 +458,20 @@ impl HttpStorageClient {
                 None,
             )
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to generate presigned url: {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to generate presigned url: {}", e);
+                StorageError::Error(format!("Failed to generate presigned url: {}", e))
+            })?;
 
-        let val = response
-            .json::<Value>()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+        let val = response.json::<Value>().await.map_err(|e| {
+            error!("Failed to parse response: {}", e);
+            StorageError::Error(format!("Failed to parse response: {}", e))
+        })?;
 
-        let response = serde_json::from_value::<PresignedUrl>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let response = serde_json::from_value::<PresignedUrl>(val).map_err(|e| {
+            error!("Failed to deserialize response: {}", e);
+            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        })?;
 
         Ok(response.url)
     }

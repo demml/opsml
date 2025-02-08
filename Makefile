@@ -38,6 +38,12 @@ test.sql.mysql: build.mysql
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
 
+######## Storage tests
+
+.PHONY: test.storage.local.server
+test.storage.local.server:
+	cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
+
 ######## Server tests
 
 .PHONE: build.server
