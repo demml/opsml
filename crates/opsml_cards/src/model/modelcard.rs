@@ -14,7 +14,7 @@ use opsml_types::cards::{CardTable, CardType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyObject};
 use serde::{
     de::{self, MapAccess, Visitor},
@@ -86,7 +86,7 @@ pub struct ModelCard {
     pub uid: String,
 
     #[pyo3(get, set)]
-    pub tags: Tags,
+    pub tags: Vec<String>,
 
     #[pyo3(get, set)]
     pub metadata: ModelCardMetadata,
@@ -102,34 +102,27 @@ pub struct ModelCard {
 impl ModelCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None,  contact=None, version=None, uid=None, info=None, tags=None, to_onnx=None))]
+    #[pyo3(signature = (interface, repository=None, name=None,  contact=None, version=None, uid=None, tags=None, to_onnx=None))]
     pub fn new(
         py: Python,
         interface: &Bound<'_, PyAny>,
-        repository: Option<String>,
-        name: Option<String>,
-        contact: Option<String>,
-        version: Option<String>,
-        uid: Option<String>,
-        info: Option<CardInfo>,
-        tags: Option<&Bound<'_, PyAny>>,
+        repository: Option<&str>,
+        name: Option<&str>,
+        contact: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+        tags: Option<&Bound<'_, PyList>>,
         to_onnx: Option<bool>,
     ) -> PyResult<Self> {
         let tags = match tags {
-            None => Tags::new(None),
-            Some(t) => {
-                if t.is_instance_of::<PyDict>() {
-                    let dict = t.extract::<HashMap<String, String>>().unwrap();
-                    Tags::new(Some(dict))
-                } else {
-                    t.extract::<Tags>()
-                        .map_err(|e| OpsmlError::new_err(e.to_string()))?
-                }
-            }
+            None => Vec::new(),
+            Some(t) => t
+                .extract::<Vec<String>>()
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)
-            .map_err(|e| {
+        let base_args =
+            BaseArgs::create_args(name, repository, contact, version, uid).map_err(|e| {
                 error!("Failed to create base args: {}", e);
                 OpsmlError::new_err(e.to_string())
             })?;
