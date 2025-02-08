@@ -209,24 +209,17 @@ impl LocalStorageClient {
     #[instrument(skip(self, path))]
     fn sync_find(&self, path: &Path) -> Result<Vec<PathBuf>, StorageError> {
         let mut files = Vec::new();
-        let full_path = self.bucket.join(path);
-        if !full_path.exists() {
+        if !path.exists() {
             return Ok(files);
         }
 
-        for entry in WalkDir::new(full_path) {
+        for entry in WalkDir::new(path) {
             let entry = entry.map_err(|e| {
                 error!("Unable to read directory: {}", e);
                 StorageError::Error(format!("Unable to read directory: {}", e))
             })?;
             if entry.file_type().is_file() {
-                let file_ = entry.path().to_path_buf();
-                let stripped_path = file_
-                    .strip_path(&self.bucket.to_str().unwrap())
-                    .strip_path("/")
-                    .to_path_buf();
-
-                files.push(stripped_path);
+                files.push(entry.path().to_path_buf());
             }
         }
 
@@ -234,15 +227,13 @@ impl LocalStorageClient {
     }
 
     pub fn open(&self, path: &Path) -> Result<File, StorageError> {
-        let full_path = self.bucket.join(path);
-        File::open(full_path)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
+        File::open(path).map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
     }
 
     #[instrument(skip(self, dir_path))]
     pub fn calculate_dir_checksum(
         &self,
-        dir_path: &Path,
+        dir_path: &Path, // full path to dir
     ) -> Result<HashMap<String, String>, StorageError> {
         let checksums: HashMap<String, String> = self
             .sync_find(dir_path)
@@ -253,12 +244,11 @@ impl LocalStorageClient {
 
                 // get
                 let path_str = path
+                    .strip_path(dir_path.to_str().unwrap())
                     .to_str()
-                    .ok_or_else(|| {
-                        error!("Invalid path");
-                        StorageError::Error("Invalid path".to_string())
-                    })?
+                    .unwrap()
                     .to_string();
+
                 Ok::<(String, String), StorageError>((path_str, checksum))
             })
             .filter_map(Result::ok)
@@ -267,6 +257,50 @@ impl LocalStorageClient {
         debug!("Finished calculating checksums");
         // check for errors (raise on first error)
         Ok(checksums)
+    }
+
+    #[instrument(skip(self, dir_path, checksums))]
+    pub fn validate_checksums(
+        &self,
+        dir_path: &Path,
+        checksums: HashMap<String, String>,
+    ) -> Result<bool, StorageError> {
+        let new_checksums = self
+            .calculate_dir_checksum(Path::new(dir_path))
+            .map_err(|e| {
+                error!("Failed to calculate checksums: {}", e);
+                StorageError::Error(format!("Failed to calculate checksums: {}", e))
+            })?;
+
+        if new_checksums.len() == 0 {
+            error!("No files found");
+            return Err(StorageError::Error("No files found".to_string()));
+        }
+
+        // check if there are new files
+        let has_new_files = new_checksums
+            .keys()
+            .any(|path| !checksums.contains_key(path));
+
+        if has_new_files {
+            return Ok(false);
+        }
+
+        // filter checksums to only include files that exist in new_checksums
+        let filtered_checksums: HashMap<String, String> = checksums
+            .into_iter()
+            .filter(|(path, _)| new_checksums.contains_key(path))
+            .collect();
+
+        // Compare checksums for all matching files
+        let all_checksums_match = filtered_checksums.iter().all(|(path, checksum)| {
+            new_checksums
+                .get(path)
+                .map_or(false, |new_checksum| new_checksum == checksum)
+        });
+
+        debug!("Finished validating checksums");
+        Ok(all_checksums_match)
     }
 }
 
@@ -731,6 +765,14 @@ impl LocalFSStorageClient {
     ) -> Result<HashMap<String, String>, StorageError> {
         self.client.calculate_dir_checksum(dir_path)
     }
+
+    pub fn validate_checksums(
+        &self,
+        dir_path: &Path,
+        checksums: HashMap<String, String>,
+    ) -> Result<bool, StorageError> {
+        self.client.validate_checksums(dir_path, checksums)
+    }
 }
 
 #[cfg(test)]
@@ -814,7 +856,8 @@ mod tests {
         ];
 
         // calculate checksums
-        let checksums = storage_client.calculate_dir_checksum(rpath_dir)?;
+        let checksums =
+            storage_client.calculate_dir_checksum(&storage_client.client.bucket.join(rpath_dir))?;
 
         assert!(checksums.len() == 2);
 
@@ -832,6 +875,9 @@ mod tests {
         // get
         storage_client.get(&new_lpath, &rpath, false).await?;
         assert!(new_lpath.exists());
+        let valid = storage_client.validate_checksums(new_tmp_dir.path(), checksums)?;
+
+        assert!(valid);
 
         // rm
         storage_client.rm(&rpath, false).await?;
