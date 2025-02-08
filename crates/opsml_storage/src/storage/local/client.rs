@@ -3,6 +3,7 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
+use blake3;
 use futures_util::stream::Stream;
 use futures_util::task::{Context, Poll};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -14,8 +15,10 @@ use opsml_types::{
     contracts::{FileInfo, UploadResponse},
     StorageType,
 };
+use rayon::prelude::*;
 use reqwest::multipart::{Form, Part};
-use std::fs::{self};
+use std::fs::{self, File};
+use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::SystemTime;
@@ -23,6 +26,8 @@ use tokio::fs::File as TokioFile;
 use tokio::io::AsyncRead;
 use tokio_util::io::ReaderStream;
 use walkdir::WalkDir;
+
+const BUFFER_SIZE: usize = 1024 * 1024; // 1MB buffer
 
 // left off here
 // removed multiupload part and implemented put on each storage client
@@ -175,6 +180,72 @@ impl LocalMultiPartUpload {
 #[derive(Clone)]
 pub struct LocalStorageClient {
     pub bucket: PathBuf,
+}
+
+impl LocalStorageClient {
+    fn calculate_file_checksum(&self, path: &Path) -> Result<String, StorageError> {
+        let file = self.open(path)?;
+        let mut reader = BufReader::with_capacity(BUFFER_SIZE, file);
+        let mut hasher = blake3::Hasher::new();
+        let mut buffer = vec![0; BUFFER_SIZE];
+
+        loop {
+            let bytes_read = reader.read(&mut buffer).map_err(|e| {
+                StorageError::Error(format!("Failed to read file: {}", e.to_string()))
+            })?;
+            if bytes_read == 0 {
+                break;
+            }
+            hasher.update(&buffer[..bytes_read]);
+        }
+
+        Ok(hasher.finalize().to_hex().to_string())
+    }
+
+    fn sync_find(&self, path: &Path) -> Result<Vec<PathBuf>, StorageError> {
+        let mut files = Vec::new();
+        let full_path = self.bucket.join(path);
+        if !full_path.exists() {
+            return Ok(files);
+        }
+
+        for entry in WalkDir::new(full_path) {
+            let entry = entry
+                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            if entry.file_type().is_file() {
+                let file_ = entry.path().to_path_buf();
+                let modified = file_
+                    .strip_prefix(&self.bucket)
+                    .map_err(|e| StorageError::Error(format!("Unable to strip prefix: {}", e)))?
+                    .strip_prefix("/")
+                    .map_err(|e| StorageError::Error(format!("Unable to strip prefix: {}", e)))?
+                    .to_path_buf();
+
+                files.push(modified);
+            }
+        }
+
+        Ok(files)
+    }
+
+    pub fn open(&self, path: &Path) -> Result<File, StorageError> {
+        let full_path = self.bucket.join(path);
+        File::open(full_path)
+            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
+    }
+
+    pub fn calculate_dir_checksum(
+        &self,
+        dir_path: &Path,
+    ) -> Result<HashMap<String, String>, StorageType> {
+        let mut checksums = HashMap::new();
+
+        let files = self
+            .sync_find(dir_path)
+            .map_err(|e| StorageError::Error(e.to_string()))?;
+
+        Ok(checksums)
+    }
 }
 
 #[async_trait]
