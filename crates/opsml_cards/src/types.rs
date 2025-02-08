@@ -155,7 +155,7 @@ pub struct CardInfo {
     pub version: Option<String>,
 
     #[pyo3(get)]
-    pub tags: Option<HashMap<String, String>>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[pymethods]
@@ -168,7 +168,7 @@ impl CardInfo {
         contact: Option<String>,
         uid: Option<String>,
         version: Option<String>,
-        tags: Option<HashMap<String, String>>,
+        tags: Option<Vec<String>>,
     ) -> Self {
         Self {
             name,
@@ -281,7 +281,7 @@ impl FromPyObject<'_> for CardInfo {
             if item.is_none() {
                 Ok(None)
             } else {
-                Ok(Some(item.extract::<HashMap<String, String>>()?))
+                Ok(Some(item.extract::<Vec<String>>()?))
             }
         })?;
 
@@ -317,7 +317,7 @@ impl BaseArgs {
 
         validate_name_repository_pattern(&name, &repository)?;
 
-        Ok((name, repository, contact, version, uid))
+        Ok((repository, name, contact, version, uid))
     }
 
     fn get_value(key: &str, value: Option<&str>) -> Result<String, CardError> {
@@ -329,31 +329,5 @@ impl BaseArgs {
             .map(|s| s.to_string())
             .or(env_val)
             .ok_or_else(|| CardError::Error(format!("{} not provided", key)))
-    }
-}
-
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct Tags {
-    #[pyo3(get, set)]
-    pub tags: HashMap<String, String>,
-}
-
-#[pymethods]
-impl Tags {
-    #[new]
-    #[pyo3(signature = (tags=None))]
-    pub fn new(tags: Option<HashMap<String, String>>) -> Self {
-        Tags {
-            tags: tags.unwrap_or_default(),
-        }
-    }
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
-    }
-
-    pub fn add_tag(&mut self, key: String, value: String) {
-        self.tags.insert(key, value);
     }
 }

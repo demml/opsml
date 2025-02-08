@@ -141,12 +141,12 @@ impl ModelCard {
                     .into_py_any(py)
                     .map_err(|e| OpsmlError::new_err(e.to_string()))?,
             ),
-            name: base_args.name,
-            repository: base_args.repository,
-            contact: base_args.contact,
-            version: base_args.version,
-            uid: base_args.uid,
-            tags: base_args.tags,
+            repository: base_args.0,
+            name: base_args.1,
+            contact: base_args.2,
+            version: base_args.3,
+            uid: base_args.4,
+            tags,
             metadata: ModelCardMetadata::default(),
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
@@ -181,6 +181,10 @@ impl ModelCard {
         );
 
         PathBuf::from(uri)
+    }
+
+    pub fn add_tags(&mut self, tags: Vec<String>) {
+        self.tags.extend(tags);
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
