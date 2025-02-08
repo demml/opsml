@@ -1,4 +1,3 @@
-use crate::types::Tags;
 use crate::{BaseArgs, CardInfo};
 use core::error;
 use opsml_error::error::OpsmlError;
