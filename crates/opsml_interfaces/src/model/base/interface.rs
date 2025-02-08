@@ -525,6 +525,17 @@ impl ModelInterface {
 
         Ok(interface)
     }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.model = None;
+    }
 }
 
 impl ModelInterface {
@@ -818,16 +829,5 @@ impl ModelInterface {
         info!("Model loaded");
 
         Ok(())
-    }
-
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        if let Some(ref model) = self.model {
-            visit.call(model)?;
-        }
-        Ok(())
-    }
-
-    fn __clear__(&mut self) {
-        self.model = None;
     }
 }

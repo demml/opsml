@@ -14,6 +14,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
+use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 use tracing::{debug, error, info};
@@ -270,6 +271,17 @@ impl SklearnModel {
         });
 
         PyHelperFuncs::__str__(json)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref preprocessor) = self.preprocessor {
+            visit.call(preprocessor)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.preprocessor = None;
     }
 }
 

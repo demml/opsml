@@ -8,6 +8,7 @@ use opsml_types::{
 };
 use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::{PyTraverseError, PyVisit};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tracing::error;
@@ -57,7 +58,7 @@ impl DataCardMetadata {
 #[derive(Debug)]
 pub struct DataCard {
     #[pyo3(get, set)]
-    pub interface: PyObject,
+    pub interface: Option<PyObject>,
 
     #[pyo3(get, set)]
     pub repository: String,
@@ -149,9 +150,11 @@ impl DataCard {
         ));
 
         Ok(Self {
-            interface: interface
-                .into_py_any(py)
-                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            interface: Some(
+                interface
+                    .into_py_any(py)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?,
+            ),
             repository: base_args.0,
             name: base_args.1,
             contact: base_args.2,
@@ -198,6 +201,17 @@ impl DataCard {
             })?;
 
         Ok(metadata)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref interface) = self.interface {
+            visit.call(interface)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.interface = None;
     }
 }
 
