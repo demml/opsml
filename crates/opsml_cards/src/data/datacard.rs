@@ -188,9 +188,15 @@ impl DataCard {
     ) -> PyResult<DataInterfaceSaveMetadata> {
         let args = (path,);
 
+        // if option raise error
+        let data = self.interface.as_ref().ok_or_else(|| {
+            OpsmlError::new_err(
+                "Interface not found. Ensure DataCard has been initialized correctly",
+            )
+        })?;
+
         // call save on interface
-        let metadata = self
-            .interface
+        let metadata = data
             .call_method(py, "save", args, kwargs)
             .map_err(|e| {
                 OpsmlError::new_err(format!("Error calling save method on interface: {}", e))
@@ -228,7 +234,7 @@ impl FromPyObject<'_> for DataCard {
         let card_type = ob.getattr("card_type")?.extract()?;
 
         Ok(DataCard {
-            interface: interface.into(),
+            interface: Some(interface.unbind()),
             name,
             repository,
             contact,

@@ -1,7 +1,5 @@
-use crate::{BaseArgs, CardInfo};
-use core::error;
+use crate::BaseArgs;
 use opsml_error::error::OpsmlError;
-use opsml_interfaces::catboost::interface;
 use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
@@ -13,7 +11,7 @@ use opsml_types::cards::{CardTable, CardType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{
@@ -21,7 +19,6 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::collections::HashMap;
 use std::fmt;
 use std::path::PathBuf;
 use tracing::error;
@@ -195,11 +192,17 @@ impl ModelCard {
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<()> {
         // save model interface
-        let metadata = self.interface.as_ref().unwrap().bind(py).call_method(
-            "save",
-            (path.clone(), self.to_onnx, save_kwargs),
-            None,
-        )?;
+        // if option raise error
+        let model = self.interface.as_ref().ok_or_else(|| {
+            OpsmlError::new_err(
+                "Interface not found. Ensure DataCard has been initialized correctly",
+            )
+        })?;
+
+        let metadata =
+            model
+                .bind(py)
+                .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)?;
 
         // extract into ModelInterfaceMetadata
         let interface_metadata = metadata.extract::<ModelInterfaceMetadata>()?;
