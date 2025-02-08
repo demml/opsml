@@ -288,10 +288,8 @@ impl MySQLQueryHelper {
 
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
-                for (key, value) in tags.iter() {
-                    query.push_str(
-                        format!(" AND json_extract(tags, '$.{}') = '{}'", key, value).as_str(),
-                    );
+                for tag in tags.iter() {
+                    query.push_str(format!(" AND json_contains(tags, '{}')", tag).as_str());
                 }
             }
 

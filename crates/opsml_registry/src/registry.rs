@@ -65,7 +65,7 @@ impl CardRegistry {
         repository: Option<String>,
         version: Option<String>,
         max_date: Option<String>,
-        tags: Option<HashMap<String, String>>,
+        tags: Option<Vec<String>>,
         limit: Option<i32>,
         sort_by_timestamp: Option<bool>,
     ) -> PyResult<CardList> {

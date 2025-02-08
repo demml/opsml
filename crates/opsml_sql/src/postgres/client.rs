@@ -1141,10 +1141,7 @@ mod tests {
         assert_eq!(results.len(), 2);
 
         // try tags
-        let tags = [("key1".to_string(), "value1".to_string())]
-            .iter()
-            .cloned()
-            .collect();
+        let tags = ["key1".to_string()].iter().cloned().collect();
         let card_args = CardQueryArgs {
             tags: Some(tags),
             ..Default::default()

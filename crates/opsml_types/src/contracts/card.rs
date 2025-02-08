@@ -91,7 +91,7 @@ pub struct CardQueryArgs {
     pub repository: Option<String>,
     pub version: Option<String>,
     pub max_date: Option<String>,
-    pub tags: Option<HashMap<String, String>>,
+    pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
 }
@@ -103,7 +103,7 @@ pub struct ListCardRequest {
     pub repository: Option<String>,
     pub version: Option<String>,
     pub max_date: Option<String>,
-    pub tags: Option<HashMap<String, String>>,
+    pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
     pub registry_type: RegistryType,
@@ -135,7 +135,7 @@ pub struct DataCardClientRecord {
     pub repository: String,
     pub version: String,
     pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub data_type: String,
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
@@ -153,7 +153,7 @@ impl Default for DataCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             data_type: "".to_string(),
             runcard_uid: None,
             pipelinecard_uid: None,
@@ -173,7 +173,7 @@ pub struct ModelCardClientRecord {
     pub repository: String,
     pub version: String,
     pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
     pub sample_data_type: String,
     pub model_type: String,
@@ -194,7 +194,7 @@ impl Default for ModelCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             datacard_uid: None,
             sample_data_type: "".to_string(),
             model_type: "".to_string(),
@@ -217,7 +217,7 @@ pub struct RunCardClientRecord {
     pub repository: String,
     pub version: String,
     pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
     pub pipelinecard_uid: Option<String>,
@@ -236,7 +236,7 @@ impl Default for RunCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             datacard_uids: None,
             modelcard_uids: None,
             pipelinecard_uid: None,
@@ -257,7 +257,7 @@ pub struct AuditCardClientRecord {
     pub repository: String,
     pub version: String,
     pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub approved: bool,
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
@@ -274,7 +274,7 @@ impl Default for AuditCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             approved: false,
             datacard_uids: None,
             modelcard_uids: None,
@@ -293,7 +293,7 @@ pub struct PipelineCardClientRecord {
     pub repository: String,
     pub version: String,
     pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub pipeline_code_uri: String,
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
@@ -310,7 +310,7 @@ impl Default for PipelineCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             pipeline_code_uri: "".to_string(),
             datacard_uids: None,
             modelcard_uids: None,
@@ -446,7 +446,7 @@ impl Card {
     }
 
     #[getter]
-    pub fn tags(&self) -> &HashMap<String, String> {
+    pub fn tags(&self) -> &Vec<String> {
         match self {
             Self::Data(card) => &card.tags,
             Self::Model(card) => &card.tags,
@@ -454,7 +454,7 @@ impl Card {
             Self::Audit(card) => &card.tags,
             Self::Pipeline(card) => &card.tags,
             Self::Project(_) => {
-                static EMPTY_MAP: LazyLock<HashMap<String, String>> = LazyLock::new(HashMap::new);
+                static EMPTY_MAP: LazyLock<Vec<String>> = LazyLock::new(Vec::new);
                 &EMPTY_MAP
             }
         }

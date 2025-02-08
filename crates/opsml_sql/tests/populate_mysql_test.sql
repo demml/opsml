@@ -1,5 +1,5 @@
 INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, pre_tag,  build_tag, version, contact, tags, data_type, runcard_uid, pipelinecard_uid, auditcard_uid, interface_type) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', 'contact1', '{"key1": "value1", "key2": "value2"}', 'type1', 'runcard1', 'pipelinecard1', 'auditcard1', 'typeA'),
+('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', 'contact1', '{"key1"}', 'type1', 'runcard1', 'pipelinecard1', 'auditcard1', 'typeA'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Data1', 'repo1', 1, 0, 1, 'beta', 'build2',   '1.0.1', 'contact2', '{}', 'type2', 'runcard2', 'pipelinecard2', 'auditcard2', 'typeB'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Data1', 'repo1', 1, 1, 0, 'gamma', 'build3',  '1.1.0', 'contact3', '{}', 'type3', 'runcard3', 'pipelinecard3', 'auditcard3', 'typeC'),
 ('550e8400-e29b-41d4-a716-446655440003', 'development', 'Data1', 'repo1', 1, 1, 1, 'delta', 'build4',  '1.1.1', 'contact4', '{}', 'type4', 'runcard4', 'pipelinecard4', 'auditcard4', 'typeD'),

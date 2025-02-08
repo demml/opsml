@@ -17,6 +17,7 @@ use opsml_types::{
 };
 use rayon::prelude::*;
 use reqwest::multipart::{Form, Part};
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -237,13 +238,22 @@ impl LocalStorageClient {
     pub fn calculate_dir_checksum(
         &self,
         dir_path: &Path,
-    ) -> Result<HashMap<String, String>, StorageType> {
-        let mut checksums = HashMap::new();
-
-        let files = self
+    ) -> Result<HashMap<String, String>, StorageError> {
+        let checksums: HashMap<String, String> = self
             .sync_find(dir_path)
-            .map_err(|e| StorageError::Error(e.to_string()))?;
-
+            .map_err(|e| StorageError::Error(e.to_string()))?
+            .into_par_iter()
+            .map(|path| {
+                let checksum = self.calculate_file_checksum(&path)?;
+                let path_str = path
+                    .to_str()
+                    .ok_or_else(|| StorageError::Error("Invalid path".to_string()))?
+                    .to_string();
+                Ok::<(String, String), StorageError>((path_str, checksum))
+            })
+            .filter_map(Result::ok)
+            .collect();
+        // check for errors (raise on first error)
         Ok(checksums)
     }
 }
@@ -677,6 +687,13 @@ impl LocalFSStorageClient {
     pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
         Ok(path.to_str().unwrap().to_string())
     }
+
+    pub fn calculate_dir_checksum(
+        &self,
+        dir_path: &Path,
+    ) -> Result<HashMap<String, String>, StorageError> {
+        self.client.calculate_dir_checksum(dir_path)
+    }
 }
 
 #[cfg(test)]
@@ -758,6 +775,11 @@ mod tests {
             rpath.to_str().unwrap().to_string(),
             rpath_nested.to_str().unwrap().to_string(),
         ];
+
+        // calculate checksums
+        let checksums = storage_client.calculate_dir_checksum(rpath_dir)?;
+
+        println!("{:?}", checksums);
 
         // sort the blobs
         blobs.sort();
