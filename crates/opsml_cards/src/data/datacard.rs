@@ -1,5 +1,4 @@
-use crate::types::Tags;
-use crate::{BaseArgs, CardInfo, Description};
+use crate::BaseArgs;
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
@@ -7,11 +6,11 @@ use opsml_types::{
     cards::{CardTable, CardType},
     DataType, InterfaceType,
 };
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
+use tracing::error;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -61,10 +60,10 @@ pub struct DataCard {
     pub interface: PyObject,
 
     #[pyo3(get, set)]
-    pub name: String,
+    pub repository: String,
 
     #[pyo3(get, set)]
-    pub repository: String,
+    pub name: String,
 
     #[pyo3(get, set)]
     pub contact: String,
@@ -76,7 +75,7 @@ pub struct DataCard {
     pub uid: String,
 
     #[pyo3(get, set)]
-    pub tags: Tags,
+    pub tags: Vec<String>,
 
     #[pyo3(get, set)]
     pub metadata: DataCardMetadata,
@@ -89,32 +88,29 @@ pub struct DataCard {
 impl DataCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, name=None, repository=None, contact=None, version=None, uid=None, info=None, tags=None, metadata=None))]
+    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None, metadata=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
-        name: Option<String>,
-        repository: Option<String>,
-        contact: Option<String>,
-        version: Option<String>,
-        uid: Option<String>,
-        info: Option<CardInfo>,
-        tags: Option<&Bound<'_, PyAny>>,
+        repository: Option<&str>,
+        name: Option<&str>,
+        contact: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+        tags: Option<&Bound<'_, PyList>>,
         metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
         let tags = match tags {
-            None => Tags::new(None),
-            Some(t) => {
-                if t.is_instance_of::<PyDict>() {
-                    let dict = t.extract::<HashMap<String, String>>().unwrap();
-                    Tags::new(Some(dict))
-                } else {
-                    t.extract::<Tags>()
-                        .map_err(|e| OpsmlError::new_err(e.to_string()))?
-                }
-            }
+            None => Vec::new(),
+            Some(t) => t
+                .extract::<Vec<String>>()
+                .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args = BaseArgs::new(name, repository, contact, version, uid, info, tags)?;
+        let base_args =
+            BaseArgs::create_args(name, repository, contact, version, uid).map_err(|e| {
+                error!("Failed to create base args: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         let py = interface.py();
 
@@ -156,12 +152,12 @@ impl DataCard {
             interface: interface
                 .into_py_any(py)
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
-            name: base_args.name,
-            repository: base_args.repository,
-            contact: base_args.contact,
-            version: base_args.version,
-            uid: base_args.uid,
-            tags: base_args.tags,
+            repository: base_args.0,
+            name: base_args.1,
+            contact: base_args.2,
+            version: base_args.3,
+            uid: base_args.4,
+            tags,
             metadata,
             card_type: CardType::Data,
         })
