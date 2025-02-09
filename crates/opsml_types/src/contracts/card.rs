@@ -141,6 +141,7 @@ pub struct DataCardClientRecord {
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: Option<String>,
+    pub checksums: Option<HashMap<String, String>>,
 }
 
 impl Default for DataCardClientRecord {
@@ -159,6 +160,7 @@ impl Default for DataCardClientRecord {
             pipelinecard_uid: None,
             auditcard_uid: None,
             interface_type: None,
+            checksums: None,
         }
     }
 }
@@ -182,6 +184,7 @@ pub struct ModelCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: Option<String>,
     pub task_type: Option<String>,
+    pub checksums: Option<HashMap<String, String>>,
 }
 
 impl Default for ModelCardClientRecord {
@@ -203,6 +206,7 @@ impl Default for ModelCardClientRecord {
             auditcard_uid: None,
             interface_type: None,
             task_type: None,
+            checksums: None,
         }
     }
 }
@@ -224,6 +228,7 @@ pub struct RunCardClientRecord {
     pub project: String,
     pub artifact_uris: Option<HashMap<String, String>>,
     pub compute_environment: Option<HashMap<String, String>>,
+    pub checksums: Option<HashMap<String, String>>,
 }
 
 impl Default for RunCardClientRecord {
@@ -243,6 +248,7 @@ impl Default for RunCardClientRecord {
             project: "".to_string(),
             artifact_uris: None,
             compute_environment: None,
+            checksums: None,
         }
     }
 }

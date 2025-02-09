@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
+use std::hash::Hash;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -160,6 +161,7 @@ pub struct DataCardRecord {
     pub pipelinecard_uid: String,
     pub auditcard_uid: String,
     pub interface_type: String,
+    pub checksums: Json<HashMap<String, String>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -175,6 +177,7 @@ impl DataCardRecord {
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
         interface_type: Option<String>,
+        checksums: Option<HashMap<String, String>>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -200,6 +203,7 @@ impl DataCardRecord {
                 .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            checksums: Json(checksums.unwrap_or_default()),
         }
     }
 }
@@ -225,6 +229,7 @@ impl Default for DataCardRecord {
             pipelinecard_uid: CommonKwargs::Undefined.to_string(),
             auditcard_uid: CommonKwargs::Undefined.to_string(),
             interface_type: CommonKwargs::Undefined.to_string(),
+            checksums: Json(HashMap::new()),
         }
     }
 }
@@ -252,6 +257,7 @@ pub struct ModelCardRecord {
     pub auditcard_uid: String,
     pub interface_type: String,
     pub task_type: String,
+    pub checksums: Json<HashMap<String, String>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -270,6 +276,7 @@ impl ModelCardRecord {
         auditcard_uid: Option<String>,
         interface_type: Option<String>,
         task_type: Option<String>,
+        checksums: Option<HashMap<String, String>>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -298,6 +305,7 @@ impl ModelCardRecord {
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             task_type: task_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            checksums: Json(checksums.unwrap_or_default()),
         }
     }
 }
@@ -326,6 +334,7 @@ impl Default for ModelCardRecord {
             auditcard_uid: CommonKwargs::Undefined.to_string(),
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
+            checksums: Json(HashMap::new()),
         }
     }
 }
@@ -351,6 +360,7 @@ pub struct RunCardRecord {
     pub project: String,
     pub artifact_uris: Json<HashMap<String, String>>,
     pub compute_environment: Json<HashMap<String, String>>,
+    pub checksums: Json<HashMap<String, String>>,
 }
 
 impl Default for RunCardRecord {
@@ -375,6 +385,7 @@ impl Default for RunCardRecord {
             project: CommonKwargs::Undefined.to_string(),
             artifact_uris: Json(HashMap::new()),
             compute_environment: Json(HashMap::new()),
+            checksums: Json(HashMap::new()),
         }
     }
 }
@@ -393,6 +404,7 @@ impl RunCardRecord {
         project: String,
         artifact_uris: Option<HashMap<String, String>>,
         compute_environment: Option<HashMap<String, String>>,
+        checksums: Option<HashMap<String, String>>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -419,6 +431,7 @@ impl RunCardRecord {
             project,
             artifact_uris: Json(artifact_uris.unwrap_or_default()),
             compute_environment: Json(compute_environment.unwrap_or_default()),
+            checksums: Json(checksums.unwrap_or_default()),
         }
     }
 }

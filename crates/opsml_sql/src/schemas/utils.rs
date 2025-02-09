@@ -23,6 +23,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
         pipelinecard_uid: Some(record.pipelinecard_uid),
         auditcard_uid: Some(record.auditcard_uid),
         interface_type: Some(record.interface_type),
+        checksums: Some(record.checksums.0),
     };
 
     Card::Data(card)
@@ -46,6 +47,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         auditcard_uid: Some(record.auditcard_uid),
         interface_type: Some(record.interface_type),
         task_type: Some(record.task_type),
+        checksums: Some(record.checksums.0),
     };
 
     Card::Model(card)
@@ -67,6 +69,7 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
         project: record.project,
         artifact_uris: Some(record.artifact_uris.0),
         compute_environment: Some(record.compute_environment.0),
+        checksums: Some(record.checksums.0),
     };
 
     Card::Run(card)

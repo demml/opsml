@@ -621,6 +621,7 @@ mod tests {
                 interface_type: card.interface_type,
                 data_type: card.data_type,
                 tags: card.tags,
+                checksums: card.checksums,
             }),
         };
 
@@ -744,6 +745,7 @@ mod tests {
                 model_type: card.model_type,
                 task_type: card.task_type,
                 tags: card.tags,
+                checksums: card.checksums,
             }),
         };
 
@@ -865,6 +867,7 @@ mod tests {
                 compute_environment: card.compute_environment,
                 project: card.project,
                 tags: card.tags,
+                checksums: card.checksums,
             }),
         };
 
