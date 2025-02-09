@@ -22,7 +22,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
         runcard_uid: Some(record.runcard_uid),
         pipelinecard_uid: Some(record.pipelinecard_uid),
         auditcard_uid: Some(record.auditcard_uid),
-        interface_type: Some(record.interface_type),
+        interface_type: record.interface_type,
         checksums: record.checksums.0,
     };
 
@@ -45,7 +45,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         runcard_uid: Some(record.runcard_uid),
         pipelinecard_uid: Some(record.pipelinecard_uid),
         auditcard_uid: Some(record.auditcard_uid),
-        interface_type: Some(record.interface_type),
+        interface_type: record.interface_type,
         task_type: record.task_type,
         checksums: record.checksums.0,
     };

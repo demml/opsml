@@ -2,7 +2,7 @@ use crate::{DataCard, ModelCard};
 
 use opsml_error::error::CardError;
 use opsml_interfaces::SaveKwargs;
-use opsml_types::{CommonKwargs, RegistryType};
+use opsml_types::{contracts::Card, CommonKwargs, RegistryType};
 use pyo3::prelude::*;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -132,5 +132,10 @@ impl CardEnum {
         Ok(())
     }
 
-    pub fn get_registry_record
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        match self {
+            CardEnum::Data(card) => card.get_registry_card(),
+            CardEnum::Model(card) => card.get_registry_card(),
+        }
+    }
 }
