@@ -668,6 +668,8 @@ mod tests {
     #[tokio::test]
     async fn test_opsml_server_modelcard_crud() {
         let helper = TestHelper::new().await;
+        let mut checksums = HashMap::new();
+        checksums.insert("file.txt".to_string(), "abcde".to_string());
 
         // ModelCard
         let card_request = CreateCardRequest {
@@ -676,6 +678,7 @@ mod tests {
                 repository: "repo1".to_string(),
                 version: "1.0.0".to_string(),
                 contact: "test".to_string(),
+                checksums,
                 ..ModelCardClientRecord::default()
             }),
             registry_type: RegistryType::Model,
