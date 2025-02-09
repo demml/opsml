@@ -2,7 +2,7 @@ use crate::base::{parse_save_kwargs, ExtraMetadata, LoadKwargs, SaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
-use crate::model::{SampleData, TaskType};
+use crate::model::SampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
@@ -12,7 +12,7 @@ use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
 use opsml_types::{
-    interfaces::{ModelInterfaceType, ModelType},
+    interfaces::{ModelInterfaceType, ModelType, TaskType},
     SaveName, Suffix,
 };
 use pyo3::prelude::*;

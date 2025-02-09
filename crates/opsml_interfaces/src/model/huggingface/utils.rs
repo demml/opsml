@@ -1,9 +1,8 @@
 use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension};
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{

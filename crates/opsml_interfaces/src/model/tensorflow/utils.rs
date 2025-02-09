@@ -3,9 +3,8 @@ use crate::model::{
     base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
-use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};

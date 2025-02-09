@@ -1,8 +1,8 @@
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::{ModelType, SaveKwargs};
+use crate::SaveKwargs;
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};

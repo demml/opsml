@@ -1,5 +1,7 @@
 use crate::model::huggingface::{HuggingFaceSampleData, HuggingFaceTask};
-use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
+use opsml_types::{
+    CommonKwargs, DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType,
+};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -10,9 +12,7 @@ use crate::base::{
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::ModelInterface;
-use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
-use crate::ModelType;
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
