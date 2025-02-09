@@ -1,17 +1,17 @@
 use crate::BaseArgs;
 use opsml_error::error::{CardError, OpsmlError};
+use opsml_interfaces::ModelInterface;
 use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
-use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::contracts::{Card, ModelCardClientRecord};
-use opsml_types::{SaveName, Suffix};
+use opsml_types::{ModelInterfaceType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
