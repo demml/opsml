@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
 use opsml_utils::PyHelperFuncs;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyString, IntoPy, PyObject};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -136,7 +136,7 @@ pub struct DataCardClientRecord {
     pub version: String,
     pub contact: String,
     pub tags: Vec<String>,
-    pub data_type: String,
+    pub data_type: DataType,
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
@@ -155,7 +155,7 @@ impl Default for DataCardClientRecord {
             version: "".to_string(),
             contact: "".to_string(),
             tags: Vec::new(),
-            data_type: "".to_string(),
+            data_type: DataType::NotProvided,
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
@@ -563,10 +563,10 @@ impl Card {
     }
 
     #[getter]
-    pub fn data_type(&self) -> Option<&str> {
+    pub fn data_type(&self) -> Option<String> {
         match self {
-            Self::Data(card) => Some(card.data_type.as_str()),
-            Self::Model(card) => Some(card.data_type.as_str()),
+            Self::Data(card) => Some(card.data_type.to_string()),
+            Self::Model(card) => Some(card.data_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,
@@ -575,10 +575,10 @@ impl Card {
     }
 
     #[getter]
-    pub fn model_type(&self) -> Option<&str> {
+    pub fn model_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => Some(card.model_type.as_str()),
+            Self::Model(card) => Some(card.model_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,

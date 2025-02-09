@@ -544,7 +544,7 @@ impl PresignableTypes {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataType {
     Pandas,
@@ -572,6 +572,36 @@ pub enum DataType {
 
     #[default]
     NotProvided,
+}
+
+impl Display for DataType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DataType::Pandas => write!(f, "Pandas"),
+            DataType::Arrow => write!(f, "Arrow"),
+            DataType::Polars => write!(f, "Polars"),
+            DataType::Numpy => write!(f, "Numpy"),
+            DataType::Image => write!(f, "Image"),
+            DataType::Text => write!(f, "Text"),
+            DataType::Dict => write!(f, "Dict"),
+            DataType::Sql => write!(f, "Sql"),
+            DataType::Profile => write!(f, "Profile"),
+            DataType::TransformerBatch => write!(f, "TransformerBatch"),
+            DataType::String => write!(f, "string"),
+            DataType::TorchTensor => write!(f, "TorchTensor"),
+            DataType::TorchDataset => write!(f, "TorchDataset"),
+            DataType::TensorFlowTensor => write!(f, "TensorFlowTensor"),
+            DataType::DMatrix => write!(f, "DMatrix"),
+            DataType::Tuple => write!(f, "Tuple"),
+            DataType::List => write!(f, "List"),
+            DataType::Str => write!(f, "str"),
+            DataType::OrderedDict => write!(f, "OrderedDict"),
+            DataType::Joblib => write!(f, "Joblib"),
+            DataType::Base => write!(f, "Base"),
+            DataType::Dataset => write!(f, "Dataset"),
+            DataType::NotProvided => write!(f, "NotProvided"),
+        }
+    }
 }
 
 #[pyclass(eq)]
