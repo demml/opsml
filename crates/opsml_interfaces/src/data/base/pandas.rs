@@ -1,7 +1,7 @@
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -55,6 +55,7 @@ impl PandasData {
 
         data_interface.data_type = DataType::Pandas;
         data_interface.data = data;
+        data_interface.interface_type = DataInterfaceType::Pandas;
 
         Ok((PandasData {}, data_interface))
     }

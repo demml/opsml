@@ -4,7 +4,7 @@ use crate::data::{
 };
 use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
-use opsml_types::{DataType, InterfaceType, SaveName, Suffix};
+use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
@@ -37,7 +37,7 @@ pub struct DataInterface {
     pub data_type: DataType,
 
     #[pyo3(get)]
-    pub interface_type: InterfaceType,
+    pub interface_type: DataInterfaceType,
 }
 
 #[pymethods]
@@ -110,7 +110,7 @@ impl DataInterface {
             feature_map,
             sql_logic,
             data_type: DataType::Base,
-            interface_type: InterfaceType::Data,
+            interface_type: DataInterfaceType::Base,
             data_profile,
         })
     }
