@@ -368,7 +368,7 @@ mod tests {
 
         // Test list cards
         let cards = registry
-            .list_cards(None, None, None, None, None, None, None, None, None)
+            .list_cards(None, None, None, None, None, None, None, None)
             .unwrap();
 
         assert_eq!(cards.cards.len(), 10);
