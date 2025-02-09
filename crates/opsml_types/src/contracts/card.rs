@@ -1,6 +1,6 @@
 use crate::{
-    interfaces::{ModelType, TaskType},
-    DataType, RegistryType,
+    interfaces::{types::DataInterfaceType, ModelType, TaskType},
+    DataType, ModelInterfaceType, RegistryType,
 };
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
@@ -143,7 +143,7 @@ pub struct DataCardClientRecord {
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
-    pub interface_type: Option<String>,
+    pub interface_type: String,
     pub checksums: HashMap<String, String>,
 }
 
@@ -162,7 +162,7 @@ impl Default for DataCardClientRecord {
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
-            interface_type: None,
+            interface_type: DataInterfaceType::Base.to_string(),
             checksums: HashMap::new(),
         }
     }
@@ -185,7 +185,7 @@ pub struct ModelCardClientRecord {
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
-    pub interface_type: Option<String>,
+    pub interface_type: String,
     pub task_type: String,
     pub checksums: HashMap<String, String>,
 }
@@ -207,7 +207,7 @@ impl Default for ModelCardClientRecord {
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
-            interface_type: None,
+            interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
             checksums: HashMap::new(),
         }
@@ -554,10 +554,10 @@ impl Card {
     }
 
     #[getter]
-    pub fn interface_type(&self) -> Option<&str> {
+    pub fn interface_type(&self) -> Option<String> {
         match self {
-            Self::Data(card) => card.interface_type.as_deref(),
-            Self::Model(card) => card.interface_type.as_deref(),
+            Self::Data(card) => Some(card.interface_type.to_string()),
+            Self::Model(card) => Some(card.interface_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,

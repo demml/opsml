@@ -95,6 +95,56 @@ pub enum ModelInterfaceType {
     XGBoost,
 }
 
+impl Display for ModelInterfaceType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        // match the types and return the string representation
+        let model_interface_type = match self {
+            ModelInterfaceType::Base => "Base",
+            ModelInterfaceType::Sklearn => "Sklearn",
+            ModelInterfaceType::CatBoost => "CatBoost",
+            ModelInterfaceType::HuggingFace => "HuggingFace",
+            ModelInterfaceType::LightGBM => "LightGBM",
+            ModelInterfaceType::Lightning => "Lightning",
+            ModelInterfaceType::Torch => "Torch",
+            ModelInterfaceType::TensorFlow => "TensorFlow",
+            ModelInterfaceType::VowpalWabbit => "VowpalWabbit",
+            ModelInterfaceType::XGBoost => "XGBoost",
+        };
+
+        write!(f, "{}", model_interface_type)
+    }
+}
+
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
+pub enum DataInterfaceType {
+    #[default]
+    Base,
+    Arrow,
+    Numpy,
+    Pandas,
+    Polars,
+    Sql,
+    Torch,
+}
+
+impl Display for DataInterfaceType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        // match the types and return the string representation
+        let data_interface_type = match self {
+            DataInterfaceType::Base => "Base",
+            DataInterfaceType::Arrow => "Arrow",
+            DataInterfaceType::Numpy => "Numpy",
+            DataInterfaceType::Pandas => "Pandas",
+            DataInterfaceType::Polars => "Polars",
+            DataInterfaceType::Sql => "Sql",
+            DataInterfaceType::Torch => "Torch",
+        };
+
+        write!(f, "{}", data_interface_type)
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelType {
