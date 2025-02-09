@@ -3,6 +3,7 @@ use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
 use opsml_types::contracts::DataCardClientRecord;
+use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{
     cards::{CardTable, CardType},
     DataType, InterfaceType,
@@ -235,11 +236,11 @@ impl DataCard {
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
-            data_type: self.data_type.clone(),
+            data_type: self.data_type.to_string(),
             runcard_uid: self.metadata.runcard_uid.clone(),
             pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
-            interface_type: Some(InterfaceType::Data),
+            interface_type: DataInterfaceType::Arrow.to_string(),
             checksums: self.checksums.clone(),
         };
 
