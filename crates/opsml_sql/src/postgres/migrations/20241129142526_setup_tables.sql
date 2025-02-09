@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     contact VARCHAR(64),
     tags JSONB DEFAULT '[]',
     datacard_uid VARCHAR(64),
-    sample_data_type VARCHAR(64),
+    data_type VARCHAR(64),
     model_type VARCHAR(64),
     runcard_uid VARCHAR(64),
     pipelinecard_uid VARCHAR(64),
