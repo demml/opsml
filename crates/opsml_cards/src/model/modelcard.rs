@@ -546,7 +546,7 @@ impl ModelCard {
         Ok(())
     }
 
-    pub fn get_registry_record(&self) -> Result<ModelCardClientRecord, CardError> {
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = ModelCardClientRecord {
             created_at: None,
             app_env: None,
@@ -559,9 +559,14 @@ impl ModelCard {
             datacard_uid: self.metadata.datacard_uid.clone(),
             data_type: self.metadata.interface_metadata.data_type.clone(),
             model_type: self.metadata.interface_metadata.model_type.clone(),
-            runcard_uid: self.metadata.runcard_uid,
+            runcard_uid: self.metadata.runcard_uid.clone(),
+            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            interface_type: self.metadata.interface_metadata.interface_type.clone(),
+            task_type: self.metadata.interface_metadata.task_type.to_string(),
+            checksums: self.checksums.clone(),
         };
 
-        Ok(record)
+        Ok(Card::Model(record))
     }
 }
