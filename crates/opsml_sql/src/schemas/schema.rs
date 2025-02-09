@@ -175,7 +175,7 @@ impl DataCardRecord {
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
-        interface_type: Option<String>,
+        interface_type: String,
         checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
@@ -201,7 +201,7 @@ impl DataCardRecord {
             pipelinecard_uid: pipelinecard_uid
                 .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            interface_type,
             checksums: Json(checksums),
         }
     }
@@ -273,8 +273,8 @@ impl ModelCardRecord {
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
-        interface_type: Option<String>,
-        task_type: Option<String>,
+        interface_type: String,
+        task_type: String,
         checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
@@ -302,8 +302,8 @@ impl ModelCardRecord {
             pipelinecard_uid: pipelinecard_uid
                 .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            task_type: task_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            interface_type,
+            task_type,
             checksums: Json(checksums),
         }
     }

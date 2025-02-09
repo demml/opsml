@@ -100,7 +100,7 @@ pub mod server_logic {
                         client_card.runcard_uid,
                         client_card.pipelinecard_uid,
                         client_card.auditcard_uid,
-                        client_card.interface_type,
+                        client_card.interface_type.to_string(),
                         client_card.checksums,
                     );
                     ServerCard::Data(server_card)
@@ -201,7 +201,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = DataCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env.unwrap(),
                         name: client_card.name,
@@ -218,7 +218,7 @@ pub mod server_logic {
                         runcard_uid: client_card.runcard_uid.unwrap(),
                         pipelinecard_uid: client_card.pipelinecard_uid.unwrap(),
                         auditcard_uid: client_card.auditcard_uid.unwrap(),
-                        interface_type: client_card.interface_type.unwrap(),
+                        interface_type: client_card.interface_type,
                         checksums: SqlxJson(client_card.checksums),
                     };
                     ServerCard::Data(server_card)
@@ -231,7 +231,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = ModelCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env.unwrap(),
                         name: client_card.name,
@@ -250,8 +250,8 @@ pub mod server_logic {
                         runcard_uid: client_card.runcard_uid.unwrap(),
                         pipelinecard_uid: client_card.pipelinecard_uid.unwrap(),
                         auditcard_uid: client_card.auditcard_uid.unwrap(),
-                        interface_type: client_card.interface_type.unwrap(),
-                        task_type: client_card.task_type.unwrap(),
+                        interface_type: client_card.interface_type,
+                        task_type: client_card.task_type,
                         checksums: SqlxJson(client_card.checksums),
                     };
                     ServerCard::Model(server_card)
@@ -264,7 +264,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = ProjectCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         name: client_card.name,
                         repository: client_card.repository,
@@ -286,7 +286,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = RunCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env.unwrap(),
                         name: client_card.name,
@@ -317,7 +317,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = PipelineCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env.unwrap(),
                         name: client_card.name,
@@ -345,7 +345,7 @@ pub mod server_logic {
                     })?;
 
                     let server_card = AuditCardRecord {
-                        uid: client_card.uid.unwrap(),
+                        uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env.unwrap(),
                         name: client_card.name,
