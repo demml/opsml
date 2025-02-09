@@ -1,7 +1,8 @@
 use crate::BaseArgs;
-use opsml_error::error::OpsmlError;
+use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
+use opsml_types::contracts::Card;
 use opsml_types::contracts::DataCardClientRecord;
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{
@@ -12,6 +13,7 @@ use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::error;
 
@@ -244,7 +246,7 @@ impl DataCard {
             checksums: self.checksums.clone(),
         };
 
-        Ok(Card::Model(record))
+        Ok(Card::Data(record))
     }
 }
 
