@@ -176,7 +176,7 @@ impl DataCardRecord {
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
         interface_type: Option<String>,
-        checksums: Option<HashMap<String, String>>,
+        checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -202,7 +202,7 @@ impl DataCardRecord {
                 .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            checksums: Json(checksums.unwrap_or_default()),
+            checksums: Json(checksums),
         }
     }
 }
@@ -275,7 +275,7 @@ impl ModelCardRecord {
         auditcard_uid: Option<String>,
         interface_type: Option<String>,
         task_type: Option<String>,
-        checksums: Option<HashMap<String, String>>,
+        checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -304,7 +304,7 @@ impl ModelCardRecord {
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             task_type: task_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            checksums: Json(checksums.unwrap_or_default()),
+            checksums: Json(checksums),
         }
     }
 }
@@ -403,7 +403,7 @@ impl RunCardRecord {
         project: String,
         artifact_uris: Option<HashMap<String, String>>,
         compute_environment: Option<HashMap<String, String>>,
-        checksums: Option<HashMap<String, String>>,
+        checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -430,7 +430,7 @@ impl RunCardRecord {
             project,
             artifact_uris: Json(artifact_uris.unwrap_or_default()),
             compute_environment: Json(compute_environment.unwrap_or_default()),
-            checksums: Json(checksums.unwrap_or_default()),
+            checksums: Json(checksums),
         }
     }
 }

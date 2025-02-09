@@ -424,7 +424,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, checksums) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -450,9 +450,10 @@ impl SqliteQueryHelper {
         pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
@@ -478,9 +479,10 @@ impl SqliteQueryHelper {
         artifact_uris, 
         compute_environment, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Run
         )
         .to_string()
@@ -556,7 +558,8 @@ impl SqliteQueryHelper {
         pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?",
             CardTable::Data
         )
@@ -584,7 +587,8 @@ impl SqliteQueryHelper {
         pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?",
             CardTable::Model
         )
@@ -610,7 +614,8 @@ impl SqliteQueryHelper {
         artifact_uris = ?, 
         compute_environment = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?",
             CardTable::Run
         )
