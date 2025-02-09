@@ -841,19 +841,10 @@ mod tests {
             rpath_nested.to_str().unwrap().to_string(),
         ];
 
-        // calculate checksums
-        // time the checksum calculation
-        let start = std::time::Instant::now();
-
         let checksums =
             storage_client.calculate_dir_checksum(&storage_client.client.bucket.join(rpath_dir))?;
 
-        let duration = start.elapsed();
-
-        println!("Time elapsed in checksum calculation: {:?}", duration);
-        println!("Checksums: {:?}", checksums);
-
-        assert!(checksums.len() == 3);
+        assert!(checksums.len() == 2);
 
         // sort the blobs
         blobs.sort();

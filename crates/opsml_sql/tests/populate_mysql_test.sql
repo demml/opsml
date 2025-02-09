@@ -1,14 +1,14 @@
 INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, pre_tag,  build_tag, version, contact, tags, data_type, runcard_uid, pipelinecard_uid, auditcard_uid, interface_type) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', 'contact1', '["key1"]', 'type1', 'runcard1', 'pipelinecard1', 'auditcard1', 'typeA'),
-('550e8400-e29b-41d4-a716-446655440001', 'development', 'Data1', 'repo1', 1, 0, 1, 'beta', 'build2',   '1.0.1', 'contact2', '[]', 'type2', 'runcard2', 'pipelinecard2', 'auditcard2', 'typeB'),
-('550e8400-e29b-41d4-a716-446655440002', 'development', 'Data1', 'repo1', 1, 1, 0, 'gamma', 'build3',  '1.1.0', 'contact3', '[]', 'type3', 'runcard3', 'pipelinecard3', 'auditcard3', 'typeC'),
-('550e8400-e29b-41d4-a716-446655440003', 'development', 'Data1', 'repo1', 1, 1, 1, 'delta', 'build4',  '1.1.1', 'contact4', '[]', 'type4', 'runcard4', 'pipelinecard4', 'auditcard4', 'typeD'),
-('550e8400-e29b-41d4-a716-446655440004', 'development', 'Data1', 'repo1', 2, 0, 0, 'epsilon', 'build5','2.0.0',  'contact5', '[]', 'type5', 'runcard5', 'pipelinecard5', 'auditcard5', 'typeE'),
-('550e8400-e29b-41d4-a716-446655440005', 'development', 'Data1', 'repo1', 2, 0, 1, 'zeta', 'build6',   '2.0.1', 'contact6', '[]', 'type6', 'runcard6', 'pipelinecard6', 'auditcard6', 'typeF'),
-('550e8400-e29b-41d4-a716-446655440006', 'development', 'Data1', 'repo1', 2, 1, 0, 'eta', 'build7',    '2.1.0', 'contact7', '[]', 'type7', 'runcard7', 'pipelinecard7', 'auditcard7', 'typeG'),
-('550e8400-e29b-41d4-a716-446655440007', 'development', 'Data1', 'repo1', 2, 1, 1, 'theta', 'build8',  '2.1.1', 'contact8', '[]', 'type8', 'runcard8', 'pipelinecard8', 'auditcard8', 'typeH'),
-('550e8400-e29b-41d4-a716-446655440008', 'development', 'Data1', 'repo1', 3, 0, 0, 'iota', 'build9',   '3.0.0', 'contact9', '[]', 'type9', 'runcard9', 'pipelinecard9', 'auditcard9', 'typeI'),
-('550e8400-e29b-41d4-a716-446655440009', 'development', 'Data1', 'repo1', 3, 0, 1, 'kappa', 'build10', '3.0.1', 'contact10', '[]', 'type10', 'runcard10', 'pipelinecard10', 'auditcard10', 'typeJ');
+('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1',  '1.0.0', 'contact1', '["key1"]', 'type1', 'runcard1', 'pipelinecard1', 'auditcard1', 'typeA', '{}'),
+('550e8400-e29b-41d4-a716-446655440001', 'development', 'Data1', 'repo1', 1, 0, 1, 'beta', 'build2',   '1.0.1', 'contact2', '[]', 'type2', 'runcard2', 'pipelinecard2', 'auditcard2', 'typeB', '{}'),
+('550e8400-e29b-41d4-a716-446655440002', 'development', 'Data1', 'repo1', 1, 1, 0, 'gamma', 'build3',  '1.1.0', 'contact3', '[]', 'type3', 'runcard3', 'pipelinecard3', 'auditcard3', 'typeC', '{}'),
+('550e8400-e29b-41d4-a716-446655440003', 'development', 'Data1', 'repo1', 1, 1, 1, 'delta', 'build4',  '1.1.1', 'contact4', '[]', 'type4', 'runcard4', 'pipelinecard4', 'auditcard4', 'typeD', '{}'),
+('550e8400-e29b-41d4-a716-446655440004', 'development', 'Data1', 'repo1', 2, 0, 0, 'epsilon', 'build5','2.0.0',  'contact5', '[]', 'type5', 'runcard5', 'pipelinecard5', 'auditcard5', 'typeE', '{}'),
+('550e8400-e29b-41d4-a716-446655440005', 'development', 'Data1', 'repo1', 2, 0, 1, 'zeta', 'build6',   '2.0.1', 'contact6', '[]', 'type6', 'runcard6', 'pipelinecard6', 'auditcard6', 'typeF', '{}'),
+('550e8400-e29b-41d4-a716-446655440006', 'development', 'Data1', 'repo1', 2, 1, 0, 'eta', 'build7',    '2.1.0', 'contact7', '[]', 'type7', 'runcard7', 'pipelinecard7', 'auditcard7', 'typeG', '{}'),
+('550e8400-e29b-41d4-a716-446655440007', 'development', 'Data1', 'repo1', 2, 1, 1, 'theta', 'build8',  '2.1.1', 'contact8', '[]', 'type8', 'runcard8', 'pipelinecard8', 'auditcard8', 'typeH', '{}'),
+('550e8400-e29b-41d4-a716-446655440008', 'development', 'Data1', 'repo1', 3, 0, 0, 'iota', 'build9',   '3.0.0', 'contact9', '[]', 'type9', 'runcard9', 'pipelinecard9', 'auditcard9', 'typeI', '{}'),
+('550e8400-e29b-41d4-a716-446655440009', 'development', 'Data1', 'repo1', 3, 0, 1, 'kappa', 'build10', '3.0.1', 'contact10', '[]', 'type10', 'runcard10', 'pipelinecard10', 'auditcard10', 'typeJ', '{}');
 
 -- Populate opsml_model_registry
 INSERT INTO opsml_model_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version, contact, tags, datacard_uid, sample_data_type, model_type, runcard_uid, pipelinecard_uid, auditcard_uid, interface_type, task_type) VALUES 

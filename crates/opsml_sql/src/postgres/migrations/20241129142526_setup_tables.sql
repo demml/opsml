@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     runcard_uid VARCHAR(64),
     pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
-    interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined'
+    interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
+    checksums JSONB
 );
 
 -- ModelSchema
@@ -42,7 +43,8 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
-    task_type VARCHAR(64) NOT NULL DEFAULT 'undefined'
+    task_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
+    checksums JSONB NOT NULL DEFAULT '{}'
 );
 
 -- RunSchema
@@ -65,7 +67,8 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     pipelinecard_uid VARCHAR(64),
     project VARCHAR(64),
     artifact_uris JSONB,
-    compute_environment JSONB
+    compute_environment JSONB,
+    checksums JSONB NOT NULL DEFAULT '{}'
 );
 
 -- AuditSchema
@@ -86,7 +89,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     approved BOOLEAN,
     datacard_uids JSONB,
     modelcard_uids JSONB,
-    runcard_uids JSONB
+    runcard_uids JSONB NOT NULL DEFAULT '{}'
 );
 
 -- PipelineSchema
