@@ -1,5 +1,4 @@
 use crate::enums::OpsmlRegistry;
-use crate::saver::enums::CardSaver;
 use opsml_cards::*;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;

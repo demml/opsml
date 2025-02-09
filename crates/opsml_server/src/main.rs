@@ -642,7 +642,7 @@ mod tests {
         assert!(update_response.updated);
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Data,
         };
 
@@ -769,7 +769,7 @@ mod tests {
         assert!(update_response.updated);
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Model,
         };
 
@@ -891,7 +891,7 @@ mod tests {
         assert!(update_response.updated);
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Run,
         };
 
@@ -1010,7 +1010,7 @@ mod tests {
         assert!(update_response.updated);
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Pipeline,
         };
 
@@ -1129,7 +1129,7 @@ mod tests {
         assert!(update_response.updated);
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Audit,
         };
 
@@ -1214,7 +1214,7 @@ mod tests {
         };
 
         let delete_args = UidRequest {
-            uid: card.uid.clone().unwrap(),
+            uid: card.uid.clone(),
             registry_type: RegistryType::Project,
         };
 
