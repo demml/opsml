@@ -128,7 +128,7 @@ impl Default for ListCardRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct DataCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub app_env: Option<String>,
     pub name: String,
@@ -147,7 +147,7 @@ pub struct DataCardClientRecord {
 impl Default for DataCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             app_env: None,
             name: "".to_string(),
@@ -168,7 +168,7 @@ impl Default for DataCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct ModelCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub app_env: Option<String>,
     pub name: String,
@@ -190,7 +190,7 @@ pub struct ModelCardClientRecord {
 impl Default for ModelCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             app_env: None,
             name: "".to_string(),
@@ -214,7 +214,7 @@ impl Default for ModelCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct RunCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub app_env: Option<String>,
     pub name: String,
@@ -234,7 +234,7 @@ pub struct RunCardClientRecord {
 impl Default for RunCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             app_env: None,
             name: "".to_string(),
@@ -256,7 +256,7 @@ impl Default for RunCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct AuditCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub app_env: Option<String>,
     pub name: String,
@@ -273,7 +273,7 @@ pub struct AuditCardClientRecord {
 impl Default for AuditCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             app_env: None,
             name: "".to_string(),
@@ -292,7 +292,7 @@ impl Default for AuditCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct PipelineCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub app_env: Option<String>,
     pub name: String,
@@ -309,7 +309,7 @@ pub struct PipelineCardClientRecord {
 impl Default for PipelineCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             app_env: None,
             name: "".to_string(),
@@ -328,7 +328,7 @@ impl Default for PipelineCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct ProjectCardClientRecord {
-    pub uid: Option<String>,
+    pub uid: String,
     pub created_at: Option<NaiveDateTime>,
     pub name: String,
     pub repository: String,
@@ -339,7 +339,7 @@ pub struct ProjectCardClientRecord {
 impl Default for ProjectCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
+            uid: "".to_string(),
             created_at: None,
             name: "".to_string(),
             repository: "".to_string(),
@@ -368,14 +368,14 @@ impl Card {
     }
 
     #[getter]
-    pub fn uid(&self) -> Option<&str> {
+    pub fn uid(&self) -> &str {
         match self {
-            Self::Data(card) => card.uid.as_deref(),
-            Self::Model(card) => card.uid.as_deref(),
-            Self::Run(card) => card.uid.as_deref(),
-            Self::Audit(card) => card.uid.as_deref(),
-            Self::Pipeline(card) => card.uid.as_deref(),
-            Self::Project(card) => card.uid.as_deref(),
+            Self::Data(card) => &card.uid,
+            Self::Model(card) => &card.uid,
+            Self::Run(card) => &card.uid,
+            Self::Audit(card) => &card.uid,
+            Self::Pipeline(card) => &card.uid,
+            Self::Project(card) => &card.uid,
         }
     }
 
@@ -469,7 +469,7 @@ impl Card {
     #[getter]
     pub fn datacard_uids(&self) -> Option<Vec<&str>> {
         match self {
-            Self::Data(card) => card.uid.as_deref().map(|uid| vec![uid]),
+            Self::Data(card) => Some(vec![&card.uid]),
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
             Self::Run(card) => card
                 .datacard_uids
@@ -491,7 +491,7 @@ impl Card {
     pub fn modelcard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => card.uid.as_deref().map(|uid| vec![uid]),
+            Self::Model(card) => Some(vec![&card.uid]),
             Self::Run(card) => card
                 .modelcard_uids
                 .as_ref()
@@ -513,7 +513,7 @@ impl Card {
         match self {
             Self::Data(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
             Self::Model(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => card.uid.as_deref().map(|uid| vec![uid]),
+            Self::Run(card) => Some(vec![&card.uid]),
             Self::Audit(card) => card
                 .runcard_uids
                 .as_ref()
@@ -533,7 +533,7 @@ impl Card {
             Self::Model(card) => card.pipelinecard_uid.as_deref(),
             Self::Run(card) => card.pipelinecard_uid.as_deref(),
             Self::Audit(_) => None,
-            Self::Pipeline(card) => card.uid.as_deref(),
+            Self::Pipeline(card) => Some(&card.uid),
             Self::Project(_) => None,
         }
     }
@@ -544,7 +544,7 @@ impl Card {
             Self::Data(card) => card.auditcard_uid.as_deref(),
             Self::Model(card) => card.auditcard_uid.as_deref(),
             Self::Run(_) => None,
-            Self::Audit(card) => card.uid.as_deref(),
+            Self::Audit(card) => Some(&card.uid),
             Self::Pipeline(_) => None,
             Self::Project(_) => None,
         }
@@ -640,7 +640,7 @@ impl CardList {
                     repository: repository.to_string(),
                     contact: contact.to_string(),
                     version: version.to_string(),
-                    uid: Colorize::purple(uid.unwrap()),
+                    uid: Colorize::purple(uid),
                 }
             })
             .collect();

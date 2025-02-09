@@ -10,21 +10,21 @@ use opsml_interfaces::{ModelInterface, ModelInterfaceType};
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
+use opsml_types::contracts::{Card, ModelCardClientRecord};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
 use pyo3::{PyTraverseError, PyVisit};
-use rayon::prelude::*;
 use serde::{
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::collections::HashMap;
+use std::fmt;
 use std::path::{Path, PathBuf};
-use std::{fmt, fs};
 use tracing::error;
 
 fn interface_from_metadata<'py>(
@@ -197,14 +197,13 @@ impl ModelCard {
         py: Python<'py>,
         path: PathBuf,
         save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<()> {
+    ) -> Result<(), CardError> {
         // save model interface
         // if option raise error
-        let model = self.interface.as_ref().ok_or_else(|| {
-            OpsmlError::new_err(
-                "Interface not found. Ensure DataCard has been initialized correctly",
-            )
-        })?;
+        let model = self
+            .interface
+            .as_ref()
+            .ok_or_else(|| CardError::Error("Model interface not found".to_string()))?;
 
         let metadata =
             model
@@ -222,7 +221,6 @@ impl ModelCard {
         PyHelperFuncs::save_to_json(&self, card_save_path)?;
 
         // create checksum for all files
-
         Ok(())
     }
 
@@ -522,10 +520,10 @@ impl ModelCard {
         &self,
         path: &Path,
         model: bool,
-        onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
+        _onnx: bool,
+        _drift_profile: bool,
+        _sample_data: bool,
+        _preprocessor: bool,
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = tokio::runtime::Runtime::new().map_err(|e| {

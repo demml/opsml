@@ -123,7 +123,7 @@ impl PyHelperFuncs {
         }
     }
 
-    pub fn save_to_json<T>(model: T, mut path: PathBuf) -> Result<(), UtilError>
+    pub fn save_to_json<T>(model: T, path: PathBuf) -> Result<(), UtilError>
     where
         T: Serialize,
     {
@@ -132,7 +132,7 @@ impl PyHelperFuncs {
             serde_json::to_string_pretty(&model).map_err(|_| UtilError::SerializationError)?;
 
         // ensure .json extension
-        path.set_extension("json");
+        let path = path.with_extension("json");
 
         if !path.exists() {
             // ensure path exists, create if not

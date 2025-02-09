@@ -1,8 +1,12 @@
 use crate::{DataCard, ModelCard};
+
 use opsml_error::error::CardError;
+use opsml_interfaces::SaveKwargs;
 use opsml_types::{CommonKwargs, RegistryType};
 use pyo3::prelude::*;
 use std::path::PathBuf;
+use tempfile::TempDir;
+use tracing::{debug, error, instrument};
 
 #[derive(Debug)]
 pub enum CardEnum {
@@ -89,4 +93,44 @@ impl CardEnum {
             CardEnum::Model(card) => card.uri(),
         }
     }
+
+    pub fn update_uid(&mut self, uid: String) {
+        match self {
+            CardEnum::Data(card) => card.uid = uid,
+            CardEnum::Model(card) => card.uid = uid,
+        }
+    }
+
+    #[instrument(skip_all)]
+    pub fn save_card(
+        &mut self,
+        py: Python,
+        save_kwargs: Option<SaveKwargs>,
+    ) -> Result<(), CardError> {
+        debug!("Saving card");
+
+        let tmp_dir = TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            CardError::Error("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        // save all interface assets + Card (
+        // Card will serve as metadata source of truth)
+        match self {
+            CardEnum::Data(_data_card) => {
+                // save data card
+                // data_card.save_artifacts(tmp_path)?;
+            }
+            CardEnum::Model(ref mut modelcard) => {
+                modelcard.save(py, tmp_path.clone(), save_kwargs)?;
+            }
+        }
+        // calculate checksums in path
+
+        Ok(())
+    }
+
+    pub fn get_registry_record
 }
