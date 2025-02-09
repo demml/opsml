@@ -12,11 +12,16 @@ chrono = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-semver = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
+rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tempfile = { workspace = true }
+tokio = { workspace = true }
 tracing = { workspace = true }
 walkdir = { workspace = true }
 

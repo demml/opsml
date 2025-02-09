@@ -1,5 +1,5 @@
 use crate::BaseArgs;
-use opsml_error::error::OpsmlError;
+use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
@@ -7,6 +7,8 @@ use opsml_interfaces::{
 };
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
 use opsml_interfaces::{ModelInterface, ModelInterfaceType};
+use opsml_settings::config::OpsmlConfig;
+use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -14,14 +16,15 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
 use pyo3::{PyTraverseError, PyVisit};
+use rayon::prelude::*;
 use serde::{
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::collections::HashMap;
-use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{fmt, fs};
 use tracing::error;
 
 fn interface_from_metadata<'py>(
@@ -223,12 +226,11 @@ impl ModelCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    #[pyo3(signature = (model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &self,
         py: Python,
-        path: PathBuf,
         model: bool,
         onnx: bool,
         drift_profile: bool,
@@ -236,11 +238,29 @@ impl ModelCard {
         preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
-        //// download assets
+        //// download assets from uri
+        let tmp_dir = tempfile::TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            OpsmlError::new_err("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        // download assets
+        self._download(
+            &tmp_path,
+            model,
+            onnx,
+            drift_profile,
+            sample_data,
+            preprocessor,
+        )?;
+
+        // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
             (
-                path,
+                tmp_path,
                 model,
                 onnx,
                 drift_profile,
@@ -475,5 +495,56 @@ impl<'de> Deserialize<'de> for ModelCard {
             "checksums",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
+    }
+}
+
+impl ModelCard {
+    async fn _download_model(
+        &self,
+        lpath: &Path,
+        rpath: &Path,
+        fs: &mut FileSystemStorage,
+    ) -> Result<(), CardError> {
+        fs.get(
+            &if rpath.extension().is_some() {
+                lpath.join(&rpath)
+            } else {
+                lpath.to_path_buf()
+            },
+            &self.uri().join(&rpath),
+            rpath.extension().is_none(),
+        )
+        .await?;
+
+        Ok(())
+    }
+    pub fn _download(
+        &self,
+        path: &Path,
+        model: bool,
+        onnx: bool,
+        drift_profile: bool,
+        sample_data: bool,
+        preprocessor: bool,
+    ) -> Result<(), CardError> {
+        // Create a new tokio runtime for the registry (needed for async calls)
+        let rt = tokio::runtime::Runtime::new().map_err(|e| {
+            error!("Failed to create tokio runtime: {}", e);
+            CardError::Error(e.to_string())
+        })?;
+
+        let config = OpsmlConfig::default();
+        let mut storage_settings = config.storage_settings().clone();
+        let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
+
+        if model {
+            rt.block_on(async {
+                let mut fs = FileSystemStorage::new(&mut storage_settings).await?;
+                self._download_model(path, &save_metadata.model_uri, &mut fs)
+                    .await
+            })?;
+        }
+
+        Ok(())
     }
 }
