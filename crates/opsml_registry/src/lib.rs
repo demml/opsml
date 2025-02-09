@@ -1,6 +1,5 @@
 pub mod enums;
 pub mod registry;
-pub mod saver;
 pub mod server;
 
 pub use registry::CardRegistry;
