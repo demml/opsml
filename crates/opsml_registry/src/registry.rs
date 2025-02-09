@@ -148,6 +148,7 @@ impl CardRegistry {
 
         // check if card and registry type match
         if !card.match_registry_type(&self.registry_type) {
+            error!("Card and registry type do not match");
             return Err(OpsmlError::new_err("Card and registry type do not match"));
         }
 
@@ -155,26 +156,19 @@ impl CardRegistry {
         println!("✓ {:?}", msg);
 
         // get next version
-        self.set_card_version(&mut card, version_type, pre_tag, build_tag)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        self.set_card_version(&mut card, version_type, pre_tag, build_tag)?;
 
         let msg = Colorize::green("set card version").to_string();
         println!("✓ {:?}", msg);
 
-        // set card uid
-        let new_uid = Uuid::new_v4().to_string();
-
-        CardSaver::save_card(py, &card, save_kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        // next steps
-        // 1. verify card to registry type
-        // 2. set card version
-        // 4. save the artifacts of the card
-        // 5. registry the card
+        card.update_uid(Uuid::new_v4().to_string());
+        card.save_card(py, save_kwargs)?;
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();
         println!("✓ {:?}", msg);
+
+        // register card
+        // get registry record
 
         let msg = Colorize::green("registered card").to_string();
         println!("✓ {:?}", msg);
@@ -199,6 +193,8 @@ impl CardRegistry {
         pre_tag: Option<String>,
         build_tag: Option<String>,
     ) -> Result<(), RegistryError> {
+        debug!("Setting card version");
+
         let version = card.version();
 
         let card_version: Option<String> = if version == CommonKwargs::BaseVersion.to_string() {

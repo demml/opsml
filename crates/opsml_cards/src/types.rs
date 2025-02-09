@@ -35,8 +35,7 @@ impl Description {
         let extracted_summary = match summary {
             Some(summary) => {
                 if summary.ends_with(".md") {
-                    let filepath = FileUtils::open_file(&summary)
-                        .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                    let filepath = FileUtils::open_file(&summary)?;
                     Some(filepath)
                 } else {
                     Some(summary)
@@ -48,8 +47,7 @@ impl Description {
         let extracted_sample_code = match sample_code {
             Some(sample_code) => {
                 if sample_code.ends_with(".md") {
-                    let filepath = FileUtils::open_file(&sample_code)
-                        .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                    let filepath = FileUtils::open_file(&sample_code)?;
                     Some(filepath)
                 } else {
                     Some(sample_code)

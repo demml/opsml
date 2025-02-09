@@ -32,11 +32,6 @@ impl OpsmlRegistry {
                 .await?;
                 Ok(Self::ServerRegistry(server_registry))
             }
-
-            #[cfg(not(feature = "server"))]
-            false => Err(RegistryError::NewError(
-                "Server mode is not enabled in the settings".to_string(),
-            )),
         }
     }
 
@@ -104,6 +99,20 @@ impl OpsmlRegistry {
                 server_registry
                     .get_next_version(name, repository, version, version_type, pre_tag, build_tag)
                     .await
+            }
+        }
+    }
+
+    pub async fn create_card(&mut self, card: Card) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.create_card(card).await?;
+                Ok(())
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.create_card(card).await?;
+                Ok(())
             }
         }
     }

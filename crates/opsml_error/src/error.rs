@@ -249,6 +249,12 @@ impl From<CardError> for PyErr {
     }
 }
 
+impl From<PyErr> for CardError {
+    fn from(err: PyErr) -> Self {
+        CardError::Error(err.to_string())
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum SaveError {
     #[error("{0}")]
