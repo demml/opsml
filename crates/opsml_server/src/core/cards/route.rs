@@ -239,6 +239,7 @@ pub async fn create_card(
                 client_card.pipelinecard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
+                client_card.checksums,
             );
             ServerCard::Data(server_card)
         }
@@ -257,6 +258,7 @@ pub async fn create_card(
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.task_type,
+                client_card.checksums,
             );
             ServerCard::Model(server_card)
         }
@@ -284,6 +286,7 @@ pub async fn create_card(
                 client_card.project,
                 client_card.artifact_uris,
                 client_card.compute_environment,
+                client_card.checksums,
             );
             ServerCard::Run(server_card)
         }
@@ -375,6 +378,7 @@ pub async fn update_card(
                 pipelinecard_uid: client_card.pipelinecard_uid.unwrap(),
                 auditcard_uid: client_card.auditcard_uid.unwrap(),
                 interface_type: client_card.interface_type.unwrap(),
+                checksums: SqlxJson(client_card.checksums.unwrap()),
             };
             ServerCard::Data(server_card)
         }
@@ -410,6 +414,7 @@ pub async fn update_card(
                 auditcard_uid: client_card.auditcard_uid.unwrap(),
                 interface_type: client_card.interface_type.unwrap(),
                 task_type: client_card.task_type.unwrap(),
+                checksums: SqlxJson(client_card.checksums.unwrap()),
             };
             ServerCard::Model(server_card)
         }
@@ -468,6 +473,7 @@ pub async fn update_card(
                 project: client_card.project,
                 artifact_uris: SqlxJson(client_card.artifact_uris.unwrap()),
                 compute_environment: SqlxJson(client_card.compute_environment.unwrap()),
+                checksums: SqlxJson(client_card.checksums.unwrap()),
             };
             ServerCard::Run(server_card)
         }
