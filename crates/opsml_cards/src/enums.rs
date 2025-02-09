@@ -1,7 +1,6 @@
 use crate::{DataCard, ModelCard};
 use opsml_error::error::CardError;
 use opsml_types::{CommonKwargs, RegistryType};
-use pyo3::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Debug)]

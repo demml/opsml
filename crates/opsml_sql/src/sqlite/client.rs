@@ -999,7 +999,8 @@ mod tests {
 
     use opsml_types::SqlType;
     use opsml_utils::utils::get_utc_datetime;
-    use std::env;
+    use sqlx::types::Json as SqlxJson;
+    use std::{collections::HashMap, env};
 
     fn get_connection_uri() -> String {
         let mut current_dir = env::current_dir().expect("Failed to get current directory");
@@ -1242,8 +1243,13 @@ mod tests {
             sql_type: SqlType::Sqlite,
         };
 
+        let mut checksums = HashMap::new();
+        checksums.insert("test.txt".to_string(), "abcd".to_string());
+
         let client = SqliteClient::new(&config).await.unwrap();
-        let data_card = DataCardRecord::default();
+        let mut data_card = DataCardRecord::default();
+        data_card.checksums = SqlxJson(checksums);
+
         let card = ServerCard::Data(data_card.clone());
 
         client.insert_card(&CardTable::Data, &card).await.unwrap();
@@ -1253,6 +1259,7 @@ mod tests {
             uid: Some(data_card.uid),
             ..Default::default()
         };
+
         let results = client
             .query_cards(&CardTable::Data, &card_args)
             .await
