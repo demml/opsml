@@ -1,11 +1,10 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
-use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use crate::{DataProcessor, LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
-use opsml_types::{CommonKwargs, SaveName, Suffix};
+use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use opsml_utils::pyobject_to_json;
 use pyo3::gc::PyVisit;
 use pyo3::prelude::*;

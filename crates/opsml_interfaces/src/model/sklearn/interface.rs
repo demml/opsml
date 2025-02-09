@@ -1,13 +1,12 @@
 use crate::base::DataProcessor;
 use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
-use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType, ProcessorType};
-use crate::ModelType;
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use crate::{LoadKwargs, SaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
+use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::pyobject_to_json;
 use opsml_utils::PyHelperFuncs;

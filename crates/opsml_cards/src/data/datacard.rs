@@ -2,6 +2,7 @@ use crate::BaseArgs;
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
+use opsml_types::contracts::DataCardClientRecord;
 use opsml_types::{
     cards::{CardTable, CardType},
     DataType, InterfaceType,
@@ -16,9 +17,6 @@ use tracing::error;
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DataCardMetadata {
-    #[pyo3(get, set)]
-    pub data_type: DataType,
-
     #[pyo3(get, set)]
     pub schema: FeatureSchema,
 
@@ -36,16 +34,14 @@ pub struct DataCardMetadata {
 impl DataCardMetadata {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data_type, schema=FeatureSchema::default(), runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
+    #[pyo3(signature = ( schema=FeatureSchema::default(), runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
     pub fn new(
-        data_type: DataType,
         schema: FeatureSchema,
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
     ) -> Self {
         Self {
-            data_type,
             schema,
             runcard_uid,
             pipelinecard_uid,
@@ -83,6 +79,12 @@ pub struct DataCard {
 
     #[pyo3(get)]
     pub card_type: CardType,
+
+    #[pyo3(get)]
+    pub data_type: DataType,
+
+    #[pyo3(get)]
+    pub checksums: HashMap<String, String>,
 }
 
 #[pymethods]
@@ -142,7 +144,6 @@ impl DataCard {
         }
 
         let metadata = metadata.unwrap_or(DataCardMetadata::new(
-            data_type,
             FeatureSchema::default(),
             None,
             None,
@@ -163,6 +164,8 @@ impl DataCard {
             tags,
             metadata,
             card_type: CardType::Data,
+            data_type,
+            checksums: HashMap::new(),
         })
     }
 
@@ -221,6 +224,29 @@ impl DataCard {
     }
 }
 
+impl DataCard {
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = DataCardClientRecord {
+            created_at: None,
+            app_env: None,
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            contact: self.contact.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            data_type: self.data_type.clone(),
+            runcard_uid: self.metadata.runcard_uid.clone(),
+            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            interface_type: Some(InterfaceType::Data),
+            checksums: self.checksums.clone(),
+        };
+
+        Ok(Card::Model(record))
+    }
+}
+
 impl FromPyObject<'_> for DataCard {
     fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
         let interface = ob.getattr("interface")?;
@@ -232,6 +258,8 @@ impl FromPyObject<'_> for DataCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let card_type = ob.getattr("card_type")?.extract()?;
+        let data_type = ob.getattr("data_type")?.extract()?;
+        let checksums = ob.getattr("checksums")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -243,6 +271,8 @@ impl FromPyObject<'_> for DataCard {
             tags,
             metadata,
             card_type,
+            data_type,
+            checksums,
         })
     }
 }
