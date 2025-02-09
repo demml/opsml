@@ -12,7 +12,7 @@ INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, p
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Data1', 'repo1', 3, 0, 1, 'kappa', 'build10', '3.0.1','contact10', '{}', 'type10', 'runcard10', 'pipelinecard10', 'auditcard10', 'typeJ');
 
 -- Populate opsml_model_registry
-INSERT INTO opsml_model_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version, contact, tags, datacard_uid, sample_data_type, model_type, runcard_uid, pipelinecard_uid, auditcard_uid, interface_type, task_type) VALUES 
+INSERT INTO opsml_model_registry (uid, app_env, name, repository, major, minor, patch, pre_tag, build_tag, version, contact, tags, datacard_uid, data_type, model_type, runcard_uid, pipelinecard_uid, auditcard_uid, interface_type, task_type) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Model1', 'repo1', 1, 0, 0, 'alpha', 'build1', '1.0.0','contact1', '{}', 'datacard1', 'sample1', 'type1', 'runcard1', 'pipelinecard1', 'auditcard1', 'typeA', 'task1'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Model2', 'repo2', 1, 0, 1, 'beta', 'build2', '1.0.0','contact2', '{}', 'datacard2', 'sample2', 'type2', 'runcard2', 'pipelinecard2', 'auditcard2', 'typeB', 'task2'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Model3', 'repo3', 1, 1, 0, 'gamma', 'build3', '1.0.0','contact3', '{}', 'datacard3', 'sample3', 'type3', 'runcard3', 'pipelinecard3', 'auditcard3', 'typeC', 'task3'),

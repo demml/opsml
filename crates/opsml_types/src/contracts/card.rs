@@ -1,4 +1,4 @@
-use crate::RegistryType;
+use crate::{interfaces::ModelType, DataType, RegistryType};
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
@@ -177,8 +177,8 @@ pub struct ModelCardClientRecord {
     pub contact: String,
     pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
-    pub sample_data_type: String,
-    pub model_type: String,
+    pub data_type: DataType,
+    pub model_type: ModelType,
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
@@ -199,8 +199,8 @@ impl Default for ModelCardClientRecord {
             contact: "".to_string(),
             tags: Vec::new(),
             datacard_uid: None,
-            sample_data_type: "".to_string(),
-            model_type: "".to_string(),
+            data_type: DataType::NotProvided,
+            model_type: ModelType::Unknown,
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
@@ -566,7 +566,7 @@ impl Card {
     pub fn data_type(&self) -> Option<&str> {
         match self {
             Self::Data(card) => Some(card.data_type.as_str()),
-            Self::Model(card) => Some(card.sample_data_type.as_str()),
+            Self::Model(card) => Some(card.data_type.as_str()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,

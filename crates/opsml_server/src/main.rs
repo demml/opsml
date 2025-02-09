@@ -744,7 +744,7 @@ mod tests {
                 auditcard_uid: card.auditcard_uid,
                 interface_type: card.interface_type,
                 datacard_uid: card.datacard_uid,
-                sample_data_type: card.sample_data_type,
+                data_type: card.data_type,
                 model_type: card.model_type,
                 task_type: card.task_type,
                 tags: card.tags,

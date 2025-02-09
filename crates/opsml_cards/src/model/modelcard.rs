@@ -545,4 +545,23 @@ impl ModelCard {
 
         Ok(())
     }
+
+    pub fn get_registry_record(&self) -> Result<ModelCardClientRecord, CardError> {
+        let record = ModelCardClientRecord {
+            created_at: None,
+            app_env: None,
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            contact: self.contact.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            datacard_uid: self.metadata.datacard_uid.clone(),
+            data_type: self.metadata.interface_metadata.data_type.clone(),
+            model_type: self.metadata.interface_metadata.model_type.clone(),
+            runcard_uid: self.metadata.runcard_uid,
+        };
+
+        Ok(record)
+    }
 }

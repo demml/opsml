@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     contact TEXT,
     tags TEXT,
     datacard_uid TEXT,
-    sample_data_type TEXT,
+    data_type TEXT,
     model_type TEXT,
     runcard_uid TEXT,
     pipelinecard_uid TEXT,

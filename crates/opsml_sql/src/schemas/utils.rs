@@ -40,7 +40,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         contact: record.contact,
         tags: record.tags.0,
         datacard_uid: Some(record.datacard_uid),
-        sample_data_type: record.sample_data_type,
+        data_type: record.data_type,
         model_type: record.model_type,
         runcard_uid: Some(record.runcard_uid),
         pipelinecard_uid: Some(record.pipelinecard_uid),
