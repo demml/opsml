@@ -46,7 +46,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         pipelinecard_uid: Some(record.pipelinecard_uid),
         auditcard_uid: Some(record.auditcard_uid),
         interface_type: Some(record.interface_type),
-        task_type: Some(record.task_type),
+        task_type: record.task_type,
         checksums: record.checksums.0,
     };
 
