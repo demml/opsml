@@ -1,6 +1,7 @@
 use crate::{DataCard, ModelCard};
 use opsml_error::error::CardError;
 use opsml_types::{CommonKwargs, RegistryType};
+use pyo3::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -10,6 +11,17 @@ pub enum CardEnum {
 }
 
 impl CardEnum {
+    pub fn from_py(card: &Bound<'_, PyAny>) -> Result<Self, CardError> {
+        if card.is_instance_of::<ModelCard>() {
+            let result: ModelCard = card.extract().unwrap();
+            Ok(CardEnum::Model(result))
+        } else if card.is_instance_of::<DataCard>() {
+            let result: DataCard = card.extract().unwrap();
+            Ok(CardEnum::Data(result))
+        } else {
+            Err(CardError::Error("Invalid card type".to_string()))
+        }
+    }
     pub fn name(&self) -> &str {
         match self {
             CardEnum::Data(card) => &card.name,

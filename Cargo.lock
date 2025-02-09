@@ -3498,6 +3498,7 @@ dependencies = [
  "pyo3",
  "serde",
  "thiserror 2.0.11",
+ "tracing",
 ]
 
 [[package]]
