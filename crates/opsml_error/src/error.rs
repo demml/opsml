@@ -3,6 +3,7 @@ use pyo3::exceptions::PyException;
 use pyo3::PyErr;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum SettingsError {
@@ -12,7 +13,9 @@ pub enum SettingsError {
 
 impl From<SettingsError> for PyErr {
     fn from(err: SettingsError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -24,7 +27,9 @@ pub enum StorageError {
 
 impl From<StorageError> for PyErr {
     fn from(err: StorageError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -36,7 +41,9 @@ pub enum ApiError {
 
 impl From<ApiError> for PyErr {
     fn from(err: ApiError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -69,7 +76,9 @@ pub enum UtilError {
 
 impl From<UtilError> for PyErr {
     fn from(err: UtilError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -105,7 +114,9 @@ pub enum TypeError {
 
 impl From<TypeError> for PyErr {
     fn from(err: TypeError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -117,7 +128,9 @@ pub enum LoggingError {
 
 impl From<LoggingError> for PyErr {
     fn from(err: LoggingError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -204,7 +217,9 @@ pub enum RegistryError {
 
 impl From<RegistryError> for PyErr {
     fn from(err: RegistryError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -228,7 +243,9 @@ pub enum CardError {
 
 impl From<CardError> for PyErr {
     fn from(err: CardError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -240,7 +257,7 @@ pub enum SaveError {
 
 impl From<SaveError> for PyErr {
     fn from(err: SaveError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -252,7 +269,9 @@ pub enum RunError {
 
 impl From<RunError> for PyErr {
     fn from(err: RunError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -264,7 +283,9 @@ pub enum OnnxError {
 
 impl From<OnnxError> for PyErr {
     fn from(err: OnnxError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 
@@ -282,7 +303,9 @@ pub enum InterfaceError {
 
 impl From<InterfaceError> for PyErr {
     fn from(err: InterfaceError) -> PyErr {
-        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
     }
 }
 

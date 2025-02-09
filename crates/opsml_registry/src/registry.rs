@@ -9,7 +9,7 @@ use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use pyo3::prelude::*;
-use tracing::info;
+use tracing::{debug, error, info, instrument};
 use uuid::Uuid;
 
 #[pyclass]
@@ -55,10 +55,10 @@ impl CardRegistry {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (info=None, uid=None, name=None, repository=None, version=None, max_date=None, tags=None, limit=None, sort_by_timestamp=None))]
+    #[pyo3(signature = (uid=None, name=None, repository=None, version=None, max_date=None, tags=None, limit=None, sort_by_timestamp=None))]
+    #[instrument(skip_all)]
     pub fn list_cards(
         &mut self,
-        info: Option<CardInfo>,
         uid: Option<String>,
         name: Option<String>,
         repository: Option<String>,
@@ -68,19 +68,16 @@ impl CardRegistry {
         limit: Option<i32>,
         sort_by_timestamp: Option<bool>,
     ) -> PyResult<CardList> {
-        let mut uid = uid;
+        debug!(
+            "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
+            uid, name, repository, version, max_date, tags, limit, sort_by_timestamp
+        );
+
+        let uid = uid;
         let mut name = name;
         let mut repository = repository;
-        let mut version = version;
-        let mut tags = tags;
-
-        if let Some(info) = info {
-            name = name.or(info.name);
-            repository = repository.or(info.repository);
-            uid = uid.or(info.uid);
-            version = version.or(info.version);
-            tags = tags.or(info.tags);
-        }
+        let version = version;
+        let tags = tags;
 
         if name.is_some() {
             name = Some(name.unwrap().to_lowercase());
@@ -118,12 +115,17 @@ impl CardRegistry {
 
         let cards = self
             .runtime
-            .block_on(async { self.registry.list_cards(query_args).await })?;
+            .block_on(async { self.registry.list_cards(query_args).await })
+            .map_err(|e| {
+                error!("Failed to list cards: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         Ok(CardList { cards })
     }
 
     #[pyo3(signature = (card, version_type, pre_tag="rc".to_string(), build_tag="build".to_string(), save_kwargs=None))]
+    #[instrument(skip_all)]
     pub fn register_card(
         &mut self,
         card: &Bound<'_, PyAny>,
@@ -132,29 +134,20 @@ impl CardRegistry {
         build_tag: Option<String>,
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<()> {
-        info!("Registering card");
+        debug!("Registering card");
         // card comes is
         let py = card.py();
-        let mut card = if card.is_instance_of::<ModelCard>() {
-            let result: ModelCard = card.extract().unwrap();
-            CardEnum::Model(result)
-        } else if card.is_instance_of::<DataCard>() {
-            let result: DataCard = card.extract().unwrap();
-            CardEnum::Data(result)
-        } else {
-            return Err(OpsmlError::new_err("Invalid card type"));
-        };
+
+        let mut card = CardEnum::from_py(card)?;
 
         // verify card arguments
         self.verify_card(&card)?;
 
         // check for needed dependencies
-        self.check_dependencies(py, &card)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        self.check_dependencies(py, &card)?;
 
         // check if card and registry type match
-        let matched = card.match_registry_type(&self.registry_type);
-        if !matched {
+        if !card.match_registry_type(&self.registry_type) {
             return Err(OpsmlError::new_err("Card and registry type do not match"));
         }
 
@@ -258,6 +251,8 @@ impl CardRegistry {
             }
         }
 
+        debug!("Verified card");
+
         Ok(())
     }
 
@@ -283,6 +278,8 @@ impl CardRegistry {
                 }
             }
         }
+
+        debug!("Checked dependencies");
 
         Ok(())
     }
