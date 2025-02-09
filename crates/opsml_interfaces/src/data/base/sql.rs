@@ -1,7 +1,7 @@
 use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataInterfaceType, DataType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::PathBuf;
@@ -19,7 +19,9 @@ impl SqlData {
     fn new(py: Python, sql_logic: SqlLogic) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
 
-        let data_interface = DataInterface::new(py, None, None, None, None, Some(sql_logic), None)?;
+        let mut data_interface =
+            DataInterface::new(py, None, None, None, None, Some(sql_logic), None)?;
+        data_interface.interface_type = DataInterfaceType::Sql;
 
         Ok((
             SqlData {
