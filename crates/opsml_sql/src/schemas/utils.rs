@@ -10,7 +10,7 @@ use opsml_types::contracts::{
 
 pub fn convert_datacard(record: DataCardRecord) -> Card {
     let card = DataCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         app_env: Some(record.app_env),
         name: record.name,
@@ -31,7 +31,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
 
 pub fn convert_modelcard(record: ModelCardRecord) -> Card {
     let card = ModelCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         app_env: Some(record.app_env),
         name: record.name,
@@ -55,7 +55,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
 
 pub fn convert_runcard(record: RunCardRecord) -> Card {
     let card = RunCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         app_env: Some(record.app_env),
         name: record.name,
@@ -77,7 +77,7 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
 
 pub fn convert_auditcard(record: AuditCardRecord) -> Card {
     let card = AuditCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         app_env: Some(record.app_env),
         name: record.name,
@@ -96,7 +96,7 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
 
 pub fn convert_pipelinecard(record: PipelineCardRecord) -> Card {
     let card = PipelineCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         app_env: Some(record.app_env),
         name: record.name,
@@ -115,7 +115,7 @@ pub fn convert_pipelinecard(record: PipelineCardRecord) -> Card {
 
 pub fn convert_projectcard(record: ProjectCardRecord) -> Card {
     let card = ProjectCardClientRecord {
-        uid: Some(record.uid),
+        uid: record.uid,
         created_at: record.created_at,
         name: record.name,
         repository: record.repository,

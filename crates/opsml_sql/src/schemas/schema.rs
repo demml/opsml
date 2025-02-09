@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
-use opsml_types::CommonKwargs;
+use opsml_types::{CommonKwargs, DataType, ModelType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
@@ -223,7 +223,7 @@ impl Default for DataCardRecord {
             version: Version::new(1, 0, 0).to_string(),
             contact: CommonKwargs::Undefined.to_string(),
             tags: Json(Vec::new()),
-            data_type: CommonKwargs::Undefined.to_string(),
+            data_type: DataType::NotProvided.to_string(),
             runcard_uid: CommonKwargs::Undefined.to_string(),
             pipelinecard_uid: CommonKwargs::Undefined.to_string(),
             auditcard_uid: CommonKwargs::Undefined.to_string(),
@@ -249,7 +249,7 @@ pub struct ModelCardRecord {
     pub contact: String,
     pub tags: Json<Vec<String>>,
     pub datacard_uid: String,
-    pub sample_data_type: String,
+    pub data_type: String,
     pub model_type: String,
     pub runcard_uid: String,
     pub pipelinecard_uid: String,
@@ -268,7 +268,7 @@ impl ModelCardRecord {
         contact: String,
         tags: Vec<String>,
         datacard_uid: Option<String>,
-        sample_data_type: String,
+        data_type: String,
         model_type: String,
         runcard_uid: Option<String>,
         pipelinecard_uid: Option<String>,
@@ -296,7 +296,7 @@ impl ModelCardRecord {
             contact,
             tags: Json(tags),
             datacard_uid: datacard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            sample_data_type,
+            data_type,
             model_type,
             runcard_uid: runcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             pipelinecard_uid: pipelinecard_uid
@@ -326,8 +326,8 @@ impl Default for ModelCardRecord {
             contact: CommonKwargs::Undefined.to_string(),
             tags: Json(Vec::new()),
             datacard_uid: CommonKwargs::Undefined.to_string(),
-            sample_data_type: CommonKwargs::Undefined.to_string(),
-            model_type: CommonKwargs::Undefined.to_string(),
+            data_type: DataType::NotProvided.to_string(),
+            model_type: ModelType::Unknown.to_string(),
             runcard_uid: CommonKwargs::Undefined.to_string(),
             pipelinecard_uid: CommonKwargs::Undefined.to_string(),
             auditcard_uid: CommonKwargs::Undefined.to_string(),

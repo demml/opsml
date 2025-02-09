@@ -31,40 +31,6 @@ impl InterfaceDataType {
     }
 }
 
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub enum TaskType {
-    Classification,
-    Regression,
-    Clustering,
-    AnomalyDetection,
-    TimeSeries,
-    Forecasting,
-    Recommendation,
-    Ranking,
-    NLP,
-    Image,
-    Audio,
-    Video,
-    Graph,
-    Tabular,
-    TimeSeriesForecasting,
-    TimeSeriesAnomalyDetection,
-    TimeSeriesClassification,
-    TimeSeriesRegression,
-    TimeSeriesClustering,
-    TimeSeriesRecommendation,
-    TimeSeriesRanking,
-    TimeSeriesNLP,
-    TimeSeriesImage,
-    TimeSeriesAudio,
-    TimeSeriesVideo,
-    TimeSeriesGraph,
-    TimeSeriesTabular,
-    #[default]
-    Other,
-}
-
 #[pyclass]
 #[derive(Debug, Default)]
 pub struct SaveKwargs {

@@ -1,9 +1,12 @@
-use crate::{interfaces::ModelType, DataType, RegistryType};
+use crate::{
+    interfaces::{ModelType, TaskType},
+    DataType, RegistryType,
+};
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
 use opsml_utils::PyHelperFuncs;
-use pyo3::{prelude::*, types::PyString, IntoPy, PyObject};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -136,7 +139,7 @@ pub struct DataCardClientRecord {
     pub version: String,
     pub contact: String,
     pub tags: Vec<String>,
-    pub data_type: DataType,
+    pub data_type: String,
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
@@ -155,7 +158,7 @@ impl Default for DataCardClientRecord {
             version: "".to_string(),
             contact: "".to_string(),
             tags: Vec::new(),
-            data_type: DataType::NotProvided,
+            data_type: DataType::NotProvided.to_string(),
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
@@ -177,13 +180,13 @@ pub struct ModelCardClientRecord {
     pub contact: String,
     pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
-    pub data_type: DataType,
-    pub model_type: ModelType,
+    pub data_type: String,
+    pub model_type: String,
     pub runcard_uid: Option<String>,
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: Option<String>,
-    pub task_type: Option<String>,
+    pub task_type: String,
     pub checksums: HashMap<String, String>,
 }
 
@@ -199,13 +202,13 @@ impl Default for ModelCardClientRecord {
             contact: "".to_string(),
             tags: Vec::new(),
             datacard_uid: None,
-            data_type: DataType::NotProvided,
-            model_type: ModelType::Unknown,
+            data_type: DataType::NotProvided.to_string(),
+            model_type: ModelType::Unknown.to_string(),
             runcard_uid: None,
             pipelinecard_uid: None,
             auditcard_uid: None,
             interface_type: None,
-            task_type: None,
+            task_type: TaskType::Other.to_string(),
             checksums: HashMap::new(),
         }
     }
@@ -587,10 +590,10 @@ impl Card {
     }
 
     #[getter]
-    pub fn task_type(&self) -> Option<&str> {
+    pub fn task_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => card.task_type.as_deref(),
+            Self::Model(card) => Some(card.task_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,

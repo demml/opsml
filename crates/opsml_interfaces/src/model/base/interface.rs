@@ -3,7 +3,7 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
 use crate::model::{SampleData, TaskType};
-use crate::types::{FeatureSchema, ModelInterfaceType, ModelType, ProcessorType};
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
@@ -11,7 +11,10 @@ use opsml_utils::PyHelperFuncs;
 use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
-use opsml_types::{SaveName, Suffix};
+use opsml_types::{
+    interfaces::{ModelInterfaceType, ModelType},
+    SaveName, Suffix,
+};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -197,6 +200,7 @@ pub struct ModelInterface {
     pub data_type: DataType,
 
     #[pyo3(get, set)]
+    // needs to be string (need to support custom tasks)
     pub task_type: TaskType,
 
     #[pyo3(get, set)]

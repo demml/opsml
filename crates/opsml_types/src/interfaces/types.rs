@@ -5,6 +5,80 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use tracing::debug;
 
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
+pub enum TaskType {
+    Classification,
+    Regression,
+    Clustering,
+    AnomalyDetection,
+    TimeSeries,
+    Forecasting,
+    Recommendation,
+    Ranking,
+    Nlp,
+    Image,
+    Audio,
+    Video,
+    Graph,
+    Tabular,
+    TimeSeriesForecasting,
+    TimeSeriesAnomalyDetection,
+    TimeSeriesClassification,
+    TimeSeriesRegression,
+    TimeSeriesClustering,
+    TimeSeriesRecommendation,
+    TimeSeriesRanking,
+    TimeSeriesNLP,
+    TimeSeriesImage,
+    TimeSeriesAudio,
+    TimeSeriesVideo,
+    TimeSeriesGraph,
+    TimeSeriesTabular,
+    Optimization,
+    #[default]
+    Other,
+}
+
+impl Display for TaskType {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        // match the types and return the string representation
+        let task_type = match self {
+            TaskType::Classification => "Classification",
+            TaskType::Regression => "Regression",
+            TaskType::Clustering => "Clustering",
+            TaskType::AnomalyDetection => "AnomalyDetection",
+            TaskType::TimeSeries => "TimeSeries",
+            TaskType::Forecasting => "Forecasting",
+            TaskType::Recommendation => "Recommendation",
+            TaskType::Ranking => "Ranking",
+            TaskType::Nlp => "Nlp",
+            TaskType::Image => "Image",
+            TaskType::Audio => "Audio",
+            TaskType::Video => "Video",
+            TaskType::Graph => "Graph",
+            TaskType::Tabular => "Tabular",
+            TaskType::TimeSeriesForecasting => "TimeSeriesForecasting",
+            TaskType::TimeSeriesAnomalyDetection => "TimeSeriesAnomalyDetection",
+            TaskType::TimeSeriesClassification => "TimeSeriesClassification",
+            TaskType::TimeSeriesRegression => "TimeSeriesRegression",
+            TaskType::TimeSeriesClustering => "TimeSeriesClustering",
+            TaskType::TimeSeriesRecommendation => "TimeSeriesRecommendation",
+            TaskType::TimeSeriesRanking => "TimeSeriesRanking",
+            TaskType::TimeSeriesNLP => "TimeSeriesNLP",
+            TaskType::TimeSeriesImage => "TimeSeriesImage",
+            TaskType::TimeSeriesAudio => "TimeSeriesAudio",
+            TaskType::TimeSeriesVideo => "TimeSeriesVideo",
+            TaskType::TimeSeriesGraph => "TimeSeriesGraph",
+            TaskType::TimeSeriesTabular => "TimeSeriesTabular",
+            TaskType::Optimization => "Optimization",
+            TaskType::Other => "Other",
+        };
+
+        write!(f, "{}", task_type)
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelInterfaceType {
