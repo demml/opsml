@@ -295,6 +295,7 @@ impl SqlClient for MySqlClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
+                        .bind(&data.checksums)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -330,6 +331,7 @@ impl SqlClient for MySqlClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
+                        .bind(&model.checksums)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -363,6 +365,7 @@ impl SqlClient for MySqlClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
+                        .bind(&run.checksums)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -475,6 +478,7 @@ impl SqlClient for MySqlClient {
             CardTable::Data => match card {
                 ServerCard::Data(data) => {
                     let query = MySQLQueryHelper::get_datacard_update_query();
+
                     sqlx::query(&query)
                         .bind(&data.app_env)
                         .bind(&data.name)
@@ -492,6 +496,7 @@ impl SqlClient for MySqlClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
+                        .bind(&data.checksums)
                         .bind(&data.uid)
                         .execute(&self.pool)
                         .await
@@ -527,6 +532,7 @@ impl SqlClient for MySqlClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
+                        .bind(&model.checksums)
                         .bind(&model.uid)
                         .execute(&self.pool)
                         .await
@@ -560,6 +566,7 @@ impl SqlClient for MySqlClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
+                        .bind(&run.checksums)
                         .bind(&run.uid)
                         .execute(&self.pool)
                         .await

@@ -403,7 +403,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
+        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, checksums) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -427,9 +427,10 @@ impl MySQLQueryHelper {
         pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -452,9 +453,10 @@ impl MySQLQueryHelper {
         artifact_uris, 
         compute_environment, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -521,7 +523,8 @@ impl MySQLQueryHelper {
         pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?"
             .to_string()
     }
@@ -546,7 +549,8 @@ impl MySQLQueryHelper {
         pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?"
             .to_string()
     }
@@ -569,7 +573,8 @@ impl MySQLQueryHelper {
         artifact_uris = ?, 
         compute_environment = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        checksums = ?
         WHERE uid = ?"
             .to_string()
     }

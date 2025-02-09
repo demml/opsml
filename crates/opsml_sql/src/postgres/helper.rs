@@ -462,9 +462,10 @@ impl PostgresQueryHelper {
         pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Data
         )
         .to_string()
@@ -491,9 +492,10 @@ impl PostgresQueryHelper {
         pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model).to_string()
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)", CardTable::Model).to_string()
     }
 
     pub fn get_runcard_insert_query() -> String {
@@ -516,9 +518,10 @@ impl PostgresQueryHelper {
         artifact_uris, 
         compute_environment, 
         pre_tag, 
-        build_tag
+        build_tag,
+        checksums
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
             CardTable::Run
         )
         .to_string()
@@ -594,8 +597,9 @@ impl PostgresQueryHelper {
         pipelinecard_uid = $13, 
         auditcard_uid = $14, 
         pre_tag = $15, 
-        build_tag = $16 
-        WHERE uid = $17",
+        build_tag = $16,
+        checksums = $17
+        WHERE uid = $18",
             CardTable::Data
         )
         .to_string()
@@ -622,8 +626,9 @@ impl PostgresQueryHelper {
         pipelinecard_uid = $16, 
         auditcard_uid = $17, 
         pre_tag = $18, 
-        build_tag = $19 
-        WHERE uid = $20",
+        build_tag = $19,
+        checksums = $20
+        WHERE uid = $21",
             CardTable::Model
         )
         .to_string()
@@ -648,8 +653,9 @@ impl PostgresQueryHelper {
         artifact_uris = $14, 
         compute_environment = $15, 
         pre_tag = $16, 
-        build_tag = $17
-        WHERE uid = $18",
+        build_tag = $17,
+        checksums = $18
+        WHERE uid = $19",
             CardTable::Run
         )
         .to_string()
