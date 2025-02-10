@@ -1,5 +1,6 @@
 use crate::{DataCard, ModelCard};
 
+use opsml_crypt::encrypt_file;
 use opsml_error::error::CardError;
 use opsml_interfaces::SaveKwargs;
 use opsml_types::{contracts::Card, CommonKwargs, RegistryType};
@@ -105,6 +106,7 @@ impl CardEnum {
     pub fn save_card(
         &mut self,
         py: Python,
+        encrypt_key: &[u8],
         save_kwargs: Option<SaveKwargs>,
     ) -> Result<(), CardError> {
         debug!("Saving card");
@@ -127,7 +129,9 @@ impl CardEnum {
                 modelcard.save(py, tmp_path.clone(), save_kwargs)?;
             }
         }
-        // calculate checksums in path
+
+        // encrypt every file in tmp_path with encrypt_key
+        
 
         Ok(())
     }

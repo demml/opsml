@@ -321,23 +321,41 @@ impl From<PyErr> for InterfaceError {
     }
 }
 
-#[derive(Error, Debug, Serialize, Deserialize)]
-pub enum CryptoError {
+#[derive(Error, Debug)]
+pub enum ProgressError {
     #[error("{0}")]
     Error(String),
 }
 
-impl From<CryptoError> for PyErr {
-    fn from(err: CryptoError) -> PyErr {
+#[derive(Error, Debug)]
+pub enum CryptError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    ProgressError(#[from] ProgressError),
+}
+
+impl From<CryptError> for PyErr {
+    fn from(err: CryptError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         OpsmlError::new_err(err.to_string())
     }
 }
 
-impl From<PyErr> for CryptoError {
+impl From<std::io::Error> for CryptError {
+    fn from(err: std::io::Error) -> Self {
+        CryptError::Error(err.to_string())
+    }
+}
+
+impl From<PyErr> for CryptError {
     fn from(err: PyErr) -> Self {
-        CryptoError::Error(err.to_string())
+        CryptError::Error(err.to_string())
     }
 }
 
