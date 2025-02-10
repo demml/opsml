@@ -321,4 +321,24 @@ impl From<PyErr> for InterfaceError {
     }
 }
 
+#[derive(Error, Debug, Serialize, Deserialize)]
+pub enum CryptoError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<CryptoError> for PyErr {
+    fn from(err: CryptoError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+impl From<PyErr> for CryptoError {
+    fn from(err: PyErr) -> Self {
+        CryptoError::Error(err.to_string())
+    }
+}
+
 create_exception!(opsml_error, OpsmlError, PyException);

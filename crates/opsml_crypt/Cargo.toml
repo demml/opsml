@@ -1,0 +1,19 @@
+[package]
+name = "opsml-crypt"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Error handling for OpsML"
+
+[lib]
+doctest = false
+
+[dependencies]
+opsml-error = { workspace = true }
+aes-gcm = { workspace = true }
+hkdf = { workspace = true }
+hmac = { workspace = true }
+pbkdf2 = { workspace = true }
+rand = { workspace = true }
+sha2 = { workspace = true }
+tracing = { workspace = true }
