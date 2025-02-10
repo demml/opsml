@@ -3495,6 +3495,7 @@ name = "opsml-cards"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "opsml-crypt",
  "opsml-error",
  "opsml-interfaces",
  "opsml-semver",
@@ -3548,10 +3549,14 @@ dependencies = [
  "aes-gcm",
  "hkdf",
  "hmac",
+ "indicatif",
  "opsml-error",
+ "opsml-utils",
  "pbkdf2",
  "rand 0.7.3",
+ "rayon",
  "sha2",
+ "tempfile",
  "tracing",
 ]
 
@@ -3785,6 +3790,8 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "colored_json",
+ "indicatif",
+ "opsml-colors",
  "opsml-error",
  "pyo3",
  "regex",
