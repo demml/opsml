@@ -54,7 +54,11 @@ pub fn encrypt_file(
     Ok(())
 }
 
-pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
+pub fn decrypt_file(
+    input_path: &Path,
+    key_bytes: &[u8],
+    bar: &ProgressBar,
+) -> Result<(), CryptError> {
     let key = Key::<Aes256Gcm>::from_slice(key_bytes);
     let cipher = Aes256Gcm::new(key);
 
@@ -83,11 +87,13 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
             .decrypt(nonce, ct_buf.as_ref())
             .map_err(|e| CryptError::Error(e.to_string()))?;
         output.write_all(&decrypted)?;
+        bar.inc(1);
     }
     output.flush()?;
     drop(output); // Ensure the file is closed before renaming
 
     fs::rename(temp_output_path, input_path)?;
+
     Ok(())
 }
 
@@ -163,11 +169,35 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     // get all files (including subdirectories)
     let files = FileUtils::list_files(input_path.to_path_buf())?;
+    let progress = Progress::new();
 
     let decrypted_files = files
         .into_par_iter()
-        .map(|file| decrypt_file(&file, key_bytes))
+        .map(|file| {
+            let file_size = fs::metadata(&file)?.len();
+            let mut chunk_count = file_size / CHUNK_SIZE as u64;
+            let size_of_last_chunk = file_size % CHUNK_SIZE as u64;
+
+            if size_of_last_chunk == 0 {
+                chunk_count -= 1;
+            }
+
+            let bar = progress.create_bar(
+                format!(
+                    "Decrypting: {}",
+                    &file.file_name().unwrap().to_str().unwrap()
+                ),
+                chunk_count,
+            );
+            let finish = decrypt_file(&file, key_bytes, &bar);
+
+            bar.finish_and_clear();
+
+            finish
+        })
         .collect::<Vec<Result<(), CryptError>>>();
+
+    progress.finish()?;
 
     // check if any of the files failed to decrypt (if so, return an error)
     for file in decrypted_files {
