@@ -52,4 +52,23 @@ impl FileUtils {
         }
         Ok(files)
     }
+
+    pub fn get_chunk_count(path: &PathBuf, chunk_size: u64) -> Result<(u64, u64), UtilError> {
+        let file_size = std::fs::metadata(path)
+            .map_err(|e| UtilError::Error(format!("Unable to read file metadata: {}", e)))?
+            .len();
+
+        let chunk_size = std::cmp::min(file_size, chunk_size);
+
+        let mut chunk_count = (file_size / chunk_size) + 1;
+        let mut size_of_last_chunk = file_size % chunk_size;
+
+        // if the last chunk is empty, reduce the number of parts
+        if size_of_last_chunk == 0 {
+            size_of_last_chunk = chunk_size;
+            chunk_count -= 1;
+        }
+
+        Ok((chunk_count, size_of_last_chunk))
+    }
 }

@@ -18,6 +18,8 @@ use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
+use opsml_utils::progress::Progress;
+use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
 use std::fs::File;
 use std::io::Write;
@@ -232,35 +234,13 @@ impl AWSMulitPartUpload {
         Ok(true)
     }
 
-    pub async fn upload_file_in_chunks(&mut self) -> Result<(), StorageError> {
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+        progress: &ProgressBar,
+    ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
-
-        // calculate the number of parts
-        let mut chunk_count = (self.file_size / chunk_size) + 1;
-        let mut size_of_last_chunk = self.file_size % chunk_size;
-
-        // if the last chunk is empty, reduce the number of parts
-        if size_of_last_chunk == 0 {
-            size_of_last_chunk = chunk_size;
-            chunk_count -= 1;
-        }
-
-        // TODO: add multi progress bar
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Uploading file:");
-        let msg2 = Colorize::purple(&self.filename);
-        let msg = format!("{} {}", msg1, msg2);
-
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
 
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -301,12 +281,10 @@ impl AWSMulitPartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-
-            bar.inc(1);
+            progress.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
-        bar.finish_with_message("Upload complete");
 
         Ok(())
 
@@ -827,9 +805,15 @@ impl FileSystem for S3FStorageClient {
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
-            for file in files {
-                let stripped_file_path = file.strip_path(self.client.bucket().await);
+            let progress = Progress::new();
 
+            for file in files {
+                let (chunk_count, size_of_last_chunk) =
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
+
+                let pb = ProgressBar::new(chunk_count);
+
+                let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
