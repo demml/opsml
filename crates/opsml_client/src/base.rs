@@ -58,7 +58,6 @@ impl OpsmlApiClient {
             api_client.get_jwt_token().await?;
 
             // mask the username and password
-            api_client.settings.api_settings.username = REDACTED.to_string();
             api_client.settings.api_settings.password = REDACTED.to_string();
 
             // mask the env variables

@@ -623,7 +623,7 @@ mod tests {
                 interface_type: card.interface_type,
                 data_type: card.data_type,
                 tags: card.tags,
-                checksums: card.checksums,
+                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             }),
         };
 
@@ -670,8 +670,6 @@ mod tests {
     #[tokio::test]
     async fn test_opsml_server_modelcard_crud() {
         let helper = TestHelper::new().await;
-        let mut checksums = HashMap::new();
-        checksums.insert("file.txt".to_string(), "abcde".to_string());
 
         // ModelCard
         let card_request = CreateCardRequest {
@@ -680,7 +678,6 @@ mod tests {
                 repository: "repo1".to_string(),
                 version: "1.0.0".to_string(),
                 contact: "test".to_string(),
-                checksums,
                 ..ModelCardClientRecord::default()
             }),
             registry_type: RegistryType::Model,
@@ -750,7 +747,7 @@ mod tests {
                 model_type: card.model_type,
                 task_type: card.task_type,
                 tags: card.tags,
-                checksums: card.checksums,
+                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             }),
         };
 
@@ -872,7 +869,7 @@ mod tests {
                 compute_environment: card.compute_environment,
                 project: card.project,
                 tags: card.tags,
-                checksums: card.checksums,
+                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             }),
         };
 
@@ -992,6 +989,7 @@ mod tests {
                 runcard_uids: card.runcard_uids,
                 tags: card.tags,
                 pipeline_code_uri: card.pipeline_code_uri,
+                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             }),
         };
 
@@ -1111,6 +1109,7 @@ mod tests {
                 runcard_uids: card.runcard_uids,
                 tags: card.tags,
                 approved: card.approved,
+                username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             }),
         };
 
