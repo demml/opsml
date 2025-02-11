@@ -57,11 +57,10 @@ impl OpsmlApiClient {
         if settings.api_settings.use_auth {
             api_client.get_jwt_token().await?;
 
-            // mask the username and password
+            // mask the password
             api_client.settings.api_settings.password = REDACTED.to_string();
 
             // mask the env variables
-            std::env::set_var("OPSML_USERNAME", REDACTED);
             std::env::set_var("OPSML_PASSWORD", REDACTED);
         }
 
