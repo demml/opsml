@@ -12,11 +12,15 @@ use axum::{
 };
 
 use opsml_auth::permission::UserPermissions;
+use opsml_crypt::key;
+use opsml_sql::base::SqlClient;
+use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 use anyhow::{Context, Result};
+use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
 use opsml_error::error::ServerError;
 
 /// Route for debugging information
@@ -336,7 +340,34 @@ pub async fn download_file(
 pub async fn create_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
-) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+    let salt = generate_salt();
+
+    let derived_key = derive_encryption_key(
+        &state.storage_settings.encryption_key,
+        &salt,
+        &[req.card_type.as_bytes()],
+    );
+
+    // encrypt key before sending
+    let encrypted_key = encrypt_key(&req.uid, &derived_key);
+
+    // spawn a task to insert the key into the database
+
+    let artifact_key = ArtifactKey {
+        uid: req.uid.clone(),
+        card_type: req.card_type.clone(),
+        encrypt_key: encrypted_key,
+    };
+
+    // spawn a task to insert the key into the database
+    tokio::spawn(async move {
+        if let Err(e) = state.sql_client.insert_artifact_key(&artifact_key).await {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
+    Ok(Json(artifact_key))
 }
 
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
