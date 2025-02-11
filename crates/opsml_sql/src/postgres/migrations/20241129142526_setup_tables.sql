@@ -192,5 +192,5 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid VARCHAR(64) PRIMARY KEY,
     card_type VARCHAR(32),
     encrypt_key BYTEA,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW()))
 );

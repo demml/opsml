@@ -8,7 +8,7 @@ use crate::schemas::schema::{
 };
 
 use async_trait::async_trait;
-use chrono::{NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -991,7 +991,6 @@ impl SqlClient for PostgresClient {
         let query = PostgresQueryHelper::get_artifact_key_update_query();
         sqlx::query(&query)
             .bind(key.encrypt_key.clone())
-            .bind(Utc::now())
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
             .execute(&self.pool)
