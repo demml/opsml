@@ -237,7 +237,7 @@ impl AWSMulitPartUpload {
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
-        progress: &ProgressBar,
+        bar: &ProgressBar,
     ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
 
@@ -280,7 +280,7 @@ impl AWSMulitPartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-            progress.inc(1);
+            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
@@ -809,7 +809,8 @@ impl FileSystem for S3FStorageClient {
                 let (chunk_count, size_of_last_chunk, _) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
-                let pb = ProgressBar::new(chunk_count);
+                let msg = format!("Uploading: {}", file.to_str().unwrap());
+                let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -852,7 +853,7 @@ impl FileSystem for S3FStorageClient {
             pb.finish_and_clear();
         };
 
-        progress.finish();
+        progress.finish()?;
         Ok(())
     }
 }

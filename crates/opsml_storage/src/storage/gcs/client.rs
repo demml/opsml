@@ -103,7 +103,6 @@ pub struct GoogleMultipartUpload {
     pub upload_status: UploadStatus,
     file_reader: BufReader<File>,
     file_size: u64,
-    filename: String,
 }
 
 impl GoogleMultipartUpload {
@@ -119,11 +118,6 @@ impl GoogleMultipartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
 
         let file_size = metadata.len();
-        let filename = Path::new(path)
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
 
         let file_reader = BufReader::new(file);
 
@@ -132,7 +126,6 @@ impl GoogleMultipartUpload {
             upload_status: UploadStatus::NotStarted,
             file_reader,
             file_size,
-            filename,
         })
     }
 
@@ -234,7 +227,7 @@ impl StorageClient for GoogleStorageClient {
         let creds = GcpCreds::new().await?;
         // If no credentials, attempt to create a default client pulling from the environment
 
-        let config = if creds.creds.is_none() {
+        let config: Result<ClientConfig, StorageError> = if creds.creds.is_none() {
             // if using in client_mode, default to anonymous
             let config = if settings.client_mode {
                 ClientConfig::default().anonymous()
@@ -725,9 +718,10 @@ impl FileSystem for GCSFSStorageClient {
 
             for file in files {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
-                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
 
-                let pb = ProgressBar::new(chunk_count);
+                let msg = format!("Uploading: {}", file.to_str().unwrap());
+                let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -750,7 +744,7 @@ impl FileSystem for GCSFSStorageClient {
             }
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
-                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
 
             let pb = ProgressBar::new(chunk_count);
 
@@ -769,7 +763,7 @@ impl FileSystem for GCSFSStorageClient {
             pb.finish_and_clear();
         };
 
-        progress.finish();
+        progress.finish()?;
 
         Ok(())
     }
