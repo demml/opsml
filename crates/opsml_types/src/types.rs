@@ -22,6 +22,7 @@ pub enum RegistryType {
     HardwareMetrics,
     Parameters,
     Users,
+    ArtifactKey,
 }
 
 #[pyclass(eq, eq_int)]

@@ -2,6 +2,7 @@ use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::fmt::Display;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -16,6 +17,7 @@ pub enum CardTable {
     HardwareMetrics,
     Parameters,
     Users,
+    ArtifactKey,
 }
 
 impl fmt::Display for CardTable {
@@ -31,6 +33,7 @@ impl fmt::Display for CardTable {
             CardTable::HardwareMetrics => "opsml_run_hardware_metrics",
             CardTable::Parameters => "opsml_run_parameters",
             CardTable::Users => "opsml_users",
+            CardTable::ArtifactKey => "opsml_artifact_key",
         };
         write!(f, "{}", table_name)
     }
@@ -49,6 +52,7 @@ impl CardTable {
             RegistryType::HardwareMetrics => CardTable::HardwareMetrics,
             RegistryType::Parameters => CardTable::Parameters,
             RegistryType::Users => CardTable::Users,
+            RegistryType::ArtifactKey => CardTable::ArtifactKey,
         }
     }
 }
@@ -62,4 +66,18 @@ pub enum CardType {
     Project,
     Audit,
     Pipeline,
+}
+
+impl Display for CardType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let card_type = match self {
+            CardType::Data => "data",
+            CardType::Model => "model",
+            CardType::Run => "run",
+            CardType::Project => "project",
+            CardType::Audit => "audit",
+            CardType::Pipeline => "pipeline",
+        };
+        write!(f, "{}", card_type)
+    }
 }
