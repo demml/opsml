@@ -16,7 +16,7 @@ impl OpsmlRegistry {
     pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
         let config = OpsmlConfig::default();
 
-        let storage_settings = config.storage_settings();
+        let storage_settings = config.storage_settings()?;
         match storage_settings.client_mode {
             true => {
                 let client_registry =

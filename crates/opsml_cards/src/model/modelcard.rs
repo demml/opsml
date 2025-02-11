@@ -532,7 +532,7 @@ impl ModelCard {
         })?;
 
         let config = OpsmlConfig::default();
-        let mut storage_settings = config.storage_settings().clone();
+        let mut storage_settings = config.storage_settings()?.clone();
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
 
         if model {

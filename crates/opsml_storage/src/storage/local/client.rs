@@ -806,7 +806,7 @@ mod tests {
         create_file(lpath.to_str().unwrap(), &1024);
 
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = LocalFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = LocalFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let rpath_dir = Path::new("test_dir");
         let rpath = rpath_dir.join(&filename);
@@ -873,7 +873,7 @@ mod tests {
         assert!(!storage_client.exists(rpath_dir).await?);
 
         let current_dir = std::env::current_dir().unwrap();
-        let path = current_dir.join(settings.storage_settings().storage_uri);
+        let path = current_dir.join(settings.storage_settings().unwrap().storage_uri);
         std::fs::remove_dir_all(&path).unwrap();
 
         Ok(())
@@ -886,7 +886,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = LocalFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = LocalFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let child = tmp_path.join("child");
         let grand_child = child.join("grandchild");
@@ -928,7 +928,7 @@ mod tests {
 
         let current_dir = std::env::current_dir().unwrap();
 
-        let path = current_dir.join(settings.storage_settings().storage_uri);
+        let path = current_dir.join(settings.storage_settings().unwrap().storage_uri);
         std::fs::remove_dir_all(&path).unwrap();
 
         Ok(())

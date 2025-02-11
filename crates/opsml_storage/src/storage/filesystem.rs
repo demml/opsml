@@ -324,7 +324,7 @@ mod tests {
     async fn test_gcs_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
             .unwrap();
 
@@ -368,7 +368,7 @@ mod tests {
     async fn test_aws_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
             .unwrap();
 
@@ -412,7 +412,7 @@ mod tests {
     async fn test_azure_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
             .unwrap();
 
@@ -466,7 +466,7 @@ mod tests {
 
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
             .unwrap();
 
