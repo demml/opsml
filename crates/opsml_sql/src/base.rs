@@ -7,6 +7,9 @@ use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use sqlx::Database;
+use sqlx::Executor;
+use sqlx::Pool;
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
     let version_bounds = VersionParser::get_version_to_search(version)
@@ -54,8 +57,18 @@ pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), Sql
     Ok(())
 }
 
+pub trait DatabaseTraits {
+    type DB: Database;
+
+    fn get_pool(&self) -> &Pool<Self::DB>;
+}
+
+pub struct PostgresClient {
+    pub pool: Pool<Postgres>,
+}
+
 #[async_trait]
-pub trait SqlClient: Sized {
+pub trait SqlClient: DatabaseTraits + Sized {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError>;
     async fn run_migrations(&self) -> Result<(), SqlError>;
     async fn get_versions(
@@ -233,7 +246,20 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `bool` - True if the uid exists
-    async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
+    async fn check_uid_exists(
+        &self,
+        uid: &str,
+        table: &CardTable,
+        query: &str,
+    ) -> Result<bool, SqlError> {
+        let exists: Option<String> = sqlx::query_scalar(query)
+            .bind(uid)
+            .fetch_optional(self.get_pool())
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(exists.is_some())
+    }
 
     /// Insert artifact key
     ///
