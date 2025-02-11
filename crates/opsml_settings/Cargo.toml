@@ -7,10 +7,11 @@ license = "MIT"
 description = "Opsml settings rust and python bindings"
 
 [dependencies]
+
+opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-
 pyo3 = { workspace = true }
 rand = { workspace = true }
 rusty-logging = { workspace = true }

@@ -1,7 +1,8 @@
+use base64::prelude::*;
+use opsml_error::StorageError;
 use opsml_types::{SqlType, StorageType};
-pub use opsml_utils::PyHelperFuncs;
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use rand::Rng;
 use rusty_logging::logger::LoggingConfig;
 use serde::Serialize;
 use std::default::Default;
@@ -196,10 +197,14 @@ impl Default for OpsmlConfig {
 }
 
 fn generate_jwt_secret() -> String {
-    let mut rng = rand::thread_rng();
-    (0..32)
-        .map(|_| rng.sample(rand::distributions::Alphanumeric) as char)
-        .collect()
+    // always creates a deterministic key
+    // this should be replaced when using AUTH and Encryption in production
+    let mut key = [0u8; 32];
+    for i in 0..32 {
+        key[i] = i as u8;
+    }
+
+    BASE64_STANDARD.encode(&key)
 }
 
 impl OpsmlConfig {
@@ -271,9 +276,11 @@ impl OpsmlConfig {
     }
 
     /// Get the storage settings for the OpsmlConfig
-    pub fn storage_settings(&self) -> OpsmlStorageSettings {
-        OpsmlStorageSettings {
-            encryption_key: self.auth_settings.jwt_secret.clone().into_bytes(),
+    pub fn storage_settings(&self) -> Result<OpsmlStorageSettings, StorageError> {
+        Ok(OpsmlStorageSettings {
+            encryption_key: BASE64_STANDARD
+                .decode(self.auth_settings.jwt_secret.clone())
+                .map_err(|e| StorageError::Error(e.to_string()))?,
             storage_uri: self.opsml_storage_uri.clone(),
             client_mode: self.client_mode,
             storage_type: self.get_storage_type(),
@@ -287,7 +294,7 @@ impl OpsmlConfig {
                 auth_token: "".to_string(),
                 prod_token: self.auth_settings.prod_token.clone(),
             },
-        }
+        })
     }
 }
 

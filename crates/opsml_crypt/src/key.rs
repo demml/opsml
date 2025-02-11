@@ -125,6 +125,10 @@ mod tests {
     fn test_generate_salt() {
         let salt = generate_salt();
         assert_eq!(salt.len(), 16);
+
+        let password = b"password";
+        let salt = generate_salt();
+        let _key = derive_master_key(password, &salt, Some(1)).unwrap();
     }
 
     #[test]
