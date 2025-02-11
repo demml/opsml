@@ -436,8 +436,9 @@ impl PostgresQueryHelper {
         patch, 
         version, 
         pre_tag,
-        build_tag) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        build_tag,
+        username) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
             CardTable::Project
         )
         .to_string()
@@ -463,7 +464,7 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        checksums
+        username
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Data
@@ -493,7 +494,7 @@ impl PostgresQueryHelper {
         auditcard_uid, 
         pre_tag, 
         build_tag,
-        checksums
+        username
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)", CardTable::Model).to_string()
     }
@@ -519,7 +520,7 @@ impl PostgresQueryHelper {
         compute_environment, 
         pre_tag, 
         build_tag,
-        checksums
+        username
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
             CardTable::Run
@@ -545,9 +546,10 @@ impl PostgresQueryHelper {
         modelcard_uids, 
         runcard_uids, 
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
             CardTable::Audit
         )
         .to_string()
@@ -570,10 +572,11 @@ impl PostgresQueryHelper {
         datacard_uids, 
         modelcard_uids, 
         runcard_uids,
-         pre_tag, 
-         build_tag
+        pre_tag, 
+        build_tag,
+        username
          ) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
             CardTable::Pipeline
         )
         .to_string()
@@ -598,7 +601,7 @@ impl PostgresQueryHelper {
         auditcard_uid = $14, 
         pre_tag = $15, 
         build_tag = $16,
-        checksums = $17
+        username = $17
         WHERE uid = $18",
             CardTable::Data
         )
@@ -627,7 +630,7 @@ impl PostgresQueryHelper {
         auditcard_uid = $17, 
         pre_tag = $18, 
         build_tag = $19,
-        checksums = $20
+        username = $20
         WHERE uid = $21",
             CardTable::Model
         )
@@ -654,7 +657,7 @@ impl PostgresQueryHelper {
         compute_environment = $15, 
         pre_tag = $16, 
         build_tag = $17,
-        checksums = $18
+        username = $18
         WHERE uid = $19",
             CardTable::Run
         )
@@ -678,8 +681,9 @@ impl PostgresQueryHelper {
         modelcard_uids = $12, 
         runcard_uids = $13, 
         pre_tag = $14, 
-        build_tag = $15 
-        WHERE uid = $16",
+        build_tag = $15,
+        username = $16
+        WHERE uid = $17",
             CardTable::Audit
         )
         .to_string()
@@ -702,8 +706,9 @@ impl PostgresQueryHelper {
         modelcard_uids = $12, 
         runcard_uids = $13, 
         pre_tag = $14, 
-        build_tag = $15 
-        WHERE uid = $16",
+        build_tag = $15,
+        username = $16
+        WHERE uid = $17",
             CardTable::Pipeline
         )
         .to_string()
