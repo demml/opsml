@@ -11,9 +11,8 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
-use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
@@ -796,6 +795,7 @@ impl FileSystem for S3FStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
+        let progress = Progress::new();
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -805,10 +805,8 @@ impl FileSystem for S3FStorageClient {
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
-            let progress = Progress::new();
-
             for file in files {
-                let (chunk_count, size_of_last_chunk) =
+                let (chunk_count, size_of_last_chunk, _) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
                 let pb = ProgressBar::new(chunk_count);
@@ -827,11 +825,17 @@ impl FileSystem for S3FStorageClient {
                     )
                     .await?;
 
-                uploader.upload_file_in_chunks().await?;
+                uploader
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, &pb)
+                    .await?;
+                pb.finish_and_clear();
             }
-
-            Ok(())
         } else {
+            let (chunk_count, size_of_last_chunk, _) =
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
+
+            let pb = ProgressBar::new(chunk_count);
+
             let mut uploader = self
                 .client
                 .create_multipart_uploader(
@@ -842,9 +846,14 @@ impl FileSystem for S3FStorageClient {
                 )
                 .await?;
 
-            uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, &pb)
+                .await?;
+            pb.finish_and_clear();
+        };
+
+        progress.finish();
+        Ok(())
     }
 }
 

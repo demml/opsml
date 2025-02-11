@@ -18,12 +18,13 @@ use google_cloud_storage::http::resumable_upload_client::ResumableUploadClient;
 use google_cloud_storage::http::resumable_upload_client::UploadStatus;
 use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
-use indicatif::{ProgressBar, ProgressStyle};
-use opsml_colors::Colorize;
+use indicatif::ProgressBar;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
+use opsml_utils::progress::Progress;
+use opsml_utils::FileUtils;
 use serde_json::Value;
 use std::env;
 use std::fs::File;
@@ -168,35 +169,13 @@ impl GoogleMultipartUpload {
         Ok(())
     }
 
-    pub async fn upload_file_in_chunks(&mut self) -> Result<(), StorageError> {
-        let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
-
-        // calculate the number of parts
-        let mut chunk_count = (self.file_size / chunk_size) + 1;
-        let mut size_of_last_chunk = self.file_size % chunk_size;
-
-        // if the last chunk is empty, reduce the number of parts
-        if size_of_last_chunk == 0 {
-            size_of_last_chunk = chunk_size;
-            chunk_count -= 1;
-        }
-
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Uploading file:");
-        let msg2 = Colorize::purple(&self.filename);
-        let msg = format!("{} {}", msg1, msg2);
-
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
-
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+        chunk_size: u64,
+        bar: &ProgressBar,
+    ) -> Result<(), StorageError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -733,6 +712,8 @@ impl FileSystem for GCSFSStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
+        let progress = Progress::new();
+
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -743,8 +724,12 @@ impl FileSystem for GCSFSStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let stripped_file_path = file.strip_path(self.client.bucket().await);
+                let (chunk_count, size_of_last_chunk, chunk_size) =
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
+                let pb = ProgressBar::new(chunk_count);
+
+                let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
@@ -757,11 +742,18 @@ impl FileSystem for GCSFSStorageClient {
                     )
                     .await?;
 
-                uploader.upload_file_in_chunks().await?;
-            }
+                uploader
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                    .await?;
 
-            Ok(())
+                pb.finish_and_clear();
+            }
         } else {
+            let (chunk_count, size_of_last_chunk, chunk_size) =
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
+
+            let pb = ProgressBar::new(chunk_count);
+
             let mut uploader = self
                 .client
                 .create_multipart_uploader(
@@ -771,9 +763,15 @@ impl FileSystem for GCSFSStorageClient {
                 )
                 .await?;
 
-            uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                .await?;
+            pb.finish_and_clear();
+        };
+
+        progress.finish();
+
+        Ok(())
     }
 }
 
