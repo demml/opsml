@@ -144,7 +144,7 @@ pub struct DataCardClientRecord {
     pub pipelinecard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
-    pub checksums: HashMap<String, String>,
+    pub username: String,
 }
 
 impl Default for DataCardClientRecord {
@@ -163,7 +163,7 @@ impl Default for DataCardClientRecord {
             pipelinecard_uid: None,
             auditcard_uid: None,
             interface_type: DataInterfaceType::Base.to_string(),
-            checksums: HashMap::new(),
+            username: "guest".to_string(),
         }
     }
 }
@@ -187,7 +187,7 @@ pub struct ModelCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
-    pub checksums: HashMap<String, String>,
+    pub username: String,
 }
 
 impl Default for ModelCardClientRecord {
@@ -209,7 +209,7 @@ impl Default for ModelCardClientRecord {
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
-            checksums: HashMap::new(),
+            username: "guest".to_string(),
         }
     }
 }
@@ -231,7 +231,7 @@ pub struct RunCardClientRecord {
     pub project: String,
     pub artifact_uris: Option<HashMap<String, String>>,
     pub compute_environment: Option<HashMap<String, String>>,
-    pub checksums: HashMap<String, String>,
+    pub username: String,
 }
 
 impl Default for RunCardClientRecord {
@@ -251,7 +251,7 @@ impl Default for RunCardClientRecord {
             project: "".to_string(),
             artifact_uris: None,
             compute_environment: None,
-            checksums: HashMap::new(),
+            username: "guest".to_string(),
         }
     }
 }
@@ -271,6 +271,7 @@ pub struct AuditCardClientRecord {
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
     pub runcard_uids: Option<Vec<String>>,
+    pub username: String,
 }
 
 impl Default for AuditCardClientRecord {
@@ -288,6 +289,7 @@ impl Default for AuditCardClientRecord {
             datacard_uids: None,
             modelcard_uids: None,
             runcard_uids: None,
+            username: "guest".to_string(),
         }
     }
 }
@@ -307,6 +309,7 @@ pub struct PipelineCardClientRecord {
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
     pub runcard_uids: Option<Vec<String>>,
+    pub username: String,
 }
 
 impl Default for PipelineCardClientRecord {
@@ -324,6 +327,7 @@ impl Default for PipelineCardClientRecord {
             datacard_uids: None,
             modelcard_uids: None,
             runcard_uids: None,
+            username: "guest".to_string(),
         }
     }
 }
@@ -337,6 +341,7 @@ pub struct ProjectCardClientRecord {
     pub repository: String,
     pub version: String,
     pub project_id: i32,
+    pub username: String,
 }
 
 impl Default for ProjectCardClientRecord {
@@ -348,6 +353,7 @@ impl Default for ProjectCardClientRecord {
             repository: "".to_string(),
             version: "".to_string(),
             project_id: 0,
+            username: "guest".to_string(),
         }
     }
 }
