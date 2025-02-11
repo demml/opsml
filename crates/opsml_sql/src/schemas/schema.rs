@@ -403,6 +403,7 @@ impl RunCardRecord {
         project: String,
         artifact_uris: Option<HashMap<String, String>>,
         compute_environment: Option<HashMap<String, String>>,
+        username: String,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -429,7 +430,7 @@ impl RunCardRecord {
             project,
             artifact_uris: Json(artifact_uris.unwrap_or_default()),
             compute_environment: Json(compute_environment.unwrap_or_default()),
-            username: CommonKwargs::Undefined.to_string(),
+            username,
         }
     }
 }
@@ -646,7 +647,13 @@ impl Default for ProjectCardRecord {
 }
 
 impl ProjectCardRecord {
-    pub fn new(name: String, repository: String, version: Version, project_id: i32) -> Self {
+    pub fn new(
+        name: String,
+        repository: String,
+        version: Version,
+        project_id: i32,
+        username: String,
+    ) -> Self {
         ProjectCardRecord {
             uid: Uuid::new_v4().to_string(),
             created_at: Some(get_utc_datetime()),
@@ -659,7 +666,7 @@ impl ProjectCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            username: CommonKwargs::Undefined.to_string(),
+            username,
         }
     }
 }

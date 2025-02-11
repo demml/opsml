@@ -101,7 +101,7 @@ pub mod server_logic {
                         client_card.pipelinecard_uid,
                         client_card.auditcard_uid,
                         client_card.interface_type.to_string(),
-                        client_card.checksums,
+                        client_card.username,
                     );
                     ServerCard::Data(server_card)
                 }
@@ -120,7 +120,7 @@ pub mod server_logic {
                         client_card.auditcard_uid,
                         client_card.interface_type,
                         client_card.task_type,
-                        client_card.checksums,
+                        client_card.username,
                     );
                     ServerCard::Model(server_card)
                 }
@@ -131,6 +131,7 @@ pub mod server_logic {
                         client_card.repository,
                         client_card.version.parse().unwrap(),
                         client_card.project_id,
+                        client_card.username,
                     );
                     ServerCard::Project(server_card)
                 }
@@ -148,7 +149,7 @@ pub mod server_logic {
                         client_card.project,
                         client_card.artifact_uris,
                         client_card.compute_environment,
-                        client_card.checksums,
+                        client_card.username,
                     );
                     ServerCard::Run(server_card)
                 }
@@ -164,6 +165,7 @@ pub mod server_logic {
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.runcard_uids,
+                        client_card.username,
                     );
                     ServerCard::Pipeline(server_card)
                 }
@@ -179,6 +181,7 @@ pub mod server_logic {
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
                         client_card.runcard_uids,
+                        client_card.username,
                     );
                     ServerCard::Audit(server_card)
                 }
@@ -219,7 +222,7 @@ pub mod server_logic {
                         pipelinecard_uid: client_card.pipelinecard_uid.unwrap(),
                         auditcard_uid: client_card.auditcard_uid.unwrap(),
                         interface_type: client_card.interface_type,
-                        checksums: SqlxJson(client_card.checksums),
+                        username: client_card.username,
                     };
                     ServerCard::Data(server_card)
                 }
@@ -252,7 +255,7 @@ pub mod server_logic {
                         auditcard_uid: client_card.auditcard_uid.unwrap(),
                         interface_type: client_card.interface_type,
                         task_type: client_card.task_type,
-                        checksums: SqlxJson(client_card.checksums),
+                        username: client_card.username,
                     };
                     ServerCard::Model(server_card)
                 }
@@ -275,6 +278,7 @@ pub mod server_logic {
                         build_tag: Some(version.build.to_string()),
                         version: client_card.version,
                         project_id: client_card.project_id,
+                        username: client_card.username,
                     };
                     ServerCard::Project(server_card)
                 }
@@ -305,7 +309,7 @@ pub mod server_logic {
                         project: client_card.project,
                         artifact_uris: SqlxJson(client_card.artifact_uris.unwrap()),
                         compute_environment: SqlxJson(client_card.compute_environment.unwrap()),
-                        checksums: SqlxJson(client_card.checksums),
+                        username: client_card.username,
                     };
                     ServerCard::Run(server_card)
                 }
@@ -334,6 +338,7 @@ pub mod server_logic {
                         datacard_uids: SqlxJson(client_card.datacard_uids.unwrap()),
                         modelcard_uids: SqlxJson(client_card.modelcard_uids.unwrap()),
                         runcard_uids: SqlxJson(client_card.runcard_uids.unwrap()),
+                        username: client_card.username,
                     };
                     ServerCard::Pipeline(server_card)
                 }
@@ -362,6 +367,7 @@ pub mod server_logic {
                         datacard_uids: SqlxJson(client_card.datacard_uids.unwrap()),
                         modelcard_uids: SqlxJson(client_card.modelcard_uids.unwrap()),
                         runcard_uids: SqlxJson(client_card.runcard_uids.unwrap()),
+                        username: client_card.username,
                     };
                     ServerCard::Audit(server_card)
                 }
