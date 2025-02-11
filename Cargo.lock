@@ -3644,6 +3644,7 @@ dependencies = [
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
+ "opsml-crypt",
  "opsml-error",
  "opsml-registry",
  "opsml-semver",

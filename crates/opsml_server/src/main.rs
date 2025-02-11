@@ -25,6 +25,7 @@ async fn create_app() -> Result<Router> {
             &config.auth_settings.refresh_secret,
         )),
         config: Arc::new(config),
+        storage_settings: Arc::new(config.storage_settings()),
     });
 
     info!("✅ Application state created");
