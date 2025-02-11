@@ -23,7 +23,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
         pipelinecard_uid: Some(record.pipelinecard_uid),
         auditcard_uid: Some(record.auditcard_uid),
         interface_type: record.interface_type,
-        checksums: record.checksums.0,
+        username: record.username,
     };
 
     Card::Data(card)
@@ -47,7 +47,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         auditcard_uid: Some(record.auditcard_uid),
         interface_type: record.interface_type,
         task_type: record.task_type,
-        checksums: record.checksums.0,
+        username: record.username,
     };
 
     Card::Model(card)
@@ -69,7 +69,7 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
         project: record.project,
         artifact_uris: Some(record.artifact_uris.0),
         compute_environment: Some(record.compute_environment.0),
-        checksums: record.checksums.0,
+        username: record.username,
     };
 
     Card::Run(card)
@@ -89,6 +89,7 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
         datacard_uids: Some(record.datacard_uids.0),
         modelcard_uids: Some(record.modelcard_uids.0),
         runcard_uids: Some(record.runcard_uids.0),
+        username: record.username,
     };
 
     Card::Audit(card)
@@ -108,6 +109,7 @@ pub fn convert_pipelinecard(record: PipelineCardRecord) -> Card {
         datacard_uids: Some(record.datacard_uids.0),
         modelcard_uids: Some(record.modelcard_uids.0),
         runcard_uids: Some(record.runcard_uids.0),
+        username: record.username,
     };
 
     Card::Pipeline(card)
@@ -121,6 +123,7 @@ pub fn convert_projectcard(record: ProjectCardRecord) -> Card {
         repository: record.repository,
         version: record.version,
         project_id: record.project_id,
+        username: record.username,
     };
 
     Card::Project(card)

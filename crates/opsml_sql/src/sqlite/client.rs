@@ -307,7 +307,7 @@ impl SqlClient for SqliteClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
-                        .bind(&data.checksums)
+                        .bind(&data.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -343,7 +343,7 @@ impl SqlClient for SqliteClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
-                        .bind(&model.checksums)
+                        .bind(&model.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -377,7 +377,7 @@ impl SqlClient for SqliteClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
-                        .bind(&run.checksums)
+                        .bind(&run.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -507,7 +507,7 @@ impl SqlClient for SqliteClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
-                        .bind(&data.checksums)
+                        .bind(&data.username)
                         .bind(&data.uid)
                         .execute(&self.pool)
                         .await
@@ -543,7 +543,7 @@ impl SqlClient for SqliteClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
-                        .bind(&model.checksums)
+                        .bind(&model.username)
                         .bind(&model.uid)
                         .execute(&self.pool)
                         .await
@@ -577,7 +577,7 @@ impl SqlClient for SqliteClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
-                        .bind(&run.checksums)
+                        .bind(&run.username)
                         .bind(&run.uid)
                         .execute(&self.pool)
                         .await
@@ -1046,8 +1046,7 @@ mod tests {
 
     use opsml_types::{cards::CardType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
-    use sqlx::types::Json as SqlxJson;
-    use std::{collections::HashMap, env};
+    use std::env;
 
     fn get_connection_uri() -> String {
         let mut current_dir = env::current_dir().expect("Failed to get current directory");
@@ -1290,13 +1289,8 @@ mod tests {
             sql_type: SqlType::Sqlite,
         };
 
-        let mut checksums = HashMap::new();
-        checksums.insert("test.txt".to_string(), "abcd".to_string());
-
         let client = SqliteClient::new(&config).await.unwrap();
-        let mut data_card = DataCardRecord::default();
-        data_card.checksums = SqlxJson(checksums);
-
+        let data_card = DataCardRecord::default();
         let card = ServerCard::Data(data_card.clone());
 
         client.insert_card(&CardTable::Data, &card).await.unwrap();
