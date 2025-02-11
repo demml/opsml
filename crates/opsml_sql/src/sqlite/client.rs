@@ -609,6 +609,7 @@ impl SqlClient for SqliteClient {
                         .bind(&audit.runcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .bind(&audit.uid)
                         .execute(&self.pool)
                         .await
@@ -640,6 +641,7 @@ impl SqlClient for SqliteClient {
                         .bind(&pipeline.runcard_uids)
                         .bind(&pipeline.pre_tag)
                         .bind(&pipeline.build_tag)
+                        .bind(&pipeline.username)
                         .bind(&pipeline.uid)
                         .execute(&self.pool)
                         .await

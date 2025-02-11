@@ -419,7 +419,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_projectcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
+        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
             .to_string()
     }
 
@@ -506,9 +506,10 @@ impl SqliteQueryHelper {
         modelcard_uids, 
         runcard_uids, 
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
         )
         .to_string()
@@ -532,9 +533,10 @@ impl SqliteQueryHelper {
         modelcard_uids, 
         runcard_uids, 
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Pipeline
         )
         .to_string()
@@ -639,7 +641,8 @@ impl SqliteQueryHelper {
         modelcard_uids = ?, 
         runcard_uids = ?, 
         pre_tag = ?, 
-        build_tag = ?
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
             CardTable::Audit
         )
@@ -663,7 +666,8 @@ impl SqliteQueryHelper {
         modelcard_uids = ?, 
         runcard_uids = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
             CardTable::Pipeline
         )

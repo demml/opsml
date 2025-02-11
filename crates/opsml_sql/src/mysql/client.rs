@@ -296,7 +296,7 @@ impl SqlClient for MySqlClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
-                        .bind(&data.checksums)
+                        .bind(&data.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -332,7 +332,7 @@ impl SqlClient for MySqlClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
-                        .bind(&model.checksums)
+                        .bind(&model.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -366,7 +366,7 @@ impl SqlClient for MySqlClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
-                        .bind(&run.checksums)
+                        .bind(&run.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -398,6 +398,7 @@ impl SqlClient for MySqlClient {
                         .bind(&audit.runcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -429,6 +430,7 @@ impl SqlClient for MySqlClient {
                         .bind(&pipeline.runcard_uids)
                         .bind(&pipeline.pre_tag)
                         .bind(&pipeline.build_tag)
+                        .bind(&pipeline.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -454,6 +456,7 @@ impl SqlClient for MySqlClient {
                         .bind(&project.version)
                         .bind(&project.pre_tag)
                         .bind(&project.build_tag)
+                        .bind(&project.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -497,7 +500,7 @@ impl SqlClient for MySqlClient {
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
-                        .bind(&data.checksums)
+                        .bind(&data.username)
                         .bind(&data.uid)
                         .execute(&self.pool)
                         .await
@@ -533,7 +536,7 @@ impl SqlClient for MySqlClient {
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
-                        .bind(&model.checksums)
+                        .bind(&model.username)
                         .bind(&model.uid)
                         .execute(&self.pool)
                         .await
@@ -567,7 +570,7 @@ impl SqlClient for MySqlClient {
                         .bind(&run.compute_environment)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
-                        .bind(&run.checksums)
+                        .bind(&run.username)
                         .bind(&run.uid)
                         .execute(&self.pool)
                         .await
@@ -599,6 +602,7 @@ impl SqlClient for MySqlClient {
                         .bind(&audit.runcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .bind(&audit.uid)
                         .execute(&self.pool)
                         .await
@@ -630,6 +634,7 @@ impl SqlClient for MySqlClient {
                         .bind(&pipeline.runcard_uids)
                         .bind(&pipeline.pre_tag)
                         .bind(&pipeline.build_tag)
+                        .bind(&pipeline.username)
                         .bind(&pipeline.uid)
                         .execute(&self.pool)
                         .await
