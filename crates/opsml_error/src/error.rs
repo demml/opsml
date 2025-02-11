@@ -219,6 +219,9 @@ pub enum RegistryError {
 
     #[error("Failed to list cards - {0}")]
     ListCardsError(String),
+
+    #[error(transparent)]
+    StorageError(#[from] StorageError),
 }
 
 impl From<RegistryError> for PyErr {

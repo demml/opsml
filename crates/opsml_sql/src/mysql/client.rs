@@ -1042,7 +1042,6 @@ mod tests {
     use crate::schemas::schema::ProjectCardRecord;
     use opsml_types::{cards::CardType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
-    use serde::de;
     use std::env;
 
     pub async fn cleanup(pool: &Pool<MySql>) {

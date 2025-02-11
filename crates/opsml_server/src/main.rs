@@ -87,7 +87,7 @@ mod tests {
     use http_body_util::BodyExt; // for `collect`
     use opsml_client::*;
     use opsml_semver::VersionType;
-    use opsml_settings::config::DatabaseSettings;
+    use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
     use opsml_sql::base::SqlClient;
     use opsml_sql::enums::client::SqlClientEnum;
     use opsml_types::*;
@@ -1499,5 +1499,9 @@ mod tests {
     #[tokio::test]
     async fn test_opsml_server_artifact_keys() {
         let helper = TestHelper::new().await;
+
+        let config = OpsmlConfig::default().storage_settings().unwrap();
+
+        println!("{:?}", config);
     }
 }
