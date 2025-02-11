@@ -732,7 +732,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_update_query() -> String {
         format!(
-            "UPDATE {} SET encrypt_key = $1 WHERE uid = $2 AND card_type = $3",
+            "UPDATE {} SET encrypt_key = $1, created_at = NOW() WHERE uid = $2 AND card_type = $3",
             CardTable::ArtifactKey
         )
         .to_string()
