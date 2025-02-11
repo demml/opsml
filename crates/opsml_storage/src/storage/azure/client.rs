@@ -9,12 +9,12 @@ use azure_storage_blobs::container::operations::BlobItem;
 use azure_storage_blobs::prelude::*;
 use base64::prelude::*;
 use futures::stream::StreamExt;
-use indicatif::{ProgressBar, ProgressStyle};
-use opsml_colors::Colorize;
+use indicatif::ProgressBar;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
+use opsml_utils::{progress::Progress as MultiProgress, FileUtils};
 use reqwest::Client as HttpClient;
 use std::env;
 use std::fs::File;
@@ -87,35 +87,13 @@ impl AzureMultipartUpload {
         })
     }
 
-    pub async fn upload_file_in_chunks(&mut self) -> Result<(), StorageError> {
-        let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
-
-        // calculate the number of parts
-        let mut chunk_count = (self.file_size / chunk_size) + 1;
-        let mut size_of_last_chunk = self.file_size % chunk_size;
-
-        // if the last chunk is empty, reduce the number of parts
-        if size_of_last_chunk == 0 {
-            size_of_last_chunk = chunk_size;
-            chunk_count -= 1;
-        }
-
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Uploading file:");
-        let msg2 = Colorize::purple(&self.filename);
-        let msg = format!("{} {}", msg1, msg2);
-
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
-
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+        chunk_size: u64,
+        bar: &ProgressBar,
+    ) -> Result<(), StorageError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -136,7 +114,6 @@ impl AzureMultipartUpload {
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
-        bar.finish_with_message("Upload complete");
 
         Ok(())
 
@@ -609,6 +586,8 @@ impl FileSystem for AzureFSStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
+        let progress = MultiProgress::new();
+
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -619,8 +598,13 @@ impl FileSystem for AzureFSStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let stripped_file_path = file.strip_path(self.client.bucket().await);
+                let (chunk_count, size_of_last_chunk, chunk_size) =
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
 
+                let msg = format!("Uploading: {}", file.to_str().unwrap());
+                let bar = progress.create_bar(msg, chunk_count);
+
+                let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
@@ -628,18 +612,31 @@ impl FileSystem for AzureFSStorageClient {
                     .create_multipart_uploader(&stripped_file_path, &remote_path, None, None)
                     .await?;
 
-                uploader.upload_file_in_chunks().await?;
+                uploader
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &bar)
+                    .await?;
+                bar.finish_and_clear();
             }
-
-            Ok(())
         } else {
+            let (chunk_count, size_of_last_chunk, chunk_size) =
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
+
+            let msg = format!("Uploading: {}", &stripped_lpath.to_str().unwrap());
+            let bar = progress.create_bar(msg, chunk_count);
+
             let mut uploader = self
                 .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None, None)
                 .await?;
 
-            uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &bar)
+                .await?;
+            bar.finish_and_clear();
+        };
+
+        progress.finish()?;
+
+        Ok(())
     }
 }
 

@@ -23,6 +23,12 @@ impl From<SettingsError> for PyErr {
 pub enum StorageError {
     #[error("Storage Error: {0}")]
     Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    ProgressError(#[from] ProgressError),
 }
 
 impl From<StorageError> for PyErr {
