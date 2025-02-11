@@ -3675,7 +3675,7 @@ dependencies = [
 name = "opsml-settings"
 version = "0.1.0"
 dependencies = [
- "opsml-crypt",
+ "base64 0.22.1",
  "opsml-error",
  "opsml-types",
  "opsml-utils",
