@@ -1897,7 +1897,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sqlite_artifact_keys() {
+    async fn test_mysql_artifact_keys() {
         let client = db_client().await;
 
         let encrypt_key: Vec<u8> = (0..32).collect();
