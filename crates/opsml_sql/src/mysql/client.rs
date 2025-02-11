@@ -7,7 +7,6 @@ use crate::schemas::schema::{
 };
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
-use chrono::Utc;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -1026,7 +1025,6 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_artifact_key_update_query();
         sqlx::query(&query)
             .bind(key.encrypt_key.clone())
-            .bind(Utc::now())
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
             .execute(&self.pool)
