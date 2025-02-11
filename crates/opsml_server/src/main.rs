@@ -1495,4 +1495,9 @@ mod tests {
 
         helper.cleanup();
     }
+
+    #[tokio::test]
+    async fn test_opsml_server_artifact_keys() {
+        let helper = TestHelper::new().await;
+    }
 }

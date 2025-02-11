@@ -1685,6 +1685,7 @@ mod tests {
             "repo".to_string(),
             Version::new(1, 0, 0),
             1,
+            "guest".to_string(),
         );
         client
             .insert_card(&CardTable::Project, &ServerCard::Project(project))
