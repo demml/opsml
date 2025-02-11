@@ -1036,6 +1036,9 @@ mod tests {
 
             DELETE
             FROM opsml_users;
+
+            DELETE
+            FROM opsml_artifact_key;
             "#,
         )
         .fetch_all(pool)
