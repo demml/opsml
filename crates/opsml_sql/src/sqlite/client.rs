@@ -2,9 +2,9 @@ use crate::base::SqlClient;
 
 use crate::schemas::schema::ProjectCardRecord;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
-    ModelCardRecord, ParameterRecord, PipelineCardRecord, QueryStats, RunCardRecord, ServerCard,
-    User, VersionResult,
+    ArtifactKey, AuditCardRecord, CardResults, CardSummary, DataCardRecord, HardwareMetricsRecord,
+    MetricRecord, ModelCardRecord, ParameterRecord, PipelineCardRecord, QueryStats, RunCardRecord,
+    ServerCard, User, VersionResult,
 };
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
@@ -996,6 +996,31 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_insert_query();
+        sqlx::query(&query)
+            .bind(&key.uid)
+            .bind(&key.card_type.to_string())
+            .bind(key.encrypt_key.clone())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
+    async fn get_artifact_key(&self, uid: &str) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_select_query();
+
+        let key: ArtifactKey = sqlx::query_as(&query)
+            .bind(uid)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(key)
+    }
 }
 
 #[cfg(test)]
@@ -1003,7 +1028,7 @@ mod tests {
 
     use super::*;
 
-    use opsml_types::SqlType;
+    use opsml_types::{cards::CardType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use sqlx::types::Json as SqlxJson;
     use std::{collections::HashMap, env};
@@ -1937,5 +1962,32 @@ mod tests {
         assert_eq!(user.refresh_token.unwrap(), "token");
 
         cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_artifact_keys() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        let encrypt_key: Vec<u8> = (0..32).collect();
+
+        let key = ArtifactKey {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            card_type: CardType::Data.to_string(),
+            encrypt_key: encrypt_key.clone(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let key = client.get_artifact_key(&key.uid).await.unwrap();
+
+        assert_eq!(key.uid, "550e8400-e29b-41d4-a716-446655440000");
     }
 }

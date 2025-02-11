@@ -669,4 +669,20 @@ impl SqliteQueryHelper {
         )
         .to_string()
     }
+
+    pub fn get_artifact_key_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (uid, card_type, encrypt_key) VALUES (?, ?, ?)",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_select_query() -> String {
+        format!(
+            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
 }

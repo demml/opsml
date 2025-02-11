@@ -1,6 +1,6 @@
 use crate::schemas::schema::{
-    CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
-    ServerCard, User,
+    ArtifactKey, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord,
+    QueryStats, ServerCard, User,
 };
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
@@ -234,4 +234,24 @@ pub trait SqlClient: Sized {
     ///
     /// * `bool` - True if the uid exists
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
+
+    /// Insert artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The artifact key
+    ///
+    /// # Returns
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+
+    /// Get artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `uid` - The unique identifier of the card
+    ///
+    /// # Returns
+    ///
+    /// * `ArtifactKey` - The artifact key
+    async fn get_artifact_key(&self, uid: &str) -> Result<ArtifactKey, SqlError>;
 }
