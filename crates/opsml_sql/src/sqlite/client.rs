@@ -409,6 +409,7 @@ impl SqlClient for SqliteClient {
                         .bind(&audit.runcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -440,6 +441,7 @@ impl SqlClient for SqliteClient {
                         .bind(&pipeline.runcard_uids)
                         .bind(&pipeline.pre_tag)
                         .bind(&pipeline.build_tag)
+                        .bind(&pipeline.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -465,6 +467,7 @@ impl SqlClient for SqliteClient {
                         .bind(&project.version)
                         .bind(&project.pre_tag)
                         .bind(&project.build_tag)
+                        .bind(&project.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
