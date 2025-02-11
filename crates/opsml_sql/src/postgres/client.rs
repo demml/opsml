@@ -1802,4 +1802,23 @@ mod tests {
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
     }
+
+    #[tokio::test]
+    async fn test_sqlite_artifact_keys() {
+        let client = db_client().await;
+
+        let encrypt_key: Vec<u8> = (0..32).collect();
+
+        let key = ArtifactKey {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            card_type: CardType::Data.to_string(),
+            encrypt_key: encrypt_key.clone(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let key = client.get_artifact_key(&key.uid).await.unwrap();
+
+        assert_eq!(key.uid, "550e8400-e29b-41d4-a716-446655440000");
+    }
 }
