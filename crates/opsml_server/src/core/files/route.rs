@@ -12,7 +12,6 @@ use axum::{
 };
 
 use opsml_auth::permission::UserPermissions;
-use opsml_crypt::key;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
@@ -346,11 +345,11 @@ pub async fn create_artifact_key(
     let derived_key = derive_encryption_key(
         &state.storage_settings.encryption_key,
         &salt,
-        &[req.card_type.as_bytes()],
+        req.card_type.as_bytes(),
     );
 
     // encrypt key before sending
-    let encrypted_key = encrypt_key(&req.uid, &derived_key);
+    let encrypted_key = encrypt_key(&req.uid.as_bytes(), &derived_key);
 
     // spawn a task to insert the key into the database
 
@@ -360,14 +359,35 @@ pub async fn create_artifact_key(
         encrypt_key: encrypted_key,
     };
 
-    // spawn a task to insert the key into the database
+    // clone the artifact_key before moving it into the async block
+    let artifact_key_clone = artifact_key.clone();
     tokio::spawn(async move {
-        if let Err(e) = state.sql_client.insert_artifact_key(&artifact_key).await {
+        if let Err(e) = state
+            .sql_client
+            .insert_artifact_key(&artifact_key_clone)
+            .await
+        {
             error!("Failed to insert artifact key: {}", e);
         }
     });
 
     Ok(Json(artifact_key))
+}
+
+pub async fn get_artifact_key(
+    State(state): State<Arc<AppState>>,
+    Query(req): Query<ArtifactKeyRequest>,
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+    let key = state
+        .sql_client
+        .get_artifact_key(&req.uid, &req.card_type)
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+        })?;
+
+    Ok(Json(key))
 }
 
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
@@ -389,6 +409,11 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/files/list", prefix), get(list_files))
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
+            .route(
+                &format!("{}/files/encrypt", prefix),
+                get(create_artifact_key),
+            )
+            .route(&format!("{}/files/decrypt", prefix), get(get_artifact_key))
     }));
 
     match result {

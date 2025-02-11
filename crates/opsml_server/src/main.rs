@@ -15,6 +15,7 @@ async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
     let (config, storage_client, sql_client) = setup_components().await?;
     let auth_enabled = config.auth_settings.enabled;
+    let storage_settings = config.storage_settings();
 
     // Create shared state for the application (storage client, auth manager, config)
     let app_state = Arc::new(AppState {
@@ -25,7 +26,7 @@ async fn create_app() -> Result<Router> {
             &config.auth_settings.refresh_secret,
         )),
         config: Arc::new(config),
-        storage_settings: Arc::new(config.storage_settings()),
+        storage_settings: Arc::new(storage_settings),
     });
 
     info!("✅ Application state created");

@@ -161,7 +161,7 @@ impl CardRegistry {
         println!("✓ {:?}", msg);
 
         card.update_uid(Uuid::new_v4().to_string());
-        card.save_card(py, save_kwargs)?;
+        //card.save_card(py, save_kwargs)?;
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();
         println!("✓ {:?}", msg);
