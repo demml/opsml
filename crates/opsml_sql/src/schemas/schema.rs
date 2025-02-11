@@ -160,7 +160,7 @@ pub struct DataCardRecord {
     pub pipelinecard_uid: String,
     pub auditcard_uid: String,
     pub interface_type: String,
-    pub checksums: Json<HashMap<String, String>>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -176,7 +176,7 @@ impl DataCardRecord {
         pipelinecard_uid: Option<String>,
         auditcard_uid: Option<String>,
         interface_type: String,
-        checksums: HashMap<String, String>,
+        username: String,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -202,7 +202,7 @@ impl DataCardRecord {
                 .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type,
-            checksums: Json(checksums),
+            username,
         }
     }
 }
@@ -228,7 +228,7 @@ impl Default for DataCardRecord {
             pipelinecard_uid: CommonKwargs::Undefined.to_string(),
             auditcard_uid: CommonKwargs::Undefined.to_string(),
             interface_type: CommonKwargs::Undefined.to_string(),
-            checksums: Json(HashMap::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -256,7 +256,7 @@ pub struct ModelCardRecord {
     pub auditcard_uid: String,
     pub interface_type: String,
     pub task_type: String,
-    pub checksums: Json<HashMap<String, String>>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -275,7 +275,7 @@ impl ModelCardRecord {
         auditcard_uid: Option<String>,
         interface_type: String,
         task_type: String,
-        checksums: HashMap<String, String>,
+        username: String,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -304,7 +304,7 @@ impl ModelCardRecord {
             auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
             interface_type,
             task_type,
-            checksums: Json(checksums),
+            username,
         }
     }
 }
@@ -333,7 +333,7 @@ impl Default for ModelCardRecord {
             auditcard_uid: CommonKwargs::Undefined.to_string(),
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
-            checksums: Json(HashMap::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -359,7 +359,7 @@ pub struct RunCardRecord {
     pub project: String,
     pub artifact_uris: Json<HashMap<String, String>>,
     pub compute_environment: Json<HashMap<String, String>>,
-    pub checksums: Json<HashMap<String, String>>,
+    pub username: String,
 }
 
 impl Default for RunCardRecord {
@@ -384,7 +384,7 @@ impl Default for RunCardRecord {
             project: CommonKwargs::Undefined.to_string(),
             artifact_uris: Json(HashMap::new()),
             compute_environment: Json(HashMap::new()),
-            checksums: Json(HashMap::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -403,7 +403,6 @@ impl RunCardRecord {
         project: String,
         artifact_uris: Option<HashMap<String, String>>,
         compute_environment: Option<HashMap<String, String>>,
-        checksums: HashMap<String, String>,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -430,7 +429,7 @@ impl RunCardRecord {
             project,
             artifact_uris: Json(artifact_uris.unwrap_or_default()),
             compute_environment: Json(compute_environment.unwrap_or_default()),
-            checksums: Json(checksums),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -454,6 +453,7 @@ pub struct AuditCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub runcard_uids: Json<Vec<String>>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -468,6 +468,7 @@ impl AuditCardRecord {
         datacard_uids: Option<Vec<String>>,
         modelcard_uids: Option<Vec<String>>,
         runcard_uids: Option<Vec<String>>,
+        username: String,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -491,6 +492,7 @@ impl AuditCardRecord {
             datacard_uids: Json(datacard_uids.unwrap_or_default()),
             modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
             runcard_uids: Json(runcard_uids.unwrap_or_default()),
+            username,
         }
     }
 }
@@ -515,6 +517,7 @@ impl Default for AuditCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             runcard_uids: Json(Vec::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -538,6 +541,7 @@ pub struct PipelineCardRecord {
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
     pub runcard_uids: Json<Vec<String>>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -552,6 +556,7 @@ impl PipelineCardRecord {
         datacard_uids: Option<Vec<String>>,
         modelcard_uids: Option<Vec<String>>,
         runcard_uids: Option<Vec<String>>,
+        username: String,
     ) -> Self {
         let created_at = Some(get_utc_datetime());
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -575,6 +580,7 @@ impl PipelineCardRecord {
             datacard_uids: Json(datacard_uids.unwrap_or_default()),
             modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
             runcard_uids: Json(runcard_uids.unwrap_or_default()),
+            username,
         }
     }
 }
@@ -599,6 +605,7 @@ impl Default for PipelineCardRecord {
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
             runcard_uids: Json(Vec::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -616,6 +623,7 @@ pub struct ProjectCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
+    pub username: String,
 }
 
 impl Default for ProjectCardRecord {
@@ -632,6 +640,7 @@ impl Default for ProjectCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -650,6 +659,7 @@ impl ProjectCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
