@@ -8,6 +8,7 @@ use crate::schemas::schema::{
 };
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
+use chrono::Utc;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -1010,16 +1011,31 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_artifact_key(&self, uid: &str) -> Result<ArtifactKey, SqlError> {
+    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_select_query();
 
         let key: ArtifactKey = sqlx::query_as(&query)
             .bind(uid)
+            .bind(card_type)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
         Ok(key)
+    }
+
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_update_query();
+        sqlx::query(&query)
+            .bind(key.encrypt_key.clone())
+            .bind(Utc::now())
+            .bind(&key.uid)
+            .bind(&key.card_type.to_string())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
     }
 }
 
@@ -1986,8 +2002,28 @@ mod tests {
 
         client.insert_artifact_key(&key).await.unwrap();
 
-        let key = client.get_artifact_key(&key.uid).await.unwrap();
+        let key = client
+            .get_artifact_key(&key.uid, &key.card_type)
+            .await
+            .unwrap();
 
         assert_eq!(key.uid, "550e8400-e29b-41d4-a716-446655440000");
+
+        // update key
+        let encrypt_key: Vec<u8> = (32..64).collect();
+        let key = ArtifactKey {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            card_type: CardType::Data.to_string(),
+            encrypt_key: encrypt_key.clone(),
+        };
+
+        client.update_artifact_key(&key).await.unwrap();
+
+        let key = client
+            .get_artifact_key(&key.uid, &key.card_type)
+            .await
+            .unwrap();
+
+        assert_eq!(key.encrypt_key, encrypt_key);
     }
 }

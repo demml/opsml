@@ -680,7 +680,15 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = ?",
+            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = ? AND card_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_update_query() -> String {
+        format!(
+            "UPDATE {} SET encrypt_key = ?, created_at= ? WHERE uid = ? AND card_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()

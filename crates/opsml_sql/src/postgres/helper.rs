@@ -708,4 +708,28 @@ impl PostgresQueryHelper {
         )
         .to_string()
     }
+
+    pub fn get_artifact_key_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (uid, card_type, encrypt_key) VALUES ($1, $2, $3)",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_select_query() -> String {
+        format!(
+            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = $1 AND card_type = $2",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn update_artifact_key_query() -> String {
+        format!(
+            "UPDATE {} SET encrypt_key = $1 WHERE uid = $2 AND card_type = $3",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
 }
