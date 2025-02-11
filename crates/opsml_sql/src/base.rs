@@ -253,5 +253,17 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `ArtifactKey` - The artifact key
-    async fn get_artifact_key(&self, uid: &str) -> Result<ArtifactKey, SqlError>;
+    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError>;
+
+    /// Update artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The artifact key
+    ///
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
 }
