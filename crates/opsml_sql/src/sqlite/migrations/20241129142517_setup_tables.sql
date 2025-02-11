@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     runcard_uid TEXT,
     pipelinecard_uid TEXT,
     auditcard_uid TEXT,
-    interface_type TEXT NOT NULL DEFAULT 'undefined',
+    interface_type TEXT NOT NULL DEFAULT 'undefined'
 );
 
 -- ModelSchema
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     pipelinecard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
-    task_type TEXT NOT NULL DEFAULT 'undefined',
+    task_type TEXT NOT NULL DEFAULT 'undefined'
 );
 
 -- RunSchema
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     pipelinecard_uid TEXT,
     project TEXT,
     artifact_uris TEXT,
-    compute_environment TEXT,
+    compute_environment TEXT
 );
 
 -- AuditSchema
