@@ -382,7 +382,12 @@ impl StorageClientEnum {
 //
 pub async fn get_storage_system(config: &OpsmlConfig) -> AnyhowResult<StorageClientEnum> {
     // check storage_uri for prefix
-    let storage_settings = config.storage_settings();
+    let storage_settings = config.storage_settings().with_context(|| {
+        format!(
+            "Failed to get storage settings from config: {:?}",
+            config.storage_settings()
+        )
+    })?;
 
     StorageClientEnum::new(&storage_settings)
         .await

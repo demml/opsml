@@ -838,7 +838,7 @@ mod tests {
         create_file(lpath.to_str().unwrap(), &1024);
 
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = GCSFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = GCSFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let rpath_dir = Path::new("test_dir");
         let rpath = rpath_dir.join(&filename);
@@ -905,7 +905,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = GCSFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = GCSFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let child = tmp_path.join("child");
         let grand_child = child.join("grandchild");
