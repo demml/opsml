@@ -243,7 +243,7 @@ impl DataCard {
             pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: DataInterfaceType::Arrow.to_string(),
-            checksums: self.checksums.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
         Ok(Card::Data(record))
