@@ -37,6 +37,8 @@ pub struct OpsmlStorageSettings {
 
     #[pyo3(get)]
     pub storage_type: StorageType,
+
+    pub encryption_key: Vec<u8>,
 }
 
 #[pymethods]
@@ -50,6 +52,7 @@ impl OpsmlStorageSettings {
     #[pyo3(signature = (storage_uri="./opsml_registries", client_mode=false))]
     pub fn new(storage_uri: &str, client_mode: bool) -> Self {
         OpsmlStorageSettings {
+            encryption_key: vec![],
             storage_uri: storage_uri.to_string(),
             client_mode,
             api_settings: ApiSettings {
@@ -147,7 +150,7 @@ impl Default for OpsmlConfig {
 
         // set auth settings
         let auth_settings = AuthSettings {
-            jwt_secret: env::var("OPSML_JWT_SECRET").unwrap_or_else(|_| generate_jwt_secret()),
+            jwt_secret: env::var("OPSML_ENCRYPT_SECRET").unwrap_or_else(|_| generate_jwt_secret()),
             refresh_secret: env::var("OPSML_REFRESH_SECRET")
                 .unwrap_or_else(|_| generate_jwt_secret()),
 
@@ -270,6 +273,7 @@ impl OpsmlConfig {
     /// Get the storage settings for the OpsmlConfig
     pub fn storage_settings(&self) -> OpsmlStorageSettings {
         OpsmlStorageSettings {
+            encryption_key: self.auth_settings.jwt_secret.clone().into_bytes(),
             storage_uri: self.opsml_storage_uri.clone(),
             client_mode: self.client_mode,
             storage_type: self.get_storage_type(),

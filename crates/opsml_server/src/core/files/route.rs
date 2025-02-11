@@ -333,6 +333,12 @@ pub async fn download_file(
     (StatusCode::OK, body).into_response()
 }
 
+pub async fn create_artifact_key(
+    State(state): State<Arc<AppState>>,
+    Query(req): Query<ArtifactKeyRequest>,
+) -> Result<Json<Vec<Metric>>, (StatusCode, Json<serde_json::Value>)> {
+}
+
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
