@@ -2,8 +2,8 @@ use crate::base::SqlClient;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
 use crate::schemas::schema::{
-    CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
-    ServerCard, User,
+    ArtifactKey, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord,
+    QueryStats, ServerCard, User,
 };
 use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
@@ -298,6 +298,30 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.update_user(user).await,
             SqlClientEnum::Sqlite(client) => client.update_user(user).await,
             SqlClientEnum::MySql(client) => client.update_user(user).await,
+        }
+    }
+
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.insert_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.insert_artifact_key(key).await,
+        }
+    }
+
+    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_artifact_key(uid, card_type).await,
+            SqlClientEnum::Sqlite(client) => client.get_artifact_key(uid, card_type).await,
+            SqlClientEnum::MySql(client) => client.get_artifact_key(uid, card_type).await,
+        }
+    }
+
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.update_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.update_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.update_artifact_key(key).await,
         }
     }
 }

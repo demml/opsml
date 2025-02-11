@@ -620,4 +620,28 @@ impl MySQLQueryHelper {
         WHERE uid = ?"
             .to_string()
     }
+
+    pub fn get_artifact_key_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (uid, card_type, encrypt_key) VALUES (?, ?, ?)",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_select_query() -> String {
+        format!(
+            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = ? AND card_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_update_query() -> String {
+        format!(
+            "UPDATE {} SET encrypt_key = ? WHERE uid = ? AND card_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
 }
