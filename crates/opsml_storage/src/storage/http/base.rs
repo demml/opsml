@@ -99,16 +99,16 @@ impl HttpStorageClient {
                 StorageError::Error(error)
             })?;
 
-        let val = response
-            .json::<Value>()
+        let settings = response
+            .json::<StorageSettings>()
             .await
             .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
 
         // convert Value to Vec<String>
-        let settings = serde_json::from_value::<StorageSettings>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
-        })?;
+        //let settings = serde_json::from_value::<StorageSettings>(val).map_err(|e| {
+        //    error!("Failed to deserialize response: {}", e);
+        //    StorageError::Error(format!("Failed to deserialize response: {}", e))
+        //})?;
 
         Ok(settings.storage_type)
     }
@@ -140,16 +140,16 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to get files: {}", e))
             })?;
 
-        let val = response.json::<Value>().await.map_err(|e| {
+        let response = response.json::<ListFileResponse>().await.map_err(|e| {
             error!("Failed to parse response: {}", e);
             StorageError::Error(format!("Failed to parse response: {}", e))
         })?;
 
         // convert Value to Vec<String>
-        let response = serde_json::from_value::<ListFileResponse>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
-        })?;
+        //let response = serde_json::from_value::<ListFileResponse>(val).map_err(|e| {
+        //    error!("Failed to deserialize response: {}", e);
+        //    StorageError::Error(format!("Failed to deserialize response: {}", e))
+        //})?;
 
         Ok(response.files)
     }
