@@ -2,16 +2,21 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
+    use opsml_crypt::{decrypt_key, derive_encryption_key, encrypt_key, generate_salt};
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
     use opsml_settings::config::OpsmlConfig;
+    use opsml_settings::config::OpsmlStorageSettings;
+    use opsml_sql::schemas::ArtifactKey;
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
         schemas::*,
     };
+    use opsml_types::cards::CardType;
     use opsml_types::{cards::CardTable, contracts::*, *};
+    use opsml_utils::uid_to_byte_key;
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
@@ -22,6 +27,7 @@ pub mod server_logic {
         sql_client: SqlClientEnum,
         pub registry_type: RegistryType,
         pub table_name: CardTable,
+        pub storage_settings: OpsmlStorageSettings,
     }
 
     impl ServerRegistry {
@@ -38,6 +44,7 @@ pub mod server_logic {
                 sql_client,
                 table_name,
                 registry_type,
+                storage_settings: config.storage_settings()?,
             })
         }
 
@@ -430,6 +437,52 @@ pub mod server_logic {
             })?;
 
             Ok(bumped_version)
+        }
+
+        pub async fn create_artifact_key(
+            &mut self,
+            uid: &str,
+            card_type: &CardType,
+        ) -> Result<Vec<u8>, RegistryError> {
+            let salt = generate_salt();
+
+            let derived_key = derive_encryption_key(
+                &self.storage_settings.encryption_key,
+                &salt,
+                card_type.as_bytes(),
+            )?;
+
+            let uid_key = uid_to_byte_key(uid)?;
+
+            let encrypted_key = encrypt_key(&uid_key, &derived_key)?;
+
+            let artifact_key = ArtifactKey {
+                uid: uid.to_string(),
+                card_type: card_type.to_string(),
+                encrypt_key: encrypted_key,
+            };
+
+            self.sql_client.insert_artifact_key(&artifact_key).await?;
+
+            Ok(derived_key.into())
+        }
+
+        pub async fn get_artifact_key(
+            &mut self,
+            uid: &str,
+            card_type: &CardType,
+        ) -> Result<Vec<u8>, RegistryError> {
+            let key = self
+                .sql_client
+                .get_artifact_key(uid, &card_type.to_string())
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to get artifact key {}", e)))?;
+
+            let uid_key = uid_to_byte_key(uid)?;
+
+            let decrypted_key = decrypt_key(&uid_key, &key.encrypt_key)?;
+
+            Ok(decrypted_key)
         }
     }
 

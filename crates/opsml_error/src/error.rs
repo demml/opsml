@@ -231,6 +231,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     CryptError(#[from] CryptError),
+
+    #[error(transparent)]
+    SqlError(#[from] SqlError),
 }
 
 impl From<RegistryError> for PyErr {
