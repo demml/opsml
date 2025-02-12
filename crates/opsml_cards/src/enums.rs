@@ -7,8 +7,7 @@ use opsml_types::{cards::CardType, contracts::Card, CommonKwargs, RegistryType};
 use pyo3::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
-use tempfile::TempDir;
-use tracing::{debug, error, instrument};
+use tracing::{debug, instrument};
 
 #[derive(Debug)]
 pub enum CardEnum {
