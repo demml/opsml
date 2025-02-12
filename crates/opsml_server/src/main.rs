@@ -8,7 +8,6 @@ use opsml_auth::auth::AuthManager;
 use opsml_colors::Colorize;
 use std::sync::Arc;
 use tracing::{info, warn};
-
 mod core;
 
 async fn create_app() -> Result<Router> {
@@ -90,8 +89,10 @@ mod tests {
     use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
     use opsml_sql::base::SqlClient;
     use opsml_sql::enums::client::SqlClientEnum;
+    use opsml_sql::schemas::ArtifactKey;
     use opsml_types::*;
     use opsml_types::{cards::*, contracts::*};
+    use tokio::time::Duration;
 
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -1517,10 +1518,27 @@ mod tests {
 
         let response = helper.send_oneshot(request, true).await;
 
-        let key: ArtifactKeyRequest =
+        let key: ArtifactKey =
             serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
                 .unwrap();
 
-        println!("{:?}", key);
+        // sleep for 1 second to allow the key to be stored
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        // get key
+        let request = Request::builder()
+            .uri(format!("/opsml/files/decrypt?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request, true).await;
+
+        // get response body
+        let key_from_server: ArtifactKey =
+            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+
+        assert_eq!(key.encrypt_key, key_from_server.encrypt_key);
     }
 }

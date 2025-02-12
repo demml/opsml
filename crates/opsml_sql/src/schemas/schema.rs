@@ -1,6 +1,5 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
-use opsml_types::cards::CardType;
 use opsml_types::{CommonKwargs, DataType, ModelType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
@@ -852,7 +851,7 @@ impl std::fmt::Debug for User {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct ArtifactKey {
     pub uid: String,
     pub card_type: String,

@@ -71,12 +71,12 @@ pub enum CardType {
 impl Display for CardType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let card_type = match self {
-            CardType::Data => "data",
-            CardType::Model => "model",
-            CardType::Run => "run",
-            CardType::Project => "project",
-            CardType::Audit => "audit",
-            CardType::Pipeline => "pipeline",
+            CardType::Data => "Data",
+            CardType::Model => "Model",
+            CardType::Run => "Run",
+            CardType::Project => "Project",
+            CardType::Audit => "Audit",
+            CardType::Pipeline => "Pipeline",
         };
         write!(f, "{}", card_type)
     }
@@ -86,12 +86,12 @@ impl Display for CardType {
 impl CardType {
     pub fn as_bytes(&self) -> &[u8] {
         match self {
-            CardType::Data => b"data",
-            CardType::Model => b"model",
-            CardType::Run => b"run",
-            CardType::Project => b"project",
-            CardType::Audit => b"audit",
-            CardType::Pipeline => b"pipeline",
+            CardType::Data => b"Data",
+            CardType::Model => b"Model",
+            CardType::Run => b"Run",
+            CardType::Project => b"Project",
+            CardType::Audit => b"Audit",
+            CardType::Pipeline => b"Pipeline",
         }
     }
 }

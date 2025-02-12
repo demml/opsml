@@ -17,7 +17,6 @@ use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use opsml_utils::uid_to_byte_key;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-use uuid::Uuid;
 
 use anyhow::{Context, Result};
 use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
@@ -346,21 +345,29 @@ pub async fn create_artifact_key(
     debug!("Creating artifact key for: {:?}", req);
     let salt = generate_salt();
 
+    // create derived key
+    let derived_key = derive_encryption_key(
+        &state.storage_settings.encryption_key,
+        &salt,
+        req.card_type.as_bytes(),
+    )
+    .map_err(|e| {
+        error!("Failed to derive key: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+    })?;
+
+    debug!("Derived key: {:?}", derived_key);
+
     let uid_key = uid_to_byte_key(&req.uid).map_err(|e| {
         error!("Failed to convert uid to key: {}", e);
         (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
     })?;
 
-    let derived_key = derive_encryption_key(
-        &state.storage_settings.encryption_key,
-        &salt,
-        req.card_type.as_bytes(),
-    );
-
-    debug!("Derived key: {:?}", derived_key);
-
     // encrypt key before sending
-    let encrypted_key = encrypt_key(&uid_key, &derived_key);
+    let encrypted_key = encrypt_key(&uid_key, &derived_key).map_err(|e| {
+        error!("Failed to encrypt key: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+    })?;
 
     debug!("Encrypted key: {:?}", encrypted_key);
 
@@ -374,12 +381,10 @@ pub async fn create_artifact_key(
 
     // clone the artifact_key before moving it into the async block
     let artifact_key_clone = artifact_key.clone();
+    let sql_client = state.sql_client.clone();
+    // Spawn task and add to managed set
     tokio::spawn(async move {
-        if let Err(e) = state
-            .sql_client
-            .insert_artifact_key(&artifact_key_clone)
-            .await
-        {
+        if let Err(e) = sql_client.insert_artifact_key(&artifact_key_clone).await {
             error!("Failed to insert artifact key: {}", e);
         }
     });

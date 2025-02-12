@@ -267,7 +267,7 @@ mod tests {
 
         // setup keys
         let master_key = derive_master_key(b"password", &generate_salt(), Some(2)).unwrap();
-        let derived_key = derive_encryption_key(&master_key, &generate_salt(), b"info");
+        let derived_key = derive_encryption_key(&master_key, &generate_salt(), b"info").unwrap();
 
         // encrypt the directory
         encrypt_directory(&input_path, &derived_key).unwrap();
