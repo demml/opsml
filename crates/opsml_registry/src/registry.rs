@@ -161,6 +161,7 @@ impl CardRegistry {
         println!("✓ {:?}", msg);
 
         card.update_uid(Uuid::new_v4().to_string());
+        // get encrypt key
         //card.save_card(py, save_kwargs)?;
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();

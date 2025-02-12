@@ -26,6 +26,8 @@ pub enum Routes {
     Multipart,
     Presigned,
     StorageSettings,
+    Encrypt,
+    Decrypt,
 }
 
 impl Routes {
@@ -36,6 +38,8 @@ impl Routes {
             Routes::Presigned => "files/presigned",
             Routes::List => "files/list",
             Routes::ListInfo => "files/list/info",
+            Routes::Encrypt => "files/encrypt",
+            Routes::Decrypt => "files/decrypt",
             Routes::Healthcheck => "healthcheck",
             Routes::StorageSettings => "storage/settings",
             Routes::DeleteFiles => "files/delete",

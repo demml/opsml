@@ -1,9 +1,12 @@
 use crate::base::*;
 use crate::types::*;
+use opsml_crypt::decrypt_key;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
+use opsml_types::cards::CardType;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
+use opsml_utils::uid_to_byte_key;
 
 // TODO: Add trait for client and server registry
 #[derive(Debug)]
@@ -233,5 +236,36 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
 
         Ok(version.version)
+    }
+
+    pub async fn artifact_key(
+        &mut self,
+        uid: &str,
+        card_type: &CardType,
+        route: Routes,
+    ) -> Result<Vec<u8>, RegistryError> {
+        let key_request = ArtifactKeyRequest {
+            uid: uid.to_string(),
+            card_type: card_type.clone(),
+        };
+
+        let query_string = serde_qs::to_string(&key_request)
+            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+
+        let response = self
+            .api_client
+            .request_with_retry(route, RequestType::Get, None, Some(query_string), None)
+            .await?;
+
+        let key = response
+            .json::<ArtifactKey>()
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+
+        let uid_key = uid_to_byte_key(uid)?;
+
+        let decrypted_key = decrypt_key(&uid_key, &key.encrypt_key)?;
+
+        Ok(decrypted_key)
     }
 }
