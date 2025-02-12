@@ -1,5 +1,7 @@
 use pyo3::prelude::*;
 use std::sync::Arc;
+use std::thread::sleep;
+use std::time::Duration;
 
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
@@ -27,7 +29,24 @@ impl OpsmlTestServer {
         #[cfg(feature = "server")]
         {
             self.handle = start_server_in_background();
-            Ok(())
+            let client = reqwest::blocking::Client::new();
+            let mut attempts = 0;
+            let max_attempts = 5;
+
+            while attempts < max_attempts {
+                let res = client.get("http://localhost:3000/opsml/healthcheck").send();
+                if let Ok(response) = res {
+                    if response.status() == 200 {
+                        return Ok(());
+                    }
+                }
+                attempts += 1;
+                sleep(Duration::from_secs(2));
+            }
+
+            return Err(opsml_error::OpsmlError::new_err(
+                "Failed to start Opsml Server",
+            ));
         }
         #[cfg(not(feature = "server"))]
         {

@@ -4266,6 +4266,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
+ "reqwest",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "scouter-client",
  "tokio",

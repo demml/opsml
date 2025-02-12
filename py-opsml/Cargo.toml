@@ -21,10 +21,11 @@ opsml-todo = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
+reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
 tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server", "opsml-server", "tokio"]
+server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest"]
