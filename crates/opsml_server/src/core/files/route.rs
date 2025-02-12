@@ -10,13 +10,14 @@ use axum::{
     routing::{delete, get, post},
     Extension, Json, Router,
 };
-
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+use opsml_utils::uid_to_byte_key;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use uuid::Uuid;
 
 use anyhow::{Context, Result};
 use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
@@ -28,7 +29,8 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
-use tracing::{error, info};
+use tracing::debug;
+use tracing::{error, info, instrument};
 
 /// Create a multipart upload session (write)
 ///
@@ -336,11 +338,18 @@ pub async fn download_file(
     (StatusCode::OK, body).into_response()
 }
 
+#[instrument(skip_all)]
 pub async fn create_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+    debug!("Creating artifact key for: {:?}", req);
     let salt = generate_salt();
+
+    let uid_key = uid_to_byte_key(&req.uid).map_err(|e| {
+        error!("Failed to convert uid to key: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+    })?;
 
     let derived_key = derive_encryption_key(
         &state.storage_settings.encryption_key,
@@ -348,14 +357,18 @@ pub async fn create_artifact_key(
         req.card_type.as_bytes(),
     );
 
+    debug!("Derived key: {:?}", derived_key);
+
     // encrypt key before sending
-    let encrypted_key = encrypt_key(&req.uid.as_bytes(), &derived_key);
+    let encrypted_key = encrypt_key(&uid_key, &derived_key);
+
+    debug!("Encrypted key: {:?}", encrypted_key);
 
     // spawn a task to insert the key into the database
 
     let artifact_key = ArtifactKey {
         uid: req.uid.clone(),
-        card_type: req.card_type.clone(),
+        card_type: req.card_type.to_string(),
         encrypt_key: encrypted_key,
     };
 
@@ -374,13 +387,15 @@ pub async fn create_artifact_key(
     Ok(Json(artifact_key))
 }
 
+#[instrument(skip_all)]
 pub async fn get_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+    debug!("Getting artifact key for: {:?}", req);
     let key = state
         .sql_client
-        .get_artifact_key(&req.uid, &req.card_type)
+        .get_artifact_key(&req.uid, &req.card_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);

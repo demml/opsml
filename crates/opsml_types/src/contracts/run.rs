@@ -83,9 +83,3 @@ pub struct HardwareMetricResponse {
 pub struct GetRunGraphsRequest {
     pub run_uid: String,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ArtifactKeyRequest {
-    pub uid: String,
-    pub card_type: String,
-}

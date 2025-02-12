@@ -149,6 +149,8 @@ mod tests {
         pub async fn new() -> Self {
             // set OPSML_AUTH to true
             env::set_var("OPSML_AUTH", "true");
+            env::set_var("RUST_LOG", "info");
+            env::set_var("LOG_LEVEL", "debug");
 
             cleanup();
 
@@ -1500,8 +1502,25 @@ mod tests {
     async fn test_opsml_server_artifact_keys() {
         let helper = TestHelper::new().await;
 
-        let config = OpsmlConfig::default().storage_settings().unwrap();
+        let body = ArtifactKeyRequest {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            card_type: CardType::Model,
+        };
 
-        println!("{:?}", config);
+        let query_string = serde_qs::to_string(&body).unwrap();
+
+        let request = Request::builder()
+            .uri(format!("/opsml/files/encrypt?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request, true).await;
+
+        let key: ArtifactKeyRequest =
+            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+
+        println!("{:?}", key);
     }
 }

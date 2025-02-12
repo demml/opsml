@@ -274,6 +274,15 @@ pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
     }
 }
 
+pub fn uid_to_byte_key(uid: &str) -> Result<[u8; 32], UtilError> {
+    let mut uid_key = [0u8; 32];
+    let uuid = Uuid::parse_str(uid).map_err(|_| UtilError::UuidError)?;
+
+    uid_key[..16].copy_from_slice(uuid.as_bytes());
+
+    Ok(uid_key)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::clean_string;

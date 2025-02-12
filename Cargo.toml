@@ -93,7 +93,7 @@ tracing = "0.*"
 tracing-appender = "0.*"
 tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
-uuid = { version = "1.11.0", features = ["v4"] }
+uuid = { version = "1.*", features = ["v4"] }
 walkdir = "2.*"
 
 

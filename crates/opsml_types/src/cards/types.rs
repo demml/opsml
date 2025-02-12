@@ -81,3 +81,17 @@ impl Display for CardType {
         write!(f, "{}", card_type)
     }
 }
+
+// implement as_bytes for CardType
+impl CardType {
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            CardType::Data => b"data",
+            CardType::Model => b"model",
+            CardType::Run => b"run",
+            CardType::Project => b"project",
+            CardType::Audit => b"audit",
+            CardType::Pipeline => b"pipeline",
+        }
+    }
+}
