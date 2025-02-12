@@ -3,7 +3,7 @@ pub mod core;
 pub mod data;
 pub mod model;
 pub mod scouter;
-pub mod storage;
+pub mod test;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pymodule;
@@ -15,7 +15,7 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
-    m.add_wrapped(wrap_pymodule!(storage::storage))?;
+    m.add_wrapped(wrap_pymodule!(test::test))?;
 
     Ok(())
 }

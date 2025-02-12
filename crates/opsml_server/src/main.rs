@@ -39,6 +39,7 @@ mod tests {
     use super::*;
     use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
     use axum::response::Response;
+    use axum::Router;
     use axum::{
         body::Body,
         http::{header, Request, StatusCode},
