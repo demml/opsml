@@ -144,66 +144,77 @@ impl CardRegistry {
         save_kwargs: Option<SaveKwargs>,
     ) -> PyResult<()> {
         debug!("Registering card");
-        // card comes is
-        let py = card.py();
 
-        let mut card = CardEnum::from_py(card)?;
+        // Wrap all operations in a single block_on to handle async operations
+        self.runtime
+            .block_on(async {
+                // Verify card first
+                let py = card.py();
+                let mut card = CardEnum::from_py(card).unwrap();
 
-        // verify card arguments
-        self.verify_card(&card)?;
+                Self::verify_card(&card, &mut self.registry).await?;
 
-        // check for needed dependencies
-        self.check_dependencies(py, &card)?;
+                // Check dependencies
+                Self::check_dependencies(py, &card)?;
 
-        // check if card and registry type match
-        if !card.match_registry_type(&self.registry_type) {
-            error!("Card and registry type do not match");
-            return Err(OpsmlError::new_err("Card and registry type do not match"));
-        }
+                // Check registry type match
+                if !card.match_registry_type(&self.registry_type) {
+                    error!("Card and registry type do not match");
+                    return Err(RegistryError::Error(
+                        "Card and registry type do not match".to_string(),
+                    ));
+                }
 
-        let msg = Colorize::green("verified card").to_string();
-        println!("✓ {:?}", msg);
+                let msg = Colorize::green("verified card").to_string();
+                println!("✓ {:?}", msg);
 
-        // get next version
-        self.set_card_version(&mut card, version_type, pre_tag, build_tag)?;
+                // Set version
+                Self::set_card_version(
+                    &mut card,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                    &mut self.registry,
+                )
+                .await?;
 
-        let msg = Colorize::green("set card version").to_string();
-        println!("✓ {:?}", msg);
+                // Update UUID
+                card.update_uid(Uuid::new_v4().to_string());
 
-        card.update_uid(Uuid::new_v4().to_string());
-        // get encrypt key
+                // Save artifacts
+                Self::save_card_artifacts(
+                    py,
+                    &mut card,
+                    &mut self.registry,
+                    &mut self.fs,
+                    save_kwargs,
+                )
+                .await?;
 
-        // save card artifacts
-        let saved = self.save_card_artifacts(py, &mut card, save_kwargs)?;
+                let msg = Colorize::green("registered card").to_string();
+                println!("✓ {:?}", msg);
 
-        let msg = Colorize::green("saved card artifacts to storage").to_string();
-        println!("✓ {:?}", msg);
+                info!(
+                    "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
+                    self.registry_type,
+                    card.name(),
+                    card.repository(),
+                    card.version()
+                );
 
-        // register card
-        // get registry record
-
-        let msg = Colorize::green("registered card").to_string();
-        println!("✓ {:?}", msg);
-
-        info!(
-            "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
-            self.registry_type,
-            card.name(),
-            card.repository(),
-            card.version()
-        );
-
-        Ok(())
+                Ok(())
+            })
+            .map_err(|e| OpsmlError::new_err(e.to_string()))
     }
 }
 
 impl CardRegistry {
-    pub fn set_card_version(
-        &mut self,
+    async fn set_card_version(
         card: &mut CardEnum,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
+        registry: &mut OpsmlRegistry,
     ) -> Result<(), RegistryError> {
         debug!("Setting card version");
 
@@ -216,40 +227,36 @@ impl CardRegistry {
         };
 
         // get next version
-        let version = self
-            .runtime
-            .block_on(async {
-                self.registry
-                    .get_next_version(
-                        card.name(),
-                        card.repository(),
-                        card_version,
-                        version_type,
-                        pre_tag,
-                        build_tag,
-                    )
-                    .await
-            })
-            .map_err(|e| RegistryError::Error(e.to_string()))?;
+        let version = registry
+            .get_next_version(
+                card.name(),
+                card.repository(),
+                card_version,
+                version_type,
+                pre_tag,
+                build_tag,
+            )
+            .await?;
 
         card.update_version(&version);
+
+        let msg = Colorize::green("set card version").to_string();
+        println!("✓ {:?}", msg);
 
         Ok(())
     }
 
-    pub fn verify_card(&mut self, card: &CardEnum) -> Result<(), RegistryError> {
+    pub async fn verify_card(
+        card: &CardEnum,
+        registry: &mut OpsmlRegistry,
+    ) -> Result<(), RegistryError> {
         card.verify_card_for_registration()
             .map_err(|e| RegistryError::Error(e.to_string()))?;
 
         // if card is a model card and has datacard
         if let CardEnum::Model(model_card) = card {
             if let Some(datacard_uid) = &model_card.metadata.datacard_uid {
-                let exists = self.runtime.block_on(async {
-                    self.registry
-                        .check_card_uid(datacard_uid)
-                        .await
-                        .map_err(|e| RegistryError::Error(e.to_string()))
-                })?;
+                let exists = registry.check_card_uid(datacard_uid).await?;
 
                 if !exists {
                     return Err(RegistryError::Error(
@@ -264,7 +271,7 @@ impl CardRegistry {
         Ok(())
     }
 
-    fn check_dependencies(&self, py: Python, card: &CardEnum) -> Result<(), RegistryError> {
+    fn check_dependencies(py: Python, card: &CardEnum) -> Result<(), RegistryError> {
         if let CardEnum::Model(modelcard) = card {
             if modelcard.to_onnx {
                 let find_spec = py
@@ -307,38 +314,37 @@ impl CardRegistry {
     /// # Returns
     ///
     /// * `Result<(), RegistryError>` - Result
-    fn save_card_artifacts(
-        &mut self,
-        py: Python,
+    async fn save_card_artifacts<'py>(
+        py: Python<'py>,
         card: &mut CardEnum,
+        registry: &mut OpsmlRegistry,
+        fs: &mut FileSystemStorage,
         save_kwargs: Option<SaveKwargs>,
     ) -> Result<(), RegistryError> {
-        self.runtime.block_on(async {
-            let encrypt_key = self
-                .registry
-                .create_artifact_key(card.uid(), &card.card_type())
-                .await?;
+        let encrypt_key = registry
+            .create_artifact_key(card.uid(), &card.card_type())
+            .await?;
 
-            // create temp path for saving
-            let tmp_dir = TempDir::new().map_err(|e| {
-                error!("Failed to create temporary directory: {}", e);
-                RegistryError::Error("Failed to create temporary directory".to_string())
+        // create temp path for saving
+        let tmp_dir = TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            RegistryError::Error("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        card.save_card(py, &tmp_path, &encrypt_key, save_kwargs)
+            .map_err(|e| {
+                error!("Failed to save card: {}", e);
+                RegistryError::Error(e.to_string())
             })?;
 
-            let tmp_path = tmp_dir.into_path();
+        fs.put(&tmp_path, &card.uri(), true).await?;
 
-            card.save_card(py, &tmp_path, &encrypt_key, save_kwargs)
-                .map_err(|e| {
-                    error!("Failed to save card: {}", e);
-                    RegistryError::Error(e.to_string())
-                })?;
+        let msg = Colorize::green("saved card artifacts to storage").to_string();
+        println!("✓ {:?}", msg);
 
-            self.fs.put(&tmp_path, &card.uri(), true).await?;
-
-            // move
-
-            Ok::<(), RegistryError>(())
-        })
+        Ok(())
     }
 }
 
