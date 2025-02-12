@@ -131,7 +131,6 @@ impl CardEnum {
         }
 
         // encrypt every file in tmp_path with encrypt_key
-        
 
         Ok(())
     }
