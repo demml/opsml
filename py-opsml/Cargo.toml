@@ -14,6 +14,7 @@ opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-semver = { workspace = true }
+opsml-server = { workspace = true, optional = true }
 opsml-settings = { workspace = true }
 opsml-storage = { workspace = true}
 opsml-todo = { workspace = true }
@@ -22,10 +23,8 @@ opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
+tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server"]
-
-[optional-dependencies]
-opsml-registry = { workspace = true, features = ["server"], optional = true }
+server = ["opsml-registry/server", "opsml-server", "tokio"]
