@@ -1,5 +1,4 @@
 use opsml_error::error::CardError;
-use opsml_error::OpsmlError;
 use opsml_interfaces::{FeatureSchema, OnnxSchema};
 use opsml_types::*;
 use opsml_utils::{clean_string, validate_name_repository_pattern, FileUtils, PyHelperFuncs};
