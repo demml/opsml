@@ -64,18 +64,18 @@ impl CardRegistry {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (uid=None, name=None, repository=None, version=None, max_date=None, tags=None, limit=None, sort_by_timestamp=None))]
+    #[pyo3(signature = (uid=None, repository=None, name=None,  version=None, max_date=None, tags=None,  sort_by_timestamp=None, limit=25))]
     #[instrument(skip_all)]
     pub fn list_cards(
         &mut self,
         uid: Option<String>,
-        name: Option<String>,
         repository: Option<String>,
+        name: Option<String>,
         version: Option<String>,
         max_date: Option<String>,
         tags: Option<Vec<String>>,
-        limit: Option<i32>,
         sort_by_timestamp: Option<bool>,
+        limit: i32,
     ) -> PyResult<CardList> {
         debug!(
             "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
@@ -96,21 +96,6 @@ impl CardRegistry {
             repository = Some(repository.unwrap().to_lowercase());
         }
 
-        let limit_check = [
-            uid.is_some(),
-            name.is_some(),
-            repository.is_some(),
-            version.is_some(),
-            tags.is_some(),
-        ];
-
-        // check if any value is true. If not, set limit to 25
-        let limit = if limit_check.iter().any(|&x| x) {
-            limit
-        } else {
-            Some(25)
-        };
-
         let query_args = CardQueryArgs {
             uid,
             name,
@@ -118,7 +103,7 @@ impl CardRegistry {
             version,
             max_date,
             tags,
-            limit,
+            limit: Some(limit),
             sort_by_timestamp,
         };
 
@@ -435,7 +420,7 @@ mod tests {
 
         // Test list cards
         let cards = registry
-            .list_cards(None, None, None, None, None, None, None, None)
+            .list_cards(None, None, None, None, None, None, None, 25)
             .unwrap();
 
         assert_eq!(cards.cards.len(), 10);
