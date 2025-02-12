@@ -1,6 +1,7 @@
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
+use opsml_types::cards::CardType;
 use opsml_types::contracts::{Card, CardQueryArgs};
 use opsml_types::*;
 
@@ -113,6 +114,38 @@ impl OpsmlRegistry {
             Self::ServerRegistry(server_registry) => {
                 server_registry.create_card(card).await?;
                 Ok(())
+            }
+        }
+    }
+
+    pub async fn create_artifact_key(
+        &mut self,
+        uid: &str,
+        card_type: &CardType,
+    ) -> Result<Vec<u8>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.create_artifact_key(uid, card_type).await
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.create_artifact_key(uid, card_type).await
+            }
+        }
+    }
+
+    pub async fn get_artifact_key(
+        &mut self,
+        uid: &str,
+        card_type: &CardType,
+    ) -> Result<Vec<u8>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.get_artifact_key(uid, card_type).await
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.get_artifact_key(uid, card_type).await
             }
         }
     }

@@ -1,9 +1,8 @@
 use crate::{DataCard, ModelCard};
 
-use opsml_crypt::encrypt_file;
 use opsml_error::error::CardError;
 use opsml_interfaces::SaveKwargs;
-use opsml_types::{contracts::Card, CommonKwargs, RegistryType};
+use opsml_types::{cards::CardType, contracts::Card, CommonKwargs, RegistryType};
 use pyo3::prelude::*;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -99,6 +98,13 @@ impl CardEnum {
         match self {
             CardEnum::Data(card) => card.uid = uid,
             CardEnum::Model(card) => card.uid = uid,
+        }
+    }
+
+    pub fn card_type(&self) -> CardType {
+        match self {
+            CardEnum::Data(_) => CardType::Data,
+            CardEnum::Model(_) => CardType::Model,
         }
     }
 

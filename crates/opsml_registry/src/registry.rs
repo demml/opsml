@@ -162,7 +162,16 @@ impl CardRegistry {
 
         card.update_uid(Uuid::new_v4().to_string());
         // get encrypt key
-        //card.save_card(py, save_kwargs)?;
+
+        let encrypt_key = self.runtime.block_on(async {
+            self.registry
+                .create_artifact_key(card.uid(), &card.card_type())
+                .await
+        })?;
+
+        card.save_card(py, &encrypt_key, save_kwargs)?;
+
+        // encrypt_data with key
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();
         println!("✓ {:?}", msg);
