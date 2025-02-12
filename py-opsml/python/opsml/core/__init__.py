@@ -19,7 +19,6 @@ OnnxSchema = core.OnnxSchema
 DataSchema = core.DataSchema
 LoadKwargs = core.LoadKwargs
 SaveKwargs = core.SaveKwargs
-Tags = core.Tags
 ApiSettings = core.ApiSettings
 OpsmlStorageSettings = core.OpsmlStorageSettings
 
@@ -40,7 +39,6 @@ __all__ = [
     "DataSchema",
     "LoadKwargs",
     "SaveKwargs",
-    "Tags",
     "ApiSettings",
     "OpsmlStorageSettings",
 ]
