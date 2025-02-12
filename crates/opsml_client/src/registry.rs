@@ -238,7 +238,7 @@ impl ClientRegistry {
         Ok(version.version)
     }
 
-    pub async fn artifact_key(
+    async fn artifact_key(
         &mut self,
         uid: &str,
         card_type: &CardType,
@@ -267,5 +267,21 @@ impl ClientRegistry {
         let decrypted_key = decrypt_key(&uid_key, &key.encrypt_key)?;
 
         Ok(decrypted_key)
+    }
+
+    pub async fn create_artifact_key(
+        &mut self,
+        uid: &str,
+        card_type: &CardType,
+    ) -> Result<Vec<u8>, RegistryError> {
+        self.artifact_key(uid, card_type, Routes::Encrypt).await
+    }
+
+    pub async fn get_artifact_key(
+        &mut self,
+        uid: &str,
+        card_type: &CardType,
+    ) -> Result<Vec<u8>, RegistryError> {
+        self.artifact_key(uid, card_type, Routes::Decrypt).await
     }
 }
