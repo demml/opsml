@@ -222,6 +222,15 @@ pub enum RegistryError {
 
     #[error(transparent)]
     StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    ApiError(#[from] ApiError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
 }
 
 impl From<RegistryError> for PyErr {
