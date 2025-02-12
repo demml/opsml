@@ -1,23 +1,27 @@
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
 use opsml_colors::Colorize;
-use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
+use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
+use opsml_settings::config::OpsmlConfig;
+use opsml_storage::{storage, FileSystemStorage};
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use pyo3::prelude::*;
+use semver::Op;
+use tempfile::TempDir;
 use tracing::{debug, error, info, instrument};
 use uuid::Uuid;
 
 #[pyclass]
-#[derive(Debug)]
 pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
     registry: OpsmlRegistry,
     runtime: tokio::runtime::Runtime,
+    pub fs: FileSystemStorage,
 }
 
 #[pymethods]
@@ -27,8 +31,14 @@ impl CardRegistry {
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = tokio::runtime::Runtime::new().unwrap();
 
-        let registry = rt
-            .block_on(async { OpsmlRegistry::new(registry_type.clone()).await })
+        let (registry, fs) = rt
+            .block_on(async {
+                let mut settings = OpsmlConfig::default().storage_settings()?;
+                let registry = OpsmlRegistry::new(registry_type.clone()).await?;
+                let fs = FileSystemStorage::new(&mut settings).await?;
+
+                Ok::<_, RegistryError>((registry, fs))
+            })
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(Self {
@@ -36,6 +46,7 @@ impl CardRegistry {
             table_name: CardTable::from_registry_type(&registry_type).to_string(),
             registry,
             runtime: rt,
+            fs,
         })
     }
 
@@ -163,15 +174,8 @@ impl CardRegistry {
         card.update_uid(Uuid::new_v4().to_string());
         // get encrypt key
 
-        let encrypt_key = self.runtime.block_on(async {
-            self.registry
-                .create_artifact_key(card.uid(), &card.card_type())
-                .await
-        })?;
-
-        card.save_card(py, &encrypt_key, save_kwargs)?;
-
-        // encrypt_data with key
+        // save card artifacts
+        let saved = self.save_card_artifacts(py, &mut card, save_kwargs)?;
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();
         println!("✓ {:?}", msg);
@@ -287,6 +291,55 @@ impl CardRegistry {
         debug!("Checked dependencies");
 
         Ok(())
+    }
+
+    /// Save card artifacts to storage
+    /// Using a runtime, this method with
+    /// (1) create an artifact key to be used to encrypt data
+    /// (2) save the card to a temporary directory (with encryption)
+    /// (3) Transfer all files in the temporary directory to the storage system
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `card` - Card to save
+    /// * `save_kwargs` - Optional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), RegistryError>` - Result
+    fn save_card_artifacts(
+        &mut self,
+        py: Python,
+        card: &mut CardEnum,
+        save_kwargs: Option<SaveKwargs>,
+    ) -> Result<(), RegistryError> {
+        self.runtime.block_on(async {
+            let encrypt_key = self
+                .registry
+                .create_artifact_key(card.uid(), &card.card_type())
+                .await?;
+
+            // create temp path for saving
+            let tmp_dir = TempDir::new().map_err(|e| {
+                error!("Failed to create temporary directory: {}", e);
+                RegistryError::Error("Failed to create temporary directory".to_string())
+            })?;
+
+            let tmp_path = tmp_dir.into_path();
+
+            card.save_card(py, &tmp_path, &encrypt_key, save_kwargs)
+                .map_err(|e| {
+                    error!("Failed to save card: {}", e);
+                    RegistryError::Error(e.to_string())
+                })?;
+
+            self.fs.put(&tmp_path, &card.uri(), true).await?;
+
+            // move
+
+            Ok::<(), RegistryError>(())
+        })
     }
 }
 

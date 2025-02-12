@@ -1,9 +1,11 @@
 use crate::{DataCard, ModelCard};
 
+use opsml_crypt::encrypt_directory;
 use opsml_error::error::CardError;
 use opsml_interfaces::SaveKwargs;
 use opsml_types::{cards::CardType, contracts::Card, CommonKwargs, RegistryType};
 use pyo3::prelude::*;
+use std::path::Path;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -112,17 +114,11 @@ impl CardEnum {
     pub fn save_card(
         &mut self,
         py: Python,
+        tmp_path: &Path,
         encrypt_key: &[u8],
         save_kwargs: Option<SaveKwargs>,
     ) -> Result<(), CardError> {
         debug!("Saving card");
-
-        let tmp_dir = TempDir::new().map_err(|e| {
-            error!("Failed to create temporary directory: {}", e);
-            CardError::Error("Failed to create temporary directory".to_string())
-        })?;
-
-        let tmp_path = tmp_dir.into_path();
 
         // save all interface assets + Card (
         // Card will serve as metadata source of truth)
@@ -132,11 +128,13 @@ impl CardEnum {
                 // data_card.save_artifacts(tmp_path)?;
             }
             CardEnum::Model(ref mut modelcard) => {
-                modelcard.save(py, tmp_path.clone(), save_kwargs)?;
+                modelcard.save(py, tmp_path.to_path_buf(), save_kwargs)?;
             }
         }
 
         // encrypt every file in tmp_path with encrypt_key
+        // unique key for each card
+        encrypt_directory(tmp_path, encrypt_key)?;
 
         Ok(())
     }
