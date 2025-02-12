@@ -56,11 +56,16 @@ pub fn derive_master_key(
 /// # Returns
 ///
 /// A 32-byte array containing the derived encryption key
-pub fn derive_encryption_key(master_key: &[u8], salt: &[u8], info: &[u8]) -> [u8; 32] {
+pub fn derive_encryption_key(
+    master_key: &[u8],
+    salt: &[u8],
+    info: &[u8],
+) -> Result<[u8; 32], CryptError> {
     let hk = Hkdf::<Sha256>::new(Some(salt), master_key);
     let mut okm = [0u8; 32];
-    hk.expand(info, &mut okm).expect("Failed to derive key");
-    okm
+    hk.expand(info, &mut okm)
+        .map_err(|_| CryptError::Error("Failed to derive encryption key".to_string()))?;
+    Ok(okm)
 }
 
 /// Generate a random salt
@@ -81,11 +86,30 @@ pub fn generate_salt() -> [u8; 16] {
 /// # Returns
 ///
 /// A vector containing the nonce and the encrypted key
-pub fn encrypt_key(master_key: &[u8], key: &[u8]) -> Vec<u8> {
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(master_key));
+pub fn encrypt_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptError> {
+    let aes_key = std::panic::catch_unwind(|| Key::<Aes256Gcm>::from_slice(master_key));
+
+    if let Err(panic) = aes_key {
+        let panic_msg = panic
+            .downcast_ref::<String>()
+            .map(|s| s.as_str())
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap_or("Unknown panic message");
+
+        return Err(CryptError::Error(format!(
+            "Failed to create AES-256-GCM key: {}",
+            panic_msg
+        )));
+    }
+
+    let cipher = Aes256Gcm::new(aes_key.unwrap());
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
-    let encrypted_key = cipher.encrypt(&nonce, key).expect("encryption failure!");
-    [nonce.as_slice(), encrypted_key.as_slice()].concat()
+
+    let encrypted_key = cipher
+        .encrypt(&nonce, key)
+        .map_err(|_| CryptError::Error("Failed to encrypt key using AES-256-GCM".to_string()))?;
+
+    Ok([nonce.as_slice(), encrypted_key.as_slice()].concat())
 }
 
 /// Decrypt a key using AES-256-GCM
@@ -99,13 +123,28 @@ pub fn encrypt_key(master_key: &[u8], key: &[u8]) -> Vec<u8> {
 /// # Returns
 ///
 /// A vector containing the decrypted key
-pub fn decrypt_key(master_key: &[u8], encrypted_key: &[u8]) -> Vec<u8> {
-    let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(master_key));
+pub fn decrypt_key(master_key: &[u8], encrypted_key: &[u8]) -> Result<Vec<u8>, CryptError> {
+    let aes_key = std::panic::catch_unwind(|| Key::<Aes256Gcm>::from_slice(master_key));
+
+    if let Err(panic) = aes_key {
+        let panic_msg = panic
+            .downcast_ref::<String>()
+            .map(|s| s.as_str())
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap_or("Unknown panic message");
+
+        return Err(CryptError::Error(format!(
+            "Failed to create AES-256-GCM key: {}",
+            panic_msg
+        )));
+    }
+
+    let cipher = Aes256Gcm::new(aes_key.unwrap());
     let nonce = Nonce::from_slice(&encrypted_key[..12]);
     let key = cipher
         .decrypt(nonce, &encrypted_key[12..])
-        .expect("decryption failure!");
-    key
+        .map_err(|_| CryptError::Error("Failed to decrypt key using AES-256-GCM".to_string()))?;
+    Ok(key)
 }
 
 // tests
@@ -137,12 +176,12 @@ mod tests {
         let salt = generate_salt();
         let master_key = derive_master_key(password, &salt, Some(2)).unwrap();
         let info = b"info";
-        let derived_key = derive_encryption_key(&master_key, &salt, info);
+        let derived_key = derive_encryption_key(&master_key, &salt, info).unwrap();
         assert_eq!(derived_key.len(), 32);
 
         // encrypt and decrypt derived key
-        let encrypted_key = encrypt_key(&master_key, &derived_key);
-        let decrypted_key = decrypt_key(&master_key, &encrypted_key);
+        let encrypted_key = encrypt_key(&master_key, &derived_key).unwrap();
+        let decrypted_key = decrypt_key(&master_key, &encrypted_key).unwrap();
 
         assert_eq!(derived_key, decrypted_key.as_slice());
     }

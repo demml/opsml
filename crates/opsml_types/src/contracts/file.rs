@@ -1,8 +1,8 @@
+use crate::cards::CardType;
 use crate::StorageType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize)]
 pub struct MultiPartQuery {
     pub path: String,
@@ -98,4 +98,10 @@ pub struct UploadPartArgs {
     pub chunk_size: u64,
     pub chunk_index: u64,
     pub this_chunk_size: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ArtifactKeyRequest {
+    pub uid: String,
+    pub card_type: CardType,
 }
