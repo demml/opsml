@@ -180,15 +180,15 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to get files: {}", e))
             })?;
 
-        let val = response.json::<Value>().await.map_err(|e| {
+        let response = response.json::<ListFileInfoResponse>().await.map_err(|e| {
             error!("Failed to parse response: {}", e);
             StorageError::Error(format!("Failed to parse response: {}", e))
         })?;
 
-        let response = serde_json::from_value::<ListFileInfoResponse>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
-        })?;
+        //let response = serde_json::from_value::<ListFileInfoResponse>(val).map_err(|e| {
+        //    error!("Failed to deserialize response: {}", e);
+        //    StorageError::Error(format!("Failed to deserialize response: {}", e))
+        //})?;
 
         Ok(response.files)
     }
@@ -330,16 +330,16 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to delete file: {}", e))
             })?;
 
-        let val = response.json::<Value>().await.map_err(|e| {
+        let response = response.json::<DeleteFileResponse>().await.map_err(|e| {
             error!("Failed to parse response: {}", e);
             StorageError::Error(format!("Failed to parse response: {}", e))
         })?;
 
         // load DeleteFileResponse from response
-        let response = serde_json::from_value::<DeleteFileResponse>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
-        })?;
+        //let response = serde_json::from_value::<DeleteFileResponse>(val).map_err(|e| {
+        //    error!("Failed to deserialize response: {}", e);
+        //    StorageError::Error(format!("Failed to deserialize response: {}", e))
+        //})?;
 
         Ok(response.deleted)
     }
@@ -365,13 +365,13 @@ impl HttpStorageClient {
             .await
             .map_err(|e| StorageError::Error(format!("Failed to delete file: {}", e)))?;
 
-        let val = response
-            .json::<Value>()
+        let response = response
+            .json::<DeleteFileResponse>()
             .await
             .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
 
-        let response = serde_json::from_value::<DeleteFileResponse>(val)
-            .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
+        //let response = serde_json::from_value::<DeleteFileResponse>(val)
+        //    .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
 
         Ok(response.deleted)
     }
