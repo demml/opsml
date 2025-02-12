@@ -1,16 +1,15 @@
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
 use opsml_colors::Colorize;
+use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
-use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_storage::{storage, FileSystemStorage};
+use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use pyo3::prelude::*;
-use semver::Op;
 use tempfile::TempDir;
 use tracing::{debug, error, info, instrument};
 use uuid::Uuid;
