@@ -5,9 +5,7 @@ use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
-use pyo3::prelude::*;
 use std::path::Path;
-use std::path::PathBuf;
 
 #[async_trait]
 pub trait FileSystem {
@@ -151,87 +149,6 @@ impl FileSystemStorage {
                 .generate_presigned_url(path, expiration)
                 .await
         }
-    }
-}
-
-// this is the python wrapper for the FileSystemStorage struct
-// it is primarily used in tests to test it's functionality outside of use within a CardRegistry or a Card
-#[pyclass(name = "FileSystemStorage")]
-pub struct PyFileSystemStorage {
-    pub fs: FileSystemStorage,
-    pub rt: tokio::runtime::Runtime,
-}
-
-#[pymethods]
-impl PyFileSystemStorage {
-    #[new]
-    pub fn new(mut settings: OpsmlStorageSettings) -> PyResult<Self> {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-
-        let fs = rt.block_on(async { FileSystemStorage::new(&mut settings).await })?;
-
-        Ok(PyFileSystemStorage { fs, rt })
-    }
-
-    pub fn name(&self) -> &str {
-        self.fs.name()
-    }
-
-    pub fn storage_type(&self) -> StorageType {
-        self.fs.storage_type()
-    }
-
-    #[pyo3(signature = (path))]
-    pub fn find(&mut self, path: PathBuf) -> PyResult<Vec<String>> {
-        Ok(self
-            .rt
-            .block_on(async { self.fs.find(&path).await })
-            .unwrap())
-    }
-
-    #[pyo3(signature = (path))]
-    pub fn find_info(&mut self, path: PathBuf) -> PyResult<Vec<FileInfo>> {
-        Ok(self
-            .rt
-            .block_on(async { self.fs.find_info(&path).await })
-            .unwrap())
-    }
-
-    #[pyo3(signature = (lpath, rpath, recursive = false))]
-    pub fn get(&mut self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-        self.rt
-            .block_on(async { self.fs.get(&lpath, &rpath, recursive).await })?;
-        Ok(())
-    }
-
-    #[pyo3(signature = (lpath, rpath, recursive = false))]
-    pub fn put(&mut self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-        self.rt
-            .block_on(async { self.fs.put(&lpath, &rpath, recursive).await })?;
-        Ok(())
-    }
-
-    #[pyo3(signature = (path, recursive = false))]
-    pub fn rm(&mut self, path: PathBuf, recursive: bool) -> PyResult<()> {
-        self.rt
-            .block_on(async { self.fs.rm(&path, recursive).await })?;
-        Ok(())
-    }
-
-    #[pyo3(signature = (path))]
-    pub fn exists(&mut self, path: PathBuf) -> PyResult<bool> {
-        Ok(self
-            .rt
-            .block_on(async { self.fs.exists(&path).await })
-            .unwrap())
-    }
-
-    #[pyo3(signature = (path, expiration))]
-    pub fn generate_presigned_url(&mut self, path: PathBuf, expiration: u64) -> PyResult<String> {
-        Ok(self
-            .rt
-            .block_on(async { self.fs.generate_presigned_url(&path, expiration).await })
-            .unwrap())
     }
 }
 
