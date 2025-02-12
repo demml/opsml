@@ -260,6 +260,9 @@ pub enum CardError {
 
     #[error(transparent)]
     StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
 }
 
 impl From<CardError> for PyErr {
