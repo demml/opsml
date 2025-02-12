@@ -1,5 +1,9 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
+from ..card import ModelCard, DataCard
+from ..core import VersionType, SaveKwargs
+
+ArtifactCard = Union[ModelCard, DataCard]
 
 class Card:
     @property
@@ -42,6 +46,8 @@ class CardList:
     """List of Cards from a registry"""
 
     cards: List[Card]
+
+    def __str__(self): ...
 
 class RegistryType:
     Data: "RegistryType"
@@ -98,7 +104,7 @@ class CardRegistry:
         tags: Optional[List[str]] = None,
         sort_by_timestamp: Optional[bool] = False,
         limit: int = 25,
-    ) -> List[Card]:
+    ) -> CardList:
         """Retrieves records from registry
 
         Args:
@@ -116,14 +122,38 @@ class CardRegistry:
             max_date (str):
                 Optional max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01").
                 Must be in the format "YYYY-MM-DD"
-
             sort_by_timestamp:
                 If True, sorts by timestamp descending
-
             limit (int):
                 Places a limit on result list. Results are sorted by SemVer.
                 Defaults to 25.
 
         Returns:
             List of Cards
+        """
+
+    def register_card(
+        self,
+        card: ArtifactCard,
+        version_type: VersionType,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+        save_kwargs=Optional[SaveKwargs],
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (ArtifactCard):
+                Card to register. Can be a DataCard, ModelCard,
+                RunCard, ProjectCard
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+            save_kwargs (SaveKwargs):
+                Optional SaveKwargs to pass to the Card interface (If using DataCards
+                and ModelCards).
+
         """
