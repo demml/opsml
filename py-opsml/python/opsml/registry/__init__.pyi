@@ -1,7 +1,8 @@
-from typing import List, Optional, Union
 from datetime import datetime
-from ..card import ModelCard, DataCard
-from ..core import VersionType, SaveKwargs
+from typing import List, Optional, Union
+
+from ..card import DataCard, ModelCard
+from ..core import SaveKwargs, VersionType
 
 ArtifactCard = Union[ModelCard, DataCard]
 
