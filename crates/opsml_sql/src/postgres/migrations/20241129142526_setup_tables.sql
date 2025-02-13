@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
 
 CREATE TABLE IF NOT EXISTS opsml_operations (
     id SERIAL PRIMARY KEY,
-    user VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     access_type VARCHAR(16) NOT NULL,
     access_location VARCHAR(255) NOT NULL
