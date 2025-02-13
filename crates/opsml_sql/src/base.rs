@@ -266,4 +266,23 @@ pub trait SqlClient: Sized {
     ///
     /// * `Result<(), SqlError>` - The result of the operation
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+
+    /// Insert operation
+    ///  Records a given file operation
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username
+    /// * `access_type` - The type of access
+    /// * `access_location` - The location of the access
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError>;
 }
