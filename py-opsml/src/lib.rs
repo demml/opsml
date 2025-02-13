@@ -2,7 +2,6 @@ pub mod card;
 pub mod core;
 pub mod data;
 pub mod model;
-pub mod registry;
 pub mod scouter;
 pub mod test;
 
@@ -16,7 +15,7 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_wrapped(wrap_pymodule!(data::data))?;
     m.add_wrapped(wrap_pymodule!(model::model))?;
     m.add_wrapped(wrap_pymodule!(card::card))?;
-    m.add_wrapped(wrap_pymodule!(test::test))?;
 
+    m.add_wrapped(wrap_pymodule!(test::test))?;
     Ok(())
 }

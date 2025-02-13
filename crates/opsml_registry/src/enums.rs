@@ -4,6 +4,7 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::CardType;
 use opsml_types::contracts::{Card, CardQueryArgs};
 use opsml_types::*;
+use tracing::{debug, instrument};
 
 #[derive(Debug)]
 pub enum OpsmlRegistry {
@@ -14,18 +15,21 @@ pub enum OpsmlRegistry {
 }
 
 impl OpsmlRegistry {
+    #[instrument(skip_all)]
     pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
         let config = OpsmlConfig::default();
 
         let storage_settings = config.storage_settings()?;
         match storage_settings.client_mode {
             true => {
+                debug!("Creating client registry");
                 let client_registry =
                     opsml_client::ClientRegistry::new(&config, registry_type).await?;
                 Ok(Self::ClientRegistry(client_registry))
             }
             #[cfg(feature = "server")]
             false => {
+                debug!("Creating server registry");
                 let server_registry = crate::server::registry::server_logic::ServerRegistry::new(
                     &config,
                     registry_type,

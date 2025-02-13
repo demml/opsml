@@ -3,7 +3,7 @@ use opsml_registry::CardRegistry;
 #[cfg(feature = "server")]
 use opsml_registry::RegistryTestHelper;
 use opsml_types::contracts::{Card, CardList};
-use opsml_types::{cards::CardType, RegistryType};
+use opsml_types::{cards::CardType, RegistryMode, RegistryType};
 
 use pyo3::prelude::*;
 
@@ -19,6 +19,7 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_registry
     m.add_class::<CardRegistry>()?;
     m.add_class::<RegistryType>()?;
+    m.add_class::<RegistryMode>()?;
 
     #[cfg(feature = "server")]
     m.add_class::<RegistryTestHelper>()?;

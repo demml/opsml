@@ -3,7 +3,6 @@ use std::sync::Arc;
 use std::thread::sleep;
 use std::time::Duration;
 
-#[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
 
 #[cfg(feature = "server")]
@@ -55,7 +54,6 @@ impl OpsmlTestServer {
                 sleep(Duration::from_secs(2));
 
                 // set env vars for OPSML_TRACKING_URI
-                std::env::set_var("OPSML_TRACKING_URI", "http://localhost:3000");
             }
 
             return Err(opsml_error::OpsmlError::new_err(
@@ -86,6 +84,20 @@ impl OpsmlTestServer {
                 "Opsml Server feature not enabled",
             ));
         }
+    }
+
+    fn __enter__(mut self_: PyRefMut<Self>) -> PyResult<PyRefMut<Self>> {
+        self_.start_server()?;
+        Ok(self_)
+    }
+
+    fn __exit__(
+        &self,
+        _exc_type: PyObject,
+        _exc_value: PyObject,
+        _traceback: PyObject,
+    ) -> PyResult<()> {
+        self.stop_server()
     }
 }
 

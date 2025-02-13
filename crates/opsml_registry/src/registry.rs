@@ -26,7 +26,9 @@ pub struct CardRegistry {
 #[pymethods]
 impl CardRegistry {
     #[new]
+    #[instrument(skip_all)]
     pub fn new(registry_type: RegistryType) -> PyResult<Self> {
+        debug!("Creating new registry client");
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = tokio::runtime::Runtime::new().unwrap();
 
