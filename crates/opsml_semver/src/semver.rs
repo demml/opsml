@@ -127,7 +127,7 @@ impl VersionValidator {
         reverse: bool,
     ) -> Result<Vec<String>, VersionError> {
         if versions.is_empty() {
-            versions.push(Version::new(0, 1, 0));
+            versions.push(Version::new(0, 0, 0));
         } else {
             versions.sort();
 

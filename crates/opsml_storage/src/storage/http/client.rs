@@ -8,6 +8,7 @@ use opsml_types::StorageType;
 use opsml_utils::progress::Progress;
 use opsml_utils::FileUtils;
 use std::path::{Path, PathBuf};
+use tracing::debug;
 
 pub struct HttpFSStorageClient {
     pub client: HttpStorageClient,
@@ -143,6 +144,11 @@ impl HttpFSStorageClient {
                 let task = tokio::spawn(async move {
                     let relative_path = file.relative_path(&stripped_lpath_clone)?;
                     let remote_path = stripped_rpath_clone.join(relative_path);
+
+                    debug!(
+                        "remote_path: {:?}, stripped_path: {:?}",
+                        remote_path, stripped_file_path
+                    );
 
                     let mut uploader = cloned_client
                         .create_multipart_uploader(&remote_path, &stripped_file_path)

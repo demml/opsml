@@ -9,7 +9,6 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
-use owo_colors::OwoColorize;
 use pyo3::prelude::*;
 use tempfile::TempDir;
 use tracing::{debug, error, info, instrument};
@@ -154,8 +153,8 @@ impl CardRegistry {
                     ));
                 }
 
-                let msg = "verified card".green().to_string();
-                println!("✓ {:?}", msg);
+                let msg = Colorize::green("verified card");
+                println!("✓ {}", msg);
 
                 // Set version
                 Self::set_card_version(
@@ -180,8 +179,8 @@ impl CardRegistry {
                 )
                 .await?;
 
-                let msg = Colorize::green("registered card").to_string();
-                println!("✓ {:?}", msg);
+                let msg = Colorize::green("registered card");
+                println!("✓ {}", msg);
 
                 info!(
                     "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
@@ -228,8 +227,8 @@ impl CardRegistry {
 
         card.update_version(&version);
 
-        let msg = Colorize::green("set card version").to_string();
-        println!("✓ {:?}", msg);
+        let msg = Colorize::green("set card version");
+        println!("✓ {}", msg);
 
         debug!("Set card version");
 
@@ -334,8 +333,11 @@ impl CardRegistry {
 
         fs.put(&tmp_path, &card.uri(), true).await?;
 
-        let msg = Colorize::green("saved card artifacts to storage").to_string();
-        println!("✓ {:?}", msg);
+        let info = fs.find_info(&card.uri()).await?;
+        println!("Saved card to storage: {:?}", info);
+
+        let msg = Colorize::green("saved card artifacts to storage");
+        println!("✓ {}", msg);
 
         debug!("Saved card artifacts to storage");
 

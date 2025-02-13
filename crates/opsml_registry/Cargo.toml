@@ -21,7 +21,6 @@ opsml-settings = { workspace = true }
 opsml-sql = { workspace = true, optional = true }
 opsml-storage = { workspace = true }
 opsml-utils = { workspace = true }
-owo-colors = { workspace = true }
 pyo3 = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }

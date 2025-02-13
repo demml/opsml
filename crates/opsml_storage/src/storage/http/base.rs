@@ -403,14 +403,9 @@ impl HttpStorageClient {
             })?;
 
         // deserialize response into MultiPartSession
-        let val = response.json::<Value>().await.map_err(|e| {
+        let session = response.json::<MultiPartSession>().await.map_err(|e| {
             error!("Failed to parse response: {}", e);
             StorageError::Error(format!("Failed to parse response: {}", e))
-        })?;
-
-        let session = serde_json::from_value::<MultiPartSession>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
         })?;
 
         let session_url = session.session_url;
