@@ -17,9 +17,22 @@ const REDACTED: &str = "REDACTED";
 /// Create a new HTTP client that can be shared across different clients
 pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     let mut headers = HeaderMap::new();
+
     headers.insert(
         "X-Prod-Token",
         HeaderValue::from_str(settings.prod_token.as_deref().unwrap_or(""))
+            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+    );
+
+    headers.insert(
+        "Username",
+        HeaderValue::from_str(&settings.username)
+            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
+    );
+
+    headers.insert(
+        "Password",
+        HeaderValue::from_str(&settings.password)
             .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
     );
 
@@ -36,7 +49,6 @@ pub struct OpsmlApiClient {
     pub client: Client,
     settings: OpsmlStorageSettings,
     base_path: String,
-    header_map: HeaderMap,
 }
 
 impl OpsmlApiClient {
@@ -50,7 +62,6 @@ impl OpsmlApiClient {
                 "{}/{}",
                 settings.api_settings.base_url, settings.api_settings.opsml_dir
             ),
-            header_map: OpsmlApiClient::get_default_headers(&settings.api_settings).await?,
         };
 
         if settings.api_settings.use_auth {
@@ -66,31 +77,6 @@ impl OpsmlApiClient {
         Ok(api_client)
     }
 
-    async fn get_default_headers(api_settings: &ApiSettings) -> Result<HeaderMap, ApiError> {
-        let mut headers = HeaderMap::new();
-
-        headers.insert(
-            "Username",
-            HeaderValue::from_str(&api_settings.username).map_err(|e| {
-                ApiError::Error(format!("Failed to create header with error: {}", e))
-            })?,
-        );
-
-        headers.insert(
-            "Password",
-            HeaderValue::from_str(&api_settings.password).map_err(|e| {
-                ApiError::Error(format!("Failed to create header with error: {}", e))
-            })?,
-        );
-
-        headers.insert(
-            "X-Prod-Token",
-            HeaderValue::from_str(&api_settings.prod_token.as_deref().unwrap_or("")).unwrap(),
-        );
-
-        Ok(headers)
-    }
-
     async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
         if !self.settings.api_settings.use_auth {
             return Ok(());
@@ -100,7 +86,6 @@ impl OpsmlApiClient {
         let response = self
             .client
             .get(url)
-            .headers(self.header_map.clone())
             .send()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?
@@ -145,13 +130,7 @@ impl OpsmlApiClient {
         query_string: Option<String>,
         headers: Option<HeaderMap>,
     ) -> Result<Response, ApiError> {
-        let provided_headers = headers.unwrap_or_default();
-        let mut headers = self.header_map.clone();
-
-        // insert headers into the header map
-        for (key, value) in provided_headers.iter() {
-            headers.insert(key, value.clone());
-        }
+        let headers = headers.unwrap_or_default();
 
         let url = format!("{}/{}", self.base_path, route.as_str());
         let response = match request_type {

@@ -5,7 +5,7 @@ use axum::extract::Multipart;
 use axum::{
     body::Body,
     extract::{Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
     Extension, Json, Router,
@@ -46,9 +46,14 @@ pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<MultiPartQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
     // If auth is enabled, check permissions or other auth-related logic
-    debug!("Checking permissions for create_multipart_upload");
+    debug!(
+        "Checking permissions for create_multipart_upload for user: {:?}",
+        headers.get("username").unwrap_or(&"guest".parse().unwrap())
+    );
+
     if state.config.auth_settings.enabled {
         let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
             (
