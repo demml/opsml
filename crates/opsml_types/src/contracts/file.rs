@@ -117,6 +117,7 @@ pub struct ArtifactKey {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Operation {
+    Create,
     Read,
     Write,
     Delete,
@@ -136,6 +137,7 @@ impl Display for Operation {
             Operation::Info => write!(f, "Info"),
             Operation::Encrypt => write!(f, "Encrypt"),
             Operation::Decrypt => write!(f, "Decrypt"),
+            Operation::Create => write!(f, "Create"),
         }
     }
 }
