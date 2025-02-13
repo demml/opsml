@@ -1058,7 +1058,7 @@ mod tests {
 
     use super::*;
     use crate::schemas::schema::ProjectCardRecord;
-    use opsml_types::{cards::CardType, SqlType};
+    use opsml_types::{cards::CardType, contracts::Operation, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -1097,6 +1097,9 @@ mod tests {
 
             DELETE
             FROM opsml_artifact_key;
+
+            DELETE
+            FROM opsml_operations;
             "#,
         )
         .fetch_all(pool)
@@ -1950,5 +1953,24 @@ mod tests {
             .unwrap();
 
         assert_eq!(key.encrypt_key, encrypt_key);
+    }
+
+    #[tokio::test]
+    async fn test_mysql_insert_operation() {
+        let client = db_client().await;
+
+        client
+            .insert_operation("guest", &Operation::Read.to_string(), "model/registry")
+            .await
+            .unwrap();
+
+        // check if the operation was inserted
+        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let result: String = sqlx::query_scalar(query)
+            .fetch_one(&client.pool)
+            .await
+            .unwrap();
+
+        assert_eq!(result, "guest");
     }
 }
