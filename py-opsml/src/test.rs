@@ -91,6 +91,23 @@ impl OpsmlTestServer {
             runtime.spawn(async move {
                 stop_server(handle).await;
             });
+
+            // get current directory
+            let current_dir = std::env::current_dir().unwrap();
+
+            // delete "opsml.db" file and "opsml_registries" directory
+
+            let db_file = current_dir.join("opsml.db");
+            let storage_dir = current_dir.join("opsml_registries");
+
+            if db_file.exists() {
+                std::fs::remove_file(db_file).unwrap();
+            }
+
+            if storage_dir.exists() {
+                std::fs::remove_dir_all(storage_dir).unwrap();
+            }
+
             Ok(())
         }
         #[cfg(not(feature = "server"))]
