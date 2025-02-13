@@ -7,6 +7,7 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::CardType;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
 use opsml_utils::uid_to_byte_key;
+use tracing::debug;
 
 // TODO: Add trait for client and server registry
 #[derive(Debug)]
@@ -215,6 +216,8 @@ impl ClientRegistry {
             build_tag,
         };
 
+        debug!("Getting next version {:?}", version_request);
+
         let query_string = serde_qs::to_string(&version_request)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
@@ -229,6 +232,8 @@ impl ClientRegistry {
             )
             .await
             .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))?;
+
+        debug!("Got response {:?}", response);
 
         let version = response
             .json::<CardVersionResponse>()

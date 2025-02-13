@@ -57,7 +57,7 @@ pub struct QueryPageRequest {
 
 // QueryPageResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CardVersionRequest {
     pub registry_type: RegistryType,
     pub name: String,

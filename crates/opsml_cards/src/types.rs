@@ -309,7 +309,7 @@ impl BaseArgs {
         let repository = clean_string(&Self::get_value("REPOSITORY", repository)?);
         let contact = Self::get_value("CONTACT", contact)?;
 
-        let version = version.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
+        let version = version.map_or(CommonKwargs::BaseVersion.to_string(), |v| v.to_string());
         let uid = uid.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
 
         validate_name_repository_pattern(&name, &repository)?;
