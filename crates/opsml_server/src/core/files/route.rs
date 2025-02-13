@@ -33,18 +33,23 @@ use tracing::debug;
 use tracing::{error, info, instrument};
 
 async fn log_operation(
-    user: String,
-    operation: Operation,
+    headers: &HeaderMap,
+    access_type: &str,
+    access_location: &str,
     sql_client: Arc<SqlClientEnum>,
-    location: String,
 ) -> Result<(), ServerError> {
-    let operation = operation.to_string();
-    let user = user.to_string();
+    let default_user = "guest".parse().unwrap();
+    let username = headers
+        .get("username")
+        .unwrap_or(&default_user)
+        .to_str()
+        .map_err(|e| ServerError::Error(e.to_string()))?;
 
-    sql_client
-        .log_operation(&user, &operation)
-        .await
-        .map_err(|e| ServerError::LogError(e.to_string()))
+    let _ = sql_client
+        .insert_operation(username, access_type, access_location)
+        .await?;
+
+    Ok(())
 }
 
 /// Create a multipart upload session (write)
@@ -108,6 +113,20 @@ pub async fn create_multipart_upload(
         }
     };
 
+    let sql_client = state.sql_client.clone();
+    tokio::spawn(async move {
+        if let Err(e) = log_operation(
+            &headers,
+            &Operation::Create.to_string(),
+            &params.path,
+            sql_client,
+        )
+        .await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
     Ok(Json(MultiPartSession { session_url }))
 }
 
@@ -125,6 +144,7 @@ pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<PresignedQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
     // check for read access
     if state.config.auth_settings.enabled {
@@ -192,6 +212,21 @@ pub async fn generate_presigned_url(
         }
     };
 
+    let sql_client = state.sql_client.clone();
+    let url_clone = url.clone();
+    tokio::spawn(async move {
+        if let Err(e) = log_operation(
+            &headers,
+            &Operation::Read.to_string(),
+            &url_clone,
+            sql_client,
+        )
+        .await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
     Ok(Json(PresignedUrl { url }))
 }
 
@@ -218,7 +253,7 @@ pub async fn upload_multipart(
             tokio::fs::create_dir_all(parent).await.unwrap();
         }
 
-        let mut file = File::create(rpath).await.unwrap();
+        let mut file = File::create(&rpath).await.unwrap();
         file.write_all(&data).await.unwrap();
     }
 
@@ -283,6 +318,7 @@ pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DeleteFileQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for delete access
     if state.config.auth_settings.enabled {
@@ -316,6 +352,16 @@ pub async fn delete_file(
     if let Err(e) = files {
         return Err(internal_server_error(e));
     }
+
+    let sql_client = state.sql_client.clone();
+    let rpath = params.path.clone();
+    tokio::spawn(async move {
+        if let Err(e) =
+            log_operation(&headers, &Operation::Delete.to_string(), &rpath, sql_client).await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
 
     // check if file exists
     let exists = state.storage_client.exists(path).await;

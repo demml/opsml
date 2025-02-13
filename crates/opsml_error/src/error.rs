@@ -153,9 +153,15 @@ pub enum ServerError {
 
     #[error("Failed to list files: {0}")]
     ListFileError(String),
+
+    #[error(transparent)]
+    SqlError(#[from] SqlError),
+
+    #[error("{0}")]
+    Error(String),
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize, Deserialize)]
 pub enum SqlError {
     #[error("Failed to run sql migrations: {0}")]
     MigrationError(String),
