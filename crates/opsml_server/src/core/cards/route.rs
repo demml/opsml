@@ -16,7 +16,7 @@ use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::error;
+use tracing::{error, instrument};
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -112,6 +112,7 @@ pub async fn get_page(
     Ok(Json(QueryPageResponse { summaries }))
 }
 
+#[instrument(skip_all)]
 pub async fn get_next_version(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardVersionRequest>,

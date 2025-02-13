@@ -126,10 +126,14 @@ impl VersionValidator {
         mut versions: Vec<Version>,
         reverse: bool,
     ) -> Result<Vec<String>, VersionError> {
-        versions.sort();
+        if versions.is_empty() {
+            versions.push(Version::new(0, 1, 0));
+        } else {
+            versions.sort();
 
-        if reverse {
-            versions.reverse();
+            if reverse {
+                versions.reverse();
+            }
         }
 
         Ok(versions.iter().map(|v| v.to_string()).collect())

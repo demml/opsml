@@ -9,6 +9,7 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
+use owo_colors::OwoColorize;
 use pyo3::prelude::*;
 use tempfile::TempDir;
 use tracing::{debug, error, info, instrument};
@@ -143,7 +144,7 @@ impl CardRegistry {
                 Self::verify_card(&card, &mut self.registry).await?;
 
                 // Check dependencies
-                Self::check_dependencies(py, &card)?;
+                //Self::check_dependencies(py, &card)?;
 
                 // Check registry type match
                 if !card.match_registry_type(&self.registry_type) {
@@ -153,7 +154,7 @@ impl CardRegistry {
                     ));
                 }
 
-                let msg = Colorize::green("verified card").to_string();
+                let msg = "verified card".green().to_string();
                 println!("✓ {:?}", msg);
 
                 // Set version

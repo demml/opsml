@@ -18,7 +18,7 @@ use sqlx::{
     types::chrono::NaiveDateTime,
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::info;
+use tracing::{info, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
@@ -149,6 +149,7 @@ impl SqlClient for SqliteClient {
     /// # Returns
     ///
     /// * `Vec<String>` - A vector of strings representing the sorted (desc) versions of the card
+    #[instrument(skip_all)]
     async fn get_versions(
         &self,
         table: &CardTable,
