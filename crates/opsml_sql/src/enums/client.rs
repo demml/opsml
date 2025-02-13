@@ -352,13 +352,12 @@ impl SqlClient for SqlClientEnum {
 }
 
 pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
-    let settings = &config.database_settings;
     SqlClientEnum::new(&config.database_settings)
         .await
         .with_context(|| {
             format!(
                 "Failed to create sql client for sql type: {:?}",
-                settings.sql_type
+                config.database_settings.sql_type
             )
         })
 }

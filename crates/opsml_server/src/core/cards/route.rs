@@ -16,7 +16,7 @@ use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{error, instrument};
+use tracing::{debug, error, instrument};
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -220,11 +220,20 @@ pub async fn list_cards(
     }
 }
 
+#[instrument(skip_all)]
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<CreateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
+
+    debug!(
+        "Creating card: {}/{}/{} - registry: {:?}",
+        &card_request.card.repository(),
+        &card_request.card.name(),
+        &card_request.card.version(),
+        &card_request.registry_type
+    );
 
     // match on registry type
     let card = match card_request.card {
@@ -338,6 +347,7 @@ pub async fn create_card(
             )
         })?;
 
+    debug!("Card created successfully");
     Ok(Json(CreateCardResponse {
         registered: true,
         uid: card.uid().to_string(),
@@ -345,6 +355,7 @@ pub async fn create_card(
 }
 
 /// update card
+#[instrument(skip_all)]
 pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
@@ -563,6 +574,7 @@ pub async fn update_card(
     Ok(Json(UpdateCardResponse { updated: true }))
 }
 
+#[instrument(skip_all)]
 pub async fn delete_card(
     State(state): State<Arc<AppState>>,
     Query(params): Query<UidRequest>,

@@ -18,7 +18,7 @@ use sqlx::{
     types::chrono::NaiveDateTime,
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
@@ -59,6 +59,7 @@ pub struct SqliteClient {
 #[async_trait]
 impl SqlClient for SqliteClient {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
+        debug!("settings: {:?}", settings);
         // if the connection uri is not in memory, create the file
         if !settings.connection_uri.contains(":memory:") {
             // strip "sqlite://" from the connection uri
@@ -67,6 +68,7 @@ impl SqlClient for SqliteClient {
 
             // check if the file exists
             if !path.exists() {
+                debug!("SQLite file does not exist, creating file");
                 // Ensure the parent directory exists
                 if let Some(parent) = path.parent() {
                     if !parent.exists() {

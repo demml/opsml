@@ -7,7 +7,8 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::CardType;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
 use opsml_utils::uid_to_byte_key;
-use tracing::debug;
+use tracing::instrument;
+use tracing::{debug, error};
 
 // TODO: Add trait for client and server registry
 #[derive(Debug)]
@@ -79,10 +80,18 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
     }
 
+    #[instrument(skip_all)]
     pub async fn create_card(&mut self, card: Card) -> Result<(), RegistryError> {
         // serialize card to json
-        let body = serde_json::to_value(card)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize card {}", e)))?;
+        let card_request = CreateCardRequest {
+            card,
+            registry_type: self.registry_type.clone(),
+        };
+
+        let body = serde_json::to_value(card_request).map_err(|e| {
+            error!("Failed to serialize card request {}", e);
+            RegistryError::Error(format!("Failed to serialize card {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -94,7 +103,12 @@ impl ClientRegistry {
                 None,
             )
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to create card {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to create card {}", e);
+                RegistryError::Error(format!("Failed to create card {}", e))
+            })?;
+
+        debug!("Response {:?}", response);
 
         let created = response
             .json::<CreateCardResponse>()
@@ -104,14 +118,17 @@ impl ClientRegistry {
         if created.registered {
             Ok(())
         } else {
+            error!("Failed to create card");
             Err(RegistryError::Error("Failed to create card".to_string()))
         }
     }
 
     pub async fn update_card(&mut self, card: Card) -> Result<(), RegistryError> {
         // serialize card to json
-        let body = serde_json::to_value(card)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize card {}", e)))?;
+        let body = serde_json::to_value(card).map_err(|e| {
+            error!("Failed to serialize card {}", e);
+            RegistryError::Error(format!("Failed to serialize card {}", e))
+        })?;
 
         let response = self
             .api_client
