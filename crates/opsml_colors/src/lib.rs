@@ -1,4 +1,3 @@
-use owo_colors::FgDynColorDisplay;
 use owo_colors::{OwoColorize, Rgb};
 pub struct Colorize {}
 

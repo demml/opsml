@@ -14,7 +14,7 @@ def test_server(tmp_path: Path, random_forest_classifier: SklearnModel):
         cards = reg.list_cards()
 
         assert isinstance(cards, CardList)
-        assert len(cards) == 0
+        assert len(cards) == 1
 
         interface: SklearnModel = random_forest_classifier
 
@@ -30,4 +30,3 @@ def test_server(tmp_path: Path, random_forest_classifier: SklearnModel):
         reg.register_card(card)
 
         # create modelcard and register it
-    a

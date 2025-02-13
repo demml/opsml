@@ -11,7 +11,7 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use pyo3::prelude::*;
 use tempfile::TempDir;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 use uuid::Uuid;
 
 #[pyclass]
@@ -121,7 +121,7 @@ impl CardRegistry {
         Ok(CardList { cards })
     }
 
-    #[pyo3(signature = (card, version_type=VersionType::Minor, pre_tag="rc".to_string(), build_tag="build".to_string(), save_kwargs=None))]
+    #[pyo3(signature = (card, version_type=VersionType::Minor, pre_tag=None, build_tag=None, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn register_card(
         &mut self,
@@ -179,14 +179,23 @@ impl CardRegistry {
                 )
                 .await?;
 
-                let msg = Colorize::green("registered card");
-                println!("✓ {}", msg);
+                Self::register_card_with_db(&mut self.registry, &card).await?;
 
-                info!(
+                let msg = Colorize::green("registered card");
+
+                println!(
+                    "✓ {} - {}/{} - v{}",
+                    msg,
+                    card.repository(),
+                    card.name(),
+                    card.version()
+                );
+
+                debug!(
                     "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
                     self.registry_type,
-                    card.name(),
                     card.repository(),
+                    card.name(),
                     card.version()
                 );
 
@@ -333,15 +342,34 @@ impl CardRegistry {
 
         fs.put(&tmp_path, &card.uri(), true).await?;
 
-        let info = fs.find_info(&card.uri()).await?;
-        println!("Saved card to storage: {:?}", info);
-
         let msg = Colorize::green("saved card artifacts to storage");
         println!("✓ {}", msg);
 
         debug!("Saved card artifacts to storage");
 
         Ok(())
+    }
+
+    /// Register a card in the registry
+    /// Will extract RegistryCard from CardEnum and call the registry to create the card
+    ///
+    /// # Arguments
+    ///
+    /// * `card` - Card to register
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), RegistryError>` - Result
+    #[instrument(skip_all)]
+    async fn register_card_with_db(
+        registry: &mut OpsmlRegistry,
+        card: &CardEnum,
+    ) -> Result<(), RegistryError> {
+        let card = card.get_registry_card().map_err(|e| {
+            error!("Failed to get registry card: {}", e);
+            RegistryError::Error(e.to_string())
+        })?;
+        registry.create_card(card).await
     }
 }
 
