@@ -18,6 +18,7 @@ pub enum CardTable {
     Parameters,
     Users,
     ArtifactKey,
+    Operations,
 }
 
 impl fmt::Display for CardTable {
@@ -34,6 +35,7 @@ impl fmt::Display for CardTable {
             CardTable::Parameters => "opsml_run_parameters",
             CardTable::Users => "opsml_users",
             CardTable::ArtifactKey => "opsml_artifact_key",
+            CardTable::Operations => "opsml_operations",
         };
         write!(f, "{}", table_name)
     }
