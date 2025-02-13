@@ -7,3 +7,9 @@ class OpsmlTestServer:
 
     def stop_server(self) -> None:
         """Stops the test server."""
+
+    def __enter__(self) -> "OpsmlTestServer":
+        """Starts the test server."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the test server."""

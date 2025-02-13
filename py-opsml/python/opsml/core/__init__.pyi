@@ -2,7 +2,12 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from ..model import HuggingFaceOnnxArgs
-from ..storage import StorageType
+
+class StorageType:
+    Google: "StorageType"
+    Aws: "StorageType"
+    Local: "StorageType"
+    Azure: "StorageType"
 
 class Description:
     summary: Optional[str]
@@ -403,12 +408,12 @@ class InterfaceType:
     Model: "InterfaceType"
 
 class VersionType:
-    Major = "major"
-    Minor = "minor"
-    Patch = "patch"
-    Pre = "pre"
-    Build = "build"
-    PreBuild = "prebuild"
+    Major: "VersionType"
+    Minor: "VersionType"
+    Patch: "VersionType"
+    Pre: "VersionType"
+    Build: "VersionType"
+    PreBuild: "VersionType"
 
     def __init__(self, version_type: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...

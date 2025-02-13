@@ -631,6 +631,10 @@ impl CardList {
         PyHelperFuncs::__str__(self)
     }
 
+    pub fn __len__(&self) -> usize {
+        self.cards.len()
+    }
+
     pub fn as_table(&self) {
         let entries: Vec<CardTableEntry> = self
             .cards

@@ -5,8 +5,8 @@ use opsml_interfaces::{LoadKwargs, SaveKwargs};
 use opsml_semver::VersionType;
 use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::{
-    CommonKwargs, InterfaceType, ModelInterfaceType, ModelType, SaveName, SaverPath, Suffix,
-    TaskType,
+    CommonKwargs, InterfaceType, ModelInterfaceType, ModelType, SaveName, SaverPath, StorageType,
+    Suffix, TaskType,
 };
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
@@ -45,6 +45,9 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // opsml_semver
     m.add_class::<VersionType>()?;
+
+    // opsml_storage
+    m.add_class::<StorageType>()?;
 
     // opsml_utils
     m.add_class::<FileUtils>()?;

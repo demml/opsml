@@ -5,6 +5,7 @@ from .. import card
 CardType = card.CardType
 CardInfo = card.CardInfo
 Card = card.Card
+CardList = card.CardList
 CardRegistry = card.CardRegistry
 DataCard = card.DataCard
 DataCardMetadata = card.DataCardMetadata
@@ -19,6 +20,7 @@ __all__ = [
     "CardType",
     "CardInfo",
     "Card",
+    "CardList",
     "CardRegistry",
     "DataCard",
     "DataCardMetadata",

@@ -121,7 +121,7 @@ impl CardRegistry {
         Ok(CardList { cards })
     }
 
-    #[pyo3(signature = (card, version_type, pre_tag="rc".to_string(), build_tag="build".to_string(), save_kwargs=None))]
+    #[pyo3(signature = (card, version_type=VersionType::Minor, pre_tag="rc".to_string(), build_tag="build".to_string(), save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn register_card(
         &mut self,
@@ -197,6 +197,7 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
+    #[instrument(skip_all)]
     async fn set_card_version(
         card: &mut CardEnum,
         version_type: VersionType,
@@ -204,8 +205,6 @@ impl CardRegistry {
         build_tag: Option<String>,
         registry: &mut OpsmlRegistry,
     ) -> Result<(), RegistryError> {
-        debug!("Setting card version");
-
         let version = card.version();
 
         let card_version: Option<String> = if version == CommonKwargs::BaseVersion.to_string() {
@@ -231,9 +230,12 @@ impl CardRegistry {
         let msg = Colorize::green("set card version").to_string();
         println!("✓ {:?}", msg);
 
+        debug!("Set card version");
+
         Ok(())
     }
 
+    #[instrument(skip_all)]
     pub async fn verify_card(
         card: &CardEnum,
         registry: &mut OpsmlRegistry,
@@ -259,6 +261,7 @@ impl CardRegistry {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     fn check_dependencies(py: Python, card: &CardEnum) -> Result<(), RegistryError> {
         if let CardEnum::Model(modelcard) = card {
             if modelcard.to_onnx {
@@ -302,6 +305,7 @@ impl CardRegistry {
     /// # Returns
     ///
     /// * `Result<(), RegistryError>` - Result
+    #[instrument(skip_all)]
     async fn save_card_artifacts<'py>(
         py: Python<'py>,
         card: &mut CardEnum,
@@ -331,6 +335,8 @@ impl CardRegistry {
 
         let msg = Colorize::green("saved card artifacts to storage").to_string();
         println!("✓ {:?}", msg);
+
+        debug!("Saved card artifacts to storage");
 
         Ok(())
     }

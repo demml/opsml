@@ -94,6 +94,9 @@ class CardList:
     def as_table(self) -> None:
         """Print cards as a table"""
 
+    def __len__(self) -> int:
+        """Return the length of the card list"""
+
 # Registry
 
 class DataCard:
@@ -333,7 +336,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -353,7 +358,7 @@ class ModelCard:
         """
 
 class CardRegistry:
-    def __init___(self, registry_type: RegistryType) -> None:
+    def __init__(self, registry_type: RegistryType) -> None:
         """Interface for connecting to any of the Card registries
 
         Args:
@@ -426,7 +431,7 @@ class CardRegistry:
     def register_card(
         self,
         card: Union[DataCard, ModelCard],
-        version_type: VersionType,
+        version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
         save_kwargs=Optional[SaveKwargs],
