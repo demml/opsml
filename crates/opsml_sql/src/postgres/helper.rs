@@ -737,4 +737,12 @@ impl PostgresQueryHelper {
         )
         .to_string()
     }
+
+    pub fn get_operation_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (username, access_type, access_location) VALUES ($1, $2, $3)",
+            CardTable::Operations
+        )
+        .to_string()
+    }
 }

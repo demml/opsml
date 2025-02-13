@@ -648,4 +648,12 @@ impl MySQLQueryHelper {
         )
         .to_string()
     }
+
+    pub fn get_operation_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
+            CardTable::Operations
+        )
+        .to_string()
+    }
 }
