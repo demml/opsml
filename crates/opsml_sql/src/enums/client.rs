@@ -324,6 +324,31 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::MySql(client) => client.update_artifact_key(key).await,
         }
     }
+
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+        }
+    }
 }
 
 pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
