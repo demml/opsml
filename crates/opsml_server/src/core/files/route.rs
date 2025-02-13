@@ -233,7 +233,6 @@ pub async fn list_files(
 
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
-    Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
 ) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
     let path = Path::new(&params.path);
