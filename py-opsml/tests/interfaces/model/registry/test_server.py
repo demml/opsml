@@ -1,10 +1,9 @@
 from opsml.test import OpsmlTestServer
 from opsml.card import CardRegistry, RegistryType, RegistryMode, CardList, ModelCard
 from opsml.model import SklearnModel
-from pathlib import Path
 
 
-def test_server(tmp_path: Path, random_forest_classifier: SklearnModel):
+def test_server(random_forest_classifier: SklearnModel):
     with OpsmlTestServer() as _server:
         reg = CardRegistry(registry_type=RegistryType.Model)
 
@@ -28,5 +27,12 @@ def test_server(tmp_path: Path, random_forest_classifier: SklearnModel):
         )
 
         reg.register_card(card)
+
+        cards = reg.list_cards()
+
+        assert isinstance(cards, CardList)
+        assert len(cards) == 1
+
+        reg.load_card(card.uid)
 
         # create modelcard and register it
