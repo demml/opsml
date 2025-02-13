@@ -234,10 +234,15 @@ pub async fn list_files(
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListFileQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
     let path = Path::new(&params.path);
 
-    debug!("Getting file info for: {}", path.display());
+    debug!(
+        "Getting file info for: {} user: {:?}",
+        path.display(),
+        headers.get("username").unwrap_or(&"guest".parse().unwrap())
+    );
 
     let files = state
         .storage_client
