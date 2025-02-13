@@ -4,6 +4,7 @@ use opsml_interfaces::{
     ModelInterfaceSaveMetadata, OnnxSession, SklearnModel, TensorFlowModel, TorchModel,
     XGBoostModel,
 };
+use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 
 use pyo3::prelude::*;
 
@@ -22,6 +23,10 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ModelInterfaceMetadata>()?;
     m.add_class::<ModelInterfaceSaveMetadata>()?;
     m.add_class::<ModelInterface>()?;
+    m.add_class::<TaskType>()?;
+    m.add_class::<ModelInterfaceType>()?;
+    m.add_class::<ModelType>()?;
+
     m.add_class::<SklearnModel>()?;
     m.add_class::<LightGBMModel>()?;
     m.add_class::<XGBoostModel>()?;

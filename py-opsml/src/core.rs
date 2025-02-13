@@ -4,10 +4,7 @@ use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
 use opsml_interfaces::{LoadKwargs, SaveKwargs};
 use opsml_semver::VersionType;
 use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::{
-    CommonKwargs, InterfaceType, ModelInterfaceType, ModelType, SaveName, SaverPath, StorageType,
-    Suffix, TaskType,
-};
+use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, StorageType, Suffix};
 use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 use rusty_logging::{LogLevel, LoggingConfig, RustyLogger};
@@ -38,10 +35,6 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Feature>()?;
     m.add_class::<DataSchema>()?;
     m.add_class::<OnnxSchema>()?;
-
-    m.add_class::<TaskType>()?;
-    m.add_class::<ModelInterfaceType>()?;
-    m.add_class::<ModelType>()?;
 
     // opsml_semver
     m.add_class::<VersionType>()?;
