@@ -1041,6 +1041,24 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_operation_insert_query();
+        sqlx::query(&query)
+            .bind(username)
+            .bind(access_type)
+            .bind(access_location)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
