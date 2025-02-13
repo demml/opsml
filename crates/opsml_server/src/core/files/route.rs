@@ -23,41 +23,14 @@ use anyhow::{Context, Result};
 use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
 use opsml_error::error::ServerError;
 
-use serde::{Deserialize, Serialize};
 /// Route for debugging information
 use serde_json::json;
-use std::fmt::Display;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
-
-#[derive(Debug, Serialize, Deserialize)]
-enum Operation {
-    Read,
-    Write,
-    Delete,
-    List,
-    Info,
-    Encrypt,
-    Decrypt,
-}
-
-impl Display for Operation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Operation::Read => write!(f, "Read"),
-            Operation::Write => write!(f, "Write"),
-            Operation::Delete => write!(f, "Delete"),
-            Operation::List => write!(f, "List"),
-            Operation::Info => write!(f, "Info"),
-            Operation::Encrypt => write!(f, "Encrypt"),
-            Operation::Decrypt => write!(f, "Decrypt"),
-        }
-    }
-}
 
 async fn log_operation(
     user: String,

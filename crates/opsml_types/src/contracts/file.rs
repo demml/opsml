@@ -3,6 +3,8 @@ use crate::StorageType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
+
 #[derive(Serialize, Deserialize)]
 pub struct MultiPartQuery {
     pub path: String,
@@ -111,4 +113,29 @@ pub struct ArtifactKey {
     pub uid: String,
     pub card_type: CardType,
     pub encrypt_key: Vec<u8>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Operation {
+    Read,
+    Write,
+    Delete,
+    List,
+    Info,
+    Encrypt,
+    Decrypt,
+}
+
+impl Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Operation::Read => write!(f, "Read"),
+            Operation::Write => write!(f, "Write"),
+            Operation::Delete => write!(f, "Delete"),
+            Operation::List => write!(f, "List"),
+            Operation::Info => write!(f, "Info"),
+            Operation::Encrypt => write!(f, "Encrypt"),
+            Operation::Decrypt => write!(f, "Decrypt"),
+        }
+    }
 }
