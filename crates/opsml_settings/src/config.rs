@@ -61,8 +61,8 @@ impl OpsmlStorageSettings {
                 use_auth: false,
                 opsml_dir: "".to_string(),
                 scouter_dir: "".to_string(),
-                username: "".to_string(),
-                password: "".to_string(),
+                username: "guest".to_string(),
+                password: "guest".to_string(),
                 auth_token: "".to_string(),
                 prod_token: None,
             },
@@ -86,8 +86,8 @@ pub struct AuthSettings {
     pub enabled: bool,
     pub jwt_secret: String,
     pub refresh_secret: String,
-    pub username: Option<String>,
-    pub password: Option<String>,
+    pub username: String,
+    pub password: String,
     pub prod_token: Option<String>,
 }
 
@@ -155,8 +155,8 @@ impl Default for OpsmlConfig {
             refresh_secret: env::var("OPSML_REFRESH_SECRET")
                 .unwrap_or_else(|_| generate_jwt_secret()),
 
-            username: env::var("OPSML_USERNAME").ok(),
-            password: env::var("OPSML_PASSWORD").ok(),
+            username: env::var("OPSML_USERNAME").unwrap_or("guest".to_string()),
+            password: env::var("OPSML_PASSWORD").unwrap_or("guest".to_string()),
             enabled: env::var("OPSML_AUTH")
                 .unwrap_or_else(|_| "false".to_string())
                 .parse()
@@ -289,8 +289,8 @@ impl OpsmlConfig {
                 use_auth: self.auth_settings.enabled,
                 opsml_dir: "opsml".to_string(),
                 scouter_dir: "scouter".to_string(),
-                username: self.auth_settings.username.clone().unwrap_or_default(),
-                password: self.auth_settings.password.clone().unwrap_or_default(),
+                username: self.auth_settings.username.clone(),
+                password: self.auth_settings.password.clone(),
                 auth_token: "".to_string(),
                 prod_token: self.auth_settings.prod_token.clone(),
             },
@@ -481,8 +481,8 @@ mod tests {
         assert_eq!(opsml_config.opsml_registry_path, "model_registry");
 
         assert_eq!(opsml_config.auth_settings.jwt_secret.len(), 32);
-        assert_eq!(opsml_config.auth_settings.username, None);
-        assert_eq!(opsml_config.auth_settings.password, None);
+        assert_eq!(opsml_config.auth_settings.username, "guest");
+        assert_eq!(opsml_config.auth_settings.password, "guest");
         assert_eq!(opsml_config.scouter_settings.server_uri, None);
         assert_eq!(opsml_config.scouter_settings.username, None);
         assert_eq!(opsml_config.scouter_settings.password, None);

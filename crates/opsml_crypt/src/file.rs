@@ -11,6 +11,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::fs::{self, File};
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
+use tracing::{debug, instrument};
 
 static CHUNK_SIZE: usize = 1024 * 1024 * 4; // 4MiB
 
@@ -109,8 +110,11 @@ pub fn decrypt_file(
 /// # Returns
 ///
 /// A Result containing either an empty tuple or a CryptError
+#[instrument(skip_all)]
 pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     let files = FileUtils::list_files(input_path.to_path_buf())?;
+
+    debug!("Encrypting files in directory: {:?}", files);
 
     let progress = Progress::new();
 

@@ -106,6 +106,7 @@ impl LocalMultiPartUpload {
         if !self.client_mode {
             // join client bucket to rpath
             // create rpath parents if they don't exist
+            debug!("Uploading to {} via server", self.rpath.display());
             if let Some(parent) = self.rpath.parent() {
                 fs::create_dir_all(parent).map_err(|e| {
                     StorageError::Error(format!("Failed to create directory: {}", e))
@@ -115,6 +116,7 @@ impl LocalMultiPartUpload {
             fs::copy(&self.lpath, self.rpath.as_path())
                 .map_err(|e| StorageError::Error(format!("Failed to copy file: {}", e)))?;
         } else {
+            debug!("Uploading to {} via client", self.rpath.display());
             let client = self.api_client.as_ref().unwrap().clone();
 
             let file = TokioFile::open(&self.lpath)
@@ -143,7 +145,7 @@ impl LocalMultiPartUpload {
             let stream = ProgressStream::new(file, bar.clone());
 
             let part = Part::stream(reqwest::Body::wrap_stream(stream))
-                .file_name(self.lpath.to_str().unwrap().to_string())
+                .file_name(self.rpath.to_str().unwrap().to_string())
                 .mime_str("application/octet-stream")
                 .map_err(|e| StorageError::Error(format!("Failed to create part: {}", e)))?;
 
@@ -556,9 +558,7 @@ impl LocalStorageClient {
         client_mode: bool,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
-        // join bucket to rpath
-        let rpath = self.bucket.join(rpath);
-        LocalMultiPartUpload::new(lpath, rpath.to_str().unwrap(), client_mode, api_client).await
+        LocalMultiPartUpload::new(lpath, rpath, client_mode, api_client).await
     }
 }
 #[derive(Clone)]
@@ -732,10 +732,22 @@ impl LocalFSStorageClient {
         rpath: &Path,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
+        debug!(
+            "Creating multipart uploader for {} -> {}",
+            lpath.display(),
+            rpath.display()
+        );
+
+        let rpath_buf = if !self.client_mode {
+            self.client.bucket.join(rpath.to_path_buf())
+        } else {
+            rpath.to_path_buf()
+        };
+
         self.client
             .create_multipart_uploader(
                 lpath.to_str().unwrap(),
-                rpath.to_str().unwrap(),
+                rpath_buf.to_str().unwrap(),
                 self.client_mode,
                 api_client,
             )

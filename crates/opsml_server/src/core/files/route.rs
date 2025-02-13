@@ -41,12 +41,14 @@ use tracing::{error, info, instrument};
 /// # Returns
 ///
 /// The session URL for the multipart upload
+#[instrument(skip_all)]
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<MultiPartQuery>,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
     // If auth is enabled, check permissions or other auth-related logic
+    debug!("Checking permissions for create_multipart_upload");
     if state.config.auth_settings.enabled {
         let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
             (
@@ -65,7 +67,6 @@ pub async fn create_multipart_upload(
     }
 
     let path = Path::new(&params.path);
-
     info!("Creating multipart upload for path: {}", path.display());
 
     let session_url = state
@@ -73,6 +74,8 @@ pub async fn create_multipart_upload(
         .create_multipart_upload(path)
         .await
         .map_err(|e| ServerError::MultipartError(e.to_string()));
+
+    debug!("Session URL: {:?}", session_url);
 
     let session_url = match session_url {
         Ok(session_url) => session_url,
@@ -170,6 +173,7 @@ pub async fn generate_presigned_url(
 }
 
 // this is for local storage only
+#[instrument(skip_all)]
 pub async fn upload_multipart(
     State(state): State<Arc<AppState>>,
     mut multipart: Multipart,
@@ -179,8 +183,12 @@ pub async fn upload_multipart(
         let data = field.bytes().await.unwrap();
         let bucket = state.config.opsml_storage_uri.to_owned();
 
+        debug!("Filename: {}", file_name);
+
         // join the bucket and the file name
         let rpath = Path::new(&bucket).join(&file_name);
+
+        debug!("Rpath: {}", rpath.display());
 
         // create the directory if it doesn't exist
         if let Some(parent) = rpath.parent() {
@@ -220,11 +228,12 @@ pub async fn list_files(
 
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
 ) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
     let path = Path::new(&params.path);
 
-    info!("Getting file info for: {}", path.display());
+    debug!("Getting file info for: {}", path.display());
 
     let files = state
         .storage_client
