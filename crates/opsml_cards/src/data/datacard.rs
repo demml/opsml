@@ -13,7 +13,6 @@ use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::error;
 
@@ -85,9 +84,6 @@ pub struct DataCard {
 
     #[pyo3(get)]
     pub data_type: DataType,
-
-    #[pyo3(get)]
-    pub checksums: HashMap<String, String>,
 }
 
 #[pymethods]
@@ -168,7 +164,6 @@ impl DataCard {
             metadata,
             card_type: CardType::Data,
             data_type,
-            checksums: HashMap::new(),
         })
     }
 
@@ -262,7 +257,6 @@ impl FromPyObject<'_> for DataCard {
         let metadata = ob.getattr("metadata")?.extract()?;
         let card_type = ob.getattr("card_type")?.extract()?;
         let data_type = ob.getattr("data_type")?.extract()?;
-        let checksums = ob.getattr("checksums")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -275,7 +269,6 @@ impl FromPyObject<'_> for DataCard {
             metadata,
             card_type,
             data_type,
-            checksums,
         })
     }
 }

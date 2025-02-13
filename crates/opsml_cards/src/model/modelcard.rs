@@ -22,7 +22,6 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
-use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use tracing::error;
@@ -97,8 +96,6 @@ pub struct ModelCard {
 
     #[pyo3(get)]
     pub to_onnx: bool,
-
-    pub checksums: HashMap<String, String>,
 }
 
 #[pymethods]
@@ -153,7 +150,6 @@ impl ModelCard {
             metadata: ModelCardMetadata::default(),
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
-            checksums: HashMap::new(),
         })
     }
 
@@ -220,7 +216,6 @@ impl ModelCard {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&self, card_save_path)?;
 
-        // create checksum for all files
         Ok(())
     }
 
@@ -354,7 +349,6 @@ impl FromPyObject<'_> for ModelCard {
         let metadata = ob.getattr("metadata")?.extract()?;
         let card_type = ob.getattr("card_type")?.extract()?;
         let to_onnx = ob.getattr("to_onnx")?.extract()?;
-        let checksums = ob.getattr("checksums")?.extract()?;
 
         Ok(ModelCard {
             interface: Some(interface.into()),
@@ -367,7 +361,6 @@ impl FromPyObject<'_> for ModelCard {
             metadata,
             card_type,
             to_onnx,
-            checksums,
         })
     }
 }
@@ -474,7 +467,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                     metadata,
                     card_type,
                     to_onnx,
-                    checksums: HashMap::new(),
                 })
             }
         }
@@ -490,7 +482,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             "metadata",
             "card_type",
             "to_onnx",
-            "checksums",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
     }

@@ -30,3 +30,4 @@ def test_server(tmp_path: Path, random_forest_classifier: SklearnModel):
         reg.register_card(card)
 
         # create modelcard and register it
+    a
