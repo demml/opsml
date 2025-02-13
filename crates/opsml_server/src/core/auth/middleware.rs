@@ -27,7 +27,7 @@ pub async fn auth_api_middleware(
     // if auth is disabled, just return
     if !state.config.auth_settings.enabled {
         req.extensions_mut().insert(UserPermissions {
-            username: "".to_string(),
+            username: "guest".to_string(),
             permissions: vec![],
             group_permissions: vec![],
         });
