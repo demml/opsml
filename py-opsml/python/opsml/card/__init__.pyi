@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
-from ..core import Description, FeatureSchema, LoadKwargs, SaveKwargs
+from ..core import Description, FeatureSchema, LoadKwargs, SaveKwargs, VersionType
 from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
 from ..model import ModelInterface
 
@@ -20,6 +20,10 @@ class RegistryType:
     Project: "RegistryType"
     Audi: "RegistryType"
     Pipeline: "RegistryType"
+
+class RegistryMode:
+    Client: "RegistryMode"
+    Server: "RegistryMode"
 
 class CardInfo:
     name: Optional[str]
@@ -167,59 +171,6 @@ class DataCardMetadata:
     @property
     def auditcard_uid(self) -> Optional[str]:
         """Return the runcard uid"""
-
-class CardRegistry:
-    def __init__(self, registry_type: RegistryType) -> None:
-        """
-        Interface for connecting to any of the Card registries
-
-        Args:
-            registry_type:
-                Type of card registry to create
-
-        Returns:
-            Instantiated connection to specific Card registry
-
-        Example:
-            data_registry = CardRegistry(RegistryType.DATA)
-            data_registry.list_cards()
-
-            or
-            data_registry = CardRegistry("data")
-            data_registry.list_cards()
-        """
-
-    def registry_type(self) -> RegistryType:
-        """Return the registry type.
-
-        Returns:
-            The registry type.
-        """
-
-    def table_name(self) -> str:
-        """Return the table name.
-
-        Returns:
-            The table name.
-        """
-
-    def list_cards(
-        self,
-        info: Optional[CardInfo] = None,
-        uid: Optional[str] = None,
-        name: Optional[str] = None,
-        repository: Optional[str] = None,
-        version: Optional[str] = None,
-        max_date: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-        limit: Optional[int] = None,
-        sort_by_time: Optional[bool] = None,
-    ) -> CardList:
-        """List all cards in the registry.
-
-        Returns:
-            A list of card names.
-        """
 
 class RegistryTestHelper:
     """Helper class for testing the registry"""
@@ -382,7 +333,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -399,4 +352,101 @@ class ModelCard:
 
         Returns:
             String representation of the ModelCard.
+        """
+
+class CardRegistry:
+    def __init___(self, registry_type: RegistryType) -> None:
+        """Interface for connecting to any of the Card registries
+
+        Args:
+            registry_type (RegistryType):
+                The type of registry to connect to
+
+        Returns:
+            Instantiated connection to specific Card registry
+
+
+        Example:
+            data_registry = CardRegistry(RegistryType.DATA)
+            data_registry.list_cards()
+
+            or
+            data_registry = CardRegistry("data")
+            data_registry.list_cards()
+        """
+
+    @property
+    def registry_type(self) -> RegistryType:
+        """Returns the type of registry"""
+
+    @property
+    def table_name(self) -> str:
+        """Returns the table name for the registry"""
+
+    @property
+    def mode(self) -> RegistryMode:
+        """Returns the mode of the registry"""
+
+    def list_cards(
+        self,
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        max_date: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        sort_by_timestamp: Optional[bool] = False,
+        limit: int = 25,
+    ) -> CardList:
+        """Retrieves records from registry
+
+        Args:
+            uid (str):
+                Unique identifier for Card. If present, the uid takes precedence
+            repository (str):
+                Optional repository associated with card
+            name (str):
+                Optional name of card
+            version (str):
+                Optional version number of existing data. If not specified, the
+                most recent version will be used
+            tags (List[str]):
+                Optional list of tags to search for
+            max_date (str):
+                Optional max date to search. (e.g. "2023-05-01" would search for cards up to and including "2023-05-01").
+                Must be in the format "YYYY-MM-DD"
+            sort_by_timestamp:
+                If True, sorts by timestamp descending
+            limit (int):
+                Places a limit on result list. Results are sorted by SemVer.
+                Defaults to 25.
+
+        Returns:
+            List of Cards
+        """
+
+    def register_card(
+        self,
+        card: Union[DataCard, ModelCard],
+        version_type: VersionType,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+        save_kwargs=Optional[SaveKwargs],
+    ) -> None:
+        """Register a Card
+
+        Args:
+            card (ArtifactCard):
+                Card to register. Can be a DataCard, ModelCard,
+                RunCard, ProjectCard
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+            save_kwargs (SaveKwargs):
+                Optional SaveKwargs to pass to the Card interface (If using DataCards
+                and ModelCards).
+
         """

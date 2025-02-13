@@ -1,8 +1,9 @@
 from opsml.test import OpsmlTestServer
+from opsml.card import CardRegistry, RegistryType
 
 
 def test_server():
-    server = OpsmlTestServer()
-    server.start_server()
+    with OpsmlTestServer() as _server:
+        reg = CardRegistry(registry_type=RegistryType.Model)
 
-    server.stop_server()
+    a

@@ -274,7 +274,6 @@ class ModelInterfaceMetadata:
     data_type: DataType
     onnx_session: Optional[OnnxSession]
     schema: FeatureSchema
-    data_type: DataType
     save_metadata: ModelInterfaceSaveMetadata
     extra_metadata: dict[str, str]
 
@@ -286,7 +285,6 @@ class ModelInterfaceMetadata:
         data_type: DataType = DataType.NotProvided,
         schema: FeatureSchema = FeatureSchema(),
         onnx_session: Optional[OnnxSession] = None,
-        data_type: DataType = DataType.NotProvided,
         extra_metadata: dict[str, str] = {},  # type: ignore
     ) -> None:
         """Define a model interface

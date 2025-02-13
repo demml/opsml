@@ -6,6 +6,7 @@ use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
+use tracing::{debug, instrument};
 
 #[async_trait]
 pub trait FileSystem {
@@ -33,14 +34,17 @@ pub struct FileSystemStorage {
 }
 
 impl FileSystemStorage {
+    #[instrument(skip(settings))]
     pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
         if !settings.client_mode {
+            debug!("Creating FileSystemStorage with StorageClientEnum");
             Ok(FileSystemStorage {
                 fs: Some(StorageClientEnum::new(settings).await?),
                 http: None,
                 client_mode: settings.client_mode,
             })
         } else {
+            debug!("Creating FileSystemStorage with HttpFSStorageClient");
             Ok(FileSystemStorage {
                 fs: None,
                 http: Some(HttpFSStorageClient::new(&mut *settings).await?),
