@@ -8,7 +8,6 @@ Card = card.Card
 CardRegistry = card.CardRegistry
 DataCard = card.DataCard
 DataCardMetadata = card.DataCardMetadata
-CardRegistry = card.CardRegistry
 RegistryTestHelper = card.RegistryTestHelper
 RegistryType = card.RegistryType
 RegistryMode = card.RegistryMode

@@ -61,6 +61,7 @@ impl CardRegistry {
         &self.table_name
     }
 
+    #[getter]
     pub fn mode(&self) -> RegistryMode {
         self.registry.mode()
     }

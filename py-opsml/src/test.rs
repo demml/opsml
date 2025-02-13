@@ -28,6 +28,20 @@ impl OpsmlTestServer {
         }
     }
 
+    fn set_env_vars_for_client(&self) -> PyResult<()> {
+        #[cfg(feature = "server")]
+        {
+            std::env::set_var("OPSML_TRACKING_URI", "http://localhost:3000");
+            Ok(())
+        }
+        #[cfg(not(feature = "server"))]
+        {
+            return Err(opsml_error::OpsmlError::new_err(
+                "Opsml Server feature not enabled",
+            ));
+        }
+    }
+
     fn start_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
@@ -46,6 +60,7 @@ impl OpsmlTestServer {
                 let res = client.get("http://localhost:3000/opsml/healthcheck").send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
+                        self.set_env_vars_for_client()?;
                         println!("Opsml Server started successfully");
                         return Ok(());
                     }
