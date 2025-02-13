@@ -195,3 +195,11 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     encrypt_key VARBINARY(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS opsml_operations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    access_type VARCHAR(16) NOT NULL,
+    access_location VARCHAR(255) NOT NULL
+);

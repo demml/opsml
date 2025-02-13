@@ -190,8 +190,17 @@ CREATE TABLE IF NOT EXISTS opsml_users (
 );
 
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
+    
     uid TEXT PRIMARY KEY,
     card_type TEXT,
     encrypt_key TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS opsml_operations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    access_type TEXT,
+    access_location TEXT
 );
