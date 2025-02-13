@@ -12,6 +12,7 @@ use axum::{
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
+use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use opsml_utils::uid_to_byte_key;
@@ -22,14 +23,56 @@ use anyhow::{Context, Result};
 use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
 use opsml_error::error::ServerError;
 
+use serde::{Deserialize, Serialize};
 /// Route for debugging information
 use serde_json::json;
+use std::fmt::Display;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
+
+#[derive(Debug, Serialize, Deserialize)]
+enum Operation {
+    Read,
+    Write,
+    Delete,
+    List,
+    Info,
+    Encrypt,
+    Decrypt,
+}
+
+impl Display for Operation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Operation::Read => write!(f, "Read"),
+            Operation::Write => write!(f, "Write"),
+            Operation::Delete => write!(f, "Delete"),
+            Operation::List => write!(f, "List"),
+            Operation::Info => write!(f, "Info"),
+            Operation::Encrypt => write!(f, "Encrypt"),
+            Operation::Decrypt => write!(f, "Decrypt"),
+        }
+    }
+}
+
+async fn log_operation(
+    user: String,
+    operation: Operation,
+    sql_client: Arc<SqlClientEnum>,
+    location: String,
+) -> Result<(), ServerError> {
+    let operation = operation.to_string();
+    let user = user.to_string();
+
+    sql_client
+        .log_operation(&user, &operation)
+        .await
+        .map_err(|e| ServerError::LogError(e.to_string()))
+}
 
 /// Create a multipart upload session (write)
 ///
@@ -49,9 +92,11 @@ pub async fn create_multipart_upload(
     headers: HeaderMap,
 ) -> Result<Json<MultiPartSession>, (StatusCode, Json<serde_json::Value>)> {
     // If auth is enabled, check permissions or other auth-related logic
+    // get user for headers (as string)
+
     debug!(
         "Checking permissions for create_multipart_upload for user: {:?}",
-        headers.get("username").unwrap_or(&"guest".parse().unwrap())
+        headers.get("username")
     );
 
     if state.config.auth_settings.enabled {
