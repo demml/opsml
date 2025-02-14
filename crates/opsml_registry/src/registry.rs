@@ -175,7 +175,7 @@ impl CardRegistry {
 
                 Self::verify_card(&card, &mut self.registry, &self.registry_type, &args).await?;
 
-                Self::register_card_with_db(
+                let card_response = Self::register_card_with_db(
                     &mut self.registry,
                     &card,
                     &self.registry_type,
@@ -186,7 +186,7 @@ impl CardRegistry {
                 )
                 .await?;
 
-                // Update UUID
+                // Update card attributes
                 Self::set_uid(card, &mut args)?;
 
                 // Save artifacts
@@ -264,13 +264,16 @@ impl CardRegistry {
 
 impl CardRegistry {
     #[instrument(skip_all)]
-    fn set_uid(card: &Bound<'_, PyAny>, args: &mut CardArgs) -> Result<(), RegistryError> {
-        let uid = Uuid::new_v4().to_string();
-        card.setattr("uid", &uid).map_err(|e| {
+    fn update_card_with_server_response(
+        response: &CreateCardResponse,
+        card: &Bound<'_, PyAny>,
+        args: &mut CardArgs,
+    ) -> Result<(), RegistryError> {
+        card.setattr("uid", response.uid.clone()).map_err(|e| {
             error!("Failed to set uid: {}", e);
             RegistryError::Error("Failed to set uid".to_string())
         })?;
-        args.uid = uid;
+        args.uid = response.uid.clone();
 
         Ok(())
     }
@@ -428,10 +431,6 @@ impl CardRegistry {
         save_kwargs: Option<SaveKwargs>,
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
-        let encrypted_key = registry
-            .create_artifact_key(&args.uid, &args.card_type)
-            .await?;
-
         // create temp path for saving
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -478,7 +477,7 @@ impl CardRegistry {
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<CreateCardResponse, RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")
             .map_err(|e| {
@@ -498,7 +497,7 @@ impl CardRegistry {
             Some(args.version.clone())
         };
 
-        registry
+        let response = registry
             .create_card(registry_card, version, version_type, pre_tag, build_tag)
             .await?;
 
@@ -515,7 +514,7 @@ impl CardRegistry {
             registry_type, args.repository, args.name, args.version
         );
 
-        Ok(())
+        Ok(response)
     }
 
     async fn get_decrypt_key(

@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
+use opsml_types::cards::CardTable;
 use opsml_types::cards::CardType;
 use opsml_types::{CommonKwargs, DataType, ModelType};
 use opsml_utils::utils::get_utc_datetime;
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
+use std::path::PathBuf;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -206,6 +208,18 @@ impl DataCardRecord {
             username,
         }
     }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Data.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
+    }
 }
 
 impl Default for DataCardRecord {
@@ -307,6 +321,18 @@ impl ModelCardRecord {
             task_type,
             username,
         }
+    }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Model.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
     }
 }
 
@@ -434,6 +460,18 @@ impl RunCardRecord {
             username,
         }
     }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Run.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -496,6 +534,18 @@ impl AuditCardRecord {
             runcard_uids: Json(runcard_uids.unwrap_or_default()),
             username,
         }
+    }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Audit.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
     }
 }
 
@@ -585,6 +635,18 @@ impl PipelineCardRecord {
             username,
         }
     }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Pipeline.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
+    }
 }
 
 impl Default for PipelineCardRecord {
@@ -669,6 +731,18 @@ impl ProjectCardRecord {
             version: version.to_string(),
             username,
         }
+    }
+
+    pub fn uri(&self) -> PathBuf {
+        let uri = format!(
+            "{}/{}/{}/v{}",
+            CardTable::Project.to_string(),
+            self.repository,
+            self.name,
+            self.version
+        );
+
+        PathBuf::from(uri)
     }
 }
 
@@ -776,6 +850,17 @@ impl ServerCard {
             ServerCard::Audit(card) => card.version.clone(),
             ServerCard::Pipeline(card) => card.version.clone(),
             ServerCard::Project(card) => card.version.clone(),
+        }
+    }
+
+    pub fn uri(&self) -> PathBuf {
+        match self {
+            ServerCard::Data(card) => card.uri(),
+            ServerCard::Model(card) => card.uri(),
+            ServerCard::Run(card) => card.uri(),
+            ServerCard::Audit(card) => card.uri(),
+            ServerCard::Pipeline(card) => card.uri(),
+            ServerCard::Project(card) => card.uri(),
         }
     }
 }
