@@ -241,11 +241,16 @@ impl CardRegistry {
 
         let card = match self.registry_type {
             RegistryType::Model => {
-                let card = ModelCard::model_validate_json(py, card_json, interface)
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+                let card =
+                    ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                        error!("Failed to validate model card: {}", e);
+                        OpsmlError::new_err(e.to_string())
+                    })?;
 
-                card.into_bound_py_any(py)
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?
+                card.into_bound_py_any(py).map_err(|e| {
+                    error!("Failed to convert card to bound: {}", e);
+                    OpsmlError::new_err(e.to_string())
+                })?
             }
 
             _ => {

@@ -32,9 +32,11 @@ def test_server(random_forest_classifier: SklearnModel):
 
         assert isinstance(cards, CardList)
         assert len(cards) == 1
-        loaded_card = reg.load_card(card.uid)
+        loaded_card = reg.load_card(uid=card.uid)
 
-        # wrong uid being use to upload card
+    a
+
+    # wrong uid being use to upload card
 
 
 # create modelcard and register it
