@@ -329,6 +329,15 @@ class ModelCard:
                 Optional kwargs to pass to `ModelInterface` load method.
         """
 
+    def download_artifacts(self, path: Optional[Path] = None) -> None:
+        """Download artifacts associated with the ModelCard
+
+        Args:
+            path (Path):
+                Path to save the artifacts. If not provided, the artifacts will be saved
+                to a directory called "card_artifacts"
+        """
+
     def model_dump_json(self) -> str:
         """Return the model dump as a json string"""
 
