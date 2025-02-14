@@ -453,3 +453,30 @@ class CardRegistry:
                 and ModelCards).
 
         """
+
+    def load_card(
+        self,
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[Union[DataInterface, ModelInterface]] = None,
+    ) -> Union[DataCard, ModelCard]:
+        """Load a Card from the registry
+
+        Args:
+            uid (str):
+                Unique identifier for Card. If present, the uid takes precedence
+            repository (str):
+                Optional repository associated with card
+            name (str):
+                Optional name of card
+            version (str):
+                Optional version number of existing data. If not specified, the
+                most recent version will be used
+            interface (Union[DataInterface, ModelInterface]):
+                Optional interface to load the card into
+
+        Returns:
+            Card
+        """
