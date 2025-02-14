@@ -20,6 +20,7 @@ use opsml_utils::clean_string;
 use opsml_utils::uid_to_byte_key;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
+use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 
@@ -51,8 +52,8 @@ pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
     registry: OpsmlRegistry,
-    runtime: tokio::runtime::Runtime,
-    pub fs: FileSystemStorage,
+    runtime: Arc<tokio::runtime::Runtime>,
+    fs: Arc<Mutex<FileSystemStorage>>,
 }
 
 #[pymethods]
@@ -62,13 +63,13 @@ impl CardRegistry {
     pub fn new(registry_type: RegistryType) -> PyResult<Self> {
         debug!("Creating new registry client");
         // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
 
         let (registry, fs) = rt
             .block_on(async {
                 let mut settings = OpsmlConfig::default().storage_settings()?;
                 let registry = OpsmlRegistry::new(registry_type.clone()).await?;
-                let fs = FileSystemStorage::new(&mut settings).await?;
+                let fs = Arc::new(Mutex::new(FileSystemStorage::new(&mut settings).await?));
 
                 Ok::<_, RegistryError>((registry, fs))
             })
@@ -420,7 +421,7 @@ impl CardRegistry {
     #[instrument(skip_all)]
     async fn save_card_artifacts<'py>(
         card: &Bound<'_, PyAny>,
-        fs: &mut FileSystemStorage,
+        fs: &mut Arc<Mutex<FileSystemStorage>>,
         save_kwargs: Option<SaveKwargs>,
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
@@ -441,7 +442,7 @@ impl CardRegistry {
             })?;
 
         encrypt_directory(&tmp_path, &encryption_key)?;
-        fs.put(&tmp_path, &args.uri, true).await?;
+        fs.lock().unwrap().put(&tmp_path, &args.uri, true).await?;
 
         println!("✓ {}", Colorize::green("saved card artifacts to storage"));
 
@@ -521,7 +522,7 @@ impl CardRegistry {
         registry_type: &RegistryType,
         registry: &mut OpsmlRegistry,
         card: &Card,
-        fs: &mut FileSystemStorage,
+        fs: &mut Arc<Mutex<FileSystemStorage>>,
         interface: Option<&Bound<'py, PyAny>>,
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
         let decryption_key = registry
@@ -548,7 +549,7 @@ impl CardRegistry {
 
         let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
 
-        fs.get(&lpath, &rpath, false).await?;
+        fs.lock().unwrap().get(&lpath, &rpath, false).await?;
 
         decrypt_directory(&tmp_path, &decryption_key)?;
 
