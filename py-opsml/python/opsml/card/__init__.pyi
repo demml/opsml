@@ -302,7 +302,6 @@ class ModelCard:
 
     def load(
         self,
-        path: Path,
         model: bool = True,
         onnx: bool = False,
         drift_profile: bool = False,
@@ -310,11 +309,9 @@ class ModelCard:
         preprocessor: bool = False,
         load_kwargs: None | LoadKwargs = None,
     ) -> None:
-        """Load ModelInterface components
+        """Load ModelCard interface components
 
         Args:
-            path (Path):
-                Path to load the model
             model (bool):
                 Whether to load the model. Defaults to True.
             onnx (bool):
