@@ -107,24 +107,7 @@ impl OpsmlRegistry {
             Self::ServerRegistry(server_registry) => {
                 server_registry
                     .create_card(card, version, version_type, pre_tag, build_tag)
-                    .await?;
-                Ok(())
-            }
-        }
-    }
-
-    pub async fn create_artifact_key(
-        &mut self,
-        uid: &str,
-        card_type: &CardType,
-    ) -> Result<Vec<u8>, RegistryError> {
-        match self {
-            Self::ClientRegistry(client_registry) => {
-                client_registry.create_artifact_key(uid, card_type).await
-            }
-            #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => {
-                server_registry.create_artifact_key(uid, card_type).await
+                    .await
             }
         }
     }
