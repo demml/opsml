@@ -1,15 +1,17 @@
 use crate::{
+    cards::{CardTable, CardType},
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
     DataType, ModelInterfaceType, RegistryType,
 };
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
+use opsml_error::CardError;
 use opsml_semver::VersionType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::LazyLock;
+use std::{collections::HashMap, path::Path};
+use std::{path::PathBuf, sync::LazyLock};
 use tabled::settings::{
     format::Format,
     object::{Columns, Rows},
@@ -604,6 +606,84 @@ impl Card {
             Self::Audit(_) => None,
             Self::Pipeline(_) => None,
             Self::Project(_) => None,
+        }
+    }
+}
+
+impl Card {
+    pub fn uri(&self) -> Result<PathBuf, CardError> {
+        match self {
+            Self::Data(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Data.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Model(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Model.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Run(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Run.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Pipeline(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Pipeline.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Audit(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Audit.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Project(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Project.to_string(),
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+        }
+    }
+
+    pub fn card_type(&self) -> CardType {
+        match self {
+            Self::Data(_) => CardType::Data,
+            Self::Model(_) => CardType::Model,
+            Self::Run(_) => CardType::Run,
+            Self::Audit(_) => CardType::Audit,
+            Self::Pipeline(_) => CardType::Pipeline,
+            Self::Project(_) => CardType::Project,
         }
     }
 }

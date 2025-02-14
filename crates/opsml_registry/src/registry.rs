@@ -1,15 +1,23 @@
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
 use opsml_colors::Colorize;
+use opsml_crypt::decrypt_directory;
+use opsml_crypt::{decrypt_file, decrypt_key};
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
+use opsml_error::UtilError;
+use opsml_interfaces::LoadKwargs;
 use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
+use opsml_utils::clean_string;
+use opsml_utils::uid_to_byte_key;
+use pyo3::ffi::PyObject;
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 use uuid::Uuid;
@@ -86,18 +94,20 @@ impl CardRegistry {
         );
 
         let uid = uid;
-        let mut name = name;
-        let mut repository = repository;
         let version = version;
         let tags = tags;
 
-        if name.is_some() {
-            name = Some(name.unwrap().to_lowercase());
-        }
+        let name = if let Some(name) = name {
+            Some(clean_string(&name))
+        } else {
+            None
+        };
 
-        if repository.is_some() {
-            repository = Some(repository.unwrap().to_lowercase());
-        }
+        let repository = if let Some(repository) = repository {
+            Some(clean_string(&repository))
+        } else {
+            None
+        };
 
         let query_args = CardQueryArgs {
             uid,
@@ -202,6 +212,60 @@ impl CardRegistry {
                 Ok(())
             })
             .map_err(|e| OpsmlError::new_err(e.to_string()))
+    }
+
+    #[pyo3(signature = (uid=None, repository=None, name=None, version=None, interface=None))]
+    #[instrument(skip_all)]
+    pub fn load_card<'py>(
+        &mut self,
+        py: Python<'py>,
+        uid: Option<String>,
+        repository: Option<String>,
+        name: Option<String>,
+        version: Option<String>,
+        interface: Option<&Bound<'py, PyAny>>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        debug!("Registering card");
+
+        // if uid, name, repository, version is None, return error
+        if uid.is_none() && name.is_none() && repository.is_none() && version.is_none() {
+            return Err(OpsmlError::new_err(
+                "At least one of uid, name, repository, version must be provided".to_string(),
+            ));
+        }
+
+        let card = self.list_cards(uid, repository, name, version, None, None, None, 1)?;
+        if card.cards.is_empty() {
+            return Err(OpsmlError::new_err("Card not found".to_string()));
+        }
+
+        let card = card.cards.first().unwrap();
+        // Wrap all operations in a single block_on to handle async operations
+        let card_json = self
+            .runtime
+            .block_on(async {
+                // 1. Load the card // download the card from storage
+                Self::download_card(&mut self.registry, card, &mut self.fs).await
+            })
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let card = match self.registry_type {
+            RegistryType::Model => {
+                let card = ModelCard::model_validate_json(py, card_json, interface)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+                card.into_bound_py_any(py)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            }
+
+            _ => {
+                return Err(OpsmlError::new_err(
+                    "Registry type not supported".to_string(),
+                ));
+            }
+        };
+
+        Ok(card)
     }
 }
 
@@ -370,6 +434,60 @@ impl CardRegistry {
             RegistryError::Error(e.to_string())
         })?;
         registry.create_card(card).await
+    }
+
+    async fn get_decrypt_key(
+        registry: &mut OpsmlRegistry,
+        card: &Card,
+    ) -> Result<Vec<u8>, RegistryError> {
+        // pull encrypted key from registry
+        let encrypted_key = registry
+            .get_artifact_key(card.uid(), &card.card_type())
+            .await?;
+
+        // convert uid to byte key (used for card encryption)
+        let uid_key = uid_to_byte_key(card.uid())?;
+
+        Ok(decrypt_key(&uid_key, &encrypted_key)?)
+    }
+
+    async fn download_card(
+        registry: &mut OpsmlRegistry,
+        card: &Card,
+        fs: &mut FileSystemStorage,
+    ) -> Result<String, RegistryError> {
+        let decryption_key = Self::get_decrypt_key(registry, card).await?;
+
+        let tmp_dir = TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            RegistryError::Error("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        let rpath = card
+            .uri()
+            .map_err(|e| {
+                error!("Failed to get card uri: {}", e);
+                RegistryError::Error("Failed to get card uri".to_string())
+            })?
+            .join(SaveName::Card)
+            .with_extension(Suffix::Json);
+
+        // add Card.json to tmp_path and rpath
+
+        let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
+
+        fs.get(&lpath, &rpath, false).await?;
+
+        decrypt_directory(&tmp_path, &decryption_key)?;
+
+        let json_string = std::fs::read_to_string(&lpath).map_err(|e| {
+            error!("Failed to read card json: {}", e);
+            UtilError::ReadError
+        })?;
+
+        Ok(json_string)
     }
 }
 
