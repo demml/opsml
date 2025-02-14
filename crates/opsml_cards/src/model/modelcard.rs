@@ -1,7 +1,6 @@
 use crate::BaseArgs;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::onnx;
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
@@ -530,8 +529,8 @@ impl ModelCard {
         tmp_path: &Path,
         model: bool,
         onnx: bool,
-        _drift_profile: bool,
-        _sample_data: bool,
+        drift_profile: bool,
+        sample_data: bool,
         preprocessor: bool,
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
@@ -577,6 +576,31 @@ impl ModelCard {
                     let recursive = rpath.extension().is_some();
                     fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
                 }
+            }
+
+            if drift_profile {
+                let drift_profile_uri = if save_metadata.drift_profile_uri.is_none() {
+                    return Err(CardError::Error("Drift profile uri not found".to_string()));
+                } else {
+                    save_metadata.drift_profile_uri.clone().unwrap()
+                };
+
+                let rpath = uri.join(&drift_profile_uri);
+                let lpath = tmp_path.join(&drift_profile_uri);
+                fs.lock().unwrap().get(&lpath, &rpath, false).await?;
+            }
+
+            if sample_data {
+                let sample_data_uri = if save_metadata.sample_data_uri.is_none() {
+                    return Err(CardError::Error("Sample data uri not found".to_string()));
+                } else {
+                    save_metadata.sample_data_uri.clone().unwrap()
+                };
+
+                let rpath = uri.join(&sample_data_uri);
+                let lpath = tmp_path.join(&sample_data_uri);
+                let recursive = rpath.extension().is_some();
+                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
             }
 
             Ok::<(), CardError>(())
