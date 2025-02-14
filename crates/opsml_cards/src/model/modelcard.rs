@@ -62,6 +62,8 @@ pub struct ModelCardMetadata {
     pub auditcard_uid: Option<String>,
 
     pub interface_metadata: ModelInterfaceMetadata,
+
+    pub decryption_key: Option<Vec<u8>>,
 }
 
 #[pyclass]
