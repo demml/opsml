@@ -32,7 +32,8 @@ def test_server(random_forest_classifier: SklearnModel):
 
         assert isinstance(cards, CardList)
         assert len(cards) == 1
-        loaded_card = reg.load_card(uid=card.uid)
+        loaded_card: ModelCard = reg.load_card(uid=card.uid)
+        loaded_card.load()
 
     a
 

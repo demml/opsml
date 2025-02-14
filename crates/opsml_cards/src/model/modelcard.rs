@@ -25,6 +25,7 @@ use serde::{
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use tracing::debug;
 use tracing::error;
 
 fn interface_from_metadata<'py>(
@@ -539,6 +540,7 @@ impl ModelCard {
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
 
         // raise error if decryption key is not found
+
         let decrypt_key = if self.metadata.decryption_key.is_none() {
             return Err(CardError::Error("Decryption key not found".to_string()));
         } else {
@@ -551,7 +553,11 @@ impl ModelCard {
             if model {
                 let rpath = uri.join(&save_metadata.model_uri);
                 let lpath = tmp_path.join(&save_metadata.model_uri);
-                let recursive = rpath.extension().is_some();
+                let recursive = rpath.extension().is_none();
+                debug!(
+                    "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
+                    lpath, rpath, recursive
+                );
                 fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
             }
 
@@ -564,7 +570,12 @@ impl ModelCard {
 
                 let rpath = uri.join(&onnx_model_uri);
                 let lpath = tmp_path.join(&onnx_model_uri);
-                let recursive = rpath.extension().is_some();
+                let recursive = rpath.extension().is_none();
+
+                debug!(
+                    "Downloading onnx model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
+                    lpath, rpath, recursive
+                );
                 fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
             }
 
@@ -573,7 +584,12 @@ impl ModelCard {
                 for (_, value) in preprocessor_map.iter() {
                     let rpath = uri.join(&value.uri);
                     let lpath = tmp_path.join(&value.uri);
-                    let recursive = rpath.extension().is_some();
+                    let recursive = rpath.extension().is_none();
+
+                    debug!(
+                        "Downloading preprocessor: lpath-{:?}, rpath-{:?}, recursive-{:?}",
+                        lpath, rpath, recursive
+                    );
                     fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
                 }
             }
@@ -585,6 +601,7 @@ impl ModelCard {
                     save_metadata.drift_profile_uri.clone().unwrap()
                 };
 
+                debug!("Drift profile uri: {:?}", drift_profile_uri);
                 let rpath = uri.join(&drift_profile_uri);
                 let lpath = tmp_path.join(&drift_profile_uri);
                 fs.lock().unwrap().get(&lpath, &rpath, false).await?;
@@ -599,7 +616,12 @@ impl ModelCard {
 
                 let rpath = uri.join(&sample_data_uri);
                 let lpath = tmp_path.join(&sample_data_uri);
-                let recursive = rpath.extension().is_some();
+                let recursive = rpath.extension().is_none();
+
+                debug!(
+                    "Downloading sample data: lpath-{:?}, rpath-{:?}, recursive-{:?}",
+                    lpath, rpath, recursive
+                );
                 fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
             }
 
