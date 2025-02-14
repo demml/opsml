@@ -262,7 +262,7 @@ impl PostgresQueryHelper {
     }
     pub fn get_versions_query(
         table: &CardTable,
-        version: Option<&str>,
+        version: Option<String>,
     ) -> Result<String, SqlError> {
         let mut query = format!(
             "
@@ -285,7 +285,7 @@ impl PostgresQueryHelper {
         );
 
         if let Some(version) = version {
-            add_version_bounds(&mut query, version)?;
+            add_version_bounds(&mut query, &version)?;
         }
 
         query.push_str(" ORDER BY created_at DESC LIMIT 20;");

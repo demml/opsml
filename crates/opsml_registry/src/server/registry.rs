@@ -404,41 +404,6 @@ pub mod server_logic {
                 .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))
         }
 
-        pub async fn get_next_version(
-            &mut self,
-            name: &str,
-            repository: &str,
-            version: Option<String>,
-            version_type: VersionType,
-            pre_tag: Option<String>,
-            build_tag: Option<String>,
-        ) -> Result<String, RegistryError> {
-            let versions = self
-                .sql_client
-                .get_versions(&self.table_name, name, repository, version.as_deref())
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
-
-            let version = versions.first().ok_or_else(|| {
-                error!("Failed to get first version");
-                RegistryError::Error("Failed to get first version".to_string())
-            })?;
-
-            let args = VersionArgs {
-                version: version.to_string(),
-                version_type,
-                pre: pre_tag.map(|s| s.to_string()),
-                build: build_tag.map(|s| s.to_string()),
-            };
-
-            let bumped_version = VersionValidator::bump_version(&args).map_err(|e| {
-                error!("Failed to bump version: {}", e);
-                RegistryError::Error("Failed to bump version".to_string())
-            })?;
-
-            Ok(bumped_version)
-        }
-
         pub async fn create_artifact_key(
             &mut self,
             uid: &str,

@@ -66,7 +66,7 @@ impl VersionValidator {
         }
     }
 
-    pub fn bump_version(version_args: &VersionArgs) -> Result<String, VersionError> {
+    pub fn bump_version(version_args: &VersionArgs) -> Result<Version, VersionError> {
         // parse the version
         let version = match Version::parse(&version_args.version) {
             Ok(v) => v,
@@ -108,7 +108,7 @@ impl VersionValidator {
             };
         }
 
-        Ok(new_version.to_string())
+        Ok(new_version)
     }
 
     pub fn sort_string_versions(versions: Vec<String>) -> Result<Vec<String>, VersionError> {
@@ -413,7 +413,10 @@ mod tests {
             pre: None,
             build: None,
         };
-        assert_eq!(VersionValidator::bump_version(&args).unwrap(), "2.0.0");
+        assert_eq!(
+            VersionValidator::bump_version(&args).unwrap(),
+            Version::parse("2.0.0").unwrap()
+        );
 
         let args = VersionArgs {
             version: "1.2.3".to_string(),
@@ -421,7 +424,10 @@ mod tests {
             pre: None,
             build: None,
         };
-        assert_eq!(VersionValidator::bump_version(&args).unwrap(), "1.3.0");
+        assert_eq!(
+            VersionValidator::bump_version(&args).unwrap(),
+            Version::parse("1.3.0").unwrap()
+        );
 
         let args = VersionArgs {
             version: "1.2.3".to_string(),
@@ -429,7 +435,10 @@ mod tests {
             pre: None,
             build: None,
         };
-        assert_eq!(VersionValidator::bump_version(&args).unwrap(), "1.2.4");
+        assert_eq!(
+            VersionValidator::bump_version(&args).unwrap(),
+            Version::parse("1.2.4").unwrap()
+        );
 
         let args = VersionArgs {
             version: "1.2.3".to_string(),
@@ -439,7 +448,7 @@ mod tests {
         };
         assert_eq!(
             VersionValidator::bump_version(&args).unwrap(),
-            "1.2.3-alpha"
+            Version::parse("1.2.3-alpha").unwrap()
         );
 
         let args = VersionArgs {
@@ -448,7 +457,10 @@ mod tests {
             pre: None,
             build: Some("001".to_string()),
         };
-        assert_eq!(VersionValidator::bump_version(&args).unwrap(), "1.2.3+001");
+        assert_eq!(
+            VersionValidator::bump_version(&args).unwrap(),
+            Version::parse("1.2.3+001").unwrap()
+        );
 
         let args = VersionArgs {
             version: "1.2.3".to_string(),
@@ -458,7 +470,7 @@ mod tests {
         };
         assert_eq!(
             VersionValidator::bump_version(&args).unwrap(),
-            "1.2.3-alpha+001"
+            Version::parse("1.2.3-alpha+001").unwrap()
         );
     }
 

@@ -81,11 +81,29 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub async fn create_card(&mut self, card: Card) -> Result<(), RegistryError> {
-        // serialize card to json
+    pub async fn create_card(
+        &mut self,
+        card: Card,
+        version: Option<String>,
+        version_type: VersionType,
+        pre_tag: Option<String>,
+        build_tag: Option<String>,
+    ) -> Result<(), RegistryError> {
+        // create version request
+        let version_request = CardVersionRequest {
+            name: card.name().to_string(),
+            repository: card.repository().to_string(),
+            version,
+            version_type,
+            pre_tag,
+            build_tag,
+        };
+
+        // create card request
         let card_request = CreateCardRequest {
             card,
             registry_type: self.registry_type.clone(),
+            version_request,
         };
 
         let body = serde_json::to_value(card_request).map_err(|e| {
@@ -212,52 +230,6 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
 
         Ok(exists.exists)
-    }
-
-    pub async fn get_next_version(
-        &mut self,
-        name: &str,
-        repository: &str,
-        version: Option<String>,
-        version_type: VersionType,
-        pre_tag: Option<String>,
-        build_tag: Option<String>,
-    ) -> Result<String, RegistryError> {
-        let version_request = CardVersionRequest {
-            name: name.to_string(),
-            repository: repository.to_string(),
-            version,
-            registry_type: self.registry_type.clone(),
-            version_type,
-            pre_tag,
-            build_tag,
-        };
-
-        debug!("Getting next version {:?}", version_request);
-
-        let query_string = serde_qs::to_string(&version_request)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
-
-        let response = self
-            .api_client
-            .request_with_retry(
-                Routes::CardVersion,
-                RequestType::Get,
-                None,
-                Some(query_string),
-                None,
-            )
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))?;
-
-        debug!("Got response {:?}", response);
-
-        let version = response
-            .json::<CardVersionResponse>()
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
-
-        Ok(version.version)
     }
 
     async fn artifact_key(

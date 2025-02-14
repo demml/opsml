@@ -61,18 +61,12 @@ pub struct QueryPageRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CardVersionRequest {
-    pub registry_type: RegistryType,
     pub name: String,
     pub repository: String,
     pub version: Option<String>,
     pub version_type: VersionType,
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CardVersionResponse {
-    pub version: String,
 }
 
 /// Arguments for querying cards
@@ -764,6 +758,7 @@ impl CardList {
 pub struct CreateCardRequest {
     pub registry_type: RegistryType,
     pub card: Card,
+    pub version_request: CardVersionRequest,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

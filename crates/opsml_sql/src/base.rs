@@ -63,7 +63,7 @@ pub trait SqlClient: Sized {
         table: &CardTable,
         name: &str,
         repository: &str,
-        version: Option<&str>,
+        version: Option<String>,
     ) -> Result<Vec<String>, SqlError>;
 
     async fn query_cards(
