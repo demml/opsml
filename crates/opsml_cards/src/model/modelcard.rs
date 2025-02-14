@@ -1,6 +1,7 @@
 use crate::BaseArgs;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
+use opsml_interfaces::onnx;
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
@@ -528,10 +529,10 @@ impl ModelCard {
         &mut self,
         tmp_path: &Path,
         model: bool,
-        _onnx: bool,
+        onnx: bool,
         _drift_profile: bool,
         _sample_data: bool,
-        _preprocessor: bool,
+        preprocessor: bool,
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = self.rt.clone().unwrap();
@@ -553,6 +554,29 @@ impl ModelCard {
                 let lpath = tmp_path.join(&save_metadata.model_uri);
                 let recursive = rpath.extension().is_some();
                 fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+            }
+
+            if onnx {
+                let onnx_model_uri = if save_metadata.onnx_model_uri.is_none() {
+                    return Err(CardError::Error("Onnx model uri not found".to_string()));
+                } else {
+                    save_metadata.onnx_model_uri.clone().unwrap()
+                };
+
+                let rpath = uri.join(&onnx_model_uri);
+                let lpath = tmp_path.join(&onnx_model_uri);
+                let recursive = rpath.extension().is_some();
+                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+            }
+
+            if preprocessor {
+                let preprocessor_map = save_metadata.data_processor_map;
+                for (_, value) in preprocessor_map.iter() {
+                    let rpath = uri.join(&value.uri);
+                    let lpath = tmp_path.join(&value.uri);
+                    let recursive = rpath.extension().is_some();
+                    fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+                }
             }
 
             Ok::<(), CardError>(())
