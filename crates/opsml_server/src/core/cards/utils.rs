@@ -5,6 +5,7 @@ use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use semver::Version;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::{error, instrument};
 
@@ -57,7 +58,7 @@ pub async fn insert_card_into_db(
     card: Card,
     version: Version,
     table: &CardTable,
-) -> Result<(String, String), ApiError> {
+) -> Result<(String, String, PathBuf), ApiError> {
     // match on registry type
     let card = match card {
         Card::Data(client_card) => {
@@ -162,9 +163,5 @@ pub async fn insert_card_into_db(
         ApiError::Error("Failed to insert card".to_string())
     })?;
 
-    Ok((
-        card.uid().to_string(),
-        card.card_type(),
-        card.uri().to_string(),
-    ))
+    Ok((card.uid().to_string(), card.card_type(), card.uri()))
 }

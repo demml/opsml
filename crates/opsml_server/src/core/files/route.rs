@@ -15,12 +15,10 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
-use opsml_utils::uid_to_byte_key;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 use anyhow::{Context, Result};
-use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
 use opsml_error::error::ServerError;
 
 /// Route for debugging information

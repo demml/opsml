@@ -201,7 +201,7 @@ pub async fn create_card(
     })?;
 
     // (2) ------- Insert the card into the database
-    let (uid, card_type) = insert_card_into_db(
+    let (uid, card_type, card_uri) = insert_card_into_db(
         state.sql_client.clone(),
         card_request.card.clone(),
         version.clone(),
@@ -238,7 +238,7 @@ pub async fn create_card(
         uid,
         version: version.to_string(),
         encryption_key: key.encrypted_key,
-        uri: card.uri(),
+        uri: card_uri,
     }))
 }
 

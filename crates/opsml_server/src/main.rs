@@ -414,40 +414,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_opsml_server_card_versions() {
-        let helper = TestHelper::new().await;
-
-        /////////////////////////// Card Versions/////////////////////
-        let args = CardVersionRequest {
-            registry_type: RegistryType::Data,
-            name: "Data1".to_string(),
-            repository: "repo1".to_string(),
-            version: None,
-            version_type: VersionType::Minor,
-            pre_tag: None,
-            build_tag: None,
-        };
-
-        let query_string = serde_qs::to_string(&args).unwrap();
-
-        let request = Request::builder()
-            .uri(format!("/opsml/card/version?{}", query_string))
-            .method("GET")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = helper.send_oneshot(request, true).await;
-        assert_eq!(response.status(), StatusCode::OK);
-
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        let version_response: CardVersionResponse = serde_json::from_slice(&body).unwrap();
-
-        assert_eq!(version_response.version, "3.1.0");
-
-        helper.cleanup();
-    }
-
-    #[tokio::test]
     async fn test_opsml_server_list_cards() {
         let helper = TestHelper::new().await;
 
@@ -514,6 +480,15 @@ mod tests {
     async fn test_opsml_server_datacard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "DataCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // DataCard
         let card_request = CreateCardRequest {
             card: Card::Data(DataCardClientRecord {
@@ -524,6 +499,7 @@ mod tests {
                 ..DataCardClientRecord::default()
             }),
             registry_type: RegistryType::Data,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -635,6 +611,15 @@ mod tests {
     async fn test_opsml_server_modelcard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "ModelCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // ModelCard
         let card_request = CreateCardRequest {
             card: Card::Model(ModelCardClientRecord {
@@ -645,6 +630,7 @@ mod tests {
                 ..ModelCardClientRecord::default()
             }),
             registry_type: RegistryType::Model,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -662,6 +648,36 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(create_response.registered);
+
+        // sleep for 1 second to allow the key to be stored
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        // test artifact key
+        let key_request = ArtifactKeyRequest {
+            uid: create_response.uid.clone(),
+            card_type: CardType::Model,
+        };
+
+        let query_string = serde_qs::to_string(&key_request).unwrap();
+
+        // get key
+        let request = Request::builder()
+            .uri(format!("/opsml/files/decrypt?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request, true).await;
+
+        // get response body
+        let key_from_server: ArtifactKey =
+            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
+                .unwrap();
+
+        assert_eq!(
+            create_response.encryption_key,
+            key_from_server.encrypted_key
+        );
 
         // get card by uid
         let list_cards = ListCardRequest {
@@ -759,6 +775,15 @@ mod tests {
     async fn test_opsml_server_runcard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "RunCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // RunCard
         let card_request = CreateCardRequest {
             card: Card::Run(RunCardClientRecord {
@@ -769,6 +794,7 @@ mod tests {
                 ..RunCardClientRecord::default()
             }),
             registry_type: RegistryType::Run,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -881,6 +907,15 @@ mod tests {
     async fn test_opsml_server_pipelinecard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "PipelineCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // PipelineCard
         let card_request = CreateCardRequest {
             card: Card::Pipeline(PipelineCardClientRecord {
@@ -891,6 +926,7 @@ mod tests {
                 ..PipelineCardClientRecord::default()
             }),
             registry_type: RegistryType::Pipeline,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -1001,6 +1037,15 @@ mod tests {
     async fn test_opsml_server_auditcard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "AuditCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // AuditCard
         let card_request = CreateCardRequest {
             card: Card::Audit(AuditCardClientRecord {
@@ -1011,6 +1056,7 @@ mod tests {
                 ..AuditCardClientRecord::default()
             }),
             registry_type: RegistryType::Audit,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
@@ -1121,6 +1167,15 @@ mod tests {
     async fn test_opsml_server_projectcard_crud() {
         let helper = TestHelper::new().await;
 
+        let card_version_request = CardVersionRequest {
+            name: "ProjectCard".to_string(),
+            repository: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
         // ProjectCard
         let card_request = CreateCardRequest {
             card: Card::Project(ProjectCardClientRecord {
@@ -1131,6 +1186,7 @@ mod tests {
                 ..Default::default()
             }),
             registry_type: RegistryType::Project,
+            version_request: card_version_request,
         };
 
         let body = serde_json::to_string(&card_request).unwrap();
