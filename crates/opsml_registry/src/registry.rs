@@ -1,8 +1,10 @@
+use std::path::PathBuf;
+
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
+use opsml_client::registry;
 use opsml_colors::Colorize;
-use opsml_crypt::decrypt_directory;
-use opsml_crypt::decrypt_key;
+use opsml_crypt::{decrypt_directory, decrypt_key, encrypt_directory};
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_error::UtilError;
@@ -11,7 +13,10 @@ use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
-use opsml_types::{cards::CardTable, contracts::*};
+use opsml_types::{
+    cards::{CardTable, CardType},
+    contracts::*,
+};
 use opsml_utils::clean_string;
 use opsml_utils::uid_to_byte_key;
 use pyo3::prelude::*;
@@ -19,6 +24,27 @@ use pyo3::IntoPyObjectExt;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 use uuid::Uuid;
+
+fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, RegistryError> {
+    obj.getattr(field)
+        .map_err(|e| {
+            error!("Failed to get field: {}", e);
+            RegistryError::Error("Failed to get field".to_string())
+        })?
+        .extract::<String>()
+        .map_err(|e| {
+            error!("Failed to extract field: {}", e);
+            RegistryError::Error("Failed to extract field".to_string())
+        })
+}
+
+pub struct CardArgs {
+    pub uid: String,
+    pub repository: String,
+    pub name: String,
+    pub version: String,
+    pub card_type: CardType,
+}
 
 #[pyclass]
 pub struct CardRegistry {
@@ -144,72 +170,40 @@ impl CardRegistry {
         // Wrap all operations in a single block_on to handle async operations
         self.runtime
             .block_on(async {
-                // Verify card first
-                let py = card.py();
-                let mut card = CardEnum::from_py(card).unwrap();
+                //let mut card = CardEnum::from_py(&card).unwrap();
+                let mut args = Self::get_card_args(card)?;
 
-                Self::verify_card(&card, &mut self.registry).await?;
-
-                // Check dependencies
-                //Self::check_dependencies(py, &card)?;
-
-                // Check registry type match
-                if !card.match_registry_type(&self.registry_type) {
-                    error!("Card and registry type do not match");
-                    return Err(RegistryError::Error(
-                        "Card and registry type do not match".to_string(),
-                    ));
-                }
-
-                let msg = Colorize::green("verified card");
-                println!("✓ {}", msg);
+                Self::verify_card(&card, &mut self.registry, &self.registry_type, &args).await?;
 
                 // Set version
                 Self::set_card_version(
-                    &mut card,
+                    card,
                     version_type,
                     pre_tag,
                     build_tag,
                     &mut self.registry,
+                    &mut args,
                 )
                 .await?;
 
                 // Update UUID
-                card.update_uid(Uuid::new_v4().to_string());
-
+                Self::set_uid(card, &mut args)?;
                 // Save artifacts
                 Self::save_card_artifacts(
-                    py,
-                    &mut card,
+                    card,
                     &mut self.registry,
                     &mut self.fs,
                     save_kwargs,
+                    &args,
                 )
                 .await?;
 
-                Self::register_card_with_db(&mut self.registry, &card).await?;
-
-                let msg = Colorize::green("registered card");
-
-                println!(
-                    "✓ {} - {}/{} - v{}",
-                    msg,
-                    card.repository(),
-                    card.name(),
-                    card.version()
-                );
-
-                debug!(
-                    "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
-                    self.registry_type,
-                    card.repository(),
-                    card.name(),
-                    card.version()
-                );
+                Self::register_card_with_db(&mut self.registry, &card, &self.registry_type, &args)
+                    .await?;
 
                 Ok(())
             })
-            .map_err(|e| OpsmlError::new_err(e.to_string()))
+            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (uid=None, repository=None, name=None, version=None, interface=None))]
@@ -223,7 +217,10 @@ impl CardRegistry {
         version: Option<String>,
         interface: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        debug!("Registering card");
+        debug!(
+            "Loading card - {:?} - {:?} - {:?} - {:?} - {:?}",
+            uid, name, repository, version, interface
+        );
 
         // if uid, name, repository, version is None, return error
         if uid.is_none() && name.is_none() && repository.is_none() && version.is_none() {
@@ -269,26 +266,97 @@ impl CardRegistry {
 
 impl CardRegistry {
     #[instrument(skip_all)]
+    fn set_uid(card: &Bound<'_, PyAny>, args: &mut CardArgs) -> Result<(), RegistryError> {
+        let uid = Uuid::new_v4().to_string();
+        card.setattr("uid", &uid).map_err(|e| {
+            error!("Failed to set uid: {}", e);
+            RegistryError::Error("Failed to set uid".to_string())
+        })?;
+        args.uid = uid;
+
+        Ok(())
+    }
+
+    fn get_card_args(card: &Bound<'_, PyAny>) -> Result<CardArgs, RegistryError> {
+        let uid = unwrap_pystring(card, "uid")?;
+        let name = unwrap_pystring(card, "name")?;
+        let repository = unwrap_pystring(card, "repository")?;
+        let version = unwrap_pystring(card, "version")?;
+
+        let card_type = card
+            .getattr("card_type")
+            .map_err(|e| {
+                error!("Failed to get card type: {}", e);
+                RegistryError::Error("Failed to get card type".to_string())
+            })?
+            .extract::<CardType>()
+            .map_err(|e| {
+                error!("Failed to extract card type: {}", e);
+                RegistryError::Error("Failed to extract card type".to_string())
+            })?;
+
+        Ok(CardArgs {
+            uid,
+            name,
+            repository,
+            version,
+            card_type,
+        })
+    }
+    fn match_registry_type(card_type: &CardType, registry_type: &RegistryType) -> bool {
+        let matched = match card_type {
+            CardType::Data => {
+                // assert registryType == RegistryType.Data
+                *registry_type == RegistryType::Data
+            }
+            CardType::Model => {
+                // assert registryType == RegistryType.Model
+                *registry_type == RegistryType::Model
+            }
+            _ => {
+                return false;
+            }
+        };
+
+        matched
+    }
+    fn verify_card_for_registration(args: &CardArgs) -> Result<(), RegistryError> {
+        if args.uid != CommonKwargs::Undefined.to_string()
+            && args.version != CommonKwargs::BaseVersion.to_string()
+        {
+            let msg = format!(
+                "Card {} already exists. Skipping registration. If you'd like to register
+                a new card, please instantiate a new Card object. If you'd like to update the
+                existing card, please use the update_card method.",
+                args.uid
+            );
+            return Err(RegistryError::Error(msg));
+        };
+
+        Ok(())
+    }
+
+    #[instrument(skip_all)]
     async fn set_card_version(
-        card: &mut CardEnum,
+        card: &Bound<'_, PyAny>,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
         registry: &mut OpsmlRegistry,
+        args: &mut CardArgs,
     ) -> Result<(), RegistryError> {
-        let version = card.version();
-
-        let card_version: Option<String> = if version == CommonKwargs::BaseVersion.to_string() {
+        let card_version: Option<String> = if args.version == CommonKwargs::BaseVersion.to_string()
+        {
             None
         } else {
-            Some(version.to_string())
+            Some(args.version.clone())
         };
 
         // get next version
         let version = registry
             .get_next_version(
-                card.name(),
-                card.repository(),
+                &args.name,
+                &args.repository,
                 card_version,
                 version_type,
                 pre_tag,
@@ -296,11 +364,10 @@ impl CardRegistry {
             )
             .await?;
 
-        card.update_version(&version);
+        card.setattr("version", &version).unwrap();
+        args.version = version;
 
-        let msg = Colorize::green("set card version");
-        println!("✓ {}", msg);
-
+        println!("✓ {}", Colorize::green("set card version"));
         debug!("Set card version");
 
         Ok(())
@@ -308,16 +375,25 @@ impl CardRegistry {
 
     #[instrument(skip_all)]
     pub async fn verify_card(
-        card: &CardEnum,
+        card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
+        registry_type: &RegistryType,
+        args: &CardArgs,
     ) -> Result<(), RegistryError> {
-        card.verify_card_for_registration()
+        Self::verify_card_for_registration(args)
             .map_err(|e| RegistryError::Error(e.to_string()))?;
 
-        // if card is a model card and has datacard
-        if let CardEnum::Model(model_card) = card {
-            if let Some(datacard_uid) = &model_card.metadata.datacard_uid {
-                let exists = registry.check_card_uid(datacard_uid).await?;
+        if card.is_instance_of::<ModelCard>() {
+            let datacard_uid = card
+                .getattr("metadata")
+                .unwrap()
+                .getattr("datacard_uid")
+                .unwrap()
+                .extract::<Option<String>>()
+                .unwrap();
+
+            if let Some(datacard_uid) = datacard_uid {
+                let exists = registry.check_card_uid(&datacard_uid).await?;
 
                 if !exists {
                     return Err(RegistryError::Error(
@@ -327,7 +403,14 @@ impl CardRegistry {
             }
         }
 
+        if !Self::match_registry_type(&args.card_type, registry_type) {
+            return Err(RegistryError::Error(
+                "Card and registry type do not match".to_string(),
+            ));
+        }
+
         debug!("Verified card");
+        println!("✓ {}", Colorize::green("verified card"));
 
         Ok(())
     }
@@ -378,14 +461,14 @@ impl CardRegistry {
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
     async fn save_card_artifacts<'py>(
-        py: Python<'py>,
-        card: &mut CardEnum,
+        card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
         fs: &mut FileSystemStorage,
         save_kwargs: Option<SaveKwargs>,
+        args: &CardArgs,
     ) -> Result<(), RegistryError> {
         let encrypt_key = registry
-            .create_artifact_key(card.uid(), &card.card_type())
+            .create_artifact_key(&args.uid, &args.card_type)
             .await?;
 
         // create temp path for saving
@@ -396,16 +479,19 @@ impl CardRegistry {
 
         let tmp_path = tmp_dir.into_path();
 
-        card.save_card(py, &tmp_path, &encrypt_key, save_kwargs)
+        card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
             .map_err(|e| {
                 error!("Failed to save card: {}", e);
                 RegistryError::Error(e.to_string())
             })?;
 
-        fs.put(&tmp_path, &card.uri(), true).await?;
+        encrypt_directory(&tmp_path, &encrypt_key)?;
 
-        let msg = Colorize::green("saved card artifacts to storage");
-        println!("✓ {}", msg);
+        let uri = card.getattr("uri").unwrap().extract::<PathBuf>().unwrap();
+
+        fs.put(&tmp_path, &uri, true).await?;
+
+        println!("✓ {}", Colorize::green("saved card artifacts to storage"));
 
         debug!("Saved card artifacts to storage");
 
@@ -425,13 +511,32 @@ impl CardRegistry {
     #[instrument(skip_all)]
     async fn register_card_with_db(
         registry: &mut OpsmlRegistry,
-        card: &CardEnum,
+        card: &Bound<'_, PyAny>,
+        registry_type: &RegistryType,
+        args: &CardArgs,
     ) -> Result<(), RegistryError> {
-        let card = card.get_registry_card().map_err(|e| {
-            error!("Failed to get registry card: {}", e);
-            RegistryError::Error(e.to_string())
-        })?;
-        registry.create_card(card).await
+        let registry_card = card
+            .call_method0("get_registry_card")
+            .unwrap()
+            .extract::<Card>()
+            .unwrap();
+
+        registry.create_card(registry_card).await?;
+
+        println!(
+            "✓ {} - {}/{} - v{}",
+            Colorize::green("registered card"),
+            args.repository,
+            args.name,
+            args.version
+        );
+
+        debug!(
+            "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
+            registry_type, args.repository, args.name, args.version
+        );
+
+        Ok(())
     }
 
     async fn get_decrypt_key(
