@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     pipelinecard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- ModelSchema
@@ -47,7 +48,8 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     task_type TEXT NOT NULL DEFAULT 'undefined',
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- RunSchema
@@ -71,7 +73,8 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     project TEXT,
     artifact_uris TEXT,
     compute_environment TEXT,
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- AuditSchema
@@ -93,7 +96,8 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids TEXT,
     modelcard_uids TEXT,
     runcard_uids TEXT,
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- PipelineSchema
@@ -115,7 +119,8 @@ CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
     datacard_uids TEXT,
     modelcard_uids TEXT,
     runcard_uids TEXT,
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- ProjectSchema
@@ -131,7 +136,8 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     pre_tag VARCHAR(16),
     build_tag VARCHAR(16),
     version VARCHAR(64),
-    username TEXT NOT NULL DEFAULT 'guest'
+    username TEXT NOT NULL DEFAULT 'guest',
+    storage_uri TEXT
 );
 
 -- MetricSchema

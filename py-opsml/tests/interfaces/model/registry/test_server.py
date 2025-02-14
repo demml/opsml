@@ -74,7 +74,6 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
         # attempt to delete folder
         shutil.rmtree("card_artifacts")
 
-    # wrong uid being use to upload card
+        # attempt to update the card
 
-
-# create modelcard and register it
+        # attempt to delete the card
