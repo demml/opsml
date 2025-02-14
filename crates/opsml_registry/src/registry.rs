@@ -436,7 +436,7 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // create temp path for saving
 
-        let encrypted_key = Self::get_decrypt_key(args).await?;
+        let encrypted_key = Self::get_decrypt_key(&args.uid, &args.encryption_key).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -523,11 +523,11 @@ impl CardRegistry {
         Ok(response)
     }
 
-    async fn get_decrypt_key(args: &CardArgs) -> Result<Vec<u8>, RegistryError> {
+    async fn get_decrypt_key(uid: &str, encryption_key: &[u8]) -> Result<Vec<u8>, RegistryError> {
         // convert uid to byte key (used for card encryption)
-        let uid_key = uid_to_byte_key(&args.uid)?;
+        let uid_key = uid_to_byte_key(uid)?;
 
-        Ok(decrypt_key(&uid_key, &args.encryption_key)?)
+        Ok(decrypt_key(&uid_key, encryption_key)?)
     }
 
     async fn download_card(
@@ -535,7 +535,11 @@ impl CardRegistry {
         card: &Card,
         fs: &mut FileSystemStorage,
     ) -> Result<String, RegistryError> {
-        let decryption_key = Self::get_decrypt_key(registry, card).await?;
+        let key = registry
+            .get_artifact_key(card.uid(), &card.card_type())
+            .await?;
+
+        let decryption_key = Self::get_decrypt_key(card.uid(), &key).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
