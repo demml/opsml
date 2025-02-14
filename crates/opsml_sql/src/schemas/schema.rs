@@ -767,6 +767,17 @@ impl ServerCard {
             ServerCard::Project(_) => CardType::Project.to_string(),
         }
     }
+
+    pub fn version(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.version.clone(),
+            ServerCard::Model(card) => card.version.clone(),
+            ServerCard::Run(card) => card.version.clone(),
+            ServerCard::Audit(card) => card.version.clone(),
+            ServerCard::Pipeline(card) => card.version.clone(),
+            ServerCard::Project(card) => card.version.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
