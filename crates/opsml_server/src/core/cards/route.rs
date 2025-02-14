@@ -1,4 +1,6 @@
 use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
+use crate::core::cards::utils::get_next_version;
+use crate::core::cards::utils::{get_next_version, insert_card_into_db};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -8,6 +10,7 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use opsml_error::ApiError;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
@@ -112,57 +115,6 @@ pub async fn get_page(
     Ok(Json(QueryPageResponse { summaries }))
 }
 
-#[instrument(skip_all)]
-pub async fn get_next_version(
-    State(state): State<Arc<AppState>>,
-    Query(params): Query<CardVersionRequest>,
-) -> Result<Json<CardVersionResponse>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardTable::from_registry_type(&params.registry_type);
-
-    let versions = state
-        .sql_client
-        .get_versions(
-            &table,
-            &params.name,
-            &params.repository,
-            params.version.as_deref(),
-        )
-        .await
-        .map_err(|e| {
-            error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-    let version = versions.first().ok_or_else(|| {
-        error!("Failed to get first version");
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
-    })?;
-
-    let args = VersionArgs {
-        version: version.to_string(),
-        version_type: params.version_type,
-        pre: params.pre_tag,
-        build: params.build_tag,
-    };
-
-    let bumped_version = VersionValidator::bump_version(&args).map_err(|e| {
-        error!("Failed to bump version: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
-    })?;
-
-    Ok(Json(CardVersionResponse {
-        version: bumped_version,
-    }))
-}
-
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<ListCardRequest>,
@@ -235,117 +187,34 @@ pub async fn create_card(
         &card_request.registry_type
     );
 
-    // match on registry type
-    let card = match card_request.card {
-        Card::Data(client_card) => {
-            let server_card = DataCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.contact,
-                client_card.tags,
-                client_card.data_type,
-                client_card.runcard_uid,
-                client_card.pipelinecard_uid,
-                client_card.auditcard_uid,
-                client_card.interface_type,
-                client_card.username,
-            );
-            ServerCard::Data(server_card)
-        }
-        Card::Model(client_card) => {
-            let server_card = ModelCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.contact,
-                client_card.tags,
-                client_card.datacard_uid,
-                client_card.data_type,
-                client_card.model_type,
-                client_card.runcard_uid,
-                client_card.pipelinecard_uid,
-                client_card.auditcard_uid,
-                client_card.interface_type,
-                client_card.task_type,
-                client_card.username,
-            );
-            ServerCard::Model(server_card)
-        }
+    let version = get_next_version(
+        state.sql_client.clone(),
+        &table,
+        card_request.version_request,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to get next version: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
 
-        Card::Project(client_card) => {
-            let server_card = ProjectCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.project_id,
-                client_card.username,
-            );
-            ServerCard::Project(server_card)
-        }
-
-        Card::Run(client_card) => {
-            let server_card = RunCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.contact,
-                client_card.tags,
-                client_card.datacard_uids,
-                client_card.modelcard_uids,
-                client_card.pipelinecard_uid,
-                client_card.project,
-                client_card.artifact_uris,
-                client_card.compute_environment,
-                client_card.username,
-            );
-            ServerCard::Run(server_card)
-        }
-
-        Card::Pipeline(client_card) => {
-            let server_card = PipelineCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.contact,
-                client_card.tags,
-                client_card.pipeline_code_uri,
-                client_card.datacard_uids,
-                client_card.modelcard_uids,
-                client_card.runcard_uids,
-                client_card.username,
-            );
-            ServerCard::Pipeline(server_card)
-        }
-
-        Card::Audit(client_card) => {
-            let server_card = AuditCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                client_card.version.parse().unwrap(),
-                client_card.contact,
-                client_card.tags,
-                client_card.approved,
-                client_card.datacard_uids,
-                client_card.modelcard_uids,
-                client_card.runcard_uids,
-                client_card.username,
-            );
-            ServerCard::Audit(server_card)
-        }
-    };
-
-    state
-        .sql_client
-        .insert_card(&table, &card)
-        .await
-        .map_err(|e| {
-            error!("Failed to insert card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
+    let uid = insert_card_into_db(
+        state.sql_client.clone(),
+        card_request.card.clone(),
+        version,
+        &table,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to insert card into db: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
 
     debug!("Card created successfully");
     Ok(Json(CreateCardResponse {
@@ -608,7 +477,6 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(get_registry_stats),
             )
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
-            .route(&format!("{}/card/version", prefix), get(get_next_version))
             .route(&format!("{}/card/list", prefix), get(list_cards))
             .route(&format!("{}/card/create", prefix), post(create_card))
             .route(&format!("{}/card/update", prefix), post(update_card))

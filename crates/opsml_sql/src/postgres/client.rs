@@ -119,9 +119,9 @@ impl SqlClient for PostgresClient {
     async fn get_versions(
         &self,
         table: &CardTable,
-        name: &str,
         repository: &str,
-        version: Option<&str>,
+        name: &str,
+        version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
         // if version is None, get the latest version
         let query = PostgresQueryHelper::get_versions_query(table, version)?;
@@ -1107,53 +1107,68 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", None)
+            .get_versions(&CardTable::Data, "repo1", "Data1", None)
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         // check star pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("1.*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.1.*"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("1.1.*".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1.1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1.1"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("~1.1.1".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 1);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("^2.0.0"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("^2.0.0".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);

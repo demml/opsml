@@ -175,14 +175,14 @@ impl CardRegistry {
 
                 Self::verify_card(&card, &mut self.registry, &self.registry_type, &args).await?;
 
-                // Set version
-                Self::set_card_version(
-                    card,
+                Self::register_card_with_db(
+                    &mut self.registry,
+                    &card,
+                    &self.registry_type,
+                    &args,
                     version_type,
                     pre_tag,
                     build_tag,
-                    &mut self.registry,
-                    &mut args,
                 )
                 .await?;
 
@@ -198,9 +198,6 @@ impl CardRegistry {
                     &args,
                 )
                 .await?;
-
-                Self::register_card_with_db(&mut self.registry, &card, &self.registry_type, &args)
-                    .await?;
 
                 Ok(())
             })
@@ -333,43 +330,6 @@ impl CardRegistry {
             );
             return Err(RegistryError::Error(msg));
         };
-
-        Ok(())
-    }
-
-    #[instrument(skip_all)]
-    async fn set_card_version(
-        card: &Bound<'_, PyAny>,
-        version_type: VersionType,
-        pre_tag: Option<String>,
-        build_tag: Option<String>,
-        registry: &mut OpsmlRegistry,
-        args: &mut CardArgs,
-    ) -> Result<(), RegistryError> {
-        let card_version: Option<String> = if args.version == CommonKwargs::BaseVersion.to_string()
-        {
-            None
-        } else {
-            Some(args.version.clone())
-        };
-
-        // get next version
-        let version = registry
-            .get_next_version(
-                &args.name,
-                &args.repository,
-                card_version,
-                version_type,
-                pre_tag,
-                build_tag,
-            )
-            .await?;
-
-        card.setattr("version", &version).unwrap();
-        args.version = version;
-
-        println!("✓ {}", Colorize::green("set card version"));
-        debug!("Set card version");
 
         Ok(())
     }
@@ -515,6 +475,9 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
         args: &CardArgs,
+        version_type: VersionType,
+        pre_tag: Option<String>,
+        build_tag: Option<String>,
     ) -> Result<(), RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")
@@ -528,7 +491,16 @@ impl CardRegistry {
                 RegistryError::Error("Failed to extract registry card".to_string())
             })?;
 
-        registry.create_card(registry_card).await?;
+        // get version
+        let version: Option<String> = if args.version == CommonKwargs::BaseVersion.to_string() {
+            None
+        } else {
+            Some(args.version.clone())
+        };
+
+        registry
+            .create_card(registry_card, version, version_type, pre_tag, build_tag)
+            .await?;
 
         println!(
             "✓ {} - {}/{} - v{}",

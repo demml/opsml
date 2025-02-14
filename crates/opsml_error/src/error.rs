@@ -43,6 +43,12 @@ impl From<StorageError> for PyErr {
 pub enum ApiError {
     #[error("Api Error: {0}")]
     Error(String),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
 }
 
 impl From<ApiError> for PyErr {
