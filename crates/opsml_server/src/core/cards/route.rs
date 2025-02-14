@@ -238,6 +238,7 @@ pub async fn create_card(
         uid,
         version: version.to_string(),
         encryption_key: key.encrypted_key,
+        uri: card.uri(),
     }))
 }
 

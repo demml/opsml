@@ -40,10 +40,12 @@ fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, Regist
 
 pub struct CardArgs {
     pub uid: String,
-    pub repository: String,
     pub name: String,
+    pub repository: String,
     pub version: String,
     pub card_type: CardType,
+    pub uri: PathBuf,
+    pub encryption_key: Vec<u8>,
 }
 
 #[pyclass]
@@ -170,11 +172,15 @@ impl CardRegistry {
         // Wrap all operations in a single block_on to handle async operations
         self.runtime
             .block_on(async {
-                //let mut card = CardEnum::from_py(&card).unwrap();
                 let mut args = Self::get_card_args(card)?;
 
+                // Verify card for registration
                 Self::verify_card(&card, &mut self.registry, &self.registry_type, &args).await?;
 
+                // register card
+                // (1) creates new version
+                // (2) Inserts card record into db
+                // (3) Creates encryption key and returns it
                 let card_response = Self::register_card_with_db(
                     &mut self.registry,
                     &card,
@@ -187,17 +193,10 @@ impl CardRegistry {
                 .await?;
 
                 // Update card attributes
-                Self::set_uid(card, &mut args)?;
+                Self::update_card_with_server_response(&card_response, card, &mut args)?;
 
                 // Save artifacts
-                Self::save_card_artifacts(
-                    card,
-                    &mut self.registry,
-                    &mut self.fs,
-                    save_kwargs,
-                    &args,
-                )
-                .await?;
+                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &args).await?;
 
                 Ok(())
             })
@@ -269,11 +268,26 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         args: &mut CardArgs,
     ) -> Result<(), RegistryError> {
+        // update uid
         card.setattr("uid", response.uid.clone()).map_err(|e| {
             error!("Failed to set uid: {}", e);
             RegistryError::Error("Failed to set uid".to_string())
         })?;
         args.uid = response.uid.clone();
+
+        // update verions
+        card.setattr("version", response.version.clone())
+            .map_err(|e| {
+                error!("Failed to set version: {}", e);
+                RegistryError::Error("Failed to set version".to_string())
+            })?;
+        args.version = response.version.clone();
+
+        // update path
+        args.uri = response.uri.clone();
+
+        // update encryption key
+        args.encryption_key = response.encryption_key.clone();
 
         Ok(())
     }
@@ -302,6 +316,8 @@ impl CardRegistry {
             repository,
             version,
             card_type,
+            uri: PathBuf::new(),
+            encryption_key: vec![],
         })
     }
     fn match_registry_type(card_type: &CardType, registry_type: &RegistryType) -> bool {
@@ -321,21 +337,6 @@ impl CardRegistry {
 
         matched
     }
-    fn verify_card_for_registration(args: &CardArgs) -> Result<(), RegistryError> {
-        if args.uid != CommonKwargs::Undefined.to_string()
-            && args.version != CommonKwargs::BaseVersion.to_string()
-        {
-            let msg = format!(
-                "Card {} already exists. Skipping registration. If you'd like to register
-                a new card, please instantiate a new Card object. If you'd like to update the
-                existing card, please use the update_card method.",
-                args.uid
-            );
-            return Err(RegistryError::Error(msg));
-        };
-
-        Ok(())
-    }
 
     #[instrument(skip_all)]
     pub async fn verify_card(
@@ -344,8 +345,11 @@ impl CardRegistry {
         registry_type: &RegistryType,
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
-        Self::verify_card_for_registration(args)
-            .map_err(|e| RegistryError::Error(e.to_string()))?;
+        if registry.check_card_uid(&args.uid).await? {
+            return Err(RegistryError::Error(
+                "Card already exists in the registry. If updating, use update_card".to_string(),
+            ));
+        }
 
         if card.is_instance_of::<ModelCard>() {
             let datacard_uid = card
@@ -426,12 +430,14 @@ impl CardRegistry {
     #[instrument(skip_all)]
     async fn save_card_artifacts<'py>(
         card: &Bound<'_, PyAny>,
-        registry: &mut OpsmlRegistry,
         fs: &mut FileSystemStorage,
         save_kwargs: Option<SaveKwargs>,
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
         // create temp path for saving
+
+        let encrypted_key = Self::get_decrypt_key(args).await?;
+
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
             RegistryError::Error("Failed to create temporary directory".to_string())
@@ -517,19 +523,11 @@ impl CardRegistry {
         Ok(response)
     }
 
-    async fn get_decrypt_key(
-        registry: &mut OpsmlRegistry,
-        card: &Card,
-    ) -> Result<Vec<u8>, RegistryError> {
-        // pull encrypted key from registry
-        let encrypted_key = registry
-            .get_artifact_key(card.uid(), &card.card_type())
-            .await?;
-
+    async fn get_decrypt_key(args: &CardArgs) -> Result<Vec<u8>, RegistryError> {
         // convert uid to byte key (used for card encryption)
-        let uid_key = uid_to_byte_key(card.uid())?;
+        let uid_key = uid_to_byte_key(&args.uid)?;
 
-        Ok(decrypt_key(&uid_key, &encrypted_key)?)
+        Ok(decrypt_key(&uid_key, &args.encryption_key)?)
     }
 
     async fn download_card(
