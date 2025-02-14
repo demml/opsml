@@ -529,11 +529,9 @@ impl CardRegistry {
         card: &Card,
         fs: &mut FileSystemStorage,
     ) -> Result<String, RegistryError> {
-        let key = registry
+        let decryption_key = registry
             .get_artifact_key(card.uid(), &card.card_type())
             .await?;
-
-        let decryption_key = Self::get_decrypt_key(card.uid(), &key).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
