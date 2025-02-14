@@ -765,6 +765,8 @@ pub struct CreateCardRequest {
 pub struct CreateCardResponse {
     pub registered: bool,
     pub uid: String,
+    pub version: String,
+    pub encryption_key: Vec<u8>,
 }
 
 /// Duplicating card request to be explicit with naming

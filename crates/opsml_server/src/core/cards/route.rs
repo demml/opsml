@@ -1,6 +1,6 @@
 use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
-use crate::core::cards::utils::get_next_version;
 use crate::core::cards::utils::{get_next_version, insert_card_into_db};
+use crate::core::files::utils::create_artifact_key;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -187,6 +187,7 @@ pub async fn create_card(
         &card_request.registry_type
     );
 
+    // (1) ------- Get the next version
     let version = get_next_version(
         state.sql_client.clone(),
         &table,
@@ -201,10 +202,11 @@ pub async fn create_card(
         )
     })?;
 
-    let uid = insert_card_into_db(
+    // (2) ------- Insert the card into the database
+    let (uid, card_type) = insert_card_into_db(
         state.sql_client.clone(),
         card_request.card.clone(),
-        version,
+        version.clone(),
         &table,
     )
     .await
@@ -216,10 +218,28 @@ pub async fn create_card(
         )
     })?;
 
+    // (3) ------- Create the artifact key for card artifact encryption
+    let key = create_artifact_key(
+        state.sql_client.clone(),
+        state.storage_settings.encryption_key.clone(),
+        &uid,
+        &card_type,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to create artifact key: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
     debug!("Card created successfully");
     Ok(Json(CreateCardResponse {
         registered: true,
-        uid: card.uid().to_string(),
+        uid,
+        version: version.to_string(),
+        encryption_key: key.encrypted_key,
     }))
 }
 

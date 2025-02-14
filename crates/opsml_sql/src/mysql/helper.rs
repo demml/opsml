@@ -627,7 +627,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypt_key) VALUES (?, ?, ?)",
+            "INSERT INTO {} (uid, card_type, encrypted_key) VALUES (?, ?, ?)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -635,7 +635,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = ? AND card_type = ?",
+            "SELECT uid, card_type, encrypted_key FROM {} WHERE uid = ? AND card_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -643,7 +643,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_update_query() -> String {
         format!(
-            "UPDATE {} SET encrypt_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND card_type = ?",
+            "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND card_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()

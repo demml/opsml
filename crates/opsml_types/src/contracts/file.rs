@@ -112,7 +112,7 @@ pub struct ArtifactKeyRequest {
 pub struct ArtifactKey {
     pub uid: String,
     pub card_type: CardType,
-    pub encrypt_key: Vec<u8>,
+    pub encrypted_key: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

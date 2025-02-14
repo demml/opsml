@@ -5,7 +5,7 @@ use opsml_sql::schemas::ArtifactKey;
 use opsml_utils::uid_to_byte_key;
 
 use anyhow::Result;
-use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
+use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
 
 /// Route for debugging information
 use std::sync::Arc;
@@ -29,7 +29,7 @@ pub async fn create_artifact_key(
     let uid_key = uid_to_byte_key(uid)?;
 
     // encrypt key before sending
-    let encrypted_key = encrypt_key(&uid_key, &derived_key)?;
+    let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
     debug!("Encrypted key: {:?}", encrypted_key);
 
     // spawn a task to insert the key into the database
@@ -37,7 +37,7 @@ pub async fn create_artifact_key(
     let artifact_key = ArtifactKey {
         uid: uid.to_string(),
         card_type: card_type.to_string(),
-        encrypt_key: encrypted_key,
+        encrypted_key,
     };
 
     // clone the artifact_key before moving it into the async block

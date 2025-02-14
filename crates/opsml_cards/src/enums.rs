@@ -114,7 +114,7 @@ impl CardEnum {
         &mut self,
         py: Python,
         tmp_path: &Path,
-        encrypt_key: &[u8],
+        encrypted_key: &[u8],
         save_kwargs: Option<SaveKwargs>,
     ) -> Result<(), CardError> {
         debug!("Saving card");
@@ -131,9 +131,9 @@ impl CardEnum {
             }
         }
 
-        // encrypt every file in tmp_path with encrypt_key
+        // encrypt every file in tmp_path with encrypted_key
         // unique key for each card
-        encrypt_directory(tmp_path, encrypt_key)?;
+        encrypt_directory(tmp_path, encrypted_key)?;
 
         Ok(())
     }

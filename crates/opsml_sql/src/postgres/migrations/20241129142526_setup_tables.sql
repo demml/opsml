@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS opsml_users (
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid VARCHAR(64) PRIMARY KEY,
     card_type VARCHAR(32),
-    encrypt_key BYTEA,
+    encrypted_key BYTEA,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW()))
 );
 

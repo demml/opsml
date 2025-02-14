@@ -20,7 +20,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 use anyhow::{Context, Result};
-use opsml_crypt::key::{derive_encryption_key, encrypt_key, generate_salt};
+use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
 use opsml_error::error::ServerError;
 
 /// Route for debugging information
@@ -420,61 +420,6 @@ pub async fn download_file(
 }
 
 #[instrument(skip_all)]
-pub async fn create_artifact_key(
-    State(state): State<Arc<AppState>>,
-    Query(req): Query<ArtifactKeyRequest>,
-) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
-    debug!("Creating artifact key for: {:?}", req);
-    let salt = generate_salt();
-
-    // create derived key
-    let derived_key = derive_encryption_key(
-        &state.storage_settings.encryption_key,
-        &salt,
-        req.card_type.as_bytes(),
-    )
-    .map_err(|e| {
-        error!("Failed to derive key: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
-    })?;
-
-    debug!("Derived key: {:?}", derived_key);
-
-    let uid_key = uid_to_byte_key(&req.uid).map_err(|e| {
-        error!("Failed to convert uid to key: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
-    })?;
-
-    // encrypt key before sending
-    let encrypted_key = encrypt_key(&uid_key, &derived_key).map_err(|e| {
-        error!("Failed to encrypt key: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
-    })?;
-
-    debug!("Encrypted key: {:?}", encrypted_key);
-
-    // spawn a task to insert the key into the database
-
-    let artifact_key = ArtifactKey {
-        uid: req.uid.clone(),
-        card_type: req.card_type.to_string(),
-        encrypt_key: encrypted_key,
-    };
-
-    // clone the artifact_key before moving it into the async block
-    let artifact_key_clone = artifact_key.clone();
-    let sql_client = state.sql_client.clone();
-    // Spawn task and add to managed set
-    tokio::spawn(async move {
-        if let Err(e) = sql_client.insert_artifact_key(&artifact_key_clone).await {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
-    Ok(Json(artifact_key))
-}
-
-#[instrument(skip_all)]
 pub async fn get_artifact_key(
     State(state): State<Arc<AppState>>,
     Query(req): Query<ArtifactKeyRequest>,
@@ -511,10 +456,6 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/files/list", prefix), get(list_files))
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
-            .route(
-                &format!("{}/files/encrypt", prefix),
-                get(create_artifact_key),
-            )
             .route(&format!("{}/files/decrypt", prefix), get(get_artifact_key))
     }));
 

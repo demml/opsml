@@ -1500,6 +1500,6 @@ mod tests {
             serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
                 .unwrap();
 
-        assert_eq!(key.encrypt_key, key_from_server.encrypt_key);
+        assert_eq!(key.encrypted_key, key_from_server.encrypted_key);
     }
 }

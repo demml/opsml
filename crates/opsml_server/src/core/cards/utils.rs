@@ -1,13 +1,3 @@
-use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
-use crate::core::state::AppState;
-use anyhow::{Context, Result};
-use axum::{
-    extract::{Query, State},
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{delete, get, post},
-    Json, Router,
-};
 use opsml_error::ApiError;
 use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
@@ -15,10 +5,8 @@ use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use semver::Version;
-use sqlx::types::Json as SqlxJson;
-use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error, instrument};
+use tracing::{error, instrument};
 
 #[instrument(skip_all)]
 pub async fn get_next_version(
@@ -69,7 +57,7 @@ pub async fn insert_card_into_db(
     card: Card,
     version: Version,
     table: &CardTable,
-) -> Result<String, ApiError> {
+) -> Result<(String, String), ApiError> {
     // match on registry type
     let card = match card {
         Card::Data(client_card) => {
@@ -169,11 +157,10 @@ pub async fn insert_card_into_db(
             ServerCard::Audit(server_card)
         }
     };
-
     sql_client.insert_card(table, &card).await.map_err(|e| {
         error!("Failed to insert card: {}", e);
         ApiError::Error("Failed to insert card".to_string())
     })?;
 
-    Ok(card.uid().to_string())
+    Ok((card.uid().to_string(), card.card_type()))
 }

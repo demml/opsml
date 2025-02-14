@@ -428,7 +428,7 @@ impl CardRegistry {
         save_kwargs: Option<SaveKwargs>,
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
-        let encrypt_key = registry
+        let encrypted_key = registry
             .create_artifact_key(&args.uid, &args.card_type)
             .await?;
 
@@ -446,7 +446,7 @@ impl CardRegistry {
                 RegistryError::Error(e.to_string())
             })?;
 
-        encrypt_directory(&tmp_path, &encrypt_key)?;
+        encrypt_directory(&tmp_path, &encrypted_key)?;
 
         let uri = card.getattr("uri").unwrap().extract::<PathBuf>().unwrap();
 

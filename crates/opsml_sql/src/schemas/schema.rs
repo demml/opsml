@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
+use opsml_types::cards::CardType;
 use opsml_types::{CommonKwargs, DataType, ModelType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
@@ -755,6 +756,17 @@ impl ServerCard {
             ServerCard::Project(card) => card.uid.as_str(),
         }
     }
+
+    pub fn card_type(&self) -> String {
+        match self {
+            ServerCard::Data(_) => CardType::Data.to_string(),
+            ServerCard::Model(_) => CardType::Model.to_string(),
+            ServerCard::Run(_) => CardType::Run.to_string(),
+            ServerCard::Audit(_) => CardType::Audit.to_string(),
+            ServerCard::Pipeline(_) => CardType::Pipeline.to_string(),
+            ServerCard::Project(_) => CardType::Project.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -855,5 +867,5 @@ impl std::fmt::Debug for User {
 pub struct ArtifactKey {
     pub uid: String,
     pub card_type: String,
-    pub encrypt_key: Vec<u8>,
+    pub encrypted_key: Vec<u8>,
 }
