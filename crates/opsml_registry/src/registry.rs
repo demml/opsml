@@ -231,34 +231,21 @@ impl CardRegistry {
 
         let card = card.cards.first().unwrap();
         // Wrap all operations in a single block_on to handle async operations
-        let card_json = self
+        let card = self
             .runtime
             .block_on(async {
                 // 1. Load the card // download the card from storage
-                Self::download_card(&mut self.registry, card, &mut self.fs).await
+                Self::download_card(
+                    py,
+                    &self.registry_type,
+                    &mut self.registry,
+                    card,
+                    &mut self.fs,
+                    interface,
+                )
+                .await
             })
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let card = match self.registry_type {
-            RegistryType::Model => {
-                let card =
-                    ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
-                        error!("Failed to validate model card: {}", e);
-                        OpsmlError::new_err(e.to_string())
-                    })?;
-
-                card.into_bound_py_any(py).map_err(|e| {
-                    error!("Failed to convert card to bound: {}", e);
-                    OpsmlError::new_err(e.to_string())
-                })?
-            }
-
-            _ => {
-                return Err(OpsmlError::new_err(
-                    "Registry type not supported".to_string(),
-                ));
-            }
-        };
 
         Ok(card)
     }
@@ -529,11 +516,14 @@ impl CardRegistry {
         Ok(decrypt_key(&uid_key, encryption_key)?)
     }
 
-    async fn download_card(
+    async fn download_card<'py>(
+        py: Python<'py>,
+        registry_type: &RegistryType,
         registry: &mut OpsmlRegistry,
         card: &Card,
         fs: &mut FileSystemStorage,
-    ) -> Result<String, RegistryError> {
+        interface: Option<&Bound<'py, PyAny>>,
+    ) -> Result<Bound<'py, PyAny>, RegistryError> {
         let decryption_key = registry
             .get_artifact_key(card.uid(), &card.card_type())
             .await?;
@@ -567,7 +557,42 @@ impl CardRegistry {
             UtilError::ReadError
         })?;
 
-        Ok(json_string)
+        let card =
+            Self::card_from_string(py, json_string, registry_type, interface, decryption_key)?;
+
+        Ok(card)
+    }
+
+    fn card_from_string<'py>(
+        py: Python<'py>,
+        card_json: String,
+        registry_type: &RegistryType,
+        interface: Option<&Bound<'py, PyAny>>,
+        decryption_key: Vec<u8>,
+    ) -> Result<Bound<'py, PyAny>, RegistryError> {
+        let card = match registry_type {
+            RegistryType::Model => {
+                let mut card =
+                    ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
+                        error!("Failed to validate model card: {}", e);
+                        RegistryError::Error(e.to_string())
+                    })?;
+                card.metadata.decryption_key = Some(decryption_key.to_vec());
+
+                card.into_bound_py_any(py).map_err(|e| {
+                    error!("Failed to convert card to bound: {}", e);
+                    RegistryError::Error(e.to_string())
+                })?
+            }
+
+            _ => {
+                return Err(RegistryError::Error(
+                    "Registry type not supported".to_string(),
+                ));
+            }
+        };
+
+        Ok(card)
     }
 }
 
