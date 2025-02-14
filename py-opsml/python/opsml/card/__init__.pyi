@@ -1,13 +1,9 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Protocol, TypeVar, Generic
+from typing import Dict, List, Optional, Union, Any
 
 from ..core import Description, FeatureSchema, LoadKwargs, SaveKwargs, VersionType
 from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
 from ..model import ModelInterface
-
-class ArtifactCard(Protocol): ...
-
-T = TypeVar("T", bound=ArtifactCard)
 
 class CardType:
     Data: "CardType"
@@ -103,7 +99,7 @@ class CardList:
 
 # Registry
 
-class DataCard(ArtifactCard):
+class DataCard:
     def __init__(  # pylint: disable=dangerous-default-value
         self,
         interface: DataInterface,
@@ -203,7 +199,7 @@ class ModelCardMetadata:
     def auditcard_uid(self) -> str:
         """Returns the runcard uid"""
 
-class ModelCard(ArtifactCard):
+class ModelCard:
     def __init__(
         self,
         interface: ModelInterface,
@@ -358,7 +354,7 @@ class ModelCard(ArtifactCard):
             String representation of the ModelCard.
         """
 
-class CardRegistry(Generic[T]):
+class CardRegistry:
     def __init__(self, registry_type: RegistryType) -> None:
         """Interface for connecting to any of the Card registries
 
@@ -462,7 +458,7 @@ class CardRegistry(Generic[T]):
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[Union[DataInterface, ModelInterface]] = None,
-    ) -> T:
+    ) -> Any:
         """Load a Card from the registry
 
         Args:
