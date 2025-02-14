@@ -24,6 +24,7 @@ use serde::{
 };
 use std::fmt;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use tracing::error;
 
 fn interface_from_metadata<'py>(
@@ -67,7 +68,6 @@ pub struct ModelCardMetadata {
 }
 
 #[pyclass]
-#[derive(Debug)]
 pub struct ModelCard {
     #[pyo3(get, set)]
     pub interface: Option<PyObject>,
@@ -98,6 +98,10 @@ pub struct ModelCard {
 
     #[pyo3(get)]
     pub to_onnx: bool,
+
+    pub rt: Option<Arc<tokio::runtime::Runtime>>,
+
+    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
 }
 
 #[pymethods]
@@ -152,6 +156,8 @@ impl ModelCard {
             metadata: ModelCardMetadata::default(),
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
+            rt: None,
+            fs: None,
         })
     }
 
@@ -387,6 +393,8 @@ impl FromPyObject<'_> for ModelCard {
             metadata,
             card_type,
             to_onnx,
+            rt: None,
+            fs: None,
         })
     }
 }
@@ -493,6 +501,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                     metadata,
                     card_type,
                     to_onnx,
+                    rt: None,
+                    fs: None,
                 })
             }
         }
