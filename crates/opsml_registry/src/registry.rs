@@ -188,6 +188,7 @@ impl CardRegistry {
 
                 // Update UUID
                 Self::set_uid(card, &mut args)?;
+
                 // Save artifacts
                 Self::save_card_artifacts(
                     card,
@@ -517,9 +518,15 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")
-            .unwrap()
+            .map_err(|e| {
+                error!("Failed to get registry card: {}", e);
+                RegistryError::Error("Failed to get registry card".to_string())
+            })?
             .extract::<Card>()
-            .unwrap();
+            .map_err(|e| {
+                error!("Failed to extract registry card: {}", e);
+                RegistryError::Error("Failed to extract registry card".to_string())
+            })?;
 
         registry.create_card(registry_card).await?;
 
