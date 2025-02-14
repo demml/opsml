@@ -2,6 +2,8 @@ from opsml.test import OpsmlTestServer
 from opsml.card import CardRegistry, RegistryType, RegistryMode, CardList, ModelCard
 from opsml.model import SklearnModel
 from opsml.data import PandasData
+from pathlib import Path
+import shutil
 
 
 def test_client_modelcard(random_forest_classifier: SklearnModel):
@@ -58,6 +60,19 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
         assert loaded_card.interface.preprocessor is not None
         assert loaded_card.interface.onnx_session.session is not None
         assert isinstance(loaded_card.interface.sample_data, PandasData)
+
+        # attempt to download all artifacts
+        loaded_card.download_artifacts()
+
+        # check that "card_artifacts" directory was created and contains 5 files
+
+        created_path = Path("card_artifacts")
+        assert created_path.exists()
+
+        assert len(list(created_path.iterdir())) == 5
+
+        # attempt to delete folder
+        shutil.rmtree("card_artifacts")
 
     # wrong uid being use to upload card
 
