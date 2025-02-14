@@ -212,7 +212,7 @@ impl DataCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Data.to_string(),
+            CardTable::Data,
             self.repository,
             self.name,
             self.version
@@ -326,7 +326,7 @@ impl ModelCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Model.to_string(),
+            CardTable::Model,
             self.repository,
             self.name,
             self.version
@@ -464,7 +464,7 @@ impl RunCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Run.to_string(),
+            CardTable::Run,
             self.repository,
             self.name,
             self.version
@@ -539,7 +539,7 @@ impl AuditCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Audit.to_string(),
+            CardTable::Audit,
             self.repository,
             self.name,
             self.version
@@ -639,7 +639,7 @@ impl PipelineCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Pipeline.to_string(),
+            CardTable::Pipeline,
             self.repository,
             self.name,
             self.version
@@ -736,7 +736,7 @@ impl ProjectCardRecord {
     pub fn uri(&self) -> PathBuf {
         let uri = format!(
             "{}/{}/{}/v{}",
-            CardTable::Project.to_string(),
+            CardTable::Project,
             self.repository,
             self.name,
             self.version
