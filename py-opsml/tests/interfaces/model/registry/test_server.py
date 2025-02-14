@@ -26,13 +26,9 @@ def test_server(random_forest_classifier: SklearnModel):
             tags=["foo:bar", "baz:qux"],
         )
 
-        print(f"python uid before: {card.uid}")
-
         reg.register_card(card)
-
-        print(f"python uid after: {card.uid}")
-
         cards = reg.list_cards()
+        cards.as_table()
 
         assert isinstance(cards, CardList)
         assert len(cards) == 1

@@ -243,18 +243,24 @@ impl ClientRegistry {
             card_type: card_type.clone(),
         };
 
-        let query_string = serde_qs::to_string(&key_request)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+        let query_string = serde_qs::to_string(&key_request).map_err(|e| {
+            error!("Failed to serialize query args {}", e);
+            RegistryError::Error(format!("Failed to serialize query args {}", e))
+        })?;
 
         let response = self
             .api_client
             .request_with_retry(route, RequestType::Get, None, Some(query_string), None)
-            .await?;
-
-        let key = response
-            .json::<ArtifactKey>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+            .map_err(|e| {
+                error!("Failed to get artifact key {}", e);
+                RegistryError::Error(format!("Failed to get artifact key {}", e))
+            })?;
+
+        let key = response.json::<ArtifactKey>().await.map_err(|e| {
+            error!("Failed to parse response {}", e);
+            RegistryError::Error(format!("Failed to parse response {}", e))
+        })?;
 
         let uid_key = uid_to_byte_key(uid)?;
 
