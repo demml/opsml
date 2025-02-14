@@ -302,6 +302,30 @@ impl ModelCard {
     fn __clear__(&mut self) {
         self.interface = None;
     }
+
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = ModelCardClientRecord {
+            created_at: None,
+            app_env: None,
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            contact: self.contact.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            datacard_uid: self.metadata.datacard_uid.clone(),
+            data_type: self.metadata.interface_metadata.data_type.to_string(),
+            model_type: self.metadata.interface_metadata.model_type.to_string(),
+            runcard_uid: self.metadata.runcard_uid.clone(),
+            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
+            task_type: self.metadata.interface_metadata.task_type.to_string(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(Card::Model(record))
+    }
 }
 
 impl ModelCard {
@@ -535,29 +559,5 @@ impl ModelCard {
         }
 
         Ok(())
-    }
-
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
-        let record = ModelCardClientRecord {
-            created_at: None,
-            app_env: None,
-            repository: self.repository.clone(),
-            name: self.name.clone(),
-            contact: self.contact.clone(),
-            version: self.version.clone(),
-            uid: self.uid.clone(),
-            tags: self.tags.clone(),
-            datacard_uid: self.metadata.datacard_uid.clone(),
-            data_type: self.metadata.interface_metadata.data_type.to_string(),
-            model_type: self.metadata.interface_metadata.model_type.to_string(),
-            runcard_uid: self.metadata.runcard_uid.clone(),
-            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
-            auditcard_uid: self.metadata.auditcard_uid.clone(),
-            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
-            task_type: self.metadata.interface_metadata.task_type.to_string(),
-            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-        };
-
-        Ok(Card::Model(record))
     }
 }

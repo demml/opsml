@@ -4,7 +4,7 @@ from opsml.model import SklearnModel
 
 
 def test_server(random_forest_classifier: SklearnModel):
-    with OpsmlTestServer() as _server:
+    with OpsmlTestServer(False) as _server:
         reg = CardRegistry(registry_type=RegistryType.Model)
 
         assert reg.registry_type == RegistryType.Model
@@ -26,13 +26,19 @@ def test_server(random_forest_classifier: SklearnModel):
             tags=["foo:bar", "baz:qux"],
         )
 
+        print(f"python uid before: {card.uid}")
+
         reg.register_card(card)
+
+        print(f"python uid after: {card.uid}")
 
         cards = reg.list_cards()
 
         assert isinstance(cards, CardList)
         assert len(cards) == 1
+        loaded_card = reg.load_card(card.uid)
 
-        reg.load_card(card.uid)
+        # wrong uid being use to upload card
 
-        # create modelcard and register it
+
+# create modelcard and register it

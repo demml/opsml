@@ -14,17 +14,21 @@ pub struct OpsmlTestServer {
     handle: Arc<Mutex<Option<JoinHandle<()>>>>,
     #[cfg(feature = "server")]
     runtime: Arc<Runtime>,
+
+    cleanup: bool,
 }
 
 #[pymethods]
 impl OpsmlTestServer {
     #[new]
-    fn new() -> Self {
+    #[pyo3(signature = (cleanup = true))]
+    fn new(cleanup: bool) -> Self {
         OpsmlTestServer {
             #[cfg(feature = "server")]
             handle: Arc::new(Mutex::new(None)),
             #[cfg(feature = "server")]
             runtime: Arc::new(Runtime::new().unwrap()),
+            cleanup,
         }
     }
 
@@ -93,7 +97,9 @@ impl OpsmlTestServer {
                 stop_server(handle).await;
             });
 
-            self.cleanup()?;
+            if self.cleanup {
+                self.cleanup()?;
+            }
 
             Ok(())
         }

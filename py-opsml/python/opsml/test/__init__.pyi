@@ -1,5 +1,5 @@
 class OpsmlTestServer:
-    def __init__(self) -> None:
+    def __init__(self, cleanup: bool = True) -> None:
         """Instantiates the test server."""
 
     def start_server(self) -> None:
