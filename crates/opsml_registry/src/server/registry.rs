@@ -292,6 +292,7 @@ pub mod server_logic {
                 uid: card.uid().to_string(),
                 version: card.version(),
                 encryption_key: key.encrypted_key,
+                uri: card.uri(),
             };
             Ok(response)
         }
