@@ -2,7 +2,7 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
-    use opsml_crypt::{decrypt_key, derive_encryption_key, encrypt_key, generate_salt};
+    use opsml_crypt::{decrypt_key, derive_encryption_key, encrypted_key, generate_salt};
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
@@ -419,12 +419,12 @@ pub mod server_logic {
 
             let uid_key = uid_to_byte_key(uid)?;
 
-            let encrypted_key = encrypt_key(&uid_key, &derived_key)?;
+            let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
 
             let artifact_key = ArtifactKey {
                 uid: uid.to_string(),
                 card_type: card_type.to_string(),
-                encrypt_key: encrypted_key,
+                encrypted_key: encrypted_key,
             };
 
             self.sql_client.insert_artifact_key(&artifact_key).await?;
@@ -445,7 +445,7 @@ pub mod server_logic {
 
             let uid_key = uid_to_byte_key(uid)?;
 
-            let decrypted_key = decrypt_key(&uid_key, &key.encrypt_key)?;
+            let decrypted_key = decrypt_key(&uid_key, &key.encrypted_key)?;
 
             Ok(decrypted_key)
         }

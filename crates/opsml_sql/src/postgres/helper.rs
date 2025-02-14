@@ -716,7 +716,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypt_key) VALUES ($1, $2, $3)",
+            "INSERT INTO {} (uid, card_type, encrypted_key) VALUES ($1, $2, $3)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -724,7 +724,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypt_key FROM {} WHERE uid = $1 AND card_type = $2",
+            "SELECT uid, card_type, encrypted_key FROM {} WHERE uid = $1 AND card_type = $2",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -732,7 +732,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_update_query() -> String {
         format!(
-            "UPDATE {} SET encrypt_key = $1, created_at = NOW() WHERE uid = $2 AND card_type = $3",
+            "UPDATE {} SET encrypted_key = $1, created_at = NOW() WHERE uid = $2 AND card_type = $3",
             CardTable::ArtifactKey
         )
         .to_string()

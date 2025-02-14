@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     
     uid TEXT PRIMARY KEY,
     card_type TEXT,
-    encrypt_key TEXT,
+    encrypted_key TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

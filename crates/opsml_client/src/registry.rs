@@ -258,7 +258,7 @@ impl ClientRegistry {
 
         let uid_key = uid_to_byte_key(uid)?;
 
-        let decrypted_key = decrypt_key(&uid_key, &key.encrypt_key)?;
+        let decrypted_key = decrypt_key(&uid_key, &key.encrypted_key)?;
 
         Ok(decrypted_key)
     }

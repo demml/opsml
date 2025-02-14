@@ -86,7 +86,7 @@ pub fn generate_salt() -> [u8; 16] {
 /// # Returns
 ///
 /// A vector containing the nonce and the encrypted key
-pub fn encrypt_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptError> {
+pub fn encrypted_key(master_key: &[u8], key: &[u8]) -> Result<Vec<u8>, CryptError> {
     let aes_key = std::panic::catch_unwind(|| Key::<Aes256Gcm>::from_slice(master_key));
 
     if let Err(panic) = aes_key {
@@ -180,7 +180,7 @@ mod tests {
         assert_eq!(derived_key.len(), 32);
 
         // encrypt and decrypt derived key
-        let encrypted_key = encrypt_key(&master_key, &derived_key).unwrap();
+        let encrypted_key = encrypted_key(&master_key, &derived_key).unwrap();
         let decrypted_key = decrypt_key(&master_key, &encrypted_key).unwrap();
 
         assert_eq!(derived_key, decrypted_key.as_slice());

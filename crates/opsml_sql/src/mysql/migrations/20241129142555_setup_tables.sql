@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS opsml_users (
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid VARCHAR(64) PRIMARY KEY,
     card_type VARCHAR(32),
-    encrypt_key VARBINARY(255),
+    encrypted_key VARBINARY(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

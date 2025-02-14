@@ -1010,7 +1010,7 @@ impl SqlClient for SqliteClient {
         sqlx::query(&query)
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
-            .bind(key.encrypt_key.clone())
+            .bind(key.encrypted_key.clone())
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1034,7 +1034,7 @@ impl SqlClient for SqliteClient {
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_update_query();
         sqlx::query(&query)
-            .bind(key.encrypt_key.clone())
+            .bind(key.encrypted_key.clone())
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
             .execute(&self.pool)
@@ -2030,12 +2030,12 @@ mod tests {
 
         let client = SqliteClient::new(&config).await.unwrap();
 
-        let encrypt_key: Vec<u8> = (0..32).collect();
+        let encrypted_key: Vec<u8> = (0..32).collect();
 
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
-            encrypt_key: encrypt_key.clone(),
+            encrypted_key: encrypted_key.clone(),
         };
 
         client.insert_artifact_key(&key).await.unwrap();
@@ -2048,11 +2048,11 @@ mod tests {
         assert_eq!(key.uid, "550e8400-e29b-41d4-a716-446655440000");
 
         // update key
-        let encrypt_key: Vec<u8> = (32..64).collect();
+        let encrypted_key: Vec<u8> = (32..64).collect();
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
-            encrypt_key: encrypt_key.clone(),
+            encrypted_key: encrypted_key.clone(),
         };
 
         client.update_artifact_key(&key).await.unwrap();
@@ -2062,7 +2062,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(key.encrypt_key, encrypt_key);
+        assert_eq!(key.encrypted_key, encrypted_key);
     }
 
     #[tokio::test]
