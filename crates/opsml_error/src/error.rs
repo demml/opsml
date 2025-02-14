@@ -78,6 +78,9 @@ pub enum UtilError {
 
     #[error("Failed to write to file")]
     WriteError,
+
+    #[error("Failed to read to file")]
+    ReadError,
 }
 
 impl From<UtilError> for PyErr {
