@@ -94,13 +94,94 @@ pub mod server_logic {
             }
         }
 
-        pub async fn create_card(&self, card: Card) -> Result<(), RegistryError> {
+        async fn get_next_version(
+            &mut self,
+            name: &str,
+            repository: &str,
+            version: Option<String>,
+            version_type: VersionType,
+            pre_tag: Option<String>,
+            build_tag: Option<String>,
+        ) -> Result<Version, RegistryError> {
+            let versions = self
+                .sql_client
+                .get_versions(&self.table_name, name, repository, version)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
+
+            let version = versions.first().ok_or_else(|| {
+                error!("Failed to get first version");
+                RegistryError::Error("Failed to get first version".to_string())
+            })?;
+
+            let args = VersionArgs {
+                version: version.to_string(),
+                version_type,
+                pre: pre_tag.map(|s| s.to_string()),
+                build: build_tag.map(|s| s.to_string()),
+            };
+
+            let bumped_version = VersionValidator::bump_version(&args).map_err(|e| {
+                error!("Failed to bump version: {}", e);
+                RegistryError::Error("Failed to bump version".to_string())
+            })?;
+
+            Ok(bumped_version)
+        }
+
+        async fn create_artifact_key(
+            &mut self,
+            uid: &str,
+            card_type: &str,
+        ) -> Result<ArtifactKey, RegistryError> {
+            let salt = generate_salt();
+
+            let derived_key = derive_encryption_key(
+                &self.storage_settings.encryption_key,
+                &salt,
+                card_type.as_bytes(),
+            )?;
+
+            let uid_key = uid_to_byte_key(uid)?;
+
+            let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
+
+            let artifact_key = ArtifactKey {
+                uid: uid.to_string(),
+                card_type: card_type.to_string(),
+                encrypted_key: encrypted_key,
+            };
+
+            self.sql_client.insert_artifact_key(&artifact_key).await?;
+
+            Ok(artifact_key)
+        }
+
+        pub async fn create_card(
+            &mut self,
+            card: Card,
+            version: Option<String>,
+            version_type: VersionType,
+            pre_tag: Option<String>,
+            build_tag: Option<String>,
+        ) -> Result<CreateCardResponse, RegistryError> {
+            let version = self
+                .get_next_version(
+                    card.name(),
+                    card.repository(),
+                    version,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                )
+                .await?;
+
             let card = match card {
                 Card::Data(client_card) => {
                     let server_card = DataCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.contact,
                         client_card.tags,
                         client_card.data_type,
@@ -116,7 +197,7 @@ pub mod server_logic {
                     let server_card = ModelCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.contact,
                         client_card.tags,
                         client_card.datacard_uid,
@@ -136,7 +217,7 @@ pub mod server_logic {
                     let server_card = ProjectCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.project_id,
                         client_card.username,
                     );
@@ -147,7 +228,7 @@ pub mod server_logic {
                     let server_card = RunCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.contact,
                         client_card.tags,
                         client_card.datacard_uids,
@@ -165,7 +246,7 @@ pub mod server_logic {
                     let server_card = PipelineCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.contact,
                         client_card.tags,
                         client_card.pipeline_code_uri,
@@ -181,7 +262,7 @@ pub mod server_logic {
                     let server_card = AuditCardRecord::new(
                         client_card.name,
                         client_card.repository,
-                        client_card.version.parse().unwrap(),
+                        version,
                         client_card.contact,
                         client_card.tags,
                         client_card.approved,
@@ -199,7 +280,20 @@ pub mod server_logic {
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to create card {}", e)))?;
 
-            Ok(())
+            let key = self
+                .create_artifact_key(card.uid(), &card.card_type())
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to create artifact key {}", e))
+                })?;
+
+            let response = CreateCardResponse {
+                registered: true,
+                uid: card.uid().to_string(),
+                version: card.version(),
+                encryption_key: key.encrypted_key,
+            };
+            Ok(response)
         }
 
         pub async fn update_card(&self, card: Card) -> Result<(), RegistryError> {
@@ -402,34 +496,6 @@ pub mod server_logic {
                 .check_uid_exists(uid, &self.table_name)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to check uid exists {}", e)))
-        }
-
-        pub async fn create_artifact_key(
-            &mut self,
-            uid: &str,
-            card_type: &CardType,
-        ) -> Result<Vec<u8>, RegistryError> {
-            let salt = generate_salt();
-
-            let derived_key = derive_encryption_key(
-                &self.storage_settings.encryption_key,
-                &salt,
-                card_type.as_bytes(),
-            )?;
-
-            let uid_key = uid_to_byte_key(uid)?;
-
-            let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
-
-            let artifact_key = ArtifactKey {
-                uid: uid.to_string(),
-                card_type: card_type.to_string(),
-                encrypted_key: encrypted_key,
-            };
-
-            self.sql_client.insert_artifact_key(&artifact_key).await?;
-
-            Ok(derived_key.into())
         }
 
         pub async fn get_artifact_key(

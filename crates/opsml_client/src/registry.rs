@@ -88,7 +88,7 @@ impl ClientRegistry {
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<CreateCardResponse, RegistryError> {
         // create version request
         let version_request = CardVersionRequest {
             name: card.name().to_string(),
@@ -134,7 +134,7 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
 
         if created.registered {
-            Ok(())
+            Ok(created)
         } else {
             error!("Failed to create card");
             Err(RegistryError::Error("Failed to create card".to_string()))

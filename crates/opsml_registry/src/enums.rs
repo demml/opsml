@@ -2,7 +2,7 @@ use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::CardType;
-use opsml_types::contracts::{Card, CardQueryArgs};
+use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
 use opsml_types::*;
 use tracing::{debug, instrument};
 
@@ -96,17 +96,18 @@ impl OpsmlRegistry {
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
-    ) -> Result<(), RegistryError> {
+    ) -> Result<CreateCardResponse, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
                 client_registry
                     .create_card(card, version, version_type, pre_tag, build_tag)
-                    .await?;
-                Ok(())
+                    .await
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
-                server_registry.create_card(card).await?;
+                server_registry
+                    .create_card(card, version, version_type, pre_tag, build_tag)
+                    .await?;
                 Ok(())
             }
         }
