@@ -10,6 +10,7 @@ use pyo3::IntoPyObjectExt;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::PathBuf;
+use tracing::error;
 use uuid::Uuid;
 
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
@@ -281,6 +282,17 @@ pub fn uid_to_byte_key(uid: &str) -> Result<[u8; 32], UtilError> {
     uid_key[..16].copy_from_slice(uuid.as_bytes());
 
     Ok(uid_key)
+}
+
+pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
+    let tmp_dir = tempfile::TempDir::new().map_err(|e| {
+        error!("Failed to create temporary directory: {}", e);
+        UtilError::Error("Failed to create temporary directory".to_string())
+    })?;
+
+    let tmp_path = tmp_dir.into_path();
+
+    Ok(tmp_path)
 }
 
 #[cfg(test)]

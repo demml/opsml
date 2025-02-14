@@ -12,7 +12,7 @@ use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::contracts::{Card, ModelCardClientRecord};
 use opsml_types::{ModelInterfaceType, SaveName, Suffix};
-use opsml_utils::PyHelperFuncs;
+use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
@@ -240,16 +240,9 @@ impl ModelCard {
         preprocessor: bool,
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
-        //// download assets from uri
-        let tmp_dir = tempfile::TempDir::new().map_err(|e| {
-            error!("Failed to create temporary directory: {}", e);
-            OpsmlError::new_err("Failed to create temporary directory".to_string())
-        })?;
-
-        let tmp_path = tmp_dir.into_path();
-
+        let tmp_path = create_tmp_path()?;
         // download assets
-        self._download(
+        self.download_select_artifacts(
             &tmp_path,
             model,
             onnx,
@@ -273,6 +266,14 @@ impl ModelCard {
             None,
         )?;
 
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (path=None))]
+    pub fn download_artifacts(&mut self, path: Option<PathBuf>) -> PyResult<()> {
+        let path = path.unwrap_or_else(|| PathBuf::from("card_artifacts"));
+        self.download_all_artifacts(&path)?;
         Ok(())
     }
 
@@ -525,7 +526,36 @@ impl<'de> Deserialize<'de> for ModelCard {
 }
 
 impl ModelCard {
-    pub fn _download(
+    fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
+        if self.metadata.decryption_key.is_none() {
+            return Err(CardError::Error("Decryption key not found".to_string()));
+        } else {
+            Ok(self.metadata.decryption_key.clone().unwrap())
+        }
+    }
+    fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
+        let rt = self.rt.clone().unwrap();
+        let fs = self.fs.clone().unwrap();
+
+        let decrypt_key = self.get_decryption_key()?;
+        let uri = self.uri();
+
+        rt.block_on(async {
+            fs.lock()
+                .map_err(|e| CardError::Error(format!("Failed to unlock fs: {}", e)))?
+                .get(&lpath, &uri, true)
+                .await
+                .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
+
+            Ok::<(), CardError>(())
+        })?;
+
+        decrypt_directory(&lpath, &decrypt_key)?;
+
+        Ok(())
+    }
+
+    fn download_select_artifacts(
         &mut self,
         tmp_path: &Path,
         model: bool,
@@ -558,7 +588,10 @@ impl ModelCard {
                     "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+                fs.lock()
+                    .map_err(|e| CardError::Error(format!("Failed to unlock fs: {}", e)))?
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             if onnx {
