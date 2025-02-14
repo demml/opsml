@@ -242,6 +242,7 @@ impl CardRegistry {
                     &mut self.registry,
                     card,
                     &mut self.fs,
+                    &self.runtime,
                     interface,
                 )
                 .await
@@ -374,35 +375,6 @@ impl CardRegistry {
         Ok(())
     }
 
-    #[instrument(skip_all)]
-    fn check_dependencies(py: Python, card: &CardEnum) -> Result<(), RegistryError> {
-        if let CardEnum::Model(modelcard) = card {
-            if modelcard.to_onnx {
-                let find_spec = py
-                    .import("importlib")
-                    .unwrap()
-                    .getattr("util")
-                    .unwrap()
-                    .getattr("find_spec")
-                    .unwrap();
-
-                let exists = find_spec.call1(("onnx",)).unwrap().is_none();
-
-                if !exists {
-                    return Err(RegistryError::Error(
-                    "To convert a model to onnx, please install onnx via one of the extras
-                    (opsml[sklearn_onnx], opsml[tf_onnx], opsml[torch_onnx]) or set to_onnx to False.
-                    ".to_string(),
-                ));
-                }
-            }
-        }
-
-        debug!("Checked dependencies");
-
-        Ok(())
-    }
-
     /// Save card artifacts to storage
     /// Using a runtime, this method with
     /// (1) create an artifact key to be used to encrypt data
@@ -523,6 +495,7 @@ impl CardRegistry {
         registry: &mut OpsmlRegistry,
         card: &Card,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
+        rt: &Arc<tokio::runtime::Runtime>,
         interface: Option<&Bound<'py, PyAny>>,
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
         let decryption_key = registry
@@ -558,8 +531,15 @@ impl CardRegistry {
             UtilError::ReadError
         })?;
 
-        let card =
-            Self::card_from_string(py, json_string, registry_type, interface, decryption_key)?;
+        let card = Self::card_from_string(
+            py,
+            json_string,
+            registry_type,
+            interface,
+            decryption_key,
+            fs,
+            rt,
+        )?;
 
         Ok(card)
     }
@@ -570,6 +550,8 @@ impl CardRegistry {
         registry_type: &RegistryType,
         interface: Option<&Bound<'py, PyAny>>,
         decryption_key: Vec<u8>,
+        fs: &mut Arc<Mutex<FileSystemStorage>>,
+        rt: &Arc<tokio::runtime::Runtime>,
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
         let card = match registry_type {
             RegistryType::Model => {
@@ -579,6 +561,8 @@ impl CardRegistry {
                         RegistryError::Error(e.to_string())
                     })?;
                 card.metadata.decryption_key = Some(decryption_key.to_vec());
+                card.fs = Some(fs.clone());
+                card.rt = Some(rt.clone());
 
                 card.into_bound_py_any(py).map_err(|e| {
                     error!("Failed to convert card to bound: {}", e);

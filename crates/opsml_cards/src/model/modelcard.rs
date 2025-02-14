@@ -1,4 +1,5 @@
 use crate::BaseArgs;
+use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
 use opsml_interfaces::SaveKwargs;
@@ -7,7 +8,6 @@ use opsml_interfaces::{
     XGBoostModel,
 };
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
-use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::contracts::{Card, ModelCardClientRecord};
@@ -230,7 +230,7 @@ impl ModelCard {
     #[pyo3(signature = (model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
-        &self,
+        &mut self,
         py: Python,
         model: bool,
         onnx: bool,
@@ -524,28 +524,9 @@ impl<'de> Deserialize<'de> for ModelCard {
 }
 
 impl ModelCard {
-    async fn _download_model(
-        &self,
-        lpath: &Path,
-        rpath: &Path,
-        fs: &mut FileSystemStorage,
-    ) -> Result<(), CardError> {
-        fs.get(
-            &if rpath.extension().is_some() {
-                lpath.join(&rpath)
-            } else {
-                lpath.to_path_buf()
-            },
-            &self.uri().join(&rpath),
-            rpath.extension().is_none(),
-        )
-        .await?;
-
-        Ok(())
-    }
     pub fn _download(
-        &self,
-        path: &Path,
+        &mut self,
+        tmp_path: &Path,
         model: bool,
         _onnx: bool,
         _drift_profile: bool,
@@ -553,22 +534,33 @@ impl ModelCard {
         _preprocessor: bool,
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = tokio::runtime::Runtime::new().map_err(|e| {
-            error!("Failed to create tokio runtime: {}", e);
-            CardError::Error(e.to_string())
-        })?;
-
-        let config = OpsmlConfig::default();
-        let mut storage_settings = config.storage_settings()?.clone();
+        let rt = self.rt.clone().unwrap();
+        let fs = self.fs.clone().unwrap();
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
 
-        if model {
-            rt.block_on(async {
-                let mut fs = FileSystemStorage::new(&mut storage_settings).await?;
-                self._download_model(path, &save_metadata.model_uri, &mut fs)
-                    .await
-            })?;
-        }
+        // raise error if decryption key is not found
+        let decrypt_key = if self.metadata.decryption_key.is_none() {
+            return Err(CardError::Error("Decryption key not found".to_string()));
+        } else {
+            self.metadata.decryption_key.clone().unwrap()
+        };
+
+        rt.block_on(async {
+            let uri = self.uri();
+
+            if model {
+                let rpath = uri.join(&save_metadata.model_uri);
+                let lpath = tmp_path.join(&save_metadata.model_uri);
+                let recursive = rpath.extension().is_some();
+                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+            }
+
+            Ok::<(), CardError>(())
+        })?;
+
+        decrypt_directory(&tmp_path, &decrypt_key)?;
+
+        // decrypt
 
         Ok(())
     }
