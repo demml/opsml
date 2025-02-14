@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
-use opsml_client::registry;
 use opsml_colors::Colorize;
 use opsml_crypt::{decrypt_directory, decrypt_key, encrypt_directory};
 use opsml_error::error::OpsmlError;
@@ -23,7 +22,6 @@ use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
-use uuid::Uuid;
 
 fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, RegistryError> {
     obj.getattr(field)
@@ -435,8 +433,7 @@ impl CardRegistry {
         args: &CardArgs,
     ) -> Result<(), RegistryError> {
         // create temp path for saving
-
-        let encrypted_key = Self::get_decrypt_key(&args.uid, &args.encryption_key).await?;
+        let encryption_key = Self::get_decrypt_key(&args.uid, &args.encryption_key).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -451,11 +448,8 @@ impl CardRegistry {
                 RegistryError::Error(e.to_string())
             })?;
 
-        encrypt_directory(&tmp_path, &encrypted_key)?;
-
-        let uri = card.getattr("uri").unwrap().extract::<PathBuf>().unwrap();
-
-        fs.put(&tmp_path, &uri, true).await?;
+        encrypt_directory(&tmp_path, &encryption_key)?;
+        fs.put(&tmp_path, &args.uri, true).await?;
 
         println!("✓ {}", Colorize::green("saved card artifacts to storage"));
 
