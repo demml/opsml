@@ -21,9 +21,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_data_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
-
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- ModelSchema
@@ -49,8 +47,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_model_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- RunSchema
@@ -74,8 +71,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     project VARCHAR(64),
     artifact_uris JSON,
     compute_environment JSON,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_run_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- AuditSchema
@@ -97,8 +93,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     runcard_uids JSON,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_audit_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- PipelineSchema
@@ -120,8 +115,7 @@ CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     runcard_uids JSON,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_pipeline_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- ProjectSchema
@@ -137,8 +131,7 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     pre_tag VARCHAR(16),
     build_tag VARCHAR(16),
     version VARCHAR(64),
-    username VARCHAR(255) NOT NULL DEFAULT 'guest',
-    storage_uri VARCHAR(255) GENERATED ALWAYS AS ('opsml_project_registry'|| '/' || repository || '/' || name || '/v' || version) STORED
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 -- MetricSchema
@@ -200,6 +193,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     uid VARCHAR(64) PRIMARY KEY,
     card_type VARCHAR(32),
     encrypted_key VARBINARY(255),
+    storage_key VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
