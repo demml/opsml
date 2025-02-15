@@ -964,4 +964,5 @@ pub struct ArtifactKey {
     pub uid: String,
     pub card_type: String,
     pub encrypted_key: Vec<u8>,
+    pub storage_uri: String,
 }

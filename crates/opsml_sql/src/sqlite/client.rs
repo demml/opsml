@@ -1061,6 +1061,26 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: ArtifactKey = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.repository.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(key)
+    }
 }
 
 #[cfg(test)]

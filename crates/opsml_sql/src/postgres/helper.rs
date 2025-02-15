@@ -745,4 +745,27 @@ impl PostgresQueryHelper {
         )
         .to_string()
     }
+
+    pub fn get_load_card_query(
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<String, SqlError> {
+        // subquery 1 - query_cards_query
+
+        let query_cards_query = PostgresQueryHelper::get_query_cards_query(table, query_args)?;
+
+        let query = format!(
+            "WITH query_cards AS (
+                {}
+            )
+            SELECT a.uid, a.storage_uri, b.encrypted_key
+            FROM query_cards as a
+            INNER JOIN (SELECT * FROM {} WHERE uid = query_cards.uid) as b 
+                ON query_cards.uid = b.uid;",
+            query_cards_query,
+            CardTable::ArtifactKey
+        );
+
+        Ok(query)
+    }
 }
