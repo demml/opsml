@@ -16,6 +16,7 @@ use opsml_types::{cards::*, contracts::*};
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::{debug, error, instrument};
 
@@ -222,6 +223,7 @@ pub async fn create_card(
         state.storage_settings.encryption_key.clone(),
         &uid,
         &card_type,
+        &card_uri,
     )
     .await
     .map_err(|e| {
@@ -238,7 +240,7 @@ pub async fn create_card(
         uid,
         version: version.to_string(),
         encryption_key: key.encrypted_key,
-        uri: card_uri,
+        storage_key: PathBuf::from(card_uri),
     }))
 }
 

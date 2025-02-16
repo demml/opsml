@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
 use opsml_colors::Colorize;
@@ -43,8 +41,6 @@ pub struct CardArgs {
     pub repository: String,
     pub version: String,
     pub card_type: CardType,
-    pub uri: PathBuf,
-    pub encryption_key: Vec<u8>,
 }
 
 #[pyclass]
@@ -195,7 +191,7 @@ impl CardRegistry {
                 Self::update_card_with_server_response(&card_response, card, &mut args)?;
 
                 // Save artifacts
-                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &args).await?;
+                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &card_response).await?;
 
                 Ok(())
             })
@@ -273,13 +269,13 @@ impl CardRegistry {
                 error!("Failed to set version: {}", e);
                 RegistryError::Error("Failed to set version".to_string())
             })?;
-        args.version = response.version.clone();
+        //args.version = response.version.clone();
 
         // update path
-        args.uri = response.uri.clone();
+        //args.uri = response.storage_key.clone();
 
         // update encryption key
-        args.encryption_key = response.encryption_key.clone();
+        //args.encryption_key = response.encryption_key.clone();
 
         Ok(())
     }
@@ -308,8 +304,6 @@ impl CardRegistry {
             repository,
             version,
             card_type,
-            uri: PathBuf::new(),
-            encryption_key: vec![],
         })
     }
     fn match_registry_type(card_type: &CardType, registry_type: &RegistryType) -> bool {
@@ -395,10 +389,11 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         save_kwargs: Option<SaveKwargs>,
-        args: &CardArgs,
+        card_response: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // create temp path for saving
-        let encryption_key = Self::get_decrypt_key(&args.uid, &args.encryption_key).await?;
+        let encryption_key =
+            Self::get_decrypt_key(&card_response.uid, &card_response.encryption_key).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -414,7 +409,10 @@ impl CardRegistry {
             })?;
 
         encrypt_directory(&tmp_path, &encryption_key)?;
-        fs.lock().unwrap().put(&tmp_path, &args.uri, true).await?;
+        fs.lock()
+            .unwrap()
+            .put(&tmp_path, &card_response.storage_key, true)
+            .await?;
 
         println!("✓ {}", Colorize::green("saved card artifacts to storage"));
 
@@ -497,6 +495,10 @@ impl CardRegistry {
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         rt: &Arc<tokio::runtime::Runtime>,
         interface: Option<&Bound<'py, PyAny>>,
+        // given uid or (name, repo, versiont)
+        // get card uid
+        // get artifact_key from registry for a uid
+        // get storage_uri
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
         let decryption_key = registry
             .get_artifact_key(card.uid(), &card.card_type())

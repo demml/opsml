@@ -20,6 +20,7 @@ pub mod server_logic {
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
+    use std::path::PathBuf;
     use tracing::error;
 
     #[derive(Debug)]
@@ -294,7 +295,7 @@ pub mod server_logic {
                 uid: card.uid().to_string(),
                 version: card.version(),
                 encryption_key: key.encrypted_key,
-                uri: card.uri(),
+                storage_key: PathBuf::from(card.uri()),
             };
             Ok(response)
         }
