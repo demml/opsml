@@ -93,35 +93,7 @@ pub struct CardQueryArgs {
     pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ListCardRequest {
-    pub uid: Option<String>,
-    pub name: Option<String>,
-    pub repository: Option<String>,
-    pub version: Option<String>,
-    pub max_date: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub limit: Option<i32>,
-    pub sort_by_timestamp: Option<bool>,
     pub registry_type: RegistryType,
-}
-
-impl Default for ListCardRequest {
-    fn default() -> Self {
-        Self {
-            uid: None,
-            name: None,
-            repository: None,
-            version: None,
-            max_date: None,
-            tags: None,
-            limit: None,
-            sort_by_timestamp: None,
-            registry_type: RegistryType::Data,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -116,23 +116,13 @@ pub async fn get_page(
 
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<ListCardRequest>,
+    Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
-    let card_args = CardQueryArgs {
-        name: params.name,
-        repository: params.repository,
-        version: params.version,
-        uid: params.uid,
-        max_date: params.max_date,
-        tags: params.tags,
-        limit: params.limit,
-        sort_by_timestamp: params.sort_by_timestamp,
-    };
 
     let cards = state
         .sql_client
-        .query_cards(&table, &card_args)
+        .query_cards(&table, &params)
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);

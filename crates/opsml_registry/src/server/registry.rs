@@ -593,6 +593,7 @@ pub mod server_logic {
                     tags: None,
                     limit: None,
                     sort_by_timestamp: None,
+                    ..Default::default()
                 };
                 let cards = client
                     .query_cards(&CardTable::Data, &query_args)

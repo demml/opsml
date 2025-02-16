@@ -45,20 +45,6 @@ impl ClientRegistry {
     }
 
     pub async fn list_cards(&mut self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
-        // convert args struct to hasmap
-
-        let args = ListCardRequest {
-            uid: args.uid,
-            name: args.name,
-            repository: args.repository,
-            version: args.version,
-            max_date: args.max_date,
-            tags: args.tags,
-            limit: args.limit,
-            sort_by_timestamp: args.sort_by_timestamp,
-            registry_type: self.registry_type.clone(),
-        };
-
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
