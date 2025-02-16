@@ -475,6 +475,27 @@ pub async fn delete_card(
     Ok(Json(UidResponse { exists: false }))
 }
 
+#[instrument(skip_all)]
+pub async fn load_card(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<CardQueryArgs>,
+) -> Result<Json<opsml_sql::schemas::ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+    let key = state
+        .sql_client
+        .get_card_key_for_loading(&table, &params)
+        .await
+        .map_err(|e| {
+            error!("Failed to get card key for loading: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+    Ok(Json(key))
+}
+
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -490,6 +511,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
             .route(&format!("{}/card/list", prefix), get(list_cards))
             .route(&format!("{}/card/create", prefix), post(create_card))
+            .route(&format!("{}/card/load", prefix), get(load_card))
             .route(&format!("{}/card/update", prefix), post(update_card))
             .route(&format!("{}/card/delete", prefix), delete(delete_card))
     }));
