@@ -758,7 +758,7 @@ impl PostgresQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT b.uid, b.encrypted_key, b.storage_key
+            SELECT b.uid, b.card_type, b.encrypted_key, b.storage_key
             FROM query_cards as a
             INNER JOIN (SELECT * FROM {} WHERE uid = query_cards.uid) as b 
                 ON query_cards.uid = b.uid;",
