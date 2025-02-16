@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     name TEXT,
     repository TEXT,
-    project_id INTEGER PRIMARY KEY,
+    project_id INTEGER PRIMARY KEY AUTOINCREMENT,
     major INT NOT NULL,
     minor INT NOT NULL,
     patch INT NOT NULL,
