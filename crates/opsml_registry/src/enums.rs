@@ -127,4 +127,12 @@ impl OpsmlRegistry {
             }
         }
     }
+
+    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<Card, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => client_registry.load_card(args).await,
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.load_card(args).await,
+        }
+    }
 }
