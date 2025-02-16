@@ -18,7 +18,7 @@ use sqlx::{
     types::chrono::NaiveDateTime,
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::{debug, info, instrument};
+use tracing::{debug, error, info, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
@@ -167,19 +167,26 @@ impl SqlClient for SqliteClient {
             .bind(repository)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .map_err(|e| {
+                error!("{}", e);
+                SqlError::QueryError(format!("{}", e))
+            })?;
 
         let versions = cards
             .iter()
             .map(|c| {
-                c.to_version()
-                    .map_err(|e| SqlError::VersionError(format!("{}", e)))
+                c.to_version().map_err(|e| {
+                    error!("{}", e);
+                    SqlError::VersionError(format!("{}", e))
+                })
             })
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        VersionValidator::sort_semver_versions(versions, true)
-            .map_err(|e| SqlError::VersionError(format!("{}", e)))
+        VersionValidator::sort_semver_versions(versions, true).map_err(|e| {
+            error!("{}", e);
+            SqlError::VersionError(format!("{}", e))
+        })
     }
 
     /// Query cards based on the query arguments
