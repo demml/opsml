@@ -718,9 +718,9 @@ impl SqliteQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT b.uid, b.card_type, b.encrypted_key, b.storage_key
-            FROM query_cards as a
-            INNER JOIN (SELECT * FROM {} WHERE uid IN (SELECT uid FROM query_cards)) as b 
+            SELECT a.uid, a.card_type, a.encrypted_key, a.storage_key
+            FROM {} as a
+            INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",
             query_cards_query,
             CardTable::ArtifactKey

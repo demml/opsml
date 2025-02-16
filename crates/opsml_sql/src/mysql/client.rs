@@ -1062,8 +1062,12 @@ impl SqlClient for MySqlClient {
 
         let key: ArtifactKey = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.name.as_ref())
             .bind(query_args.name.as_ref())
             .bind(query_args.repository.as_ref())
+            .bind(query_args.repository.as_ref())
+            .bind(query_args.max_date.as_ref())
             .bind(query_args.max_date.as_ref())
             .bind(query_args.limit.unwrap_or(1))
             .fetch_one(&self.pool)
@@ -2010,5 +2014,37 @@ mod tests {
             .unwrap();
 
         assert_eq!(result, "guest");
+    }
+
+    #[tokio::test]
+    async fn test_mysql_get_load_card_key() {
+        let client = db_client().await;
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+        let encrypted_key: Vec<u8> = (0..32).collect();
+        let key = ArtifactKey {
+            uid: data_card.uid.clone(),
+            card_type: CardType::Data.to_string(),
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let query_args = CardQueryArgs {
+            uid: Some(data_card.uid.clone()),
+            limit: Some(1),
+            ..Default::default()
+        };
+
+        let key = client
+            .get_card_key_for_loading(&CardTable::Data, &query_args)
+            .await
+            .unwrap();
+
+        assert_eq!(key.uid, data_card.uid);
+        assert_eq!(key.encrypted_key, encrypted_key);
     }
 }
