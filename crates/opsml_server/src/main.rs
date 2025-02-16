@@ -417,7 +417,7 @@ mod tests {
     async fn test_opsml_server_list_cards() {
         let helper = TestHelper::new().await;
 
-        let args = ListCardRequest {
+        let args = CardQueryArgs {
             uid: None,
             name: None,
             repository: None,
@@ -445,7 +445,7 @@ mod tests {
 
         assert_eq!(card_results.len(), 10);
 
-        let args = ListCardRequest {
+        let args = CardQueryArgs {
             uid: None,
             name: None,
             repository: Some("repo1".to_string()),
@@ -519,7 +519,7 @@ mod tests {
         assert!(create_response.registered);
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Data,
             ..Default::default()
@@ -680,7 +680,7 @@ mod tests {
         );
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Model,
             ..Default::default()
@@ -814,7 +814,7 @@ mod tests {
         assert!(create_response.registered);
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Run,
             ..Default::default()
@@ -946,7 +946,7 @@ mod tests {
         assert!(create_response.registered);
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Pipeline,
             ..Default::default()
@@ -1076,7 +1076,7 @@ mod tests {
         assert!(create_response.registered);
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Audit,
             ..Default::default()
@@ -1206,7 +1206,7 @@ mod tests {
         assert!(create_response.registered);
 
         // get card by uid
-        let list_cards = ListCardRequest {
+        let list_cards = CardQueryArgs {
             uid: Some(create_response.uid),
             registry_type: RegistryType::Project,
             ..Default::default()

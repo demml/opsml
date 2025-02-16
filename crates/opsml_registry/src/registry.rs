@@ -139,6 +139,7 @@ impl CardRegistry {
             tags,
             limit: Some(limit),
             sort_by_timestamp,
+            registry_type: self.registry_type.clone(),
         };
 
         let cards = self
