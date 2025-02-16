@@ -5,7 +5,6 @@ use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use semver::Version;
-use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::{error, instrument};
 
