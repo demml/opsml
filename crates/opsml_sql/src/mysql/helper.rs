@@ -627,7 +627,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypted_key) VALUES (?, ?, ?)",
+            "INSERT INTO {} (uid, card_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -635,7 +635,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypted_key FROM {} WHERE uid = ? AND card_type = ?",
+            "SELECT uid, card_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND card_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -669,7 +669,7 @@ impl MySQLQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.storage_uri, b.encrypted_key
+            SELECT b.uid, b.card_type, b.encrypted_key, b.storage_key
             FROM query_cards as a
             INNER JOIN (SELECT * FROM {} WHERE uid = query_cards.uid) as b 
                 ON query_cards.uid = b.uid;",
