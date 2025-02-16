@@ -349,6 +349,24 @@ impl SqlClient for SqlClientEnum {
             }
         }
     }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+        }
+    }
 }
 
 pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
