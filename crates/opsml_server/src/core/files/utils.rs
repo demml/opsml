@@ -18,6 +18,7 @@ pub async fn create_artifact_key(
     encryption_key: Vec<u8>,
     uid: &str,
     card_type: &str,
+    storage_key: &str,
 ) -> Result<ArtifactKey, ApiError> {
     debug!("Creating artifact key for: {:?}", uid);
     let salt = generate_salt();
@@ -38,6 +39,7 @@ pub async fn create_artifact_key(
         uid: uid.to_string(),
         card_type: card_type.to_string(),
         encrypted_key,
+        storage_key: storage_key.to_string(),
     };
 
     // clone the artifact_key before moving it into the async block
