@@ -131,8 +131,7 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     pre_tag VARCHAR(16),
     build_tag VARCHAR(16),
     version VARCHAR(64),
-    username TEXT NOT NULL DEFAULT 'guest',
-    storage_uri TEXT
+    username TEXT NOT NULL DEFAULT 'guest'
 );
 
 -- MetricSchema

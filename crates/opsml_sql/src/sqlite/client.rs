@@ -161,6 +161,7 @@ impl SqlClient for SqliteClient {
     ) -> Result<Vec<String>, SqlError> {
         // if version is None, get the latest version
         let query = SqliteQueryHelper::get_versions_query(table, version)?;
+
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
             .bind(repository)
@@ -1011,6 +1012,7 @@ impl SqlClient for SqliteClient {
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
             .bind(key.encrypted_key.clone())
+            .bind(&key.storage_key)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1142,7 +1144,7 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", None)
+            .get_versions(&CardTable::Data, "repo1", "Data1", None)
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
@@ -2150,6 +2152,7 @@ mod tests {
             .await
             .unwrap();
 
-        println!("{:?}", key);
+        assert_eq!(key.uid, data_card.uid);
+        assert_eq!(key.encrypted_key, encrypted_key);
     }
 }
