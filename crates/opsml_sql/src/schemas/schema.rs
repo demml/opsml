@@ -209,16 +209,14 @@ impl DataCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Data,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -323,16 +321,14 @@ impl ModelCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Model,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -461,16 +457,14 @@ impl RunCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Run,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -536,16 +530,14 @@ impl AuditCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Audit,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -636,16 +628,14 @@ impl PipelineCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Pipeline,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -733,16 +723,14 @@ impl ProjectCardRecord {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
+    pub fn uri(&self) -> String {
+        format!(
             "{}/{}/{}/v{}",
             CardTable::Project,
             self.repository,
             self.name,
             self.version
-        );
-
-        PathBuf::from(uri)
+        )
     }
 }
 
@@ -853,7 +841,7 @@ impl ServerCard {
         }
     }
 
-    pub fn uri(&self) -> PathBuf {
+    pub fn uri(&self) -> String {
         match self {
             ServerCard::Data(card) => card.uri(),
             ServerCard::Model(card) => card.uri(),

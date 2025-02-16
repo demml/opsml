@@ -2113,4 +2113,43 @@ mod tests {
 
         assert_eq!(result, "guest");
     }
+
+    #[tokio::test]
+    async fn test_sqlite_get_load_card_key() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+        let encrypted_key: Vec<u8> = (0..32).collect();
+        let key = ArtifactKey {
+            uid: data_card.uid.clone(),
+            card_type: CardType::Data.to_string(),
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let query_args = CardQueryArgs {
+            uid: Some(data_card.uid.clone()),
+            limit: Some(1),
+            ..Default::default()
+        };
+
+        let key = client
+            .get_card_key_for_loading(&CardTable::Data, &query_args)
+            .await
+            .unwrap();
+
+        println!("{:?}", key);
+    }
 }

@@ -133,6 +133,7 @@ pub mod server_logic {
             &mut self,
             uid: &str,
             card_type: &str,
+            storage_key: &str,
         ) -> Result<ArtifactKey, RegistryError> {
             let salt = generate_salt();
 
@@ -150,6 +151,7 @@ pub mod server_logic {
                 uid: uid.to_string(),
                 card_type: card_type.to_string(),
                 encrypted_key: encrypted_key,
+                storage_key: storage_key.to_string(),
             };
 
             self.sql_client.insert_artifact_key(&artifact_key).await?;
@@ -281,7 +283,7 @@ pub mod server_logic {
                 .map_err(|e| RegistryError::Error(format!("Failed to create card {}", e)))?;
 
             let key = self
-                .create_artifact_key(card.uid(), &card.card_type())
+                .create_artifact_key(card.uid(), &card.card_type(), &card.uri())
                 .await
                 .map_err(|e| {
                     RegistryError::Error(format!("Failed to create artifact key {}", e))
