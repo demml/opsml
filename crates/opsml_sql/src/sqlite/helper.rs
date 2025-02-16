@@ -255,7 +255,6 @@ impl SqliteQueryHelper {
              patch, 
              pre_tag, 
              build_tag, 
-             contact, 
              uid
              FROM {}
              WHERE 1=1
