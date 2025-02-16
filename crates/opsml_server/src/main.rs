@@ -187,7 +187,7 @@ mod tests {
         }
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_login() {
         let helper = TestHelper::new().await;
 
@@ -229,7 +229,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_card_uid() {
         let helper = TestHelper::new().await;
 
@@ -286,7 +286,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_card_repositories() {
         let helper = TestHelper::new().await;
 
@@ -316,7 +316,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_card_stats_and_query() {
         let helper = TestHelper::new().await;
 
@@ -413,7 +413,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_list_cards() {
         let helper = TestHelper::new().await;
 
@@ -476,7 +476,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_datacard_crud() {
         let helper = TestHelper::new().await;
 
@@ -607,7 +607,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_modelcard_crud() {
         let helper = TestHelper::new().await;
 
@@ -772,7 +772,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_runcard_crud() {
         let helper = TestHelper::new().await;
 
@@ -904,7 +904,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_pipelinecard_crud() {
         let helper = TestHelper::new().await;
 
@@ -1034,7 +1034,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_auditcard_crud() {
         let helper = TestHelper::new().await;
 
@@ -1183,7 +1183,6 @@ mod tests {
                 name: "ProjectCard".to_string(),
                 repository: "repo1".to_string(),
                 version: "1.0.0".to_string(),
-                project_id: 1,
                 ..Default::default()
             }),
             registry_type: RegistryType::Project,
@@ -1259,7 +1258,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_run_routes() {
         let helper = TestHelper::new().await;
         let run_uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
@@ -1453,7 +1452,7 @@ mod tests {
         helper.cleanup();
     }
 
-    //#[tokio::test]
+    #[tokio::test]
     async fn test_opsml_server_run_graphs() {
         let helper = TestHelper::new().await;
 
