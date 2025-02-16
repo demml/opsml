@@ -190,6 +190,29 @@ impl ClientRegistry {
         }
     }
 
+    #[instrument(skip_all)]
+    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+        let query_string = serde_qs::to_string(&args)
+            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::CardLoad,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to load_card {}", e)))?;
+
+        response
+            .json::<ArtifactKey>()
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+    }
+
     pub async fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {
         let uid_request = UidRequest {
             uid: uid.to_string(),

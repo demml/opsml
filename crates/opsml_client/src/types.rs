@@ -16,6 +16,7 @@ pub enum Routes {
     CardCreate,
     CardDelete,
     CardList,
+    CardLoad,
     CardVersion,
     CardUpdate,
     DeleteFiles,
@@ -49,6 +50,7 @@ impl Routes {
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",
             Routes::CardList => "card/list",
+            Routes::CardLoad => "card/load",
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
         }

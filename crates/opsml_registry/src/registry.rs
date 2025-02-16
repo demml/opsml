@@ -222,12 +222,6 @@ impl CardRegistry {
             ));
         }
 
-        let card = self.list_cards(uid, repository, name, version, None, None, None, 1)?;
-        if card.cards.is_empty() {
-            return Err(OpsmlError::new_err("Card not found".to_string()));
-        }
-
-        let card = card.cards.first().unwrap();
         // Wrap all operations in a single block_on to handle async operations
         let card = self
             .runtime
