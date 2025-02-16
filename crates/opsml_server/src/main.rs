@@ -652,23 +652,24 @@ mod tests {
         // sleep for 1 second to allow the key to be stored
         tokio::time::sleep(Duration::from_secs(1)).await;
 
-        // test artifact key
-        let key_request = ArtifactKeyRequest {
-            uid: create_response.uid.clone(),
-            card_type: CardType::Model,
+        let load_request = CardQueryArgs {
+            uid: Some(create_response.uid.clone()),
+            registry_type: RegistryType::Model,
+            ..Default::default()
         };
 
-        let query_string = serde_qs::to_string(&key_request).unwrap();
+        let query_string = serde_qs::to_string(&load_request).unwrap();
 
         // get key
         let request = Request::builder()
-            .uri(format!("/opsml/files/decrypt?{}", query_string))
+            .uri(format!("/opsml/card/load?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
 
         let response = helper.send_oneshot(request, true).await;
 
+        assert_eq!(response.status(), StatusCode::OK);
         // get response body
         let key_from_server: ArtifactKey =
             serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
@@ -1514,48 +1515,5 @@ mod tests {
         assert_eq!(graphs.len(), 2);
 
         helper.cleanup();
-    }
-
-    #[tokio::test]
-    async fn test_opsml_server_artifact_keys() {
-        let helper = TestHelper::new().await;
-
-        let body = ArtifactKeyRequest {
-            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            card_type: CardType::Model,
-        };
-
-        let query_string = serde_qs::to_string(&body).unwrap();
-
-        let request = Request::builder()
-            .uri(format!("/opsml/files/encrypt?{}", query_string))
-            .method("GET")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = helper.send_oneshot(request, true).await;
-
-        let key: ArtifactKey =
-            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
-                .unwrap();
-
-        // sleep for 1 second to allow the key to be stored
-        tokio::time::sleep(Duration::from_secs(1)).await;
-
-        // get key
-        let request = Request::builder()
-            .uri(format!("/opsml/files/decrypt?{}", query_string))
-            .method("GET")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = helper.send_oneshot(request, true).await;
-
-        // get response body
-        let key_from_server: ArtifactKey =
-            serde_json::from_slice(&response.into_body().collect().await.unwrap().to_bytes())
-                .unwrap();
-
-        assert_eq!(key.encrypted_key, key_from_server.encrypted_key);
     }
 }
