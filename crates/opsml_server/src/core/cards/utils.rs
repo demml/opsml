@@ -58,7 +58,7 @@ pub async fn insert_card_into_db(
     card: Card,
     version: Version,
     table: &CardTable,
-) -> Result<(String, String, PathBuf), ApiError> {
+) -> Result<(String, String, String), ApiError> {
     // match on registry type
     let card = match card {
         Card::Data(client_card) => {
