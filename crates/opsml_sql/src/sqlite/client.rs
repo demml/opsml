@@ -2056,6 +2056,7 @@ mod tests {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
             encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
         };
 
         client.insert_artifact_key(&key).await.unwrap();
@@ -2073,6 +2074,7 @@ mod tests {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
             encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
         };
 
         client.update_artifact_key(&key).await.unwrap();

@@ -1017,6 +1017,26 @@ impl SqlClient for PostgresClient {
 
         Ok(())
     }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = PostgresQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: ArtifactKey = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.repository.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(key)
+    }
 }
 
 #[cfg(test)]
@@ -1898,6 +1918,7 @@ mod tests {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
             encrypted_key: encrypted_key.clone(),
+            storage_uri: "opsml_registry".to_string(),
         };
 
         client.insert_artifact_key(&key).await.unwrap();
@@ -1915,6 +1936,7 @@ mod tests {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             card_type: CardType::Data.to_string(),
             encrypted_key: encrypted_key.clone(),
+            storage_uri: "opsml_registry".to_string(),
         };
 
         client.update_artifact_key(&key).await.unwrap();

@@ -676,7 +676,7 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypted_key) VALUES (?, ?, ?)",
+            "INSERT INTO {} (uid, card_type, encrypted_key, storage_uri) VALUES (?, ?, ?, ?)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -684,7 +684,7 @@ impl SqliteQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypted_key FROM {} WHERE uid = ? AND card_type = ?",
+            "SELECT uid, card_type, encrypted_key, storage_uri FROM {} WHERE uid = ? AND card_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
