@@ -967,6 +967,7 @@ impl SqlClient for PostgresClient {
             .bind(&key.uid)
             .bind(&key.card_type.to_string())
             .bind(key.encrypted_key.clone())
+            .bind(&key.storage_key)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;

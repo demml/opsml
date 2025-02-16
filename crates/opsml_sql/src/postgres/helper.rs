@@ -760,8 +760,8 @@ impl PostgresQueryHelper {
             )
             SELECT b.uid, b.card_type, b.encrypted_key, b.storage_key
             FROM query_cards as a
-            INNER JOIN (SELECT * FROM {} WHERE uid = query_cards.uid) as b 
-                ON query_cards.uid = b.uid;",
+            INNER JOIN (SELECT * FROM {} WHERE uid IN (SELECT uid FROM query_cards)) as b 
+                ON a.uid = b.uid;",
             query_cards_query,
             CardTable::ArtifactKey
         );

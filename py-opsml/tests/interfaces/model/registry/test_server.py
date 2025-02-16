@@ -75,5 +75,7 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
         shutil.rmtree("card_artifacts")
 
         # attempt to update the card
+        loaded_card.name = "test2"
+        reg.update_card(loaded_card)
 
         # attempt to delete the card

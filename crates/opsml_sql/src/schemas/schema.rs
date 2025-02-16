@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
-use std::path::PathBuf;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
