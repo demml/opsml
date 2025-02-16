@@ -113,6 +113,7 @@ pub struct ArtifactKey {
     pub uid: String,
     pub card_type: CardType,
     pub encrypted_key: Vec<u8>,
+    pub storage_key: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
