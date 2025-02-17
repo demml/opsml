@@ -15,12 +15,12 @@ pub mod server_logic {
         schemas::*,
     };
     use opsml_types::cards::CardType;
+    use opsml_types::contracts::ArtifactKey as ClientArtifactKey;
     use opsml_types::{cards::CardTable, contracts::*, *};
     use opsml_utils::uid_to_byte_key;
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
-    use std::path::PathBuf;
     use tracing::error;
 
     #[derive(Debug)]
@@ -292,10 +292,15 @@ pub mod server_logic {
 
             let response = CreateCardResponse {
                 registered: true,
-                uid: card.uid().to_string(),
                 version: card.version(),
-                encryption_key: key.encrypted_key,
-                storage_key: PathBuf::from(card.uri()),
+                repository: card.card_type(),
+                name: card.name(),
+                key: ClientArtifactKey {
+                    uid: key.uid,
+                    card_type: CardType::from_string(&key.card_type),
+                    encrypted_key: key.encrypted_key,
+                    storage_key: key.storage_key,
+                },
             };
             Ok(response)
         }

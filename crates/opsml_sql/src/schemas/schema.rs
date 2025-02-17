@@ -840,6 +840,28 @@ impl ServerCard {
         }
     }
 
+    pub fn repository(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.repository.clone(),
+            ServerCard::Model(card) => card.repository.clone(),
+            ServerCard::Run(card) => card.repository.clone(),
+            ServerCard::Audit(card) => card.repository.clone(),
+            ServerCard::Pipeline(card) => card.repository.clone(),
+            ServerCard::Project(card) => card.repository.clone(),
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.name.clone(),
+            ServerCard::Model(card) => card.name.clone(),
+            ServerCard::Run(card) => card.name.clone(),
+            ServerCard::Audit(card) => card.name.clone(),
+            ServerCard::Pipeline(card) => card.name.clone(),
+            ServerCard::Project(card) => card.name.clone(),
+        }
+    }
+
     pub fn uri(&self) -> String {
         match self {
             ServerCard::Data(card) => card.uri(),
@@ -944,12 +966,4 @@ impl std::fmt::Debug for User {
             .field("group_permissions", &"[redacted]")
             .finish()
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
-pub struct ArtifactKey {
-    pub uid: String,
-    pub card_type: String,
-    pub encrypted_key: Vec<u8>,
-    pub storage_key: String,
 }

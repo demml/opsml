@@ -227,10 +227,10 @@ pub async fn create_card(
     debug!("Card created successfully");
     Ok(Json(CreateCardResponse {
         registered: true,
-        uid,
+        repository: card_request.card.repository().to_string(),
+        name: card_request.card.name().to_string(),
         version: version.to_string(),
-        encryption_key: key.encrypted_key,
-        storage_key: PathBuf::from(card_uri),
+        key,
     }))
 }
 
