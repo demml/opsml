@@ -13,7 +13,6 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-use opsml_sql::schemas::ArtifactKey;
 use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;

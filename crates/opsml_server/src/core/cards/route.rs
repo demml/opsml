@@ -16,7 +16,6 @@ use opsml_types::{cards::*, contracts::*};
 use semver::Version;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::{debug, error, instrument};
 
@@ -479,7 +478,7 @@ pub async fn delete_card(
 pub async fn load_card(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<opsml_sql::schemas::ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let key = state
         .sql_client

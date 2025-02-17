@@ -111,7 +111,7 @@ pub struct ArtifactKeyRequest {
     pub card_type: CardType,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactKey {
     pub uid: String,
     pub card_type: CardType,

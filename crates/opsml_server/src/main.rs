@@ -50,7 +50,6 @@ mod tests {
     use opsml_settings::config::DatabaseSettings;
     use opsml_sql::base::SqlClient;
     use opsml_sql::enums::client::SqlClientEnum;
-    use opsml_sql::schemas::ArtifactKey;
     use opsml_types::*;
     use opsml_types::{cards::*, contracts::*};
     use tokio::time::Duration;
@@ -520,7 +519,7 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Data,
             ..Default::default()
         };
@@ -653,7 +652,7 @@ mod tests {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         let load_request = CardQueryArgs {
-            uid: Some(create_response.uid.clone()),
+            uid: Some(create_response.key.uid.clone()),
             registry_type: RegistryType::Model,
             ..Default::default()
         };
@@ -676,13 +675,13 @@ mod tests {
                 .unwrap();
 
         assert_eq!(
-            create_response.encryption_key,
+            create_response.key.encrypted_key,
             key_from_server.encrypted_key
         );
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Model,
             ..Default::default()
         };
@@ -816,7 +815,7 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Run,
             ..Default::default()
         };
@@ -948,7 +947,7 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Pipeline,
             ..Default::default()
         };
@@ -1078,7 +1077,7 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Audit,
             ..Default::default()
         };
@@ -1207,7 +1206,7 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.uid),
+            uid: Some(create_response.key.uid),
             registry_type: RegistryType::Project,
             ..Default::default()
         };
