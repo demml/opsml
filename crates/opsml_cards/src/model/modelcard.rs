@@ -64,8 +64,6 @@ pub struct ModelCardMetadata {
     pub auditcard_uid: Option<String>,
 
     pub interface_metadata: ModelInterfaceMetadata,
-
-    pub decryption_key: Option<Vec<u8>>,
 }
 
 #[pyclass]
@@ -576,10 +574,10 @@ impl ModelCard {
 
         // raise error if decryption key is not found
 
-        let decrypt_key = if self.metadata.decryption_key.is_none() {
+        let decrypt_key = if self.artifact_key.is_none() {
             return Err(CardError::Error("Decryption key not found".to_string()));
         } else {
-            self.metadata.decryption_key.clone().unwrap()
+            self.artifact_key.as_ref().unwrap().get_decrypt_key()?
         };
 
         rt.block_on(async {

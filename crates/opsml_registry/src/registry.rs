@@ -239,16 +239,7 @@ impl CardRegistry {
                     })
                     .await?;
 
-                Self::download_card(
-                    py,
-                    &self.registry_type,
-                    &mut self.registry,
-                    &key,
-                    &mut self.fs,
-                    &self.runtime,
-                    interface,
-                )
-                .await
+                Self::download_card(py, key, &mut self.fs, &self.runtime, interface).await
             })
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
@@ -393,7 +384,10 @@ impl CardRegistry {
             .put(&tmp_path, &card_record.key.storage_path(), true)
             .await?;
 
-        println!("✓ {}", Colorize::green("saved card artifacts to storage"));
+        println!(
+            "...✓ {}",
+            Colorize::green("saved card artifacts to storage")
+        );
 
         debug!("Saved card artifacts to storage");
 
@@ -445,7 +439,7 @@ impl CardRegistry {
             .await?;
 
         println!(
-            "... ✓ {} - {}/{} - v{}",
+            "...✓ {} - {}/{} - v{}",
             Colorize::green("registered card"),
             response.repository,
             response.name,
@@ -462,9 +456,7 @@ impl CardRegistry {
 
     async fn download_card<'py>(
         py: Python<'py>,
-        registry_type: &RegistryType,
-        registry: &mut OpsmlRegistry,
-        key: &ArtifactKey,
+        key: ArtifactKey,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         rt: &Arc<tokio::runtime::Runtime>,
         interface: Option<&Bound<'py, PyAny>>,
@@ -473,7 +465,10 @@ impl CardRegistry {
         // get artifact_key from registry for a uid
         // get storage_uri
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
-        let decryption_key = registry.get_artifact_key(&key.uid, &key.card_type).await?;
+        let decryption_key = key.get_decrypt_key().map_err(|e| {
+            error!("Failed to get decryption key: {}", e);
+            RegistryError::Error(e.to_string())
+        })?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -496,15 +491,7 @@ impl CardRegistry {
             UtilError::ReadError
         })?;
 
-        let card = Self::card_from_string(
-            py,
-            json_string,
-            registry_type,
-            interface,
-            decryption_key,
-            fs,
-            rt,
-        )?;
+        let card = Self::card_from_string(py, json_string, interface, key, fs, rt)?;
 
         Ok(card)
     }
@@ -512,20 +499,20 @@ impl CardRegistry {
     fn card_from_string<'py>(
         py: Python<'py>,
         card_json: String,
-        registry_type: &RegistryType,
         interface: Option<&Bound<'py, PyAny>>,
-        decryption_key: Vec<u8>,
+        key: ArtifactKey,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         rt: &Arc<tokio::runtime::Runtime>,
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
-        let card = match registry_type {
-            RegistryType::Model => {
+        let card = match key.card_type {
+            CardType::Model => {
                 let mut card =
                     ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
                         error!("Failed to validate model card: {}", e);
                         RegistryError::Error(e.to_string())
                     })?;
-                card.metadata.decryption_key = Some(decryption_key.to_vec());
+
+                card.artifact_key = Some(key);
                 card.fs = Some(fs.clone());
                 card.rt = Some(rt.clone());
 
