@@ -1,7 +1,7 @@
 use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveMetadata};
 use crate::model::ModelInterface;
 use crate::types::FeatureSchema;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use crate::{OnnxSession, ProcessorType};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
@@ -146,7 +146,7 @@ impl CatBoostModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving CatBoost interface");
 
@@ -270,7 +270,7 @@ impl CatBoostModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

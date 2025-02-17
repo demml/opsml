@@ -1,6 +1,6 @@
+use crate::base::ModelSaveKwargs;
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::SaveKwargs;
 use opsml_error::OpsmlError;
 use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
@@ -532,7 +532,7 @@ impl OnnxExtension for SampleData {
 
 pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
-    save_kwargs: &Option<SaveKwargs>,
+    save_kwargs: &Option<ModelSaveKwargs>,
 ) -> PyDictKwargs<'py> {
     let onnx_kwargs = save_kwargs
         .as_ref()

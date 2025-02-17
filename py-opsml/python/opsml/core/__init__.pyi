@@ -567,7 +567,7 @@ class DataSchema:
             String representation of the DataSchema.
         """
 
-class SaveKwargs:
+class ModelSaveKwargs:
     def __init__(
         self,
         data: Optional[Dict] = None,
@@ -591,9 +591,9 @@ class SaveKwargs:
     def __str__(self): ...
     def model_dump_json(self) -> str: ...
     @staticmethod
-    def model_validate_json(json_string: str) -> "SaveKwargs": ...
+    def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
 
-class LoadKwargs:
+class ModelLoadKwargs:
     data: Optional[Dict]
     onnx: Optional[Dict]
     model: Optional[Dict]

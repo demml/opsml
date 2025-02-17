@@ -15,7 +15,7 @@ use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -466,7 +466,7 @@ impl HuggingFaceModel {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
@@ -587,7 +587,7 @@ impl HuggingFaceModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

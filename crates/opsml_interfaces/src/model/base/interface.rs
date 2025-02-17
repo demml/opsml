@@ -1,4 +1,4 @@
-use crate::base::{parse_save_kwargs, ExtraMetadata, LoadKwargs, SaveKwargs};
+use crate::base::{parse_save_kwargs, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
@@ -81,7 +81,7 @@ pub struct ModelInterfaceSaveMetadata {
 
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub save_kwargs: Option<SaveKwargs>,
+    pub save_kwargs: Option<ModelSaveKwargs>,
 }
 
 #[pymethods]
@@ -95,7 +95,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
         extra: Option<ExtraMetadata>,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -365,7 +365,7 @@ impl ModelInterface {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving model interface");
 
@@ -483,7 +483,7 @@ impl ModelInterface {
         drift_profile: bool,
         sample_data: bool,
         _preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

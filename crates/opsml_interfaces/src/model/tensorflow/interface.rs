@@ -7,7 +7,7 @@ use crate::types::{FeatureSchema, ProcessorType};
 use crate::ModelInterfaceMetadata;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType};
@@ -221,7 +221,7 @@ impl TensorFlowModel {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
@@ -320,7 +320,7 @@ impl TensorFlowModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

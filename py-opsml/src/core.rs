@@ -1,7 +1,7 @@
 use opsml_cards::{DataSchema, Description};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{Feature, FeatureSchema, OnnxSchema};
-use opsml_interfaces::{LoadKwargs, SaveKwargs};
+use opsml_interfaces::{ModelLoadKwargs, ModelSaveKwargs};
 use opsml_semver::VersionType;
 use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, StorageType, Suffix};
@@ -22,8 +22,8 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_settings
     m.add_class::<OpsmlConfig>()?;
 
-    m.add_class::<SaveKwargs>()?;
-    m.add_class::<LoadKwargs>()?;
+    m.add_class::<ModelSaveKwargs>()?;
+    m.add_class::<ModelLoadKwargs>()?;
 
     // opsml_types
     m.add_class::<CommonKwargs>()?;

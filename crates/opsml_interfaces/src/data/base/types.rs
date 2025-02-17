@@ -2,9 +2,14 @@ use crate::types::FeatureSchema;
 use opsml_error::{OpsmlError, SaveError};
 use opsml_types::DataType;
 use opsml_types::{SaveName, Suffix};
+use opsml_utils::{json_to_pyobject, pyobject_to_json};
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::Value;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -197,5 +202,172 @@ impl DataInterfaceSaveMetadata {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Default)]
+pub struct DataSaveKwargs {
+    pub data: Option<Py<PyDict>>,
+}
+
+#[pymethods]
+impl DataSaveKwargs {
+    #[new]
+    #[pyo3(signature = (data=None))]
+    pub fn new<'py>(data: Option<Bound<'py, PyDict>>) -> PyResult<Self> {
+        // check if onnx is None, PyDict or HuggingFaceOnnxArgs
+
+        let data = data.map(|data| data.unbind());
+
+        Ok(Self { data })
+    }
+
+    pub fn __str__(&self, py: Python) -> String {
+        let mut data = Value::Null;
+
+        if let Some(data_args) = &self.data {
+            data = pyobject_to_json(data_args.bind(py)).unwrap();
+        }
+
+        let json = json!({
+            "data": data,
+        });
+
+        PyHelperFuncs::__str__(json)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> DataSaveKwargs {
+        serde_json::from_str(&json_string).unwrap()
+    }
+}
+
+impl DataSaveKwargs {
+    pub fn data_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.data.as_ref().map(|data| data.bind(py))
+    }
+}
+
+impl Serialize for DataSaveKwargs {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        Python::with_gil(|py| {
+            let mut state = serializer.serialize_struct("DataSaveKwargs", 1)?;
+            let data = self
+                .data
+                .as_ref()
+                .map(|onnx| pyobject_to_json(onnx.bind(py)).unwrap());
+
+            state.serialize_field("data", &data)?;
+            state.end()
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for DataSaveKwargs {
+    fn deserialize<D>(deserializer: D) -> Result<DataSaveKwargs, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct DataSaveKwargsVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for DataSaveKwargsVisitor {
+            type Value = DataSaveKwargs;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct DataSaveKwargs")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<DataSaveKwargs, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                Python::with_gil(|py| {
+                    let mut data = None;
+
+                    while let Some(key) = map.next_key::<String>()? {
+                        match key.as_str() {
+                            "data" => {
+                                let value = map.next_value::<serde_json::Value>()?;
+                                match value {
+                                    serde_json::Value::Null => {
+                                        data = None;
+                                    }
+                                    _ => {
+                                        let dict =
+                                            json_to_pyobject(py, &value, &PyDict::new(py)).unwrap();
+                                        data = Some(dict.unbind());
+                                    }
+                                }
+                            }
+                            _ => {
+                                let _: serde::de::IgnoredAny = map.next_value()?;
+                            }
+                        }
+                    }
+                    let kwargs = DataSaveKwargs { data };
+                    Ok(kwargs)
+                })
+            }
+        }
+
+        deserializer.deserialize_struct(
+            "DataSaveKwargs",
+            &["onnx", "model", "preprocessor"],
+            DataSaveKwargsVisitor,
+        )
+    }
+}
+
+impl Clone for DataSaveKwargs {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let data = self.data.as_ref().map(|data| data.clone_ref(py));
+
+            DataSaveKwargs { data }
+        })
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Default)]
+pub struct DataLoadKwargs {
+    #[pyo3(get, set)]
+    data: Option<Py<PyDict>>,
+}
+
+#[pymethods]
+impl DataLoadKwargs {
+    #[new]
+    #[pyo3(signature = (data=None))]
+    pub fn new<'py>(data: Option<Bound<'py, PyDict>>) -> PyResult<Self> {
+        let data = data.map(|data| data.unbind());
+
+        Ok(Self { data })
+    }
+}
+
+impl DataLoadKwargs {
+    pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+        // convert Option<PyObject> into Option<Bound<_, PyDict>>
+        self.data.as_ref().map(|data| data.bind(py))
+    }
+}
+
+impl Clone for DataLoadKwargs {
+    fn clone(&self) -> Self {
+        Python::with_gil(|py| {
+            let data = self.data.as_ref().map(|data| data.clone_ref(py));
+
+            DataLoadKwargs { data }
+        })
     }
 }

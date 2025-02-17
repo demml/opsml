@@ -25,8 +25,7 @@ use serde::{
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use tracing::debug;
-use tracing::error;
+use tracing::{debug, error};
 
 fn interface_from_metadata<'py>(
     py: Python<'py>,
@@ -178,19 +177,6 @@ impl ModelCard {
                 "interface must be an instance of ModelInterface",
             ));
         }
-    }
-
-    #[getter]
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
-            "{}/{}/{}/v{}",
-            CardTable::Model,
-            self.repository,
-            self.name,
-            self.version
-        );
-
-        PathBuf::from(uri)
     }
 
     pub fn add_tags(&mut self, tags: Vec<String>) {
