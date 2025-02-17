@@ -360,7 +360,7 @@ impl DataLoadKwargs {
 }
 
 impl DataLoadKwargs {
-    pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
+    pub fn data_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.data.as_ref().map(|data| data.bind(py))
     }
