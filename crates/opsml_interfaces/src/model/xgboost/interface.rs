@@ -2,7 +2,7 @@ use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveM
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use pyo3::prelude::*;
@@ -191,7 +191,7 @@ impl XGBoostModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         // color text
         let span = span!(Level::INFO, "XGBoost Save").entered();
@@ -312,7 +312,7 @@ impl XGBoostModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

@@ -10,8 +10,8 @@ pub mod torch;
 pub mod xgboost;
 
 pub use base::{
-    DataProcessor, InterfaceDataType, LoadKwargs, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, SampleData, SaveKwargs,
+    DataProcessor, InterfaceDataType, ModelInterface, ModelInterfaceMetadata,
+    ModelInterfaceSaveMetadata, ModelLoadKwargs, ModelSaveKwargs, SampleData,
 };
 pub use catboost::CatBoostModel;
 pub use huggingface::{

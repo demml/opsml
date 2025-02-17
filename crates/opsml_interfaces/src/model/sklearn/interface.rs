@@ -3,7 +3,7 @@ use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
-use crate::{LoadKwargs, SaveKwargs};
+use crate::{ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::CommonKwargs;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
@@ -151,7 +151,7 @@ impl SklearnModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving model interface");
 
@@ -216,7 +216,7 @@ impl SklearnModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

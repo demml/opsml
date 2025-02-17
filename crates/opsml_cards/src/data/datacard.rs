@@ -2,8 +2,8 @@ use crate::BaseArgs;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::data::DataInterfaceSaveMetadata;
 use opsml_interfaces::FeatureSchema;
-use opsml_types::contracts::Card;
-use opsml_types::contracts::DataCardClientRecord;
+use opsml_storage::FileSystemStorage;
+use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{
     cards::{CardTable, CardType},
@@ -14,6 +14,7 @@ use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use tracing::error;
 
 #[pyclass]
@@ -53,7 +54,6 @@ impl DataCardMetadata {
 }
 
 #[pyclass]
-#[derive(Debug)]
 pub struct DataCard {
     #[pyo3(get, set)]
     pub interface: Option<PyObject>,
@@ -84,6 +84,12 @@ pub struct DataCard {
 
     #[pyo3(get)]
     pub data_type: DataType,
+
+    pub rt: Option<Arc<tokio::runtime::Runtime>>,
+
+    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
+
+    pub artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
@@ -164,20 +170,14 @@ impl DataCard {
             metadata,
             card_type: CardType::Data,
             data_type,
+            rt: None,
+            fs: None,
+            artifact_key: None,
         })
     }
 
-    #[getter]
-    pub fn uri(&self) -> PathBuf {
-        let uri = format!(
-            "{}/{}/{}/v{}",
-            CardTable::Data,
-            self.repository,
-            self.name,
-            self.version
-        );
-
-        PathBuf::from(uri)
+    pub fn add_tags(&mut self, tags: Vec<String>) {
+        self.tags.extend(tags);
     }
 
     #[pyo3(signature = (path, **kwargs))]

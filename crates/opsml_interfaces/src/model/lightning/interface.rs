@@ -6,7 +6,7 @@ use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::DataType;
 use opsml_types::{CommonKwargs, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType};
@@ -220,7 +220,7 @@ impl LightningModel {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
@@ -339,7 +339,7 @@ impl LightningModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();

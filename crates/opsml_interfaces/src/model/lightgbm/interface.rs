@@ -2,7 +2,7 @@ use crate::base::{parse_save_kwargs, ModelInterfaceMetadata, ModelInterfaceSaveM
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use opsml_utils::pyobject_to_json;
@@ -143,7 +143,7 @@ impl LightGBMModel {
         py: Python<'py>,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving lightgbm interface");
 
@@ -258,7 +258,7 @@ impl LightGBMModel {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
