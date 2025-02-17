@@ -10,6 +10,7 @@ use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
 use std::collections::HashMap;
+use std::path::Path;
 use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
@@ -176,5 +177,24 @@ impl PandasData {
             generate_feature_schema(self.data.as_ref().unwrap().bind(py), &DataType::Pandas)?;
 
         Ok(feature_map)
+    }
+
+    pub fn from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+
+        let pandas = PyModule::import(py, "pandas")?;
+
+        // Load the data using polars
+        let data = pandas.call_method("read_parquet", (load_path,), kwargs)?;
+
+        let interface = PandasData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
     }
 }
