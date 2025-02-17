@@ -5,7 +5,6 @@ use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_error::UtilError;
-use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
@@ -162,7 +161,7 @@ impl CardRegistry {
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<()> {
         debug!("Registering card");
 
@@ -353,10 +352,10 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn save_card_artifacts<'py>(
+    async fn save_card_artifacts(
         card: &Bound<'_, PyAny>,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
         card_record: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // create temp path for saving

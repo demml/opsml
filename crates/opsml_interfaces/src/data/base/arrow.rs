@@ -119,6 +119,9 @@ impl ArrowData {
             HashMap::new(),
             self_.as_super().sql_logic.clone(),
             self_.as_super().interface_type.clone(),
+            self_.as_super().dependent_vars.clone(),
+            self_.as_super().data_splits.clone(),
+            self_.as_super().data_type.clone(),
         ))
     }
 
@@ -154,6 +157,25 @@ impl ArrowData {
 }
 
 impl ArrowData {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &DataInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let interface = DataInterface {
+            data_type: metadata.data_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            schema: metadata.schema.clone(),
+            dependent_vars: metadata.dependent_vars.clone(),
+            data_splits: metadata.data_splits.clone(),
+            sql_logic: metadata.sql_logic.clone(),
+            data_profile: None,
+            data: None,
+        };
+
+        let arrow_interface = ArrowData { data: None };
+
+        Ok(Py::new(py, (arrow_interface, interface))?.into_bound_py_any(py)?)
+    }
     pub fn from_path(
         py: Python,
         path: &Path,

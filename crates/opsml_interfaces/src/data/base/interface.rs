@@ -12,7 +12,7 @@ use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::{DataProfile, DataProfiler};
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
@@ -23,10 +23,10 @@ use tracing::instrument;
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataInterfaceMetadata {
     #[pyo3(get)]
-    save_metadata: DataInterfaceSaveMetadata,
+    pub save_metadata: DataInterfaceSaveMetadata,
 
     #[pyo3(get)]
-    schema: FeatureSchema,
+    pub schema: FeatureSchema,
 
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
@@ -37,19 +37,31 @@ pub struct DataInterfaceMetadata {
     #[pyo3(get)]
     pub interface_type: DataInterfaceType,
 
+    #[pyo3(get)]
+    pub data_splits: DataSplits,
+
+    #[pyo3(get)]
+    pub dependent_vars: DependentVars,
+
+    #[pyo3(get)]
+    pub data_type: DataType,
+
     pub data_specific_metadata: Value,
 }
 
 #[pymethods]
 impl DataInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (save_metadata, schema=FeatureSchema::default(), extra_metadata=HashMap::new(), sql_logic=SqlLogic::default(),interface_type=DataInterfaceType::Base))]
+    #[pyo3(signature = (save_metadata, schema=FeatureSchema::default(), extra_metadata=HashMap::new(), sql_logic=SqlLogic::default(),interface_type=DataInterfaceType::Base, dependent_vars=DependentVars::default(), data_splits=DataSplits::default(), data_type=DataType::Base))]
     pub fn new(
         save_metadata: DataInterfaceSaveMetadata,
         schema: FeatureSchema,
         extra_metadata: HashMap<String, String>,
         sql_logic: SqlLogic,
         interface_type: DataInterfaceType,
+        dependent_vars: DependentVars,
+        data_splits: DataSplits,
+        data_type: DataType,
     ) -> Self {
         DataInterfaceMetadata {
             save_metadata,
@@ -57,6 +69,9 @@ impl DataInterfaceMetadata {
             extra_metadata,
             sql_logic,
             interface_type,
+            dependent_vars,
+            data_splits,
+            data_type,
             data_specific_metadata: Value::Null,
         }
     }
@@ -286,6 +301,9 @@ impl DataInterface {
             HashMap::new(),
             self.sql_logic.clone(),
             self.interface_type.clone(),
+            self.dependent_vars.clone(),
+            self.data_splits.clone(),
+            self.data_type.clone(),
         ))
     }
     #[pyo3(signature = (path, **load_kwargs))]

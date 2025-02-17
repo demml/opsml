@@ -121,6 +121,9 @@ impl PolarsData {
             HashMap::new(),
             self_.as_super().sql_logic.clone(),
             self_.as_super().interface_type.clone(),
+            self_.as_super().dependent_vars.clone(),
+            self_.as_super().data_splits.clone(),
+            self_.as_super().data_type.clone(),
         ))
     }
 
