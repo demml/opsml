@@ -8,7 +8,7 @@ pub mod server_logic {
     use opsml_settings::config::DatabaseSettings;
     use opsml_settings::config::OpsmlConfig;
     use opsml_settings::config::OpsmlStorageSettings;
-    use opsml_sql::schemas::ArtifactKey;
+    use opsml_sql::schemas::ArtifactKey as ServerArtifactKey;
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
@@ -135,7 +135,7 @@ pub mod server_logic {
             uid: &str,
             card_type: &str,
             storage_key: &str,
-        ) -> Result<ArtifactKey, RegistryError> {
+        ) -> Result<ServerArtifactKey, RegistryError> {
             let salt = generate_salt();
 
             let derived_key = derive_encryption_key(
@@ -148,7 +148,7 @@ pub mod server_logic {
 
             let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
 
-            let artifact_key = ArtifactKey {
+            let artifact_key = ServerArtifactKey {
                 uid: uid.to_string(),
                 card_type: card_type.to_string(),
                 encrypted_key: encrypted_key,
@@ -493,6 +493,16 @@ pub mod server_logic {
                 .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
 
             Ok(())
+        }
+
+        pub async fn load_card(
+            &mut self,
+            args: CardQueryArgs,
+        ) -> Result<ServerArtifactKey, RegistryError> {
+            self.sql_client
+                .get_card_key_for_loading(&self.table_name, &args)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))
         }
 
         pub async fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {

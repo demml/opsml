@@ -18,8 +18,10 @@ use opsml_utils::clean_string;
 use opsml_utils::uid_to_byte_key;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tempfile::TempDir;
+
 use tracing::{debug, error, instrument};
 
 fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, RegistryError> {
@@ -227,11 +229,23 @@ impl CardRegistry {
             .runtime
             .block_on(async {
                 // 1. Load the card // download the card from storage
+
+                let key = self
+                    .registry
+                    .load_card(CardQueryArgs {
+                        uid,
+                        name,
+                        repository,
+                        version,
+                        registry_type: self.registry_type.clone(),
+                        ..Default::default()
+                    })
+                    .await?;
+
                 Self::download_card(
                     py,
                     &self.registry_type,
                     &mut self.registry,
-                    card,
                     &mut self.fs,
                     &self.runtime,
                     interface,
@@ -486,7 +500,7 @@ impl CardRegistry {
         py: Python<'py>,
         registry_type: &RegistryType,
         registry: &mut OpsmlRegistry,
-        card: &Card,
+        key: &ArtifactKey,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         rt: &Arc<tokio::runtime::Runtime>,
         interface: Option<&Bound<'py, PyAny>>,
@@ -495,9 +509,7 @@ impl CardRegistry {
         // get artifact_key from registry for a uid
         // get storage_uri
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
-        let decryption_key = registry
-            .get_artifact_key(card.uid(), &card.card_type())
-            .await?;
+        let decryption_key = registry.get_artifact_key(&key.uid, &key.card_type).await?;
 
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -505,22 +517,14 @@ impl CardRegistry {
         })?;
 
         let tmp_path = tmp_dir.into_path();
+        let rpath = PathBuf::from(&key.storage_key);
 
-        let rpath = card
-            .uri()
-            .map_err(|e| {
-                error!("Failed to get card uri: {}", e);
-                RegistryError::Error("Failed to get card uri".to_string())
-            })?
-            .join(SaveName::Card)
-            .with_extension(Suffix::Json);
+        let rpath = rpath.join(SaveName::Card).with_extension(Suffix::Json);
 
         // add Card.json to tmp_path and rpath
-
         let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
 
         fs.lock().unwrap().get(&lpath, &rpath, false).await?;
-
         decrypt_directory(&tmp_path, &decryption_key)?;
 
         let json_string = std::fs::read_to_string(&lpath).map_err(|e| {

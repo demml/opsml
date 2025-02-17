@@ -96,4 +96,16 @@ impl CardType {
             CardType::Pipeline => b"Pipeline",
         }
     }
+
+    pub fn from_string(card_type: &str) -> Self {
+        match card_type {
+            "Data" => CardType::Data,
+            "Model" => CardType::Model,
+            "Run" => CardType::Run,
+            "Project" => CardType::Project,
+            "Audit" => CardType::Audit,
+            "Pipeline" => CardType::Pipeline,
+            _ => panic!("Invalid card type"),
+        }
+    }
 }
