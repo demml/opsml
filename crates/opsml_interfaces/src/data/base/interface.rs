@@ -78,7 +78,7 @@ impl DataInterfaceMetadata {
 #[pyclass(subclass)]
 pub struct DataInterface {
     #[pyo3(get)]
-    pub data: PyObject,
+    pub data: Option<PyObject>,
 
     #[pyo3(get)]
     pub data_splits: DataSplits,
@@ -162,8 +162,8 @@ impl DataInterface {
         let sql_logic = sql_logic.unwrap_or_default();
 
         let data = match data {
-            Some(data) => data.into_py_any(py)?,
-            None => py.None(),
+            Some(data) => Some(data.into_py_any(py)?),
+            None => None,
         };
         Ok(DataInterface {
             data,
@@ -183,10 +183,10 @@ impl DataInterface {
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            self.data = py.None();
+            self.data = None;
             return Ok(());
         } else {
-            self.data = data.into_py_any(py)?;
+            self.data = Some(data.into_py_any(py)?);
         };
 
         Ok(())
@@ -269,7 +269,7 @@ impl DataInterface {
 
         // save sql logic
         let sql_uri = self.save_sql(path.clone())?;
-        self.schema = self.create_feature_map(py)?;
+        self.schema = self.create_schema(py)?;
 
         let data_profile_uri = if self.data_profile.is_none() {
             None
@@ -299,7 +299,9 @@ impl DataInterface {
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.data = joblib.call_method("load", (load_path,), kwargs)?.into();
+        let data = joblib.call_method("load", (load_path,), kwargs)?;
+
+        self.data = Some(data.into());
 
         Ok(())
     }
@@ -318,7 +320,7 @@ impl DataInterface {
 
     pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
         // check if data is None
-        if self.data.is_none(py) {
+        if self.data.is_none() {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -332,8 +334,11 @@ impl DataInterface {
 
         let dependent_vars = self.dependent_vars.clone();
 
-        self.data_splits
-            .split_data(self.data.bind(py), &self.data_type, &dependent_vars)
+        self.data_splits.split_data(
+            self.data.as_ref().unwrap().bind(py),
+            &self.data_type,
+            &dependent_vars,
+        )
     }
 
     #[pyo3(signature = (bin_size=20, compute_correlations=false))]
@@ -357,7 +362,7 @@ impl DataInterface {
 
         let profile = profiler.create_data_profile(
             py,
-            self.data.bind(py),
+            self.data.as_ref().unwrap().bind(py),
             data_type,
             bin_size,
             compute_correlations,
@@ -396,9 +401,10 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    pub fn create_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
         // Create and insert the feature
-        let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
+        let feature_map =
+            generate_feature_schema(self.data.as_ref().unwrap().bind(py), &self.data_type)?;
 
         self.schema = feature_map.clone();
 
@@ -424,7 +430,7 @@ impl DataInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
-        if self.data.is_none(py) {
+        if self.data.is_none() {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
