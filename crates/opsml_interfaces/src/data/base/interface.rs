@@ -1,7 +1,7 @@
 use crate::data::DataSaveKwargs;
 use crate::data::{
-    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
-    SqlLogic,
+    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataLoadKwargs, DataSplit,
+    DataSplits, DependentVars, SqlLogic,
 };
 use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
@@ -288,18 +288,19 @@ impl DataInterface {
             self.interface_type.clone(),
         ))
     }
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data(
+    #[pyo3(signature = (path, **load_kwargs))]
+    pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
+        let load_kwargs = load_kwargs.unwrap_or_default();
 
         // Load the data using joblib
-        let data = joblib.call_method("load", (load_path,), kwargs)?;
+        let data = joblib.call_method("load", (load_path,), load_kwargs.data_kwargs(py))?;
 
         self.data = Some(data.into());
 

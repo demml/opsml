@@ -12,7 +12,7 @@ use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 #[pyclass(extends=DataInterface, subclass)]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ArrowData {
     #[pyo3(get)]
     pub data: Option<PyObject>,
@@ -40,7 +40,7 @@ impl ArrowData {
                 let pyarrow_table = py.import("pyarrow")?.getattr("Table")?;
                 // check if data is a numpy array
                 if data.is_instance(&pyarrow_table).unwrap() {
-                    data.into_py_any(py)?
+                    Some(data.into_py_any(py)?)
                 } else {
                     return Err(OpsmlError::new_err("Data must be a pyarrow table"));
                 }
@@ -59,39 +59,30 @@ impl ArrowData {
         )?;
 
         data_interface.data_type = DataType::Arrow;
-        data_interface.data = data;
         data_interface.interface_type = DataInterfaceType::Arrow;
 
-        Ok((ArrowData {}, data_interface))
-    }
-
-    #[getter]
-    pub fn get_data(self_: PyRef<'_, Self>, py: Python) -> PyObject {
-        self_.as_super().data.clone_ref(py)
+        Ok((ArrowData { data }, data_interface))
     }
 
     #[setter]
-    pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
-        let parent = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            parent.data = py.None();
-            Ok(())
+            self.data = None;
+            return Ok(());
         } else {
-            // check if data is a numpy array
-            // get type name of data
             let pyarrow_table = py.import("pyarrow")?.getattr("Table")?;
-
             // check if data is a numpy array
             if data.is_instance(&pyarrow_table).unwrap() {
-                parent.data = data.into_py_any(py)?;
-                Ok(())
+                Some(data.into_py_any(py)?)
             } else {
-                Err(OpsmlError::new_err("Data must be a pyarrow table"))
+                return Err(OpsmlError::new_err("Data must be a pyarrow table"));
             }
-        }
+        };
+
+        Ok(())
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
@@ -114,7 +105,7 @@ impl ArrowData {
             Some(self_.as_super().save_data_profile(&path)?)
         };
 
-        let data_uri = ArrowData::save_data(self_, py, path.clone(), data_kwargs.as_ref())?;
+        let data_uri = self_.save_data(py, path.clone(), data_kwargs.as_ref())?;
 
         let save_metadata =
             DataInterfaceSaveMetadata::new(data_uri, sql_uri, data_profile_uri, None, save_kwargs);
@@ -174,8 +165,7 @@ impl ArrowData {
         path: PathBuf,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let parent = self_.as_super();
-        if parent.data.is_none(py) {
+        if self.data.is_none() {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -185,7 +175,7 @@ impl ArrowData {
         let full_save_path = path.join(&save_path);
 
         let parquet = py.import("pyarrow")?.getattr("parquet")?;
-        let args = (&parent.data, full_save_path);
+        let args = (self.data.as_ref().unwrap(), full_save_path);
 
         // Save the data using joblib
         parquet
