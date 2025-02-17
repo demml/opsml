@@ -139,7 +139,7 @@ impl OpsmlRegistry {
                 // convert to client ArtifactKey
                 Ok(ArtifactKey {
                     uid: key.uid,
-                    card_type: CardType::from_string(&key.card_type),
+                    card_type: key.card_type,
                     encrypted_key: key.encrypted_key,
                     storage_key: key.storage_key,
                 })
