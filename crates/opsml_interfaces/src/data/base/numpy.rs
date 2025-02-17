@@ -7,7 +7,7 @@ use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::IntoPyObjectExt;
+use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -140,6 +140,17 @@ impl NumpyData {
         self_.set_data(&data)?;
 
         Ok(())
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref data) = self.data {
+            visit.call(data)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.data = None;
     }
 }
 
