@@ -588,7 +588,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip(self, path) name = "save_driftprofile")]
+    #[instrument(skip(self, path) name = "save_drift_profile")]
     pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
         let save_dir = PathBuf::from(SaveName::Drift);
         if !save_dir.exists() {

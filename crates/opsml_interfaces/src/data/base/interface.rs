@@ -1,3 +1,4 @@
+use crate::data::DataSaveKwargs;
 use crate::data::{
     generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
     SqlLogic,
@@ -14,9 +15,9 @@ use scouter_client::{DataProfile, DataProfiler};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::path::Path;
 use std::path::PathBuf;
-
-use super::DataSaveKwargs;
+use tracing::instrument;
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -241,77 +242,6 @@ impl DataInterface {
         Ok(())
     }
 
-    /// Save the SQL logic to a file
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Path to save the SQL logic
-    ///
-    /// # Returns
-    ///
-    /// * `Option<PathBuf>` - Path to the saved SQL logic
-    pub fn save_sql(&self, path: PathBuf) -> PyResult<Option<PathBuf>> {
-        if !self.sql_logic.queries.is_empty() {
-            Ok(Some(self.sql_logic.save(&path)?))
-        } else {
-            Ok(None)
-        }
-    }
-
-    /// Create a feature schema
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Name of the feature
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
-        // Create and insert the feature
-        let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
-
-        self.schema = feature_map.clone();
-
-        Ok(feature_map)
-    }
-
-    /// Save the data
-    ///
-    /// # Arguments
-    ///
-    /// * `py` - Python interpreter
-    /// * `path` - Path to save the data
-    /// * `kwargs` - Additional save kwargs
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<PathBuf>` - Path to the saved data
-    ///
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        // check if data is None
-        if self.data.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
-        }
-
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
-        let full_save_path = path.join(&save_path);
-        let joblib = py.import("joblib")?;
-
-        // Save the data using joblib
-        joblib.call_method("dump", (&self.data, full_save_path), kwargs)?;
-
-        Ok(save_path)
-    }
-
     /// Save the data and SQL logic
     ///
     /// # Arguments
@@ -341,8 +271,14 @@ impl DataInterface {
         let sql_uri = self.save_sql(path.clone())?;
         self.schema = self.create_feature_map(py)?;
 
+        let data_profile_uri = if self.data_profile.is_none() {
+            None
+        } else {
+            Some(self.save_data_profile(&path)?)
+        };
+
         let save_metadata =
-            DataInterfaceSaveMetadata::new(data_uri, sql_uri, None, None, save_kwargs);
+            DataInterfaceSaveMetadata::new(data_uri, sql_uri, data_profile_uri, None, save_kwargs);
 
         Ok(DataInterfaceMetadata::new(
             save_metadata,
@@ -430,5 +366,99 @@ impl DataInterface {
         self.data_profile = Some(profile.clone());
 
         Ok(profile)
+    }
+}
+
+impl DataInterface {
+    /// Save the SQL logic to a file
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save the SQL logic
+    ///
+    /// # Returns
+    ///
+    /// * `Option<PathBuf>` - Path to the saved SQL logic
+    pub fn save_sql(&self, path: PathBuf) -> PyResult<Option<PathBuf>> {
+        if !self.sql_logic.queries.is_empty() {
+            Ok(Some(self.sql_logic.save(&path)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+        let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
+
+        self.schema = feature_map.clone();
+
+        Ok(feature_map)
+    }
+
+    /// Save the data
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<PathBuf>` - Path to the saved data
+    ///
+    pub fn save_data(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        // check if data is None
+        if self.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Joblib);
+        let full_save_path = path.join(&save_path);
+        let joblib = py.import("joblib")?;
+
+        // Save the data using joblib
+        joblib.call_method("dump", (&self.data, full_save_path), kwargs)?;
+
+        Ok(save_path)
+    }
+
+    /// Save drift profile
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to save drift profile
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<PathBuf>` - Path to saved drift profile
+    #[instrument(skip(self, path) name = "save_drift_profile")]
+    pub fn save_data_profile(&self, path: &Path) -> PyResult<PathBuf> {
+        let profile_save_path = path
+            .join(SaveName::DataProfile)
+            .with_extension(Suffix::Json);
+        self.data_profile
+            .as_ref()
+            .unwrap()
+            .save_to_json(Some(profile_save_path.clone()))?;
+
+        Ok(profile_save_path)
     }
 }
