@@ -1,7 +1,8 @@
 use opsml_error::ApiError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-use opsml_sql::schemas::ArtifactKey;
+use opsml_types::cards::CardType;
+use opsml_types::contracts::ArtifactKey;
 use opsml_utils::uid_to_byte_key;
 
 use anyhow::Result;
@@ -37,7 +38,7 @@ pub async fn create_artifact_key(
 
     let artifact_key = ArtifactKey {
         uid: uid.to_string(),
-        card_type: card_type.to_string(),
+        card_type: CardType::from_string(card_type),
         encrypted_key,
         storage_key: storage_key.to_string(),
     };
