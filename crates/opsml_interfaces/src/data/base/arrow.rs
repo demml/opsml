@@ -1,6 +1,7 @@
 // Tests are in py-opsml/tests/interfaces/data
 use crate::data::{
-    DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataSaveKwargs, SqlLogic,
+    DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
+    DataSaveKwargs, SqlLogic,
 };
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
@@ -119,21 +120,21 @@ impl ArrowData {
         ))
     }
 
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
+    #[pyo3(signature = (path, load_kwargs=None))]
+    pub fn load<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
         let parquet = py.import("pyarrow")?.getattr("parquet")?;
+        let load_kwargs = load_kwargs.unwrap_or_default();
 
         // Load the data using numpy
-        let data = parquet.call_method("read_table", (load_path,), kwargs)?;
+        let data = parquet.call_method("read_table", (load_path,), load_kwargs.data_kwargs(py))?;
 
-        self_.as_super().data = data.into();
+        self_.set_data(&data)?;
 
         Ok(())
     }
