@@ -242,6 +242,7 @@ impl ModelCard {
         load_kwargs: Option<LoadKwargs>,
     ) -> PyResult<()> {
         let tmp_path = create_tmp_path()?;
+
         // download assets
         self.download_select_artifacts(
             &tmp_path,
@@ -571,14 +572,7 @@ impl ModelCard {
         let rt = self.rt.clone().unwrap();
         let fs = self.fs.clone().unwrap();
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
-
-        // raise error if decryption key is not found
-
-        let decrypt_key = if self.artifact_key.is_none() {
-            return Err(CardError::Error("Decryption key not found".to_string()));
-        } else {
-            self.artifact_key.as_ref().unwrap().get_decrypt_key()?
-        };
+        let decrypt_key = self.get_decryption_key()?;
 
         rt.block_on(async {
             let uri = self.uri();
@@ -667,7 +661,6 @@ impl ModelCard {
         decrypt_directory(&tmp_path, &decrypt_key)?;
 
         // decrypt
-
         Ok(())
     }
 }
