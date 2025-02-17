@@ -10,7 +10,7 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
-use pyo3::IntoPyObjectExt;
+use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::{DataProfile, DataProfiler};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -372,6 +372,17 @@ impl DataInterface {
         self.data_profile = Some(profile.clone());
 
         Ok(profile)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref data) = self.data {
+            visit.call(data)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.data = None;
     }
 }
 
