@@ -10,7 +10,7 @@ use opsml_interfaces::{
 use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
-use opsml_types::contracts::{Card, ModelCardClientRecord};
+use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{ModelInterfaceType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::prelude::*;
@@ -103,6 +103,8 @@ pub struct ModelCard {
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
+
+    pub artifact_key: Option<ArtifactKey>,
 }
 
 #[pymethods]
@@ -159,6 +161,7 @@ impl ModelCard {
             to_onnx: to_onnx.unwrap_or(false),
             rt: None,
             fs: None,
+            artifact_key: None,
         })
     }
 
@@ -397,6 +400,7 @@ impl FromPyObject<'_> for ModelCard {
             to_onnx,
             rt: None,
             fs: None,
+            artifact_key: None,
         })
     }
 }
@@ -505,6 +509,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     to_onnx,
                     rt: None,
                     fs: None,
+                    artifact_key: None,
                 })
             }
         }
@@ -527,10 +532,10 @@ impl<'de> Deserialize<'de> for ModelCard {
 
 impl ModelCard {
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
-        if self.metadata.decryption_key.is_none() {
+        if self.artifact_key.is_none() {
             return Err(CardError::Error("Decryption key not found".to_string()));
         } else {
-            Ok(self.metadata.decryption_key.clone().unwrap())
+            Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
         }
     }
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
