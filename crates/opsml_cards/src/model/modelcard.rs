@@ -342,7 +342,7 @@ impl Serialize for ModelCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ModelCard", 10)?;
+        let mut state = serializer.serialize_struct("ModelCard", 9)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -415,7 +415,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             type Value = ModelCard;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("struct OnnxSession")
+                formatter.write_str("struct ModelCard")
             }
 
             fn visit_map<V>(self, mut map: V) -> Result<ModelCard, V::Error>
