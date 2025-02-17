@@ -2,8 +2,8 @@ use crate::base::SqlClient;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
 use crate::schemas::schema::{
-    ArtifactKey, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord,
-    QueryStats, ServerCard, User,
+    CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
+    ServerCard, User,
 };
 use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
@@ -13,7 +13,10 @@ use opsml_error::error::SqlError;
 use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
 use opsml_types::{
     SqlType,
-    {cards::CardTable, contracts::CardQueryArgs},
+    {
+        cards::CardTable,
+        contracts::{ArtifactKey, CardQueryArgs},
+    },
 };
 
 #[derive(Debug, Clone)]
