@@ -1,7 +1,9 @@
 use crate::BaseArgs;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::data::{DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs};
+use opsml_interfaces::data::{
+    ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs,
+};
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
@@ -20,6 +22,20 @@ use serde::{
     ser::SerializeStruct,
     Deserialize, Deserializer, Serialize, Serializer,
 };
+
+fn interface_from_metadata<'py>(
+    py: Python<'py>,
+    metadata: &DataInterfaceMetadata,
+) -> PyResult<Bound<'py, PyAny>> {
+    match metadata.interface_type {
+        DataInterfaceType::Arrow => ArrowData::from_metadata(py, metadata),
+
+        _ => {
+            error!("Interface type not found");
+            Err(OpsmlError::new_err("Interface type not found"))
+        }
+    }
+}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -154,6 +170,23 @@ impl DataCard {
         })
     }
 
+    #[setter]
+    pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> PyResult<()> {
+        if interface.is_instance_of::<DataInterface>() {
+            self.interface = Some(
+                interface
+                    .into_py_any(interface.py())
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))
+                    .unwrap(),
+            );
+            Ok(())
+        } else {
+            return Err(OpsmlError::new_err(
+                "interface must be an instance of ModelInterface",
+            ));
+        }
+    }
+
     pub fn add_tags(&mut self, tags: Vec<String>) {
         self.tags.extend(tags);
     }
@@ -222,6 +255,23 @@ impl DataCard {
         serde_json::to_string(self).unwrap()
     }
 
+    #[staticmethod]
+    #[pyo3(signature = (json_string, interface=None))]
+    pub fn model_validate_json(
+        py: Python,
+        json_string: String,
+        interface: Option<&Bound<'_, PyAny>>,
+    ) -> PyResult<DataCard> {
+        let mut card: DataCard = serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
+
+        card.load_interface(py, interface)?;
+
+        Ok(card)
+    }
+
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
         if let Some(ref interface) = self.interface {
             visit.call(interface)?;
@@ -235,6 +285,16 @@ impl DataCard {
 }
 
 impl DataCard {
+    fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+        if let Some(interface) = interface {
+            self.set_interface(interface)
+        } else {
+            // match interface type
+            let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
+            self.set_interface(&interface)
+        }
+    }
+
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = DataCardClientRecord {
             created_at: None,
