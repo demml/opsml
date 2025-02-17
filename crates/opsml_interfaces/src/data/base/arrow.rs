@@ -1,5 +1,7 @@
 // Tests are in py-opsml/tests/interfaces/data
-use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
+use crate::data::{
+    DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataSaveKwargs, SqlLogic,
+};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
@@ -7,23 +9,26 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-
 #[pyclass(extends=DataInterface, subclass)]
 #[derive(Debug, Clone)]
-pub struct ArrowData {}
+pub struct ArrowData {
+    #[pyo3(get)]
+    pub data: Option<PyObject>,
+}
 
 #[pymethods]
 impl ArrowData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
+        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> PyResult<(Self, DataInterface)> {
@@ -40,7 +45,7 @@ impl ArrowData {
                     return Err(OpsmlError::new_err("Data must be a pyarrow table"));
                 }
             }
-            None => py.None(),
+            None => None,
         };
 
         let mut data_interface = DataInterface::new(
@@ -48,7 +53,7 @@ impl ArrowData {
             None,
             data_splits,
             dependent_vars,
-            feature_map,
+            schema,
             sql_logic,
             data_profile,
         )?;
@@ -89,51 +94,38 @@ impl ArrowData {
         }
     }
 
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<PathBuf> {
-        let parent = self_.as_super();
-        if parent.data.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
-        }
-
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
-        let full_save_path = path.join(&save_path);
-
-        let parquet = py.import("pyarrow")?.getattr("parquet")?;
-        let args = (&parent.data, full_save_path);
-
-        // Save the data using joblib
-        parquet
-            .call_method("write_table", args, kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-        Ok(save_path)
-    }
-
-    #[pyo3(signature = (path, **kwargs))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<DataInterfaceSaveMetadata> {
-        let feature_map = self_.as_super().create_feature_map(py)?;
-        let sql_save_path = self_.as_super().save_sql(path.clone())?;
-        let save_path = ArrowData::save_data(self_, py, path.clone(), kwargs)?;
+        save_kwargs: Option<DataSaveKwargs>,
+    ) -> PyResult<DataInterfaceMetadata> {
+        let data_kwargs = save_kwargs
+            .as_ref()
+            .and_then(|args| args.data_kwargs(py))
+            .cloned();
 
-        Ok(DataInterfaceSaveMetadata {
-            data_type: DataType::Arrow,
-            feature_map: feature_map.clone(),
-            data_save_path: Some(save_path),
-            sql_save_path,
-            data_profile_save_path: None,
-        })
+        let schema = self_.as_super().create_schema(py)?;
+        let sql_uri = self_.as_super().save_sql(path.clone())?;
+        let data_profile_uri = if self_.as_super().data_profile.is_none() {
+            None
+        } else {
+            Some(self_.as_super().save_data_profile(&path)?)
+        };
+
+        let data_uri = ArrowData::save_data(self_, py, path.clone(), data_kwargs.as_ref())?;
+
+        let save_metadata =
+            DataInterfaceSaveMetadata::new(data_uri, sql_uri, data_profile_uri, None, save_kwargs);
+
+        Ok(DataInterfaceMetadata::new(
+            save_metadata,
+            schema,
+            HashMap::new(),
+            self_.as_super().sql_logic.clone(),
+            self_.as_super().interface_type.clone(),
+        ))
     }
 
     #[pyo3(signature = (path, **kwargs))]
@@ -174,5 +166,31 @@ impl ArrowData {
         let bound = Py::new(py, interface)?.as_any().clone_ref(py);
 
         Ok(bound)
+    }
+
+    pub fn save_data<'py>(
+        &self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> PyResult<PathBuf> {
+        let parent = self_.as_super();
+        if parent.data.is_none(py) {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
+        let full_save_path = path.join(&save_path);
+
+        let parquet = py.import("pyarrow")?.getattr("parquet")?;
+        let args = (&parent.data, full_save_path);
+
+        // Save the data using joblib
+        parquet
+            .call_method("write_table", args, kwargs)
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        Ok(save_path)
     }
 }
