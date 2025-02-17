@@ -8,14 +8,12 @@ pub mod server_logic {
     use opsml_settings::config::DatabaseSettings;
     use opsml_settings::config::OpsmlConfig;
     use opsml_settings::config::OpsmlStorageSettings;
-    use opsml_sql::schemas::ArtifactKey as ServerArtifactKey;
     use opsml_sql::{
         base::SqlClient,
         enums::client::{get_sql_client, SqlClientEnum},
         schemas::*,
     };
     use opsml_types::cards::CardType;
-    use opsml_types::contracts::ArtifactKey as ClientArtifactKey;
     use opsml_types::{cards::CardTable, contracts::*, *};
     use opsml_utils::uid_to_byte_key;
     use pyo3::prelude::*;
@@ -135,7 +133,7 @@ pub mod server_logic {
             uid: &str,
             card_type: &str,
             storage_key: &str,
-        ) -> Result<ServerArtifactKey, RegistryError> {
+        ) -> Result<ArtifactKey, RegistryError> {
             let salt = generate_salt();
 
             let derived_key = derive_encryption_key(
@@ -148,9 +146,9 @@ pub mod server_logic {
 
             let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
 
-            let artifact_key = ServerArtifactKey {
+            let artifact_key = ArtifactKey {
                 uid: uid.to_string(),
-                card_type: card_type.to_string(),
+                card_type: CardType::from_string(card_type),
                 encrypted_key: encrypted_key,
                 storage_key: storage_key.to_string(),
             };
@@ -295,9 +293,9 @@ pub mod server_logic {
                 version: card.version(),
                 repository: card.card_type(),
                 name: card.name(),
-                key: ClientArtifactKey {
+                key: ArtifactKey {
                     uid: key.uid,
-                    card_type: CardType::from_string(&key.card_type),
+                    card_type: key.card_type,
                     encrypted_key: key.encrypted_key,
                     storage_key: key.storage_key,
                 },
@@ -503,7 +501,7 @@ pub mod server_logic {
         pub async fn load_card(
             &mut self,
             args: CardQueryArgs,
-        ) -> Result<ServerArtifactKey, RegistryError> {
+        ) -> Result<ArtifactKey, RegistryError> {
             self.sql_client
                 .get_card_key_for_loading(&self.table_name, &args)
                 .await
