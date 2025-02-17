@@ -8,7 +8,7 @@ use opsml_interfaces::{
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_storage::FileSystemStorage;
-use opsml_types::cards::{CardTable, CardType};
+use opsml_types::cards::CardType;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{ModelInterfaceType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
