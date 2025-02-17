@@ -67,7 +67,7 @@ impl PandasData {
     }
 
     #[setter]
-    pub fn set_data<'py>(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
 
         // check if data is None
@@ -90,8 +90,8 @@ impl PandasData {
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn save(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
@@ -124,8 +124,8 @@ impl PandasData {
     }
 
     #[pyo3(signature = (path, load_kwargs=None))]
-    pub fn load_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn load_data(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         load_kwargs: Option<DataLoadKwargs>,
@@ -144,11 +144,11 @@ impl PandasData {
 }
 
 impl PandasData {
-    pub fn save_data<'py>(
+    pub fn save_data(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
         if self.data.is_none() {
