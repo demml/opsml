@@ -1,14 +1,11 @@
 use crate::BaseArgs;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::data::DataInterfaceSaveMetadata;
+use opsml_interfaces::data::{DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs};
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{
-    cards::{CardTable, CardType},
-    DataType, InterfaceType,
-};
+use opsml_types::{cards::CardType, DataType, InterfaceType};
 use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};

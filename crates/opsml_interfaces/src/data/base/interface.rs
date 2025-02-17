@@ -5,13 +5,74 @@ use crate::data::{
 use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::IntoPyObjectExt;
 use scouter_client::{DataProfile, DataProfiler};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+use super::DataSaveKwargs;
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DataInterfaceMetadata {
+    #[pyo3(get)]
+    save_metadata: DataInterfaceSaveMetadata,
+
+    #[pyo3(get)]
+    schema: FeatureSchema,
+
+    #[pyo3(get)]
+    pub extra_metadata: HashMap<String, String>,
+
+    #[pyo3(get, set)]
+    pub sql_logic: SqlLogic,
+
+    #[pyo3(get)]
+    pub interface_type: DataInterfaceType,
+
+    pub data_specific_metadata: Value,
+}
+
+#[pymethods]
+impl DataInterfaceMetadata {
+    #[new]
+    #[pyo3(signature = (save_metadata, schema=FeatureSchema::default(), extra_metadata=HashMap::new(), sql_logic=SqlLogic::default(),interface_type=DataInterfaceType::Base))]
+    pub fn new(
+        save_metadata: DataInterfaceSaveMetadata,
+        schema: FeatureSchema,
+        extra_metadata: HashMap<String, String>,
+        sql_logic: SqlLogic,
+        interface_type: DataInterfaceType,
+    ) -> Self {
+        DataInterfaceMetadata {
+            save_metadata,
+            schema,
+            extra_metadata,
+            sql_logic,
+            interface_type,
+            data_specific_metadata: Value::Null,
+        }
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> DataInterfaceMetadata {
+        serde_json::from_str(&json_string).unwrap()
+    }
+}
 
 #[pyclass(subclass)]
 pub struct DataInterface {
@@ -25,7 +86,7 @@ pub struct DataInterface {
     pub dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
-    pub feature_map: FeatureSchema,
+    pub schema: FeatureSchema,
 
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
@@ -44,13 +105,13 @@ pub struct DataInterface {
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
+        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> PyResult<Self> {
@@ -96,7 +157,7 @@ impl DataInterface {
             }
         };
 
-        let feature_map = feature_map.unwrap_or_default();
+        let schema = schema.unwrap_or_default();
         let sql_logic = sql_logic.unwrap_or_default();
 
         let data = match data {
@@ -107,7 +168,7 @@ impl DataInterface {
             data,
             data_splits: splits,
             dependent_vars: depen_vars,
-            feature_map,
+            schema,
             sql_logic,
             data_type: DataType::Base,
             interface_type: DataInterfaceType::Base,
@@ -210,7 +271,7 @@ impl DataInterface {
         // Create and insert the feature
         let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
 
-        self.feature_map = feature_map.clone();
+        self.schema = feature_map.clone();
 
         Ok(feature_map)
     }
@@ -262,29 +323,35 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, **kwargs))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<DataInterfaceSaveMetadata> {
-        // save data
-        let save_path = self.save_data(py, path.clone(), kwargs)?;
+        save_kwargs: Option<DataSaveKwargs>,
+    ) -> PyResult<DataInterfaceMetadata> {
+        let data_kwargs = save_kwargs
+            .as_ref()
+            .and_then(|args| args.data_kwargs(py))
+            .cloned();
+
+        let data_uri = self.save_data(py, path.clone(), data_kwargs.as_ref())?;
 
         // save sql logic
-        let sql_save_path = self.save_sql(path.clone())?;
-        self.feature_map = self.create_feature_map(py)?;
+        let sql_uri = self.save_sql(path.clone())?;
+        self.schema = self.create_feature_map(py)?;
 
-        Ok(DataInterfaceSaveMetadata {
-            data_type: self.data_type.clone(),
-            feature_map: self.feature_map.clone(),
-            data_save_path: Some(save_path),
-            sql_save_path,
-            data_profile_save_path: None,
-        })
+        let save_metadata =
+            DataInterfaceSaveMetadata::new(data_uri, sql_uri, None, None, save_kwargs);
+
+        Ok(DataInterfaceMetadata::new(
+            save_metadata,
+            self.schema.clone(),
+            HashMap::new(),
+            self.sql_logic.clone(),
+            self.interface_type.clone(),
+        ))
     }
-
     #[pyo3(signature = (path, **kwargs))]
     pub fn load_data(
         &mut self,
