@@ -1,6 +1,8 @@
 use crate::BaseArgs;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::data::{DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs};
+use opsml_interfaces::data::{
+    DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs,
+};
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
@@ -15,7 +17,7 @@ use std::sync::{Arc, Mutex};
 use tracing::error;
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataCardMetadata {
     #[pyo3(get, set)]
     pub schema: FeatureSchema,
@@ -28,26 +30,8 @@ pub struct DataCardMetadata {
 
     #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
-}
 
-#[pymethods]
-impl DataCardMetadata {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = ( schema=FeatureSchema::default(), runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))]
-    pub fn new(
-        schema: FeatureSchema,
-        runcard_uid: Option<String>,
-        pipelinecard_uid: Option<String>,
-        auditcard_uid: Option<String>,
-    ) -> Self {
-        Self {
-            schema,
-            runcard_uid,
-            pipelinecard_uid,
-            auditcard_uid,
-        }
-    }
+    pub interface_metadata: DataInterfaceMetadata,
 }
 
 #[pyclass]
@@ -93,7 +77,7 @@ pub struct DataCard {
 impl DataCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None, metadata=None))]
+    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
         repository: Option<&str>,
@@ -102,7 +86,6 @@ impl DataCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
-        metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
         let tags = match tags {
             None => Vec::new(),
@@ -145,13 +128,6 @@ impl DataCard {
             ));
         }
 
-        let metadata = metadata.unwrap_or(DataCardMetadata::new(
-            FeatureSchema::default(),
-            None,
-            None,
-            None,
-        ));
-
         Ok(Self {
             interface: Some(
                 interface
@@ -164,7 +140,7 @@ impl DataCard {
             version: base_args.3,
             uid: base_args.4,
             tags,
-            metadata,
+            metadata: DataCardMetadata::default(),
             card_type: CardType::Data,
             data_type,
             rt: None,
@@ -177,15 +153,13 @@ impl DataCard {
         self.tags.extend(tags);
     }
 
-    #[pyo3(signature = (path, **kwargs))]
+    #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save(
-        &self,
+        &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        save_kwargs: Option<DataSaveKwargs>,
     ) -> PyResult<DataInterfaceSaveMetadata> {
-        let args = (path,);
-
         // if option raise error
         let data = self.interface.as_ref().ok_or_else(|| {
             OpsmlError::new_err(
@@ -195,11 +169,11 @@ impl DataCard {
 
         // call save on interface
         let metadata = data
-            .call_method(py, "save", args, kwargs)
+            .call_method(py, "save", (path, save_kwargs), None)
             .map_err(|e| {
                 OpsmlError::new_err(format!("Error calling save method on interface: {}", e))
             })?
-            .extract::<DataInterfaceSaveMetadata>(py)
+            .extract::<DataInterfaceMetadata>(py)
             .map_err(|e| {
                 OpsmlError::new_err(format!("Error extracting metadata from interface: {}", e))
             })?;
