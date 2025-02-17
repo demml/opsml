@@ -183,9 +183,9 @@ impl ModelCard {
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
-    pub fn save<'py>(
+    pub fn save(
         &mut self,
-        py: Python<'py>,
+        py: Python,
         path: PathBuf,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<(), CardError> {
