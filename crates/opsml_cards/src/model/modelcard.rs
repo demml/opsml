@@ -2,12 +2,11 @@ use crate::BaseArgs;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
-use opsml_interfaces::SaveKwargs;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
-use opsml_interfaces::{LoadKwargs, ModelInterfaceMetadata};
+use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{CardTable, CardType};
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
@@ -188,7 +187,7 @@ impl ModelCard {
         &mut self,
         py: Python<'py>,
         path: PathBuf,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<(), CardError> {
         // save model interface
         // if option raise error
@@ -225,7 +224,7 @@ impl ModelCard {
         drift_profile: bool,
         sample_data: bool,
         preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         let tmp_path = create_tmp_path()?;
 
@@ -528,7 +527,7 @@ impl ModelCard {
         let fs = self.fs.clone().unwrap();
 
         let decrypt_key = self.get_decryption_key()?;
-        let uri = self.uri();
+        let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
         rt.block_on(async {
             fs.lock()
@@ -561,7 +560,7 @@ impl ModelCard {
         let decrypt_key = self.get_decryption_key()?;
 
         rt.block_on(async {
-            let uri = self.uri();
+            let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
             if model {
                 let rpath = uri.join(&save_metadata.model_uri);
