@@ -1,6 +1,5 @@
-use crate::types::FeatureSchema;
+use crate::base::ExtraMetadata;
 use opsml_error::{OpsmlError, SaveError};
-use opsml_types::DataType;
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::{json_to_pyobject, pyobject_to_json};
 use opsml_utils::{FileUtils, PyHelperFuncs};
@@ -15,6 +14,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use super::sql;
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DependentVars {
@@ -162,41 +162,45 @@ impl SqlLogic {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataInterfaceSaveMetadata {
     #[pyo3(get)]
-    pub data_type: DataType,
+    pub data_uri: PathBuf,
 
     #[pyo3(get)]
-    pub feature_map: FeatureSchema,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data_profile_uri: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub data_save_path: Option<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sql_uri: Option<PathBuf>,
 
     #[pyo3(get)]
-    pub sql_save_path: Option<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extra: Option<ExtraMetadata>,
 
     #[pyo3(get)]
-    pub data_profile_save_path: Option<PathBuf>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub save_kwargs: Option<DataSaveKwargs>,
 }
 
 #[pymethods]
 impl DataInterfaceSaveMetadata {
     #[new]
-    #[pyo3(signature = (data_type, feature_map, data_save_path=None, sql_save_path=None, data_profile_save_path=None))]
+    #[pyo3(signature = (data_uri, sql_uri=None, data_profile_uri=None, extra=None, save_kwargs=None))]
     pub fn new(
-        data_type: DataType,
-        feature_map: FeatureSchema,
-        data_save_path: Option<PathBuf>,
-        sql_save_path: Option<PathBuf>,
-        data_profile_save_path: Option<PathBuf>,
+        data_uri: PathBuf,
+        sql_uri: Option<PathBuf>,
+        data_profile_uri: Option<PathBuf>,
+        extra: Option<ExtraMetadata>,
+        save_kwargs: Option<DataSaveKwargs>,
     ) -> Self {
         DataInterfaceSaveMetadata {
-            data_type,
-            feature_map,
-            data_save_path,
-            sql_save_path,
-            data_profile_save_path,
+            data_uri,
+            sql_uri,
+            data_profile_uri,
+            extra,
+            save_kwargs,
         }
     }
 
