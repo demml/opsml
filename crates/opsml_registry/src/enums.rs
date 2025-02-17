@@ -2,6 +2,7 @@ use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::CardType;
+use opsml_types::contracts::ArtifactKey;
 use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
 use opsml_types::*;
 use tracing::{debug, instrument};
@@ -128,11 +129,21 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<Card, RegistryError> {
+    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.load_card(args).await,
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => server_registry.load_card(args).await,
+            Self::ServerRegistry(server_registry) => {
+                let key = server_registry.load_card(args).await?;
+
+                // convert to client ArtifactKey
+                Ok(ArtifactKey {
+                    uid: key.uid,
+                    card_type: CardType::from_string(&key.card_type),
+                    encrypted_key: key.encrypted_key,
+                    storage_key: key.storage_key,
+                })
+            }
         }
     }
 }

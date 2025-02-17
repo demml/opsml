@@ -3780,6 +3780,7 @@ dependencies = [
  "chrono",
  "colored_json",
  "opsml-colors",
+ "opsml-crypt",
  "opsml-error",
  "opsml-semver",
  "opsml-utils",

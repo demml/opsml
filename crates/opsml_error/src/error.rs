@@ -125,6 +125,9 @@ pub enum TypeError {
 
     #[error("File not found")]
     FileNotFoundError,
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
 }
 
 impl From<TypeError> for PyErr {
