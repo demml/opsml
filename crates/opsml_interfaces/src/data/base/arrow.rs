@@ -122,8 +122,8 @@ impl ArrowData {
     }
 
     #[pyo3(signature = (path, load_kwargs=None))]
-    pub fn load<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         load_kwargs: Option<DataLoadKwargs>,
@@ -161,11 +161,11 @@ impl ArrowData {
         Ok(bound)
     }
 
-    pub fn save_data<'py>(
+    pub fn save_data(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         if self.data.is_none() {
             return Err(OpsmlError::new_err(

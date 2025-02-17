@@ -1,4 +1,7 @@
-use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
+use crate::data::{
+    generate_feature_schema, DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata,
+    DataLoadKwargs, DataSaveKwargs, SqlLogic,
+};
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
@@ -6,11 +9,15 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::{Path, PathBuf};
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
-#[derive(Debug, Clone)]
-pub struct PolarsData {}
+#[derive(Debug)]
+pub struct PolarsData {
+    #[pyo3(get)]
+    pub data: Option<PyObject>,
+}
 
 #[pymethods]
 impl PolarsData {
@@ -35,12 +42,12 @@ impl PolarsData {
 
                 // check if data is a polars.DataFrame
                 if data.is_instance(&polars_data_frame).unwrap() {
-                    data.into_py_any(py)?
+                    Some(data.into_py_any(py)?)
                 } else {
                     return Err(OpsmlError::new_err("Data must be a polars.DataFrame"));
                 }
             }
-            None => py.None(),
+            None => None,
         };
 
         let mut data_interface = DataInterface::new(
@@ -54,26 +61,20 @@ impl PolarsData {
         )?;
 
         data_interface.data_type = DataType::Polars;
-        data_interface.data = data;
+
         data_interface.interface_type = DataInterfaceType::Polars;
 
-        Ok((PolarsData {}, data_interface))
-    }
-
-    #[getter]
-    pub fn get_data(self_: PyRef<'_, Self>, py: Python) -> PyObject {
-        self_.as_super().data.clone_ref(py)
+        Ok((PolarsData { data }, data_interface))
     }
 
     #[setter]
     #[allow(clippy::needless_lifetimes)]
-    pub fn set_data<'py>(mut self_: PyRefMut<'py, Self>, data: &Bound<'py, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
-        let parent = self_.as_super();
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            parent.data = py.None();
+            self.data = None;
             Ok(())
         } else {
             // check if data is a numpy array
@@ -82,7 +83,7 @@ impl PolarsData {
 
             // check if data is a numpy array
             if data.is_instance(&polars).unwrap() {
-                parent.data = data.into_py_any(py)?;
+                self.data = Some(data.into_py_any(py)?);
                 Ok(())
             } else {
                 Err(OpsmlError::new_err("Data must be a polars dataframe"))
@@ -90,17 +91,70 @@ impl PolarsData {
         }
     }
 
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    #[pyo3(signature = (path, save_kwargs=None))]
+    pub fn save(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        save_kwargs: Option<DataSaveKwargs>,
+    ) -> PyResult<DataInterfaceMetadata> {
+        let data_kwargs = save_kwargs
+            .as_ref()
+            .and_then(|args| args.data_kwargs(py))
+            .cloned();
+
+        self_.as_super().schema = self_.create_feature_schema(py)?;
+        let sql_uri = self_.as_super().save_sql(path.clone())?;
+        let data_profile_uri = if self_.as_super().data_profile.is_none() {
+            None
+        } else {
+            Some(self_.as_super().save_data_profile(&path)?)
+        };
+        let data_uri = self_.save_data(py, path.clone(), data_kwargs.as_ref())?;
+
+        let save_metadata =
+            DataInterfaceSaveMetadata::new(data_uri, sql_uri, data_profile_uri, None, save_kwargs);
+
+        Ok(DataInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().schema.clone(),
+            HashMap::new(),
+            self_.as_super().sql_logic.clone(),
+            self_.as_super().interface_type.clone(),
+        ))
+    }
+
+    #[pyo3(signature = (path, load_kwargs=None))]
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        path: PathBuf,
+        load_kwargs: Option<DataLoadKwargs>,
+    ) -> PyResult<()> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        let polars = PyModule::import(py, "polars")?;
+
+        // Load the data using polars
+        let data = polars.call_method("read_parquet", (load_path,), load_kwargs.data_kwargs(py))?;
+
+        self_.set_data(&data)?;
+
+        Ok(())
+    }
+}
+
+impl PolarsData {
+    pub fn save_data(
+        &self,
+        py: Python,
+        path: PathBuf,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
 
-        let parent = self_.as_super();
-        if parent.data.is_none(py) {
+        if self.data.is_none() {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -109,72 +163,21 @@ impl PolarsData {
         let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
-        let _ = &self_
-            .as_super()
+        let _ = self
             .data
+            .as_ref()
+            .unwrap()
             .call_method(py, "write_parquet", (full_save_path,), kwargs)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(save_path)
     }
 
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<DataInterfaceSaveMetadata> {
-        let feature_map = self_.as_super().create_feature_map(py)?;
-        let sql_save_path = self_.as_super().save_sql(path.clone())?;
-        let save_path = PolarsData::save_data(self_, py, path.clone(), kwargs)?;
+    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+        let feature_map =
+            generate_feature_schema(self.data.as_ref().unwrap().bind(py), &DataType::Polars)?;
 
-        Ok(DataInterfaceSaveMetadata {
-            data_type: DataType::Polars,
-            feature_map: feature_map.clone(),
-            data_save_path: Some(save_path),
-            sql_save_path,
-            data_profile_save_path: None,
-        })
-    }
-
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
-        let polars = PyModule::import(py, "polars")?;
-
-        // Load the data using polars
-        let data = polars.call_method("read_parquet", (load_path,), kwargs)?;
-
-        self_.as_super().data = data.into();
-
-        Ok(())
-    }
-}
-
-impl PolarsData {
-    pub fn from_path(
-        py: Python,
-        path: &Path,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
-        let polars = PyModule::import(py, "polars")?;
-
-        // Load the data using polars
-        let data = polars.call_method("read_parquet", (load_path,), kwargs)?;
-
-        let interface = PolarsData::new(py, Some(&data), None, None, None, None, None)?;
-
-        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
-
-        Ok(bound)
+        Ok(feature_map)
     }
 }

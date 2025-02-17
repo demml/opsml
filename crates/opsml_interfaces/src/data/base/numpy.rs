@@ -67,7 +67,7 @@ impl NumpyData {
 
     #[setter]
     #[allow(clippy::needless_lifetimes)]
-    pub fn set_data<'py>(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
         let py = data.py();
 
         // check if data is None
@@ -123,8 +123,8 @@ impl NumpyData {
     }
 
     #[pyo3(signature = (path, load_kwargs=None))]
-    pub fn load<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn load(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         load_kwargs: Option<DataLoadKwargs>,
@@ -144,11 +144,11 @@ impl NumpyData {
 }
 
 impl NumpyData {
-    pub fn save_data<'py>(
+    pub fn save_data(
         &self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         if self.data.is_none() {
             return Err(OpsmlError::new_err(

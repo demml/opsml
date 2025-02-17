@@ -14,7 +14,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use super::sql;
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DependentVars {
