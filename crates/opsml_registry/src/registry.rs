@@ -1,7 +1,7 @@
 use crate::enums::OpsmlRegistry;
 use opsml_cards::*;
 use opsml_colors::Colorize;
-use opsml_crypt::{decrypt_directory, decrypt_key, encrypt_directory};
+use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_error::UtilError;
@@ -15,7 +15,6 @@ use opsml_types::{
     contracts::*,
 };
 use opsml_utils::clean_string;
-use opsml_utils::uid_to_byte_key;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
