@@ -6,6 +6,7 @@ use opsml_utils::{uid_to_byte_key, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
 pub struct MultiPartQuery {
@@ -125,6 +126,10 @@ impl ArtifactKey {
 
         Ok(decrypt_key(&uid_key, &self.encrypted_key)
             .map_err(|e| TypeError::Error(format!("{}", e)))?)
+    }
+
+    pub fn storage_path(&self) -> PathBuf {
+        PathBuf::from(&self.storage_key)
     }
 }
 

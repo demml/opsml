@@ -1,3 +1,4 @@
+use crate::contracts::ArtifactKey;
 use crate::{
     cards::{CardTable, CardType},
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
@@ -736,10 +737,10 @@ pub struct CreateCardRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateCardResponse {
     pub registered: bool,
-    pub uid: String,
     pub version: String,
-    pub encryption_key: Vec<u8>,
-    pub storage_key: PathBuf,
+    pub repository: String,
+    pub name: String,
+    pub key: ArtifactKey,
 }
 
 /// Duplicating card request to be explicit with naming
