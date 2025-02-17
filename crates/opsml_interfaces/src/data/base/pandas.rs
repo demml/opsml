@@ -159,6 +159,26 @@ impl PandasData {
 }
 
 impl PandasData {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &DataInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let interface = DataInterface {
+            data_type: metadata.data_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            schema: metadata.schema.clone(),
+            dependent_vars: metadata.dependent_vars.clone(),
+            data_splits: metadata.data_splits.clone(),
+            sql_logic: metadata.sql_logic.clone(),
+            data_profile: None,
+            data: None,
+        };
+
+        let data_interface = PandasData { data: None };
+
+        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
+    }
+
     pub fn save_data(
         &self,
         py: Python,
