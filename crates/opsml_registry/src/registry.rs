@@ -176,7 +176,7 @@ impl CardRegistry {
                 // (1) creates new version
                 // (2) Inserts card record into db
                 // (3) Creates encryption key and returns it
-                let card_response = Self::register_card_with_db(
+                let create_response = Self::register_card_with_db(
                     &mut self.registry,
                     &card,
                     &self.registry_type,
@@ -187,10 +187,11 @@ impl CardRegistry {
                 .await?;
 
                 // Update card attributes
-                Self::update_card_with_server_response(&card_response, card)?;
+                Self::update_card_with_server_response(&create_response, card)?;
 
                 // Save artifacts
-                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &card_response).await?;
+                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &create_response)
+                    .await?;
 
                 Ok(())
             })
@@ -365,10 +366,10 @@ impl CardRegistry {
         card: &Bound<'_, PyAny>,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         save_kwargs: Option<SaveKwargs>,
-        card_response: &CreateCardResponse,
+        card_record: &CreateCardResponse,
     ) -> Result<(), RegistryError> {
         // create temp path for saving
-        let encryption_key = card_response
+        let encryption_key = card_record
             .key
             .get_decrypt_key()
             .map_err(|e| RegistryError::Error(e.to_string()))?;
@@ -389,7 +390,7 @@ impl CardRegistry {
         encrypt_directory(&tmp_path, &encryption_key)?;
         fs.lock()
             .unwrap()
-            .put(&tmp_path, &card_response.key.storage_path(), true)
+            .put(&tmp_path, &card_record.key.storage_path(), true)
             .await?;
 
         println!("✓ {}", Colorize::green("saved card artifacts to storage"));
