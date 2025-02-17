@@ -1,7 +1,7 @@
 use crate::base::SqlClient;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
-    ArtifactKey, AuditCardRecord, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
+    AuditCardRecord, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
     ModelCardRecord, ParameterRecord, PipelineCardRecord, ProjectCardRecord, QueryStats,
     RunCardRecord, ServerCard, User,
 };
@@ -10,7 +10,10 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{
+    cards::{CardTable, CardType},
+    contracts::{ArtifactKey, CardQueryArgs},
+};
 use semver::Version;
 use sqlx::{
     mysql::{MySql, MySqlPoolOptions, MySqlRow},
@@ -1012,14 +1015,19 @@ impl SqlClient for MySqlClient {
     async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_select_query();
 
-        let key: ArtifactKey = sqlx::query_as(&query)
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(uid)
             .bind(card_type)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-        Ok(key)
+        Ok(ArtifactKey {
+            uid: key.0,
+            card_type: CardType::from_string(&key.1),
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
     }
 
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
@@ -1060,7 +1068,7 @@ impl SqlClient for MySqlClient {
     ) -> Result<ArtifactKey, SqlError> {
         let query = MySQLQueryHelper::get_load_card_query(table, query_args)?;
 
-        let key: ArtifactKey = sqlx::query_as(&query)
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(query_args.uid.as_ref())
             .bind(query_args.uid.as_ref())
             .bind(query_args.name.as_ref())
@@ -1074,7 +1082,12 @@ impl SqlClient for MySqlClient {
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-        Ok(key)
+        Ok(ArtifactKey {
+            uid: key.0,
+            card_type: CardType::from_string(&key.1),
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
     }
 }
 
@@ -1964,7 +1977,7 @@ mod tests {
 
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            card_type: CardType::Data.to_string(),
+            card_type: CardType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };
@@ -1972,7 +1985,7 @@ mod tests {
         client.insert_artifact_key(&key).await.unwrap();
 
         let key = client
-            .get_artifact_key(&key.uid, &key.card_type)
+            .get_artifact_key(&key.uid, &key.card_type.to_string())
             .await
             .unwrap();
 
@@ -1982,7 +1995,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (32..64).collect();
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            card_type: CardType::Data.to_string(),
+            card_type: CardType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };
@@ -1990,7 +2003,7 @@ mod tests {
         client.update_artifact_key(&key).await.unwrap();
 
         let key = client
-            .get_artifact_key(&key.uid, &key.card_type)
+            .get_artifact_key(&key.uid, &key.card_type.to_string())
             .await
             .unwrap();
 
@@ -2026,7 +2039,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (0..32).collect();
         let key = ArtifactKey {
             uid: data_card.uid.clone(),
-            card_type: CardType::Data.to_string(),
+            card_type: CardType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };
