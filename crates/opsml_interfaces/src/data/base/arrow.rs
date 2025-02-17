@@ -1,4 +1,5 @@
 // Tests are in py-opsml/tests/interfaces/data
+use crate::data::generate_feature_schema;
 use crate::data::{
     DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
     DataSaveKwargs, SqlLogic,
@@ -98,7 +99,7 @@ impl ArrowData {
             .and_then(|args| args.data_kwargs(py))
             .cloned();
 
-        let schema = self_.as_super().create_schema(py)?;
+        self_.as_super().schema = self_.create_feature_schema(py)?;
         let sql_uri = self_.as_super().save_sql(path.clone())?;
         let data_profile_uri = if self_.as_super().data_profile.is_none() {
             None
@@ -113,7 +114,7 @@ impl ArrowData {
 
         Ok(DataInterfaceMetadata::new(
             save_metadata,
-            schema,
+            self_.as_super().schema.clone(),
             HashMap::new(),
             self_.as_super().sql_logic.clone(),
             self_.as_super().interface_type.clone(),
@@ -183,5 +184,22 @@ impl ArrowData {
             .call_method("write_table", args, kwargs)
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
         Ok(save_path)
+    }
+
+    /// Create a feature schema
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name of the feature
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<FeatureMap>` - FeatureMap
+    pub fn create_feature_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
+        // Create and insert the feature
+        let feature_map =
+            generate_feature_schema(self.data.as_ref().unwrap().bind(py), &DataType::Arrow)?;
+
+        Ok(feature_map)
     }
 }
