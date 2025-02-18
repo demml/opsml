@@ -226,7 +226,7 @@ impl PolarsData {
             ));
         }
 
-        let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Parquet);
+        let save_path = PathBuf::from(SaveName::Data).with_extension(Suffix::Parquet);
         let full_save_path = path.join(&save_path);
 
         let _ = self

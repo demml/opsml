@@ -158,7 +158,7 @@ impl CardRegistry {
                 // Verify card for registration
                 Self::verify_card(&card, &mut self.registry, &self.registry_type).await?;
 
-                // Save card artifacts to temp path
+                // Save card artifacts to temp path (returns metadata to store in registry)
                 let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
 
                 // register card
