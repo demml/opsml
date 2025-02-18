@@ -12,7 +12,7 @@ use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
 use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::{DataProfile, DataProfiler};
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
@@ -306,7 +306,7 @@ impl DataInterface {
             self.data_type.clone(),
         ))
     }
-    #[pyo3(signature = (path, **load_kwargs))]
+    #[pyo3(signature = (path, load_kwargs = None))]
     pub fn load(
         &mut self,
         py: Python,

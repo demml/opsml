@@ -1,7 +1,10 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from ..model import HuggingFaceOnnxArgs
+
+class ExtraMetadata:
+    metadata: Dict[str, Any]
 
 class StorageType:
     Google: "StorageType"
@@ -570,7 +573,6 @@ class DataSchema:
 class ModelSaveKwargs:
     def __init__(
         self,
-        data: Optional[Dict] = None,
         onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
@@ -578,8 +580,6 @@ class ModelSaveKwargs:
         """Optional arguments to pass to save_model
 
         Args:
-            data (Dict):
-                Optional data arguments to use when saving
             onnx (Dict or HuggingFaceOnnxArgs):
                 Optional onnx arguments to use when saving model to onnx format
             model (Dict):
@@ -594,14 +594,12 @@ class ModelSaveKwargs:
     def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
 
 class ModelLoadKwargs:
-    data: Optional[Dict]
     onnx: Optional[Dict]
     model: Optional[Dict]
     preprocessor: Optional[Dict]
 
     def __init__(
         self,
-        data: Optional[Dict] = None,
         onnx: Optional[Dict] = None,
         model: Optional[Dict] = None,
         preprocessor: Optional[Dict] = None,
@@ -609,8 +607,6 @@ class ModelLoadKwargs:
         """Optional arguments to pass to load_model
 
         Args:
-            data (Dict):
-                Optional data arguments to use when loading
             onnx (Dict):
                 Optional onnx arguments to use when loading
             model (Dict):
@@ -618,3 +614,44 @@ class ModelLoadKwargs:
             preprocessor (Dict):
                 Optional preprocessor arguments to use when loading
         """
+
+class DataSaveKwargs:
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when saving model to onnx format
+        """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "DataSaveKwargs": ...
+
+class DataLoadKwargs:
+    data: Optional[Dict]
+
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when loading
+
+        """
+
+class DataInterfaceType:
+    Base: "DataInterfaceType"
+    Arrow: "DataInterfaceType"
+    Numpy: "DataInterfaceType"
+    Pandas: "DataInterfaceType"
+    Polars: "DataInterfaceType"
+    Sql: "DataInterfaceType"
+    Torch: "DataInterfaceType"

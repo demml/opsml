@@ -1,7 +1,13 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ..core import FeatureSchema
+from ..core import (
+    FeatureSchema,
+    ExtraMetadata,
+    DataSaveKwargs,
+    DataLoadKwargs,
+    DataInterfaceType,
+)
 from ..scouter.profile import DataProfile
 
 class Inequality:
@@ -227,31 +233,86 @@ class DataSplitter:
         """
 
 class DataInterfaceSaveMetadata:
-    data_type: DataType
-    feature_map: FeatureSchema
-    data_save_path: Path
-    sql_save_path: Optional[Path]
-    data_profile_save_path: Optional[Path]
+    data_uri: Path
+    data_profile_uri: Optional[Path]
+    sql_uri: Optional[Path]
+    extra: Optional[ExtraMetadata]
+    save_kwargs: DataSaveKwargs
 
     def __init__(
         self,
-        data_type: DataType,
-        feature_map: FeatureSchema,
-        data_save_path: Path,
-        data_profile_save_path: Optional[Path] = None,
+        data_uri: Path,
+        data_profile_uri: Optional[Path] = None,
+        sql_uri: Optional[Path] = None,
+        extra: Optional[ExtraMetadata] = None,
+        save_kwargs: Optional[DataSaveKwargs] = None,
     ) -> None:
         """Define interface save metadata
 
         Args:
+            data_uri:
+                The data uri
+            data_profile_uri:
+                The data profile uri
+            sql_uri:
+                The sql uri
+            extra:
+                Extra metadata
+            save_kwargs:
+                Save kwargs
+        """
+
+class DataInterfaceMetadata:
+    save_metadata: DataInterfaceSaveMetadata
+    schema: FeatureSchema
+    extra_metadata: dict[str, str]
+    sql_logic: SqlLogic
+    interface_type: DataInterfaceType
+    data_splits: DataSplits
+    dependent_vars: DependentVars
+    data_type: DataType
+
+    def __init__(
+        self,
+        save_metadata: DataInterfaceSaveMetadata,
+        schema: FeatureSchema,
+        extra_metadata: dict[str, str],
+        sql_logic: SqlLogic,
+        interface_type: DataInterfaceType,
+        data_splits: DataSplits,
+        dependent_vars: DependentVars,
+        data_type: DataType,
+    ) -> None:
+        """Instantiate DataInterfaceMetadata object
+
+        Args:
+            save_metadata:
+                The save metadata
+            schema:
+                The schema
+            extra_metadata:
+                Extra metadata
+            sql_logic:
+                Sql logic
+            interface_type:
+                The interface type
+            data_splits:
+                The data splits
+            dependent_vars:
+                Dependent variables
             data_type:
                 The data type
-            feature_map:
-                The feature map
-            data_save_path:
-                The data save path
-            data_profile_save_path:
-                The data profile save path
         """
+
+    def __str__(self) -> str:
+        """Return the string representation of the model interface metadata"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model interface metadata to json"""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "DataInterfaceMetadata":
+        """Validate the model interface metadata json"""
 
 class DataInterface:
     def __init__(
@@ -259,25 +320,26 @@ class DataInterface:
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
         Args:
-            data:
+            data (Any):
                 Data. Can be a pyarrow table, pandas dataframe, polars dataframe
                 or numpy array
-            dependent_vars:
+            dependent_vars (DependentVars):
                 List of dependent variables to associate with data
-            data_splits:
+            data_splits (DataSplits):
                 Optional list of `DataSplit`
-            feature_map:
+            schema (FeatureSchema):
                 Dictionary of features -> automatically generated
-            sql_logic:
-                Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            sql_logic (SqlLogic):
+                SqlLogic class used to generate data.
+            data_profile (DataProfile):
+                Data profile
         """
 
     @property
@@ -308,11 +370,11 @@ class DataInterface:
         """Sets the dependent variables"""
 
     @property
-    def feature_map(self) -> FeatureSchema:
+    def schema(self) -> FeatureSchema:
         """Returns the feature map."""
 
-    @feature_map.setter
-    def feature_map(self, feature_map: FeatureSchema) -> None:
+    @schema.setter
+    def schema(self, schema: FeatureSchema) -> None:
         """Sets the feature map"""
 
     @property
@@ -340,58 +402,32 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save_sql(self, path: Path, **kwargs) -> Optional[Path]:
-        """Save the sql logic to a file
-
-        Args:
-            path:
-                The path to save the sql logic to
-            **kwargs:
-                Additional kwargs to pass in.
-        """
-
-    def create_feature_map(self, name: str) -> FeatureSchema:
-        """Save the sql logic to a file
-
-        Args:
-            name:
-                The name of the data object
-        """
-
-    def save_data(self, path: Path, **kwargs) -> Path:
-        """Save the data to a file
-
-        Args:
-            path:
-                Base path to save the data to
-            **kwargs:
-                Additional kwargs to pass in.
-        """
-
-    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs]
+    ) -> DataInterfaceMetadata:
         """Saves all data interface component to the given path. This used as part of saving a
         DataCard
 
         Methods called in save:
             - save_sql: Saves all sql logic to files(s)
-            - create_feature_map: Creates a FeatureSchema from the associated data
+            - create_schema: Creates a FeatureSchema from the associated data
             - save_data: Saves the data to a file
 
         Args:
-            path:
+            path (Path):
                 The path to save the data interface components to.
-            **kwargs:
-                Additional kwargs to pass in.
+            save_kwargs (DataSaveKwargs):
+                The save kwargs to use.
 
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs]) -> None:
         """Load the data from a file
 
         Args:
-            path:
+            path (Path):
                 Base path to load the data from
-            **kwargs:
+            load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
         """
 
@@ -411,14 +447,14 @@ class DataInterface:
 
 
         Args:
-            bin_size:
+            bin_size (int):
                 The bin size for the data profile
-            compute_correlations:
+            compute_correlations (bool):
                 Whether to compute correlations
         """
 
     @property
-    def data_profile(self) -> Optional[Any]: ...
+    def data_profile(self) -> Optional[DataProfile]: ...
 
 class SqlLogic:
     def __init__(self, queries: Dict[str, str]) -> None:
@@ -477,36 +513,41 @@ class NumpyData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
         Args:
-            data:
+            data (np.NDArray | None):
                 Numpy array
-            dependent_vars:
+            dependent_vars (DependentVars | List[str] | List[int] | None):
                 List of dependent variables to associate with data
-            data_splits:
+            data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map:
+            schema (FeatureSchema | None):
                 Dictionary of features -> automatically generated
-            sql_logic:
+            sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            data_profile (DataProfile | None):
+                Data profile
         """
 
-    def save_data(self, path: Path, **kwargs) -> Path:
+    def save(
+        self,
+        path: Path,
+        save_kwargs: Optional[DataSaveKwargs],
+    ) -> DataInterfaceMetadata:
         """Save data using numpy save format
 
         Args:
             path (Path):
                 Base path to save the data to.
-            **kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable save kwargs:
 
             see: https://numpy.org/doc/stable/reference/generated/numpy.save.html
 
@@ -517,33 +558,16 @@ class NumpyData(DataInterface):
 
         """
 
-    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
-        """Saves Interface attributes. This used as part of saving a
-        DataCard
-
-        Methods called in save:
-            - save_sql: Saves all sql logic to files(s)
-            - create_feature_map: Creates a FeatureSchema from the associated data
-            - save_data: Saves the data to a file
-
-        Args:
-            path:
-                The path to save the data interface components to.
-            **kwargs:
-                Additional kwargs to pass in.
-
-        """
-
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs]) -> None:
         """Load the data via numpy.load
 
         Args:
             path (Path):
                 Base path to load the data from.
-            **kwargs:
-                Additional kwargs to pass in.
+            load_kwargs (DataLoadKwargs):
+                Additional kwargs to use when loading
 
-        Kwargs:
+        Acceptable load kwargs:
 
             see: https://numpy.org/doc/stable/reference/generated/numpy.load.html
 
@@ -565,8 +589,9 @@ class PolarsData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
@@ -577,25 +602,27 @@ class PolarsData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureSchema | None):
+            schema (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            data_profile (DataProfile | None):
+                Data profile
 
         """
 
-    def save_data(self, path: Path, **kwargs) -> Path:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs]
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
             path (Path):
                 Base path to save the data to.
-            **kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable save kwargs:
             compression (ParquetCompression):
                 Compression codec to use for writing.
             compression_level (int | None):
@@ -626,16 +653,16 @@ class PolarsData(DataInterface):
 
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs]) -> None:
         """Load the data from a file
 
         Args:
             path (Path):
                 Base path to load the data from.
-            **kwargs:
+            load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable load kwargs:
             columns (list[int] | list[str] | None):
                 Columns to load. Default is None.
             n_rows (int | None):
@@ -689,8 +716,9 @@ class PandasData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
@@ -701,24 +729,26 @@ class PandasData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureSchema | None):
+            schema (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            data_profile (DataProfile | None):
+                Data profile
         """
 
-    def save_data(self, path: Path, **kwargs) -> Path:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs]
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
             path:
                 Base path to save the data to.
-            **kwargs:
+            save_kwargs:
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable save kwargs:
             engine ({'auto', 'pyarrow', 'fastparquet'}):
                 Parquet library to use. If 'auto', then the option io.parquet.engine is used.
                 The default io.parquet.engine behavior is to try 'pyarrow',
@@ -747,16 +777,16 @@ class PandasData(DataInterface):
             https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs]) -> None:
         """Load the pandas dataframe from a parquet dataset via read_parquet
 
         Args:
             path:
                 Base path to load the data from.
-            **kwargs:
+            load_kwargs:
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable load kwargs:
             engine ({'auto', 'pyarrow', 'fastparquet'}):
                 Parquet library to use. If 'auto', then the option io.parquet.engine is used.
                 The default io.parquet.engine behavior is to try 'pyarrow',
@@ -805,8 +835,9 @@ class ArrowData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
@@ -817,24 +848,26 @@ class ArrowData(DataInterface):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureSchema | None):
+            schema (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            data_profile (DataProfile | None):
+                Data profile
         """
 
-    def save_data(self, path: Path, **kwargs) -> Path:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs]
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
             path:
                 Base path to save the data to.
-            **kwargs:
+            save_kwargs:
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable save kwargs:
             row_group_size (int | None):
                 Maximum number of rows in each written row group. If None, the row group size will be the minimum of the
                 Table size and 1024 * 1024. Default is None.
@@ -893,16 +926,16 @@ class ArrowData(DataInterface):
             https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs]) -> None:
         """Load the data from a file
 
         Args:
             path (Path):
                 Base path to load the data from.
-            **kwargs:
+            load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable load kwargs:
             columns (list | None):
                 If not None, only these columns will be read from the file. A column name may be a prefix of a nested field,
                 e.g. 'a' will select 'a.b', 'a.c', and 'a.d.e'. If empty, no columns will be read. Default is None.
@@ -957,36 +990,39 @@ class TorchData(DataInterface):
         data: Optional[Any] = None,
         data_splits: Optional[Union[DataSplits, List[DataSplit]]] = None,
         dependent_vars: Optional[Union[DependentVars, List[str], List[int]]] = None,
-        feature_map: Optional[FeatureSchema] = None,
+        schema: Optional[FeatureSchema] = None,
         sql_logic: Optional[SqlLogic] = None,
+        data_profile: Optional[DataProfile] = None,
     ) -> None:
         """Define a data interface
 
         Args:
-             data (torch.Tensor | None):
+            data (torch.Tensor | None):
                 Torch tensor
             dependent_vars (DependentVars | List[str] | List[int] | None):
                 List of dependent variables to associate with data
             data_splits (DataSplits | List[DataSplit]):
                 Optional list of `DataSplit`
-            feature_map (FeatureSchema | None):
+            schema (FeatureSchema | None):
                 Dictionary of features -> automatically generated
             sql_logic (SqlLogic | None):
                 Sql logic used to generate data represented as a dictionary.
-                Key is the name to assign to the sql logic and value is either a sql query
-                or a path to a .sql file.
+            data_profile (DataProfile | None):
+                Data profile
         """
 
-    def save_data(self, path: Path, **kwargs) -> Path:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs]
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
-            path:
+            path (Path):
                 Base path to save the data to.
-            **kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable save kwargs:
             pickle_module (Any):
                 Module used for pickling metadata and objects.
             pickle_protocol (int):
@@ -997,16 +1033,16 @@ class TorchData(DataInterface):
            https://pytorch.org/docs/main/generated/torch.save.html
         """
 
-    def load_data(self, path: Path, **kwargs) -> None:
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
         """Load the torch tensor from file
 
         Args:
-            path:
+            path (Path):
                 Base path to load the data from.
-            **kwargs:
+            load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
-        Kwargs:
+        Acceptable load kwargs:
             map_location:
                 A function, torch.device, string or a dict specifying how to remap storage locations.
             pickle_module:
@@ -1040,13 +1076,15 @@ class SqlData:
                 Sql logic used to generate data represented as a dictionary.
         """
 
-    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Save the sql logic to a file
 
         Args:
             path (Path):
                 The path to save the sql logic to.
-            **kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
         """
 
