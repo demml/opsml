@@ -17,6 +17,7 @@ pub struct TorchData {
     #[pyo3(get)]
     pub data: Option<PyObject>,
 
+    #[pyo3(get)]
     pub data_type: DataType,
 }
 
@@ -128,7 +129,7 @@ impl TorchData {
             self_.as_super().interface_type.clone(),
             self_.as_super().dependent_vars.clone(),
             self_.as_super().data_splits.clone(),
-            self_.as_super().data_type.clone(),
+            self_.data_type.clone(),
         ))
     }
 
@@ -174,6 +175,18 @@ impl TorchData {
         self_.set_data(&data)?;
 
         Ok(())
+    }
+
+    #[pyo3(signature = (_bin_size=20, _compute_correlations=false))]
+    pub fn create_data_profile(
+        mut _self_: PyRefMut<'_, Self>,
+        _py: Python,
+        _bin_size: Option<usize>,
+        _compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        Err(OpsmlError::new_err(
+            "Data profiling not supported for Torch data",
+        ))
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {

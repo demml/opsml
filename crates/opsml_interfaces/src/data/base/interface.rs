@@ -379,6 +379,8 @@ impl DataInterface {
             _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
         };
 
+        println!("Data: {:?}", self.data);
+
         let profile = profiler.create_data_profile(
             py,
             self.data.as_ref().unwrap().bind(py),

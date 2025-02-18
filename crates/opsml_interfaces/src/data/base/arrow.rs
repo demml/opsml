@@ -10,7 +10,7 @@ use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
-use scouter_client::DataProfile;
+use scouter_client::{DataProfile, DataProfiler};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -79,7 +79,7 @@ impl ArrowData {
             let pyarrow_table = py.import("pyarrow")?.getattr("Table")?;
             // check if data is a numpy array
             if data.is_instance(&pyarrow_table).unwrap() {
-                Some(data.into_py_any(py)?)
+                self.data = Some(data.into_py_any(py)?)
             } else {
                 return Err(OpsmlError::new_err("Data must be a pyarrow table"));
             }
@@ -142,6 +142,38 @@ impl ArrowData {
         self_.set_data(&data)?;
 
         Ok(())
+    }
+
+    #[pyo3(signature = (bin_size=20, compute_correlations=false))]
+    pub fn create_data_profile(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        bin_size: Option<usize>,
+        compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        let mut profiler = DataProfiler::new();
+
+        // get ScouterDataType from opsml DataType
+
+        let data_type = match self_.as_super().data_type {
+            DataType::Numpy => Some(&scouter_client::DataType::Numpy),
+            DataType::Pandas => Some(&scouter_client::DataType::Pandas),
+            DataType::Polars => Some(&scouter_client::DataType::Polars),
+            DataType::Arrow => Some(&scouter_client::DataType::Arrow),
+            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+        };
+
+        let profile = profiler.create_data_profile(
+            py,
+            self_.data.as_ref().unwrap().bind(py),
+            data_type,
+            bin_size,
+            compute_correlations,
+        )?;
+
+        self_.as_super().data_profile = Some(profile.clone());
+
+        Ok(profile)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
