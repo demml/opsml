@@ -13,7 +13,7 @@ use opsml_types::{
     cards::{CardTable, CardType},
     contracts::*,
 };
-use opsml_utils::clean_string;
+use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
@@ -388,10 +388,10 @@ impl CardRegistry {
             .get_decrypt_key()
             .map_err(|e| RegistryError::Error(e.to_string()))?;
 
-        encrypt_directory(&tmp_path, &encryption_key)?;
+        encrypt_directory(&path, &encryption_key)?;
         fs.lock()
             .unwrap()
-            .put(&tmp_path, &card_record.key.storage_path(), true)
+            .put(&path, &card_record.key.storage_path(), true)
             .await?;
 
         println!(
