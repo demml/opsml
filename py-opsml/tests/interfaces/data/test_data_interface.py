@@ -11,6 +11,7 @@ from opsml.data import (
     IndiceSplit,
     DependentVars,
     DataType,
+    DataSaveKwargs,
 )
 from opsml.core import OpsmlError
 import numpy as np
@@ -117,8 +118,8 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     assert interface.data is not None
 
-    interface.feature_map["numpy_array"].feature_type = "float64"
-    interface.feature_map["numpy_array"].shape = [10, 100]
+    interface.schema["numpy_array"].feature_type = "float64"
+    interface.schema["numpy_array"].shape = [10, 100]
 
 
 def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
@@ -134,19 +135,19 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
     save_path.mkdir()
 
     kwargs = {"compression": "gzip"}
-
-    metadata = interface.save(path=save_path, **kwargs)
+    save_kwargs = DataSaveKwargs(data=kwargs)
+    metadata = interface.save(save_path, save_kwargs)
 
     assert metadata.data_type == DataType.Polars
-    assert interface.feature_map["int8"].feature_type == "Int8"
-    assert interface.feature_map["int16"].feature_type == "Int16"
+    assert interface.schema["int8"].feature_type == "Int8"
+    assert interface.schema["int16"].feature_type == "Int16"
 
     # set data to none
     interface.data = None
 
     assert interface.data is None
 
-    interface.load_data(path=save_path)
+    interface.load(path=save_path)
 
     assert interface.data is not None
 
@@ -169,15 +170,15 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: P
     metadata = interface.save(path=save_path)
 
     assert metadata.data_type == DataType.Pandas
-    assert interface.feature_map["n_legs"].feature_type == "int64"
-    assert interface.feature_map["category"].feature_type == "category"
+    assert interface.schema["n_legs"].feature_type == "int64"
+    assert interface.schema["category"].feature_type == "category"
 
     # set data to none
     interface.data = None
 
     assert interface.data is None
 
-    interface.load_data(path=save_path)
+    interface.load(path=save_path)
 
     assert interface.data is not None
 
@@ -205,15 +206,15 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
     metadata = interface.save(path=save_path)
 
     assert metadata.data_type == DataType.Arrow
-    assert interface.feature_map["n_legs"].feature_type == "int64"
-    assert interface.feature_map["animals"].feature_type == "string"
+    assert interface.schema["n_legs"].feature_type == "int64"
+    assert interface.schema["animals"].feature_type == "string"
 
     # set data to none
     interface.data = None
 
     assert interface.data is None
 
-    interface.load_data(path=save_path)
+    interface.load(path=save_path)
 
     assert interface.data is not None
 
@@ -242,7 +243,7 @@ def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
 
     assert interface.data is None
 
-    interface.load_data(path=save_path)
+    interface.load(path=save_path)
 
     assert interface.data is not None
 

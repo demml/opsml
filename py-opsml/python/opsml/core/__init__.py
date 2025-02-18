@@ -17,8 +17,6 @@ Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
 DataSchema = core.DataSchema
-DataSaveKwargs = core.DataSaveKwargs
-DataLoadKwargs = core.DataLoadKwargs
 ApiSettings = core.ApiSettings
 OpsmlStorageSettings = core.OpsmlStorageSettings
 ExtraMetadata = core.ExtraMetadata
@@ -39,8 +37,6 @@ __all__ = [
     "FeatureSchema",
     "OnnxSchema",
     "DataSchema",
-    "DataSaveKwargs",
-    "DataLoadKwargs",
     "ApiSettings",
     "OpsmlStorageSettings",
     "ExtraMetadata",

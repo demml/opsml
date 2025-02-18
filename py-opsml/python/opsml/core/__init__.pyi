@@ -567,12 +567,3 @@ class DataSchema:
         Returns:
             String representation of the DataSchema.
         """
-
-class DataInterfaceType:
-    Base: "DataInterfaceType"
-    Arrow: "DataInterfaceType"
-    Numpy: "DataInterfaceType"
-    Pandas: "DataInterfaceType"
-    Polars: "DataInterfaceType"
-    Sql: "DataInterfaceType"
-    Torch: "DataInterfaceType"
