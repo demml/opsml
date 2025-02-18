@@ -295,6 +295,19 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
     Ok(tmp_path)
 }
 
+pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, UtilError> {
+    obj.getattr(field)
+        .map_err(|e| {
+            error!("Failed to get field: {}", e);
+            UtilError::Error("Failed to get field".to_string())
+        })?
+        .extract::<String>()
+        .map_err(|e| {
+            error!("Failed to extract field: {}", e);
+            UtilError::Error("Failed to extract field".to_string())
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::clean_string;

@@ -22,19 +22,6 @@ use tempfile::TempDir;
 
 use tracing::{debug, error, instrument};
 
-fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, RegistryError> {
-    obj.getattr(field)
-        .map_err(|e| {
-            error!("Failed to get field: {}", e);
-            RegistryError::Error("Failed to get field".to_string())
-        })?
-        .extract::<String>()
-        .map_err(|e| {
-            error!("Failed to extract field: {}", e);
-            RegistryError::Error("Failed to extract field".to_string())
-        })
-}
-
 pub struct CardArgs {
     pub uid: String,
     pub name: String,
@@ -171,6 +158,9 @@ impl CardRegistry {
                 // Verify card for registration
                 Self::verify_card(&card, &mut self.registry, &self.registry_type).await?;
 
+                // Save card artifacts to temp path
+                let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
+
                 // register card
                 // (1) creates new version
                 // (2) Inserts card record into db
@@ -189,8 +179,7 @@ impl CardRegistry {
                 Self::update_card_with_server_response(&create_response, card)?;
 
                 // Save artifacts
-                Self::save_card_artifacts(card, &mut self.fs, save_kwargs, &create_response)
-                    .await?;
+                Self::upload_card_artifacts(tmp_path, &mut self.fs, &create_response).await?;
 
                 Ok(())
             })
@@ -354,16 +343,8 @@ impl CardRegistry {
     #[instrument(skip_all)]
     async fn save_card_artifacts(
         card: &Bound<'_, PyAny>,
-        fs: &mut Arc<Mutex<FileSystemStorage>>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
-        card_record: &CreateCardResponse,
-    ) -> Result<(), RegistryError> {
-        // create temp path for saving
-        let encryption_key = card_record
-            .key
-            .get_decrypt_key()
-            .map_err(|e| RegistryError::Error(e.to_string()))?;
-
+    ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
             RegistryError::Error("Failed to create temporary directory".to_string())
@@ -376,6 +357,36 @@ impl CardRegistry {
                 error!("Failed to save card: {}", e);
                 RegistryError::Error(e.to_string())
             })?;
+
+        Ok(tmp_path)
+    }
+
+    /// Save card artifacts to storage
+    /// Using a runtime, this method with
+    /// (1) create an artifact key to be used to encrypt data
+    /// (2) save the card to a temporary directory (with encryption)
+    /// (3) Transfer all files in the temporary directory to the storage system
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `card` - Card to save
+    /// * `save_kwargs` - Optional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), RegistryError>` - Result
+    #[instrument(skip_all)]
+    async fn upload_card_artifacts(
+        path: PathBuf,
+        fs: &mut Arc<Mutex<FileSystemStorage>>,
+        card_record: &CreateCardResponse,
+    ) -> Result<(), RegistryError> {
+        // create temp path for saving
+        let encryption_key = card_record
+            .key
+            .get_decrypt_key()
+            .map_err(|e| RegistryError::Error(e.to_string()))?;
 
         encrypt_directory(&tmp_path, &encryption_key)?;
         fs.lock()
