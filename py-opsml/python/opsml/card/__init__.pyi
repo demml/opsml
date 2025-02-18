@@ -7,6 +7,7 @@ from ..data import (
     DataInterfaceSaveMetadata,
     DataType,
     DataSaveKwargs,
+    DataLoadKwargs,
 )
 from ..model import ModelInterface, ModelSaveKwargs, ModelLoadKwargs
 
@@ -107,65 +108,160 @@ class CardList:
 class DataCard:
     def __init__(  # pylint: disable=dangerous-default-value
         self,
-        interface: DataInterface,
-        name: Optional[str] = None,
+        interface: Optional[DataInterface] = None,
         repository: Optional[str] = None,
+        name: Optional[str] = None,
         contact: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        info: Optional[CardInfo] = None,
-        tags: Dict[str, str] = {},
-        metadata: Optional[DataCardMetadata] = None,
+        tags: List[str] = [],
     ) -> None:
         """Define a data card
 
         Args:
-            name:
+            interface (DataInterface | None):
+                The data interface
+            repository (str | None):
+                The repository of the card
+            name (str | None):
+                The name of the card
+            contact (str | None):
+                The contact of the card
+            version (str | None):
+                The version of the card
+            uid (str | None):
+                The uid of the card
+            tags (List[str]):
+                The tags of the card
+        """
+
+    @property
+    def interface(self) -> Any:
+        """Return the data interface"""
+
+    @interface.setter
+    def interface(self, interface: Any) -> None:
+        """Set the data interface
+
+        Args:
+            interface (DataInterface):
+                The data interface to set. Must inherit from DataInterface
+        """
+
+    @property
+    def name(self) -> str:
+        """Return the name of the data card"""
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the name of the data card
+
+        Args:
+            name (str):
                 The name of the data card
-            repository:
+        """
+
+    @property
+    def repository(self) -> str:
+        """Return the repository of the data card"""
+
+    @repository.setter
+    def repository(self, repository: str) -> None:
+        """Set the repository of the data card
+
+        Args:
+            repository (str):
                 The repository of the data card
-            contact:
-                The contact of the data card
-            version:
+        """
+
+    @property
+    def version(self) -> str:
+        """Return the version of the data card"""
+
+    @version.setter
+    def version(self, version: str) -> None:
+        """Set the version of the data card
+
+        Args:
+            version (str):
                 The version of the data card
-            uid:
-                The uid of the data card
-            info:
-                The info of the data card
-            tags:
+        """
+
+    @property
+    def uid(self) -> str:
+        """Return the uid of the data card"""
+
+    @property
+    def tags(self) -> List[str]:
+        """Return the tags of the data card"""
+
+    @tags.setter
+    def tags(self, tags: List[str]) -> None:
+        """Set the tags of the data card
+
+        Args:
+            tags (List[str]):
                 The tags of the data card
         """
 
     @property
-    def uri(self) -> str:
-        """Return the uri"""
+    def metadata(self) -> DataCardMetadata:
+        """Return the metadata of the data card"""
 
-    def save(self, path: Path, **kwargs) -> DataInterfaceSaveMetadata:
+    @property
+    def card_type(self) -> CardType:
+        """Return the card type of the data card"""
+
+    @property
+    def data_type(self) -> DataType:
+        """Return the data type"""
+
+    def save(
+        self,
+        path: Path,
+        save_kwargs: Optional[DataSaveKwargs] = None,
+    ) -> DataInterfaceSaveMetadata:
         """Save the data card
 
         Args:
-            path:
+            path (Path):
                 The path to save the data card to
-            **kwargs:
-                Additional kwargs to pass in.
+            save_kwargs (DataSaveKwargs | None):
+                Optional save kwargs to that will be passed to the
+                data interface save method
 
-        Kwargs:
+        Acceptable save kwargs:
             Kwargs are passed to the underlying data interface for saving.
             For a complete list of options see the save method of the data interface and
             their associated libraries.
         """
 
+    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+        """Load the data card
+
+        Args:
+            path (Path):
+                The path to load the data card from
+            load_kwargs (DataLoadKwargs | None):
+                Optional load kwargs to that will be passed to the
+                data interface load method
+        """
+
+    def download_artifacts(self, path: Optional[Path] = None) -> None:
+        """Download artifacts associated with the DataCard
+
+        Args:
+            path (Path):
+                Path to save the artifacts. If not provided, the artifacts will be saved
+                to a directory called "card_artifacts"
+        """
+
+    def model_dump_json(self) -> str:
+        """Return the model dump as a json string"""
+
 class DataCardMetadata:
     @property
-    def data_type(self) -> DataType:
-        """Return the data type"""
-
-    @property
-    def description(self) -> Description:
-        """Return the data type"""
-
-    @property
-    def feature_map(self) -> FeatureSchema:
+    def schema(self) -> FeatureSchema:
         """Return the feature map"""
 
     @property
@@ -213,8 +309,7 @@ class ModelCard:
         contact: Optional[str] = None,
         verison: Optional[str] = None,
         uid: Optional[str] = None,
-        info: Optional[CardInfo] = None,
-        tags: Optional[List[str]] = None,
+        tags: List[str] = [],
         to_onnx: bool = False,
     ) -> None:
         """Create a ModelCard from a machine learning model.
@@ -223,26 +318,20 @@ class ModelCard:
         {registry}/{repository}/{name}/v{version}
 
         Args:
-            interface:
+            interface (ModelInterface | None):
                 `ModelInterface` class containing trained model
-            repository:
+            repository (str | None):
                 Repository to associate with `ModelCard`
-            name:
+            name (str | None):
                 Name to associate with `ModelCard`
-            contact:
+            contact (str | None):
                 Contact to associate with `ModelCard`
-            version:
+            version (str | None):
                 Current version (assigned if card has been registered). Follows
                 semantic versioning.
-            uid:
+            uid (str | None):
                 Unique id (assigned if card has been registered)
-            info:
-                `CardInfo` object containing additional metadata. If provided, it will override any
-                values provided for `name`, `repository`, `contact`, and `version`.
-
-                Name, repository, and contact are required arguments for all cards. They can be provided
-                directly or through a `CardInfo` object.
-            tags:
+            tags (List[str]):
                 Tags to associate with `ModelCard`. Can be a dictionary of strings or
                 a `Tags` object.
             to_onnx:
@@ -256,20 +345,38 @@ class ModelCard:
         """
 
     @property
-    def interface(self) -> ModelInterface:
+    def interface(self) -> Any:
         """Returns the `ModelInterface` associated with the `ModelCard`"""
 
     @interface.setter
-    def interface(self, interface: ModelInterface) -> None:
+    def interface(self, interface: Any) -> None:
         """Set the `ModelInterface` associated with the `ModelCard`"""
 
     @property
     def name(self) -> str:
         """Returns the name of the `ModelCard`"""
 
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the name of the `ModelCard`
+
+        Args:
+            name (str):
+                The name of the `ModelCard`
+        """
+
     @property
     def repository(self) -> str:
         """Returns the repository of the `ModelCard`"""
+
+    @repository.setter
+    def repository(self, repository: str) -> None:
+        """Set the repository of the `ModelCard`
+
+        Args:
+            repository (str):
+                The repository of the `ModelCard`
+        """
 
     @property
     def contact(self) -> str:
@@ -278,6 +385,15 @@ class ModelCard:
     @property
     def version(self) -> str:
         """Returns the version of the `ModelCard`"""
+
+    @version.setter
+    def version(self, version: str) -> None:
+        """Set the version of the `ModelCard`
+
+        Args:
+            version (str):
+                The version of the `ModelCard`
+        """
 
     @property
     def uid(self) -> str:

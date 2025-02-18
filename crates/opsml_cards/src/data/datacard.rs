@@ -8,7 +8,7 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{cards::CardType, DataType, InterfaceType, SaveName, Suffix};
+use opsml_types::{cards::CardType, DataType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -72,7 +72,7 @@ pub struct DataCard {
     #[pyo3(get, set)]
     pub version: String,
 
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     pub uid: String,
 
     #[pyo3(get, set)]
@@ -83,9 +83,6 @@ pub struct DataCard {
 
     #[pyo3(get)]
     pub card_type: CardType,
-
-    #[pyo3(get)]
-    pub data_type: DataType,
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
@@ -124,30 +121,14 @@ impl DataCard {
         let py = interface.py();
 
         // try and extract data_type from interface
-        let interface_type = interface
+        interface
             .getattr("interface_type")?
-            .extract::<InterfaceType>()
+            .extract::<DataInterfaceType>()
             .map_err(|e| {
                 OpsmlError::new_err(
                     format!("Invalid type passed to interface. Ensure class is a subclass of DataInterface. Error: {}", e)
                 )
             })?;
-
-        let data_type = interface
-            .getattr("data_type")?
-            .extract::<DataType>()
-            .map_err(|e| {
-                OpsmlError::new_err(format!(
-                    "Error parsing data_type from interface. Error: {}",
-                    e
-                ))
-            })?;
-
-        if interface_type != InterfaceType::Data {
-            return Err(OpsmlError::new_err(
-                "Invalid type passed to interface. Ensure class is a subclass of DataInterface",
-            ));
-        }
 
         Ok(Self {
             interface: Some(
@@ -163,7 +144,6 @@ impl DataCard {
             tags,
             metadata: DataCardMetadata::default(),
             card_type: CardType::Data,
-            data_type,
             rt: None,
             fs: None,
             artifact_key: None,

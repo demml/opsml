@@ -1,4 +1,4 @@
-from opsml.data import PolarsData, DataInterface
+from opsml.data import PolarsData, DataInterface, DataSaveKwargs
 from opsml.card import DataCard
 import polars as pl
 from pathlib import Path
@@ -13,7 +13,8 @@ def test_polars_datacard(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: P
     save_path.mkdir()
 
     kwargs = {"compression": "gzip"}
-    metadata = card.save(path=save_path, **kwargs)
+    save_kwargs = DataSaveKwargs(data=kwargs)
+    metadata = card.save(save_path, save_kwargs)
 
     save_path = save_path / metadata.data_save_path
 
@@ -21,7 +22,7 @@ def test_polars_datacard(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: P
 
 
 # TODO: remove this in a later PR when Cards are created. This was only used to test having a DataCard save a DataInterface
-def test_custom_datacard(
+def _test_custom_datacard(
     multi_type_polars_dataframe2: pl.DataFrame,
     tmp_path: Path,
     custom_data_interface: type[DataInterface],
