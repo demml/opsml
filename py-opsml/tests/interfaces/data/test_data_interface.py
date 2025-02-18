@@ -57,10 +57,10 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     ## should raise an error if we try to save again
     with pytest.raises(OpsmlError) as error:
-        data_interface.save_data(save_path)
+        data_interface.save(save_path)
     assert str(error.value) == "No data detected in interface for saving"
 
-    data_interface.load_data(save_path)
+    data_interface.load(save_path)
 
     assert data_interface.data is not None
 
@@ -104,7 +104,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     metadata = interface.save(save_path)
 
-    assert metadata.data_save_path == "data.npy"
+    assert metadata.save_metadata.data_uri == "data.npy"
     assert metadata.data_type == DataType.Numpy
 
     with pytest.raises(OpsmlError):
@@ -113,7 +113,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     interface.data = None
     assert interface.data is None
 
-    interface.load_data(save_path)
+    interface.load(save_path)
 
     assert interface.data is not None
 
@@ -134,6 +134,7 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
     save_path.mkdir()
 
     kwargs = {"compression": "gzip"}
+
     metadata = interface.save(path=save_path, **kwargs)
 
     assert metadata.data_type == DataType.Polars

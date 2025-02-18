@@ -3,12 +3,42 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..core import (
     DataInterfaceType,
-    DataLoadKwargs,
-    DataSaveKwargs,
     ExtraMetadata,
     FeatureSchema,
 )
 from ..scouter.profile import DataProfile
+
+class DataSaveKwargs:
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when saving model to onnx format
+        """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "DataSaveKwargs": ...
+
+class DataLoadKwargs:
+    data: Optional[Dict]
+
+    def __init__(
+        self,
+        data: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            data (Dict):
+                Optional data arguments to use when loading
+
+        """
 
 class Inequality:
     Equal: "Inequality"
@@ -402,7 +432,9 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves all data interface component to the given path. This used as part of saving a
         DataCard
 
@@ -609,7 +641,9 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -733,7 +767,9 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -850,7 +886,9 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -1003,7 +1041,9 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:

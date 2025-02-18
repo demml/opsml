@@ -1,9 +1,15 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ..core import Description, FeatureSchema, LoadKwargs, SaveKwargs, VersionType
-from ..data import DataInterface, DataInterfaceSaveMetadata, DataType
-from ..model import ModelInterface
+from ..core import Description, FeatureSchema, VersionType
+from ..data import (
+    DataInterface,
+    DataInterfaceSaveMetadata,
+    DataType,
+    DataSaveKwargs,
+    DataLoadKwargs,
+)
+from ..model import ModelInterface, ModelSaveKwargs, ModelLoadKwargs
 
 class CardType:
     Data: "CardType"
@@ -290,7 +296,7 @@ class ModelCard:
     def card_type(self) -> CardType:
         """Returns the card type of the `ModelCard`"""
 
-    def save(self, path: Path, save_kwargs: Optional[SaveKwargs] = None) -> None:
+    def save(self, path: Path, save_kwargs: Optional[ModelSaveKwargs] = None) -> None:
         """Save the model card to a directory
 
         Args:
@@ -307,7 +313,7 @@ class ModelCard:
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelCard interface components
 
@@ -342,7 +348,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -438,7 +446,7 @@ class CardRegistry:
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs=Optional[SaveKwargs],
+        save_kwargs=Optional[ModelSaveKwargs | DataSaveKwargs],
     ) -> None:
         """Register a Card
 

@@ -1,8 +1,8 @@
 use opsml_interfaces::{
     CatBoostModel, DataProcessor, HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs,
     HuggingFaceTask, LightGBMModel, LightningModel, ModelInterface, ModelInterfaceMetadata,
-    ModelInterfaceSaveMetadata, OnnxSession, SklearnModel, TensorFlowModel, TorchModel,
-    XGBoostModel,
+    ModelInterfaceSaveMetadata, ModelLoadKwargs, ModelSaveKwargs, OnnxSession, SklearnModel,
+    TensorFlowModel, TorchModel, XGBoostModel,
 };
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 
@@ -18,6 +18,8 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DataProcessor>()?;
     m.add_class::<OnnxSession>()?;
     m.add_class::<HuggingFaceTask>()?;
+    m.add_class::<ModelSaveKwargs>()?;
+    m.add_class::<ModelLoadKwargs>()?;
 
     // Model Interface
     m.add_class::<ModelInterfaceMetadata>()?;

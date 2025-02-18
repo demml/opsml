@@ -1,8 +1,8 @@
 use opsml_interfaces::data::{
     generate_feature_schema, ArrowData, ColType, ColValType, ColumnSplit, Data, DataInterface,
-    DataInterfaceMetadata, DataInterfaceSaveMetadata, DataSplit, DataSplits, DataSplitter,
-    DependentVars, IndiceSplit, Inequality, NumpyData, PandasData, PolarsData, SqlData, SqlLogic,
-    StartStopSplit, TorchData,
+    DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
+    DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality, NumpyData, PandasData,
+    PolarsData, SqlData, SqlLogic, StartStopSplit, TorchData,
 };
 use opsml_types::DataType;
 
@@ -23,6 +23,8 @@ pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DependentVars>()?;
     m.add_class::<SqlLogic>()?;
     m.add_class::<DataSplits>()?;
+    m.add_class::<DataLoadKwargs>()?;
+    m.add_class::<DataSaveKwargs>()?;
 
     // data_interface
     m.add_class::<DataInterface>()?;

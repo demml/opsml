@@ -21,6 +21,8 @@ HuggingFaceModel = model.HuggingFaceModel
 CatBoostModel = model.CatBoostModel
 OnnxSession = model.OnnxSession
 TensorFlowModel = model.TensorFlowModel
+ModelLoadKwargs = model.ModelLoadKwargs
+ModelSaveKwargs = model.ModelSaveKwargs
 
 __all__ = [
     "HuggingFaceORTModel",
@@ -42,4 +44,6 @@ __all__ = [
     "CatBoostModel",
     "OnnxSession",
     "TensorFlowModel",
+    "ModelLoadKwargs",
+    "ModelSaveKwargs",
 ]
