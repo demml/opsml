@@ -2,6 +2,7 @@ use crate::data::{
     DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
     DataSaveKwargs, SqlLogic,
 };
+use opsml_error::OpsmlError;
 use opsml_types::DataInterfaceType;
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -76,6 +77,18 @@ impl SqlData {
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
         Ok(())
+    }
+
+    #[pyo3(signature = (_bin_size=20, _compute_correlations=false))]
+    pub fn create_data_profile(
+        mut _self_: PyRefMut<'_, Self>,
+        _py: Python,
+        _bin_size: Option<usize>,
+        _compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        Err(OpsmlError::new_err(
+            "Data profiling not supported for Torch data",
+        ))
     }
 }
 

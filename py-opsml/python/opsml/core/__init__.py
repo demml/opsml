@@ -20,7 +20,6 @@ DataSchema = core.DataSchema
 ApiSettings = core.ApiSettings
 OpsmlStorageSettings = core.OpsmlStorageSettings
 ExtraMetadata = core.ExtraMetadata
-DataInterfaceType = core.DataInterfaceType
 
 
 __all__ = [
@@ -40,5 +39,4 @@ __all__ = [
     "ApiSettings",
     "OpsmlStorageSettings",
     "ExtraMetadata",
-    "DataInterfaceType",
 ]
