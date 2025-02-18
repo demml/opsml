@@ -17,8 +17,6 @@ Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
 DataSchema = core.DataSchema
-ModelLoadKwargs = core.ModelLoadKwargs
-ModelSaveKwargs = core.ModelSaveKwargs
 DataSaveKwargs = core.DataSaveKwargs
 DataLoadKwargs = core.DataLoadKwargs
 ApiSettings = core.ApiSettings
@@ -41,8 +39,6 @@ __all__ = [
     "FeatureSchema",
     "OnnxSchema",
     "DataSchema",
-    "ModelLoadKwargs",
-    "ModelSaveKwargs",
     "DataSaveKwargs",
     "DataLoadKwargs",
     "ApiSettings",

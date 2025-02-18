@@ -6,8 +6,6 @@ from typing import Any, Dict, List, Optional, Union, overload
 from ..core import (
     ExtraMetadata,
     FeatureSchema,
-    ModelLoadKwargs,
-    ModelSaveKwargs,
     OnnxSchema,
 )
 from ..data import DataType
@@ -20,6 +18,51 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
+
+class ModelSaveKwargs:
+    def __init__(
+        self,
+        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            onnx (Dict or HuggingFaceOnnxArgs):
+                Optional onnx arguments to use when saving model to onnx format
+            model (Dict):
+                Optional model arguments to use when saving
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when saving
+        """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
+
+class ModelLoadKwargs:
+    onnx: Optional[Dict]
+    model: Optional[Dict]
+    preprocessor: Optional[Dict]
+
+    def __init__(
+        self,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            onnx (Dict):
+                Optional onnx arguments to use when loading
+            model (Dict):
+                Optional model arguments to use when loading
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when loading
+        """
 
 class ModelType:
     Transformers: "ModelType"
