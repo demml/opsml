@@ -3,7 +3,13 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import FeatureSchema, LoadKwargs, OnnxSchema, SaveKwargs
+from ..core import (
+    FeatureSchema,
+    ModelLoadKwargs,
+    OnnxSchema,
+    ModelSaveKwargs,
+    ExtraMetadata,
+)
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -136,9 +142,6 @@ class DataProcessor:
 
     def __str__(self): ...
 
-class ExtraMetadata:
-    metadata: Dict[str, Any]
-
 # Define interface save and metadata arguments
 class ModelInterfaceSaveMetadata:
     model_uri: Path
@@ -147,7 +150,7 @@ class ModelInterfaceSaveMetadata:
     onnx_model_uri: Optional[Path]
     drift_profile_uri: Optional[Path]
     extra: Optional[ExtraMetadata]
-    save_kwargs: Optional[SaveKwargs]
+    save_kwargs: Optional[ModelSaveKwargs]
 
     def __init__(
         self,
@@ -157,7 +160,7 @@ class ModelInterfaceSaveMetadata:
         onnx_model_uri: Optional[Path] = None,
         drift_profile_uri: Optional[Path] = None,
         extra: Optional[ExtraMetadata] = None,
-        save_kwargs: Optional[SaveKwargs] = None,
+        save_kwargs: Optional[ModelSaveKwargs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -462,7 +465,7 @@ class ModelInterface:
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
+        save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the model interface
 
@@ -471,7 +474,7 @@ class ModelInterface:
                 Path to save the model
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -488,7 +491,7 @@ class ModelInterface:
         onnx: bool = False,
         drift_profile: bool = False,
         sample_data: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelInterface components
 
@@ -503,7 +506,7 @@ class ModelInterface:
                 Whether to load the drift profile
             sample_data (bool):
                 Whether to load the sample data
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -578,7 +581,7 @@ class SklearnModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load SklearnModel components
 
@@ -595,7 +598,7 @@ class SklearnModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -656,7 +659,7 @@ class LightGBMModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load LightGBMModel components
 
@@ -673,7 +676,7 @@ class LightGBMModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -734,7 +737,7 @@ class XGBoostModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load XGBoostModel components
 
@@ -751,7 +754,7 @@ class XGBoostModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -810,7 +813,7 @@ class TorchModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
+        save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the TorchModel interface. Torch models are saved
         as state_dicts as is the standard for PyTorch.
@@ -820,7 +823,7 @@ class TorchModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -838,7 +841,7 @@ class TorchModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load TorchModel components
 
@@ -855,7 +858,7 @@ class TorchModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -922,7 +925,7 @@ class LightningModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
+        save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the LightningModel interface. Lightning models are saved via checkpoints.
 
@@ -931,7 +934,7 @@ class LightningModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -949,7 +952,7 @@ class LightningModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load LightningModel components
 
@@ -966,7 +969,7 @@ class LightningModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -1053,7 +1056,7 @@ class HuggingFaceModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
+        save_kwargs: None | ModelSaveKwargs = None,
     ) -> ModelInterfaceMetadata:
         """Save the HuggingFaceModel interface
 
@@ -1062,7 +1065,7 @@ class HuggingFaceModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model/pipeline to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -1147,7 +1150,7 @@ class HuggingFaceModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load HuggingFaceModel components
 
@@ -1164,7 +1167,7 @@ class HuggingFaceModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
@@ -1225,7 +1228,7 @@ class CatBoostModel(ModelInterface):
         drift_profile: bool = False,
         sample_data: bool = False,
         preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load HuggingFaceModel components
 
@@ -1242,7 +1245,7 @@ class CatBoostModel(ModelInterface):
                 Whether to load the sample data
             preprocessor (bool):
                 Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
 
