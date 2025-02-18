@@ -2,11 +2,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..core import (
-    DataInterfaceType,
     ExtraMetadata,
     FeatureSchema,
 )
 from ..scouter.profile import DataProfile
+
+class DataInterfaceType:
+    Base: "DataInterfaceType"
+    Arrow: "DataInterfaceType"
+    Numpy: "DataInterfaceType"
+    Pandas: "DataInterfaceType"
+    Polars: "DataInterfaceType"
+    Sql: "DataInterfaceType"
+    Torch: "DataInterfaceType"
 
 class DataSaveKwargs:
     def __init__(

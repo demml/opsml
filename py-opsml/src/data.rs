@@ -4,7 +4,7 @@ use opsml_interfaces::data::{
     DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality, NumpyData, PandasData,
     PolarsData, SqlData, SqlLogic, StartStopSplit, TorchData,
 };
-use opsml_types::DataType;
+use opsml_types::{DataInterfaceType, DataType};
 
 use pyo3::prelude::*;
 
@@ -25,6 +25,7 @@ pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DataSplits>()?;
     m.add_class::<DataLoadKwargs>()?;
     m.add_class::<DataSaveKwargs>()?;
+    m.add_class::<DataInterfaceType>()?;
 
     // data_interface
     m.add_class::<DataInterface>()?;

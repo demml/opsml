@@ -7,7 +7,6 @@ from ..data import (
     DataInterfaceSaveMetadata,
     DataType,
     DataSaveKwargs,
-    DataLoadKwargs,
 )
 from ..model import ModelInterface, ModelSaveKwargs, ModelLoadKwargs
 
