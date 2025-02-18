@@ -11,7 +11,7 @@ use opsml_storage::FileSystemStorage;
 use opsml_types::cards::CardType;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{ModelInterfaceType, SaveName, Suffix};
-use opsml_utils::{create_tmp_path, unwrap_pystring, PyHelperFuncs};
+use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
@@ -22,7 +22,6 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::fmt;
-use std::fs::metadata;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tracing::{debug, error};

@@ -8,7 +8,7 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{cards::CardType, DataType, SaveName, Suffix};
+use opsml_types::{cards::CardType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -285,11 +285,11 @@ impl DataCard {
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
-            data_type: self.data_type.to_string(),
+            data_type: self.metadata.interface_metadata.data_type.to_string(),
             runcard_uid: self.metadata.runcard_uid.clone(),
             pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
-            interface_type: DataInterfaceType::Arrow.to_string(),
+            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
@@ -332,7 +332,7 @@ impl Serialize for DataCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("DataCard", 9)?;
+        let mut state = serializer.serialize_struct("DataCard", 8)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -343,7 +343,6 @@ impl Serialize for DataCard {
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("card_type", &self.card_type)?;
-        state.serialize_field("data_type", &self.data_type)?;
         state.end()
     }
 }
@@ -365,7 +364,6 @@ impl<'de> Deserialize<'de> for DataCard {
             Tags,
             Metadata,
             CardType,
-            DataType,
         }
 
         struct DataCardVisitor;
@@ -390,7 +388,6 @@ impl<'de> Deserialize<'de> for DataCard {
                 let mut tags = None;
                 let mut metadata = None;
                 let mut card_type = None;
-                let mut data_type = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -422,9 +419,6 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::CardType => {
                             card_type = Some(map.next_value()?);
                         }
-                        Field::DataType => {
-                            data_type = Some(map.next_value()?);
-                        }
                     }
                 }
 
@@ -437,7 +431,6 @@ impl<'de> Deserialize<'de> for DataCard {
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
                 let card_type = card_type.ok_or_else(|| de::Error::missing_field("card_type"))?;
-                let data_type = data_type.ok_or_else(|| de::Error::missing_field("data_type"))?;
 
                 Ok(DataCard {
                     interface,
@@ -449,7 +442,6 @@ impl<'de> Deserialize<'de> for DataCard {
                     tags,
                     metadata,
                     card_type,
-                    data_type,
                     rt: None,
                     fs: None,
                     artifact_key: None,
@@ -467,7 +459,6 @@ impl<'de> Deserialize<'de> for DataCard {
             "tags",
             "metadata",
             "card_type",
-            "data_type",
         ];
         deserializer.deserialize_struct("DataCard", FIELDS, DataCardVisitor)
     }
@@ -484,7 +475,6 @@ impl FromPyObject<'_> for DataCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let card_type = ob.getattr("card_type")?.extract()?;
-        let data_type = ob.getattr("data_type")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -496,7 +486,6 @@ impl FromPyObject<'_> for DataCard {
             tags,
             metadata,
             card_type,
-            data_type,
             rt: None,
             fs: None,
             artifact_key: None,
