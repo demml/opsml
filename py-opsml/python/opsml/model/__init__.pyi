@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
 from ..core import (
+    ExtraMetadata,
     FeatureSchema,
     ModelLoadKwargs,
-    OnnxSchema,
     ModelSaveKwargs,
-    ExtraMetadata,
+    OnnxSchema,
 )
 from ..data import DataType
 from ..scouter.drift import (
