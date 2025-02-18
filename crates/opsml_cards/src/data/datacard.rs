@@ -2,7 +2,8 @@ use crate::BaseArgs;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::data::{
-    ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs,
+    ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs, NumpyData,
+    PandasData, PolarsData, SqlData, TorchData,
 };
 use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
@@ -29,6 +30,11 @@ fn interface_from_metadata<'py>(
 ) -> PyResult<Bound<'py, PyAny>> {
     match metadata.interface_type {
         DataInterfaceType::Arrow => ArrowData::from_metadata(py, metadata),
+        DataInterfaceType::Pandas => PandasData::from_metadata(py, metadata),
+        DataInterfaceType::Numpy => NumpyData::from_metadata(py, metadata),
+        DataInterfaceType::Polars => PolarsData::from_metadata(py, metadata),
+        DataInterfaceType::Torch => TorchData::from_metadata(py, metadata),
+        DataInterfaceType::Sql => SqlData::from_metadata(py, metadata),
 
         _ => {
             error!("Interface type not found");
