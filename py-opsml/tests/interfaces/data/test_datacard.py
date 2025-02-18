@@ -14,9 +14,9 @@ def test_polars_datacard(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: P
 
     kwargs = {"compression": "gzip"}
     save_kwargs = DataSaveKwargs(data=kwargs)
-    metadata = card.save(save_path, save_kwargs)
+    card.save(save_path, save_kwargs)
 
-    save_path = save_path / metadata.data_save_path
+    save_path = (save_path / "data").with_suffix(".parquet")
 
     assert save_path.exists()
 

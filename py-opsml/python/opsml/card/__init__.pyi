@@ -220,7 +220,7 @@ class DataCard:
         self,
         path: Path,
         save_kwargs: Optional[DataSaveKwargs] = None,
-    ) -> DataInterfaceSaveMetadata:
+    ) -> None:
         """Save the data card
 
         Args:
