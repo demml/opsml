@@ -265,7 +265,7 @@ pub async fn update_card(
             let server_card = DataCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
-                app_env: client_card.app_env.unwrap(),
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,
@@ -298,7 +298,7 @@ pub async fn update_card(
             let server_card = ModelCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
-                app_env: client_card.app_env.unwrap(),
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,
@@ -360,7 +360,7 @@ pub async fn update_card(
             let server_card = RunCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
-                app_env: client_card.app_env.unwrap(),
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,
@@ -394,7 +394,7 @@ pub async fn update_card(
             let server_card = PipelineCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
-                app_env: client_card.app_env.unwrap(),
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,
@@ -426,7 +426,7 @@ pub async fn update_card(
             let server_card = AuditCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
-                app_env: client_card.app_env.unwrap(),
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,

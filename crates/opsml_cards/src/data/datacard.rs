@@ -1,4 +1,5 @@
 use crate::BaseArgs;
+use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::data::{
@@ -11,7 +12,7 @@ use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::RegistryType;
 use opsml_types::{SaveName, Suffix};
-use opsml_utils::{create_tmp_path, PyHelperFuncs};
+use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
@@ -91,6 +92,12 @@ pub struct DataCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
 
+    #[pyo3(get)]
+    pub app_env: String,
+
+    #[pyo3(get)]
+    pub created_at: NaiveDateTime,
+
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
@@ -154,6 +161,8 @@ impl DataCard {
             rt: None,
             fs: None,
             artifact_key: None,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
         })
     }
 
@@ -284,8 +293,8 @@ impl DataCard {
 
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = DataCardClientRecord {
-            created_at: None,
-            app_env: None,
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
             repository: self.repository.clone(),
             name: self.name.clone(),
             contact: self.contact.clone(),
@@ -339,7 +348,7 @@ impl Serialize for DataCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("DataCard", 8)?;
+        let mut state = serializer.serialize_struct("DataCard", 10)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -350,6 +359,8 @@ impl Serialize for DataCard {
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("registry_type", &self.registry_type)?;
+        state.serialize_field("created_at", &self.created_at)?;
+        state.serialize_field("app_env", &self.app_env)?;
         state.end()
     }
 }
@@ -371,6 +382,8 @@ impl<'de> Deserialize<'de> for DataCard {
             Tags,
             Metadata,
             RegistryType,
+            AppEnv,
+            CreatedAt,
         }
 
         struct DataCardVisitor;
@@ -395,6 +408,8 @@ impl<'de> Deserialize<'de> for DataCard {
                 let mut tags = None;
                 let mut metadata = None;
                 let mut registry_type = None;
+                let mut app_env = None;
+                let mut created_at = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -426,6 +441,12 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::RegistryType => {
                             registry_type = Some(map.next_value()?);
                         }
+                        Field::AppEnv => {
+                            app_env = Some(map.next_value()?);
+                        }
+                        Field::CreatedAt => {
+                            created_at = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -439,6 +460,9 @@ impl<'de> Deserialize<'de> for DataCard {
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
                 let registry_type =
                     registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
+                let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
+                let created_at =
+                    created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
 
                 Ok(DataCard {
                     interface,
@@ -453,6 +477,8 @@ impl<'de> Deserialize<'de> for DataCard {
                     rt: None,
                     fs: None,
                     artifact_key: None,
+                    app_env,
+                    created_at,
                 })
             }
         }
@@ -467,6 +493,8 @@ impl<'de> Deserialize<'de> for DataCard {
             "tags",
             "metadata",
             "registry_type",
+            "app_env",
+            "created_at",
         ];
         deserializer.deserialize_struct("DataCard", FIELDS, DataCardVisitor)
     }
@@ -483,6 +511,8 @@ impl FromPyObject<'_> for DataCard {
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
         let registry_type = ob.getattr("registry_type")?.extract()?;
+        let created_at = ob.getattr("created_at")?.extract()?;
+        let app_env = ob.getattr("app_env")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -497,6 +527,8 @@ impl FromPyObject<'_> for DataCard {
             rt: None,
             fs: None,
             artifact_key: None,
+            app_env,
+            created_at,
         })
     }
 }

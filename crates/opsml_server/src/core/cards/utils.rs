@@ -164,7 +164,13 @@ pub async fn insert_card_into_db(
         ApiError::Error("Failed to insert card".to_string())
     })?;
 
-    Ok((card.uid().to_string(), card.registry_type(), card.uri()))
+    Ok((
+        card.uid().to_string(),
+        card.registry_type(),
+        card.uri(),
+        card.created_at(),
+        card.app_env(),
+    ))
 }
 
 #[instrument(skip_all)]

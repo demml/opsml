@@ -1,4 +1,5 @@
 use crate::BaseArgs;
+use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
@@ -12,7 +13,7 @@ use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{
     DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
-use opsml_utils::{create_tmp_path, PyHelperFuncs};
+use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::{IntoPyObjectExt, PyObject};
@@ -97,9 +98,11 @@ pub struct ModelCard {
     #[pyo3(get)]
     pub to_onnx: bool,
 
-    pub app_env: String
+    #[pyo3(get)]
+    pub app_env: String,
 
-    pub created_at: Option<String>,
+    #[pyo3(get)]
+    pub created_at: NaiveDateTime,
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
@@ -194,7 +197,8 @@ impl ModelCard {
             rt: None,
             fs: None,
             artifact_key: None,
-            app_env: None,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
         })
     }
 
@@ -379,8 +383,8 @@ impl ModelCard {
 
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = ModelCardClientRecord {
-            created_at: None,
-            app_env: self.app_env.
+            app_env: self.app_env.clone(),
+            created_at: self.created_at,
             repository: self.repository.clone(),
             name: self.name.clone(),
             contact: self.contact.clone(),
@@ -426,7 +430,7 @@ impl Serialize for ModelCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ModelCard", 9)?;
+        let mut state = serializer.serialize_struct("ModelCard", 11)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -438,6 +442,8 @@ impl Serialize for ModelCard {
         state.serialize_field("metadata", &self.metadata)?;
         state.serialize_field("registry_type", &self.registry_type)?;
         state.serialize_field("to_onnx", &self.to_onnx)?;
+        state.serialize_field("created_at", &self.created_at)?;
+        state.serialize_field("app_env", &self.app_env)?;
         state.end()
     }
 }
@@ -454,6 +460,8 @@ impl FromPyObject<'_> for ModelCard {
         let metadata = ob.getattr("metadata")?.extract()?;
         let registry_type = ob.getattr("registry_type")?.extract()?;
         let to_onnx = ob.getattr("to_onnx")?.extract()?;
+        let created_at = ob.getattr("created_at")?.extract()?;
+        let app_env = ob.getattr("app_env")?.extract()?;
 
         Ok(ModelCard {
             interface: Some(interface.into()),
@@ -469,6 +477,8 @@ impl FromPyObject<'_> for ModelCard {
             rt: None,
             fs: None,
             artifact_key: None,
+            app_env,
+            created_at,
         })
     }
 }
@@ -491,6 +501,8 @@ impl<'de> Deserialize<'de> for ModelCard {
             Metadata,
             RegistryType,
             ToOnnx,
+            AppEnv,
+            CreatedAt,
         }
 
         struct ModelCardVisitor;
@@ -516,6 +528,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut metadata = None;
                 let mut registry_type = None;
                 let mut to_onnx = None;
+                let mut app_env = None;
+                let mut created_at = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -550,6 +564,12 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::ToOnnx => {
                             to_onnx = Some(map.next_value()?);
                         }
+                        Field::AppEnv => {
+                            app_env = Some(map.next_value()?);
+                        }
+                        Field::CreatedAt => {
+                            created_at = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -564,6 +584,9 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let registry_type =
                     registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
                 let to_onnx = to_onnx.ok_or_else(|| de::Error::missing_field("to_onnx"))?;
+                let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
+                let created_at =
+                    created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
 
                 Ok(ModelCard {
                     interface,
@@ -579,6 +602,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                     rt: None,
                     fs: None,
                     artifact_key: None,
+                    app_env,
+                    created_at,
                 })
             }
         }
@@ -594,6 +619,8 @@ impl<'de> Deserialize<'de> for ModelCard {
             "metadata",
             "registry_type",
             "to_onnx",
+            "app_env",
+            "created_at",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
     }
