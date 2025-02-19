@@ -195,5 +195,5 @@ def test_crud_modelcard(
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
 
-        # delete_card(datacard, data_registry)
-        # delete_card(modelcard, model_registry)
+        delete_card(datacard, data_registry)
+        delete_card(modelcard, model_registry)
