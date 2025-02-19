@@ -187,9 +187,9 @@ impl DataCard {
             );
             Ok(())
         } else {
-            return Err(OpsmlError::new_err(
+            Err(OpsmlError::new_err(
                 "interface must be an instance of ModelInterface",
-            ));
+            ))
         }
     }
 
@@ -309,7 +309,7 @@ impl DataCard {
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+        PyHelperFuncs::save_to_json(self, card_save_path)?;
 
         Ok(())
     }
@@ -339,7 +339,7 @@ impl DataCard {
 
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if self.artifact_key.is_none() {
-            return Err(CardError::Error("Decryption key not found".to_string()));
+            Err(CardError::Error("Decryption key not found".to_string()))
         } else {
             Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
         }
@@ -355,14 +355,14 @@ impl DataCard {
         rt.block_on(async {
             fs.lock()
                 .await
-                .get(&lpath, &uri, true)
+                .get(lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 
             Ok::<(), CardError>(())
         })?;
 
-        decrypt_directory(&lpath, &decrypt_key)?;
+        decrypt_directory(lpath, &decrypt_key)?;
 
         Ok(())
     }

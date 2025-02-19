@@ -249,9 +249,9 @@ impl ModelCard {
             );
             Ok(())
         } else {
-            return Err(OpsmlError::new_err(
+            Err(OpsmlError::new_err(
                 "interface must be an instance of ModelInterface",
-            ));
+            ))
         }
     }
 
@@ -358,7 +358,7 @@ impl ModelCard {
     }
 
     pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(&self)
+        PyHelperFuncs::__str__(self)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
@@ -397,7 +397,7 @@ impl ModelCard {
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+        PyHelperFuncs::save_to_json(self, card_save_path)?;
 
         Ok(())
     }
@@ -613,7 +613,7 @@ impl<'de> Deserialize<'de> for ModelCard {
 impl ModelCard {
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if self.artifact_key.is_none() {
-            return Err(CardError::Error("Decryption key not found".to_string()));
+            Err(CardError::Error("Decryption key not found".to_string()))
         } else {
             Ok(self.artifact_key.as_ref().unwrap().get_decrypt_key()?)
         }
@@ -635,7 +635,7 @@ impl ModelCard {
             Ok::<(), CardError>(())
         })?;
 
-        decrypt_directory(&lpath, &decrypt_key)?;
+        decrypt_directory(lpath, &decrypt_key)?;
 
         Ok(())
     }
