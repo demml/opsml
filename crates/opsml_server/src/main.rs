@@ -582,8 +582,9 @@ mod tests {
         let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(update_response.updated);
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Data,
         };
 
@@ -747,8 +748,9 @@ mod tests {
         let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(update_response.updated);
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Model,
         };
 
@@ -879,8 +881,9 @@ mod tests {
         let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(update_response.updated);
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Run,
         };
 
@@ -1009,8 +1012,9 @@ mod tests {
         let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(update_response.updated);
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Pipeline,
         };
 
@@ -1139,8 +1143,9 @@ mod tests {
         let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
         assert!(update_response.updated);
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Audit,
         };
 
@@ -1233,8 +1238,9 @@ mod tests {
             _ => panic!("Card not found"),
         };
 
-        let delete_args = UidRequest {
+        let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
+            repository: card.repository.clone(),
             registry_type: RegistryType::Project,
         };
 
