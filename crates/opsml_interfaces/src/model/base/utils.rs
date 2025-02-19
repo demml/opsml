@@ -11,7 +11,7 @@ use scouter_client::{
 };
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::{error, span};
+use tracing::{debug, error, instrument};
 
 type PyDictKwargs<'py> = (
     Option<Bound<'py, PyDict>>,
@@ -256,20 +256,25 @@ impl SampleData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let save_path = data.call_method("save", (path,), kwargs)?;
+        debug!("Saving data to path: {:?} with kwargs: {:?}", path, kwargs);
+        let metadata = data.call_method("save", (path,), kwargs)?;
+
         // convert pyany to pathbuf
-        let save_path = save_path.extract::<PathBuf>()?;
+        let save_path = metadata
+            .getattr("save_metadata")?
+            .getattr("data_uri")?
+            .extract::<PathBuf>()?;
+
         Ok(save_path)
     }
 
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
-        let span = span!(tracing::Level::DEBUG, "Save Sample Data");
-        let _enter = span.enter();
         match self {
             SampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)

@@ -146,4 +146,12 @@ impl OpsmlRegistry {
             }
         }
     }
+
+    pub async fn update_card(&mut self, card: Card) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => client_registry.update_card(card).await,
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.update_card(card).await,
+        }
+    }
 }
