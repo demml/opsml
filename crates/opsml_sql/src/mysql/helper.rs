@@ -402,7 +402,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
+        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -415,7 +415,6 @@ impl MySQLQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         datacard_uid, 
         data_type, 
         model_type, 
@@ -429,7 +428,7 @@ impl MySQLQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -443,7 +442,6 @@ impl MySQLQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         project, 
         tags, 
         datacard_uids,
@@ -455,7 +453,7 @@ impl MySQLQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -469,7 +467,6 @@ impl MySQLQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         approved, 
         datacard_uids, 
@@ -479,7 +476,7 @@ impl MySQLQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -493,7 +490,6 @@ impl MySQLQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         pipeline_code_uri, 
         datacard_uids, 
@@ -503,7 +499,7 @@ impl MySQLQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 
@@ -516,7 +512,6 @@ impl MySQLQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         data_type = ?, 
         interface_type = ?, 
         tags = ?, 
@@ -539,7 +534,6 @@ impl MySQLQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         datacard_uid = ?, 
         data_type = ?, 
         model_type = ?, 
@@ -565,7 +559,6 @@ impl MySQLQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         project = ?, 
         tags = ?, 
         datacard_uids = ?, 
@@ -589,7 +582,6 @@ impl MySQLQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         tags = ?, 
         approved = ?, 
         datacard_uids = ?, 
@@ -611,7 +603,6 @@ impl MySQLQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         tags = ?, 
         pipeline_code_uri = ?, 
         datacard_uids = ?, 
