@@ -5,6 +5,7 @@ use crate::data::{
 };
 use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
+use opsml_error::InterfaceError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -90,6 +91,59 @@ impl DataInterfaceMetadata {
     }
 }
 
+pub fn check_data_splits(
+    data_splits: Option<&Bound<'_, PyAny>>,
+) -> Result<DataSplits, InterfaceError> {
+    let splits: DataSplits = {
+        if let Some(data_splits) = data_splits {
+            // check if data_splits is either Vec<DataSplit> or DataSplits
+            if data_splits.is_instance_of::<DataSplits>() {
+                data_splits.extract::<DataSplits>()?
+            } else if data_splits.is_instance_of::<PyList>() {
+                // pylist should be list of DataSplit
+                DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?)
+            } else {
+                DataSplits::default()
+            }
+        } else {
+            DataSplits::default()
+        }
+    };
+
+    Ok(splits)
+}
+
+pub fn check_dependent_vars(
+    dependent_vars: Option<&Bound<'_, PyAny>>,
+) -> Result<DependentVars, InterfaceError> {
+    // define dependent vars
+    let depen_vars: DependentVars = {
+        if let Some(dependent_vars) = dependent_vars {
+            // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
+            if dependent_vars.is_instance_of::<DependentVars>() {
+                dependent_vars.extract::<DependentVars>()?
+            } else if dependent_vars.is_instance_of::<PyList>() {
+                // pylist should be list of string or list of int
+                if dependent_vars.extract::<Vec<String>>().is_ok() {
+                    let column_names = dependent_vars.extract::<Vec<String>>()?;
+                    DependentVars::new(Some(column_names), None)
+                } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
+                    let column_indices = dependent_vars.extract::<Vec<usize>>()?;
+                    DependentVars::new(None, Some(column_indices))
+                } else {
+                    DependentVars::default()
+                }
+            } else {
+                DependentVars::default()
+            }
+        } else {
+            DependentVars::default()
+        }
+    };
+
+    Ok(depen_vars)
+}
+
 #[pyclass(subclass)]
 pub struct DataInterface {
     #[pyo3(get)]
@@ -132,46 +186,8 @@ impl DataInterface {
         data_profile: Option<DataProfile>,
     ) -> PyResult<Self> {
         // define data splits
-        let splits: DataSplits = {
-            if let Some(data_splits) = data_splits {
-                // check if data_splits is either Vec<DataSplit> or DataSplits
-                if data_splits.is_instance_of::<DataSplits>() {
-                    data_splits.extract::<DataSplits>()?
-                } else if data_splits.is_instance_of::<PyList>() {
-                    // pylist should be list of DataSplit
-                    DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?)
-                } else {
-                    DataSplits::default()
-                }
-            } else {
-                DataSplits::default()
-            }
-        };
-
-        // define dependent vars
-        let depen_vars: DependentVars = {
-            if let Some(dependent_vars) = dependent_vars {
-                // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
-                if dependent_vars.is_instance_of::<DependentVars>() {
-                    dependent_vars.extract::<DependentVars>()?
-                } else if dependent_vars.is_instance_of::<PyList>() {
-                    // pylist should be list of string or list of int
-                    if dependent_vars.extract::<Vec<String>>().is_ok() {
-                        let column_names = dependent_vars.extract::<Vec<String>>()?;
-                        DependentVars::new(Some(column_names), None)
-                    } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
-                        let column_indices = dependent_vars.extract::<Vec<usize>>()?;
-                        DependentVars::new(None, Some(column_indices))
-                    } else {
-                        DependentVars::default()
-                    }
-                } else {
-                    DependentVars::default()
-                }
-            } else {
-                DependentVars::default()
-            }
-        };
+        let splits: DataSplits = check_data_splits(data_splits)?;
+        let depen_vars: DependentVars = check_dependent_vars(dependent_vars)?;
 
         let schema = schema.unwrap_or_default();
         let sql_logic = sql_logic.unwrap_or_default();
