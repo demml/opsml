@@ -2076,5 +2076,11 @@ mod tests {
 
         assert_eq!(key.uid, data_card.uid);
         assert_eq!(key.encrypted_key, encrypted_key);
+
+        // delete
+        client
+            .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
+            .await
+            .unwrap();
     }
 }
