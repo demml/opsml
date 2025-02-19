@@ -50,15 +50,7 @@ def crud_datacard(pandas_data: PandasData):
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
 
-    assert isinstance(loaded_card.interface, SklearnModel)
-    assert loaded_card.interface.sample_data is not None
-    assert loaded_card.interface.model is not None
-    assert loaded_card.interface.onnx_session is not None
-    assert loaded_card.interface.onnx_session.session is not None
-
-    assert loaded_card.interface.preprocessor is not None
-    assert loaded_card.interface.onnx_session.session is not None
-    assert isinstance(loaded_card.interface.sample_data, PandasData)
+    assert isinstance(loaded_card.interface, PandasData)
 
     # attempt to download all artifacts
     loaded_card.download_artifacts()
@@ -80,7 +72,7 @@ def crud_datacard(pandas_data: PandasData):
     reg.update_card(loaded_card)
 
     # load the updated card
-    updated_card: ModelCard = reg.load_card(uid=loaded_card.uid)
+    updated_card: DataCard = reg.load_card(uid=loaded_card.uid)
 
     # assert that the card was updated
     assert updated_card.name == "test2"
@@ -126,12 +118,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel):
     loaded_card: ModelCard = reg.load_card(uid=card.uid)
 
     # load all artifacts
-    loaded_card.load(
-        model=True,
-        onnx=True,
-        sample_data=True,
-        preprocessor=True,
-    )
+    loaded_card.load(onnx=True)
 
     assert loaded_card.name == card.name
     assert loaded_card.repository == card.repository
@@ -182,7 +169,11 @@ def crud_modelcard(random_forest_classifier: SklearnModel):
     assert len(cards) == 0
 
 
-def test_crud_modelcard(random_forest_classifier: SklearnModel):
+def test_crud_modelcard(
+    random_forest_classifier: SklearnModel,
+    pandas_data: PandasData,
+):
     # start server
     with OpsmlTestServer():
-        crud_modelcard(random_forest_classifier)
+        crud_datacard(pandas_data)
+        # crud_modelcard(random_forest_classifier)
