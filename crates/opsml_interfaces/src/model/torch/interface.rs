@@ -305,69 +305,43 @@ impl TorchModel {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
-    /// * `preprocessor` - Whether to load the preprocessor (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
-    #[instrument(skip(
-        self_,
-        py,
-        path,
-        model,
-        onnx,
-        drift_profile,
-        sample_data,
-        preprocessor,
-        load_kwargs
-    ))]
+    #[instrument(skip_all)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        if model {
-            debug!("Loading model");
-            self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
+        debug!("Loading model");
+        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
             self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        if sample_data {
-            debug!("Loading sample data");
-            let data_type = self_.as_super().data_type.clone();
+        debug!("Loading sample data");
+        let data_type = self_.as_super().data_type.clone();
 
-            self_.load_data(py, &path, &data_type, None)?;
-        }
+        self_.load_data(py, &path, &data_type, None)?;
 
-        if preprocessor {
-            debug!("Loading preprocessor");
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-        }
+        debug!("Loading preprocessor");
+        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
 
-        if drift_profile {
-            debug!("Loading drift profile");
-            self_.as_super().load_drift_profile(&path)?;
-        }
+        debug!("Loading drift profile");
+        self_.as_super().load_drift_profile(&path)?;
 
         Ok(())
     }

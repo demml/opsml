@@ -2,7 +2,7 @@ use crate::BaseArgs;
 use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::ModelInterface;
+use opsml_interfaces::{onnx, ModelInterface};
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
@@ -301,42 +301,31 @@ impl ModelCard {
         Ok(())
     }
 
-    #[pyo3(signature = (model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    #[pyo3(signature = (path=None, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
-        model: bool,
+        path: Option<PathBuf>,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
-        let tmp_path = create_tmp_path()?;
+        let path = if let Some(p) = path {
+            p
+        } else {
+            let tmp_path = create_tmp_path()?;
+            // download assets
+            self.download_all_artifacts(&tmp_path)?;
+            tmp_path
+        };
 
         // download assets
-        self.download_select_artifacts(
-            &tmp_path,
-            model,
-            onnx,
-            drift_profile,
-            sample_data,
-            preprocessor,
-        )?;
+        self.download_all_artifacts(&path)?;
 
         // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (
-                tmp_path,
-                model,
-                onnx,
-                drift_profile,
-                sample_data,
-                preprocessor,
-                load_kwargs,
-            ),
+            (path, onnx, load_kwargs),
             None,
         )?;
 
@@ -661,8 +650,8 @@ impl ModelCard {
 
         Ok(())
     }
-
-    fn download_select_artifacts(
+    // # TODO: May use this later
+    fn _download_select_artifacts(
         &mut self,
         tmp_path: &Path,
         model: bool,

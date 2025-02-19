@@ -194,12 +194,17 @@ class DataCard:
             their associated libraries.
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Optional[Path] = None,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the data card
 
         Args:
-            path (Path):
-                The path to load the data card from
+            path (Path | None):
+                The path to load the data card from. If no path is provided,
+                the data interface will be loaded from the server.
             load_kwargs (DataLoadKwargs | None):
                 Optional load kwargs to that will be passed to the
                 data interface load method
@@ -277,7 +282,7 @@ class ModelCardMetadata:
 class ModelCard:
     def __init__(
         self,
-        interface: ModelInterface,
+        interface: Optional[ModelInterface] = None,
         repository: Optional[str] = None,
         name: Optional[str] = None,
         contact: Optional[str] = None,

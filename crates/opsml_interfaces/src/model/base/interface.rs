@@ -482,45 +482,30 @@ impl ModelInterface {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, _preprocessor=false, load_kwargs=None, ))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None, ))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        _preprocessor: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        if model {
-            self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
+        self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        self.load_drift_profile(&path)?;
+        self.load_data(py, &path, None)?;
 
         if onnx {
             self.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
-        }
-
-        if drift_profile {
-            self.load_drift_profile(&path)?;
-        }
-
-        if sample_data {
-            self.load_data(py, &path, None)?;
         }
 
         Ok(())
