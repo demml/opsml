@@ -193,7 +193,7 @@ pub async fn create_card(
     })?;
 
     // (2) ------- Insert the card into the database
-    let (uid, registry_type, card_uri) = insert_card_into_db(
+    let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
         state.sql_client.clone(),
         card_request.card.clone(),
         version.clone(),
@@ -231,6 +231,8 @@ pub async fn create_card(
         repository: card_request.card.repository().to_string(),
         name: card_request.card.name().to_string(),
         version: version.to_string(),
+        app_env,
+        created_at,
         key,
     }))
 }
@@ -334,6 +336,7 @@ pub async fn update_card(
             let server_card = ProjectCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
+                app_env: client_card.app_env,
                 name: client_card.name,
                 repository: client_card.repository,
                 major: version.major as i32,

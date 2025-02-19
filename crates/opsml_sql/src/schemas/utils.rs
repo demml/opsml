@@ -119,6 +119,7 @@ pub fn convert_projectcard(record: ProjectCardRecord) -> Card {
     let card = ProjectCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,

@@ -313,6 +313,7 @@ impl Default for PipelineCardClientRecord {
 pub struct ProjectCardClientRecord {
     pub uid: String,
     pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -325,6 +326,7 @@ impl Default for ProjectCardClientRecord {
         Self {
             uid: "".to_string(),
             created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -747,6 +749,8 @@ pub struct CreateCardResponse {
     pub version: String,
     pub repository: String,
     pub name: String,
+    pub app_env: String,
+    pub created_at: NaiveDateTime,
     pub key: ArtifactKey,
 }
 
