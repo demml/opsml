@@ -469,14 +469,12 @@ pub async fn delete_card(
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    if state.config.auth_settings.enabled {
-        if !perms.has_delete_permission(&params.repository) {
-            error!("Permission denied");
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(json!({ "error": "Permission denied" })),
-            ));
-        }
+    if state.config.auth_settings.enabled && !perms.has_delete_permission(&params.repository) {
+        error!("Permission denied");
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
     }
 
     let table = CardTable::from_registry_type(&params.registry_type);
