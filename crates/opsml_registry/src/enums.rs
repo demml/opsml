@@ -1,8 +1,7 @@
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::cards::CardType;
-use opsml_types::contracts::ArtifactKey;
+use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
 use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
 use opsml_types::*;
 use tracing::{debug, instrument};
@@ -116,15 +115,15 @@ impl OpsmlRegistry {
     pub async fn get_artifact_key(
         &mut self,
         uid: &str,
-        card_type: &CardType,
+        registry_type: &RegistryType,
     ) -> Result<Vec<u8>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                client_registry.get_artifact_key(uid, card_type).await
+                client_registry.get_artifact_key(uid, registry_type).await
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
-                server_registry.get_artifact_key(uid, card_type).await
+                server_registry.get_artifact_key(uid, registry_type).await
             }
         }
     }
@@ -139,7 +138,7 @@ impl OpsmlRegistry {
                 // convert to client ArtifactKey
                 Ok(ArtifactKey {
                     uid: key.uid,
-                    card_type: key.card_type,
+                    registry_type: key.registry_type,
                     encrypted_key: key.encrypted_key,
                     storage_key: key.storage_key,
                 })
@@ -147,11 +146,18 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn delete_card(&mut self, uid: &str) -> Result<(), RegistryError> {
+    pub async fn delete_card(
+        &mut self,
+        delete_request: DeleteCardRequest,
+    ) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.delete_card(uid).await,
+            Self::ClientRegistry(client_registry) => {
+                client_registry.delete_card(delete_request).await
+            }
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => server_registry.delete_card(uid).await,
+            Self::ServerRegistry(server_registry) => {
+                server_registry.delete_card(delete_request).await
+            }
         }
     }
 }

@@ -62,6 +62,22 @@ impl RegistryType {
             _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
         }
     }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            RegistryType::Data => b"data",
+            RegistryType::Model => b"model",
+            RegistryType::Run => b"run",
+            RegistryType::Project => b"project",
+            RegistryType::Audit => b"audit",
+            RegistryType::Pipeline => b"pipeline",
+            RegistryType::Metrics => b"metrics",
+            RegistryType::HardwareMetrics => b"hardware_metrics",
+            RegistryType::Parameters => b"parameters",
+            RegistryType::Users => b"users",
+            RegistryType::ArtifactKey => b"artifact_key",
+        }
+    }
 }
 
 #[pyclass(eq, eq_int)]

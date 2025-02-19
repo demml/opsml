@@ -1,5 +1,4 @@
 use crate::BaseArgs;
-use core::task;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
@@ -9,9 +8,10 @@ use opsml_interfaces::{
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_storage::FileSystemStorage;
-use opsml_types::cards::CardType;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
-use opsml_types::{DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType};
+use opsml_types::{
+    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
+};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -92,7 +92,7 @@ pub struct ModelCard {
     pub metadata: ModelCardMetadata,
 
     #[pyo3(get)]
-    pub card_type: CardType,
+    pub registry_type: RegistryType,
 
     #[pyo3(get)]
     pub to_onnx: bool,
@@ -185,7 +185,7 @@ impl ModelCard {
             uid: base_args.4,
             tags,
             metadata,
-            card_type: CardType::Model,
+            registry_type: RegistryType::Model,
             to_onnx: to_onnx.unwrap_or(false),
             rt: None,
             fs: None,
@@ -424,7 +424,7 @@ impl Serialize for ModelCard {
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
-        state.serialize_field("card_type", &self.card_type)?;
+        state.serialize_field("registry_type", &self.registry_type)?;
         state.serialize_field("to_onnx", &self.to_onnx)?;
         state.end()
     }
@@ -440,7 +440,7 @@ impl FromPyObject<'_> for ModelCard {
         let uid = ob.getattr("uid")?.extract()?;
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
-        let card_type = ob.getattr("card_type")?.extract()?;
+        let registry_type = ob.getattr("registry_type")?.extract()?;
         let to_onnx = ob.getattr("to_onnx")?.extract()?;
 
         Ok(ModelCard {
@@ -452,7 +452,7 @@ impl FromPyObject<'_> for ModelCard {
             uid,
             tags,
             metadata,
-            card_type,
+            registry_type,
             to_onnx,
             rt: None,
             fs: None,
@@ -477,7 +477,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             Uid,
             Tags,
             Metadata,
-            CardType,
+            RegistryType,
             ToOnnx,
         }
 
@@ -502,7 +502,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut uid = None;
                 let mut tags = None;
                 let mut metadata = None;
-                let mut card_type = None;
+                let mut registry_type = None;
                 let mut to_onnx = None;
 
                 while let Some(key) = map.next_key()? {
@@ -532,8 +532,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::Metadata => {
                             metadata = Some(map.next_value()?);
                         }
-                        Field::CardType => {
-                            card_type = Some(map.next_value()?);
+                        Field::RegistryType => {
+                            registry_type = Some(map.next_value()?);
                         }
                         Field::ToOnnx => {
                             to_onnx = Some(map.next_value()?);
@@ -549,7 +549,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
-                let card_type = card_type.ok_or_else(|| de::Error::missing_field("card_type"))?;
+                let registry_type =
+                    registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
                 let to_onnx = to_onnx.ok_or_else(|| de::Error::missing_field("to_onnx"))?;
 
                 Ok(ModelCard {
@@ -561,7 +562,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     uid,
                     tags,
                     metadata,
-                    card_type,
+                    registry_type,
                     to_onnx,
                     rt: None,
                     fs: None,
@@ -579,7 +580,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             "uid",
             "tags",
             "metadata",
-            "card_type",
+            "registry_type",
             "to_onnx",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)

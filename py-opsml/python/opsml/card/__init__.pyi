@@ -2,70 +2,20 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..core import FeatureSchema, VersionType
-from ..data import (
-    DataInterface,
-    DataLoadKwargs,
-    DataSaveKwargs,
-    DataType,
-)
+from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
-
-class CardType:
-    Data: "CardType"
-    Model: "CardType"
-    Run: "CardType"
-    Project: "CardType"
-    Audit: "CardType"
-    Pipeline: "CardType"
 
 class RegistryType:
     Data: "RegistryType"
     Model: "RegistryType"
     Run: "RegistryType"
     Project: "RegistryType"
-    Audi: "RegistryType"
+    Audit: "RegistryType"
     Pipeline: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"
     Server: "RegistryMode"
-
-class CardInfo:
-    name: Optional[str]
-    repository: Optional[str]
-    contact: Optional[str]
-    uid: Optional[str]
-    version: Optional[str]
-    tags: Optional[Dict[str, str]]
-
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        repository: Optional[str] = None,
-        contact: Optional[str] = None,
-        uid: Optional[str] = None,
-        version: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-    ) -> None:
-        """Define card information
-
-        Args:
-            name:
-                The name of the card
-            repository:
-                The repository of the card
-            contact:
-                The contact of the card
-            uid:
-                The uid of the card
-            version:
-                The version of the card
-            tags:
-                The tags of the card
-        """
-
-    def set_env(self) -> None:
-        """Helper to set environment variables for the current runtime environment"""
 
 class Card:
     uid: Optional[str]
@@ -208,7 +158,7 @@ class DataCard:
         """Return the metadata of the data card"""
 
     @property
-    def card_type(self) -> CardType:
+    def registry_type(self) -> RegistryType:
         """Return the card type of the data card"""
 
     @property
@@ -442,7 +392,7 @@ class ModelCard:
         """Returns the metadata of the `ModelCard`"""
 
     @property
-    def card_type(self) -> CardType:
+    def registry_type(self) -> RegistryType:
         """Returns the card type of the `ModelCard`"""
 
     def save(self, path: Path, save_kwargs: Optional[ModelSaveKwargs] = None) -> None:
@@ -646,7 +596,9 @@ class CardRegistry:
         self,
         card: Union[DataCard, ModelCard],
     ) -> None:
-        """Update a Card in the registry
+        """Update a Card in the registry.
+        Note: This will only update the registry record for a given card. It
+        will not re-save/update the underlying artifacts (except for metadata).
 
         Args:
             card (ArtifactCard):

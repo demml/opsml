@@ -312,11 +312,15 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError> {
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_artifact_key(uid, card_type).await,
-            SqlClientEnum::Sqlite(client) => client.get_artifact_key(uid, card_type).await,
-            SqlClientEnum::MySql(client) => client.get_artifact_key(uid, card_type).await,
+            SqlClientEnum::Postgres(client) => client.get_artifact_key(uid, registry_type).await,
+            SqlClientEnum::Sqlite(client) => client.get_artifact_key(uid, registry_type).await,
+            SqlClientEnum::MySql(client) => client.get_artifact_key(uid, registry_type).await,
         }
     }
 
@@ -371,11 +375,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError> {
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, card_type).await,
-            SqlClientEnum::Sqlite(client) => client.delete_artifact_key(uid, card_type).await,
-            SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, card_type).await,
+            SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, registry_type).await,
+            SqlClientEnum::Sqlite(client) => client.delete_artifact_key(uid, registry_type).await,
+            SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, registry_type).await,
         }
     }
 }

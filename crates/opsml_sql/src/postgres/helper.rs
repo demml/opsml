@@ -715,7 +715,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -723,7 +723,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND card_type = $2",
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -731,7 +731,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_update_query() -> String {
         format!(
-            "UPDATE {} SET encrypted_key = $1, created_at = NOW() WHERE uid = $2 AND card_type = $3",
+            "UPDATE {} SET encrypted_key = $1, created_at = NOW() WHERE uid = $2 AND registry_type = $3",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -757,7 +757,7 @@ impl PostgresQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.card_type, a.encrypted_key, a.storage_key
+            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
             INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",
@@ -770,7 +770,7 @@ impl PostgresQueryHelper {
 
     pub fn get_artifact_key_delete_query() -> String {
         format!(
-            "DELETE FROM {} WHERE uid = $1 AND card_type = $2",
+            "DELETE FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
         .to_string()

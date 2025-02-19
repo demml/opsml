@@ -4,8 +4,8 @@ use opsml_error::ApiError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_storage::StorageClientEnum;
-use opsml_types::cards::{CardTable, CardType};
-use opsml_types::contracts::{card, ArtifactKey, CardQueryArgs};
+use opsml_types::cards::CardTable;
+use opsml_types::contracts::{ArtifactKey, CardQueryArgs};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
 
@@ -19,14 +19,14 @@ pub async fn create_artifact_key(
     sql_client: Arc<SqlClientEnum>,
     encryption_key: Vec<u8>,
     uid: &str,
-    card_type: &str,
+    registry_type: &str,
     storage_key: &str,
 ) -> Result<ArtifactKey, ApiError> {
     debug!("Creating artifact key for: {:?}", uid);
     let salt = generate_salt();
 
     // create derived key
-    let derived_key = derive_encryption_key(&encryption_key, &salt, card_type.as_bytes())?;
+    let derived_key = derive_encryption_key(&encryption_key, &salt, registry_type.as_bytes())?;
 
     debug!("Derived key: {:?}", derived_key);
     let uid_key = uid_to_byte_key(uid)?;
@@ -39,7 +39,7 @@ pub async fn create_artifact_key(
 
     let artifact_key = ArtifactKey {
         uid: uid.to_string(),
-        card_type: CardType::from_string(card_type),
+        registry_type: RegistryType::from_string(registry_type)?,
         encrypted_key,
         storage_key: storage_key.to_string(),
     };
@@ -69,8 +69,8 @@ pub async fn cleanup_artifacts(
         .get_card_key_for_loading(
             table,
             &CardQueryArgs {
-                uid: Some(uid),
-                registry_type,
+                uid: Some(uid.clone()),
+                registry_type: registry_type.clone(),
                 ..Default::default()
             },
         )
@@ -88,10 +88,8 @@ pub async fn cleanup_artifacts(
             ApiError::Error("Failed to remove artifact".to_string())
         })?;
 
-    // delete key from database
-    let card_type = CardType::from_registry_type(&registry_type);
     sql_client
-        .delete_artifact_key(&uid, &card_type)
+        .delete_artifact_key(&uid, &registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to delete artifact key: {}", e);

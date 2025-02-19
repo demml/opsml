@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS opsml_users (
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     
     uid TEXT PRIMARY KEY,
-    card_type TEXT,
+    registry_type TEXT,
     encrypted_key TEXT,
     storage_key TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

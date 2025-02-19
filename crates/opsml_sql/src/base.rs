@@ -256,7 +256,11 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `ArtifactKey` - The artifact key
-    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError>;
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError>;
 
     /// Update artifact key
     ///
@@ -311,10 +315,10 @@ pub trait SqlClient: Sized {
     /// # Arguments
     ///
     /// * `uid` - The unique identifier of the card
-    /// * `card_type` - The card type
+    /// * `registry_type` - The card type
     ///
     /// # Returns
     ///
     /// * `Result<(), SqlError>` - The result of the operation
-    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError>;
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError>;
 }

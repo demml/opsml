@@ -1,4 +1,4 @@
-use crate::cards::CardType;
+use crate::RegistryType;
 use crate::StorageType;
 use opsml_crypt::decrypt_key;
 use opsml_error::TypeError;
@@ -108,13 +108,13 @@ pub struct UploadPartArgs {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ArtifactKeyRequest {
     pub uid: String,
-    pub card_type: CardType,
+    pub registry_type: RegistryType,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArtifactKey {
     pub uid: String,
-    pub card_type: CardType,
+    pub registry_type: RegistryType,
     pub encrypted_key: Vec<u8>,
     pub storage_key: String,
 }

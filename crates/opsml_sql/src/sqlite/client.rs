@@ -11,9 +11,8 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::cards::CardType;
 use opsml_types::contracts::ArtifactKey;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
@@ -1019,7 +1018,7 @@ impl SqlClient for SqliteClient {
         let query = SqliteQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)
             .bind(&key.uid)
-            .bind(&key.card_type.to_string())
+            .bind(&key.registry_type.to_string())
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
             .execute(&self.pool)
@@ -1029,19 +1028,23 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_artifact_key(&self, uid: &str, card_type: &str) -> Result<ArtifactKey, SqlError> {
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_select_query();
 
         let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
             .bind(uid)
-            .bind(card_type)
+            .bind(registry_type)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
         Ok(ArtifactKey {
             uid: key.0,
-            card_type: CardType::from_string(&key.1),
+            registry_type: RegistryType::from_string(&key.1)?,
             encrypted_key: key.2,
             storage_key: key.3,
         })
@@ -1052,7 +1055,7 @@ impl SqlClient for SqliteClient {
         sqlx::query(&query)
             .bind(key.encrypted_key.clone())
             .bind(&key.uid)
-            .bind(&key.card_type.to_string())
+            .bind(&key.registry_type.to_string())
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1097,17 +1100,17 @@ impl SqlClient for SqliteClient {
 
         Ok(ArtifactKey {
             uid: key.0,
-            card_type: CardType::from_string(&key.1),
+            registry_type: RegistryType::from_string(&key.1)?,
             encrypted_key: key.2,
             storage_key: key.3,
         })
     }
 
-    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError> {
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_delete_query();
         sqlx::query(&query)
             .bind(uid)
-            .bind(card_type)
+            .bind(registry_type)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1121,7 +1124,7 @@ mod tests {
 
     use super::*;
 
-    use opsml_types::{cards::CardType, contracts::Operation, SqlType};
+    use opsml_types::{contracts::Operation, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -2087,7 +2090,7 @@ mod tests {
 
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            card_type: CardType::Data,
+            registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };
@@ -2095,7 +2098,7 @@ mod tests {
         client.insert_artifact_key(&key).await.unwrap();
 
         let key = client
-            .get_artifact_key(&key.uid, &key.card_type.to_string())
+            .get_artifact_key(&key.uid, &key.registry_type.to_string())
             .await
             .unwrap();
 
@@ -2105,7 +2108,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (32..64).collect();
         let key = ArtifactKey {
             uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            card_type: CardType::Data,
+            registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };
@@ -2113,7 +2116,7 @@ mod tests {
         client.update_artifact_key(&key).await.unwrap();
 
         let key = client
-            .get_artifact_key(&key.uid, &key.card_type.to_string())
+            .get_artifact_key(&key.uid, &key.registry_type.to_string())
             .await
             .unwrap();
 
@@ -2165,7 +2168,7 @@ mod tests {
         let encrypted_key: Vec<u8> = (0..32).collect();
         let key = ArtifactKey {
             uid: data_card.uid.clone(),
-            card_type: CardType::Data,
+            registry_type: RegistryType::Data,
             encrypted_key: encrypted_key.clone(),
             storage_key: "opsml_registry".to_string(),
         };

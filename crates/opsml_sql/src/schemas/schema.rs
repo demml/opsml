@@ -1,8 +1,7 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
 use opsml_types::cards::CardTable;
-use opsml_types::cards::CardType;
-use opsml_types::{CommonKwargs, DataType, ModelType};
+use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
@@ -818,14 +817,14 @@ impl ServerCard {
         }
     }
 
-    pub fn card_type(&self) -> String {
+    pub fn registry_type(&self) -> String {
         match self {
-            ServerCard::Data(_) => CardType::Data.to_string(),
-            ServerCard::Model(_) => CardType::Model.to_string(),
-            ServerCard::Run(_) => CardType::Run.to_string(),
-            ServerCard::Audit(_) => CardType::Audit.to_string(),
-            ServerCard::Pipeline(_) => CardType::Pipeline.to_string(),
-            ServerCard::Project(_) => CardType::Project.to_string(),
+            ServerCard::Data(_) => RegistryType::Data.to_string(),
+            ServerCard::Model(_) => RegistryType::Model.to_string(),
+            ServerCard::Run(_) => RegistryType::Run.to_string(),
+            ServerCard::Audit(_) => RegistryType::Audit.to_string(),
+            ServerCard::Pipeline(_) => RegistryType::Pipeline.to_string(),
+            ServerCard::Project(_) => RegistryType::Project.to_string(),
         }
     }
 

@@ -1113,10 +1113,10 @@ window.pdocSearch = (function () {
           doc: "<p>Returns the root URI to which artifacts associated with this card should be saved.</p>\n",
           annotation: ": pathlib.Path",
         },
-        "opsml.cards.base.ArtifactCard.card_type": {
-          fullname: "opsml.cards.base.ArtifactCard.card_type",
+        "opsml.cards.base.ArtifactCard.registry_type": {
+          fullname: "opsml.cards.base.ArtifactCard.registry_type",
           modulename: "opsml.cards.base",
-          qualname: "ArtifactCard.card_type",
+          qualname: "ArtifactCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -1544,10 +1544,10 @@ window.pdocSearch = (function () {
             '<span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">section</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">question_nbr</span><span class="p">:</span> <span class="nb">int</span>, </span><span class="param"><span class="n">response</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>',
           funcdef: "def",
         },
-        "opsml.cards.audit.AuditCard.card_type": {
-          fullname: "opsml.cards.audit.AuditCard.card_type",
+        "opsml.cards.audit.AuditCard.registry_type": {
+          fullname: "opsml.cards.audit.AuditCard.registry_type",
           modulename: "opsml.cards.audit",
-          qualname: "AuditCard.card_type",
+          qualname: "AuditCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -1701,10 +1701,10 @@ window.pdocSearch = (function () {
           doc: "<p>Returns data profile</p>\n",
           annotation: ": Any",
         },
-        "opsml.cards.data.DataCard.card_type": {
-          fullname: "opsml.cards.data.DataCard.card_type",
+        "opsml.cards.data.DataCard.registry_type": {
+          fullname: "opsml.cards.data.DataCard.registry_type",
           modulename: "opsml.cards.data",
-          qualname: "DataCard.card_type",
+          qualname: "DataCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -1899,10 +1899,10 @@ window.pdocSearch = (function () {
           doc: "<p>Loads <code>ModelMetadata</code> class</p>\n",
           annotation: ": opsml.types.model.ModelMetadata",
         },
-        "opsml.cards.model.ModelCard.card_type": {
-          fullname: "opsml.cards.model.ModelCard.card_type",
+        "opsml.cards.model.ModelCard.registry_type": {
+          fullname: "opsml.cards.model.ModelCard.registry_type",
           modulename: "opsml.cards.model",
-          qualname: "ModelCard.card_type",
+          qualname: "ModelCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -1956,10 +1956,10 @@ window.pdocSearch = (function () {
             '<span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>',
           funcdef: "def",
         },
-        "opsml.cards.project.ProjectCard.card_type": {
-          fullname: "opsml.cards.project.ProjectCard.card_type",
+        "opsml.cards.project.ProjectCard.registry_type": {
+          fullname: "opsml.cards.project.ProjectCard.registry_type",
           modulename: "opsml.cards.project",
-          qualname: "ProjectCard.card_type",
+          qualname: "ProjectCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -2181,9 +2181,9 @@ window.pdocSearch = (function () {
           modulename: "opsml.cards.run",
           qualname: "RunCard.add_card_uid",
           kind: "function",
-          doc: '<p>Adds a card uid to the appropriate card uid list for tracking</p>\n\n<h6 id="arguments">Arguments:</h6>\n\n<ul>\n<li><strong>card_type:</strong>  ArtifactCard class name</li>\n<li><strong>uid:</strong>  Uid of registered ArtifactCard</li>\n</ul>\n',
+          doc: '<p>Adds a card uid to the appropriate card uid list for tracking</p>\n\n<h6 id="arguments">Arguments:</h6>\n\n<ul>\n<li><strong>registry_type:</strong>  ArtifactCard class name</li>\n<li><strong>uid:</strong>  Uid of registered ArtifactCard</li>\n</ul>\n',
           signature:
-            '<span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">card_type</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">uid</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>',
+            '<span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">registry_type</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">uid</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>',
           funcdef: "def",
         },
         "opsml.cards.run.RunCard.get_metric": {
@@ -2234,10 +2234,10 @@ window.pdocSearch = (function () {
           doc: "<p>The base URI to use for the card and it's artifacts.</p>\n",
           annotation: ": pathlib.Path",
         },
-        "opsml.cards.run.RunCard.card_type": {
-          fullname: "opsml.cards.run.RunCard.card_type",
+        "opsml.cards.run.RunCard.registry_type": {
+          fullname: "opsml.cards.run.RunCard.registry_type",
           modulename: "opsml.cards.run",
-          qualname: "RunCard.card_type",
+          qualname: "RunCard.registry_type",
           kind: "variable",
           doc: "<p></p>\n",
           annotation: ": str",
@@ -7249,7 +7249,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 17,
         },
-        "opsml.cards.base.ArtifactCard.card_type": {
+        "opsml.cards.base.ArtifactCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -7699,7 +7699,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 53,
         },
-        "opsml.cards.audit.AuditCard.card_type": {
+        "opsml.cards.audit.AuditCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -7861,7 +7861,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 5,
         },
-        "opsml.cards.data.DataCard.card_type": {
+        "opsml.cards.data.DataCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -8068,7 +8068,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 7,
         },
-        "opsml.cards.model.ModelCard.card_type": {
+        "opsml.cards.model.ModelCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -8131,7 +8131,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 9,
         },
-        "opsml.cards.project.ProjectCard.card_type": {
+        "opsml.cards.project.ProjectCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -8410,7 +8410,7 @@ window.pdocSearch = (function () {
           bases: 0,
           doc: 15,
         },
-        "opsml.cards.run.RunCard.card_type": {
+        "opsml.cards.run.RunCard.registry_type": {
           qualname: 3,
           fullname: 6,
           annotation: 2,
@@ -13782,9 +13782,10 @@ window.pdocSearch = (function () {
                                     },
                                     "opsml.cards.base.ArtifactCard.artifact_uri":
                                       { tf: 1 },
-                                    "opsml.cards.base.ArtifactCard.card_type": {
-                                      tf: 1,
-                                    },
+                                    "opsml.cards.base.ArtifactCard.registry_type":
+                                      {
+                                        tf: 1,
+                                      },
                                     "opsml.cards.base.ArtifactCard.model_fields":
                                       { tf: 1 },
                                     "opsml.cards.base.ArtifactCard.model_computed_fields":
@@ -14068,7 +14069,7 @@ window.pdocSearch = (function () {
                               "opsml.cards.audit.AuditCard.answer_question": {
                                 tf: 1,
                               },
-                              "opsml.cards.audit.AuditCard.card_type": {
+                              "opsml.cards.audit.AuditCard.registry_type": {
                                 tf: 1,
                               },
                               "opsml.cards.audit.AuditCard.model_config": {
@@ -14778,7 +14779,7 @@ window.pdocSearch = (function () {
                               "opsml.cards.model.ModelCard.model_metadata": {
                                 tf: 1,
                               },
-                              "opsml.cards.model.ModelCard.card_type": {
+                              "opsml.cards.model.ModelCard.registry_type": {
                                 tf: 1,
                               },
                               "opsml.cards.model.ModelCard.model_fields": {
@@ -15536,14 +15537,14 @@ window.pdocSearch = (function () {
                 df: 0,
                 d: {
                   docs: {
-                    "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                    "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                     "opsml.cards.audit.AuditCard.add_card": { tf: 1 },
-                    "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
-                    "opsml.cards.data.DataCard.card_type": { tf: 1 },
-                    "opsml.cards.model.ModelCard.card_type": { tf: 1 },
-                    "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+                    "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
+                    "opsml.cards.data.DataCard.registry_type": { tf: 1 },
+                    "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
+                    "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
                     "opsml.cards.run.RunCard.add_card_uid": { tf: 1 },
-                    "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                    "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                     "opsml.projects.active_run.CardHandler.register_card": {
                       tf: 1,
                     },
@@ -16893,7 +16894,7 @@ window.pdocSearch = (function () {
                           "opsml.cards.run.RunCard.get_parameter": { tf: 1 },
                           "opsml.cards.run.RunCard.load_artifacts": { tf: 1 },
                           "opsml.cards.run.RunCard.uri": { tf: 1 },
-                          "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                          "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                           "opsml.cards.run.RunCard.model_config": { tf: 1 },
                           "opsml.cards.run.RunCard.model_fields": { tf: 1 },
                           "opsml.cards.run.RunCard.model_computed_fields": {
@@ -17941,12 +17942,12 @@ window.pdocSearch = (function () {
                 df: 0,
                 e: {
                   docs: {
-                    "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
-                    "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
-                    "opsml.cards.data.DataCard.card_type": { tf: 1 },
-                    "opsml.cards.model.ModelCard.card_type": { tf: 1 },
-                    "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
-                    "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                    "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
+                    "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
+                    "opsml.cards.data.DataCard.registry_type": { tf: 1 },
+                    "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
+                    "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
+                    "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                     "opsml.model.interfaces.base.SamplePrediction.prediction_type":
                       { tf: 1 },
                     "opsml.model.interfaces.base.ModelInterface.task_type": {
@@ -18949,7 +18950,9 @@ window.pdocSearch = (function () {
                             "opsml.cards.data.DataCard.data_splits": { tf: 1 },
                             "opsml.cards.data.DataCard.data": { tf: 1 },
                             "opsml.cards.data.DataCard.data_profile": { tf: 1 },
-                            "opsml.cards.data.DataCard.card_type": { tf: 1 },
+                            "opsml.cards.data.DataCard.registry_type": {
+                              tf: 1,
+                            },
                             "opsml.cards.data.DataCard.model_config": { tf: 1 },
                             "opsml.cards.data.DataCard.model_fields": { tf: 1 },
                             "opsml.cards.data.DataCard.model_computed_fields": {
@@ -20027,9 +20030,10 @@ window.pdocSearch = (function () {
                                     { tf: 1 },
                                   "opsml.cards.project.ProjectCard.create_registry_record":
                                     { tf: 1 },
-                                  "opsml.cards.project.ProjectCard.card_type": {
-                                    tf: 1,
-                                  },
+                                  "opsml.cards.project.ProjectCard.registry_type":
+                                    {
+                                      tf: 1,
+                                    },
                                   "opsml.cards.project.ProjectCard.model_config":
                                     { tf: 1 },
                                   "opsml.cards.project.ProjectCard.model_fields":
@@ -23021,7 +23025,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.base.ArtifactCard.add_tag": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.uri": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.artifact_uri": { tf: 1 },
-                      "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                      "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.model_fields": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.model_computed_fields": {
                         tf: 1,
@@ -23098,7 +23102,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.audit.AuditCard.misc": { tf: 1 },
                       "opsml.cards.audit.AuditCard.list_questions": { tf: 1 },
                       "opsml.cards.audit.AuditCard.answer_question": { tf: 1 },
-                      "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
+                      "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_config": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_fields": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_computed_fields": {
@@ -23122,7 +23126,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.data.DataCard.data_splits": { tf: 1 },
                       "opsml.cards.data.DataCard.data": { tf: 1 },
                       "opsml.cards.data.DataCard.data_profile": { tf: 1 },
-                      "opsml.cards.data.DataCard.card_type": { tf: 1 },
+                      "opsml.cards.data.DataCard.registry_type": { tf: 1 },
                       "opsml.cards.data.DataCard.model_config": { tf: 1 },
                       "opsml.cards.data.DataCard.model_fields": { tf: 1 },
                       "opsml.cards.data.DataCard.model_computed_fields": {
@@ -23151,7 +23155,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.model.ModelCard.preprocessor": { tf: 1 },
                       "opsml.cards.model.ModelCard.onnx_model": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_metadata": { tf: 1 },
-                      "opsml.cards.model.ModelCard.card_type": { tf: 1 },
+                      "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_fields": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_computed_fields": {
                         tf: 1,
@@ -23161,7 +23165,9 @@ window.pdocSearch = (function () {
                       "opsml.cards.project.ProjectCard.project_id": { tf: 1 },
                       "opsml.cards.project.ProjectCard.create_registry_record":
                         { tf: 1 },
-                      "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+                      "opsml.cards.project.ProjectCard.registry_type": {
+                        tf: 1,
+                      },
                       "opsml.cards.project.ProjectCard.model_config": { tf: 1 },
                       "opsml.cards.project.ProjectCard.model_fields": { tf: 1 },
                       "opsml.cards.project.ProjectCard.model_computed_fields": {
@@ -23200,7 +23206,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.run.RunCard.get_parameter": { tf: 1 },
                       "opsml.cards.run.RunCard.load_artifacts": { tf: 1 },
                       "opsml.cards.run.RunCard.uri": { tf: 1 },
-                      "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                      "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                       "opsml.cards.run.RunCard.model_config": { tf: 1 },
                       "opsml.cards.run.RunCard.model_fields": { tf: 1 },
                       "opsml.cards.run.RunCard.model_computed_fields": {
@@ -24645,14 +24651,14 @@ window.pdocSearch = (function () {
                 df: 0,
                 d: {
                   docs: {
-                    "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                    "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                     "opsml.cards.audit.AuditCard.add_card": { tf: 1 },
-                    "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
-                    "opsml.cards.data.DataCard.card_type": { tf: 1 },
-                    "opsml.cards.model.ModelCard.card_type": { tf: 1 },
-                    "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+                    "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
+                    "opsml.cards.data.DataCard.registry_type": { tf: 1 },
+                    "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
+                    "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
                     "opsml.cards.run.RunCard.add_card_uid": { tf: 1 },
-                    "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                    "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                     "opsml.projects.active_run.CardHandler.register_card": {
                       tf: 1,
                     },
@@ -24701,7 +24707,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.base.ArtifactCard.add_tag": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.uri": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.artifact_uri": { tf: 1 },
-                      "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                      "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.model_fields": { tf: 1 },
                       "opsml.cards.base.ArtifactCard.model_computed_fields": {
                         tf: 1,
@@ -24778,7 +24784,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.audit.AuditCard.misc": { tf: 1 },
                       "opsml.cards.audit.AuditCard.list_questions": { tf: 1 },
                       "opsml.cards.audit.AuditCard.answer_question": { tf: 1 },
-                      "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
+                      "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_config": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_fields": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_computed_fields": {
@@ -24802,7 +24808,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.data.DataCard.data_splits": { tf: 1 },
                       "opsml.cards.data.DataCard.data": { tf: 1 },
                       "opsml.cards.data.DataCard.data_profile": { tf: 1 },
-                      "opsml.cards.data.DataCard.card_type": { tf: 1 },
+                      "opsml.cards.data.DataCard.registry_type": { tf: 1 },
                       "opsml.cards.data.DataCard.model_config": { tf: 1 },
                       "opsml.cards.data.DataCard.model_fields": { tf: 1 },
                       "opsml.cards.data.DataCard.model_computed_fields": {
@@ -24831,7 +24837,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.model.ModelCard.preprocessor": { tf: 1 },
                       "opsml.cards.model.ModelCard.onnx_model": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_metadata": { tf: 1 },
-                      "opsml.cards.model.ModelCard.card_type": { tf: 1 },
+                      "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_fields": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_computed_fields": {
                         tf: 1,
@@ -24841,7 +24847,9 @@ window.pdocSearch = (function () {
                       "opsml.cards.project.ProjectCard.project_id": { tf: 1 },
                       "opsml.cards.project.ProjectCard.create_registry_record":
                         { tf: 1 },
-                      "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+                      "opsml.cards.project.ProjectCard.registry_type": {
+                        tf: 1,
+                      },
                       "opsml.cards.project.ProjectCard.model_config": { tf: 1 },
                       "opsml.cards.project.ProjectCard.model_fields": { tf: 1 },
                       "opsml.cards.project.ProjectCard.model_computed_fields": {
@@ -24880,7 +24888,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.run.RunCard.get_parameter": { tf: 1 },
                       "opsml.cards.run.RunCard.load_artifacts": { tf: 1 },
                       "opsml.cards.run.RunCard.uri": { tf: 1 },
-                      "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                      "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                       "opsml.cards.run.RunCard.model_config": { tf: 1 },
                       "opsml.cards.run.RunCard.model_fields": { tf: 1 },
                       "opsml.cards.run.RunCard.model_computed_fields": {
@@ -26181,7 +26189,7 @@ window.pdocSearch = (function () {
                     "opsml.cards.base.ArtifactCard.add_tag": { tf: 1 },
                     "opsml.cards.base.ArtifactCard.uri": { tf: 1 },
                     "opsml.cards.base.ArtifactCard.artifact_uri": { tf: 1 },
-                    "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                    "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                     "opsml.cards.base.ArtifactCard.model_fields": { tf: 1 },
                     "opsml.cards.base.ArtifactCard.model_computed_fields": {
                       tf: 1,
@@ -26982,9 +26990,10 @@ window.pdocSearch = (function () {
                                     },
                                     "opsml.cards.base.ArtifactCard.artifact_uri":
                                       { tf: 1 },
-                                    "opsml.cards.base.ArtifactCard.card_type": {
-                                      tf: 1,
-                                    },
+                                    "opsml.cards.base.ArtifactCard.registry_type":
+                                      {
+                                        tf: 1,
+                                      },
                                     "opsml.cards.base.ArtifactCard.model_fields":
                                       { tf: 1 },
                                     "opsml.cards.base.ArtifactCard.model_computed_fields":
@@ -27171,7 +27180,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.audit.AuditCard.misc": { tf: 1 },
                       "opsml.cards.audit.AuditCard.list_questions": { tf: 1 },
                       "opsml.cards.audit.AuditCard.answer_question": { tf: 1 },
-                      "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
+                      "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_config": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_fields": { tf: 1 },
                       "opsml.cards.audit.AuditCard.model_computed_fields": {
@@ -27348,7 +27357,7 @@ window.pdocSearch = (function () {
                               "opsml.cards.audit.AuditCard.answer_question": {
                                 tf: 1,
                               },
-                              "opsml.cards.audit.AuditCard.card_type": {
+                              "opsml.cards.audit.AuditCard.registry_type": {
                                 tf: 1,
                               },
                               "opsml.cards.audit.AuditCard.model_config": {
@@ -27745,7 +27754,7 @@ window.pdocSearch = (function () {
                       "opsml.cards.model.ModelCard.model_metadata": {
                         tf: 1.4142135623730951,
                       },
-                      "opsml.cards.model.ModelCard.card_type": { tf: 1 },
+                      "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
                       "opsml.cards.model.ModelCard.model_fields": {
                         tf: 1.4142135623730951,
                       },
@@ -28485,7 +28494,7 @@ window.pdocSearch = (function () {
                               "opsml.cards.model.ModelCard.model_metadata": {
                                 tf: 1,
                               },
-                              "opsml.cards.model.ModelCard.card_type": {
+                              "opsml.cards.model.ModelCard.registry_type": {
                                 tf: 1,
                               },
                               "opsml.cards.model.ModelCard.model_fields": {
@@ -29602,7 +29611,7 @@ window.pdocSearch = (function () {
                   "opsml.cards.run.RunCard.get_parameter": { tf: 1 },
                   "opsml.cards.run.RunCard.load_artifacts": { tf: 1 },
                   "opsml.cards.run.RunCard.uri": { tf: 1 },
-                  "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                  "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                   "opsml.cards.run.RunCard.model_config": { tf: 1 },
                   "opsml.cards.run.RunCard.model_fields": { tf: 1 },
                   "opsml.cards.run.RunCard.model_computed_fields": { tf: 1 },
@@ -29713,7 +29722,7 @@ window.pdocSearch = (function () {
                           "opsml.cards.run.RunCard.get_parameter": { tf: 1 },
                           "opsml.cards.run.RunCard.load_artifacts": { tf: 1 },
                           "opsml.cards.run.RunCard.uri": { tf: 1 },
-                          "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                          "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                           "opsml.cards.run.RunCard.model_config": { tf: 1 },
                           "opsml.cards.run.RunCard.model_fields": { tf: 1 },
                           "opsml.cards.run.RunCard.model_computed_fields": {
@@ -31219,12 +31228,12 @@ window.pdocSearch = (function () {
                 df: 0,
                 e: {
                   docs: {
-                    "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
-                    "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
-                    "opsml.cards.data.DataCard.card_type": { tf: 1 },
-                    "opsml.cards.model.ModelCard.card_type": { tf: 1 },
-                    "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
-                    "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                    "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
+                    "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
+                    "opsml.cards.data.DataCard.registry_type": { tf: 1 },
+                    "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
+                    "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
+                    "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                     "opsml.model.interfaces.base.SamplePrediction.prediction_type":
                       { tf: 1 },
                     "opsml.model.interfaces.base.ModelInterface.task_type": {
@@ -32350,7 +32359,7 @@ window.pdocSearch = (function () {
                     "opsml.cards.data.DataCard.data_profile": {
                       tf: 1.4142135623730951,
                     },
-                    "opsml.cards.data.DataCard.card_type": { tf: 1 },
+                    "opsml.cards.data.DataCard.registry_type": { tf: 1 },
                     "opsml.cards.data.DataCard.model_config": { tf: 1 },
                     "opsml.cards.data.DataCard.model_fields": { tf: 1 },
                     "opsml.cards.data.DataCard.model_computed_fields": {
@@ -32545,7 +32554,9 @@ window.pdocSearch = (function () {
                             "opsml.cards.data.DataCard.data_splits": { tf: 1 },
                             "opsml.cards.data.DataCard.data": { tf: 1 },
                             "opsml.cards.data.DataCard.data_profile": { tf: 1 },
-                            "opsml.cards.data.DataCard.card_type": { tf: 1 },
+                            "opsml.cards.data.DataCard.registry_type": {
+                              tf: 1,
+                            },
                             "opsml.cards.data.DataCard.model_config": { tf: 1 },
                             "opsml.cards.data.DataCard.model_fields": { tf: 1 },
                             "opsml.cards.data.DataCard.model_computed_fields": {
@@ -33613,7 +33624,7 @@ window.pdocSearch = (function () {
                           },
                           "opsml.cards.project.ProjectCard.create_registry_record":
                             { tf: 1 },
-                          "opsml.cards.project.ProjectCard.card_type": {
+                          "opsml.cards.project.ProjectCard.registry_type": {
                             tf: 1,
                           },
                           "opsml.cards.project.ProjectCard.model_config": {
@@ -33689,9 +33700,10 @@ window.pdocSearch = (function () {
                                     { tf: 1 },
                                   "opsml.cards.project.ProjectCard.create_registry_record":
                                     { tf: 1 },
-                                  "opsml.cards.project.ProjectCard.card_type": {
-                                    tf: 1,
-                                  },
+                                  "opsml.cards.project.ProjectCard.registry_type":
+                                    {
+                                      tf: 1,
+                                    },
                                   "opsml.cards.project.ProjectCard.model_config":
                                     { tf: 1 },
                                   "opsml.cards.project.ProjectCard.model_fields":
@@ -36935,7 +36947,7 @@ window.pdocSearch = (function () {
             "opsml.cards.base.ArtifactCard.tags": { tf: 1 },
             "opsml.cards.base.ArtifactCard.uri": { tf: 1 },
             "opsml.cards.base.ArtifactCard.artifact_uri": { tf: 1 },
-            "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+            "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
             "opsml.cards.audit.Question.question": { tf: 1 },
             "opsml.cards.audit.Question.purpose": { tf: 1 },
             "opsml.cards.audit.Question.response": { tf: 1 },
@@ -36969,13 +36981,13 @@ window.pdocSearch = (function () {
             "opsml.cards.audit.AuditCard.evaluation": { tf: 1 },
             "opsml.cards.audit.AuditCard.deployment": { tf: 1 },
             "opsml.cards.audit.AuditCard.misc": { tf: 1 },
-            "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
+            "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
             "opsml.cards.data.DataCard.interface": { tf: 1.4142135623730951 },
             "opsml.cards.data.DataCard.metadata": { tf: 1 },
             "opsml.cards.data.DataCard.data_splits": { tf: 1 },
             "opsml.cards.data.DataCard.data": { tf: 1 },
             "opsml.cards.data.DataCard.data_profile": { tf: 1 },
-            "opsml.cards.data.DataCard.card_type": { tf: 1 },
+            "opsml.cards.data.DataCard.registry_type": { tf: 1 },
             "opsml.cards.model.ModelCard.interface": { tf: 1.4142135623730951 },
             "opsml.cards.model.ModelCard.datacard_uid": { tf: 1 },
             "opsml.cards.model.ModelCard.to_onnx": { tf: 1 },
@@ -36985,9 +36997,9 @@ window.pdocSearch = (function () {
             "opsml.cards.model.ModelCard.preprocessor": { tf: 1 },
             "opsml.cards.model.ModelCard.onnx_model": { tf: 1 },
             "opsml.cards.model.ModelCard.model_metadata": { tf: 1 },
-            "opsml.cards.model.ModelCard.card_type": { tf: 1 },
+            "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
             "opsml.cards.project.ProjectCard.project_id": { tf: 1 },
-            "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+            "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
             "opsml.cards.run.RunCard.datacard_uids": { tf: 1 },
             "opsml.cards.run.RunCard.modelcard_uids": { tf: 1 },
             "opsml.cards.run.RunCard.pipelinecard_uid": { tf: 1 },
@@ -36997,7 +37009,7 @@ window.pdocSearch = (function () {
             "opsml.cards.run.RunCard.tags": { tf: 1 },
             "opsml.cards.run.RunCard.project": { tf: 1 },
             "opsml.cards.run.RunCard.uri": { tf: 1 },
-            "opsml.cards.run.RunCard.card_type": { tf: 1 },
+            "opsml.cards.run.RunCard.registry_type": { tf: 1 },
             "opsml.data.splitter.Data.X": { tf: 1 },
             "opsml.data.splitter.Data.y": { tf: 1 },
             "opsml.data.splitter.DataSplit.label": { tf: 1 },
@@ -37238,15 +37250,15 @@ window.pdocSearch = (function () {
                   "opsml.cards.base.ArtifactCard.contact": { tf: 1 },
                   "opsml.cards.base.ArtifactCard.version": { tf: 1 },
                   "opsml.cards.base.ArtifactCard.tags": { tf: 1 },
-                  "opsml.cards.base.ArtifactCard.card_type": { tf: 1 },
+                  "opsml.cards.base.ArtifactCard.registry_type": { tf: 1 },
                   "opsml.cards.audit.Question.question": { tf: 1 },
                   "opsml.cards.audit.Question.purpose": { tf: 1 },
-                  "opsml.cards.audit.AuditCard.card_type": { tf: 1 },
-                  "opsml.cards.data.DataCard.card_type": { tf: 1 },
-                  "opsml.cards.model.ModelCard.card_type": { tf: 1 },
-                  "opsml.cards.project.ProjectCard.card_type": { tf: 1 },
+                  "opsml.cards.audit.AuditCard.registry_type": { tf: 1 },
+                  "opsml.cards.data.DataCard.registry_type": { tf: 1 },
+                  "opsml.cards.model.ModelCard.registry_type": { tf: 1 },
+                  "opsml.cards.project.ProjectCard.registry_type": { tf: 1 },
                   "opsml.cards.run.RunCard.tags": { tf: 1 },
-                  "opsml.cards.run.RunCard.card_type": { tf: 1 },
+                  "opsml.cards.run.RunCard.registry_type": { tf: 1 },
                   "opsml.data.splitter.DataSplit.label": { tf: 1 },
                   "opsml.data.splitter.DataSplitterBase.column_name": { tf: 1 },
                   "opsml.model.interfaces.base.SamplePrediction.prediction_type":
@@ -73042,7 +73054,7 @@ window.pdocSearch = (function () {
             "opsml.cards.base.ArtifactCard.artifact_uri": {
               tf: 1.7320508075688772,
             },
-            "opsml.cards.base.ArtifactCard.card_type": {
+            "opsml.cards.base.ArtifactCard.registry_type": {
               tf: 1.7320508075688772,
             },
             "opsml.cards.base.ArtifactCard.model_fields": {
@@ -73150,7 +73162,9 @@ window.pdocSearch = (function () {
             "opsml.cards.audit.AuditCard.answer_question": {
               tf: 4.47213595499958,
             },
-            "opsml.cards.audit.AuditCard.card_type": { tf: 1.7320508075688772 },
+            "opsml.cards.audit.AuditCard.registry_type": {
+              tf: 1.7320508075688772,
+            },
             "opsml.cards.audit.AuditCard.model_config": {
               tf: 1.7320508075688772,
             },
@@ -73182,7 +73196,9 @@ window.pdocSearch = (function () {
             "opsml.cards.data.DataCard.data_profile": {
               tf: 1.4142135623730951,
             },
-            "opsml.cards.data.DataCard.card_type": { tf: 1.7320508075688772 },
+            "opsml.cards.data.DataCard.registry_type": {
+              tf: 1.7320508075688772,
+            },
             "opsml.cards.data.DataCard.model_config": {
               tf: 1.7320508075688772,
             },
@@ -73229,7 +73245,9 @@ window.pdocSearch = (function () {
               tf: 1.4142135623730951,
             },
             "opsml.cards.model.ModelCard.model_metadata": { tf: 2 },
-            "opsml.cards.model.ModelCard.card_type": { tf: 1.7320508075688772 },
+            "opsml.cards.model.ModelCard.registry_type": {
+              tf: 1.7320508075688772,
+            },
             "opsml.cards.model.ModelCard.model_fields": {
               tf: 1.7320508075688772,
             },
@@ -73244,7 +73262,7 @@ window.pdocSearch = (function () {
             "opsml.cards.project.ProjectCard.create_registry_record": {
               tf: 1.4142135623730951,
             },
-            "opsml.cards.project.ProjectCard.card_type": {
+            "opsml.cards.project.ProjectCard.registry_type": {
               tf: 1.7320508075688772,
             },
             "opsml.cards.project.ProjectCard.model_config": {
@@ -73297,7 +73315,7 @@ window.pdocSearch = (function () {
               tf: 1.4142135623730951,
             },
             "opsml.cards.run.RunCard.uri": { tf: 1.7320508075688772 },
-            "opsml.cards.run.RunCard.card_type": { tf: 1.7320508075688772 },
+            "opsml.cards.run.RunCard.registry_type": { tf: 1.7320508075688772 },
             "opsml.cards.run.RunCard.model_config": { tf: 1.7320508075688772 },
             "opsml.cards.run.RunCard.model_fields": { tf: 1.7320508075688772 },
             "opsml.cards.run.RunCard.model_computed_fields": {
