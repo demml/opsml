@@ -33,7 +33,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
     let card = ModelCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
-        app_env: Some(record.app_env),
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,
@@ -57,7 +57,7 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
     let card = RunCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
-        app_env: Some(record.app_env),
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,
@@ -79,7 +79,7 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
     let card = AuditCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
-        app_env: Some(record.app_env),
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,
@@ -99,7 +99,7 @@ pub fn convert_pipelinecard(record: PipelineCardRecord) -> Card {
     let card = PipelineCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
-        app_env: Some(record.app_env),
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,
