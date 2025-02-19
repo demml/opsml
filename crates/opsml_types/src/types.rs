@@ -1,3 +1,4 @@
+use opsml_error::TypeError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -44,20 +45,21 @@ impl Display for RegistryType {
     }
 }
 impl RegistryType {
-    pub fn from_string(s: &str) -> Option<Self> {
+    pub fn from_string(s: &str) -> Result<Self, TypeError> {
         match s {
-            "data" => Some(RegistryType::Data),
-            "model" => Some(RegistryType::Model),
-            "run" => Some(RegistryType::Run),
-            "project" => Some(RegistryType::Project),
-            "audit" => Some(RegistryType::Audit),
-            "pipeline" => Some(RegistryType::Pipeline),
-            "metrics" => Some(RegistryType::Metrics),
-            "hardware_metrics" => Some(RegistryType::HardwareMetrics),
-            "parameters" => Some(RegistryType::Parameters),
-            "users" => Some(RegistryType::Users),
-            "artifact_key" => Some(RegistryType::ArtifactKey),
-            _ => None,
+            "data" => Ok(RegistryType::Data),
+            "model" => Ok(RegistryType::Model),
+            "run" => Ok(RegistryType::Run),
+            "project" => Ok(RegistryType::Project),
+            "audit" => Ok(RegistryType::Audit),
+            "pipeline" => Ok(RegistryType::Pipeline),
+            "metrics" => Ok(RegistryType::Metrics),
+            "hardware_metrics" => Ok(RegistryType::HardwareMetrics),
+            "parameters" => Ok(RegistryType::Parameters),
+            "users" => Ok(RegistryType::Users),
+            "artifact_key" => Ok(RegistryType::ArtifactKey),
+
+            _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
         }
     }
 }
