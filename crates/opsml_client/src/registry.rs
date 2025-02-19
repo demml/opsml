@@ -126,7 +126,7 @@ impl ClientRegistry {
         }
     }
 
-    pub async fn update_card(&mut self, card: Card) -> Result<(), RegistryError> {
+    pub async fn update_card(&mut self, card: &Card) -> Result<(), RegistryError> {
         // serialize card to json
         let body = serde_json::to_value(card).map_err(|e| {
             error!("Failed to serialize card {}", e);
