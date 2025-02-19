@@ -241,7 +241,7 @@ impl ArrowData {
 
         // get ScouterDataType from opsml DataType
 
-        let data_type = match self_.as_super().data_type {
+        let data_type = match self_.data_type {
             DataType::Numpy => Some(&scouter_client::DataType::Numpy),
             DataType::Pandas => Some(&scouter_client::DataType::Pandas),
             DataType::Polars => Some(&scouter_client::DataType::Polars),
