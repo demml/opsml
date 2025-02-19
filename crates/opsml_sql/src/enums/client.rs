@@ -370,6 +370,14 @@ impl SqlClient for SqlClientEnum {
             }
         }
     }
+
+    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, card_type).await,
+            SqlClientEnum::Sqlite(client) => client.delete_artifact_key(uid, card_type).await,
+            SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, card_type).await,
+        }
+    }
 }
 
 pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
