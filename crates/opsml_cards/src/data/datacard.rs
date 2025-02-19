@@ -313,6 +313,13 @@ impl DataCard {
         Ok(Card::Data(record))
     }
 
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+
+        Ok(())
+    }
+
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
         if let Some(ref interface) = self.interface {
             visit.call(interface)?;
