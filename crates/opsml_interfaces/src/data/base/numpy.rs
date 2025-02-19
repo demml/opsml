@@ -1,12 +1,15 @@
+use crate::data::Data;
+
 use crate::data::{
-    generate_feature_schema, DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata,
-    DataLoadKwargs, DataSaveKwargs, SqlLogic,
+    check_data_splits, check_dependent_vars, generate_feature_schema, DataInterface,
+    DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
+    DataSplits, DependentVars, SqlLogic,
 };
 use crate::types::FeatureSchema;
 use opsml_error::OpsmlError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::{DataProfile, DataProfiler};
 use std::collections::HashMap;
@@ -17,6 +20,15 @@ use std::path::{Path, PathBuf};
 pub struct NumpyData {
     #[pyo3(get)]
     pub data: Option<PyObject>,
+
+    #[pyo3(get)]
+    pub data_splits: DataSplits,
+
+    #[pyo3(get)]
+    pub dependent_vars: DependentVars,
+
+    #[pyo3(get)]
+    pub data_type: DataType,
 }
 
 #[pymethods]
@@ -49,20 +61,24 @@ impl NumpyData {
             None => None,
         };
 
-        let mut data_interface = DataInterface::new(
-            py,
-            None,
-            data_splits,
-            dependent_vars,
-            feature_map,
-            sql_logic,
-            data_profile,
-        )?;
+        let mut data_interface =
+            DataInterface::new(py, None, None, None, feature_map, sql_logic, data_profile)?;
 
-        data_interface.data_type = DataType::Numpy;
+        let data_type = DataType::Numpy;
+        let data_splits: DataSplits = check_data_splits(data_splits)?;
+        let dependent_vars: DependentVars = check_dependent_vars(dependent_vars)?;
+
         data_interface.interface_type = DataInterfaceType::Numpy;
 
-        Ok((NumpyData { data }, data_interface))
+        Ok((
+            NumpyData {
+                data,
+                data_splits,
+                dependent_vars,
+                data_type,
+            },
+            data_interface,
+        ))
     }
 
     #[setter]
@@ -87,6 +103,56 @@ impl NumpyData {
                 Err(OpsmlError::new_err("Data must be a numpy array"))
             }
         }
+    }
+
+    #[setter]
+    pub fn set_data_splits(&mut self, data_splits: &Bound<'_, PyAny>) -> PyResult<()> {
+        // check if data_splits is None
+        if PyAnyMethods::is_none(data_splits) {
+            self.data_splits = DataSplits::default();
+            return Ok(());
+        }
+
+        // check if data_splits is either Vec<DataSplit> or DataSplits
+        if data_splits.is_instance_of::<DataSplits>() {
+            self.data_splits = data_splits.extract::<DataSplits>()?;
+        } else if data_splits.is_instance_of::<PyList>() {
+            // pylist should be list of DataSplit
+            self.data_splits = DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?);
+        } else {
+            self.data_splits = DataSplits::default();
+        }
+
+        Ok(())
+    }
+
+    #[setter]
+    pub fn set_dependent_vars(&mut self, dependent_vars: &Bound<'_, PyAny>) -> PyResult<()> {
+        // check if dependent_vars is None
+        if PyAnyMethods::is_none(dependent_vars) {
+            self.dependent_vars = DependentVars::default();
+            return Ok(());
+        }
+
+        // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
+        if dependent_vars.is_instance_of::<DependentVars>() {
+            self.dependent_vars = dependent_vars.extract::<DependentVars>()?;
+        } else if dependent_vars.is_instance_of::<PyList>() {
+            // pylist should be list of string or list of int
+            if dependent_vars.extract::<Vec<String>>().is_ok() {
+                let column_names = dependent_vars.extract::<Vec<String>>()?;
+                self.dependent_vars = DependentVars::new(Some(column_names), None);
+            } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
+                let column_indices = dependent_vars.extract::<Vec<usize>>()?;
+                self.dependent_vars = DependentVars::new(None, Some(column_indices));
+            } else {
+                self.dependent_vars = DependentVars::default();
+            }
+        } else {
+            self.dependent_vars = DependentVars::default();
+        }
+
+        Ok(())
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
@@ -119,9 +185,9 @@ impl NumpyData {
             HashMap::new(),
             self_.as_super().sql_logic.clone(),
             self_.as_super().interface_type.clone(),
-            self_.as_super().dependent_vars.clone(),
-            self_.as_super().data_splits.clone(),
-            self_.as_super().data_type.clone(),
+            self_.dependent_vars.clone(),
+            self_.data_splits.clone(),
+            self_.data_type.clone(),
         ))
     }
 
@@ -143,6 +209,29 @@ impl NumpyData {
         self_.set_data(&data)?;
 
         Ok(())
+    }
+
+    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+        // check if data is None
+        if self.data.is_none() {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        if self.data_splits.is_empty() {
+            return Err(OpsmlError::new_err(
+                "No data splits detected in interface for splitting",
+            ));
+        }
+
+        let dependent_vars = self.dependent_vars.clone();
+
+        self.data_splits.split_data(
+            self.data.as_ref().unwrap().bind(py),
+            &self.data_type,
+            &dependent_vars,
+        )
     }
 
     #[pyo3(signature = (bin_size=20, compute_correlations=false))]
@@ -198,14 +287,19 @@ impl NumpyData {
             data_type: metadata.data_type.clone(),
             interface_type: metadata.interface_type.clone(),
             schema: metadata.schema.clone(),
-            dependent_vars: metadata.dependent_vars.clone(),
-            data_splits: metadata.data_splits.clone(),
+            dependent_vars: DependentVars::default(),
+            data_splits: DataSplits::default(),
             sql_logic: metadata.sql_logic.clone(),
             data_profile: None,
             data: None,
         };
 
-        let data_interface = NumpyData { data: None };
+        let data_interface = NumpyData {
+            data: None,
+            data_splits: metadata.data_splits.clone(),
+            dependent_vars: metadata.dependent_vars.clone(),
+            data_type: metadata.data_type.clone(),
+        };
 
         Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
     }
