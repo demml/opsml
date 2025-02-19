@@ -10,7 +10,7 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::RegistryType;
+use opsml_types::{DataType, RegistryType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
@@ -109,7 +109,7 @@ pub struct DataCard {
 impl DataCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None))]
+    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None, metadata=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
         repository: Option<&str>,
@@ -118,6 +118,7 @@ impl DataCard {
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
+        metadata: Option<DataCardMetadata>,
     ) -> PyResult<Self> {
         let tags = match tags {
             None => Vec::new(),
@@ -134,15 +135,29 @@ impl DataCard {
 
         let py = interface.py();
 
-        // try and extract data_type from interface
-        interface
-            .getattr("interface_type")?
+        if interface.is_instance_of::<DataInterface>() {
+            //
+        } else {
+            return Err(OpsmlError::new_err(
+                "interface must be an instance of DataInterface",
+            ));
+        }
+
+        let interface_type = interface
+            .getattr("interface_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
             .extract::<DataInterfaceType>()
-            .map_err(|e| {
-                OpsmlError::new_err(
-                    format!("Invalid type passed to interface. Ensure class is a subclass of DataInterface. Error: {}", e)
-                )
-            })?;
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let data_type = interface
+            .getattr("data_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<DataType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let mut metadata = metadata.unwrap_or_default();
+        metadata.interface_metadata.interface_type = interface_type;
+        metadata.interface_metadata.data_type = data_type;
 
         Ok(Self {
             interface: Some(
@@ -156,7 +171,7 @@ impl DataCard {
             version: base_args.3,
             uid: base_args.4,
             tags,
-            metadata: DataCardMetadata::default(),
+            metadata,
             registry_type: RegistryType::Data,
             rt: None,
             fs: None,
@@ -277,6 +292,27 @@ impl DataCard {
         Ok(card)
     }
 
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = DataCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            contact: self.contact.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            data_type: self.metadata.interface_metadata.data_type.to_string(),
+            runcard_uid: self.metadata.runcard_uid.clone(),
+            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(Card::Data(record))
+    }
+
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
         if let Some(ref interface) = self.interface {
             visit.call(interface)?;
@@ -298,27 +334,6 @@ impl DataCard {
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
             self.set_interface(&interface)
         }
-    }
-
-    pub fn get_registry_card(&self) -> Result<Card, CardError> {
-        let record = DataCardClientRecord {
-            created_at: self.created_at,
-            app_env: self.app_env.clone(),
-            repository: self.repository.clone(),
-            name: self.name.clone(),
-            contact: self.contact.clone(),
-            version: self.version.clone(),
-            uid: self.uid.clone(),
-            tags: self.tags.clone(),
-            data_type: self.metadata.interface_metadata.data_type.to_string(),
-            runcard_uid: self.metadata.runcard_uid.clone(),
-            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
-            auditcard_uid: self.metadata.auditcard_uid.clone(),
-            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
-            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-        };
-
-        Ok(Card::Data(record))
     }
 
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
