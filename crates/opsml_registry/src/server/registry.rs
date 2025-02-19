@@ -494,11 +494,6 @@ pub mod server_logic {
             &mut self,
             delete_request: DeleteCardRequest,
         ) -> Result<(), RegistryError> {
-            self.sql_client
-                .delete_card(&self.table_name, &delete_request.uid)
-                .await
-                .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
-
             // get key
             let key = self
                 .load_card(CardQueryArgs {
@@ -523,6 +518,11 @@ pub mod server_logic {
                 .map_err(|e| {
                     RegistryError::Error(format!("Failed to delete artifact key {}", e))
                 })?;
+
+            self.sql_client
+                .delete_card(&self.table_name, &delete_request.uid)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
 
             // delete key
 
