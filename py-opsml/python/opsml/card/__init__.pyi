@@ -25,7 +25,6 @@ class Card:
     name: str
     repository: str
     version: str
-    contact: str
     tags: Dict[str, str]
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
@@ -61,7 +60,6 @@ class DataCard:
         interface: Optional[DataInterface] = None,
         repository: Optional[str] = None,
         name: Optional[str] = None,
-        contact: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
@@ -75,8 +73,6 @@ class DataCard:
                 The repository of the card
             name (str | None):
                 The name of the card
-            contact (str | None):
-                The contact of the card
             version (str | None):
                 The version of the card
             uid (str | None):
@@ -84,10 +80,6 @@ class DataCard:
             tags (List[str]):
                 The tags of the card
         """
-
-    @property
-    def contact(self) -> str:
-        """Return the contact of the data card"""
 
     @property
     def interface(self) -> Optional[DataInterface]:
@@ -289,7 +281,6 @@ class ModelCard:
         interface: Optional[ModelInterface] = None,
         repository: Optional[str] = None,
         name: Optional[str] = None,
-        contact: Optional[str] = None,
         verison: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
@@ -308,8 +299,6 @@ class ModelCard:
                 Repository to associate with `ModelCard`
             name (str | None):
                 Name to associate with `ModelCard`
-            contact (str | None):
-                Contact to associate with `ModelCard`
             version (str | None):
                 Current version (assigned if card has been registered). Follows
                 semantic versioning.
@@ -389,10 +378,6 @@ class ModelCard:
         """
 
     @property
-    def contact(self) -> str:
-        """Returns the contact of the `ModelCard`"""
-
-    @property
     def version(self) -> str:
         """Returns the version of the `ModelCard`"""
 
@@ -463,7 +448,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:

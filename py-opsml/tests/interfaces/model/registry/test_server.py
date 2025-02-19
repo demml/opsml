@@ -28,7 +28,6 @@ def crud_datacard(pandas_data: PandasData):
         interface=pandas_data,
         repository="test",
         name="test",
-        contact="test",
         tags=["foo:bar", "baz:qux"],
     )
 
@@ -45,7 +44,6 @@ def crud_datacard(pandas_data: PandasData):
 
     assert loaded_card.name == card.name
     assert loaded_card.repository == card.repository
-    assert loaded_card.contact == card.contact
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
@@ -109,7 +107,6 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
         interface=interface,
         repository="test",
         name="test",
-        contact="test",
         to_onnx=True,
         tags=["foo:bar", "baz:qux"],
     )
@@ -133,7 +130,6 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
 
     assert loaded_card.name == card.name
     assert loaded_card.repository == card.repository
-    assert loaded_card.contact == card.contact
     assert loaded_card.tags == card.tags
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version

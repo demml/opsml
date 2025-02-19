@@ -7,7 +7,7 @@ from pathlib import Path
 def test_polars_datacard(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
     interface = PolarsData(data=multi_type_polars_dataframe2)
 
-    card = DataCard(interface=interface, name="test", repository="test", contact="test")
+    card = DataCard(interface=interface, name="test", repository="test")
 
     save_path = tmp_path / "test"
     save_path.mkdir()
