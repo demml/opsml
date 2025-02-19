@@ -36,6 +36,7 @@ impl OpsmlTestServer {
         #[cfg(feature = "server")]
         {
             std::env::set_var("OPSML_TRACKING_URI", "http://localhost:3000");
+            std::env::set_var("APP_ENV", "dev_client");
             Ok(())
         }
         #[cfg(not(feature = "server"))]
@@ -50,6 +51,9 @@ impl OpsmlTestServer {
         #[cfg(feature = "server")]
         {
             self.cleanup()?;
+
+            // set server env vars
+            std::env::set_var("APP_ENV", "dev_server");
             let handle = self.handle.clone();
             let runtime = self.runtime.clone();
             runtime.spawn(async move {
