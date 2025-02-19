@@ -605,3 +605,16 @@ class CardRegistry:
                 Card to update. Can be a DataCard, ModelCard,
                 RunCard, ProjectCard
         """
+
+    def delete_card(
+        self,
+        card: Union[DataCard, ModelCard],
+    ) -> None:
+        """Delete a Card from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (ArtifactCard):
+                Card to delete. Can be a DataCard, ModelCard,
+                RunCard, ProjectCard
+        """
