@@ -86,6 +86,10 @@ class DataCard:
         """
 
     @property
+    def contact(self) -> str:
+        """Return the contact of the data card"""
+
+    @property
     def interface(self) -> Any:
         """Return the data interface"""
 
