@@ -372,23 +372,43 @@ impl ModelInterface {
         let (onnx_kwargs, model_kwargs, _) = parse_save_kwargs(py, &save_kwargs);
 
         // save model
-        let model_uri = self.save_model(py, &path, model_kwargs.as_ref())?;
+        let model_uri = self
+            .save_model(py, &path, model_kwargs.as_ref())
+            .map_err(|e| {
+                error!("Failed to save model. Error: {}", e);
+                e
+            })?;
 
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+            onnx_model_uri = Some(
+                self.save_onnx_model(py, &path, onnx_kwargs.as_ref())
+                    .map_err(|e| {
+                        error!("Failed to save ONNX model. Error: {}", e);
+                        e
+                    })?,
+            );
         }
 
-        let sample_data_uri = self.save_data(py, &path, None)?;
+        let sample_data_uri = self.save_data(py, &path, None).map_err(|e| {
+            error!("Failed to save sample data. Error: {}", e);
+            e
+        })?;
 
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(&path)?)
+            Some(self.save_drift_profile(&path).map_err(|e| {
+                error!("Failed to save drift profile. Error: {}", e);
+                e
+            })?)
         };
 
-        self.schema = self.create_feature_schema(py)?;
+        self.schema = self.create_feature_schema(py).map_err(|e| {
+            error!("Failed to create feature schema. Error: {}", e);
+            e
+        })?;
 
         let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
