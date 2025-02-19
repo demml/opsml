@@ -162,6 +162,46 @@ impl ModelCard {
         })
     }
 
+    #[getter]
+    pub fn datacard_uid(&self) -> Option<&str> {
+        self.metadata.datacard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_datacard_uid(&mut self, datacard_uid: Option<&str>) {
+        self.metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
+    }
+
+    #[getter]
+    pub fn runcard_uid(&self) -> Option<&str> {
+        self.metadata.runcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_runcard_uid(&mut self, runcard_uid: Option<&str>) {
+        self.metadata.runcard_uid = runcard_uid.map(|s| s.to_string());
+    }
+
+    #[getter]
+    pub fn pipelinecard_uid(&self) -> Option<&str> {
+        self.metadata.pipelinecard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_pipelinecard_uid(&mut self, pipelinecard_uid: Option<&str>) {
+        self.metadata.pipelinecard_uid = pipelinecard_uid.map(|s| s.to_string());
+    }
+
+    #[getter]
+    pub fn auditcard_uid(&self) -> Option<&str> {
+        self.metadata.auditcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_auditcard_uid(&mut self, auditcard_uid: Option<&str>) {
+        self.metadata.auditcard_uid = auditcard_uid.map(|s| s.to_string());
+    }
+
     #[setter]
     pub fn set_interface(&mut self, interface: &Bound<'_, PyAny>) -> PyResult<()> {
         if interface.is_instance_of::<ModelInterface>() {

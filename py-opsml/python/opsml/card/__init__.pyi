@@ -326,6 +326,7 @@ class ModelCard:
         verison: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
+        metadata: ModelCardMetadata = ModelCardMetadata(),
         to_onnx: bool = False,
     ) -> None:
         """Create a ModelCard from a machine learning model.
@@ -350,9 +351,27 @@ class ModelCard:
             tags (List[str]):
                 Tags to associate with `ModelCard`. Can be a dictionary of strings or
                 a `Tags` object.
+            metadata (ModelCardMetadata):
+                Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
             to_onnx:
                 Whether to convert the model to onnx or not during registration
         """
+
+    @property
+    def datacard_uid(self) -> str:
+        """Returns the datacard uid"""
+
+    @datacard_uid.setter
+    def datacard_uid(self, datacard_uid: str) -> None:
+        """Set the datacard uid"""
+
+    @property
+    def runcard_uid(self) -> str:
+        """Returns the runcard uid"""
+
+    @runcard_uid.setter
+    def runcard_uid(self, runcard_uid: str) -> None:
+        """Set the runcard uid"""
 
     @property
     def uri(self) -> Path:
@@ -479,7 +498,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:

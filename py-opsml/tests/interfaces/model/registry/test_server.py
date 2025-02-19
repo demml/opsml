@@ -8,7 +8,7 @@ import shutil
 
 def test_client_modelcard(random_forest_classifier: SklearnModel):
     # start server
-    with OpsmlTestServer():
+    with OpsmlTestServer(False):
         reg = CardRegistry(registry_type=RegistryType.Model)
 
         assert reg.registry_type == RegistryType.Model
@@ -30,8 +30,8 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
             tags=["foo:bar", "baz:qux"],
         )
 
-        card.metadata.runcard_uid = "test"
-        assert card.metadata.runcard_uid == "test"
+        card.runcard_uid = "test"
+        assert card.runcard_uid == "test"
 
         reg.register_card(card)
         cards = reg.list_cards()
