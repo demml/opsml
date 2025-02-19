@@ -578,7 +578,7 @@ impl Card {
             Self::Data(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Data.to_string(),
+                    CardTable::Data,
                     card.repository,
                     card.name,
                     card.version
@@ -588,7 +588,7 @@ impl Card {
             Self::Model(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Model.to_string(),
+                    CardTable::Model,
                     card.repository,
                     card.name,
                     card.version
@@ -598,7 +598,7 @@ impl Card {
             Self::Run(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Run.to_string(),
+                    CardTable::Run,
                     card.repository,
                     card.name,
                     card.version
@@ -608,7 +608,7 @@ impl Card {
             Self::Pipeline(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Pipeline.to_string(),
+                    CardTable::Pipeline,
                     card.repository,
                     card.name,
                     card.version
@@ -618,7 +618,7 @@ impl Card {
             Self::Audit(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Audit.to_string(),
+                    CardTable::Audit,
                     card.repository,
                     card.name,
                     card.version
@@ -628,7 +628,7 @@ impl Card {
             Self::Project(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Project.to_string(),
+                    CardTable::Project,
                     card.repository,
                     card.name,
                     card.version

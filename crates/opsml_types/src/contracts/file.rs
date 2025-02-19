@@ -124,8 +124,7 @@ impl ArtifactKey {
         // convert uid to byte key (used for card encryption)
         let uid_key = uid_to_byte_key(&self.uid)?;
 
-        Ok(decrypt_key(&uid_key, &self.encrypted_key)
-            .map_err(|e| TypeError::Error(format!("{}", e)))?)
+        decrypt_key(&uid_key, &self.encrypted_key).map_err(|e| TypeError::Error(format!("{}", e)))
     }
 
     pub fn storage_path(&self) -> PathBuf {
