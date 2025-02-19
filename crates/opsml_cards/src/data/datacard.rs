@@ -80,7 +80,7 @@ pub struct DataCard {
     #[pyo3(get, set)]
     pub version: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub uid: String,
 
     #[pyo3(get, set)]
