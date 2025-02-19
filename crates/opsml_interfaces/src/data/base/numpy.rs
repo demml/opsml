@@ -1,7 +1,5 @@
-use crate::data::Data;
-
 use crate::data::{
-    check_data_splits, check_dependent_vars, generate_feature_schema, DataInterface,
+    check_data_splits, check_dependent_vars, generate_feature_schema, Data, DataInterface,
     DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
     DataSplits, DependentVars, SqlLogic,
 };
