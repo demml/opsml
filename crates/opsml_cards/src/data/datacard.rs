@@ -229,20 +229,29 @@ impl DataCard {
         Ok(())
     }
 
-    #[pyo3(signature = (load_kwargs=None))]
+    #[pyo3(signature = (path=None, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
-    pub fn load(&mut self, py: Python, load_kwargs: Option<DataLoadKwargs>) -> PyResult<()> {
-        let tmp_path = create_tmp_path()?;
-
-        // download assets
-        self.download_all_artifacts(&tmp_path)?;
+    pub fn load(
+        &mut self,
+        py: Python,
+        path: Option<PathBuf>,
+        load_kwargs: Option<DataLoadKwargs>,
+    ) -> PyResult<()> {
+        let path = if let Some(p) = path {
+            p
+        } else {
+            let tmp_path = create_tmp_path()?;
+            // download assets
+            self.download_all_artifacts(&tmp_path)?;
+            tmp_path
+        };
 
         // load data interface
-        self.interface.as_ref().unwrap().bind(py).call_method(
-            "load",
-            (tmp_path, load_kwargs),
-            None,
-        )?;
+        self.interface
+            .as_ref()
+            .unwrap()
+            .bind(py)
+            .call_method("load", (path, load_kwargs), None)?;
 
         Ok(())
     }

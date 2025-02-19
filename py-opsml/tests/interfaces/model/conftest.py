@@ -40,10 +40,7 @@ from PIL import Image
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
-from opsml.data import (
-    ColType,
-    ColumnSplit,
-)
+from opsml.data import ColType, ColumnSplit, DataSplit
 
 
 def cleanup() -> None:
@@ -1184,13 +1181,20 @@ def lightgbm_regression(regression_data) -> SklearnModel:
 
 
 @pytest.fixture
-def get_pandas_data(example_dataframe) -> PandasData:
-    split = ColumnSplit(
-        column_name="col_1",
-        column_value=3,
-        column_type=ColType.Builtin,
-        inequality="<=",
+def pandas_data(example_dataframe) -> PandasData:
+    split = DataSplit(
+        label="train",
+        column_split=ColumnSplit(
+            column_name="col_1",
+            column_value=0.4,
+            column_type=ColType.Builtin,
+            inequality="<=",
+        ),
     )
 
-    X_train, y_train, X_test, y_test = example_dataframe
-    return PandasData(data=X_train)
+    X_train, _, _, _ = example_dataframe
+    return PandasData(
+        data=X_train,
+        data_splits=[split],
+        dependent_vars=["target"],
+    )

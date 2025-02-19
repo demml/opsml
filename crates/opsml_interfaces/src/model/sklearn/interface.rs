@@ -195,27 +195,19 @@ impl SklearnModel {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
-    /// * `preprocessor` - Whether to load the preprocessor (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
@@ -224,26 +216,19 @@ impl SklearnModel {
         // parent scope - can only borrow mutable one at a time
         {
             let parent = self_.as_super();
-            if model {
-                parent.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-            }
+
+            parent.load_model(py, &path, load_kwargs.model_kwargs(py))?;
 
             if onnx {
                 parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            if drift_profile {
-                parent.load_drift_profile(&path)?;
-            }
+            parent.load_drift_profile(&path)?;
 
-            if sample_data {
-                parent.load_data(py, &path, None)?;
-            }
+            parent.load_data(py, &path, None)?;
         }
 
-        if preprocessor {
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-        }
+        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
 
         Ok(())
     }
