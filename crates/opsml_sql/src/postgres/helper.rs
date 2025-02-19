@@ -429,6 +429,7 @@ impl PostgresQueryHelper {
         uid, 
         name, 
         repository, 
+        app_env,
         project_id, 
         major, 
         minor, 
@@ -437,7 +438,7 @@ impl PostgresQueryHelper {
         pre_tag,
         build_tag,
         username) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
             CardTable::Project
         )
         .to_string()

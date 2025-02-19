@@ -471,6 +471,7 @@ impl SqlClient for SqliteClient {
                         .bind(&project.uid)
                         .bind(&project.name)
                         .bind(&project.repository)
+                        .bind(&project.app_env)
                         .bind(project.project_id)
                         .bind(project.major)
                         .bind(project.minor)

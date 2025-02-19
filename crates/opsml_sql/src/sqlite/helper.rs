@@ -418,7 +418,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_projectcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
+        format!("INSERT INTO {} (uid, name, repository, app_env, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
             .to_string()
     }
 
