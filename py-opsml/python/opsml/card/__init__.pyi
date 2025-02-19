@@ -1,10 +1,9 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ..core import Description, FeatureSchema, VersionType
+from ..core import FeatureSchema, VersionType
 from ..data import (
     DataInterface,
-    DataInterfaceSaveMetadata,
     DataLoadKwargs,
     DataSaveKwargs,
     DataType,
@@ -641,4 +640,16 @@ class CardRegistry:
 
         Returns:
             Card
+        """
+
+    def update_card(
+        self,
+        card: Union[DataCard, ModelCard],
+    ) -> None:
+        """Update a Card in the registry
+
+        Args:
+            card (ArtifactCard):
+                Card to update. Can be a DataCard, ModelCard,
+                RunCard, ProjectCard
         """
