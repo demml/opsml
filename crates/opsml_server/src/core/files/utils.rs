@@ -1,12 +1,13 @@
+use anyhow::Result;
+use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
 use opsml_error::ApiError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
-use opsml_types::cards::CardType;
-use opsml_types::contracts::ArtifactKey;
+use opsml_storage::StorageClientEnum;
+use opsml_types::cards::{CardTable, CardType};
+use opsml_types::contracts::{ArtifactKey, CardQueryArgs};
+use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
-
-use anyhow::Result;
-use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
 
 /// Route for debugging information
 use std::sync::Arc;
@@ -53,4 +54,39 @@ pub async fn create_artifact_key(
     });
 
     Ok(artifact_key)
+}
+
+#[instrument(skip_all)]
+pub async fn cleanup_artifacts(
+    storage_client: &Arc<StorageClientEnum>,
+    sql_client: &Arc<SqlClientEnum>,
+    uid: String,
+    registry_type: RegistryType,
+    table: &CardTable,
+) -> Result<(), ApiError> {
+    // get artifact key
+    let key = sql_client
+        .get_card_key_for_loading(
+            table,
+            &CardQueryArgs {
+                uid: Some(uid),
+                registry_type,
+                ..Default::default()
+            },
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key: {}", e);
+            ApiError::Error("Failed to get artifact key".to_string())
+        })?;
+
+    storage_client
+        .rm(&key.storage_path(), true)
+        .await
+        .map_err(|e| {
+            error!("Failed to remove artifact: {}", e);
+            ApiError::Error("Failed to remove artifact".to_string())
+        })?;
+
+    Ok(())
 }

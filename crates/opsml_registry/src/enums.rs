@@ -147,11 +147,11 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn update_card(&mut self, card: Card) -> Result<(), RegistryError> {
+    pub async fn delete_card(&mut self, uid: &str) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.update_card(card).await,
+            Self::ClientRegistry(client_registry) => client_registry.delete_card(uid).await,
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => server_registry.update_card(card).await,
+            Self::ServerRegistry(server_registry) => server_registry.delete_card(uid).await,
         }
     }
 }
