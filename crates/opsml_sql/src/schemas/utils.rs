@@ -12,7 +12,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
     let card = DataCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
-        app_env: Some(record.app_env),
+        app_env: record.app_env,
         name: record.name,
         repository: record.repository,
         version: record.version,

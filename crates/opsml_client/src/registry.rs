@@ -128,11 +128,16 @@ impl ClientRegistry {
     }
 
     pub async fn update_card(&mut self, card: &Card) -> Result<(), RegistryError> {
-        // don't want to clone
-        let body = json!({
-            "card": card,
-            "registry_type": self.registry_type,
-        });
+        let update_request = UpdateCardRequest {
+            card: card.clone(),
+            registry_type: self.registry_type.clone(),
+        };
+
+        // serialize card to json
+        let body = serde_json::to_value(update_request).map_err(|e| {
+            error!("Failed to serialize card {}", e);
+            RegistryError::Error(format!("Failed to serialize card {}", e))
+        })?;
 
         let response = self
             .api_client
@@ -143,8 +148,9 @@ impl ClientRegistry {
                 None,
                 None,
             )
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to update card {}", e)))?;
+            .await?;
+
+        println!("Response {:?}", response);
 
         let updated = response
             .json::<UpdateCardResponse>()
