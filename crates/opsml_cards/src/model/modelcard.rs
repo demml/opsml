@@ -25,7 +25,8 @@ use serde::{
 };
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::{debug, error};
 
 fn interface_from_metadata<'py>(
@@ -626,7 +627,7 @@ impl ModelCard {
 
         rt.block_on(async {
             fs.lock()
-                .map_err(|e| CardError::Error(format!("Failed to unlock fs: {}", e)))?
+                .await
                 .get(&lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
@@ -665,10 +666,7 @@ impl ModelCard {
                     "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock()
-                    .map_err(|e| CardError::Error(format!("Failed to unlock fs: {}", e)))?
-                    .get(&lpath, &rpath, recursive)
-                    .await?;
+                fs.lock().await.get(&lpath, &rpath, recursive).await?;
             }
 
             if onnx && save_metadata.onnx_model_uri.is_some() {
@@ -686,7 +684,7 @@ impl ModelCard {
                     "Downloading onnx model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+                fs.lock().await.get(&lpath, &rpath, recursive).await?;
             }
 
             if preprocessor {
@@ -700,7 +698,7 @@ impl ModelCard {
                         "Downloading preprocessor: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                         lpath, rpath, recursive
                     );
-                    fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+                    fs.lock().await.get(&lpath, &rpath, recursive).await?;
                 }
             }
 
@@ -714,7 +712,7 @@ impl ModelCard {
                 debug!("Drift profile uri: {:?}", drift_profile_uri);
                 let rpath = uri.join(&drift_profile_uri);
                 let lpath = tmp_path.join(&drift_profile_uri);
-                fs.lock().unwrap().get(&lpath, &rpath, false).await?;
+                fs.lock().await.get(&lpath, &rpath, false).await?;
             }
 
             if sample_data && save_metadata.sample_data_uri.is_some() {
@@ -732,13 +730,13 @@ impl ModelCard {
                     "Downloading sample data: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().unwrap().get(&lpath, &rpath, recursive).await?;
+                fs.lock().await.get(&lpath, &rpath, recursive).await?;
             }
 
             Ok::<(), CardError>(())
         })?;
 
-        decrypt_directory(&tmp_path, &decrypt_key)?;
+        decrypt_directory(tmp_path, &decrypt_key)?;
 
         // decrypt
         Ok(())

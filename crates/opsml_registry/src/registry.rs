@@ -14,8 +14,9 @@ use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tempfile::TempDir;
+use tokio::sync::Mutex;
 
 use tracing::{debug, error, instrument};
 
@@ -478,7 +479,7 @@ impl CardRegistry {
 
         encrypt_directory(&path, &encryption_key)?;
         fs.lock()
-            .unwrap()
+            .await
             .put(&path, &key.storage_path(), true)
             .await?;
 
@@ -648,7 +649,7 @@ impl CardRegistry {
         // add Card.json to tmp_path and rpath
         let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
 
-        fs.lock().unwrap().get(&lpath, &rpath, false).await?;
+        fs.lock().await.get(&lpath, &rpath, false).await?;
         decrypt_directory(&tmp_path, &decryption_key)?;
 
         let json_string = std::fs::read_to_string(&lpath).map_err(|e| {

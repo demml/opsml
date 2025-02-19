@@ -17,7 +17,8 @@ use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::error;
 
 use serde::{
@@ -353,7 +354,7 @@ impl DataCard {
 
         rt.block_on(async {
             fs.lock()
-                .map_err(|e| CardError::Error(format!("Failed to unlock fs: {}", e)))?
+                .await
                 .get(&lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
