@@ -423,7 +423,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -438,7 +438,6 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         datacard_uid, 
         data_type, 
         model_type, 
@@ -452,7 +451,7 @@ impl SqliteQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
@@ -469,7 +468,6 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         project, 
         tags, 
         datacard_uids,
@@ -481,7 +479,7 @@ impl SqliteQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Run
         )
         .to_string()
@@ -498,7 +496,6 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         approved, 
         datacard_uids, 
@@ -508,7 +505,7 @@ impl SqliteQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
         )
         .to_string()
@@ -525,7 +522,6 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         pipeline_code_uri, 
         datacard_uids, 
@@ -535,7 +531,7 @@ impl SqliteQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Pipeline
         )
         .to_string()
@@ -551,7 +547,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         data_type = ?, 
         interface_type = ?, 
         tags = ?, 
@@ -577,7 +572,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         datacard_uid = ?, 
         data_type = ?, 
         model_type = ?, 
@@ -606,7 +600,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         project = ?, 
         tags = ?, 
         datacard_uids = ?, 
@@ -633,7 +626,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         tags = ?, 
         approved = ?, 
         datacard_uids = ?, 
@@ -658,7 +650,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         tags = ?, 
         pipeline_code_uri = ?, 
         datacard_uids = ?, 
