@@ -257,6 +257,12 @@ impl CardRegistry {
             })
             .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
+
+    #[pyo3(signature = (card))]
+    #[instrument(skip_all)]
+    pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
+        Ok(())
+    }
 }
 
 impl CardRegistry {
