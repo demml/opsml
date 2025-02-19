@@ -455,7 +455,6 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         data_type, 
         interface_type, 
         tags, 
@@ -466,7 +465,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
             CardTable::Data
         )
         .to_string()
@@ -482,7 +481,6 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        contact,
         datacard_uid, 
         data_type, 
         model_type, 
@@ -496,7 +494,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)", CardTable::Model).to_string()
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model).to_string()
     }
 
     pub fn get_runcard_insert_query() -> String {
@@ -510,7 +508,6 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         project, 
         tags, 
         datacard_uids, 
@@ -522,7 +519,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
             CardTable::Run
         )
         .to_string()
@@ -539,7 +536,6 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         approved, 
         datacard_uids, 
@@ -549,7 +545,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Audit
         )
         .to_string()
@@ -566,7 +562,6 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         pipeline_code_uri, 
         datacard_uids, 
@@ -576,7 +571,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
          ) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Pipeline
         )
         .to_string()
@@ -592,17 +587,16 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        contact = $8, 
-        data_type = $9, 
-        interface_type = $10, 
-        tags = $11, 
-        runcard_uid = $12, 
-        pipelinecard_uid = $13, 
-        auditcard_uid = $14, 
-        pre_tag = $15, 
-        build_tag = $16,
-        username = $17
-        WHERE uid = $18",
+        data_type = $8, 
+        interface_type = $9, 
+        tags = $10, 
+        runcard_uid = $11, 
+        pipelinecard_uid = $12, 
+        auditcard_uid = $13, 
+        pre_tag = $14, 
+        build_tag = $15,
+        username = $16
+        WHERE uid = $17",
             CardTable::Data
         )
         .to_string()
@@ -618,20 +612,19 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        contact = $8, 
-        datacard_uid = $9, 
-        data_type = $10, 
-        model_type = $11, 
-        interface_type = $12, 
-        task_type = $13, 
-        tags = $14, 
-        runcard_uid = $15, 
-        pipelinecard_uid = $16, 
-        auditcard_uid = $17, 
-        pre_tag = $18, 
-        build_tag = $19,
-        username = $20
-        WHERE uid = $21",
+        datacard_uid = $8, 
+        data_type = $9, 
+        model_type = $10, 
+        interface_type = $11, 
+        task_type = $12, 
+        tags = $13, 
+        runcard_uid = $14, 
+        pipelinecard_uid = $15, 
+        auditcard_uid = $16, 
+        pre_tag = $17, 
+        build_tag = $18,
+        username = $19
+        WHERE uid = $20",
             CardTable::Model
         )
         .to_string()
@@ -647,18 +640,17 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        contact = $8, 
-        project = $9, 
-        tags = $10, 
-        datacard_uids = $11, 
-        modelcard_uids = $12, 
-        pipelinecard_uid = $13, 
-        artifact_uris = $14, 
-        compute_environment = $15, 
-        pre_tag = $16, 
-        build_tag = $17,
-        username = $18
-        WHERE uid = $19",
+        project = $8, 
+        tags = $9, 
+        datacard_uids = $10, 
+        modelcard_uids = $11, 
+        pipelinecard_uid = $12, 
+        artifact_uris = $13, 
+        compute_environment = $14, 
+        pre_tag = $15, 
+        build_tag = $16,
+        username = $17
+        WHERE uid = $18",
             CardTable::Run
         )
         .to_string()
@@ -674,16 +666,15 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        contact = $8, 
-        tags = $9, 
-        approved = $10, 
-        datacard_uids = $11, 
-        modelcard_uids = $12, 
-        runcard_uids = $13, 
-        pre_tag = $14, 
-        build_tag = $15,
-        username = $16
-        WHERE uid = $17",
+        tags = $8, 
+        approved = $9, 
+        datacard_uids = $10, 
+        modelcard_uids = $11, 
+        runcard_uids = $12, 
+        pre_tag = $13, 
+        build_tag = $14,
+        username = $15
+        WHERE uid = $16",
             CardTable::Audit
         )
         .to_string()
@@ -699,16 +690,15 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        contact = $8, 
-        tags = $9, 
-        pipeline_code_uri = $10, 
-        datacard_uids = $11, 
-        modelcard_uids = $12, 
-        runcard_uids = $13, 
-        pre_tag = $14, 
-        build_tag = $15,
-        username = $16
-        WHERE uid = $17",
+        tags = $8, 
+        pipeline_code_uri = $9, 
+        datacard_uids = $10, 
+        modelcard_uids = $11, 
+        runcard_uids = $12, 
+        pre_tag = $13, 
+        build_tag = $14,
+        username = $15
+        WHERE uid = $16",
             CardTable::Pipeline
         )
         .to_string()
