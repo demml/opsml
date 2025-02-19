@@ -13,6 +13,7 @@ pub mod server_logic {
         enums::client::{get_sql_client, SqlClientEnum},
         schemas::*,
     };
+    use opsml_storage::StorageClientEnum;
     use opsml_types::cards::CardType;
     use opsml_types::{cards::CardTable, contracts::*, *};
     use opsml_utils::uid_to_byte_key;
@@ -489,11 +490,29 @@ pub mod server_logic {
             Ok(())
         }
 
-        pub async fn delete_card(&self, uid: &str) -> Result<(), RegistryError> {
+        pub async fn delete_card(&mut self, uid: &str) -> Result<(), RegistryError> {
             self.sql_client
                 .delete_card(&self.table_name, uid)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
+
+            // get key
+            let key = self
+                .load_card(CardQueryArgs {
+                    uid: Some(uid.to_string()),
+                    ..Default::default()
+                })
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to load card {}", e)))?;
+
+            // get storage client and delete artifacts
+            let storage_client = StorageClientEnum::new(&self.storage_settings)
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to create storage client {}", e))
+                })?;
+
+            storage_client.rm(&key.storage_path(), true).await?;
 
             Ok(())
         }

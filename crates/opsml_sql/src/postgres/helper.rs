@@ -767,4 +767,12 @@ impl PostgresQueryHelper {
 
         Ok(query)
     }
+
+    pub fn get_artifact_key_delete_query() -> String {
+        format!(
+            "DELETE FROM {} WHERE uid = $1 AND card_type = $2",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
 }

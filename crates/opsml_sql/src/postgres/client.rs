@@ -1050,6 +1050,18 @@ impl SqlClient for PostgresClient {
             storage_key: key.3,
         })
     }
+
+    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError> {
+        let query = PostgresQueryHelper::get_artifact_key_delete_query();
+        sqlx::query(&query)
+            .bind(uid)
+            .bind(card_type)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]

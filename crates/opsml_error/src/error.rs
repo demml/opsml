@@ -49,6 +49,9 @@ pub enum ApiError {
 
     #[error(transparent)]
     UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    StorageError(#[from] StorageError),
 }
 
 impl From<ApiError> for PyErr {

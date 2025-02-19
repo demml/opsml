@@ -727,4 +727,12 @@ impl SqliteQueryHelper {
 
         Ok(query)
     }
+
+    pub fn get_artifact_key_delete_query() -> String {
+        format!(
+            "DELETE FROM {} WHERE uid = ? AND card_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
 }

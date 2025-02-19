@@ -1,6 +1,6 @@
 use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
 use crate::core::cards::utils::{get_next_version, insert_card_into_db};
-use crate::core::files::utils::create_artifact_key;
+use crate::core::files::utils::{cleanup_artifacts, create_artifact_key};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -459,6 +459,8 @@ pub async fn delete_card(
     Query(params): Query<UidRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
+
+    // delete card
     state
         .sql_client
         .delete_card(&table, &params.uid)
@@ -470,6 +472,24 @@ pub async fn delete_card(
                 Json(serde_json::json!({})),
             )
         })?;
+
+    cleanup_artifacts(
+        &state.storage_client,
+        &state.sql_client,
+        params.uid.clone(),
+        params.registry_type.clone(),
+        &table,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to cleanup artifacts: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    // need to delete the artifact key and the artifact itself
 
     Ok(Json(UidResponse { exists: false }))
 }

@@ -305,4 +305,16 @@ pub trait SqlClient: Sized {
         table: &CardTable,
         query_args: &CardQueryArgs,
     ) -> Result<ArtifactKey, SqlError>;
+
+    /// Delete artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `uid` - The unique identifier of the card
+    /// * `card_type` - The card type
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn delete_artifact_key(&self, uid: &str, card_type: &str) -> Result<(), SqlError>;
 }
