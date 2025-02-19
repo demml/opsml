@@ -4,7 +4,6 @@ use opsml_crypt::decrypt_key;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::cards::CardType;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
 use opsml_utils::uid_to_byte_key;
 use tracing::instrument;
@@ -158,12 +157,11 @@ impl ClientRegistry {
         }
     }
 
-    pub async fn delete_card(&mut self, uid: &str) -> Result<(), RegistryError> {
-        let uid_request = UidRequest {
-            uid: uid.to_string(),
-            registry_type: self.registry_type.clone(),
-        };
-        let query_string = serde_qs::to_string(&uid_request)
+    pub async fn delete_card(
+        &mut self,
+        delete_request: DeleteCardRequest,
+    ) -> Result<(), RegistryError> {
+        let query_string = serde_qs::to_string(&delete_request)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
         let response = self
@@ -244,12 +242,12 @@ impl ClientRegistry {
     async fn artifact_key(
         &mut self,
         uid: &str,
-        card_type: &CardType,
+        registry_type: &RegistryType,
         route: Routes,
     ) -> Result<Vec<u8>, RegistryError> {
         let key_request = ArtifactKeyRequest {
             uid: uid.to_string(),
-            card_type: card_type.clone(),
+            registry_type: registry_type.clone(),
         };
 
         let query_string = serde_qs::to_string(&key_request).map_err(|e| {
@@ -281,16 +279,16 @@ impl ClientRegistry {
     pub async fn create_artifact_key(
         &mut self,
         uid: &str,
-        card_type: &CardType,
+        registry_type: &RegistryType,
     ) -> Result<Vec<u8>, RegistryError> {
-        self.artifact_key(uid, card_type, Routes::Encrypt).await
+        self.artifact_key(uid, registry_type, Routes::Encrypt).await
     }
 
     pub async fn get_artifact_key(
         &mut self,
         uid: &str,
-        card_type: &CardType,
+        registry_type: &RegistryType,
     ) -> Result<Vec<u8>, RegistryError> {
-        self.artifact_key(uid, card_type, Routes::Decrypt).await
+        self.artifact_key(uid, registry_type, Routes::Decrypt).await
     }
 }

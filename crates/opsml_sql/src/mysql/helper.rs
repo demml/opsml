@@ -626,7 +626,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "INSERT INTO {} (uid, card_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
+            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -634,7 +634,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_select_query() -> String {
         format!(
-            "SELECT uid, card_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND card_type = ?",
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -642,7 +642,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_update_query() -> String {
         format!(
-            "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND card_type = ?",
+            "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()
@@ -668,7 +668,7 @@ impl MySQLQueryHelper {
             "WITH query_cards AS (
                 {}
             )
-            SELECT a.uid, a.card_type, a.encrypted_key, a.storage_key
+            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
             FROM {} as a
             INNER JOIN query_cards as b 
                 ON a.uid = b.uid;",
@@ -681,7 +681,7 @@ impl MySQLQueryHelper {
 
     pub fn get_artifact_key_delete_query() -> String {
         format!(
-            "DELETE FROM {} WHERE uid = ? AND card_type = ?",
+            "DELETE FROM {} WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
         .to_string()

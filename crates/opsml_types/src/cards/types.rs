@@ -2,7 +2,6 @@ use crate::types::RegistryType;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::fmt::Display;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -55,57 +54,6 @@ impl CardTable {
             RegistryType::Parameters => CardTable::Parameters,
             RegistryType::Users => CardTable::Users,
             RegistryType::ArtifactKey => CardTable::ArtifactKey,
-        }
-    }
-}
-
-#[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub enum CardType {
-    Data,
-    Model,
-    Run,
-    Project,
-    Audit,
-    Pipeline,
-}
-
-impl Display for CardType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let card_type = match self {
-            CardType::Data => "Data",
-            CardType::Model => "Model",
-            CardType::Run => "Run",
-            CardType::Project => "Project",
-            CardType::Audit => "Audit",
-            CardType::Pipeline => "Pipeline",
-        };
-        write!(f, "{}", card_type)
-    }
-}
-
-// implement as_bytes for CardType
-impl CardType {
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            CardType::Data => b"Data",
-            CardType::Model => b"Model",
-            CardType::Run => b"Run",
-            CardType::Project => b"Project",
-            CardType::Audit => b"Audit",
-            CardType::Pipeline => b"Pipeline",
-        }
-    }
-
-    pub fn from_string(card_type: &str) -> Self {
-        match card_type {
-            "Data" => CardType::Data,
-            "Model" => CardType::Model,
-            "Run" => CardType::Run,
-            "Project" => CardType::Project,
-            "Audit" => CardType::Audit,
-            "Pipeline" => CardType::Pipeline,
-            _ => panic!("Invalid card type"),
         }
     }
 }

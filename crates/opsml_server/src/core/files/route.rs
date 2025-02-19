@@ -424,7 +424,7 @@ pub async fn get_artifact_key(
     debug!("Getting artifact key for: {:?}", req);
     let key = state
         .sql_client
-        .get_artifact_key(&req.uid, &req.card_type.to_string())
+        .get_artifact_key(&req.uid, &req.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);

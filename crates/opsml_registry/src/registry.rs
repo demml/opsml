@@ -9,10 +9,7 @@ use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
-use opsml_types::{
-    cards::{CardTable, CardType},
-    contracts::*,
-};
+use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
@@ -27,7 +24,7 @@ pub struct CardArgs {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub card_type: CardType,
+    pub registry_type: RegistryType,
 }
 
 #[pyclass]
@@ -254,7 +251,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // update card
-                Self::delete_card_with_db(&mut self.registry, &card).await?;
+                Self::delete_card_with_db(&mut self.registry, &card, &self.registry_type).await?;
 
                 Ok(())
             })
@@ -284,24 +281,6 @@ impl CardRegistry {
         Ok(())
     }
 
-    fn match_registry_type(card_type: &CardType, registry_type: &RegistryType) -> bool {
-        let matched = match card_type {
-            CardType::Data => {
-                // assert registryType == RegistryType.Data
-                *registry_type == RegistryType::Data
-            }
-            CardType::Model => {
-                // assert registryType == RegistryType.Model
-                *registry_type == RegistryType::Model
-            }
-            _ => {
-                return false;
-            }
-        };
-
-        matched
-    }
-
     #[instrument(skip_all)]
     pub async fn verify_card(
         card: &Bound<'_, PyAny>,
@@ -328,21 +307,22 @@ impl CardRegistry {
             }
         }
 
-        let card_type = card
-            .getattr("card_type")
+        let card_registry_type = card
+            .getattr("registry_type")
             .map_err(|e| {
                 error!("Failed to get card type: {}", e);
                 RegistryError::Error("Failed to get card type".to_string())
             })?
-            .extract::<CardType>()
+            .extract::<RegistryType>()
             .map_err(|e| {
                 error!("Failed to extract card type: {}", e);
                 RegistryError::Error("Failed to extract card type".to_string())
             })?;
 
-        if !Self::match_registry_type(&card_type, registry_type) {
+        // assert that the card registry type is the same as the registry type
+        if card_registry_type != *registry_type {
             return Err(RegistryError::Error(
-                "Card and registry type do not match".to_string(),
+                "Card registry type does not match registry type".to_string(),
             ));
         }
 
@@ -495,10 +475,18 @@ impl CardRegistry {
     async fn delete_card_with_db(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
+        registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         let uid = unwrap_pystring(card, "uid")?;
+        let repository = unwrap_pystring(card, "repository")?;
 
-        registry.delete_card(&uid).await?;
+        let delete_request = DeleteCardRequest {
+            uid: uid.clone(),
+            repository: repository.clone(),
+            registry_type: registry_type.clone(),
+        };
+
+        registry.delete_card(delete_request).await?;
 
         println!("...✓ {}", Colorize::green("Deleted card"));
         debug!("Successfully deleted card");
@@ -556,8 +544,8 @@ impl CardRegistry {
         fs: &mut Arc<Mutex<FileSystemStorage>>,
         rt: &Arc<tokio::runtime::Runtime>,
     ) -> Result<Bound<'py, PyAny>, RegistryError> {
-        let card = match key.card_type {
-            CardType::Model => {
+        let card = match key.registry_type {
+            RegistryType::Model => {
                 let mut card =
                     ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
                         error!("Failed to validate model card: {}", e);

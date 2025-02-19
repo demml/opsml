@@ -14,7 +14,6 @@ pub mod server_logic {
         schemas::*,
     };
     use opsml_storage::StorageClientEnum;
-    use opsml_types::cards::CardType;
     use opsml_types::{cards::CardTable, contracts::*, *};
     use opsml_utils::uid_to_byte_key;
     use pyo3::prelude::*;
@@ -132,7 +131,7 @@ pub mod server_logic {
         async fn create_artifact_key(
             &mut self,
             uid: &str,
-            card_type: &str,
+            registry_type: &str,
             storage_key: &str,
         ) -> Result<ArtifactKey, RegistryError> {
             let salt = generate_salt();
@@ -140,7 +139,7 @@ pub mod server_logic {
             let derived_key = derive_encryption_key(
                 &self.storage_settings.encryption_key,
                 &salt,
-                card_type.as_bytes(),
+                registry_type.as_bytes(),
             )?;
 
             let uid_key = uid_to_byte_key(uid)?;
@@ -149,7 +148,7 @@ pub mod server_logic {
 
             let artifact_key = ArtifactKey {
                 uid: uid.to_string(),
-                card_type: CardType::from_string(card_type),
+                registry_type: RegistryType::from_string(registry_type)?,
                 encrypted_key: encrypted_key,
                 storage_key: storage_key.to_string(),
             };
@@ -283,7 +282,7 @@ pub mod server_logic {
                 .map_err(|e| RegistryError::Error(format!("Failed to create card {}", e)))?;
 
             let key = self
-                .create_artifact_key(card.uid(), &card.card_type(), &card.uri())
+                .create_artifact_key(card.uid(), &card.registry_type(), &card.uri())
                 .await
                 .map_err(|e| {
                     RegistryError::Error(format!("Failed to create artifact key {}", e))
@@ -292,11 +291,11 @@ pub mod server_logic {
             let response = CreateCardResponse {
                 registered: true,
                 version: card.version(),
-                repository: card.card_type(),
+                repository: card.registry_type(),
                 name: card.name(),
                 key: ArtifactKey {
                     uid: key.uid,
-                    card_type: key.card_type,
+                    registry_type: key.registry_type,
                     encrypted_key: key.encrypted_key,
                     storage_key: key.storage_key,
                 },
@@ -490,16 +489,19 @@ pub mod server_logic {
             Ok(())
         }
 
-        pub async fn delete_card(&mut self, uid: &str) -> Result<(), RegistryError> {
+        pub async fn delete_card(
+            &mut self,
+            delete_request: DeleteCardRequest,
+        ) -> Result<(), RegistryError> {
             self.sql_client
-                .delete_card(&self.table_name, uid)
+                .delete_card(&self.table_name, &delete_request.uid)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
 
             // get key
             let key = self
                 .load_card(CardQueryArgs {
-                    uid: Some(uid.to_string()),
+                    uid: Some(delete_request.uid.to_string()),
                     ..Default::default()
                 })
                 .await
@@ -513,6 +515,15 @@ pub mod server_logic {
                 })?;
 
             storage_client.rm(&key.storage_path(), true).await?;
+
+            self.sql_client
+                .delete_artifact_key(&delete_request.uid, &key.registry_type.to_string())
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to delete artifact key {}", e))
+                })?;
+
+            // delete key
 
             Ok(())
         }
@@ -537,11 +548,11 @@ pub mod server_logic {
         pub async fn get_artifact_key(
             &mut self,
             uid: &str,
-            card_type: &CardType,
+            registry_type: &RegistryType,
         ) -> Result<Vec<u8>, RegistryError> {
             let key = self
                 .sql_client
-                .get_artifact_key(uid, &card_type.to_string())
+                .get_artifact_key(uid, &registry_type.to_string())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get artifact key {}", e)))?;
 

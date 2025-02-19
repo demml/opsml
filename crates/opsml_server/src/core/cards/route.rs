@@ -18,7 +18,6 @@ use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, instrument};
 
@@ -194,7 +193,7 @@ pub async fn create_card(
     })?;
 
     // (2) ------- Insert the card into the database
-    let (uid, card_type, card_uri) = insert_card_into_db(
+    let (uid, registry_type, card_uri) = insert_card_into_db(
         state.sql_client.clone(),
         card_request.card.clone(),
         version.clone(),
@@ -214,7 +213,7 @@ pub async fn create_card(
         state.sql_client.clone(),
         state.storage_settings.encryption_key.clone(),
         &uid,
-        &card_type,
+        &registry_type,
         &card_uri,
     )
     .await

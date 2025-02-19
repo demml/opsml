@@ -52,6 +52,9 @@ pub enum ApiError {
 
     #[error(transparent)]
     StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
 }
 
 impl From<ApiError> for PyErr {
@@ -62,7 +65,7 @@ impl From<ApiError> for PyErr {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Deserialize, Serialize)]
 pub enum UtilError {
     #[error("{0}")]
     Error(String),
@@ -100,7 +103,7 @@ impl From<UtilError> for PyErr {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Deserialize, Serialize)]
 pub enum TypeError {
     #[error("{0}")]
     Error(String),
@@ -195,6 +198,9 @@ pub enum SqlError {
 
     #[error("Failed to connect to the database - {0}")]
     ConnectionError(String),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
 }
 
 #[derive(Error, Debug)]
@@ -255,6 +261,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     SqlError(#[from] SqlError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
 }
 
 impl From<RegistryError> for PyErr {

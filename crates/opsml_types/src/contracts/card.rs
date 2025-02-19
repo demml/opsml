@@ -1,6 +1,6 @@
 use crate::contracts::ArtifactKey;
 use crate::{
-    cards::{CardTable, CardType},
+    cards::CardTable,
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
     DataType, ModelInterfaceType, RegistryType,
 };
@@ -650,14 +650,14 @@ impl Card {
         }
     }
 
-    pub fn card_type(&self) -> CardType {
+    pub fn registry_type(&self) -> RegistryType {
         match self {
-            Self::Data(_) => CardType::Data,
-            Self::Model(_) => CardType::Model,
-            Self::Run(_) => CardType::Run,
-            Self::Audit(_) => CardType::Audit,
-            Self::Pipeline(_) => CardType::Pipeline,
-            Self::Project(_) => CardType::Project,
+            Self::Data(_) => RegistryType::Data,
+            Self::Model(_) => RegistryType::Model,
+            Self::Run(_) => RegistryType::Run,
+            Self::Audit(_) => RegistryType::Audit,
+            Self::Pipeline(_) => RegistryType::Pipeline,
+            Self::Project(_) => RegistryType::Project,
         }
     }
 }
