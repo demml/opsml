@@ -666,6 +666,7 @@ impl Default for PipelineCardRecord {
 pub struct ProjectCardRecord {
     pub uid: String,
     pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub project_id: i32,
@@ -683,6 +684,7 @@ impl Default for ProjectCardRecord {
         ProjectCardRecord {
             uid: Uuid::new_v4().to_string(),
             created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
             project_id: 1,
@@ -708,6 +710,7 @@ impl ProjectCardRecord {
         ProjectCardRecord {
             uid: Uuid::new_v4().to_string(),
             created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name,
             repository,
             project_id,
@@ -869,6 +872,28 @@ impl ServerCard {
             ServerCard::Audit(card) => card.uri(),
             ServerCard::Pipeline(card) => card.uri(),
             ServerCard::Project(card) => card.uri(),
+        }
+    }
+
+    pub fn app_env(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.app_env.clone(),
+            ServerCard::Model(card) => card.app_env.clone(),
+            ServerCard::Run(card) => card.app_env.clone(),
+            ServerCard::Audit(card) => card.app_env.clone(),
+            ServerCard::Pipeline(card) => card.app_env.clone(),
+            ServerCard::Project(card) => card.app_env.clone(),
+        }
+    }
+
+    pub fn created_at(&self) -> NaiveDateTime {
+        match self {
+            ServerCard::Data(card) => card.created_at,
+            ServerCard::Model(card) => card.created_at,
+            ServerCard::Run(card) => card.created_at,
+            ServerCard::Audit(card) => card.created_at,
+            ServerCard::Pipeline(card) => card.created_at,
+            ServerCard::Project(card) => card.created_at,
         }
     }
 }
