@@ -6,6 +6,7 @@ use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
 use opsml_utils::uid_to_byte_key;
+use serde_json::json;
 use tracing::instrument;
 use tracing::{debug, error};
 
@@ -127,11 +128,11 @@ impl ClientRegistry {
     }
 
     pub async fn update_card(&mut self, card: &Card) -> Result<(), RegistryError> {
-        // serialize card to json
-        let body = serde_json::to_value(card).map_err(|e| {
-            error!("Failed to serialize card {}", e);
-            RegistryError::Error(format!("Failed to serialize card {}", e))
-        })?;
+        // don't want to clone
+        let body = json!({
+            "card": card,
+            "registry_type": self.registry_type,
+        });
 
         let response = self
             .api_client

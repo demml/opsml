@@ -11,6 +11,7 @@ use opsml_semver::VersionType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::{collections::HashMap, path::Path};
 use std::{path::PathBuf, sync::LazyLock};
 use tabled::settings::{
@@ -751,10 +752,10 @@ pub struct CreateCardResponse {
 }
 
 /// Duplicating card request to be explicit with naming
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UpdateCardRequest {
-    pub registry_type: RegistryType,
     pub card: Card,
+    pub registry_type: RegistryType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

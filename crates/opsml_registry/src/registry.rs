@@ -261,6 +261,7 @@ impl CardRegistry {
     #[pyo3(signature = (card))]
     #[instrument(skip_all)]
     pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
+        debug!("Updating card");
         self.runtime
             .block_on(async {
                 // update card
@@ -528,8 +529,8 @@ impl CardRegistry {
         let repository = unwrap_pystring(card, "repository")?;
 
         let delete_request = DeleteCardRequest {
-            uid: uid.clone(),
-            repository: repository.clone(),
+            uid,
+            repository,
             registry_type: registry_type.clone(),
         };
 
@@ -560,7 +561,10 @@ impl CardRegistry {
             })?;
 
         // update card
-        registry.update_card(&registry_card).await?;
+        registry.update_card(&registry_card).await.map_err(|e| {
+            error!("Failed to update card: {}", e);
+            e
+        })?;
 
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
@@ -570,7 +574,11 @@ impl CardRegistry {
                 registry_type: registry_type.clone(),
                 ..Default::default()
             })
-            .await?;
+            .await
+            .map_err(|e| {
+                error!("Failed to load card: {}", e);
+                e
+            })?;
 
         println!("...✓ {}", Colorize::green("Updated card"));
         debug!("Successfully updated card");
