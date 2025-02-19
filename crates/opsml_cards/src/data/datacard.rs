@@ -372,7 +372,7 @@ impl Serialize for DataCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("DataCard", 10)?;
+        let mut state = serializer.serialize_struct("DataCard", 9)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -399,7 +399,6 @@ impl<'de> Deserialize<'de> for DataCard {
             Interface,
             Name,
             Repository,
-
             Version,
             Uid,
             Tags,
@@ -474,7 +473,6 @@ impl<'de> Deserialize<'de> for DataCard {
                 let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
                 let repository =
                     repository.ok_or_else(|| de::Error::missing_field("repository"))?;
-
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
@@ -508,7 +506,6 @@ impl<'de> Deserialize<'de> for DataCard {
             "interface",
             "name",
             "repository",
-            "contact",
             "version",
             "uid",
             "tags",
