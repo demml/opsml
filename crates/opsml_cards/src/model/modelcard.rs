@@ -97,6 +97,10 @@ pub struct ModelCard {
     #[pyo3(get)]
     pub to_onnx: bool,
 
+    pub app_env: String
+
+    pub created_at: Option<String>,
+
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
@@ -190,6 +194,7 @@ impl ModelCard {
             rt: None,
             fs: None,
             artifact_key: None,
+            app_env: None,
         })
     }
 
@@ -375,7 +380,7 @@ impl ModelCard {
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = ModelCardClientRecord {
             created_at: None,
-            app_env: None,
+            app_env: self.app_env.
             repository: self.repository.clone(),
             name: self.name.clone(),
             contact: self.contact.clone(),

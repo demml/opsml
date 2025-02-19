@@ -8,10 +8,9 @@ use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
 use opsml_error::CardError;
 use opsml_semver::VersionType;
-use opsml_utils::PyHelperFuncs;
+use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use std::{collections::HashMap, path::Path};
 use std::{path::PathBuf, sync::LazyLock};
 use tabled::settings::{
@@ -109,8 +108,8 @@ pub struct CardQueryArgs {
 #[pyclass]
 pub struct DataCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -128,8 +127,8 @@ impl Default for DataCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
-            app_env: None,
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -149,8 +148,8 @@ impl Default for DataCardClientRecord {
 #[pyclass]
 pub struct ModelCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -171,8 +170,8 @@ impl Default for ModelCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
-            app_env: None,
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -195,8 +194,8 @@ impl Default for ModelCardClientRecord {
 #[pyclass]
 pub struct RunCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -215,8 +214,8 @@ impl Default for RunCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
-            app_env: None,
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -237,8 +236,8 @@ impl Default for RunCardClientRecord {
 #[pyclass]
 pub struct AuditCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -255,8 +254,8 @@ impl Default for AuditCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
-            app_env: None,
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -275,8 +274,8 @@ impl Default for AuditCardClientRecord {
 #[pyclass]
 pub struct PipelineCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -293,8 +292,8 @@ impl Default for PipelineCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
-            app_env: None,
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -313,7 +312,7 @@ impl Default for PipelineCardClientRecord {
 #[pyclass]
 pub struct ProjectCardClientRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub name: String,
     pub repository: String,
     pub version: String,
@@ -325,7 +324,7 @@ impl Default for ProjectCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
-            created_at: None,
+            created_at: get_utc_datetime(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
@@ -366,7 +365,7 @@ impl Card {
     }
 
     #[getter]
-    pub fn created_at(&self) -> Option<NaiveDateTime> {
+    pub fn created_at(&self) -> NaiveDateTime {
         match self {
             Self::Data(card) => card.created_at,
             Self::Model(card) => card.created_at,
@@ -378,14 +377,14 @@ impl Card {
     }
 
     #[getter]
-    pub fn app_env(&self) -> Option<&str> {
+    pub fn app_env(&self) -> &str {
         match self {
-            Self::Data(card) => card.app_env.as_deref(),
-            Self::Model(card) => card.app_env.as_deref(),
-            Self::Run(card) => card.app_env.as_deref(),
-            Self::Audit(card) => card.app_env.as_deref(),
-            Self::Pipeline(card) => card.app_env.as_deref(),
-            Self::Project(_) => None,
+            Self::Data(card) => card.app_env.as_ref(),
+            Self::Model(card) => card.app_env.as_ref(),
+            Self::Run(card) => card.app_env.as_ref(),
+            Self::Audit(card) => card.app_env.as_ref(),
+            Self::Pipeline(card) => card.app_env.as_ref(),
+            Self::Project(_) => "",
         }
     }
 
@@ -695,7 +694,7 @@ impl CardList {
             .cards
             .iter()
             .map(|card| {
-                let created_at = card.created_at().unwrap().to_string();
+                let created_at = card.created_at().to_string();
                 let name = card.name();
                 let repository = card.repository();
                 let contact = card.contact();

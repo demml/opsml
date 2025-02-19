@@ -1,3 +1,5 @@
+use core::error;
+
 use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
@@ -10,6 +12,7 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
+use tracing::error;
 
 const TIMEOUT_SECS: u64 = 30;
 const REDACTED: &str = "REDACTED";
@@ -227,13 +230,16 @@ impl OpsmlApiClient {
 
             if response.is_err() {
                 self.refresh_token().await.map_err(|e| {
+                    error!("Failed to refresh token: {}", e);
                     ApiError::Error(format!("Failed to refresh token with error: {}", e))
                 })?;
             }
         }
 
-        let response = response
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+        let response = response.map_err(|e| {
+            error!("Failed to send request: {}", e);
+            ApiError::Error(format!("Failed to send request with error: {}", e))
+        })?;
 
         Ok(response)
     }
