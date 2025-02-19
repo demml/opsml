@@ -75,9 +75,6 @@ pub struct DataCard {
     pub name: String,
 
     #[pyo3(get, set)]
-    pub contact: String,
-
-    #[pyo3(get, set)]
     pub version: String,
 
     #[pyo3(get, set)]
@@ -109,12 +106,11 @@ pub struct DataCard {
 impl DataCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (interface, repository=None, name=None, contact=None, version=None, uid=None, tags=None, metadata=None))]
+    #[pyo3(signature = (interface, repository=None, name=None, version=None, uid=None, tags=None, metadata=None))]
     pub fn new(
         interface: &Bound<'_, PyAny>,
         repository: Option<&str>,
         name: Option<&str>,
-        contact: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
@@ -127,11 +123,10 @@ impl DataCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args =
-            BaseArgs::create_args(name, repository, contact, version, uid).map_err(|e| {
-                error!("Failed to create base args: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
+            error!("Failed to create base args: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         let py = interface.py();
 
@@ -167,9 +162,8 @@ impl DataCard {
             ),
             repository: base_args.0,
             name: base_args.1,
-            contact: base_args.2,
-            version: base_args.3,
-            uid: base_args.4,
+            version: base_args.2,
+            uid: base_args.3,
             tags,
             metadata,
             registry_type: RegistryType::Data,
@@ -298,7 +292,6 @@ impl DataCard {
             app_env: self.app_env.clone(),
             repository: self.repository.clone(),
             name: self.name.clone(),
-            contact: self.contact.clone(),
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
@@ -384,7 +377,6 @@ impl Serialize for DataCard {
         // set session to none
         state.serialize_field("name", &self.name)?;
         state.serialize_field("repository", &self.repository)?;
-        state.serialize_field("contact", &self.contact)?;
         state.serialize_field("version", &self.version)?;
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
@@ -407,7 +399,7 @@ impl<'de> Deserialize<'de> for DataCard {
             Interface,
             Name,
             Repository,
-            Contact,
+
             Version,
             Uid,
             Tags,
@@ -433,7 +425,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 let mut interface = None;
                 let mut name = None;
                 let mut repository = None;
-                let mut contact = None;
+
                 let mut version = None;
                 let mut uid = None;
                 let mut tags = None;
@@ -454,9 +446,7 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::Repository => {
                             repository = Some(map.next_value()?);
                         }
-                        Field::Contact => {
-                            contact = Some(map.next_value()?);
-                        }
+
                         Field::Version => {
                             version = Some(map.next_value()?);
                         }
@@ -484,7 +474,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 let name = name.ok_or_else(|| de::Error::missing_field("name"))?;
                 let repository =
                     repository.ok_or_else(|| de::Error::missing_field("repository"))?;
-                let contact = contact.ok_or_else(|| de::Error::missing_field("contact"))?;
+
                 let version = version.ok_or_else(|| de::Error::missing_field("version"))?;
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
@@ -499,7 +489,7 @@ impl<'de> Deserialize<'de> for DataCard {
                     interface,
                     name,
                     repository,
-                    contact,
+
                     version,
                     uid,
                     tags,
@@ -536,7 +526,7 @@ impl FromPyObject<'_> for DataCard {
         let interface = ob.getattr("interface")?;
         let name = ob.getattr("name")?.extract()?;
         let repository = ob.getattr("repository")?.extract()?;
-        let contact = ob.getattr("contact")?.extract()?;
+
         let version = ob.getattr("version")?.extract()?;
         let uid = ob.getattr("uid")?.extract()?;
         let tags = ob.getattr("tags")?.extract()?;
@@ -549,7 +539,7 @@ impl FromPyObject<'_> for DataCard {
             interface: Some(interface.unbind()),
             name,
             repository,
-            contact,
+
             version,
             uid,
             tags,

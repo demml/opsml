@@ -143,9 +143,6 @@ pub struct CardInfo {
     pub repository: Option<String>,
 
     #[pyo3(get)]
-    pub contact: Option<String>,
-
-    #[pyo3(get)]
     pub uid: Option<String>,
 
     #[pyo3(get)]
@@ -158,11 +155,11 @@ pub struct CardInfo {
 #[pymethods]
 impl CardInfo {
     #[new]
-    #[pyo3(signature = (name=None, repository=None, contact=None, uid=None, version=None, tags=None))]
+    #[pyo3(signature = (name=None, repository=None, uid=None, version=None, tags=None))]
     pub fn new(
         name: Option<String>,
         repository: Option<String>,
-        contact: Option<String>,
+
         uid: Option<String>,
         version: Option<String>,
         tags: Option<Vec<String>>,
@@ -170,7 +167,6 @@ impl CardInfo {
         Self {
             name,
             repository,
-            contact,
             uid,
             version,
             tags,
@@ -182,10 +178,9 @@ impl CardInfo {
     }
 
     pub fn set_env(&self) {
-        // if check name, repo and contact. If any is set, set environment variable
+        // if check name, repo. If any is set, set environment variable
         // if name is set, set OPSML_RUNTIME_NAME
         // if repository is set, set OPSML_RUNTIME_REPOSITORY
-        // if contact is set, set OPSML_RUNTIME_CONTACT
 
         if let Some(name) = &self.name {
             std::env::set_var("OPSML_RUNTIME_NAME", name);
@@ -194,26 +189,20 @@ impl CardInfo {
         if let Some(repo) = &self.repository {
             std::env::set_var("OPSML_RUNTIME_REPOSITORY", repo);
         }
-
-        if let Some(contact) = &self.contact {
-            std::env::set_var("OPSML_RUNTIME_CONTACT", contact);
-        }
     }
 
     // primarily used for checking and testing. Do not write .pyi file for this method
     pub fn get_vars(&self) -> HashMap<String, String> {
-        // check if OPSML_RUNTIME_NAME, OPSML_RUNTIME_REPOSITORY, OPSML_RUNTIME_CONTACT are set
+        // check if OPSML_RUNTIME_NAME, OPSML_RUNTIME_REPOSITORY are set
         // Print out the values if they are set
 
         let name = std::env::var("OPSML_RUNTIME_NAME").unwrap_or_default();
         let repo = std::env::var("OPSML_RUNTIME_REPOSITORY").unwrap_or_default();
-        let contact = std::env::var("OPSML_RUNTIME_CONTACT").unwrap_or_default();
 
         // print
         let mut map = HashMap::new();
         map.insert("OPSML_RUNTIME_NAME".to_string(), name);
         map.insert("OPSML_RUNTIME_REPOSITORY".to_string(), repo);
-        map.insert("OPSML_RUNTIME_CONTACT".to_string(), contact);
 
         map
     }
@@ -224,7 +213,7 @@ impl CardInfo {
         match name {
             "name" => &self.name,
             "repository" => &self.repository,
-            "contact" => &self.contact,
+
             "uid" => &self.uid,
             "version" => &self.version,
             _ => &None,
@@ -243,14 +232,6 @@ impl FromPyObject<'_> for CardInfo {
         })?;
 
         let repository = ob.getattr("repository").and_then(|item| {
-            if item.is_none() {
-                Ok(None)
-            } else {
-                Ok(Some(item.extract::<String>()?))
-            }
-        })?;
-
-        let contact = ob.getattr("contact").and_then(|item| {
             if item.is_none() {
                 Ok(None)
             } else {
@@ -285,7 +266,7 @@ impl FromPyObject<'_> for CardInfo {
         Ok(CardInfo {
             name,
             repository,
-            contact,
+
             uid,
             version,
             tags,
@@ -293,7 +274,7 @@ impl FromPyObject<'_> for CardInfo {
     }
 }
 
-pub type BaseArgsResult = (String, String, String, String, String);
+pub type BaseArgsResult = (String, String, String, String);
 
 pub struct BaseArgs {}
 
@@ -301,20 +282,18 @@ impl BaseArgs {
     pub fn create_args(
         name: Option<&str>,
         repository: Option<&str>,
-        contact: Option<&str>,
         version: Option<&str>,
         uid: Option<&str>,
     ) -> Result<BaseArgsResult, CardError> {
         let name = clean_string(&Self::get_value("NAME", name)?);
         let repository = clean_string(&Self::get_value("REPOSITORY", repository)?);
-        let contact = Self::get_value("CONTACT", contact)?;
 
         let version = version.map_or(CommonKwargs::BaseVersion.to_string(), |v| v.to_string());
         let uid = uid.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
 
         validate_name_repository_pattern(&name, &repository)?;
 
-        Ok((repository, name, contact, version, uid))
+        Ok((repository, name, version, uid))
     }
 
     fn get_value(key: &str, value: Option<&str>) -> Result<String, CardError> {
