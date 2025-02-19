@@ -429,30 +429,20 @@ class ModelCard:
 
     def load(
         self,
-        model: bool = True,
+        path: Optional[Path] = None,
         onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelCard interface components
 
         Args:
-            model (bool):
-                Whether to load the model. Defaults to True.
+            path (Path | None):
+                The path to load the data card from. If no path is provided,
+                the model interface will be loaded from the server.
             onnx (bool):
-                Whether to load the onnx model. Defaults to False.
-            drift_profile (bool):
-                Whether to load the drift profile. Defaults to False.
-            sample_data (bool):
-                Whether to load the sample data. Defaults to False.
-            preprocessor (bool):
-                Whether to load the preprocessor. Defaults to False.
-                Note, this will load all preprocessors found in the preprocessor map
-                which may include an sklearn preprocessor, tokenizer, feature extractor or
-                image processor.
-            load_kwargs (LoadKwargs):
+                Whether to load the model as onnx or not.
+                Only available for models that have been converted to onnx.
+            load_kwargs (ModelLoadKwargs):
                 Optional kwargs to pass to `ModelInterface` load method.
         """
 
