@@ -165,7 +165,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // Verify card for registration
-                Self::verify_card(&card, &mut self.registry, &self.registry_type).await?;
+                Self::verify_card(&card, &self.registry_type).await?;
 
                 // register card
                 // (1) creates new version
@@ -333,7 +333,6 @@ impl CardRegistry {
     #[instrument(skip_all)]
     pub async fn verify_card(
         card: &Bound<'_, PyAny>,
-        registry: &mut OpsmlRegistry,
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         if card.is_instance_of::<ModelCard>() {
@@ -346,7 +345,11 @@ impl CardRegistry {
                 .unwrap();
 
             if let Some(datacard_uid) = datacard_uid {
-                let exists = registry.check_card_uid(&datacard_uid).await?;
+                // check if datacard exists in the registry
+                let exists = OpsmlRegistry::new(RegistryType::Data)
+                    .await?
+                    .check_card_uid(&datacard_uid)
+                    .await?;
 
                 if !exists {
                     return Err(RegistryError::Error(

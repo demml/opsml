@@ -68,6 +68,18 @@ def crud_datacard(pandas_data: PandasData):
     # attempt to update the card
     loaded_card.name = "test2"
 
+    assert loaded_card.interface is not None
+    assert card.interface is not None
+
+    assert loaded_card.interface.data_splits.splits[0].column_split is not None
+    assert (
+        loaded_card.interface.data_splits.splits[0].column_split.column_name == "col_1"
+    )
+
+    split_data = loaded_card.interface.split_data()
+    assert split_data["train"].x.shape[1] == 9
+    assert split_data["train"].y.shape[1] == 1
+
     # update the card
     reg.update_card(loaded_card)
 
@@ -77,14 +89,10 @@ def crud_datacard(pandas_data: PandasData):
     # assert that the card was updated
     assert updated_card.name == "test2"
 
-    # attempt to delete the card
-    reg.delete_card(card=updated_card)
-
-    cards = reg.list_cards(uid=updated_card.uid)
-    assert len(cards) == 0
+    return updated_card, reg
 
 
-def crud_modelcard(random_forest_classifier: SklearnModel):
+def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     reg = CardRegistry(registry_type=RegistryType.Model)
 
     assert reg.registry_type == RegistryType.Model
@@ -105,6 +113,9 @@ def crud_modelcard(random_forest_classifier: SklearnModel):
         to_onnx=True,
         tags=["foo:bar", "baz:qux"],
     )
+
+    # set uid
+    card.datacard_uid = datacard.uid
 
     card.runcard_uid = "test"
     assert card.runcard_uid == "test"
@@ -159,13 +170,19 @@ def crud_modelcard(random_forest_classifier: SklearnModel):
     # load the updated card
     updated_card: ModelCard = reg.load_card(uid=loaded_card.uid)
 
+    # make sure datacard_uid is set
+    assert updated_card.datacard_uid == datacard.uid
+
     # assert that the card was updated
     assert updated_card.name == "test2"
 
-    # attempt to delete the card
-    reg.delete_card(card=updated_card)
+    return updated_card, reg
 
-    cards = reg.list_cards(uid=updated_card.uid)
+
+def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
+    registry.delete_card(card=card)
+
+    cards = registry.list_cards(uid=card.uid)
     assert len(cards) == 0
 
 
@@ -174,6 +191,9 @@ def test_crud_modelcard(
     pandas_data: PandasData,
 ):
     # start server
-    with OpsmlTestServer():
-        crud_datacard(pandas_data)
-        # crud_modelcard(random_forest_classifier)
+    with OpsmlTestServer(False):
+        datacard, data_registry = crud_datacard(pandas_data)
+        modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
+
+        # delete_card(datacard, data_registry)
+        # delete_card(modelcard, model_registry)

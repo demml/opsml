@@ -398,7 +398,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_projectcard_insert_query() -> String {
-        "INSERT INTO opsml_project_registry (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
+        "INSERT INTO opsml_project_registry (uid, name, repository, app_env, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {

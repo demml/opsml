@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     uid VARCHAR(64),
     name VARCHAR(128),
     repository VARCHAR(128),
+    app_env VARCHAR(32) DEFAULT 'development',
     project_id INT PRIMARY KEY AUTO_INCREMENT,
     major INT NOT NULL,
     minor INT NOT NULL,
@@ -198,9 +199,9 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
 );
 
 CREATE TABLE IF NOT EXISTS opsml_operations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     access_type VARCHAR(16) NOT NULL,
-    access_location VARCHAR(255) NOT NULL
+    access_location VARCHAR(255) NOT NULL,
+    INDEX idx_created_at (created_at)
 );

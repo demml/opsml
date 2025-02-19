@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS opsml_project_registry (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     name TEXT,
     repository TEXT,
+    app_env TEXT DEFAULT 'development',
     project_id INTEGER PRIMARY KEY AUTOINCREMENT,
     major INT NOT NULL,
     minor INT NOT NULL,
@@ -190,7 +191,6 @@ CREATE TABLE IF NOT EXISTS opsml_users (
 );
 
 CREATE TABLE IF NOT EXISTS opsml_artifact_key (
-    
     uid TEXT PRIMARY KEY,
     registry_type TEXT,
     encrypted_key TEXT,
@@ -199,7 +199,6 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
 );
 
 CREATE TABLE IF NOT EXISTS opsml_operations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     access_type TEXT,

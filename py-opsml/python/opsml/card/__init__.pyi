@@ -1,6 +1,6 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
@@ -90,7 +90,7 @@ class DataCard:
         """Return the contact of the data card"""
 
     @property
-    def interface(self) -> Any:
+    def interface(self) -> Optional[DataInterface]:
         """Return the data interface"""
 
     @interface.setter
@@ -463,9 +463,7 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_str: str, interface: Optional[ModelInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:

@@ -1196,5 +1196,5 @@ def pandas_data(example_dataframe) -> PandasData:
     return PandasData(
         data=X_train,
         data_splits=[split],
-        dependent_vars=["target"],
+        dependent_vars=["col_2"],
     )
