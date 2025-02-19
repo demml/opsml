@@ -36,3 +36,9 @@ impl Progress {
         Ok(())
     }
 }
+
+impl Default for Progress {
+    fn default() -> Self {
+        Self::new()
+    }
+}
