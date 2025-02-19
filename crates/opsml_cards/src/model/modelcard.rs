@@ -628,7 +628,7 @@ impl ModelCard {
         rt.block_on(async {
             fs.lock()
                 .await
-                .get(&lpath, &uri, true)
+                .get(lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 

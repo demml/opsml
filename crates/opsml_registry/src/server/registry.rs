@@ -149,7 +149,7 @@ pub mod server_logic {
             let artifact_key = ArtifactKey {
                 uid: uid.to_string(),
                 registry_type: RegistryType::from_string(registry_type)?,
-                encrypted_key: encrypted_key,
+                encrypted_key,
                 storage_key: storage_key.to_string(),
             };
 

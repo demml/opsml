@@ -111,21 +111,9 @@ impl CardRegistry {
             uid, name, repository, version, max_date, tags, limit, sort_by_timestamp
         );
 
-        let uid = uid;
-        let version = version;
-        let tags = tags;
+        let name = name.map(|name| clean_string(&name));
 
-        let name = if let Some(name) = name {
-            Some(clean_string(&name))
-        } else {
-            None
-        };
-
-        let repository = if let Some(repository) = repository {
-            Some(clean_string(&repository))
-        } else {
-            None
-        };
+        let repository = repository.map(|repository| clean_string(&repository));
 
         let query_args = CardQueryArgs {
             uid,
@@ -166,7 +154,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // Verify card for registration
-                Self::verify_card(&card, &self.registry_type).await?;
+                Self::verify_card(card, &self.registry_type).await?;
 
                 // register card
                 // (1) creates new version
@@ -174,7 +162,7 @@ impl CardRegistry {
                 // (3) Creates encryption key and returns it
                 let create_response = Self::_register_card(
                     &mut self.registry,
-                    &card,
+                    card,
                     &self.registry_type,
                     version_type,
                     pre_tag,
@@ -252,7 +240,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // update card
-                Self::_delete_card(&mut self.registry, &card, &self.registry_type)
+                Self::_delete_card(&mut self.registry, card, &self.registry_type)
                     .await
                     .map_err(|e| {
                         error!("Failed to delete card: {}", e);
@@ -271,8 +259,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // update card
-                let key =
-                    Self::_update_card(&mut self.registry, &card, &self.registry_type).await?;
+                let key = Self::_update_card(&mut self.registry, card, &self.registry_type).await?;
 
                 let tmp_path = Self::save_card(card).await?;
 
@@ -315,7 +302,7 @@ impl CardRegistry {
             })?;
 
         // update created_at
-        card.setattr("created_at", response.created_at.clone())
+        card.setattr("created_at", response.created_at)
             .map_err(|e| {
                 error!("Failed to set created_at: {}", e);
                 RegistryError::Error("Failed to set created_at".to_string())
