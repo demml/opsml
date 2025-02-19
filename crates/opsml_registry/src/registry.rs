@@ -351,7 +351,7 @@ impl CardRegistry {
     }
 
     /// Save card artifacts to storage
-    /// Using a runtime, this method with
+    /// Using a runtime, this method will:
     /// (1) create an artifact key to be used to encrypt data
     /// (2) save the card to a temporary directory (with encryption)
     /// (3) Transfer all files in the temporary directory to the storage system
@@ -386,17 +386,14 @@ impl CardRegistry {
         Ok(tmp_path)
     }
 
-    /// Save card artifacts to storage
-    /// Using a runtime, this method with
-    /// (1) create an artifact key to be used to encrypt data
-    /// (2) save the card to a temporary directory (with encryption)
-    /// (3) Transfer all files in the temporary directory to the storage system
+    /// Save card to storage
+    /// Using a runtime, this method will:
+    /// (1) save the card to a temporary directory (with encryption)
     ///
     /// # Arguments
     ///
     /// * `py` - Python interpreter
     /// * `card` - Card to save
-    /// * `save_kwargs` - Optional save kwargs
     ///
     /// # Returns
     ///
@@ -544,6 +541,7 @@ impl CardRegistry {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     async fn _update_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
