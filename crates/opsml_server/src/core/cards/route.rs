@@ -241,6 +241,13 @@ pub async fn update_card(
     State(state): State<Arc<AppState>>,
     Json(card_request): Json<UpdateCardRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    debug!(
+        "Updating card: {}/{}/{} - registry: {:?}",
+        &card_request.card.repository(),
+        &card_request.card.name(),
+        &card_request.card.version(),
+        &card_request.registry_type
+    );
     let table = CardTable::from_registry_type(&card_request.registry_type);
 
     // Note: We can use unwrap() here because a card being updated has already been created and thus has defaults.
@@ -452,6 +459,7 @@ pub async fn update_card(
             )
         })?;
 
+    debug!("Card updated successfully");
     Ok(Json(UpdateCardResponse { updated: true }))
 }
 
