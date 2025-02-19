@@ -3,7 +3,9 @@ use opsml_semver::{VersionArgs, VersionValidator};
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
-use opsml_types::{cards::*, contracts::*};
+use opsml_storage::StorageClientEnum;
+use opsml_types::cards::CardTable;
+use opsml_types::{contracts::*, RegistryType};
 use semver::Version;
 use std::sync::Arc;
 use tracing::{error, instrument};
@@ -163,4 +165,47 @@ pub async fn insert_card_into_db(
     })?;
 
     Ok((card.uid().to_string(), card.registry_type(), card.uri()))
+}
+
+#[instrument(skip_all)]
+pub async fn cleanup_artifacts(
+    storage_client: &Arc<StorageClientEnum>,
+    sql_client: &Arc<SqlClientEnum>,
+    uid: String,
+    registry_type: RegistryType,
+    table: &CardTable,
+) -> Result<(), ApiError> {
+    // get artifact key
+    let key = sql_client
+        .get_card_key_for_loading(
+            table,
+            &CardQueryArgs {
+                uid: Some(uid.clone()),
+                registry_type: registry_type.clone(),
+                ..Default::default()
+            },
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key: {}", e);
+            ApiError::Error("Failed to get artifact key".to_string())
+        })?;
+
+    storage_client
+        .rm(&key.storage_path(), true)
+        .await
+        .map_err(|e| {
+            error!("Failed to remove artifact: {}", e);
+            ApiError::Error("Failed to remove artifact".to_string())
+        })?;
+
+    sql_client
+        .delete_artifact_key(&uid, &registry_type.to_string())
+        .await
+        .map_err(|e| {
+            error!("Failed to delete artifact key: {}", e);
+            ApiError::Error("Failed to delete artifact key".to_string())
+        })?;
+
+    Ok(())
 }
