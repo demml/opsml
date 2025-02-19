@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
@@ -96,6 +97,14 @@ class DataCard:
             interface (DataInterface):
                 The data interface to set. Must inherit from DataInterface
         """
+
+    @property
+    def app_env(self) -> str:
+        """Returns the app env"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Returns the created at timestamp"""
 
     @property
     def name(self) -> str:
@@ -307,6 +316,14 @@ class ModelCard:
         """
 
     @property
+    def app_env(self) -> str:
+        """Returns the app env"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Returns the created at timestamp"""
+
+    @property
     def datacard_uid(self) -> str:
         """Returns the datacard uid"""
 
@@ -447,7 +464,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:

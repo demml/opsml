@@ -98,10 +98,10 @@ pub struct ModelCard {
     #[pyo3(get)]
     pub to_onnx: bool,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub app_env: String,
 
-    #[pyo3(get)]
+    #[pyo3(get, set)]
     pub created_at: NaiveDateTime,
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
