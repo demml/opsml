@@ -27,6 +27,13 @@ pub struct UidRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct DeleteCardRequest {
+    pub uid: String,
+    pub repository: String,
+    pub registry_type: RegistryType,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct UidResponse {
     pub exists: bool,
 }

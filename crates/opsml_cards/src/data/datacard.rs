@@ -9,7 +9,8 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{cards::CardType, SaveName, Suffix};
+use opsml_types::RegistryType;
+use opsml_types::{SaveName, Suffix};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -88,7 +89,7 @@ pub struct DataCard {
     pub metadata: DataCardMetadata,
 
     #[pyo3(get)]
-    pub card_type: CardType,
+    pub registry_type: RegistryType,
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
@@ -149,7 +150,7 @@ impl DataCard {
             uid: base_args.4,
             tags,
             metadata: DataCardMetadata::default(),
-            card_type: CardType::Data,
+            registry_type: RegistryType::Data,
             rt: None,
             fs: None,
             artifact_key: None,
@@ -348,7 +349,7 @@ impl Serialize for DataCard {
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
         state.serialize_field("metadata", &self.metadata)?;
-        state.serialize_field("card_type", &self.card_type)?;
+        state.serialize_field("registry_type", &self.registry_type)?;
         state.end()
     }
 }
@@ -369,7 +370,7 @@ impl<'de> Deserialize<'de> for DataCard {
             Uid,
             Tags,
             Metadata,
-            CardType,
+            RegistryType,
         }
 
         struct DataCardVisitor;
@@ -393,7 +394,7 @@ impl<'de> Deserialize<'de> for DataCard {
                 let mut uid = None;
                 let mut tags = None;
                 let mut metadata = None;
-                let mut card_type = None;
+                let mut registry_type = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -422,8 +423,8 @@ impl<'de> Deserialize<'de> for DataCard {
                         Field::Metadata => {
                             metadata = Some(map.next_value()?);
                         }
-                        Field::CardType => {
-                            card_type = Some(map.next_value()?);
+                        Field::RegistryType => {
+                            registry_type = Some(map.next_value()?);
                         }
                     }
                 }
@@ -436,7 +437,8 @@ impl<'de> Deserialize<'de> for DataCard {
                 let uid = uid.ok_or_else(|| de::Error::missing_field("uid"))?;
                 let tags = tags.ok_or_else(|| de::Error::missing_field("tags"))?;
                 let metadata = metadata.ok_or_else(|| de::Error::missing_field("metadata"))?;
-                let card_type = card_type.ok_or_else(|| de::Error::missing_field("card_type"))?;
+                let registry_type =
+                    registry_type.ok_or_else(|| de::Error::missing_field("registry_type"))?;
 
                 Ok(DataCard {
                     interface,
@@ -447,7 +449,7 @@ impl<'de> Deserialize<'de> for DataCard {
                     uid,
                     tags,
                     metadata,
-                    card_type,
+                    registry_type,
                     rt: None,
                     fs: None,
                     artifact_key: None,
@@ -464,7 +466,7 @@ impl<'de> Deserialize<'de> for DataCard {
             "uid",
             "tags",
             "metadata",
-            "card_type",
+            "registry_type",
         ];
         deserializer.deserialize_struct("DataCard", FIELDS, DataCardVisitor)
     }
@@ -480,7 +482,7 @@ impl FromPyObject<'_> for DataCard {
         let uid = ob.getattr("uid")?.extract()?;
         let tags = ob.getattr("tags")?.extract()?;
         let metadata = ob.getattr("metadata")?.extract()?;
-        let card_type = ob.getattr("card_type")?.extract()?;
+        let registry_type = ob.getattr("registry_type")?.extract()?;
 
         Ok(DataCard {
             interface: Some(interface.unbind()),
@@ -491,7 +493,7 @@ impl FromPyObject<'_> for DataCard {
             uid,
             tags,
             metadata,
-            card_type,
+            registry_type,
             rt: None,
             fs: None,
             artifact_key: None,
