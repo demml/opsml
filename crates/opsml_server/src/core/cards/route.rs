@@ -472,19 +472,7 @@ pub async fn delete_card(
 
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    // delete card
-    state
-        .sql_client
-        .delete_card(&table, &params.uid)
-        .await
-        .map_err(|e| {
-            error!("Failed to delete card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
+    // delete the artifact key and the artifact itself
     cleanup_artifacts(
         &state.storage_client,
         &state.sql_client,
@@ -500,6 +488,19 @@ pub async fn delete_card(
             Json(serde_json::json!({})),
         )
     })?;
+
+    // delete card
+    state
+        .sql_client
+        .delete_card(&table, &params.uid)
+        .await
+        .map_err(|e| {
+            error!("Failed to delete card: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
 
     // need to delete the artifact key and the artifact itself
 
