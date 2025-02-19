@@ -323,8 +323,8 @@ impl SqlClient for MySqlClient {
                         .bind(model.patch)
                         .bind(&model.version)
                         .bind(&model.datacard_uid)
-                        .bind(&model.data_type.to_string())
-                        .bind(&model.model_type.to_string())
+                        .bind(model.data_type.to_string())
+                        .bind(model.model_type.to_string())
                         .bind(&model.interface_type)
                         .bind(&model.task_type)
                         .bind(&model.tags)
@@ -490,7 +490,7 @@ impl SqlClient for MySqlClient {
                         .bind(data.minor)
                         .bind(data.patch)
                         .bind(&data.version)
-                        .bind(&data.data_type.to_string())
+                        .bind(data.data_type.to_string())
                         .bind(&data.interface_type)
                         .bind(&data.tags)
                         .bind(&data.runcard_uid)
@@ -994,7 +994,7 @@ impl SqlClient for MySqlClient {
         let query = MySQLQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)
             .bind(&key.uid)
-            .bind(&key.registry_type.to_string())
+            .bind(key.registry_type.to_string())
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
             .execute(&self.pool)
@@ -1031,7 +1031,7 @@ impl SqlClient for MySqlClient {
         sqlx::query(&query)
             .bind(key.encrypted_key.clone())
             .bind(&key.uid)
-            .bind(&key.registry_type.to_string())
+            .bind(key.registry_type.to_string())
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1313,7 +1313,7 @@ mod tests {
         assert_eq!(results.len(), 2);
 
         // try tags
-        let tags = ["key1".to_string()].iter().cloned().collect();
+        let tags = ["key1".to_string()].to_vec();
         let card_args = CardQueryArgs {
             tags: Some(tags),
             ..Default::default()
