@@ -498,7 +498,7 @@ impl CatBoostModel {
         )?;
         set_catboost_model_attribute(model, &new_dict)?;
 
-        Ok(pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)?)
+        pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)
     }
 }
 

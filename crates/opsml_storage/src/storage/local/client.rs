@@ -15,9 +15,7 @@ use opsml_types::{
     contracts::{FileInfo, UploadResponse},
     StorageType,
 };
-use rayon::prelude::*;
 use reqwest::multipart::{Form, Part};
-use std::collections::HashMap;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
@@ -189,7 +187,7 @@ impl LocalStorageClient {
         let mut hasher = blake3::Hasher::new();
         hasher.update_mmap(path).map_err(|e| {
             error!("Failed to read file: {}", e);
-            StorageError::Error(format!("Failed to read file: {}", e.to_string()))
+            StorageError::Error(format!("Failed to read file: {}", e))
         })?;
 
         Ok(hasher.finalize().to_hex().to_string())
@@ -217,79 +215,6 @@ impl LocalStorageClient {
 
     pub fn open(&self, path: &Path) -> Result<File, StorageError> {
         File::open(path).map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
-    }
-
-    #[instrument(skip(self, dir_path))]
-    pub fn calculate_dir_checksum(
-        &self,
-        dir_path: &Path, // full path to dir
-    ) -> Result<HashMap<String, String>, StorageError> {
-        let checksums: HashMap<String, String> = self
-            .sync_find(dir_path)
-            .map_err(|e| StorageError::Error(e.to_string()))?
-            .into_par_iter()
-            .map(|path| {
-                let checksum = self.calculate_file_checksum(&path)?;
-
-                // get
-                let path_str = path
-                    .strip_path(dir_path.to_str().unwrap())
-                    .to_str()
-                    .unwrap()
-                    .to_string();
-
-                Ok::<(String, String), StorageError>((path_str, checksum))
-            })
-            .filter_map(Result::ok)
-            .collect();
-
-        debug!("Finished calculating checksums");
-        // check for errors (raise on first error)
-        Ok(checksums)
-    }
-
-    #[instrument(skip(self, dir_path, checksums))]
-    pub fn validate_checksums(
-        &self,
-        dir_path: &Path,
-        checksums: HashMap<String, String>,
-    ) -> Result<bool, StorageError> {
-        let new_checksums = self
-            .calculate_dir_checksum(Path::new(dir_path))
-            .map_err(|e| {
-                error!("Failed to calculate checksums: {}", e);
-                StorageError::Error(format!("Failed to calculate checksums: {}", e))
-            })?;
-
-        if new_checksums.len() == 0 {
-            error!("No files found");
-            return Err(StorageError::Error("No files found".to_string()));
-        }
-
-        // check if there are new files
-        let has_new_files = new_checksums
-            .keys()
-            .any(|path| !checksums.contains_key(path));
-
-        if has_new_files {
-            return Ok(false);
-        }
-
-        // filter checksums to only include files that exist in new_checksums
-        let filtered_checksums: HashMap<String, String> = checksums
-            .into_iter()
-            .filter(|(path, _)| new_checksums.contains_key(path))
-            .collect();
-
-        // Compare checksums for all matching files
-        let all_checksums_match = filtered_checksums.iter().all(|(path, checksum)| {
-            new_checksums
-                .get(path)
-                .map_or(false, |new_checksum| new_checksum == checksum)
-        });
-
-        debug!("Finished validating checksums");
-        Ok(all_checksums_match)
     }
 }
 
@@ -739,7 +664,7 @@ impl LocalFSStorageClient {
         );
 
         let rpath_buf = if !self.client_mode {
-            self.client.bucket.join(rpath.to_path_buf())
+            self.client.bucket.join(rpath)
         } else {
             rpath.to_path_buf()
         };
@@ -756,21 +681,6 @@ impl LocalFSStorageClient {
 
     pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
         Ok(path.to_str().unwrap().to_string())
-    }
-
-    pub fn calculate_dir_checksum(
-        &self,
-        dir_path: &Path,
-    ) -> Result<HashMap<String, String>, StorageError> {
-        self.client.calculate_dir_checksum(dir_path)
-    }
-
-    pub fn validate_checksums(
-        &self,
-        dir_path: &Path,
-        checksums: HashMap<String, String>,
-    ) -> Result<bool, StorageError> {
-        self.client.validate_checksums(dir_path, checksums)
     }
 }
 
@@ -853,11 +763,6 @@ mod tests {
             rpath_nested.to_str().unwrap().to_string(),
         ];
 
-        let checksums =
-            storage_client.calculate_dir_checksum(&storage_client.client.bucket.join(rpath_dir))?;
-
-        assert!(checksums.len() == 2);
-
         // sort the blobs
         blobs.sort();
         expected_blobs.sort();
@@ -872,9 +777,6 @@ mod tests {
         // get
         storage_client.get(&new_lpath, &rpath, false).await?;
         assert!(new_lpath.exists());
-        let valid = storage_client.validate_checksums(new_tmp_dir.path(), checksums)?;
-
-        assert!(valid);
 
         // rm
         storage_client.rm(&rpath, false).await?;

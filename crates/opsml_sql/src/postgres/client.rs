@@ -959,7 +959,7 @@ impl SqlClient for PostgresClient {
 
         sqlx::query(&query)
             .bind(&key.uid)
-            .bind(&key.registry_type.to_string())
+            .bind(key.registry_type.to_string())
             .bind(key.encrypted_key.clone())
             .bind(&key.storage_key)
             .execute(&self.pool)
@@ -996,7 +996,7 @@ impl SqlClient for PostgresClient {
         sqlx::query(&query)
             .bind(key.encrypted_key.clone())
             .bind(&key.uid)
-            .bind(&key.registry_type.to_string())
+            .bind(key.registry_type.to_string())
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1274,7 +1274,7 @@ mod tests {
         assert_eq!(results.len(), 2);
 
         // try tags
-        let tags = ["key1".to_string()].iter().cloned().collect();
+        let tags = ["key1".to_string()].to_vec();
         let card_args = CardQueryArgs {
             tags: Some(tags),
             ..Default::default()

@@ -297,7 +297,7 @@ impl ArrowData {
             data_type: metadata.data_type.clone(),
         };
 
-        Ok(Py::new(py, (arrow_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (arrow_interface, interface))?.into_bound_py_any(py)
     }
     pub fn from_path(
         py: Python,
