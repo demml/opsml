@@ -526,10 +526,7 @@ class ModelInterface:
     def load(
         self,
         path: Path,
-        model: bool = True,
         onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelInterface components
@@ -537,14 +534,8 @@ class ModelInterface:
         Args:
             path (Path):
                 Path to load the model
-            model (bool):
-                Whether to load the model
             onnx (bool):
                 Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
             load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
         """
@@ -612,35 +603,6 @@ class SklearnModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load SklearnModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class LightGBMModel(ModelInterface):
     def __init__(
         self,
@@ -690,35 +652,6 @@ class LightGBMModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load LightGBMModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class XGBoostModel(ModelInterface):
     def __init__(
         self,
@@ -767,35 +700,6 @@ class XGBoostModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load XGBoostModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
 
 class TorchModel(ModelInterface):
     def __init__(
@@ -870,35 +774,6 @@ class TorchModel(ModelInterface):
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
-        """
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load TorchModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
         """
 
 class LightningModel(ModelInterface):
@@ -981,35 +856,6 @@ class LightningModel(ModelInterface):
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
-        """
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load LightningModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
         """
 
 class HuggingFaceModel(ModelInterface):
@@ -1181,35 +1027,6 @@ class HuggingFaceModel(ModelInterface):
                 this can be None.
         """
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load HuggingFaceModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class CatBoostModel(ModelInterface):
     def __init__(
         self,
@@ -1258,35 +1075,6 @@ class CatBoostModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | ModelLoadKwargs = None,
-    ) -> None:
-        """Load HuggingFaceModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (ModelLoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
 
 class TensorFlowModel(ModelInterface):
     def __init__(
@@ -1338,7 +1126,3 @@ class TensorFlowModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
-
-class ModelInterfaceTest:
-    def __init__(self, test="") -> None:
-        """Test class for ModelInterface"""
