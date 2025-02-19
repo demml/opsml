@@ -174,13 +174,16 @@ impl ClientRegistry {
             .api_client
             .request_with_retry(
                 Routes::CardDelete,
-                RequestType::Post,
+                RequestType::Delete,
                 None,
                 Some(query_string),
                 None,
             )
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to delete card {}", e)))?;
+            .map_err(|e| {
+                error!("Request failed {}", e);
+                e
+            })?;
 
         let deleted = response
             .json::<UidResponse>()

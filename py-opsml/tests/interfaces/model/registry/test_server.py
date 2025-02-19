@@ -60,6 +60,8 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
         assert loaded_card.interface.sample_data is not None
         assert loaded_card.interface.model is not None
         assert loaded_card.interface.onnx_session is not None
+        assert loaded_card.interface.onnx_session.session is not None
+
         assert loaded_card.interface.preprocessor is not None
         assert loaded_card.interface.onnx_session.session is not None
         assert isinstance(loaded_card.interface.sample_data, PandasData)
@@ -84,7 +86,13 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
         reg.update_card(loaded_card)
 
         # load the updated card
-        # updated_card: ModelCard = reg.load_card(uid=loaded_card.uid)
+        updated_card: ModelCard = reg.load_card(uid=loaded_card.uid)
 
         # assert that the card was updated
-        # assert updated_card.name == "test2"
+        assert updated_card.name == "test2"
+
+        # attempt to delete the card
+        reg.delete_card(card=updated_card)
+
+        cards = reg.list_cards(uid=updated_card.uid)
+        assert len(cards) == 0

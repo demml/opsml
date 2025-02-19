@@ -277,13 +277,19 @@ impl ModelCard {
             .as_ref()
             .ok_or_else(|| CardError::Error("Model interface not found".to_string()))?;
 
-        let metadata =
-            model
-                .bind(py)
-                .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)?;
+        let metadata = model
+            .bind(py)
+            .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)
+            .map_err(|e| {
+                error!("Failed to save model interface: {}", e);
+                e
+            })?;
 
         // extract into ModelInterfaceMetadata
-        let interface_metadata = metadata.extract::<ModelInterfaceMetadata>()?;
+        let interface_metadata = metadata.extract::<ModelInterfaceMetadata>().map_err(|e| {
+            error!("Failed to extract metadata: {}", e);
+            e
+        })?;
 
         // update metadata
         self.metadata.interface_metadata = interface_metadata;

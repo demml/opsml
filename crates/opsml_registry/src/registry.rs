@@ -246,12 +246,17 @@ impl CardRegistry {
     #[pyo3(signature = (card))]
     #[instrument(skip_all)]
     pub fn delete_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
-        debug!("Updating card");
+        debug!("Deleting card");
 
         self.runtime
             .block_on(async {
                 // update card
-                Self::_delete_card(&mut self.registry, &card, &self.registry_type).await?;
+                Self::_delete_card(&mut self.registry, &card, &self.registry_type)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to delete card: {}", e);
+                        e
+                    })?;
 
                 Ok(())
             })
@@ -433,7 +438,7 @@ impl CardRegistry {
 
         let tmp_path = tmp_dir.into_path();
 
-        card.call_method1("save", (tmp_path.to_path_buf(),))
+        card.call_method1("save_card", (tmp_path.to_path_buf(),))
             .map_err(|e| {
                 error!("Failed to save card: {}", e);
                 RegistryError::Error(e.to_string())
