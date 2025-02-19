@@ -853,7 +853,7 @@ mod tests {
                 contact: "test".to_string(),
                 uid: card.uid.clone(),
                 app_env: card.app_env,
-                created_at: Some(card.created_at.unwrap()),
+                created_at: card.created_at,
                 datacard_uids: card.datacard_uids,
                 pipelinecard_uid: card.pipelinecard_uid,
                 artifact_uris: card.artifact_uris,

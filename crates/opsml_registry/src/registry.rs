@@ -279,6 +279,17 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
+    /// Update card with server response.
+    /// These are attributes that are overwritten and set by the server
+    ///
+    /// # Arguments
+    ///
+    /// * `response` - CreateCardResponse
+    /// * `card` - Card to update
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
     fn update_card_with_server_response(
         response: &CreateCardResponse,
@@ -290,11 +301,25 @@ impl CardRegistry {
             RegistryError::Error("Failed to set uid".to_string())
         })?;
 
-        // update verions
+        // update version
         card.setattr("version", response.version.clone())
             .map_err(|e| {
                 error!("Failed to set version: {}", e);
                 RegistryError::Error("Failed to set version".to_string())
+            })?;
+
+        // update created_at
+        card.setattr("created_at", response.created_at.clone())
+            .map_err(|e| {
+                error!("Failed to set created_at: {}", e);
+                RegistryError::Error("Failed to set created_at".to_string())
+            })?;
+
+        // update app_env
+        card.setattr("app_env", response.app_env.clone())
+            .map_err(|e| {
+                error!("Failed to set app_env: {}", e);
+                RegistryError::Error("Failed to set app_env".to_string())
             })?;
 
         Ok(())
