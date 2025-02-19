@@ -113,7 +113,7 @@ pub struct DataCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
+
     pub tags: Vec<String>,
     pub data_type: String,
     pub runcard_uid: Option<String>,
@@ -132,7 +132,6 @@ impl Default for DataCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
             tags: Vec::new(),
             data_type: DataType::NotProvided.to_string(),
             runcard_uid: None,
@@ -153,7 +152,6 @@ pub struct ModelCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
     pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
     pub data_type: String,
@@ -175,7 +173,7 @@ impl Default for ModelCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
+
             tags: Vec::new(),
             datacard_uid: None,
             data_type: DataType::NotProvided.to_string(),
@@ -199,7 +197,7 @@ pub struct RunCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
+
     pub tags: Vec<String>,
     pub datacard_uids: Option<Vec<String>>,
     pub modelcard_uids: Option<Vec<String>>,
@@ -219,7 +217,7 @@ impl Default for RunCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
+
             tags: Vec::new(),
             datacard_uids: None,
             modelcard_uids: None,
@@ -241,7 +239,7 @@ pub struct AuditCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
+
     pub tags: Vec<String>,
     pub approved: bool,
     pub datacard_uids: Option<Vec<String>>,
@@ -259,7 +257,7 @@ impl Default for AuditCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
+
             tags: Vec::new(),
             approved: false,
             datacard_uids: None,
@@ -279,7 +277,7 @@ pub struct PipelineCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
+
     pub tags: Vec<String>,
     pub pipeline_code_uri: String,
     pub datacard_uids: Option<Vec<String>>,
@@ -297,7 +295,7 @@ impl Default for PipelineCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
+
             tags: Vec::new(),
             pipeline_code_uri: "".to_string(),
             datacard_uids: None,
@@ -423,18 +421,6 @@ impl Card {
             Self::Audit(card) => card.version.as_ref(),
             Self::Pipeline(card) => card.version.as_ref(),
             Self::Project(card) => card.version.as_ref(),
-        }
-    }
-
-    #[getter]
-    pub fn contact(&self) -> &str {
-        match self {
-            Self::Data(card) => card.contact.as_ref(),
-            Self::Model(card) => card.contact.as_ref(),
-            Self::Run(card) => card.contact.as_ref(),
-            Self::Audit(card) => card.contact.as_ref(),
-            Self::Pipeline(card) => card.contact.as_ref(),
-            Self::Project(_) => "",
         }
     }
 
@@ -669,7 +655,6 @@ struct CardTableEntry {
     created_at: String,
     name: String,
     repository: String,
-    contact: String,
     version: String,
     uid: String,
 }
@@ -699,7 +684,6 @@ impl CardList {
                 let created_at = card.created_at().to_string();
                 let name = card.name();
                 let repository = card.repository();
-                let contact = card.contact();
                 let version = card.version();
                 let uid = card.uid();
 
@@ -707,7 +691,6 @@ impl CardList {
                     created_at,
                     name: name.to_string(),
                     repository: repository.to_string(),
-                    contact: contact.to_string(),
                     version: version.to_string(),
                     uid: Colorize::purple(uid),
                 }
@@ -720,7 +703,6 @@ impl CardList {
         table.modify(Columns::single(0), Width::wrap(20).keep_words(true));
         table.modify(Columns::single(1), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(2), Width::wrap(15).keep_words(true));
-        table.modify(Columns::single(3), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(4), Width::wrap(30).keep_words(true));
         table.modify(Columns::single(5), Width::wrap(50));
         table.modify(
