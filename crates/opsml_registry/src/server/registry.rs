@@ -303,7 +303,8 @@ pub mod server_logic {
             Ok(response)
         }
 
-        pub async fn update_card(&self, card: Card) -> Result<(), RegistryError> {
+        pub async fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
+            let card = card.clone();
             let card = match card {
                 Card::Data(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {

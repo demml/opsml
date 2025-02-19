@@ -395,6 +395,13 @@ impl ModelCard {
 
         Ok(Card::Model(record))
     }
+
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+
+        Ok(())
+    }
 }
 
 impl ModelCard {
@@ -649,7 +656,7 @@ impl ModelCard {
                     .await?;
             }
 
-            if onnx {
+            if onnx && save_metadata.onnx_model_uri.is_some() {
                 let onnx_model_uri = if save_metadata.onnx_model_uri.is_none() {
                     return Err(CardError::Error("Onnx model uri not found".to_string()));
                 } else {
@@ -682,7 +689,7 @@ impl ModelCard {
                 }
             }
 
-            if drift_profile {
+            if drift_profile && save_metadata.drift_profile_uri.is_some() {
                 let drift_profile_uri = if save_metadata.drift_profile_uri.is_none() {
                     return Err(CardError::Error("Drift profile uri not found".to_string()));
                 } else {
@@ -695,7 +702,7 @@ impl ModelCard {
                 fs.lock().unwrap().get(&lpath, &rpath, false).await?;
             }
 
-            if sample_data {
+            if sample_data && save_metadata.sample_data_uri.is_some() {
                 let sample_data_uri = if save_metadata.sample_data_uri.is_none() {
                     return Err(CardError::Error("Sample data uri not found".to_string()));
                 } else {

@@ -171,7 +171,7 @@ impl CardRegistry {
                 // (1) creates new version
                 // (2) Inserts card record into db
                 // (3) Creates encryption key and returns it
-                let create_response = Self::register_card_with_db(
+                let create_response = Self::_register_card(
                     &mut self.registry,
                     &card,
                     &self.registry_type,
@@ -184,11 +184,11 @@ impl CardRegistry {
                 // Update card attributes
                 Self::update_card_with_server_response(&create_response, card)?;
 
-                // Save card artifacts to temp path (returns metadata to store in registry)
+                // Save card artifacts to temp path
                 let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
 
                 // Save artifacts
-                Self::upload_card_artifacts(tmp_path, &mut self.fs, &create_response).await?;
+                Self::upload_card_artifacts(tmp_path, &mut self.fs, &create_response.key).await?;
 
                 Ok(())
             })
@@ -251,7 +251,7 @@ impl CardRegistry {
         self.runtime
             .block_on(async {
                 // update card
-                Self::delete_card_with_db(&mut self.registry, &card, &self.registry_type).await?;
+                Self::_delete_card(&mut self.registry, &card, &self.registry_type).await?;
 
                 Ok(())
             })
@@ -261,7 +261,19 @@ impl CardRegistry {
     #[pyo3(signature = (card))]
     #[instrument(skip_all)]
     pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
-        Ok(())
+        self.runtime
+            .block_on(async {
+                // update card
+                let key =
+                    Self::_update_card(&mut self.registry, &card, &self.registry_type).await?;
+
+                let tmp_path = Self::save_card(card).await?;
+
+                Self::upload_card_artifacts(tmp_path, &mut self.fs, &key).await?;
+
+                Ok(())
+            })
+            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 }
 
@@ -390,21 +402,53 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
+    async fn save_card(card: &Bound<'_, PyAny>) -> Result<PathBuf, RegistryError> {
+        let tmp_dir = TempDir::new().map_err(|e| {
+            error!("Failed to create temporary directory: {}", e);
+            RegistryError::Error("Failed to create temporary directory".to_string())
+        })?;
+
+        let tmp_path = tmp_dir.into_path();
+
+        card.call_method1("save", (tmp_path.to_path_buf(),))
+            .map_err(|e| {
+                error!("Failed to save card: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+
+        Ok(tmp_path)
+    }
+
+    /// Save card artifacts to storage
+    /// Using a runtime, this method with
+    /// (1) create an artifact key to be used to encrypt data
+    /// (2) save the card to a temporary directory (with encryption)
+    /// (3) Transfer all files in the temporary directory to the storage system
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `card` - Card to save
+    /// * `save_kwargs` - Optional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), RegistryError>` - Result
+    #[instrument(skip_all)]
     async fn upload_card_artifacts(
         path: PathBuf,
         fs: &mut Arc<Mutex<FileSystemStorage>>,
-        card_record: &CreateCardResponse,
+        key: &ArtifactKey,
     ) -> Result<(), RegistryError> {
         // create temp path for saving
-        let encryption_key = card_record
-            .key
+        let encryption_key = key
             .get_decrypt_key()
             .map_err(|e| RegistryError::Error(e.to_string()))?;
 
         encrypt_directory(&path, &encryption_key)?;
         fs.lock()
             .unwrap()
-            .put(&path, &card_record.key.storage_path(), true)
+            .put(&path, &key.storage_path(), true)
             .await?;
 
         println!(
@@ -428,7 +472,7 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn register_card_with_db(
+    async fn _register_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
@@ -478,7 +522,7 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    async fn delete_card_with_db(
+    async fn _delete_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
@@ -498,6 +542,42 @@ impl CardRegistry {
         debug!("Successfully deleted card");
 
         Ok(())
+    }
+
+    async fn _update_card(
+        registry: &mut OpsmlRegistry,
+        card: &Bound<'_, PyAny>,
+        registry_type: &RegistryType,
+    ) -> Result<ArtifactKey, RegistryError> {
+        let registry_card = card
+            .call_method0("get_registry_card")
+            .map_err(|e| {
+                error!("Failed to get registry card: {}", e);
+                RegistryError::Error("Failed to get registry card".to_string())
+            })?
+            .extract::<Card>()
+            .map_err(|e| {
+                error!("Failed to extract registry card: {}", e);
+                RegistryError::Error("Failed to extract registry card".to_string())
+            })?;
+
+        // update card
+        registry.update_card(&registry_card).await?;
+
+        // get key to re-save Card.json
+        let uid = registry_card.uid().to_string();
+        let key = registry
+            .load_card(CardQueryArgs {
+                uid: Some(uid),
+                registry_type: registry_type.clone(),
+                ..Default::default()
+            })
+            .await?;
+
+        println!("...✓ {}", Colorize::green("Updated card"));
+        debug!("Successfully updated card");
+
+        Ok(key)
     }
 
     async fn download_card<'py>(
