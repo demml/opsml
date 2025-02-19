@@ -48,10 +48,13 @@ impl CardRegistry {
 
         // check if registry_type is a valid RegistryType or String
         let registry_type = if registry_type.is_instance_of::<RegistryType>() {
-            registry_type.extract::<RegistryType>().unwrap()
+            registry_type.extract::<RegistryType>().map_err(|e| {
+                error!("Failed to extract registry type: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?
         } else {
             let registry_type = registry_type.extract::<String>().unwrap();
-            RegistryType::from_string(&registry_type).unwrap()
+            RegistryType::from_string(&registry_type)?
         };
 
         // Create a new tokio runtime for the registry (needed for async calls)
