@@ -395,7 +395,7 @@ impl TensorFlowModel {
 
         interface.data_type = metadata.data_type.clone();
 
-        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
     }
 
     /// Converts the model to onnx

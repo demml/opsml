@@ -272,8 +272,7 @@ impl LightningModel {
             self_.as_super().onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
-                let onnx_session = sess.extract::<OnnxSession>().unwrap();
-                onnx_session
+                sess.extract::<OnnxSession>().unwrap()
             })
         };
 
@@ -420,7 +419,7 @@ impl LightningModel {
 
         interface.data_type = metadata.data_type.clone();
 
-        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
     }
 
     /// Converts the model to onnx

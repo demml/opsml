@@ -98,8 +98,8 @@ impl TorchData {
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
+    pub fn save(
+        mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         save_kwargs: Option<DataSaveKwargs>,
@@ -222,7 +222,7 @@ impl TorchData {
             data_type: metadata.data_type.clone(),
         };
 
-        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
     }
 
     pub fn save_data(

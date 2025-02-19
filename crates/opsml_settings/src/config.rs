@@ -200,11 +200,11 @@ fn generate_jwt_secret() -> String {
     // always creates a deterministic key
     // this should be replaced when using AUTH and Encryption in production
     let mut key = [0u8; 32];
-    for i in 0..32 {
-        key[i] = i as u8;
+    for (i, item) in key.iter_mut().enumerate() {
+        *item = i as u8;
     }
 
-    BASE64_STANDARD.encode(&key)
+    BASE64_STANDARD.encode(key)
 }
 
 impl OpsmlConfig {

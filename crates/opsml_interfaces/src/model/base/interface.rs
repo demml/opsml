@@ -153,6 +153,7 @@ pub struct ModelInterfaceMetadata {
 impl ModelInterfaceMetadata {
     #[new]
     #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(),interface_type=ModelInterfaceType::Base, onnx_session=None, extra_metadata=HashMap::new()))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
         task_type: TaskType,
@@ -222,7 +223,7 @@ pub struct ModelInterface {
 #[pymethods]
 impl ModelInterface {
     #[new]
-    #[allow(clippy::too_many_arguments, clippy::unused_variables)]
+    #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (model=None, sample_data=None, task_type=None, schema=None,drift_profile=None, **_kwargs))]
     pub fn new<'py>(
         py: Python,
@@ -424,8 +425,7 @@ impl ModelInterface {
         let onnx_session = self.onnx_session.as_ref().map(|sess| {
             let sess = sess.bind(py);
             // extract OnnxSession from py object
-            let onnx_session = sess.extract::<OnnxSession>().unwrap();
-            onnx_session
+            sess.extract::<OnnxSession>().unwrap()
         });
 
         let metadata = ModelInterfaceMetadata::new(

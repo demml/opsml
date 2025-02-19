@@ -218,7 +218,7 @@ pub struct DataSaveKwargs {
 impl DataSaveKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new<'py>(data: Option<Bound<'py, PyDict>>) -> PyResult<Self> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         // check if onnx is None, PyDict or HuggingFaceOnnxArgs
 
         let data = data.map(|data| data.unbind());
@@ -351,7 +351,7 @@ pub struct DataLoadKwargs {
 impl DataLoadKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new<'py>(data: Option<Bound<'py, PyDict>>) -> PyResult<Self> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         let data = data.map(|data| data.unbind());
 
         Ok(Self { data })

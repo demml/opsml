@@ -525,8 +525,7 @@ impl HuggingFaceModel {
             self_.as_super().onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
-                let onnx_session = sess.extract::<OnnxSession>().unwrap();
-                onnx_session
+                sess.extract::<OnnxSession>().unwrap()
             })
         };
 
@@ -671,7 +670,7 @@ impl HuggingFaceModel {
         interface.model_type = metadata.model_type.clone();
         interface.interface_type = metadata.interface_type.clone();
 
-        Ok(Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)
     }
 
     /// Load the preprocessor from a file
