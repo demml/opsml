@@ -2,7 +2,7 @@ use crate::BaseArgs;
 use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_interfaces::{onnx, ModelInterface};
+use opsml_interfaces::ModelInterface;
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
