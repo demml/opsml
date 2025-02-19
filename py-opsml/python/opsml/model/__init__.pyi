@@ -3,11 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import (
-    ExtraMetadata,
-    FeatureSchema,
-    OnnxSchema,
-)
+from ..core import ExtraMetadata, FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
