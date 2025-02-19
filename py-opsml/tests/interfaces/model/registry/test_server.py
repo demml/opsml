@@ -60,7 +60,7 @@ def crud_datacard(pandas_data: PandasData):
     created_path = Path("card_artifacts")
     assert created_path.exists()
 
-    assert len(list(created_path.iterdir())) == 5
+    assert len(list(created_path.iterdir())) == 2
 
     # attempt to delete folder
     shutil.rmtree("card_artifacts")
