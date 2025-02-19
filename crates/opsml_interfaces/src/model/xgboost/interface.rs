@@ -234,8 +234,7 @@ impl XGBoostModel {
             self_.as_super().onnx_session.as_ref().map(|sess| {
                 let sess = sess.bind(py);
                 // extract OnnxSession from py object
-                let onnx_session = sess.extract::<OnnxSession>().unwrap();
-                onnx_session
+                sess.extract::<OnnxSession>().unwrap()
             })
         };
 
@@ -383,7 +382,7 @@ impl XGBoostModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Ok(Py::new(py, (model_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
     }
 
     /// Save the model to a file

@@ -307,7 +307,7 @@ impl SklearnModel {
             .as_ref()
             .map(|session| Py::new(py, session.clone()).unwrap());
 
-        Ok(Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)
     }
 
     /// Save the preprocessor to a file
@@ -377,7 +377,7 @@ impl SklearnModel {
         new_dict.set_item("params", model.call_method0("get_params")?)?;
         set_sklearn_model_attribute(model, &new_dict)?;
 
-        Ok(pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)?)
+        pyobject_to_json(&new_dict).map_err(OpsmlError::new_err)
     }
 }
 

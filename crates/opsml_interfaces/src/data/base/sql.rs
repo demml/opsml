@@ -110,6 +110,6 @@ impl SqlData {
 
         let data_interface = SqlData {};
 
-        Ok(Py::new(py, (data_interface, interface))?.into_bound_py_any(py)?)
+        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
     }
 }

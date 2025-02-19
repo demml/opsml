@@ -54,6 +54,7 @@ pub struct DataInterfaceMetadata {
 impl DataInterfaceMetadata {
     #[new]
     #[pyo3(signature = (save_metadata, schema=FeatureSchema::default(), extra_metadata=HashMap::new(), sql_logic=SqlLogic::default(),interface_type=DataInterfaceType::Base, dependent_vars=DependentVars::default(), data_splits=DataSplits::default(), data_type=DataType::Base))]
+    #[clippy::too_many_arguments]
     pub fn new(
         save_metadata: DataInterfaceSaveMetadata,
         schema: FeatureSchema,
