@@ -8,14 +8,17 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
+use opsml_auth::permission::UserPermissions;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
 use semver::Version;
+use serde_json::json;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, instrument};
 
@@ -456,8 +459,18 @@ pub async fn update_card(
 #[instrument(skip_all)]
 pub async fn delete_card(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<UidRequest>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<DeleteCardRequest>,
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
+    if state.config.auth_settings.enabled {
+        if !perms.has_delete_permission(&params.repository) {
+            return Err((
+                StatusCode::FORBIDDEN,
+                Json(json!({ "error": "Permission denied" })),
+            ));
+        }
+    }
+
     let table = CardTable::from_registry_type(&params.registry_type);
 
     // delete card

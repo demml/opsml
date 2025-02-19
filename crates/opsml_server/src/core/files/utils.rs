@@ -5,7 +5,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_storage::StorageClientEnum;
 use opsml_types::cards::{CardTable, CardType};
-use opsml_types::contracts::{ArtifactKey, CardQueryArgs};
+use opsml_types::contracts::{card, ArtifactKey, CardQueryArgs};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
 
@@ -86,6 +86,16 @@ pub async fn cleanup_artifacts(
         .map_err(|e| {
             error!("Failed to remove artifact: {}", e);
             ApiError::Error("Failed to remove artifact".to_string())
+        })?;
+
+    // delete key from database
+    let card_type = CardType::from_registry_type(&registry_type);
+    sql_client
+        .delete_artifact_key(&uid, &card_type)
+        .await
+        .map_err(|e| {
+            error!("Failed to delete artifact key: {}", e);
+            ApiError::Error("Failed to delete artifact key".to_string())
         })?;
 
     Ok(())
