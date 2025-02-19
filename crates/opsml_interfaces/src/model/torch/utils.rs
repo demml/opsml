@@ -216,7 +216,7 @@ impl TorchSampleData {
         match self {
             TorchSampleData::Torch(data) => {
                 let bound = data.bind(py);
-                let save_path = bound.call_method("save_data", (path,), kwargs)?;
+                let save_path = bound.call_method("save", (path,), kwargs)?;
                 // convert pyany to pathbuf
                 let save_path = save_path.extract::<PathBuf>()?;
                 Ok(Some(save_path))

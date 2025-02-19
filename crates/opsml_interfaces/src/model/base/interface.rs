@@ -200,7 +200,6 @@ pub struct ModelInterface {
     pub data_type: DataType,
 
     #[pyo3(get, set)]
-    // needs to be string (need to support custom tasks)
     pub task_type: TaskType,
 
     #[pyo3(get, set)]
