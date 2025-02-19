@@ -12,6 +12,9 @@ from opsml.data import (
     DependentVars,
     DataType,
     DataSaveKwargs,
+    ColumnSplit,
+    ColType,
+    Inequality,
 )
 from opsml.core import OpsmlError
 import numpy as np
@@ -92,7 +95,19 @@ def test_data_split(numpy_array: NDArray[np.float64]):
 
 
 def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
-    interface = NumpyData(data=numpy_array)
+    data_split = DataSplit(
+        label="train",
+        indice_split=IndiceSplit(
+            indices=[0, 5, 9],
+        ),
+    )
+
+    interface = NumpyData(
+        data=numpy_array,
+        data_splits=DataSplits(
+            [data_split],
+        ),
+    )
 
     assert interface.data is not None
     assert interface.data_type == DataType.Numpy
@@ -121,9 +136,26 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     interface.schema["numpy_array"].feature_type = "float64"
     interface.schema["numpy_array"].shape = [10, 100]
 
+    data = interface.split_data()
+    assert data["train"].x.shape == (3, 100)
+
 
 def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: Path):
-    interface = PolarsData(data=multi_type_polars_dataframe2)
+    data_split = DataSplit(
+        label="train",
+        column_split=ColumnSplit(
+            column_name="float64",
+            column_value=1.0,
+            column_type=ColType.Builtin,
+        ),
+    )
+    interface = PolarsData(
+        data=multi_type_polars_dataframe2,
+        data_splits=[data_split],
+    )
+
+    split_data = interface.split_data()
+    assert split_data["train"].x.shape == (1, 24)
 
     assert interface.data is not None
     assert interface.data_type == DataType.Polars
@@ -156,7 +188,20 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
 
 
 def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: Path):
-    interface = PandasData(data=pandas_mixed_type_dataframe)
+    data_split = DataSplit(
+        label="train",
+        column_split=ColumnSplit(
+            column_name="year",
+            column_value=2020,
+            column_type=ColType.Builtin,
+            inequality=Inequality.GreaterThanEqual,
+        ),
+    )
+
+    interface = PandasData(
+        data=pandas_mixed_type_dataframe,
+        data_splits=[data_split],
+    )
 
     assert interface.data is not None
     assert interface.data_type == DataType.Pandas
@@ -189,6 +234,9 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: P
 
     with pytest.raises(OpsmlError):
         interface.data = 10
+
+    split_data = interface.split_data()
+    assert split_data["train"].x.shape == (6, 5)
 
 
 def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
