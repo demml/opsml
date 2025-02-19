@@ -30,6 +30,9 @@ def test_client_modelcard(random_forest_classifier: SklearnModel):
             tags=["foo:bar", "baz:qux"],
         )
 
+        card.metadata.runcard_uid = "test"
+        assert card.metadata.runcard_uid == "test"
+
         reg.register_card(card)
         cards = reg.list_cards()
         cards.as_table()

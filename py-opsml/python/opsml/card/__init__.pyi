@@ -5,11 +5,11 @@ from ..core import Description, FeatureSchema, VersionType
 from ..data import (
     DataInterface,
     DataInterfaceSaveMetadata,
-    DataType,
-    DataSaveKwargs,
     DataLoadKwargs,
+    DataSaveKwargs,
+    DataType,
 )
-from ..model import ModelInterface, ModelSaveKwargs, ModelLoadKwargs
+from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
 
 class CardType:
     Data: "CardType"
@@ -288,17 +288,33 @@ class ModelCardMetadata:
     def datacard_uid(self) -> str:
         """Returns the datacard uid"""
 
+    @datacard_uid.setter
+    def datacard_uid(self, datacard_uid: str) -> None:
+        """Set the datacard uid"""
+
     @property
     def runcard_uid(self) -> str:
         """Returns the runcard uid"""
+
+    @runcard_uid.setter
+    def runcard_uid(self, runcard_uid: str) -> None:
+        """Set the runcard uid"""
 
     @property
     def pipelinecard_uid(self) -> str:
         """Returns the runcard uid"""
 
+    @pipelinecard_uid.setter
+    def pipelinecard_uid(self, pipelinecard_uid: str) -> None:
+        """Set the runcard uid"""
+
     @property
     def auditcard_uid(self) -> str:
         """Returns the runcard uid"""
+
+    @auditcard_uid.setter
+    def auditcard_uid(self, auditcard_uid: str) -> None:
+        """Set the runcard uid"""
 
 class ModelCard:
     def __init__(
@@ -463,9 +479,7 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(
-        json_str: str, interface: Optional[ModelInterface] = None
-    ) -> "ModelCard":
+    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -485,19 +499,19 @@ class ModelCard:
         """
 
 class CardRegistry:
-    def __init__(self, registry_type: RegistryType) -> None:
+    def __init__(self, registry_type: RegistryType | str) -> None:
         """Interface for connecting to any of the Card registries
 
         Args:
-            registry_type (RegistryType):
-                The type of registry to connect to
+            registry_type (RegistryType | str):
+                The type of registry to connect to. Can be a `RegistryType` or a string
 
         Returns:
             Instantiated connection to specific Card registry
 
 
         Example:
-            data_registry = CardRegistry(RegistryType.DATA)
+            data_registry = CardRegistry(RegistryType.Data)
             data_registry.list_cards()
 
             or
