@@ -251,9 +251,14 @@ impl HuggingFaceSampleData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let save_path = data.call_method("save", (path,), kwargs)?;
+        let metadata = data.call_method("save", (path,), kwargs)?;
+
         // convert pyany to pathbuf
-        let save_path = save_path.extract::<PathBuf>()?;
+        let save_path = metadata
+            .getattr("save_metadata")?
+            .getattr("data_uri")?
+            .extract::<PathBuf>()?;
+
         Ok(save_path)
     }
 

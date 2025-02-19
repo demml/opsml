@@ -1,4 +1,5 @@
 use crate::BaseArgs;
+use core::task;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
@@ -10,7 +11,7 @@ use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs}
 use opsml_storage::FileSystemStorage;
 use opsml_types::cards::CardType;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
-use opsml_types::{ModelInterfaceType, SaveName, Suffix};
+use opsml_types::{DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType};
 use opsml_utils::{create_tmp_path, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
@@ -141,6 +142,36 @@ impl ModelCard {
             ));
         }
 
+        let interface_type = interface
+            .getattr("interface_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<ModelInterfaceType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let data_type = interface
+            .getattr("data_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<DataType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let model_type = interface
+            .getattr("model_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<ModelType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let task_type = interface
+            .getattr("task_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<TaskType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        let mut metadata = metadata.unwrap_or_default();
+        metadata.interface_metadata.interface_type = interface_type;
+        metadata.interface_metadata.data_type = data_type;
+        metadata.interface_metadata.model_type = model_type;
+        metadata.interface_metadata.task_type = task_type;
+
         Ok(Self {
             interface: Some(
                 interface
@@ -153,7 +184,7 @@ impl ModelCard {
             version: base_args.3,
             uid: base_args.4,
             tags,
-            metadata: metadata.unwrap_or_default(),
+            metadata,
             card_type: CardType::Model,
             to_onnx: to_onnx.unwrap_or(false),
             rt: None,

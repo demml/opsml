@@ -741,6 +741,7 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
+
         let sample_data_uri = self
             .sample_data
             .save_data(py, path, kwargs)

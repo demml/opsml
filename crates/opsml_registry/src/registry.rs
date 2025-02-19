@@ -170,9 +170,6 @@ impl CardRegistry {
                 // Verify card for registration
                 Self::verify_card(&card, &mut self.registry, &self.registry_type).await?;
 
-                // Save card artifacts to temp path (returns metadata to store in registry)
-                let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
-
                 // register card
                 // (1) creates new version
                 // (2) Inserts card record into db
@@ -189,6 +186,9 @@ impl CardRegistry {
 
                 // Update card attributes
                 Self::update_card_with_server_response(&create_response, card)?;
+
+                // Save card artifacts to temp path (returns metadata to store in registry)
+                let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
 
                 // Save artifacts
                 Self::upload_card_artifacts(tmp_path, &mut self.fs, &create_response).await?;
@@ -244,6 +244,21 @@ impl CardRegistry {
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(card)
+    }
+
+    #[pyo3(signature = (card))]
+    #[instrument(skip_all)]
+    pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
+        debug!("Updating card");
+
+        self.runtime
+            .block_on(async {
+                // update card
+                Self::update_card_with_db(&mut self.registry, &card).await?;
+
+                Ok(())
+            })
+            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 }
 
@@ -474,6 +489,31 @@ impl CardRegistry {
         );
 
         Ok(response)
+    }
+
+    #[instrument(skip_all)]
+    async fn update_card_with_db(
+        registry: &mut OpsmlRegistry,
+        card: &Bound<'_, PyAny>,
+    ) -> Result<(), RegistryError> {
+        let registry_card = card
+            .call_method0("get_registry_card")
+            .map_err(|e| {
+                error!("Failed to get registry card: {}", e);
+                RegistryError::Error("Failed to get registry card".to_string())
+            })?
+            .extract::<Card>()
+            .map_err(|e| {
+                error!("Failed to extract registry card: {}", e);
+                RegistryError::Error("Failed to extract registry card".to_string())
+            })?;
+
+        registry.update_card(registry_card).await?;
+
+        println!("...✓ {}", Colorize::green("Updated card"));
+        debug!("Successfully updated card");
+
+        Ok(())
     }
 
     async fn download_card<'py>(

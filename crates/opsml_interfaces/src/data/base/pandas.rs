@@ -3,7 +3,7 @@ use crate::data::{
     DataLoadKwargs, DataSaveKwargs, SqlLogic,
 };
 use crate::types::FeatureSchema;
-use opsml_error::OpsmlError;
+use opsml_error::{InterfaceError, OpsmlError};
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -12,6 +12,7 @@ use scouter_client::{DataProfile, DataProfiler};
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
+use tracing::{error, instrument};
 
 #[pyclass(extends=DataInterface, subclass)]
 #[derive(Debug)]
@@ -91,6 +92,7 @@ impl PandasData {
     }
 
     #[pyo3(signature = (path, save_kwargs=None))]
+    #[instrument(skip_all)]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -110,6 +112,7 @@ impl PandasData {
         } else {
             Some(self_.as_super().save_data_profile(&path)?)
         };
+
         let data_uri = self_.save_data(py, path.clone(), data_kwargs.as_ref())?;
 
         let save_metadata =
@@ -216,11 +219,11 @@ impl PandasData {
         py: Python,
         path: PathBuf,
         kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<PathBuf> {
+    ) -> Result<PathBuf, InterfaceError> {
         // check if data is None
         if self.data.is_none() {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
+            return Err(InterfaceError::Error(
+                "No data detected in interface for saving".to_string(),
             ));
         }
 
@@ -232,7 +235,10 @@ impl PandasData {
             .as_ref()
             .unwrap()
             .call_method(py, "to_parquet", (full_save_path,), kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            .map_err(|e| {
+                error!("Error saving data to parquet: {}", e);
+                InterfaceError::Error(e.to_string())
+            })?;
 
         Ok(save_path)
     }
