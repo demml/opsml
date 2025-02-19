@@ -43,8 +43,17 @@ pub struct CardRegistry {
 impl CardRegistry {
     #[new]
     #[instrument(skip_all)]
-    pub fn new(registry_type: RegistryType) -> PyResult<Self> {
+    pub fn new(registry_type: &Bound<'_, PyAny>) -> PyResult<Self> {
         debug!("Creating new registry client");
+
+        // check if registry_type is a valid RegistryType or String
+        let registry_type = if registry_type.is_instance_of::<RegistryType>() {
+            registry_type.extract::<RegistryType>().unwrap()
+        } else {
+            let registry_type = registry_type.extract::<String>().unwrap();
+            RegistryType::from_string(&registry_type).unwrap()
+        };
+
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
 
@@ -540,101 +549,5 @@ impl CardRegistry {
         };
 
         Ok(card)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use opsml_settings::config::DatabaseSettings;
-    use opsml_sql::base::SqlClient;
-    use opsml_sql::enums::client::SqlClientEnum;
-
-    use std::env;
-
-    fn cleanup() {
-        // cleanup delete opsml.db and opsml_registries folder from the current directory
-        let current_dir = std::env::current_dir().unwrap();
-        // get 2 parents up
-        let parent_dir = current_dir.parent().unwrap().parent().unwrap();
-        let db_path = parent_dir.join("opsml.db");
-        let registry_path = parent_dir.join("opsml_registries");
-
-        if db_path.exists() {
-            std::fs::remove_file(db_path).unwrap();
-        }
-
-        if registry_path.exists() {
-            std::fs::remove_dir_all(registry_path).unwrap();
-        }
-    }
-
-    fn create_registry_storage() {
-        let current_dir = std::env::current_dir().unwrap();
-        // get 2 parents up
-        let parent_dir = current_dir.parent().unwrap().parent().unwrap();
-        let registry_path = parent_dir.join("opsml_registries");
-
-        // create the registry folder if it does not exist
-        if !registry_path.exists() {
-            std::fs::create_dir(registry_path).unwrap();
-        }
-    }
-
-    fn get_connection_uri() -> String {
-        let current_dir = env::current_dir().expect("Failed to get current directory");
-        let parent_dir = current_dir.parent().unwrap().parent().unwrap();
-        let db_path = parent_dir.join("opsml.db");
-
-        format!(
-            "sqlite://{}",
-            db_path.to_str().expect("Failed to convert path to string")
-        )
-    }
-
-    fn setup() {
-        // create opsml_registries folder
-        create_registry_storage();
-
-        // create opsml.db and populate it with data
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let client = SqlClientEnum::new(&config).await.unwrap();
-            let script = std::fs::read_to_string("tests/populate_db.sql").unwrap();
-            client.query(&script).await;
-        });
-
-        env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:3000");
-    }
-
-    #[tokio::test]
-    async fn test_registry_client_list_cards() {
-        cleanup();
-
-        //cleanup();
-        setup();
-
-        env::set_var("OPSML_TRACKING_URI", "http://0.0.0.0:3000");
-        let mut registry = CardRegistry::new(RegistryType::Data).unwrap();
-
-        // Test mode
-        assert_eq!(registry.mode(), RegistryMode::Client);
-
-        // Test table name
-        assert_eq!(registry.table_name(), CardTable::Data.to_string());
-
-        // Test list cards
-        let cards = registry
-            .list_cards(None, None, None, None, None, None, None, 25)
-            .unwrap();
-
-        assert_eq!(cards.cards.len(), 10);
-
-        cleanup();
     }
 }

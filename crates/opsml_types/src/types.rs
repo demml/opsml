@@ -26,6 +26,42 @@ pub enum RegistryType {
     ArtifactKey,
 }
 
+impl Display for RegistryType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegistryType::Data => write!(f, "data"),
+            RegistryType::Model => write!(f, "model"),
+            RegistryType::Run => write!(f, "run"),
+            RegistryType::Project => write!(f, "project"),
+            RegistryType::Audit => write!(f, "audit"),
+            RegistryType::Pipeline => write!(f, "pipeline"),
+            RegistryType::Metrics => write!(f, "metrics"),
+            RegistryType::HardwareMetrics => write!(f, "hardware_metrics"),
+            RegistryType::Parameters => write!(f, "parameters"),
+            RegistryType::Users => write!(f, "users"),
+            RegistryType::ArtifactKey => write!(f, "artifact_key"),
+        }
+    }
+}
+impl RegistryType {
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s {
+            "data" => Some(RegistryType::Data),
+            "model" => Some(RegistryType::Model),
+            "run" => Some(RegistryType::Run),
+            "project" => Some(RegistryType::Project),
+            "audit" => Some(RegistryType::Audit),
+            "pipeline" => Some(RegistryType::Pipeline),
+            "metrics" => Some(RegistryType::Metrics),
+            "hardware_metrics" => Some(RegistryType::HardwareMetrics),
+            "parameters" => Some(RegistryType::Parameters),
+            "users" => Some(RegistryType::Users),
+            "artifact_key" => Some(RegistryType::ArtifactKey),
+            _ => None,
+        }
+    }
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum StorageType {
