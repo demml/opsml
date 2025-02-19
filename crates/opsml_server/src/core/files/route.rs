@@ -42,7 +42,7 @@ async fn log_operation(
         .to_str()
         .map_err(|e| ServerError::Error(e.to_string()))?;
 
-    let _ = sql_client
+    sql_client
         .insert_operation(username, access_type, access_location)
         .await?;
 

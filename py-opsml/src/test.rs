@@ -1,20 +1,23 @@
 use pyo3::prelude::*;
-use std::sync::Arc;
-use std::thread::sleep;
-use std::time::Duration;
 
+#[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
-
+#[cfg(feature = "server")]
+use std::sync::Arc;
+#[cfg(feature = "server")]
+use std::thread::sleep;
+#[cfg(feature = "server")]
+use std::time::Duration;
 #[cfg(feature = "server")]
 use tokio::{runtime::Runtime, sync::Mutex, task::JoinHandle};
 
 #[pyclass]
+#[allow(dead_code)]
 pub struct OpsmlTestServer {
     #[cfg(feature = "server")]
     handle: Arc<Mutex<Option<JoinHandle<()>>>>,
     #[cfg(feature = "server")]
     runtime: Arc<Runtime>,
-
     cleanup: bool,
 }
 
@@ -41,9 +44,9 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            return Err(opsml_error::OpsmlError::new_err(
+            Err(opsml_error::OpsmlError::new_err(
                 "Opsml Server feature not enabled",
-            ));
+            ))
         }
     }
 
@@ -86,9 +89,9 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            return Err(opsml_error::OpsmlError::new_err(
+            Err(opsml_error::OpsmlError::new_err(
                 "Opsml Server feature not enabled",
-            ));
+            ))
         }
     }
 
@@ -109,9 +112,9 @@ impl OpsmlTestServer {
         }
         #[cfg(not(feature = "server"))]
         {
-            return Err(opsml_error::OpsmlError::new_err(
+            Err(opsml_error::OpsmlError::new_err(
                 "Opsml Server feature not enabled",
-            ));
+            ))
         }
     }
 
