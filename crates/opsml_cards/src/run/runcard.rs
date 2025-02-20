@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::error;
+use tracing::{error, info};
 
 #[pyclass]
 pub struct RunCard {
@@ -100,4 +100,52 @@ impl RunCard {
             artifacts: Vec::new(),
         })
     }
+
+    #[staticmethod]
+    #[pyo3(signature = (repository=None, name=None, log_hardware=None, code_dir=None))]
+    pub fn start_run<'py>(
+        py: Python<'py>,
+        repository: Option<&str>,
+        name: Option<&str>,
+        log_hardware: Option<bool>,
+        code_dir: Option<&str>,
+    ) -> PyResult<Bound<'py, RunContext>> {
+        let run = Self::new(py, repository, name, None, None, None)?;
+
+        let _hardware = log_hardware.unwrap_or(false);
+        let _code_dir = code_dir.unwrap_or("");
+
+        // Return the RunCard wrapped in a PyRef which implements context manager protocol
+        let context = RunContext { run };
+        Ok(Py::new(py, context)?.bind(py).clone())
+    }
 }
+
+#[pyclass]
+pub struct RunContext {
+    run: RunCard,
+}
+
+#[pymethods]
+impl RunContext {
+    fn __enter__(slf: PyRef<'_, Self>) -> PyResult<PyRef<'_, Self>> {
+        info!("Starting run {} in context", slf.run.uid);
+        Ok(slf)
+    }
+
+    fn __exit__(
+        &self,
+        _exc_type: PyObject,
+        _exc_value: PyObject,
+        _traceback: PyObject,
+    ) -> PyResult<bool> {
+        println!("Exiting the context");
+
+        Ok(false) // Return false to propagate exceptions
+    }
+}
+
+//run_name: str | None = None,
+//log_hardware: bool = False,
+//hardware_interval: int = _DEFAULT_INTERVAL,
+//code_dir: str | Path | None = None
