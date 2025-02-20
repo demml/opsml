@@ -224,22 +224,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "arrayref"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
-
-[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
-
-[[package]]
-name = "arrayvec"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
 name = "asn1-rs"
@@ -1182,20 +1170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "blake3"
-version = "1.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8ee0c1824c4dea5b5f81736aff91bae041d2c07ee1192bec91054e10e3e601e"
-dependencies = [
- "arrayref",
- "arrayvec 0.7.6",
- "cc",
- "cfg-if",
- "constant_time_eq",
- "memmap2",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1494,12 +1468,6 @@ name = "const_fn"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f8a2ca5ac02d09563609681103aada9e1777d54fc57a5acd7a41404f9c93b6e"
-
-[[package]]
-name = "constant_time_eq"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 
 [[package]]
 name = "cookie"
@@ -3124,15 +3092,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
-name = "memmap2"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd3f7eed9d3848f8b98834af67102b720745c4ec028fcd0aa0239277e7de374f"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "memoffset"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3592,40 +3551,29 @@ dependencies = [
  "opsml-crypt",
  "opsml-error",
  "opsml-interfaces",
- "opsml-semver",
- "opsml-settings",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
  "pyo3",
- "rayon",
  "serde",
  "serde_json",
  "sysinfo",
- "tempfile",
  "tokio",
  "tracing",
- "walkdir",
 ]
 
 [[package]]
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "bytes",
- "indicatif",
  "mockito",
- "opsml-colors",
  "opsml-crypt",
  "opsml-error",
  "opsml-semver",
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "pyo3",
  "reqwest",
- "reqwest-middleware",
  "serde",
  "serde_json",
  "serde_qs 0.13.0",
@@ -3672,7 +3620,6 @@ dependencies = [
 name = "opsml-interfaces"
 version = "0.1.0"
 dependencies = [
- "opsml-colors",
  "opsml-error",
  "opsml-types",
  "opsml-utils",
@@ -3690,13 +3637,11 @@ dependencies = [
 name = "opsml-registry"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "opsml-cards",
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",
- "opsml-interfaces",
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
@@ -3704,16 +3649,11 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
- "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "semver",
- "serde",
- "serde_json",
- "serde_qs 0.13.0",
  "sqlx",
  "tempfile",
  "tokio",
  "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -3750,28 +3690,22 @@ name = "opsml-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "axum",
  "axum-extra",
- "bytes",
- "futures",
  "http-body-util",
  "mockall",
  "mockito",
  "opsml-auth",
- "opsml-cards",
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",
- "opsml-registry",
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
- "password-auth",
  "rand 0.8.5",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "semver",
@@ -3780,14 +3714,11 @@ dependencies = [
  "serde_qs 0.13.0",
  "sqlx",
  "tempfile",
- "thiserror 2.0.11",
- "time",
  "tokio",
  "tokio-util",
  "tower 0.4.13",
  "tower-http",
  "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -3799,7 +3730,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
- "rand 0.8.5",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "serde",
 ]
@@ -3816,7 +3746,6 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "semver",
  "serde",
  "serde_json",
@@ -3834,20 +3763,15 @@ dependencies = [
  "async-trait",
  "aws-config",
  "aws-sdk-s3",
- "aws-smithy-types",
- "aws-types",
- "azure_core",
  "azure_identity",
  "azure_storage",
  "azure_storage_blobs",
  "base64 0.22.1",
- "blake3",
  "bytes",
  "futures",
  "futures-util",
  "google-cloud-auth",
  "google-cloud-storage",
- "google-cloud-token",
  "indicatif",
  "mockall",
  "mockito",
@@ -3857,12 +3781,8 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "pyo3",
  "rand 0.8.5",
- "rayon",
  "reqwest",
- "reqwest-middleware",
- "serde",
  "serde_json",
  "serde_qs 0.13.0",
  "tempfile",
@@ -3880,7 +3800,6 @@ version = "0.1.0"
 dependencies = [
  "clap 4.5.27",
  "opsml-colors",
- "opsml-types",
  "rayon",
  "tabled",
  "walkdir",
@@ -3890,9 +3809,7 @@ dependencies = [
 name = "opsml-types"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "chrono",
- "colored_json",
  "opsml-colors",
  "opsml-crypt",
  "opsml-error",
@@ -3900,10 +3817,8 @@ dependencies = [
  "opsml-utils",
  "pyo3",
  "serde",
- "serde_json",
  "tabled",
  "tracing",
- "walkdir",
 ]
 
 [[package]]
@@ -3913,7 +3828,6 @@ dependencies = [
  "chrono",
  "colored_json",
  "indicatif",
- "opsml-colors",
  "opsml-error",
  "pyo3",
  "regex",
@@ -4410,8 +4324,6 @@ dependencies = [
  "opsml-semver",
  "opsml-server",
  "opsml-settings",
- "opsml-storage",
- "opsml-todo",
  "opsml-types",
  "opsml-utils",
  "pyo3",
@@ -6544,7 +6456,7 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6cbce692ab4ca2f1f3047fcf732430249c0e971bfdd2b234cf2c47ad93af5983"
 dependencies = [
- "arrayvec 0.5.2",
+ "arrayvec",
  "utf8parse",
  "vte_generate_state_changes",
 ]

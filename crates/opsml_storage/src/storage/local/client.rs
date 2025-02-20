@@ -3,7 +3,6 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use blake3;
 use futures_util::stream::Stream;
 use futures_util::task::{Context, Poll};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -16,7 +15,7 @@ use opsml_types::{
     StorageType,
 };
 use reqwest::multipart::{Form, Part};
-use std::fs::{self, File};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::time::SystemTime;
@@ -179,43 +178,6 @@ impl LocalMultiPartUpload {
 #[derive(Clone)]
 pub struct LocalStorageClient {
     pub bucket: PathBuf,
-}
-
-impl LocalStorageClient {
-    #[instrument(skip(self, path))]
-    fn calculate_file_checksum(&self, path: &Path) -> Result<String, StorageError> {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update_mmap(path).map_err(|e| {
-            error!("Failed to read file: {}", e);
-            StorageError::Error(format!("Failed to read file: {}", e))
-        })?;
-
-        Ok(hasher.finalize().to_hex().to_string())
-    }
-
-    #[instrument(skip(self, path))]
-    fn sync_find(&self, path: &Path) -> Result<Vec<PathBuf>, StorageError> {
-        let mut files = Vec::new();
-        if !path.exists() {
-            return Ok(files);
-        }
-
-        for entry in WalkDir::new(path) {
-            let entry = entry.map_err(|e| {
-                error!("Unable to read directory: {}", e);
-                StorageError::Error(format!("Unable to read directory: {}", e))
-            })?;
-            if entry.file_type().is_file() {
-                files.push(entry.path().to_path_buf());
-            }
-        }
-
-        Ok(files)
-    }
-
-    pub fn open(&self, path: &Path) -> Result<File, StorageError> {
-        File::open(path).map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))
-    }
 }
 
 #[async_trait]
