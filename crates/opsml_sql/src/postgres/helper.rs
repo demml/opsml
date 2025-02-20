@@ -164,20 +164,6 @@ impl PostgresQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_project_id_query() -> String {
-        format!(
-            "WITH max_project AS (
-                SELECT MAX(project_id) AS max_id FROM {}
-            )
-            SELECT COALESCE(
-                (SELECT project_id FROM {} WHERE name = $1 AND repository = $2),
-                (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
-            ) AS project_id",
-            CardTable::Project,
-            CardTable::Project
-        )
-        .to_string()
-    }
     pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
@@ -423,26 +409,6 @@ impl PostgresQueryHelper {
 
         query
     }
-    pub fn get_projectcard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-        uid, 
-        name, 
-        repository, 
-        app_env,
-        project_id, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        pre_tag,
-        build_tag,
-        username) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
-            CardTable::Project
-        )
-        .to_string()
-    }
 
     pub fn get_datacard_insert_query() -> String {
         format!(
@@ -459,13 +425,12 @@ impl PostgresQueryHelper {
         interface_type, 
         tags, 
         runcard_uid, 
-        pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Data
         )
         .to_string()
@@ -488,13 +453,12 @@ impl PostgresQueryHelper {
         task_type, 
         tags, 
         runcard_uid, 
-        pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", CardTable::Model).to_string()
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model).to_string()
     }
 
     pub fn get_runcard_insert_query() -> String {
@@ -508,18 +472,15 @@ impl PostgresQueryHelper {
         minor, 
         patch, 
         version, 
-        project, 
         tags, 
         datacard_uids, 
         modelcard_uids, 
-        pipelinecard_uid, 
-        artifact_uris, 
-        compute_environment, 
+        runcard_uids,
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
             CardTable::Run
         )
         .to_string()
@@ -551,32 +512,6 @@ impl PostgresQueryHelper {
         .to_string()
     }
 
-    pub fn get_pipelinecard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        tags, 
-        pipeline_code_uri, 
-        datacard_uids, 
-        modelcard_uids, 
-        runcard_uids,
-        pre_tag, 
-        build_tag,
-        username
-         ) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
-            CardTable::Pipeline
-        )
-        .to_string()
-    }
-
     pub fn get_datacard_update_query() -> String {
         format!(
             "UPDATE {} SET 
@@ -591,12 +526,11 @@ impl PostgresQueryHelper {
         interface_type = $9, 
         tags = $10, 
         runcard_uid = $11, 
-        pipelinecard_uid = $12, 
-        auditcard_uid = $13, 
-        pre_tag = $14, 
-        build_tag = $15,
-        username = $16
-        WHERE uid = $17",
+        auditcard_uid = $12, 
+        pre_tag = $13, 
+        build_tag = $14,
+        username = $15
+        WHERE uid = $16",
             CardTable::Data
         )
         .to_string()
@@ -619,12 +553,11 @@ impl PostgresQueryHelper {
         task_type = $12, 
         tags = $13, 
         runcard_uid = $14, 
-        pipelinecard_uid = $15, 
-        auditcard_uid = $16, 
-        pre_tag = $17, 
-        build_tag = $18,
-        username = $19
-        WHERE uid = $20",
+        auditcard_uid = $15, 
+        pre_tag = $16, 
+        build_tag = $17,
+        username = $18
+        WHERE uid = $19",
             CardTable::Model
         )
         .to_string()
@@ -640,17 +573,14 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        project = $8, 
-        tags = $9, 
-        datacard_uids = $10, 
-        modelcard_uids = $11, 
-        pipelinecard_uid = $12, 
-        artifact_uris = $13, 
-        compute_environment = $14, 
-        pre_tag = $15, 
-        build_tag = $16,
-        username = $17
-        WHERE uid = $18",
+        tags = $8, 
+        datacard_uids = $9, 
+        modelcard_uids = $10, 
+        runcard_uids = $11, 
+        pre_tag = $12, 
+        build_tag = $13,
+        username = $14
+        WHERE uid = $15",
             CardTable::Run
         )
         .to_string()
@@ -676,30 +606,6 @@ impl PostgresQueryHelper {
         username = $15
         WHERE uid = $16",
             CardTable::Audit
-        )
-        .to_string()
-    }
-
-    pub fn get_pipelinecard_update_query() -> String {
-        format!(
-            "UPDATE {} SET 
-        app_env = $1, 
-        name = $2, 
-        repository = $3, 
-        major = $4, 
-        minor = $5, 
-        patch = $6, 
-        version = $7, 
-        tags = $8, 
-        pipeline_code_uri = $9, 
-        datacard_uids = $10, 
-        modelcard_uids = $11, 
-        runcard_uids = $12, 
-        pre_tag = $13, 
-        build_tag = $14,
-        username = $15
-        WHERE uid = $16",
-            CardTable::Pipeline
         )
         .to_string()
     }
