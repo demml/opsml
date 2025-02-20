@@ -31,7 +31,7 @@ impl Progress {
     pub fn finish(&self) -> Result<(), ProgressError> {
         self.multi_progress
             .clear()
-            .map_err(|e| ProgressError::Error(format!("Failed to clear progress bar: {}", e)))?;
+            .map_err(|e| ProgressError::Error(format!("Failed to clear progress bar: {e}")))?;
 
         Ok(())
     }

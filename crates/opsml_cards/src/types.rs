@@ -89,7 +89,7 @@ impl Description {
             }
         }
         // raise error if file not found
-        let msg = format!("File not found: {}", filepath);
+        let msg = format!("File not found: {filepath}");
         Err(CardError::Error(msg))
     }
 }
@@ -297,13 +297,14 @@ impl BaseArgs {
     }
 
     fn get_value(key: &str, value: Option<&str>) -> Result<String, CardError> {
-        let env_key = format!("OPSML_RUNTIME_{}", key.to_uppercase());
+        let uppercase = key.to_uppercase();
+        let env_key = format!("OPSML_RUNTIME_{uppercase}");
         let env_val = env::var(&env_key).ok();
 
         value
             .as_ref()
             .map(|s| s.to_string())
             .or(env_val)
-            .ok_or_else(|| CardError::Error(format!("{} not provided", key)))
+            .ok_or_else(|| CardError::Error(format!("{key} not provided")))
     }
 }

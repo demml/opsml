@@ -181,215 +181,155 @@ impl VersionParser {
         }
     }
 
+    fn parse_version(version: &str) -> Result<Version, VersionError> {
+        Version::parse(version).map_err(|e| VersionError::InvalidVersion(e.to_string()))
+    }
+
+    fn create_bounds(
+        lower: &str,
+        upper: &str,
+        parser_type: VersionParser,
+        num_parts: usize,
+        no_upper_bound: bool,
+    ) -> Result<VersionBounds, VersionError> {
+        Ok(VersionBounds {
+            lower_bound: Self::parse_version(lower)?,
+            upper_bound: Self::parse_version(upper)?,
+            no_upper_bound,
+            parser_type,
+            num_parts,
+        })
+    }
+
     pub fn get_version_to_search(version: &str) -> Result<VersionBounds, VersionError> {
         let parser = VersionParser::new(version)?;
 
         let cleaned_version = parser.remove_version_prefix(version);
 
         // determine number of "." in the version and split into int parts
-        let version_parts = if !cleaned_version.is_empty() {
-            cleaned_version
-                .split(".")
-                .filter(|v| !v.is_empty())
-                .map(|v| v.parse::<u64>())
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(|e| VersionError::InvalidVersion(e.to_string()))?
-        } else {
-            vec![]
-        };
+        let version_parts = cleaned_version
+            .split('.')
+            .filter(|v| !v.is_empty())
+            .map(str::parse::<u64>)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?;
 
         let num_parts = version_parts.len();
 
         match parser {
-            VersionParser::Star => {
-                if num_parts == 0 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse("0.0.0")
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse("0.0.0")
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: true,
-                        parser_type: VersionParser::Star,
-                        num_parts,
-                    })
-                } else if num_parts == 1 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!("{}.0.0", version_parts[0]))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!("{}.0.0", version_parts[0] + 1))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Star,
-                        num_parts,
-                    })
-                } else if num_parts == 2 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0], version_parts[1]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0],
-                            version_parts[1] + 1
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Star,
-                        num_parts,
-                    })
-                } else if num_parts == 3 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.{}",
-                            version_parts[0], version_parts[1], version_parts[2]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.{}",
-                            version_parts[0],
-                            version_parts[1],
-                            version_parts[2] + 1
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Star,
-                        num_parts,
-                    })
-                } else {
-                    Err(VersionError::InvalidVersion(
-                        "Invalid version provided with * syntax".to_string(),
-                    ))
-                }
-            }
-            VersionParser::Tilde => {
-                if num_parts == 1 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!("{}.0.0", version_parts[0]))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!("{}.0.0", version_parts[0] + 1))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Tilde,
-                        num_parts,
-                    })
-                } else if num_parts == 2 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0], version_parts[1]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0],
-                            version_parts[1] + 1
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Tilde,
-                        num_parts,
-                    })
-                } else if num_parts >= 3 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.{}",
-                            version_parts[0], version_parts[1], version_parts[2]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0],
-                            version_parts[1] + 1,
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Tilde,
-                        num_parts,
-                    })
-                } else {
-                    Err(VersionError::InvalidVersion(
-                        "Invalid version provided with ~ syntax".to_string(),
-                    ))
-                }
-            }
+            VersionParser::Star => match num_parts {
+                0 => Self::create_bounds("0.0.0", "0.0.0", VersionParser::Star, num_parts, true),
+                1 => Self::create_bounds(
+                    &format!("{}.0.0", version_parts[0]),
+                    &format!("{}.0.0", version_parts[0] + 1),
+                    VersionParser::Star,
+                    num_parts,
+                    false,
+                ),
+                2 => Self::create_bounds(
+                    &format!("{}.{}.0", version_parts[0], version_parts[1]),
+                    &format!("{}.{}.0", version_parts[0], version_parts[1] + 1),
+                    VersionParser::Star,
+                    num_parts,
+                    false,
+                ),
+                3 => Self::create_bounds(
+                    &format!(
+                        "{}.{}.{}",
+                        version_parts[0], version_parts[1], version_parts[2]
+                    ),
+                    &format!(
+                        "{}.{}.{}",
+                        version_parts[0],
+                        version_parts[1],
+                        version_parts[2] + 1
+                    ),
+                    VersionParser::Star,
+                    num_parts,
+                    false,
+                ),
+                _ => Err(VersionError::InvalidVersion(
+                    "Invalid version provided with * syntax".to_string(),
+                )),
+            },
+            VersionParser::Tilde => match num_parts {
+                1 => Self::create_bounds(
+                    &format!("{}.0.0", version_parts[0]),
+                    &format!("{}.0.0", version_parts[0] + 1),
+                    VersionParser::Tilde,
+                    num_parts,
+                    false,
+                ),
+                2 => Self::create_bounds(
+                    &format!("{}.{}.0", version_parts[0], version_parts[1]),
+                    &format!("{}.{}.0", version_parts[0], version_parts[1] + 1),
+                    VersionParser::Tilde,
+                    num_parts,
+                    false,
+                ),
+                _ => Self::create_bounds(
+                    &format!(
+                        "{}.{}.{}",
+                        version_parts[0], version_parts[1], version_parts[2]
+                    ),
+                    &format!("{}.{}.0", version_parts[0], version_parts[1] + 1),
+                    VersionParser::Tilde,
+                    num_parts,
+                    false,
+                ),
+            },
             VersionParser::Caret => {
                 if num_parts >= 2 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
+                    Self::create_bounds(
+                        &format!(
                             "{}.{}.{}",
                             version_parts[0], version_parts[1], version_parts[2]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0],
-                            version_parts[1] + 1,
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Caret,
+                        ),
+                        &format!("{}.{}.0", version_parts[0], version_parts[1] + 1),
+                        VersionParser::Caret,
                         num_parts,
-                    })
+                        false,
+                    )
                 } else {
                     Err(VersionError::InvalidVersion(
                         "Invalid version provided with ^ syntax".to_string(),
                     ))
                 }
             }
-            VersionParser::Exact => {
-                if num_parts == 1 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!("{}.0.0", version_parts[0]))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!("{}.0.0", version_parts[0] + 1))
-                            .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Exact,
-                        num_parts,
-                    })
-                } else if num_parts == 2 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0], version_parts[1]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.0",
-                            version_parts[0],
-                            version_parts[1] + 1
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Exact,
-                        num_parts,
-                    })
-                } else if num_parts == 3 {
-                    Ok(VersionBounds {
-                        lower_bound: Version::parse(&format!(
-                            "{}.{}.{}",
-                            version_parts[0], version_parts[1], version_parts[2]
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        upper_bound: Version::parse(&format!(
-                            "{}.{}.{}",
-                            version_parts[0],
-                            version_parts[1],
-                            version_parts[2] + 1
-                        ))
-                        .map_err(|e| VersionError::InvalidVersion(e.to_string()))?,
-                        no_upper_bound: false,
-                        parser_type: VersionParser::Exact,
-                        num_parts,
-                    })
-                } else {
-                    Err(VersionError::InvalidVersion(
-                        "Invalid version provided with exact syntax".to_string(),
-                    ))
-                }
-            }
+            VersionParser::Exact => match num_parts {
+                1 => Self::create_bounds(
+                    &format!("{}.0.0", version_parts[0]),
+                    &format!("{}.0.0", version_parts[0] + 1),
+                    VersionParser::Exact,
+                    num_parts,
+                    false,
+                ),
+                2 => Self::create_bounds(
+                    &format!("{}.{}.0", version_parts[0], version_parts[1]),
+                    &format!("{}.{}.0", version_parts[0], version_parts[1] + 1),
+                    VersionParser::Exact,
+                    num_parts,
+                    false,
+                ),
+                3 => Self::create_bounds(
+                    &format!(
+                        "{}.{}.{}",
+                        version_parts[0], version_parts[1], version_parts[2]
+                    ),
+                    &format!(
+                        "{}.{}.{}",
+                        version_parts[0],
+                        version_parts[1],
+                        version_parts[2] + 1
+                    ),
+                    VersionParser::Exact,
+                    num_parts,
+                    false,
+                ),
+                _ => Err(VersionError::InvalidVersion(
+                    "Invalid version provided with exact syntax".to_string(),
+                )),
+            },
         }
     }
 }
