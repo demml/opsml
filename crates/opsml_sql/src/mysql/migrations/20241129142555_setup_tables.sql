@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     tags JSON,
     data_type VARCHAR(64),
     runcard_uid VARCHAR(64),
-    pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -41,7 +40,6 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     data_type VARCHAR(64),
     model_type VARCHAR(64),
     runcard_uid VARCHAR(64),
-    pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
@@ -64,8 +62,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     tags JSON,
     datacard_uids JSON,
     modelcard_uids JSON,
-    pipelinecard_uid VARCHAR(64),
-    project VARCHAR(64),
+    runcard_uids JSON,
     artifact_uris JSON,
     compute_environment JSON,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -89,44 +86,6 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     runcard_uids JSON,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest'
-);
-
--- PipelineSchema
-CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
-    uid VARCHAR(64) PRIMARY KEY,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(128),
-    repository VARCHAR(128),
-    major INT NOT NULL,
-    minor INT NOT NULL,
-    patch INT NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
-    tags JSON,
-    pipeline_code_uri VARCHAR(256),
-    datacard_uids JSON,
-    modelcard_uids JSON,
-    runcard_uids JSON,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest'
-);
-
--- ProjectSchema
-CREATE TABLE IF NOT EXISTS opsml_project_registry (
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    uid VARCHAR(64),
-    name VARCHAR(128),
-    repository VARCHAR(128),
-    app_env VARCHAR(32) DEFAULT 'development',
-    project_id INT PRIMARY KEY AUTO_INCREMENT,
-    major INT NOT NULL,
-    minor INT NOT NULL,
-    patch INT NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 

@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     tags JSONB DEFAULT '[]',
     data_type VARCHAR(64),
     runcard_uid VARCHAR(64),
-    pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -38,7 +37,6 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     data_type VARCHAR(64),
     model_type VARCHAR(64),
     runcard_uid VARCHAR(64),
-    pipelinecard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
@@ -61,8 +59,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     tags JSONB DEFAULT '[]',
     datacard_uids JSONB,
     modelcard_uids JSONB,
-    pipelinecard_uid VARCHAR(64),
-    project VARCHAR(64),
+    runcard_uids JSONB,
     artifact_uris JSONB,
     compute_environment JSONB,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -89,43 +86,6 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
--- PipelineSchema
-CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
-    uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
-    app_env VARCHAR(32) DEFAULT 'development',
-    name VARCHAR(128),
-    repository VARCHAR(128),
-    major INTEGER NOT NULL,
-    minor INTEGER NOT NULL,
-    patch INTEGER NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
-    tags JSONB DEFAULT '[]',
-    pipeline_code_uri VARCHAR(256),
-    datacard_uids JSONB,
-    modelcard_uids JSONB,
-    runcard_uids JSONB,
-    username VARCHAR(255) NOT NULL DEFAULT 'guest'
-);
-
--- ProjectSchema
-CREATE TABLE IF NOT EXISTS opsml_project_registry (
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
-    uid VARCHAR(64),
-    name VARCHAR(128),
-    repository VARCHAR(128),
-    app_env VARCHAR(32) DEFAULT 'development',
-    project_id SERIAL PRIMARY KEY,
-    major INTEGER NOT NULL,
-    minor INTEGER NOT NULL,
-    patch INTEGER NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
-    username VARCHAR(255) NOT NULL DEFAULT 'guest'
-);
 
 -- MetricSchema
 CREATE TABLE IF NOT EXISTS opsml_run_metrics (

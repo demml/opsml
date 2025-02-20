@@ -2,8 +2,7 @@ use crate::base::SqlClient;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
     AuditCardRecord, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
-    ModelCardRecord, ParameterRecord, PipelineCardRecord, ProjectCardRecord, QueryStats,
-    RunCardRecord, ServerCard, User,
+    ModelCardRecord, ParameterRecord, QueryStats, RunCardRecord, ServerCard, User,
 };
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
@@ -234,40 +233,7 @@ impl SqlClient for MySqlClient {
 
                 return Ok(CardResults::Audit(card));
             }
-            CardTable::Pipeline => {
-                let card: Vec<PipelineCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Pipeline(card));
-            }
-            CardTable::Project => {
-                let card: Vec<ProjectCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-
-                return Ok(CardResults::Project(card));
-            }
             _ => {
                 return Err(SqlError::QueryError(
                     "Invalid table name for query".to_string(),
@@ -294,7 +260,6 @@ impl SqlClient for MySqlClient {
                         .bind(&data.interface_type)
                         .bind(&data.tags)
                         .bind(&data.runcard_uid)
-                        .bind(&data.pipelinecard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
@@ -329,7 +294,6 @@ impl SqlClient for MySqlClient {
                         .bind(&model.task_type)
                         .bind(&model.tags)
                         .bind(&model.runcard_uid)
-                        .bind(&model.pipelinecard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
@@ -357,13 +321,10 @@ impl SqlClient for MySqlClient {
                         .bind(run.minor)
                         .bind(run.patch)
                         .bind(&run.version)
-                        .bind(&run.project)
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.pipelinecard_uid)
-                        .bind(&run.artifact_uris)
-                        .bind(&run.compute_environment)
+                        .bind(&run.runcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -409,64 +370,6 @@ impl SqlClient for MySqlClient {
                     ));
                 }
             },
-            CardTable::Pipeline => match card {
-                ServerCard::Pipeline(pipeline) => {
-                    let query = MySQLQueryHelper::get_pipelinecard_insert_query();
-                    sqlx::query(&query)
-                        .bind(&pipeline.uid)
-                        .bind(&pipeline.app_env)
-                        .bind(&pipeline.name)
-                        .bind(&pipeline.repository)
-                        .bind(pipeline.major)
-                        .bind(pipeline.minor)
-                        .bind(pipeline.patch)
-                        .bind(&pipeline.version)
-                        .bind(&pipeline.tags)
-                        .bind(&pipeline.pipeline_code_uri)
-                        .bind(&pipeline.datacard_uids)
-                        .bind(&pipeline.modelcard_uids)
-                        .bind(&pipeline.runcard_uids)
-                        .bind(&pipeline.pre_tag)
-                        .bind(&pipeline.build_tag)
-                        .bind(&pipeline.username)
-                        .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-                    Ok(())
-                }
-                _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
-                }
-            },
-            CardTable::Project => match card {
-                ServerCard::Project(project) => {
-                    let query = MySQLQueryHelper::get_projectcard_insert_query();
-                    sqlx::query(&query)
-                        .bind(&project.uid)
-                        .bind(&project.name)
-                        .bind(&project.repository)
-                        .bind(&project.app_env)
-                        .bind(project.project_id)
-                        .bind(project.major)
-                        .bind(project.minor)
-                        .bind(project.patch)
-                        .bind(&project.version)
-                        .bind(&project.pre_tag)
-                        .bind(&project.build_tag)
-                        .bind(&project.username)
-                        .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-                    Ok(())
-                }
-                _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
-                }
-            },
 
             _ => {
                 return Err(SqlError::QueryError(
@@ -494,7 +397,6 @@ impl SqlClient for MySqlClient {
                         .bind(&data.interface_type)
                         .bind(&data.tags)
                         .bind(&data.runcard_uid)
-                        .bind(&data.pipelinecard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
@@ -529,7 +431,6 @@ impl SqlClient for MySqlClient {
                         .bind(&model.task_type)
                         .bind(&model.tags)
                         .bind(&model.runcard_uid)
-                        .bind(&model.pipelinecard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
@@ -557,13 +458,10 @@ impl SqlClient for MySqlClient {
                         .bind(run.minor)
                         .bind(run.patch)
                         .bind(&run.version)
-                        .bind(&run.project)
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.pipelinecard_uid)
-                        .bind(&run.artifact_uris)
-                        .bind(&run.compute_environment)
+                        .bind(&run.runcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -599,37 +497,6 @@ impl SqlClient for MySqlClient {
                         .bind(&audit.build_tag)
                         .bind(&audit.username)
                         .bind(&audit.uid)
-                        .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-                    Ok(())
-                }
-                _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
-                }
-            },
-            CardTable::Pipeline => match card {
-                ServerCard::Pipeline(pipeline) => {
-                    let query = MySQLQueryHelper::get_pipelinecard_update_query();
-                    sqlx::query(&query)
-                        .bind(&pipeline.app_env)
-                        .bind(&pipeline.name)
-                        .bind(&pipeline.repository)
-                        .bind(pipeline.major)
-                        .bind(pipeline.minor)
-                        .bind(pipeline.patch)
-                        .bind(&pipeline.version)
-                        .bind(&pipeline.tags)
-                        .bind(&pipeline.pipeline_code_uri)
-                        .bind(&pipeline.datacard_uids)
-                        .bind(&pipeline.modelcard_uids)
-                        .bind(&pipeline.runcard_uids)
-                        .bind(&pipeline.pre_tag)
-                        .bind(&pipeline.build_tag)
-                        .bind(&pipeline.username)
-                        .bind(&pipeline.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -746,19 +613,6 @@ impl SqlClient for MySqlClient {
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
         Ok(())
-    }
-
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError> {
-        let query = MySQLQueryHelper::get_project_id_query();
-
-        let project_id: i32 = sqlx::query_scalar(&query)
-            .bind(project_name)
-            .bind(repository)
-            .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-
-        Ok(project_id)
     }
 
     async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
@@ -1103,7 +957,6 @@ impl SqlClient for MySqlClient {
 mod tests {
 
     use super::*;
-    use crate::schemas::schema::ProjectCardRecord;
     use opsml_types::{contracts::Operation, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
@@ -1438,29 +1291,6 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-
-        // check pipeline card
-        let pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
     }
 
     #[tokio::test]
@@ -1618,47 +1448,6 @@ mod tests {
         if let CardResults::Audit(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedAuditName");
         }
-
-        // Test PipelineCardRecord
-        let mut pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        pipeline_card.name = "UpdatedPipelineName".to_string();
-        let updated_card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .update_card(&CardTable::Pipeline, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Pipeline(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedPipelineName");
-        }
     }
 
     #[tokio::test]
@@ -1794,51 +1583,6 @@ mod tests {
             .unwrap();
 
         assert_eq!(cards.len(), 9);
-    }
-
-    #[tokio::test]
-    async fn test_mysql_project_id() {
-        let client = db_client().await;
-
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
-        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
-
-        // insert project id
-        let project = ProjectCardRecord::new(
-            "test".to_string(),
-            "repo".to_string(),
-            Version::new(1, 0, 0),
-            1,
-            "guest".to_string(),
-        );
-        client
-            .insert_card(&CardTable::Project, &ServerCard::Project(project))
-            .await
-            .unwrap();
-
-        // get project id
-
-        let project_id = client.get_project_id("test", "repo").await.unwrap();
-        assert_eq!(project_id, 1);
-
-        // get next project id
-        let project_id = client.get_project_id("test1", "repo").await.unwrap();
-
-        assert_eq!(project_id, 2);
-
-        let args = CardQueryArgs {
-            uid: None,
-            name: Some("test".to_string()),
-            repository: Some("repo".to_string()),
-            ..Default::default()
-        };
-        let cards = client
-            .query_cards(&CardTable::Project, &args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 1);
     }
 
     #[tokio::test]

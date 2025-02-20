@@ -71,7 +71,6 @@ pub async fn insert_card_into_db(
                 client_card.tags,
                 client_card.data_type,
                 client_card.runcard_uid,
-                client_card.pipelinecard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.username,
@@ -88,24 +87,12 @@ pub async fn insert_card_into_db(
                 client_card.data_type,
                 client_card.model_type,
                 client_card.runcard_uid,
-                client_card.pipelinecard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.task_type,
                 client_card.username,
             );
             ServerCard::Model(server_card)
-        }
-
-        Card::Project(client_card) => {
-            let server_card = ProjectCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                version,
-                client_card.project_id,
-                client_card.username,
-            );
-            ServerCard::Project(server_card)
         }
 
         Card::Run(client_card) => {
@@ -116,10 +103,7 @@ pub async fn insert_card_into_db(
                 client_card.tags,
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
-                client_card.pipelinecard_uid,
-                client_card.project,
-                client_card.artifact_uris,
-                client_card.compute_environment,
+                client_card.runcard_uids,
                 client_card.username,
             );
             ServerCard::Run(server_card)

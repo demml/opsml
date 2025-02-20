@@ -54,9 +54,6 @@ pub struct DataCardMetadata {
     pub runcard_uid: Option<String>,
 
     #[pyo3(get, set)]
-    pub pipelinecard_uid: Option<String>,
-
-    #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
 
     pub interface_metadata: DataInterfaceMetadata,
@@ -296,7 +293,6 @@ impl DataCard {
             tags: self.tags.clone(),
             data_type: self.metadata.interface_metadata.data_type.to_string(),
             runcard_uid: self.metadata.runcard_uid.clone(),
-            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),

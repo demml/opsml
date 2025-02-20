@@ -59,9 +59,6 @@ pub struct ModelCardMetadata {
     pub runcard_uid: Option<String>,
 
     #[pyo3(get, set)]
-    pub pipelinecard_uid: Option<String>,
-
-    #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
 
     pub interface_metadata: ModelInterfaceMetadata,
@@ -216,16 +213,6 @@ impl ModelCard {
     #[setter]
     pub fn set_runcard_uid(&mut self, runcard_uid: Option<&str>) {
         self.metadata.runcard_uid = runcard_uid.map(|s| s.to_string());
-    }
-
-    #[getter]
-    pub fn pipelinecard_uid(&self) -> Option<&str> {
-        self.metadata.pipelinecard_uid.as_deref()
-    }
-
-    #[setter]
-    pub fn set_pipelinecard_uid(&mut self, pipelinecard_uid: Option<&str>) {
-        self.metadata.pipelinecard_uid = pipelinecard_uid.map(|s| s.to_string());
     }
 
     #[getter]
