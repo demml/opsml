@@ -943,12 +943,6 @@ mod tests {
             FROM opsml_audit_registry;
 
             DELETE
-            FROM opsml_pipeline_registry;
-
-            DELETE
-            FROM opsml_project_registry;
-
-            DELETE
             FROM opsml_run_metrics;
 
             DELETE
