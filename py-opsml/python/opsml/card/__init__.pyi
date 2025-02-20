@@ -480,9 +480,16 @@ class ComputeEnvironment:
 
     def __str__(self): ...
 
-class RunContext:
-    def __enter__(self) -> "RunContext": ...
+class ActiveRun:
+    def __enter__(self) -> "ActiveRun": ...
     def __exit__(self, exc_type, exc_value, traceback) -> None: ...
+    def start_run(
+        self,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        code_dir: Optional[str] = None,
+        log_hardware: bool = False,
+    ) -> "ActiveRun": ...
     def log_artifact(self, artifact: Any, name: str, description: str) -> None: ...
     def log_artifacts(self, artifacts: Dict[str, Any]) -> None: ...
     def log_metric(
@@ -572,6 +579,10 @@ class RunCard:
         """Returns the tags of the `RuncCard`"""
 
     @property
+    def runcard_uids(self) -> List[str]:
+        """Returns the runcard uids"""
+
+    @property
     def datacard_uids(self) -> List[str]:
         """Returns the datacard uids"""
 
@@ -603,9 +614,9 @@ class RunCard:
     def start_run(
         repository: Optional[str] = None,
         name: Optional[str] = None,
-        log_hardware: bool = False,
         code_dir: Optional[str] = None,
-    ) -> RunContext:
+        log_hardware: bool = False,
+    ) -> ActiveRun:
         """Start a run
 
         Args:
@@ -613,13 +624,13 @@ class RunCard:
                 Repository to associate with `RunCard`
             name (str | None):
                 Name to associate with `RunCard`
-            log_hardware (bool):
-                Whether to log hardware or not
             code_dir (str | None):
                 Directory to log code from
+            log_hardware (bool):
+                Whether to log hardware information or not
 
         Returns:
-            RunContext
+            ActiveRun
         """
 
 class CardRegistry:
