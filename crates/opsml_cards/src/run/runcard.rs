@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tracing::{error, info};
+use tracing::{debug, error};
 
 #[pyclass]
 pub struct RunCard {
@@ -129,7 +129,7 @@ pub struct RunContext {
 #[pymethods]
 impl RunContext {
     fn __enter__(slf: PyRef<'_, Self>) -> PyResult<PyRef<'_, Self>> {
-        info!("Starting run {} in context", slf.run.uid);
+        debug!("Starting run");
         Ok(slf)
     }
 

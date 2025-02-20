@@ -14,6 +14,7 @@ ModelCard = card.ModelCard
 ModelCardMetadata = card.ModelCardMetadata
 RunCard = card.RunCard
 ComputeEnvironment = card.ComputeEnvironment
+RunContext = card.RunContext
 
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "ModelCardMetadata",
     "RunCard",
     "ComputeEnvironment",
+    "RunContext",
 ]
