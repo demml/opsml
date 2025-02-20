@@ -586,7 +586,7 @@ impl FileSystem for AzureFSStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
-        let progress = MultiProgress::new();
+        let progress = MultiProgress::new()?;
 
         if recursive {
             if !stripped_lpath.is_dir() {

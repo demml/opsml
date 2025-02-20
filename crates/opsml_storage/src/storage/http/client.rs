@@ -115,7 +115,7 @@ impl HttpFSStorageClient {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
-        let progress = Progress::new();
+        let progress = Progress::new()?;
 
         if recursive {
             if !lpath.is_dir() {

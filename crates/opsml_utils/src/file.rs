@@ -21,9 +21,9 @@ impl FileUtils {
         // get file name of path
         let path = std::path::Path::new(&filepath)
             .file_name()
-            .unwrap()
+            .ok_or_else(|| OpsmlError::new_err("Invalid file path"))?
             .to_str()
-            .unwrap();
+            .ok_or_else(|| OpsmlError::new_err("Invalid file path"))?;
 
         let current_dir = std::env::current_dir().map_err(OpsmlError::new_err)?;
         // recursively search for file in current directory
@@ -35,7 +35,7 @@ impl FileUtils {
             }
         }
         // raise error if file not found
-        let msg = format!("File not found: {}", filepath);
+        let msg = format!("File not found: {filepath}");
         Err(OpsmlError::new_err(msg))
     }
 }
@@ -45,7 +45,7 @@ impl FileUtils {
         let mut files = Vec::new();
         for entry in WalkDir::new(path) {
             let entry =
-                entry.map_err(|e| UtilError::Error(format!("Unable to read directory: {}", e)))?;
+                entry.map_err(|e| UtilError::Error(format!("Unable to read directory: {e}")))?;
             if entry.file_type().is_file() {
                 files.push(entry.path().to_path_buf());
             }
@@ -55,7 +55,7 @@ impl FileUtils {
 
     pub fn get_chunk_count(path: &PathBuf, chunk_size: u64) -> Result<(u64, u64, u64), UtilError> {
         let file_size = std::fs::metadata(path)
-            .map_err(|e| UtilError::Error(format!("Unable to read file metadata: {}", e)))?
+            .map_err(|e| UtilError::Error(format!("Unable to read file metadata: {e}")))?
             .len();
 
         let chunk_size = std::cmp::min(file_size, chunk_size);
