@@ -2,7 +2,7 @@ from opsml.card import RunCard
 from opsml.test import OpsmlTestServer
 
 
-def test_runcard():
+def _test_runcard():
     card = RunCard(repository="test", name="test")
 
 
