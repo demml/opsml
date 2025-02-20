@@ -39,15 +39,12 @@ aes-gcm = "0.*"
 anyhow = "1.0.93"
 async-trait = "0.*"
 aws-sdk-s3 = "1.*"
-azure_core = "0.*"
 azure_identity = "0.*"
 azure_storage = "0.21.0"
 azure_storage_blobs = "0.21.0"
 aws-config = {version = "1.5.10", features = ["sso"]}
-aws-smithy-types = { version = "1.2.9", features = ["rt-tokio", "http-body-0-4-x"] }
 aws-types = "1.*"
 base64 = "0.22.*"
-blake3 = { version = "1.*", features = ["mmap"] }
 bytes = "1.*"
 axum = { version = "0.*", features = ["multipart", "macros"] }
 axum-extra = { version =  "0.*", features = ["cookie"] }
@@ -59,7 +56,6 @@ futures = "0.*"
 futures-util = "0.*"
 google-cloud-storage = { version = "0.*", features  = ["auth"] }
 google-cloud-auth = "0.*"
-google-cloud-token = "0.*"
 hmac = "0.*"
 hkdf = "0.*"
 indicatif = "0.*"

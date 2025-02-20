@@ -12,6 +12,5 @@ opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 base64 = { workspace = true }
 pyo3 = { workspace = true }
-rand = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
