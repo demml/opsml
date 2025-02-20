@@ -294,7 +294,6 @@ class CommonKwargs:
 class SaveName:
     Card: "SaveName"
     Audit: "SaveName"
-    PipelineCard: "SaveName"
     ModelMetadata: "SaveName"
     Model: "SaveName"
     Preprocessor: "SaveName"

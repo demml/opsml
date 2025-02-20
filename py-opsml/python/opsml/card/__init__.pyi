@@ -31,7 +31,6 @@ class Card:
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
     runcard_uids: Optional[List[str]]
-    pipelinecard_uid: Optional[str]
     auditcard_uid: Optional[str]
     interface_type: Optional[str]
     data_type: Optional[str]
@@ -230,10 +229,6 @@ class DataCardMetadata:
         """Return the runcard uid"""
 
     @property
-    def pipelinecard_uid(self) -> Optional[str]:
-        """Return the runcard uid"""
-
-    @property
     def auditcard_uid(self) -> Optional[str]:
         """Return the runcard uid"""
 
@@ -259,14 +254,6 @@ class ModelCardMetadata:
 
     @runcard_uid.setter
     def runcard_uid(self, runcard_uid: str) -> None:
-        """Set the runcard uid"""
-
-    @property
-    def pipelinecard_uid(self) -> str:
-        """Returns the runcard uid"""
-
-    @pipelinecard_uid.setter
-    def pipelinecard_uid(self, pipelinecard_uid: str) -> None:
         """Set the runcard uid"""
 
     @property
@@ -450,7 +437,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -492,9 +481,13 @@ class ActiveRun:
     ) -> "ActiveRun": ...
     def log_artifact(self, artifact: Any, name: str, description: str) -> None: ...
     def log_artifacts(self, artifacts: Dict[str, Any]) -> None: ...
-    def log_metric(self, metric: Union[int, float], name: str, description: str) -> None: ...
+    def log_metric(
+        self, metric: Union[int, float], name: str, description: str
+    ) -> None: ...
     def log_metrics(self, metrics: Dict[str, Union[int, float]]) -> None: ...
-    def log_param(self, param: Union[int, float, str], name: str, description: str) -> None: ...
+    def log_param(
+        self, param: Union[int, float, str], name: str, description: str
+    ) -> None: ...
     def log_params(self, params: Dict[str, Union[int, float, str]]) -> None: ...
     def log_tag(self, tag: str) -> None: ...
 
@@ -713,7 +706,7 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to register. Can be a DataCard, ModelCard,
-                RunCard, ProjectCard
+                RunCard.
             version_type (VersionType):
                 How to increment the version SemVer.
             pre_tag (str):
@@ -764,7 +757,7 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to update. Can be a DataCard, ModelCard,
-                RunCard, ProjectCard
+                RunCard.
         """
 
     def delete_card(
@@ -777,5 +770,5 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to delete. Can be a DataCard, ModelCard,
-                RunCard, ProjectCard
+                RunCard.
         """

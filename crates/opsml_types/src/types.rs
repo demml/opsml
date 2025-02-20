@@ -283,7 +283,6 @@ impl Display for CommonKwargs {
 pub enum SaveName {
     Card,
     Audit,
-    PipelineCard,
     ModelMetadata,
     Model,
     Preprocessor,
@@ -313,7 +312,6 @@ impl SaveName {
         match s {
             "card" => Some(SaveName::Card),
             "audit" => Some(SaveName::Audit),
-            "pipelinecard" => Some(SaveName::PipelineCard),
             "model-metadata" => Some(SaveName::ModelMetadata),
             "model" => Some(SaveName::Model),
             "preprocessor" => Some(SaveName::Preprocessor),
@@ -342,7 +340,6 @@ impl SaveName {
         match self {
             SaveName::Card => "card",
             SaveName::Audit => "audit",
-            SaveName::PipelineCard => "pipelinecard",
             SaveName::ModelMetadata => "model-metadata",
             SaveName::Model => "model",
             SaveName::Preprocessor => "preprocessor",
@@ -382,7 +379,6 @@ impl AsRef<Path> for SaveName {
         match self {
             SaveName::Card => Path::new("card"),
             SaveName::Audit => Path::new("audit"),
-            SaveName::PipelineCard => Path::new("pipelinecard"),
             SaveName::ModelMetadata => Path::new("model-metadata"),
             SaveName::Model => Path::new("model"),
             SaveName::Preprocessor => Path::new("preprocessor"),
