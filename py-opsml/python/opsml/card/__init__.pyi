@@ -480,6 +480,21 @@ class ComputeEnvironment:
 
     def __str__(self): ...
 
+class RunContext:
+    def __enter__(self) -> "RunContext": ...
+    def __exit__(self, exc_type, exc_value, traceback) -> None: ...
+    def log_artifact(self, artifact: Any, name: str, description: str) -> None: ...
+    def log_artifacts(self, artifacts: Dict[str, Any]) -> None: ...
+    def log_metric(
+        self, metric: Union[int, float], name: str, description: str
+    ) -> None: ...
+    def log_metrics(self, metrics: Dict[str, Union[int, float]]) -> None: ...
+    def log_param(
+        self, param: Union[int, float, str], name: str, description: str
+    ) -> None: ...
+    def log_params(self, params: Dict[str, Union[int, float, str]]) -> None: ...
+    def log_tag(self, tag: str) -> None: ...
+
 class RunCard:
     def __init__(
         self,
@@ -583,6 +598,29 @@ class RunCard:
     @property
     def created_at(self) -> datetime:
         """Returns the created at timestamp"""
+
+    @staticmethod
+    def start_run(
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        log_hardware: bool = False,
+        code_dir: Optional[str] = None,
+    ) -> RunContext:
+        """Start a run
+
+        Args:
+            repository (str | None):
+                Repository to associate with `RunCard`
+            name (str | None):
+                Name to associate with `RunCard`
+            log_hardware (bool):
+                Whether to log hardware or not
+            code_dir (str | None):
+                Directory to log code from
+
+        Returns:
+            RunContext
+        """
 
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
