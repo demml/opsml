@@ -187,7 +187,7 @@ def test_crud_modelcard(
     pandas_data: PandasData,
 ):
     # start server
-    with OpsmlTestServer(False):
+    with OpsmlTestServer(True):
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
 

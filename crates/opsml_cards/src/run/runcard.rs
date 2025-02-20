@@ -119,6 +119,26 @@ impl RunCard {
         let context = RunContext { run };
         Ok(Py::new(py, context)?.bind(py).clone())
     }
+
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = RunCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            data_type: self.metadata.interface_metadata.data_type.to_string(),
+            runcard_uid: self.metadata.runcard_uid.clone(),
+            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(Card::Data(record))
+    }
 }
 
 #[pyclass]
