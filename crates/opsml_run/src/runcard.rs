@@ -12,7 +12,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use std::sync::{Arc, Mutex};
-use tracing::{debug, error};
+use tracing::error;
 
 #[pyclass]
 pub struct RunCard {
