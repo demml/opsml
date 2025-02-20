@@ -422,7 +422,8 @@ impl MySQLQueryHelper {
         major, 
         minor, 
         patch, 
-        version, 
+        version,
+        tags, 
         datacard_uids,
         modelcard_uids, 
         runcard_uids,
@@ -430,7 +431,7 @@ impl MySQLQueryHelper {
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             .to_string()
     }
 

@@ -63,8 +63,6 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     datacard_uids JSON,
     modelcard_uids JSON,
     runcard_uids JSON,
-    artifact_uris JSON,
-    compute_environment JSON,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
