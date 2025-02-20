@@ -116,7 +116,7 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 
     debug!("Encrypting files in directory: {:?}", files);
 
-    let progress = Progress::new();
+    let progress = Progress::new()?;
 
     let encrypted_files = files
         .into_par_iter()
@@ -130,13 +130,8 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
                 chunk_count -= 1;
             }
 
-            let bar = progress.create_bar(
-                format!(
-                    "Encrypting: {}",
-                    &file.file_name().unwrap().to_str().unwrap()
-                ),
-                chunk_count,
-            );
+            let filename = file.file_name().unwrap().to_str().unwrap();
+            let bar = progress.create_bar(format!("Encrypting: {filename}",), chunk_count);
 
             let finish = encrypt_file(&file, key_bytes, &bar);
 
@@ -173,7 +168,7 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     // get all files (including subdirectories)
     let files = FileUtils::list_files(input_path.to_path_buf())?;
-    let progress = Progress::new();
+    let progress = Progress::new()?;
 
     let decrypted_files = files
         .into_par_iter()
@@ -186,13 +181,8 @@ pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
                 chunk_count -= 1;
             }
 
-            let bar = progress.create_bar(
-                format!(
-                    "Decrypting: {}",
-                    &file.file_name().unwrap().to_str().unwrap()
-                ),
-                chunk_count,
-            );
+            let filename = file.file_name().unwrap().to_str().unwrap();
+            let bar = progress.create_bar(format!("Decrypting: {filename}",), chunk_count);
             let finish = decrypt_file(&file, key_bytes, &bar);
 
             bar.finish_and_clear();

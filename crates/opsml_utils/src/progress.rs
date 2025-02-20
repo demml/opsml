@@ -1,5 +1,5 @@
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
-use opsml_error::ProgressError;
+use opsml_error::{ProgressError, UtilError};
 
 pub struct Progress {
     multi_progress: MultiProgress,
@@ -7,18 +7,18 @@ pub struct Progress {
 }
 
 impl Progress {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, UtilError> {
         let m = MultiProgress::new();
         let style = ProgressStyle::with_template(
             "[{elapsed_precise}] {bar:40.green/magenta} {pos:>7}/{len:7} {msg}",
         )
-        .unwrap()
+        .map_err(|e| UtilError::Error(format!("Failed to create progress style: {e}")))?
         .progress_chars("--");
 
-        Progress {
+        Ok(Progress {
             multi_progress: m,
             style,
-        }
+        })
     }
 
     pub fn create_bar(&self, message: String, total: u64) -> ProgressBar {
@@ -39,6 +39,6 @@ impl Progress {
 
 impl Default for Progress {
     fn default() -> Self {
-        Self::new()
+        Self::new().unwrap()
     }
 }

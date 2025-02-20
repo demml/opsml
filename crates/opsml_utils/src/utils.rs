@@ -9,7 +9,7 @@ use pyo3::types::{PyBool, PyDict, PyDictMethods, PyFloat, PyInt, PyList, PyStrin
 use pyo3::IntoPyObjectExt;
 use serde::Serialize;
 use serde_json::{json, Value};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::error;
 use uuid::Uuid;
 
@@ -59,7 +59,7 @@ pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<
     Ok(())
 }
 
-/// Check if a string is a valid `UUIDv4``
+/// Check if a string is a valid `UUIDv4`
 ///
 /// # Arguments
 ///
@@ -80,6 +80,16 @@ pub fn is_valid_uuid4(uid: &str) -> Result<bool, UtilError> {
     }
 }
 
+/// Get the current epoch time in microseconds
+///
+/// # Returns
+///
+/// An `i64` containing the current epoch time in microseconds
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - The current time cannot be retrieved
 pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
     const YEAR_MONTH_DATE: &str = "%Y-%m-%d";
 
@@ -145,7 +155,22 @@ impl PyHelperFuncs {
         }
     }
 
-    pub fn save_to_json<T>(model: T, path: &PathBuf) -> Result<(), UtilError>
+    /// Save a struct to a JSON file
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - A reference to a struct that implements the `Serialize` trait
+    /// * `path` - A reference to a `Path` object that holds the path to the file
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing `()` or a `UtilError`
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - The struct cannot be serialized to a string
+    pub fn save_to_json<T>(model: T, path: &Path) -> Result<(), UtilError>
     where
         T: Serialize,
     {
