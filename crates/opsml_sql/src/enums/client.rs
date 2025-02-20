@@ -139,16 +139,6 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_project_id(project_name, repository).await
-            }
-            SqlClientEnum::Sqlite(client) => client.get_project_id(project_name, repository).await,
-            SqlClientEnum::MySql(client) => client.get_project_id(project_name, repository).await,
-        }
-    }
-
     async fn query_cards(
         &self,
         table: &CardTable,
@@ -399,9 +389,7 @@ pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum>
 mod tests {
 
     use super::*;
-    use crate::schemas::schema::{
-        AuditCardRecord, DataCardRecord, ModelCardRecord, PipelineCardRecord, RunCardRecord,
-    };
+    use crate::schemas::schema::{AuditCardRecord, DataCardRecord, ModelCardRecord, RunCardRecord};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -705,29 +693,6 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
-        // check pipeline card
-        let pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
         cleanup();
     }
 
@@ -887,47 +852,6 @@ mod tests {
             assert_eq!(cards[0].name, "UpdatedAuditName");
         }
 
-        // Test PipelineCardRecord
-        let mut pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        pipeline_card.name = "UpdatedPipelineName".to_string();
-        let updated_card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .update_card(&CardTable::Pipeline, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Pipeline(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedPipelineName");
-        }
-
         cleanup();
     }
 
@@ -1032,35 +956,6 @@ mod tests {
         let results = client.query_cards(&CardTable::Data, &args).await.unwrap();
 
         assert_eq!(results.len(), 0);
-    }
-
-    #[tokio::test]
-    async fn test_enum_project_id() {
-        let client = get_client().await;
-
-        // get project id
-
-        let project_id = client.get_project_id("test", "repo").await.unwrap();
-        assert_eq!(project_id, 1);
-
-        // get next project id
-        let project_id = client.get_project_id("test1", "repo").await.unwrap();
-
-        assert_eq!(project_id, 2);
-
-        let args = CardQueryArgs {
-            uid: None,
-            name: Some("test".to_string()),
-            repository: Some("repo".to_string()),
-            ..Default::default()
-        };
-        let cards = client
-            .query_cards(&CardTable::Project, &args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 1);
-        cleanup();
     }
 
     // test run metric

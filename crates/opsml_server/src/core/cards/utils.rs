@@ -109,21 +109,6 @@ pub async fn insert_card_into_db(
             ServerCard::Run(server_card)
         }
 
-        Card::Pipeline(client_card) => {
-            let server_card = PipelineCardRecord::new(
-                client_card.name,
-                client_card.repository,
-                version,
-                client_card.tags,
-                client_card.pipeline_code_uri,
-                client_card.datacard_uids,
-                client_card.modelcard_uids,
-                client_card.runcard_uids,
-                client_card.username,
-            );
-            ServerCard::Pipeline(server_card)
-        }
-
         Card::Audit(client_card) => {
             let server_card = AuditCardRecord::new(
                 client_card.name,

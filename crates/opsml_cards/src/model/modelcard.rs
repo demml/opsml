@@ -372,7 +372,6 @@ impl ModelCard {
             data_type: self.metadata.interface_metadata.data_type.to_string(),
             model_type: self.metadata.interface_metadata.model_type.to_string(),
             runcard_uid: self.metadata.runcard_uid.clone(),
-            pipelinecard_uid: self.metadata.pipelinecard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             task_type: self.metadata.interface_metadata.task_type.to_string(),
