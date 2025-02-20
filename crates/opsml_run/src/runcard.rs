@@ -118,13 +118,13 @@ impl RunCard {
     }
 
     #[staticmethod]
-    #[pyo3(signature = (repository=None, name=None, log_hardware=None, code_dir=None))]
+    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
     pub fn start_run<'py>(
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        log_hardware: Option<bool>,
         code_dir: Option<&str>,
+        log_hardware: bool,
     ) -> PyResult<Bound<'py, ActiveRun>> {
         let run = Py::new(py, RunCard::new(py, repository, name, None, None, None)?)?
             .into_bound_py_any(py)
@@ -138,7 +138,7 @@ impl RunCard {
             .run
             .register_card(&run, VersionType::Minor, None, None, None)?;
 
-        let _hardware = log_hardware.unwrap_or(false);
+        let _hardware = log_hardware;
         let _code_dir = code_dir.unwrap_or("");
 
         // Return the new ActiveRun wrapped in a PyRef which implements context manager protocol

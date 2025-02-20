@@ -30,11 +30,11 @@ impl ActiveRun {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        log_hardware: Option<bool>,
         code_dir: Option<&str>,
+        log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let run = Self::initialize_run_card(py, repository, name, log_hardware, code_dir)?;
+        let run = Self::initialize_run_card(py, repository, name, code_dir, log_hardware)?;
         Self::register_run_card(&run, &mut registries)?;
         Ok(run)
     }
@@ -43,10 +43,10 @@ impl ActiveRun {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        log_hardware: Option<bool>,
         code_dir: Option<&str>,
+        log_hardware: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let _hardware = log_hardware.unwrap_or(false);
+        let _hardware = log_hardware;
         let _code_dir = code_dir.unwrap_or("");
 
         let run = Py::new(py, RunCard::new(py, repository, name, None, None, None)?)?
@@ -85,21 +85,21 @@ impl ActiveRun {
 
 #[pymethods]
 impl ActiveRun {
-    #[pyo3(signature = (repository=None, name=None, log_hardware=None, code_dir=None))]
+    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
     pub fn start_run<'py>(
         slf: PyRefMut<'py, Self>,
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        log_hardware: Option<bool>,
         code_dir: Option<&str>,
+        log_hardware: bool,
     ) -> PyResult<Bound<'py, ActiveRun>> {
         let run = Self::create_run_card(
             py,
             repository,
             name,
-            log_hardware,
             code_dir,
+            log_hardware,
             slf.unlock_registries()?,
         )?;
 
