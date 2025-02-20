@@ -7,9 +7,9 @@ def _test_runcard():
 
 
 def test_runcard_context():
-    with OpsmlTestServer(True):
+    with OpsmlTestServer(False):
         with RunCard.start_run(repository="test") as run:
-            # with run.start_run(repository="test") as _run2:
-            print("hello")
+            with run.start_run(repository="test") as _run2:
+                print("hello")
 
     a

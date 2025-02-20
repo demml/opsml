@@ -283,7 +283,7 @@ impl CardRegistry {
                 // update card
                 let key = Self::_update_card(&mut self.registry, card, &self.registry_type).await?;
 
-                let tmp_path = Self::save_card(card).await?;
+                let tmp_path = Self::save_card(card, &self.registry_type).await?;
 
                 upload_card_artifacts(tmp_path, &mut self.fs, &key).await?;
 
@@ -322,7 +322,7 @@ impl CardRegistry {
         Self::update_card_with_server_response(&create_response, card)?;
 
         // Save card artifacts to temp path
-        let tmp_path = Self::save_card_artifacts(card, save_kwargs).await?;
+        let tmp_path = Self::save_card_artifacts(card, save_kwargs, registry_type).await?;
 
         // Save artifacts
         upload_card_artifacts(tmp_path, fs, &create_response.key).await?;
@@ -395,6 +395,7 @@ impl CardRegistry {
     async fn save_card_artifacts(
         card: &Bound<'_, PyAny>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
+        registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
@@ -403,11 +404,22 @@ impl CardRegistry {
 
         let tmp_path = tmp_dir.into_path();
 
-        card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
-            .map_err(|e| {
-                error!("Failed to save card: {}", e);
-                RegistryError::Error(e.to_string())
-            })?;
+        match registry_type {
+            RegistryType::Run => {
+                card.call_method1("save", (tmp_path.to_path_buf(),))
+                    .map_err(|e| {
+                        error!("Failed to save card: {}", e);
+                        RegistryError::Error(e.to_string())
+                    })?;
+            }
+            _ => {
+                card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
+                    .map_err(|e| {
+                        error!("Failed to save card: {}", e);
+                        RegistryError::Error(e.to_string())
+                    })?;
+            }
+        }
 
         Ok(tmp_path)
     }
@@ -425,7 +437,10 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn save_card(card: &Bound<'_, PyAny>) -> Result<PathBuf, RegistryError> {
+    async fn save_card(
+        card: &Bound<'_, PyAny>,
+        registry_type: &RegistryType,
+    ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new().map_err(|e| {
             error!("Failed to create temporary directory: {}", e);
             RegistryError::Error("Failed to create temporary directory".to_string())
@@ -433,11 +448,22 @@ impl CardRegistry {
 
         let tmp_path = tmp_dir.into_path();
 
-        card.call_method1("save_card", (tmp_path.to_path_buf(),))
-            .map_err(|e| {
-                error!("Failed to save card: {}", e);
-                RegistryError::Error(e.to_string())
-            })?;
+        match registry_type {
+            RegistryType::Run => {
+                card.call_method1("save", (tmp_path.to_path_buf(),))
+                    .map_err(|e| {
+                        error!("Failed to save card: {}", e);
+                        RegistryError::Error(e.to_string())
+                    })?;
+            }
+            _ => {
+                card.call_method1("save_card", (tmp_path.to_path_buf(),))
+                    .map_err(|e| {
+                        error!("Failed to save card: {}", e);
+                        RegistryError::Error(e.to_string())
+                    })?;
+            }
+        }
 
         Ok(tmp_path)
     }
