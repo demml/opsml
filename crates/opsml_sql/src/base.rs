@@ -96,10 +96,6 @@ pub trait SqlClient: Sized {
 
     async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError>;
 
-    // db specific functions
-    // get project_id
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError>;
-
     /// Insert run metric
     ///
     /// # Arguments

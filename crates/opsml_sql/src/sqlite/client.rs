@@ -456,7 +456,6 @@ impl SqlClient for SqliteClient {
                         .bind(&model.task_type)
                         .bind(&model.tags)
                         .bind(&model.runcard_uid)
-                        .bind(&model.pipelinecard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
