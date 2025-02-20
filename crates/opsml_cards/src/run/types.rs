@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::TypeError;
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use sysinfo::System;
@@ -102,12 +103,13 @@ pub struct ComputeEnvironment {
     system: String,
     os_version: String,
     hostname: String,
+    python_version: String,
 }
 
 #[pymethods]
 impl ComputeEnvironment {
     #[new]
-    pub fn new() -> Result<Self, TypeError> {
+    pub fn new(py: Python) -> Result<Self, TypeError> {
         let sys = System::new_all();
 
         Ok(Self {
@@ -117,6 +119,11 @@ impl ComputeEnvironment {
             system: System::name().unwrap_or("Unknown".to_string()),
             os_version: System::os_version().unwrap_or("Unknown".to_string()),
             hostname: System::host_name().unwrap_or("Unknown".to_string()),
+            python_version: py.version().to_string(),
         })
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }

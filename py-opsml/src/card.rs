@@ -1,9 +1,12 @@
-use opsml_cards::{DataCard, DataCardMetadata, ModelCard, ModelCardMetadata};
+use opsml_cards::{
+    ComputeEnvironment, DataCard, DataCardMetadata, ModelCard, ModelCardMetadata, RunCard,
+};
 use opsml_registry::CardRegistry;
-#[cfg(feature = "server")]
-use opsml_registry::RegistryTestHelper;
 use opsml_types::contracts::{Card, CardList};
 use opsml_types::{RegistryMode, RegistryType};
+
+#[cfg(feature = "server")]
+use opsml_registry::RegistryTestHelper;
 
 use pyo3::prelude::*;
 
@@ -25,6 +28,10 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // ModelCard
     m.add_class::<ModelCard>()?;
     m.add_class::<ModelCardMetadata>()?;
+
+    // RunCard
+    m.add_class::<RunCard>()?;
+    m.add_class::<ComputeEnvironment>()?;
 
     Ok(())
 }

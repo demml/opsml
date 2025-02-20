@@ -12,6 +12,8 @@ RegistryType = card.RegistryType
 RegistryMode = card.RegistryMode
 ModelCard = card.ModelCard
 ModelCardMetadata = card.ModelCardMetadata
+RunCard = card.RunCard
+ComputeEnvironment = card.ComputeEnvironment
 
 
 __all__ = [
@@ -25,4 +27,6 @@ __all__ = [
     "RegistryMode",
     "ModelCard",
     "ModelCardMetadata",
+    "RunCard",
+    "ComputeEnvironment",
 ]
