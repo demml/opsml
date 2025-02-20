@@ -71,6 +71,16 @@ impl ActiveRun {
                 OpsmlError::new_err(e.to_string())
             })
     }
+
+    fn add_child_run<'py>(
+        slf: &PyRefMut<'py, Self>,
+        py: Python<'py>,
+        run: &Bound<'py, PyAny>,
+    ) -> PyResult<()> {
+        let child_uid = run.getattr("uid")?.extract::<String>()?;
+        slf.run.call_method1(py, "add_child_run", (&child_uid,))?;
+        Ok(())
+    }
 }
 
 #[pymethods]
@@ -127,18 +137,6 @@ impl ActiveRun {
         }
 
         Ok(false) // Return false to propagate exceptions
-    }
-}
-
-impl ActiveRun {
-    fn add_child_run<'py>(
-        slf: &PyRefMut<'py, Self>,
-        py: Python<'py>,
-        run: &Bound<'py, PyAny>,
-    ) -> PyResult<()> {
-        let child_uid = run.getattr("uid")?.extract::<String>()?;
-        slf.run.call_method1(py, "add_child_run", (&child_uid,))?;
-        Ok(())
     }
 }
 
