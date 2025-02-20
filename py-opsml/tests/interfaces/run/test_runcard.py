@@ -1,4 +1,5 @@
 from opsml.card import RunCard
+from opsml.test import OpsmlTestServer
 
 
 def test_runcard():
@@ -6,7 +7,9 @@ def test_runcard():
 
 
 def test_runcard_context():
-    with RunCard.start_run(repository="test", name="test") as run:
-        print(run)
+    with OpsmlTestServer(True):
+        with RunCard.start_run(repository="test") as run:
+            # with run.start_run(repository="test") as _run2:
+            print("hello")
 
     a
