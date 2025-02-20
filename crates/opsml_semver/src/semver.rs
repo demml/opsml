@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-
+use std::string::ToString;
 #[pyclass]
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum VersionType {
@@ -119,7 +119,7 @@ impl VersionValidator {
 
         versions.sort();
 
-        Ok(versions.iter().map(|v| v.to_string()).collect())
+        Ok(versions.iter().map(ToString::to_string).collect())
     }
 
     pub fn sort_semver_versions(
@@ -136,7 +136,7 @@ impl VersionValidator {
             }
         }
 
-        Ok(versions.iter().map(|v| v.to_string()).collect())
+        Ok(versions.iter().map(ToString::to_string).collect())
     }
 }
 
@@ -158,6 +158,11 @@ pub enum VersionParser {
 }
 
 impl VersionParser {
+    /// Create a new VersionParser from a version string
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the version string is invalid
     pub fn new(version: &str) -> Result<VersionParser, VersionError> {
         // check if version contains
         if version.contains('*') {
@@ -174,17 +179,25 @@ impl VersionParser {
     pub fn remove_version_prefix(&self, version: &str) -> String {
         // break version into parts
         match self {
-            VersionParser::Star => version.replace("*", ""),
-            VersionParser::Caret => version.replace("^", ""),
-            VersionParser::Tilde => version.replace("~", ""),
+            VersionParser::Star => version.replace('*', ""),
+            VersionParser::Caret => version.replace('^', ""),
+            VersionParser::Tilde => version.replace('~', ""),
             VersionParser::Exact => version.to_string(),
         }
     }
 
+    /// Parse a version string into a Version struct
+    ///
+    /// # Errors
+    /// Errors if the version string is invalid
     fn parse_version(version: &str) -> Result<Version, VersionError> {
         Version::parse(version).map_err(|e| VersionError::InvalidVersion(e.to_string()))
     }
 
+    /// Create a VersionBounds struct from a lower and upper version string
+    ///
+    /// # Errors
+    /// Errors if the version strings are invalid
     fn create_bounds(
         lower: &str,
         upper: &str,
