@@ -1,4 +1,3 @@
-use crate::BaseArgs;
 use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
@@ -10,8 +9,7 @@ use opsml_interfaces::FeatureSchema;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
-use opsml_types::{DataType, RegistryType};
-use opsml_types::{SaveName, Suffix};
+use opsml_types::{cards::BaseArgs, DataType, RegistryType, SaveName, Suffix};
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
@@ -215,7 +213,7 @@ impl DataCard {
         let metadata = data
             .call_method(py, "save", (&path, save_kwargs), None)
             .map_err(|e| {
-                OpsmlError::new_err(format!("Error calling save method on interface: {}", e))
+                OpsmlError::new_err(format!("Error calling save method on interface: {e}"))
             })?
             .extract::<DataInterfaceMetadata>(py)
             .map_err(|e| {
