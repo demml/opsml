@@ -12,9 +12,7 @@ class RegistryType:
     Data: "RegistryType"
     Model: "RegistryType"
     Run: "RegistryType"
-    Project: "RegistryType"
     Audit: "RegistryType"
-    Pipeline: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"

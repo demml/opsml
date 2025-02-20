@@ -132,6 +132,5 @@ def test_version_type_str():
 def test_registry_type_enum():
     assert RegistryType.Data == RegistryType.Data
     assert RegistryType.Model == RegistryType.Model
-    assert RegistryType.Project == RegistryType.Project
     assert RegistryType.Audit == RegistryType.Audit
     assert RegistryType.Run == RegistryType.Run
