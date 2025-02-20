@@ -48,7 +48,6 @@ def test_common_kwargs_as_string(variant, expected_string):
     [
         (SaveName.Card, "card"),
         (SaveName.Audit, "audit"),
-        (SaveName.PipelineCard, "pipelinecard"),
         (SaveName.ModelMetadata, "model-metadata"),
         (SaveName.Model, "model"),
         (SaveName.Preprocessor, "preprocessor"),
