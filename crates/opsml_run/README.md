@@ -1,0 +1,2 @@
+# Opsml Run
+This is separate crate for handling OpsML runs and RunCards. RunCards are the main abstraction for running OpsML experiments. Active runs can be used to track the progress of the experiment and store the results (cards, metrics, artifacts, etc). This is a separate crate to avoid cyclic dependencies between the registry and cards crates (active runs use registries to register and load cards).

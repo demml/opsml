@@ -10,7 +10,7 @@ use tracing::instrument;
 use tracing::{debug, error};
 
 // TODO: Add trait for client and server registry
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ClientRegistry {
     registry_type: RegistryType,
     api_client: OpsmlApiClient,

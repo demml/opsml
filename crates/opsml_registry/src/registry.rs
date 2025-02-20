@@ -1,5 +1,4 @@
 use crate::enums::OpsmlRegistry;
-use opsml_cards::*;
 use opsml_colors::Colorize;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::OpsmlError;
@@ -29,6 +28,7 @@ pub struct CardArgs {
 }
 
 #[pyclass]
+#[derive(Clone)]
 pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
@@ -702,5 +702,53 @@ impl CardRegistry {
         };
 
         Ok(card)
+    }
+}
+
+impl CardRegistry {
+    pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
+        // Create a new tokio runtime for the registry (needed for async calls)
+        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+
+        let (registry, fs) = rt.block_on(async {
+            let mut settings = OpsmlConfig::default().storage_settings()?;
+            let registry = OpsmlRegistry::new(registry_type.clone()).await?;
+            let fs = Arc::new(Mutex::new(FileSystemStorage::new(&mut settings).await?));
+
+            Ok::<_, RegistryError>((registry, fs))
+        })?;
+
+        Ok(Self {
+            registry_type: registry_type.clone(),
+            table_name: CardTable::from_registry_type(&registry_type).to_string(),
+            registry,
+            runtime: rt,
+            fs,
+        })
+    }
+}
+
+#[pyclass]
+pub struct CardRegistries {
+    #[pyo3(get)]
+    pub run: CardRegistry,
+
+    #[pyo3(get)]
+    pub model: CardRegistry,
+
+    #[pyo3(get)]
+    pub data: CardRegistry,
+}
+
+#[pymethods]
+impl CardRegistries {
+    #[new]
+    #[instrument(skip_all)]
+    pub fn new() -> PyResult<Self> {
+        let run = CardRegistry::rust_new(&RegistryType::Run)?;
+        let model = CardRegistry::rust_new(&RegistryType::Model)?;
+        let data = CardRegistry::rust_new(&RegistryType::Data)?;
+
+        Ok(Self { run, model, data })
     }
 }

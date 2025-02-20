@@ -1,0 +1,15 @@
+[package]
+name = "opsml-run"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[lib]
+doctest = false
+
+[dependencies]
+chrono = { workspace = true }
+opsml-cards = { workspace = true }
+opsml-registry = { workspace = true }
+
+

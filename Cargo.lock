@@ -3632,6 +3632,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-run"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "opsml-cards",
+ "opsml-registry",
+]
+
+[[package]]
 name = "opsml-semver"
 version = "0.1.0"
 dependencies = [
