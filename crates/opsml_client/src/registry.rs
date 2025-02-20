@@ -116,7 +116,7 @@ impl ClientRegistry {
         let created = response
             .json::<CreateCardResponse>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
 
         if created.registered {
             Ok(created)
@@ -135,7 +135,7 @@ impl ClientRegistry {
         // serialize card to json
         let body = serde_json::to_value(update_request).map_err(|e| {
             error!("Failed to serialize card {}", e);
-            RegistryError::Error(format!("Failed to serialize card {}", e))
+            RegistryError::Error(format!("Failed to serialize card {e}"))
         })?;
 
         let response = self
@@ -154,7 +154,7 @@ impl ClientRegistry {
         let updated = response
             .json::<UpdateCardResponse>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
 
         if updated.updated {
             Ok(())
@@ -168,7 +168,7 @@ impl ClientRegistry {
         delete_request: DeleteCardRequest,
     ) -> Result<(), RegistryError> {
         let query_string = serde_qs::to_string(&delete_request)
-            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {e}")))?;
 
         let response = self
             .api_client
@@ -188,7 +188,7 @@ impl ClientRegistry {
         let deleted = response
             .json::<UidResponse>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
 
         if !deleted.exists {
             Ok(())

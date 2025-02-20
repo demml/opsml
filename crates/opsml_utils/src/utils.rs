@@ -16,6 +16,20 @@ use uuid::Uuid;
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
 const NAME_REPOSITORY_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 
+/// Clean a string by removing punctuation and converting to lowercase
+///
+/// # Arguments
+///
+/// * `input` - A string slice that holds the input string
+///
+/// # Returns
+///
+/// A `Result` containing the cleaned string or a `UtilError`
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// - The regex pattern cannot be created.
 pub fn clean_string(input: &str) -> Result<String, UtilError> {
     let pattern = format!("[{}]", regex::escape(PUNCTUATION));
     let re = Regex::new(&pattern.to_string())
@@ -171,7 +185,9 @@ pub fn json_to_pyobject<'py>(
             for (k, v) in map {
                 let py_value = match v {
                     Value::Null => py.None(),
-                    Value::Bool(b) => b.into_py_any(py).unwrap(),
+                    Value::Bool(b) => b
+                        .into_py_any(py)
+                        .map_err(|_| PyValueError::new_err("Invalid bool"))?,
                     Value::Number(n) => {
                         if let Some(i) = n.as_i64() {
                             i.into_py_any(py)
@@ -227,9 +243,11 @@ pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
             .map_err(|_| PyValueError::new_err("Invalid bool"))?,
         Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                i.into_py_any(py).unwrap()
+                i.into_py_any(py)
+                    .map_err(|_| PyValueError::new_err("Invalid number"))?
             } else if let Some(f) = n.as_f64() {
-                f.into_py_any(py).unwrap()
+                f.into_py_any(py)
+                    .map_err(|_| PyValueError::new_err("Invalid number"))?
             } else {
                 return Err(PyValueError::new_err("Invalid number"));
             }
@@ -348,7 +366,7 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
     Ok(tmp_path)
 }
 
-/// Unwraps a Python string attribute from a `PyAny`` object.
+/// Unwraps a Python string attribute from a `PyAny` object.
 ///
 /// # Arguments
 ///

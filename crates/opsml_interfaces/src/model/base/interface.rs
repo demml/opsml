@@ -830,7 +830,7 @@ impl ModelInterface {
                 .call_method("load", (load_path,), kwargs)
                 .map_err(|e| {
                     error!("Failed to load model. Error: {}", e);
-                    OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
+                    OpsmlError::new_err(format!("Failed to load model. Error: {e}"))
                 })?
                 .unbind(),
         );
