@@ -231,12 +231,11 @@ pub struct AuditCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-
     pub tags: Vec<String>,
     pub approved: bool,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub runcard_uids: Option<Vec<String>>,
+    pub datacard_uids: Vec<String>,
+    pub modelcard_uids: Vec<String>,
+    pub runcard_uids: Vec<String>,
     pub username: String,
 }
 
@@ -249,78 +248,11 @@ impl Default for AuditCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-
             tags: Vec::new(),
             approved: false,
-            datacard_uids: None,
-            modelcard_uids: None,
-            runcard_uids: None,
-            username: "guest".to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
-pub struct PipelineCardClientRecord {
-    pub uid: String,
-    pub created_at: NaiveDateTime,
-    pub app_env: String,
-    pub name: String,
-    pub repository: String,
-    pub version: String,
-
-    pub tags: Vec<String>,
-    pub pipeline_code_uri: String,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub runcard_uids: Option<Vec<String>>,
-    pub username: String,
-}
-
-impl Default for PipelineCardClientRecord {
-    fn default() -> Self {
-        Self {
-            uid: "".to_string(),
-            created_at: get_utc_datetime(),
-            app_env: "development".to_string(),
-            name: "".to_string(),
-            repository: "".to_string(),
-            version: "".to_string(),
-
-            tags: Vec::new(),
-            pipeline_code_uri: "".to_string(),
-            datacard_uids: None,
-            modelcard_uids: None,
-            runcard_uids: None,
-            username: "guest".to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
-pub struct ProjectCardClientRecord {
-    pub uid: String,
-    pub created_at: NaiveDateTime,
-    pub app_env: String,
-    pub name: String,
-    pub repository: String,
-    pub version: String,
-    pub project_id: i32,
-    pub username: String,
-}
-
-impl Default for ProjectCardClientRecord {
-    fn default() -> Self {
-        Self {
-            uid: "".to_string(),
-            created_at: get_utc_datetime(),
-            app_env: "development".to_string(),
-            name: "".to_string(),
-            repository: "".to_string(),
-            version: "".to_string(),
-            project_id: 0,
+            datacard_uids: Vec::new(),
+            modelcard_uids: Vec::new(),
+            runcard_uids: Vec::new(),
             username: "guest".to_string(),
         }
     }
@@ -418,10 +350,7 @@ impl Card {
             Self::Data(card) => Some(vec![&card.uid]),
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
             Self::Run(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
-            Self::Audit(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
         }
     }
 
@@ -431,10 +360,7 @@ impl Card {
             Self::Data(_) => None,
             Self::Model(card) => Some(vec![&card.uid]),
             Self::Run(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
-            Self::Audit(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
         }
     }
 
@@ -444,10 +370,7 @@ impl Card {
             Self::Data(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
             Self::Model(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
             Self::Run(card) => Some(vec![&card.uid]),
-            Self::Audit(card) => card
-                .runcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Audit(card) => Some(card.runcard_uids.iter().map(String::as_str).collect()),
         }
     }
 
