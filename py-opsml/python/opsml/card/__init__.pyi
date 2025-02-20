@@ -281,7 +281,7 @@ class ModelCard:
         interface: Optional[ModelInterface] = None,
         repository: Optional[str] = None,
         name: Optional[str] = None,
-        verison: Optional[str] = None,
+        version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
         metadata: ModelCardMetadata = ModelCardMetadata(),
@@ -468,6 +468,121 @@ class ModelCard:
         Returns:
             String representation of the ModelCard.
         """
+
+class ComputeEnvironment:
+    cpu_count: int
+    total_memory: int
+    total_swap: int
+    system: str
+    os_version: str
+    hostname: str
+    python_version: str
+
+    def __str__(self): ...
+
+class RunCard:
+    def __init__(
+        self,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        uid: Optional[str] = None,
+        tags: List[str] = [],
+    ) -> None:
+        """Creates a RunCard.
+
+        Cards are stored in the RunCard Registry and follow the naming convention of:
+        {registry}/{repository}/{name}/v{version}
+
+        Args:
+            repository (str | None):
+                Repository to associate with `RunCard`
+            name (str | None):
+                Name to associate with `RunCard`
+            version (str | None):
+                Current version (assigned if card has been registered). Follows
+                semantic versioning.
+            uid (str | None):
+                Unique id (assigned if card has been registered)
+            tags (List[str]):
+                Tags to associate with `RunCard`. Can be a dictionary of strings or
+                a `Tags` object.
+        """
+
+    @property
+    def name(self) -> str:
+        """Returns the name of the `ModelCard`"""
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the name of the `ModelCard`
+
+        Args:
+            name (str):
+                The name of the `ModelCard`
+        """
+
+    @property
+    def repository(self) -> str:
+        """Returns the repository of the `RunCard`"""
+
+    @repository.setter
+    def repository(self, repository: str) -> None:
+        """Set the repository of the `RunCard`
+
+        Args:
+            repository (str):
+                The repository of the `RunCard`
+        """
+
+    @property
+    def version(self) -> str:
+        """Returns the version of the `RunCard`"""
+
+    @version.setter
+    def version(self, version: str) -> None:
+        """Set the version of the `RunCard`
+
+        Args:
+            version (str):
+                The version of the `RunCard`
+        """
+
+    @property
+    def uid(self) -> str:
+        """Returns the uid of the `RunCard`"""
+
+    @property
+    def tags(self) -> List[str]:
+        """Returns the tags of the `RuncCard`"""
+
+    @property
+    def datacard_uids(self) -> List[str]:
+        """Returns the datacard uids"""
+
+    @property
+    def modelcard_uids(self) -> List[str]:
+        """Returns the modelcard uids"""
+
+    @property
+    def artifacts(self) -> List[str]:
+        """Returns the artifact names"""
+
+    @property
+    def compute_environment(self) -> ComputeEnvironment:
+        """Returns the compute env"""
+
+    @property
+    def registry_type(self) -> RegistryType:
+        """Returns the card type of the `RunCard`"""
+
+    @property
+    def app_env(self) -> str:
+        """Returns the app env"""
+
+    @property
+    def created_at(self) -> datetime:
+        """Returns the created at timestamp"""
 
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:

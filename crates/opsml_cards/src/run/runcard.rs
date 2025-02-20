@@ -63,6 +63,7 @@ impl RunCard {
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (repository=None, name=None, version=None, uid=None, tags=None))]
     pub fn new(
+        py: Python,
         repository: Option<&str>,
         name: Option<&str>,
         version: Option<&str>,
@@ -93,7 +94,7 @@ impl RunCard {
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
-            compute_environment: ComputeEnvironment::new()?,
+            compute_environment: ComputeEnvironment::new(py)?,
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             artifacts: Vec::new(),
