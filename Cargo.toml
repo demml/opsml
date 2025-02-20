@@ -64,6 +64,7 @@ hmac = "0.*"
 hkdf = "0.*"
 indicatif = "0.*"
 jsonwebtoken = "9.*"
+names = "0.*"
 ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"

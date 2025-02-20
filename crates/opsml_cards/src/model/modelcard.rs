@@ -1,4 +1,3 @@
-use crate::BaseArgs;
 use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
@@ -11,7 +10,8 @@ use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs}
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{
-    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
+    cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
+    TaskType,
 };
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
