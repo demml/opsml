@@ -111,9 +111,11 @@ impl CardRegistry {
             uid, name, repository, version, max_date, tags, limit, sort_by_timestamp
         );
 
-        let name = name.map(|name| clean_string(&name));
+        let name = name.map(|name| clean_string(&name)).transpose()?;
 
-        let repository = repository.map(|repository| clean_string(&repository));
+        let repository = repository
+            .map(|repository| clean_string(&repository))
+            .transpose()?;
 
         let query_args = CardQueryArgs {
             uid,

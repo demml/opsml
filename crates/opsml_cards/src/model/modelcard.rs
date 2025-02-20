@@ -292,7 +292,7 @@ impl ModelCard {
 
         // save modelcard
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, card_save_path)?;
+        PyHelperFuncs::save_to_json(&self, &card_save_path)?;
 
         Ok(())
     }
@@ -397,7 +397,7 @@ impl ModelCard {
 
     pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, card_save_path)?;
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
         Ok(())
     }

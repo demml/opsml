@@ -217,6 +217,6 @@ impl RunGraph {
                 .with_extension(Suffix::Json);
         }
 
-        PyHelperFuncs::save_to_json(self, path)
+        PyHelperFuncs::save_to_json(self, &path)
     }
 }
