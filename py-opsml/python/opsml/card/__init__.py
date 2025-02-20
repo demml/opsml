@@ -13,6 +13,7 @@ RegistryMode = card.RegistryMode
 ModelCard = card.ModelCard
 ModelCardMetadata = card.ModelCardMetadata
 RunCard = card.RunCard
+ActiveRun = card.ActiveRun
 ComputeEnvironment = card.ComputeEnvironment
 RunContext = card.RunContext
 
@@ -30,5 +31,5 @@ __all__ = [
     "ModelCardMetadata",
     "RunCard",
     "ComputeEnvironment",
-    "RunContext",
+    "ActiveRun",
 ]

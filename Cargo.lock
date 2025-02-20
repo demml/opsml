@@ -4406,6 +4406,7 @@ dependencies = [
  "opsml-error",
  "opsml-interfaces",
  "opsml-registry",
+ "opsml-run",
  "opsml-semver",
  "opsml-server",
  "opsml-settings",

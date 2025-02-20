@@ -1,8 +1,6 @@
-use opsml_cards::{
-    ComputeEnvironment, DataCard, DataCardMetadata, ModelCard, ModelCardMetadata, RunCard,
-    RunContext,
-};
+use opsml_cards::{DataCard, DataCardMetadata, ModelCard, ModelCardMetadata};
 use opsml_registry::CardRegistry;
+use opsml_run::{ActiveRun, ComputeEnvironment, RunCard};
 use opsml_types::contracts::{Card, CardList};
 use opsml_types::{RegistryMode, RegistryType};
 
@@ -33,7 +31,7 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // RunCard
     m.add_class::<RunCard>()?;
     m.add_class::<ComputeEnvironment>()?;
-    m.add_class::<RunContext>()?;
+    m.add_class::<ActiveRun>()?;
 
     Ok(())
 }

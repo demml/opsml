@@ -110,6 +110,7 @@ class HuggingFaceORTModel:
     OrtStableDiffusionInpaintPipeline: "HuggingFaceORTModel"
     OrtStableDiffusionXlPipeline: "HuggingFaceORTModel"
     OrtStableDiffusionXlImg2ImgPipeline: "HuggingFaceORTModel"
+    OrtStableDiffusionImg2ImgPipeline: "HuggingFaceORTModel"
 
 class HuggingFaceTask:
     AudioClassification: "HuggingFaceTask"
