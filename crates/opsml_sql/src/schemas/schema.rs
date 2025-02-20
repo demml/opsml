@@ -390,9 +390,9 @@ impl RunCardRecord {
         repository: String,
         version: Version,
         tags: Vec<String>,
-        datacard_uids: Option<Vec<String>>,
-        modelcard_uids: Option<Vec<String>>,
-        runcard_uids: Option<Vec<String>>,
+        datacard_uids: Vec<String>,
+        modelcard_uids: Vec<String>,
+        runcard_uids: Vec<String>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -412,9 +412,9 @@ impl RunCardRecord {
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
             tags: Json(tags),
-            datacard_uids: Json(datacard_uids.unwrap_or_default()),
-            modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            runcard_uids: Json(runcard_uids.unwrap_or_default()),
+            datacard_uids: Json(datacard_uids),
+            modelcard_uids: Json(modelcard_uids),
+            runcard_uids: Json(runcard_uids),
             username,
         }
     }
