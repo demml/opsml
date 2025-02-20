@@ -100,11 +100,11 @@ pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
     // Replace hour, minute, and second to get the max values for the date
     let max_date = converted_date
         .with_hour(23)
-        .unwrap()
+        .ok_or(UtilError::DateError)?
         .with_minute(59)
-        .unwrap()
+        .ok_or(UtilError::DateError)?
         .with_second(59)
-        .unwrap_or(converted_date);
+        .ok_or(UtilError::DateError)?;
 
     // Convert NaiveDateTime to timestamp in microseconds
     let timestamp = max_date.and_utc().timestamp() * 1_000_000;

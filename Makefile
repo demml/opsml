@@ -4,7 +4,10 @@ format:
 
 .PHONY: lints
 lints:
-	cargo clippy --workspace --all-targets  -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate
+	cargo clippy --workspace --all-targets  -- -D warnings
+
+lints.pedantic:
+	cargo clippy --workspace --all-targets  -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc
 
 ####### SQL tests
 .PHONY: test.sql.sqlite

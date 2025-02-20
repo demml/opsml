@@ -6,7 +6,7 @@ use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
 use opsml_types::*;
 use tracing::{debug, instrument};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
     ClientRegistry(opsml_client::ClientRegistry),
 

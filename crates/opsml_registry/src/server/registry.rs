@@ -21,7 +21,7 @@ pub mod server_logic {
     use sqlx::types::Json as SqlxJson;
     use tracing::error;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct ServerRegistry {
         sql_client: SqlClientEnum,
         pub registry_type: RegistryType,

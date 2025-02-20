@@ -3,7 +3,7 @@ use crate::BaseArgs;
 use chrono::NaiveDateTime;
 use opsml_error::OpsmlError;
 use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::ArtifactKey;
+use opsml_types::contracts::{ArtifactKey, Card};
 use opsml_types::RegistryType;
 use opsml_utils::get_utc_datetime;
 use pyo3::prelude::*;
@@ -124,6 +124,13 @@ impl RunCard {
 #[pyclass]
 pub struct RunContext {
     run: RunCard,
+    registries: CardRegistries,
+}
+
+impl RunContext {
+    pub fn new(run: RunCard) -> Self {
+        Self { run }
+    }
 }
 
 #[pymethods]
@@ -133,13 +140,22 @@ impl RunContext {
         Ok(slf)
     }
 
+    #[pyo3(signature = (exc_type=None, exc_value=None, traceback=None))]
     fn __exit__(
         &self,
-        _exc_type: PyObject,
-        _exc_value: PyObject,
-        _traceback: PyObject,
+        exc_type: Option<PyObject>,
+        exc_value: Option<PyObject>,
+        traceback: Option<PyObject>,
     ) -> PyResult<bool> {
-        println!("Exiting the context");
+        if let (Some(exc_type), Some(exc_value), Some(traceback)) = (exc_type, exc_value, traceback)
+        {
+            error!(
+                "An error occurred: {:?}, {:?}, {:?}",
+                exc_type, exc_value, traceback
+            );
+        } else {
+            println!("Exiting the context without error");
+        }
 
         Ok(false) // Return false to propagate exceptions
     }
