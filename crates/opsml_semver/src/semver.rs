@@ -34,10 +34,10 @@ impl FromStr for VersionType {
 #[pymethods]
 impl VersionType {
     #[new]
-    fn new(version_type: String) -> PyResult<Self> {
-        match VersionType::from_str(&version_type) {
+    fn new(version_type: &str) -> PyResult<Self> {
+        match VersionType::from_str(version_type) {
             Ok(version_type) => Ok(version_type),
-            Err(_) => Err(pyo3::exceptions::PyValueError::new_err(
+            Err(()) => Err(pyo3::exceptions::PyValueError::new_err(
                 "Invalid version type",
             )),
         }

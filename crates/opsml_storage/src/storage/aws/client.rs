@@ -795,7 +795,7 @@ impl FileSystem for S3FStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
-        let progress = Progress::new();
+        let progress = Progress::new()?;
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
