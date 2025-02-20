@@ -3,17 +3,15 @@ use crate::ComputeEnvironment;
 use chrono::NaiveDateTime;
 use names::Generator;
 use opsml_error::OpsmlError;
+use opsml_registry::CardRegistries;
+use opsml_semver::VersionType;
 use opsml_storage::FileSystemStorage;
-use opsml_types::{
-    cards::BaseArgs,
-    contracts::{ArtifactKey, Card},
-    RegistryType,
-};
+use opsml_types::{cards::BaseArgs, contracts::ArtifactKey, RegistryType};
 use opsml_utils::get_utc_datetime;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use pyo3::IntoPyObjectExt;
+use std::sync::{Arc, Mutex};
 use tracing::{debug, error};
 
 #[pyclass]
@@ -128,13 +126,24 @@ impl RunCard {
         log_hardware: Option<bool>,
         code_dir: Option<&str>,
     ) -> PyResult<Bound<'py, ActiveRun>> {
-        let run = Self::new(py, repository, name, None, None, None)?;
+        let run = Py::new(py, RunCard::new(py, repository, name, None, None, None)?)?
+            .into_bound_py_any(py)
+            .map_err(|e| {
+                error!("Failed to register run card: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        let mut registries = CardRegistries::new()?;
+        registries
+            .run
+            .register_card(&run, VersionType::Minor, None, None, None)?;
 
         let _hardware = log_hardware.unwrap_or(false);
         let _code_dir = code_dir.unwrap_or("");
 
-        // Return the RunCard wrapped in a PyRef which implements context manager protocol
-        let active = ActiveRun::new(run)?;
+        // Return the new ActiveRun wrapped in a PyRef which implements context manager protocol
+        let active = ActiveRun::new(run.unbind(), Arc::new(Mutex::new(registries)))?;
+
         Ok(Py::new(py, active)?.bind(py).clone())
     }
 }
