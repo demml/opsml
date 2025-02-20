@@ -285,8 +285,8 @@ impl BaseArgs {
         version: Option<&str>,
         uid: Option<&str>,
     ) -> Result<BaseArgsResult, CardError> {
-        let name = clean_string(&Self::get_value("NAME", name)?);
-        let repository = clean_string(&Self::get_value("REPOSITORY", repository)?);
+        let name = clean_string(&Self::get_value("NAME", name)?)?;
+        let repository = clean_string(&Self::get_value("REPOSITORY", repository)?)?;
 
         let version = version.map_or(CommonKwargs::BaseVersion.to_string(), |v| v.to_string());
         let uid = uid.map_or(CommonKwargs::Undefined.to_string(), |v| v.to_string());
