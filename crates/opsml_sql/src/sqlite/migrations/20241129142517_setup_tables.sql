@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     tags TEXT,
     data_type TEXT,
     runcard_uid TEXT,
-    pipelinecard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     username TEXT NOT NULL DEFAULT 'guest'
@@ -41,7 +40,6 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     data_type TEXT,
     model_type TEXT,
     runcard_uid TEXT,
-    pipelinecard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     task_type TEXT NOT NULL DEFAULT 'undefined',
@@ -64,10 +62,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     tags TEXT,
     datacard_uids TEXT,
     modelcard_uids TEXT,
-    pipelinecard_uid TEXT,
-    project TEXT,
-    artifact_uris TEXT,
-    compute_environment TEXT,
+    runcard_uids TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -92,43 +87,6 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
--- PipelineSchema
-CREATE TABLE IF NOT EXISTS opsml_pipeline_registry (
-    uid TEXT PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    app_env TEXT DEFAULT 'development',
-    name TEXT,
-    repository TEXT,
-    major INT NOT NULL,
-    minor INT NOT NULL,
-    patch INT NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
-    tags TEXT,
-    pipeline_code_uri TEXT,
-    datacard_uids TEXT,
-    modelcard_uids TEXT,
-    runcard_uids TEXT,
-    username TEXT NOT NULL DEFAULT 'guest'
-);
-
--- ProjectSchema
-CREATE TABLE IF NOT EXISTS opsml_project_registry (
-    uid TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    name TEXT,
-    repository TEXT,
-    app_env TEXT DEFAULT 'development',
-    project_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    major INT NOT NULL,
-    minor INT NOT NULL,
-    patch INT NOT NULL,
-    pre_tag VARCHAR(16),
-    build_tag VARCHAR(16),
-    version VARCHAR(64),
-    username TEXT NOT NULL DEFAULT 'guest'
-);
 
 -- MetricSchema
 CREATE TABLE IF NOT EXISTS opsml_run_metrics (

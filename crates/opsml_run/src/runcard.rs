@@ -2,10 +2,11 @@ use crate::ActiveRun;
 use crate::ComputeEnvironment;
 use chrono::NaiveDateTime;
 use names::Generator;
-use opsml_error::OpsmlError;
+use opsml_error::{CardError, OpsmlError};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_storage::FileSystemStorage;
+use opsml_types::contracts::{Card, RunCardClientRecord};
 use opsml_types::{cards::BaseArgs, contracts::ArtifactKey, RegistryType};
 use opsml_utils::get_utc_datetime;
 use pyo3::prelude::*;
@@ -145,6 +146,24 @@ impl RunCard {
         let active = ActiveRun::new(run.unbind(), Arc::new(Mutex::new(registries)))?;
 
         Ok(Py::new(py, active)?.bind(py).clone())
+    }
+
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = RunCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            datacard_uids: self.datacard_uids.clone(),
+            modelcard_uids: self.modelcard_uids.clone(),
+            runcard_uids: self.runcard_uids.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(Card::Run(record))
     }
 }
 

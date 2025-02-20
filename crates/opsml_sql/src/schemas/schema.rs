@@ -6,7 +6,6 @@ use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
-use std::collections::HashMap;
 use std::env;
 use uuid::Uuid;
 
@@ -365,10 +364,7 @@ pub struct RunCardRecord {
     pub tags: Json<Vec<String>>,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
-    pub pipelinecard_uid: String,
-    pub project: String,
-    pub artifact_uris: Json<HashMap<String, String>>,
-    pub compute_environment: Json<HashMap<String, String>>,
+    pub runcard_uids: Json<Vec<String>>,
     pub username: String,
 }
 
@@ -389,10 +385,7 @@ impl Default for RunCardRecord {
             tags: Json(Vec::new()),
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
-            pipelinecard_uid: CommonKwargs::Undefined.to_string(),
-            project: CommonKwargs::Undefined.to_string(),
-            artifact_uris: Json(HashMap::new()),
-            compute_environment: Json(HashMap::new()),
+            runcard_uids: Json(Vec::new()),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -407,10 +400,7 @@ impl RunCardRecord {
         tags: Vec<String>,
         datacard_uids: Option<Vec<String>>,
         modelcard_uids: Option<Vec<String>>,
-        pipelinecard_uid: Option<String>,
-        project: String,
-        artifact_uris: Option<HashMap<String, String>>,
-        compute_environment: Option<HashMap<String, String>>,
+        runcard_uids: Option<Vec<String>>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -432,11 +422,7 @@ impl RunCardRecord {
             tags: Json(tags),
             datacard_uids: Json(datacard_uids.unwrap_or_default()),
             modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            pipelinecard_uid: pipelinecard_uid
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            project,
-            artifact_uris: Json(artifact_uris.unwrap_or_default()),
-            compute_environment: Json(compute_environment.unwrap_or_default()),
+            runcard_uids: Json(runcard_uids.unwrap_or_default()),
             username,
         }
     }
@@ -546,173 +532,6 @@ impl Default for AuditCardRecord {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct PipelineCardRecord {
-    pub uid: String,
-    pub created_at: NaiveDateTime,
-    pub app_env: String,
-    pub name: String,
-    pub repository: String,
-    pub major: i32,
-    pub minor: i32,
-    pub patch: i32,
-    pub pre_tag: Option<String>,
-    pub build_tag: Option<String>,
-    pub version: String,
-    pub tags: Json<Vec<String>>,
-    pub pipeline_code_uri: String,
-    pub datacard_uids: Json<Vec<String>>,
-    pub modelcard_uids: Json<Vec<String>>,
-    pub runcard_uids: Json<Vec<String>>,
-    pub username: String,
-}
-
-#[allow(clippy::too_many_arguments)]
-impl PipelineCardRecord {
-    pub fn new(
-        name: String,
-        repository: String,
-        version: Version,
-        tags: Vec<String>,
-        pipeline_code_uri: String,
-        datacard_uids: Option<Vec<String>>,
-        modelcard_uids: Option<Vec<String>>,
-        runcard_uids: Option<Vec<String>>,
-        username: String,
-    ) -> Self {
-        let created_at = get_utc_datetime();
-        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
-
-        PipelineCardRecord {
-            uid,
-            created_at,
-            app_env,
-            name,
-            repository,
-            major: version.major as i32,
-            minor: version.minor as i32,
-            patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
-            version: version.to_string(),
-            tags: Json(tags),
-            pipeline_code_uri,
-            datacard_uids: Json(datacard_uids.unwrap_or_default()),
-            modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            runcard_uids: Json(runcard_uids.unwrap_or_default()),
-            username,
-        }
-    }
-
-    pub fn uri(&self) -> String {
-        format!(
-            "{}/{}/{}/v{}",
-            CardTable::Pipeline,
-            self.repository,
-            self.name,
-            self.version
-        )
-    }
-}
-
-impl Default for PipelineCardRecord {
-    fn default() -> Self {
-        PipelineCardRecord {
-            uid: Uuid::new_v4().to_string(),
-            created_at: get_utc_datetime(),
-            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
-            name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
-            major: 1,
-            minor: 0,
-            patch: 0,
-            pre_tag: None,
-            build_tag: None,
-            version: Version::new(1, 0, 0).to_string(),
-            tags: Json(Vec::new()),
-            pipeline_code_uri: CommonKwargs::Undefined.to_string(),
-            datacard_uids: Json(Vec::new()),
-            modelcard_uids: Json(Vec::new()),
-            runcard_uids: Json(Vec::new()),
-            username: CommonKwargs::Undefined.to_string(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct ProjectCardRecord {
-    pub uid: String,
-    pub created_at: NaiveDateTime,
-    pub app_env: String,
-    pub name: String,
-    pub repository: String,
-    pub project_id: i32,
-    pub major: i32,
-    pub minor: i32,
-    pub patch: i32,
-    pub pre_tag: Option<String>,
-    pub build_tag: Option<String>,
-    pub version: String,
-    pub username: String,
-}
-
-impl Default for ProjectCardRecord {
-    fn default() -> Self {
-        ProjectCardRecord {
-            uid: Uuid::new_v4().to_string(),
-            created_at: get_utc_datetime(),
-            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
-            name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
-            project_id: 1,
-            major: 1,
-            minor: 0,
-            patch: 0,
-            pre_tag: None,
-            build_tag: None,
-            version: Version::new(1, 0, 0).to_string(),
-            username: CommonKwargs::Undefined.to_string(),
-        }
-    }
-}
-
-impl ProjectCardRecord {
-    pub fn new(
-        name: String,
-        repository: String,
-        version: Version,
-        project_id: i32,
-        username: String,
-    ) -> Self {
-        ProjectCardRecord {
-            uid: Uuid::new_v4().to_string(),
-            created_at: get_utc_datetime(),
-            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
-            name,
-            repository,
-            project_id,
-            major: version.major as i32,
-            minor: version.minor as i32,
-            patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
-            version: version.to_string(),
-            username,
-        }
-    }
-
-    pub fn uri(&self) -> String {
-        format!(
-            "{}/{}/{}/v{}",
-            CardTable::Project,
-            self.repository,
-            self.name,
-            self.version
-        )
-    }
-}
-
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
@@ -721,8 +540,6 @@ pub enum CardResults {
     Model(Vec<ModelCardRecord>),
     Run(Vec<RunCardRecord>),
     Audit(Vec<AuditCardRecord>),
-    Pipeline(Vec<PipelineCardRecord>),
-    Project(Vec<ProjectCardRecord>),
 }
 
 impl CardResults {
@@ -732,8 +549,6 @@ impl CardResults {
             CardResults::Model(cards) => cards.len(),
             CardResults::Run(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
-            CardResults::Pipeline(cards) => cards.len(),
-            CardResults::Project(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -742,8 +557,6 @@ impl CardResults {
             CardResults::Model(cards) => cards.is_empty(),
             CardResults::Run(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
-            CardResults::Pipeline(cards) => cards.is_empty(),
-            CardResults::Project(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -764,14 +577,6 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
-            CardResults::Pipeline(cards) => cards
-                .iter()
-                .map(|card| serde_json::to_string_pretty(card).unwrap())
-                .collect(),
-            CardResults::Project(cards) => cards
-                .iter()
-                .map(|card| serde_json::to_string_pretty(card).unwrap())
-                .collect(),
         }
     }
 }
@@ -782,8 +587,6 @@ pub enum ServerCard {
     Model(ModelCardRecord),
     Run(RunCardRecord),
     Audit(AuditCardRecord),
-    Pipeline(PipelineCardRecord),
-    Project(ProjectCardRecord),
 }
 
 impl ServerCard {
@@ -793,8 +596,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.uid.as_str(),
             ServerCard::Run(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
-            ServerCard::Pipeline(card) => card.uid.as_str(),
-            ServerCard::Project(card) => card.uid.as_str(),
         }
     }
 
@@ -804,8 +605,6 @@ impl ServerCard {
             ServerCard::Model(_) => RegistryType::Model.to_string(),
             ServerCard::Run(_) => RegistryType::Run.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
-            ServerCard::Pipeline(_) => RegistryType::Pipeline.to_string(),
-            ServerCard::Project(_) => RegistryType::Project.to_string(),
         }
     }
 
@@ -815,8 +614,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.version.clone(),
             ServerCard::Run(card) => card.version.clone(),
             ServerCard::Audit(card) => card.version.clone(),
-            ServerCard::Pipeline(card) => card.version.clone(),
-            ServerCard::Project(card) => card.version.clone(),
         }
     }
 
@@ -826,8 +623,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.repository.clone(),
             ServerCard::Run(card) => card.repository.clone(),
             ServerCard::Audit(card) => card.repository.clone(),
-            ServerCard::Pipeline(card) => card.repository.clone(),
-            ServerCard::Project(card) => card.repository.clone(),
         }
     }
 
@@ -837,8 +632,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.name.clone(),
             ServerCard::Run(card) => card.name.clone(),
             ServerCard::Audit(card) => card.name.clone(),
-            ServerCard::Pipeline(card) => card.name.clone(),
-            ServerCard::Project(card) => card.name.clone(),
         }
     }
 
@@ -848,8 +641,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.uri(),
             ServerCard::Run(card) => card.uri(),
             ServerCard::Audit(card) => card.uri(),
-            ServerCard::Pipeline(card) => card.uri(),
-            ServerCard::Project(card) => card.uri(),
         }
     }
 
@@ -859,8 +650,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.app_env.clone(),
             ServerCard::Run(card) => card.app_env.clone(),
             ServerCard::Audit(card) => card.app_env.clone(),
-            ServerCard::Pipeline(card) => card.app_env.clone(),
-            ServerCard::Project(card) => card.app_env.clone(),
         }
     }
 
@@ -870,8 +659,6 @@ impl ServerCard {
             ServerCard::Model(card) => card.created_at,
             ServerCard::Run(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
-            ServerCard::Pipeline(card) => card.created_at,
-            ServerCard::Project(card) => card.created_at,
         }
     }
 }
