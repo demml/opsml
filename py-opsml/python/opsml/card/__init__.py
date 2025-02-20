@@ -15,7 +15,6 @@ ModelCardMetadata = card.ModelCardMetadata
 RunCard = card.RunCard
 ActiveRun = card.ActiveRun
 ComputeEnvironment = card.ComputeEnvironment
-RunContext = card.RunContext
 
 
 __all__ = [
