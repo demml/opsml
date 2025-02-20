@@ -122,6 +122,7 @@ impl ActiveRun {
     #[pyo3(signature = (exc_type=None, exc_value=None, traceback=None))]
     fn __exit__(
         &self,
+        py: Python<'_>,
         exc_type: Option<PyObject>,
         exc_value: Option<PyObject>,
         traceback: Option<PyObject>,
@@ -133,7 +134,13 @@ impl ActiveRun {
                 exc_type, exc_value, traceback
             );
         } else {
-            println!("Exiting the context without error");
+            debug!("Exiting run");
+            // update card
+            self.unlock_registries()?
+                .run
+                .update_card(self.run.bind(py))?;
+
+            debug!("Run updated");
         }
 
         Ok(false) // Return false to propagate exceptions

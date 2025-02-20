@@ -174,12 +174,8 @@ impl RunCard {
         Ok(Card::Run(record))
     }
 
-    #[pyo3(signature = (path, **_kwargs))]
-    pub fn save(
-        &mut self,
-        path: PathBuf,
-        _kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> Result<(), CardError> {
+    #[pyo3(signature = (path))]
+    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&self, &card_save_path)?;
 
