@@ -301,7 +301,7 @@ class DataInterfaceMetadata:
     save_metadata: DataInterfaceSaveMetadata
     schema: FeatureSchema
     extra_metadata: dict[str, str]
-    sql_logic: SqlLogic
+    sql_logic: SqlLogic  # pylint: disable=used-before-assignment
     interface_type: DataInterfaceType
     data_splits: DataSplits
     dependent_vars: DependentVars

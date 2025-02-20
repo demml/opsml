@@ -1,4 +1,3 @@
-use opsml_cards::{DataSchema, Description};
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{base::ExtraMetadata, Feature, FeatureSchema, OnnxSchema};
 use opsml_semver::VersionType;
@@ -31,7 +30,6 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SaverPath>()?;
     m.add_class::<FeatureSchema>()?;
     m.add_class::<Feature>()?;
-    m.add_class::<DataSchema>()?;
     m.add_class::<OnnxSchema>()?;
 
     // opsml_semver
@@ -42,8 +40,6 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // opsml_utils
     m.add_class::<FileUtils>()?;
-
-    m.add_class::<Description>()?;
     m.add_class::<ApiSettings>()?;
     m.add_class::<OpsmlStorageSettings>()?;
     Ok(())

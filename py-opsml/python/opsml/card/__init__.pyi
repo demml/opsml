@@ -1,3 +1,5 @@
+# pylint: disable=dangerous-default-value
+
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -159,7 +161,7 @@ class DataCard:
         """
 
     @property
-    def metadata(self) -> DataCardMetadata:
+    def metadata(self) -> DataCardMetadata:  # pylint: disable=used-before-assignment
         """Return the metadata of the data card"""
 
     @property

@@ -534,36 +534,3 @@ class OnnxSchema:
     @property
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
-
-class DataSchema:
-    data_type: str
-    input_features: Optional[FeatureSchema]
-    output_features: Optional[FeatureSchema]
-    onnx_schema: Optional[OnnxSchema]
-
-    def __init__(
-        self,
-        data_type: str,
-        input_features: Optional[FeatureSchema] = None,
-        output_features: Optional[FeatureSchema] = None,
-        onnx_schema: Optional[OnnxSchema] = None,
-    ) -> None:
-        """Define a data schema
-
-        Args:
-            data_type:
-                The type of the data schema
-            input_features:
-                The input features of the data schema
-            output_features:
-                The output features of the data schema
-            onnx_schema:
-                The onnx schema of the data schema
-        """
-
-    def __str__(self) -> str:
-        """Return a string representation of the DataSchema.
-
-        Returns:
-            String representation of the DataSchema.
-        """
