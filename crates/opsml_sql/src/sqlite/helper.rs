@@ -136,20 +136,6 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_project_id_query() -> String {
-        format!(
-            "WITH max_project AS (
-                SELECT MAX(project_id) AS max_id FROM {}
-            )
-            SELECT COALESCE(
-                (SELECT project_id FROM {} WHERE name = ? AND repository = ?),
-                (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
-            ) AS project_id",
-            CardTable::Project,
-            CardTable::Project
-        )
-        .to_string()
-    }
     pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
@@ -417,13 +403,8 @@ impl SqliteQueryHelper {
         query
     }
 
-    pub fn get_projectcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, name, repository, app_env, project_id, major, minor, patch, version, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
-            .to_string()
-    }
-
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, runcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -445,13 +426,12 @@ impl SqliteQueryHelper {
         task_type, 
         tags, 
         runcard_uid, 
-        pipelinecard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
@@ -468,18 +448,15 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        project, 
         tags, 
         datacard_uids,
         modelcard_uids, 
-        pipelinecard_uid, 
-        artifact_uris, 
-        compute_environment, 
+        runcard_uids,
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Run
         )
         .to_string()
@@ -511,32 +488,6 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_pipelinecard_insert_query() -> String {
-        format!(
-            "INSERT INTO {} (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        tags, 
-        pipeline_code_uri, 
-        datacard_uids, 
-        modelcard_uids, 
-        runcard_uids, 
-        pre_tag, 
-        build_tag,
-        username
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Pipeline
-        )
-        .to_string()
-    }
-
     pub fn get_datacard_update_query() -> String {
         format!(
             "UPDATE {} SET 
@@ -551,7 +502,6 @@ impl SqliteQueryHelper {
         interface_type = ?, 
         tags = ?, 
         runcard_uid = ?, 
-        pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -579,7 +529,6 @@ impl SqliteQueryHelper {
         task_type = ?, 
         tags = ?, 
         runcard_uid = ?, 
-        pipelinecard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -600,13 +549,10 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        project = ?, 
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        pipelinecard_uid = ?, 
-        artifact_uris = ?, 
-        compute_environment = ?, 
+        runcard_uids = ?,  
         pre_tag = ?, 
         build_tag = ?,
         username = ?
@@ -636,30 +582,6 @@ impl SqliteQueryHelper {
         username = ?
         WHERE uid = ?",
             CardTable::Audit
-        )
-        .to_string()
-    }
-
-    pub fn get_pipelinecard_update_query() -> String {
-        format!(
-            "UPDATE {} SET  
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?, 
-        tags = ?, 
-        pipeline_code_uri = ?, 
-        datacard_uids = ?, 
-        modelcard_uids = ?, 
-        runcard_uids = ?, 
-        pre_tag = ?, 
-        build_tag = ?,
-        username = ?
-        WHERE uid = ?",
-            CardTable::Pipeline
         )
         .to_string()
     }

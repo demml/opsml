@@ -11,8 +11,8 @@ use opsml_semver::VersionType;
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::Path};
-use std::{path::PathBuf, sync::LazyLock};
+use std::path::Path;
+use std::path::PathBuf;
 use tabled::settings::{
     format::Format,
     object::{Columns, Rows},
@@ -197,14 +197,10 @@ pub struct RunCardClientRecord {
     pub name: String,
     pub repository: String,
     pub version: String,
-
     pub tags: Vec<String>,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub pipelinecard_uid: Option<String>,
-    pub project: String,
-    pub artifact_uris: Option<HashMap<String, String>>,
-    pub compute_environment: Option<HashMap<String, String>>,
+    pub datacard_uids: Vec<String>,
+    pub modelcard_uids: Vec<String>,
+    pub runcard_uids: Vec<String>,
     pub username: String,
 }
 
@@ -217,14 +213,10 @@ impl Default for RunCardClientRecord {
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-
             tags: Vec::new(),
-            datacard_uids: None,
-            modelcard_uids: None,
-            pipelinecard_uid: None,
-            project: "".to_string(),
-            artifact_uris: None,
-            compute_environment: None,
+            datacard_uids: Vec::new(),
+            modelcard_uids: Vec::new(),
+            runcard_uids: Vec::new(),
             username: "guest".to_string(),
         }
     }
@@ -342,8 +334,6 @@ pub enum Card {
     Model(ModelCardClientRecord),
     Run(RunCardClientRecord),
     Audit(AuditCardClientRecord),
-    Pipeline(PipelineCardClientRecord),
-    Project(ProjectCardClientRecord),
 }
 
 #[pymethods]
@@ -359,8 +349,6 @@ impl Card {
             Self::Model(card) => &card.uid,
             Self::Run(card) => &card.uid,
             Self::Audit(card) => &card.uid,
-            Self::Pipeline(card) => &card.uid,
-            Self::Project(card) => &card.uid,
         }
     }
 
@@ -371,8 +359,6 @@ impl Card {
             Self::Model(card) => card.created_at,
             Self::Run(card) => card.created_at,
             Self::Audit(card) => card.created_at,
-            Self::Pipeline(card) => card.created_at,
-            Self::Project(card) => card.created_at,
         }
     }
 
@@ -383,8 +369,6 @@ impl Card {
             Self::Model(card) => card.app_env.as_ref(),
             Self::Run(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
-            Self::Pipeline(card) => card.app_env.as_ref(),
-            Self::Project(_) => "",
         }
     }
 
@@ -395,8 +379,6 @@ impl Card {
             Self::Model(card) => card.name.as_ref(),
             Self::Run(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
-            Self::Pipeline(card) => card.name.as_ref(),
-            Self::Project(card) => card.name.as_ref(),
         }
     }
 
@@ -407,8 +389,6 @@ impl Card {
             Self::Model(card) => card.repository.as_ref(),
             Self::Run(card) => card.repository.as_ref(),
             Self::Audit(card) => card.repository.as_ref(),
-            Self::Pipeline(card) => card.repository.as_ref(),
-            Self::Project(card) => card.repository.as_ref(),
         }
     }
 
@@ -419,8 +399,6 @@ impl Card {
             Self::Model(card) => card.version.as_ref(),
             Self::Run(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
-            Self::Pipeline(card) => card.version.as_ref(),
-            Self::Project(card) => card.version.as_ref(),
         }
     }
 
@@ -431,11 +409,6 @@ impl Card {
             Self::Model(card) => &card.tags,
             Self::Run(card) => &card.tags,
             Self::Audit(card) => &card.tags,
-            Self::Pipeline(card) => &card.tags,
-            Self::Project(_) => {
-                static EMPTY_MAP: LazyLock<Vec<String>> = LazyLock::new(Vec::new);
-                &EMPTY_MAP
-            }
         }
     }
 
@@ -444,19 +417,11 @@ impl Card {
         match self {
             Self::Data(card) => Some(vec![&card.uid]),
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Run(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => card
                 .datacard_uids
                 .as_ref()
                 .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
         }
     }
 
@@ -465,19 +430,11 @@ impl Card {
         match self {
             Self::Data(_) => None,
             Self::Model(card) => Some(vec![&card.uid]),
-            Self::Run(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
+            Self::Run(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => card
                 .modelcard_uids
                 .as_ref()
                 .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
         }
     }
 
@@ -491,23 +448,6 @@ impl Card {
                 .runcard_uids
                 .as_ref()
                 .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .runcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
-        }
-    }
-
-    #[getter]
-    pub fn pipelinecard_uid(&self) -> Option<&str> {
-        match self {
-            Self::Data(card) => card.pipelinecard_uid.as_deref(),
-            Self::Model(card) => card.pipelinecard_uid.as_deref(),
-            Self::Run(card) => card.pipelinecard_uid.as_deref(),
-            Self::Audit(_) => None,
-            Self::Pipeline(card) => Some(&card.uid),
-            Self::Project(_) => None,
         }
     }
 
@@ -518,8 +458,6 @@ impl Card {
             Self::Model(card) => card.auditcard_uid.as_deref(),
             Self::Run(_) => None,
             Self::Audit(card) => Some(&card.uid),
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
         }
     }
 
@@ -530,8 +468,6 @@ impl Card {
             Self::Model(card) => Some(card.interface_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
         }
     }
 
@@ -542,8 +478,6 @@ impl Card {
             Self::Model(card) => Some(card.data_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
         }
     }
 
@@ -554,8 +488,6 @@ impl Card {
             Self::Model(card) => Some(card.model_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
         }
     }
 
@@ -566,8 +498,6 @@ impl Card {
             Self::Model(card) => Some(card.task_type.to_string()),
             Self::Run(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
         }
     }
 }
@@ -605,30 +535,11 @@ impl Card {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
-            Self::Pipeline(card) => {
-                let uri = format!(
-                    "{}/{}/{}/v{}",
-                    CardTable::Pipeline,
-                    card.repository,
-                    card.name,
-                    card.version
-                );
-                Ok(Path::new(&uri).to_path_buf())
-            }
+
             Self::Audit(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Audit,
-                    card.repository,
-                    card.name,
-                    card.version
-                );
-                Ok(Path::new(&uri).to_path_buf())
-            }
-            Self::Project(card) => {
-                let uri = format!(
-                    "{}/{}/{}/v{}",
-                    CardTable::Project,
                     card.repository,
                     card.name,
                     card.version
@@ -644,8 +555,6 @@ impl Card {
             Self::Model(_) => RegistryType::Model,
             Self::Run(_) => RegistryType::Run,
             Self::Audit(_) => RegistryType::Audit,
-            Self::Pipeline(_) => RegistryType::Pipeline,
-            Self::Project(_) => RegistryType::Project,
         }
     }
 }

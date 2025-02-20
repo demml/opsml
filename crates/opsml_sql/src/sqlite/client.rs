@@ -261,32 +261,7 @@ impl SqlClient for SqliteClient {
 
                 return Ok(CardResults::Audit(card));
             }
-            CardTable::Pipeline => {
-                let card: Vec<PipelineCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Pipeline(card));
-            }
-            CardTable::Project => {
-                let card: Vec<ProjectCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-
-                return Ok(CardResults::Project(card));
-            }
             _ => {
                 return Err(SqlError::QueryError(
                     "Invalid table name for query".to_string(),
@@ -376,13 +351,10 @@ impl SqlClient for SqliteClient {
                         .bind(run.minor)
                         .bind(run.patch)
                         .bind(&run.version)
-                        .bind(&run.project)
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.pipelinecard_uid)
-                        .bind(&run.artifact_uris)
-                        .bind(&run.compute_environment)
+                        .bind(&run.runcardcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)

@@ -60,12 +60,9 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
         repository: record.repository,
         version: record.version,
         tags: record.tags.0,
-        datacard_uids: Some(record.datacard_uids.0),
-        modelcard_uids: Some(record.modelcard_uids.0),
-        pipelinecard_uid: Some(record.pipelinecard_uid),
-        project: record.project,
-        artifact_uris: Some(record.artifact_uris.0),
-        compute_environment: Some(record.compute_environment.0),
+        datacard_uids: record.datacard_uids.0,
+        modelcard_uids: record.modelcard_uids.0,
+        runcard_uids: record.runcard_uids.0,
         username: record.username,
     };
 
