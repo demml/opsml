@@ -1,30 +1,57 @@
 use names::Generator;
 use opsml_cards::ExperimentCard;
-use opsml_error::{CardError, OpsmlError};
+use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
+use opsml_settings::config::OpsmlConfig;
+use opsml_storage::FileSystemStorage;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::sync::{Arc, Mutex};
+use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error};
+
+fn initialize_experiment_environment() -> Result<
+    (
+        Arc<tokio::runtime::Runtime>,
+        Arc<Mutex<CardRegistries>>,
+        Arc<TokioMutex<FileSystemStorage>>,
+    ),
+    ExperimentError,
+> {
+    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+    let registries = Arc::new(Mutex::new(CardRegistries::new_with_rt(rt.clone())?));
+    let mut settings = OpsmlConfig::default().storage_settings()?;
+    let fs = rt.block_on(async { FileSystemStorage::new(&mut settings).await })?;
+    Ok((rt, registries, Arc::new(TokioMutex::new(fs))))
+}
 
 #[pyclass]
 pub struct Experiment {
     pub experiment: PyObject,
     pub registries: Arc<Mutex<CardRegistries>>,
+    pub fs: Arc<TokioMutex<FileSystemStorage>>,
+    pub rt: Arc<tokio::runtime::Runtime>,
 }
 
 impl Experiment {
-    pub fn new(experiment: PyObject, registries: Arc<Mutex<CardRegistries>>) -> PyResult<Self> {
+    pub fn new(
+        experiment: PyObject,
+        registries: Arc<Mutex<CardRegistries>>,
+        fs: Arc<TokioMutex<FileSystemStorage>>,
+        rt: Arc<tokio::runtime::Runtime>,
+    ) -> PyResult<Self> {
         Ok(Self {
             experiment,
             registries,
+            fs,
+            rt,
         })
     }
 
     fn unlock_registries(&self) -> PyResult<std::sync::MutexGuard<'_, CardRegistries>> {
         let registries = self.registries.lock().map_err(|e| {
             error!("Failed to lock registries: {}", e);
-            CardError::Error(e.to_string())
+            ExperimentError::Error(e.to_string())
         })?;
 
         Ok(registries)
@@ -40,12 +67,13 @@ impl Experiment {
     ) -> PyResult<Bound<'py, PyAny>> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
-            generator.next().unwrap_or_else(|| "run".to_string())
+            generator.next().unwrap_or_else(|| "experiment".to_string())
         });
 
-        let run = Self::initialize_experiment(py, repository, Some(&name), code_dir, log_hardware)?;
-        Self::register_experiment(&run, &mut registries)?;
-        Ok(run)
+        let experiment =
+            Self::initialize_experiment(py, repository, Some(&name), code_dir, log_hardware)?;
+        Self::register_experiment(&experiment, &mut registries)?;
+        Ok(experiment)
     }
 
     fn initialize_experiment<'py>(
@@ -65,7 +93,7 @@ impl Experiment {
         .into_bound_py_any(py)
         .map_err(|e| {
             error!("Failed to register experiment card: {}", e);
-            CardError::Error(e.to_string())
+            ExperimentError::Error(e.to_string())
         })?;
 
         Ok(experiment)
@@ -154,7 +182,12 @@ impl Experiment {
         );
 
         // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
-        let active = Experiment::new(experiment.unbind(), slf.registries.clone())?;
+        let active = Experiment::new(
+            experiment.unbind(),
+            slf.registries.clone(),
+            slf.fs.clone(),
+            slf.rt.clone(),
+        )?;
 
         Ok(Py::new(py, active)?.bind(py).clone())
     }
@@ -202,8 +235,11 @@ pub fn start_experiment<'py>(
     log_hardware: bool,
     experiment_uid: Option<&str>,
 ) -> PyResult<Bound<'py, Experiment>> {
-    let registries = Arc::new(Mutex::new(CardRegistries::new()?));
+    debug!("Initializing experiment");
+    // runtime should be shared across all registries
+    let (rt, registries, fs) = initialize_experiment_environment()?;
 
+    debug!("Creating experiment");
     let experiment = if let Some(experiment_uid) = experiment_uid {
         // Load the existing experiment
         Experiment::load_experiment(py, experiment_uid, registries.lock().unwrap())?
@@ -220,7 +256,12 @@ pub fn start_experiment<'py>(
     };
 
     // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
-    let active = Experiment::new(experiment.unbind(), registries)?;
+    let active = Experiment::new(
+        experiment.unbind(),
+        registries,
+        Arc::new(TokioMutex::new(fs)),
+        rt,
+    )?;
 
     Ok(Py::new(py, active)?.bind(py).clone())
 }

@@ -356,6 +356,29 @@ impl From<PyErr> for OnnxError {
 }
 
 #[derive(Error, Debug)]
+pub enum ExperimentError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    StorageError(#[from] StorageError),
+}
+
+impl From<ExperimentError> for PyErr {
+    fn from(err: ExperimentError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+impl From<PyErr> for ExperimentError {
+    fn from(err: PyErr) -> Self {
+        ExperimentError::Error(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
 pub enum InterfaceError {
     #[error("{0}")]
     Error(String),

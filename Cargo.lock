@@ -3626,6 +3626,7 @@ dependencies = [
  "opsml-error",
  "opsml-registry",
  "opsml-semver",
+ "opsml-settings",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",

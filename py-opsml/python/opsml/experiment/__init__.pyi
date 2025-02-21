@@ -1,7 +1,7 @@
 from typing import Optional
 
 class Experiment:
-    def start_run(
+    def start_experiment(
         self,
         repository: Optional[str] = None,
         name: Optional[str] = None,
@@ -34,7 +34,7 @@ class Experiment:
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         pass
 
-def start_run(
+def start_experiment(
     repository: Optional[str] = None,
     name: Optional[str] = None,
     code_dir: Optional[str] = None,
