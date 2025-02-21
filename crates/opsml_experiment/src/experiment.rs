@@ -64,14 +64,21 @@ impl Experiment {
         code_dir: Option<&str>,
         log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
+        child: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
             generator.next().unwrap_or_else(|| "experiment".to_string())
         });
 
-        let experiment =
-            Self::initialize_experiment(py, repository, Some(&name), code_dir, log_hardware)?;
+        let experiment = Self::initialize_experiment(
+            py,
+            repository,
+            Some(&name),
+            code_dir,
+            log_hardware,
+            child,
+        )?;
         Self::register_experiment(&experiment, &mut registries)?;
         Ok(experiment)
     }
@@ -82,16 +89,15 @@ impl Experiment {
         name: Option<&str>,
         code_dir: Option<&str>,
         log_hardware: bool,
+        child: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
         let _hardware = log_hardware;
         let _code_dir = code_dir.unwrap_or("");
 
-        let experiment = Py::new(
-            py,
-            ExperimentCard::new(py, repository, name, None, None, None)?,
-        )?
-        .into_bound_py_any(py)
-        .map_err(|e| {
+        let mut card = ExperimentCard::new(py, repository, name, None, None, None)?;
+        card.child = child;
+
+        let experiment = Py::new(py, card)?.into_bound_py_any(py).map_err(|e| {
             error!("Failed to register experiment card: {}", e);
             ExperimentError::Error(e.to_string())
         })?;
@@ -170,6 +176,7 @@ impl Experiment {
                 code_dir,
                 log_hardware,
                 slf.unlock_registries()?,
+                true,
             )?
         };
 
@@ -252,10 +259,11 @@ pub fn start_experiment<'py>(
             code_dir,
             log_hardware,
             registries.lock().unwrap(),
+            false,
         )?
     };
 
-    // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
+    // Return the new Active experiment wrapped in a PyRef which implements context manager protocol
     let active = Experiment::new(experiment.unbind(), registries, fs, rt)?;
 
     Ok(Py::new(py, active)?.bind(py).clone())
