@@ -29,6 +29,10 @@ pub enum Routes {
     StorageSettings,
     Encrypt,
     Decrypt,
+    ExperimentMetrics,
+    ExperimentMetricNames,
+    ExperimentHardwareMetrics,
+    ExperimentParameters,
 }
 
 impl Routes {
@@ -53,6 +57,10 @@ impl Routes {
             Routes::CardLoad => "card/load",
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
+            Routes::ExperimentMetrics => "experiment/metrics",
+            Routes::ExperimentMetricNames => "experiment/metrics/names",
+            Routes::ExperimentHardwareMetrics => "experiment/hardware/metrics",
+            Routes::ExperimentParameters => "experiment/parameters",
         }
     }
 }

@@ -3,7 +3,12 @@ use crate::types::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
+use opsml_types::cards::HardwareMetrics;
+use opsml_types::{
+    cards::{CardTable, Metric, Parameter},
+    contracts::*,
+    RegistryMode, RegistryType,
+};
 use tracing::instrument;
 use tracing::{debug, error};
 
@@ -283,5 +288,204 @@ impl ClientRegistry {
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
         self.artifact_key(uid, registry_type, Routes::Decrypt).await
+    }
+
+    pub async fn insert_hardware_metrics(
+        &mut self,
+        metrics: &HardwareMetricRequest,
+    ) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(metrics).map_err(|e| {
+            error!("Failed to serialize metrics {}", e);
+            RegistryError::Error(format!("Failed to serialize metrics {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentHardwareMetrics,
+                RequestType::Put,
+                Some(body),
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to insert hardware metrics {}", e);
+                RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
+            })?;
+
+        let inserted = response.json::<UidResponse>().await.map_err(|e| {
+            error!("Failed to parse response {}", e);
+            RegistryError::Error(format!("Failed to parse response {}", e))
+        })?;
+
+        if inserted.exists {
+            Ok(())
+        } else {
+            Err(RegistryError::Error(
+                "Failed to insert hardware metrics".to_string(),
+            ))
+        }
+    }
+
+    pub async fn get_hardware_metrics(
+        &mut self,
+        metrics: &GetHardwareMetricRequest,
+    ) -> Result<Vec<HardwareMetrics>, RegistryError> {
+        let query_string = serde_qs::to_string(metrics).map_err(|e| {
+            error!("Failed to serialize metrics {}", e);
+            RegistryError::Error(format!("Failed to serialize metrics {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentHardwareMetrics,
+                RequestType::Get,
+                None,
+                Some(query_string),
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to get hardware metrics {}", e);
+                RegistryError::Error(format!("Failed to get hardware metrics {}", e))
+            })?;
+
+        response
+            .json::<Vec<HardwareMetrics>>()
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+    }
+
+    pub async fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(metrics).map_err(|e| {
+            error!("Failed to serialize metrics {}", e);
+            RegistryError::Error(format!("Failed to serialize metrics {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentMetrics,
+                RequestType::Put,
+                Some(body),
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to insert metrics {}", e);
+                RegistryError::Error(format!("Failed to insert metrics {}", e))
+            })?;
+
+        let inserted = response.json::<MetricResponse>().await.map_err(|e| {
+            error!("Failed to parse response {}", e);
+            RegistryError::Error(format!("Failed to parse response {}", e))
+        })?;
+
+        if inserted.success {
+            Ok(())
+        } else {
+            Err(RegistryError::Error("Failed to insert metrics".to_string()))
+        }
+    }
+
+    pub async fn get_metrics(
+        &mut self,
+        metrics: &GetMetricRequest,
+    ) -> Result<Vec<Metric>, RegistryError> {
+        let body = serde_json::to_value(metrics).map_err(|e| {
+            error!("Failed to serialize metrics {}", e);
+            RegistryError::Error(format!("Failed to serialize metrics {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentMetrics,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to get metrics {}", e);
+                RegistryError::Error(format!("Failed to get metrics {}", e))
+            })?;
+
+        response
+            .json::<Vec<Metric>>()
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+    }
+
+    pub async fn insert_parameters(
+        &mut self,
+        parameters: &ParameterRequest,
+    ) -> Result<(), RegistryError> {
+        let body = serde_json::to_value(parameters).map_err(|e| {
+            error!("Failed to serialize parameters {}", e);
+            RegistryError::Error(format!("Failed to serialize parameters {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentParameters,
+                RequestType::Put,
+                Some(body),
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to insert parameters {}", e);
+                RegistryError::Error(format!("Failed to insert parameters {}", e))
+            })?;
+
+        let inserted = response.json::<ParameterResponse>().await.map_err(|e| {
+            error!("Failed to parse response {}", e);
+            RegistryError::Error(format!("Failed to parse response {}", e))
+        })?;
+
+        if inserted.success {
+            Ok(())
+        } else {
+            Err(RegistryError::Error(
+                "Failed to insert parameters".to_string(),
+            ))
+        }
+    }
+
+    pub async fn get_parameters(
+        &mut self,
+        parameters: &GetParameterRequest,
+    ) -> Result<Vec<Parameter>, RegistryError> {
+        let body = serde_json::to_value(parameters).map_err(|e| {
+            error!("Failed to serialize parameters {}", e);
+            RegistryError::Error(format!("Failed to serialize parameters {}", e))
+        })?;
+
+        let response = self
+            .api_client
+            .request_with_retry(
+                Routes::ExperimentParameters,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to get parameters {}", e);
+                RegistryError::Error(format!("Failed to get parameters {}", e))
+            })?;
+
+        response
+            .json::<Vec<Parameter>>()
+            .await
+            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
     }
 }
