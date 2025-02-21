@@ -64,7 +64,7 @@ impl Experiment {
         code_dir: Option<&str>,
         log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
-        child: bool,
+        subexperiment: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
@@ -77,7 +77,7 @@ impl Experiment {
             Some(&name),
             code_dir,
             log_hardware,
-            child,
+            subexperiment,
         )?;
         Self::register_experiment(&experiment, &mut registries)?;
         Ok(experiment)
@@ -89,13 +89,13 @@ impl Experiment {
         name: Option<&str>,
         code_dir: Option<&str>,
         log_hardware: bool,
-        child: bool,
+        subexperiment: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
         let _hardware = log_hardware;
         let _code_dir = code_dir.unwrap_or("");
 
         let mut card = ExperimentCard::new(py, repository, name, None, None, None)?;
-        card.child = child;
+        card.subexperiment = subexperiment;
 
         let experiment = Py::new(py, card)?.into_bound_py_any(py).map_err(|e| {
             error!("Failed to register experiment card: {}", e);
@@ -118,14 +118,14 @@ impl Experiment {
             })
     }
 
-    fn add_child_experiment<'py>(
+    fn add_subexperiment_experiment<'py>(
         slf: &PyRefMut<'py, Self>,
         py: Python<'py>,
         experiment: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
-        let child_uid = experiment.getattr("uid")?.extract::<String>()?;
+        let subexperiment_uid = experiment.getattr("uid")?.extract::<String>()?;
         slf.experiment
-            .call_method1(py, "add_child_experiment", (&child_uid,))?;
+            .call_method1(py, "add_subexperiment_experiment", (&subexperiment_uid,))?;
         Ok(())
     }
 
@@ -181,7 +181,7 @@ impl Experiment {
         };
 
         // Add the new experiment's UID to the parent experiment's experimentcard_uids
-        Self::add_child_experiment(&slf, py, &experiment)?;
+        Self::add_subexperiment_experiment(&slf, py, &experiment)?;
 
         debug!(
             "Starting experiment: {}",
