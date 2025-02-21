@@ -1,6 +1,5 @@
 use crate::enums::OpsmlRegistry;
 use opsml_cards::{DataCard, ExperimentCard, ModelCard};
-use opsml_colors::Colorize;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::RegistryError;
 use opsml_storage::FileSystemStorage;

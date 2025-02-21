@@ -513,15 +513,16 @@ impl CardRegistry {
             .await?;
 
         println!(
-            "...✓ {} - {}/{} - v{}",
+            "{} - {} - {}/{} - v{}",
             Colorize::green("registered card"),
+            Colorize::purple(&registry_type.to_string()),
             response.repository,
             response.name,
             response.version
         );
 
         debug!(
-            "Successfully registered card - {:?} - {:?}/{:?} - v{:?}",
+            "Successfully registered card - {} - {}/{} - v{}",
             registry_type, response.repository, response.name, response.version
         );
 
@@ -545,7 +546,7 @@ impl CardRegistry {
 
         registry.delete_card(delete_request).await?;
 
-        println!("...✓ {}", Colorize::green("Deleted card"));
+        println!("{}", Colorize::green("Deleted card"));
         debug!("Successfully deleted card");
 
         Ok(())
@@ -590,8 +591,9 @@ impl CardRegistry {
             })?;
 
         println!(
-            "...✓ {} - {}/{} - v{}",
+            "{} - {} - {}/{} - v{}",
             Colorize::green("Updated card"),
+            Colorize::purple(&registry_type.to_string()),
             registry_card.repository(),
             registry_card.name(),
             registry_card.version()
