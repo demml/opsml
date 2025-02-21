@@ -691,38 +691,23 @@ impl SqlClient for MySqlClient {
 
         Ok(records)
     }
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        record: &'life1 [HardwareMetricsRecord],
+        record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
-        let query = MySQLQueryHelper::get_hardware_metrics_insert_query(record.len());
-
-        let mut query_builder = sqlx::query(&query);
-
-        for r in record {
-            query_builder = query_builder
-                .bind(&r.run_uid)
-                .bind(r.created_at)
-                .bind(r.cpu_percent_utilization)
-                .bind(&r.cpu_percent_per_core)
-                .bind(r.compute_overall)
-                .bind(r.compute_utilized)
-                .bind(r.load_avg)
-                .bind(r.sys_ram_total)
-                .bind(r.sys_ram_used)
-                .bind(r.sys_ram_available)
-                .bind(r.sys_ram_percent_used)
-                .bind(r.sys_swap_total)
-                .bind(r.sys_swap_used)
-                .bind(r.sys_swap_free)
-                .bind(r.sys_swap_percent)
-                .bind(r.bytes_recv)
-                .bind(r.bytes_sent)
-                .bind(r.gpu_percent_utilization)
-                .bind(&r.gpu_percent_per_core);
-        }
-
-        query_builder
+        let query = MySQLQueryHelper::get_hardware_metrics_insert_query(0);
+        sqlx::query(&query)
+            .bind(&record.experiment_uid)
+            .bind(record.created_at)
+            .bind(record.cpu_percent_utilization)
+            .bind(&record.cpu_percent_per_core)
+            .bind(&record.free_memory)
+            .bind(&record.total_memory)
+            .bind(&record.used_memory)
+            .bind(&record.available_memory)
+            .bind(record.used_percent_memory)
+            .bind(&record.bytes_recv)
+            .bind(&record.bytes_sent)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1647,20 +1632,16 @@ mod tests {
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
-        let mut metrics = vec![];
 
         // create a loop of 10
-        for _ in 0..10 {
-            let metric = HardwareMetricsRecord {
-                run_uid: uid.clone(),
-                created_at: get_utc_datetime(),
-                ..Default::default()
-            };
 
-            metrics.push(metric);
-        }
+        let metric = HardwareMetricsRecord {
+            experiment_uid: uid.clone(),
+            created_at: get_utc_datetime(),
+            ..Default::default()
+        };
 
-        client.insert_hardware_metrics(&metrics).await.unwrap();
+        client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);

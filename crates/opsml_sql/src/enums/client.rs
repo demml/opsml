@@ -228,9 +228,9 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        record: &'life1 [HardwareMetricsRecord],
+        record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.insert_hardware_metrics(record).await,
@@ -1005,20 +1005,16 @@ mod tests {
         let client = get_client().await;
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
-        let mut metrics = vec![];
 
         // create a loop of 10
-        for _ in 0..10 {
-            let metric = HardwareMetricsRecord {
-                run_uid: uid.clone(),
-                created_at: get_utc_datetime(),
-                ..Default::default()
-            };
 
-            metrics.push(metric);
-        }
+        let metric = HardwareMetricsRecord {
+            experiment_uid: uid.clone(),
+            created_at: get_utc_datetime(),
+            ..Default::default()
+        };
 
-        client.insert_hardware_metrics(&metrics).await.unwrap();
+        client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);

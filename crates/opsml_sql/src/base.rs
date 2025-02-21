@@ -176,9 +176,9 @@ pub trait SqlClient: Sized {
     ///
     /// * `metric_record` - The hardware metrics
     ///
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        records: &'life1 [HardwareMetricsRecord],
+        records: &HardwareMetricsRecord,
     ) -> Result<(), SqlError>;
 
     /// Get hardware metrics
