@@ -141,7 +141,7 @@ impl ExperimentCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
-        Ok(Card::Run(record))
+        Ok(Card::Experiment(record))
     }
 
     #[pyo3(signature = (path))]

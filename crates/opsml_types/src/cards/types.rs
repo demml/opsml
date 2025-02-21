@@ -10,7 +10,7 @@ use std::{env, fmt};
 pub enum CardTable {
     Data,
     Model,
-    Run,
+    Experiment,
     Audit,
     Metrics,
     HardwareMetrics,
@@ -25,7 +25,7 @@ impl fmt::Display for CardTable {
         let table_name = match self {
             CardTable::Data => "opsml_data_registry",
             CardTable::Model => "opsml_model_registry",
-            CardTable::Run => "opsml_experiment_registry",
+            CardTable::Experiment => "opsml_experiment_registry",
             CardTable::Audit => "opsml_audit_registry",
             CardTable::Metrics => "opsml_experiment_metrics",
             CardTable::HardwareMetrics => "opsml_experiment_hardware_metrics",
@@ -43,7 +43,7 @@ impl CardTable {
         match registry_type {
             RegistryType::Data => CardTable::Data,
             RegistryType::Model => CardTable::Model,
-            RegistryType::Run => CardTable::Run,
+            RegistryType::Experiment => CardTable::Experiment,
             RegistryType::Audit => CardTable::Audit,
             RegistryType::Metrics => CardTable::Metrics,
             RegistryType::HardwareMetrics => CardTable::HardwareMetrics,

@@ -95,8 +95,8 @@ pub async fn insert_card_into_db(
             ServerCard::Model(server_card)
         }
 
-        Card::Run(client_card) => {
-            let server_card = experimentcardRecord::new(
+        Card::Experiment(client_card) => {
+            let server_card = ExperimentCardRecord::new(
                 client_card.name,
                 client_card.repository,
                 version,
@@ -106,7 +106,7 @@ pub async fn insert_card_into_db(
                 client_card.experimentcard_uids,
                 client_card.username,
             );
-            ServerCard::Run(server_card)
+            ServerCard::Experiment(server_card)
         }
 
         Card::Audit(client_card) => {

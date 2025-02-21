@@ -453,7 +453,7 @@ impl Card {
             Self::Experiment(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
-                    CardTable::Run,
+                    CardTable::Experiment,
                     card.repository,
                     card.name,
                     card.version
