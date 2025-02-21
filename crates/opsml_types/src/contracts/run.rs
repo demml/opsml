@@ -66,7 +66,7 @@ pub struct ParameterResponse {
 #[derive(Serialize, Deserialize)]
 pub struct HardwareMetricRequest {
     pub experiment_uid: String,
-    pub metrics: Vec<HardwareMetrics>,
+    pub metrics: HardwareMetrics,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

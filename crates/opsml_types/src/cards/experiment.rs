@@ -78,10 +78,10 @@ impl GetMetrics for CPUMetrics {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct MemoryMetrics {
-    pub free_memory: u64,
-    pub total_memory: u64,
-    pub used_memory: u64,
-    pub available_memory: u64,
+    pub free_memory: i64,
+    pub total_memory: i64,
+    pub used_memory: i64,
+    pub available_memory: i64,
     pub used_percent_memory: f32,
 }
 
@@ -90,10 +90,10 @@ impl GetMetrics for MemoryMetrics {
         let mut system = System::new_all();
         system.refresh_memory();
 
-        let free = system.free_memory();
-        let total = system.total_memory();
-        let used = system.used_memory();
-        let available = system.available_memory();
+        let free = system.free_memory() as i64;
+        let total = system.total_memory() as i64;
+        let used = system.used_memory() as i64;
+        let available = system.available_memory() as i64;
         let used_percent_memory = used as f32 / total as f32;
 
         MemoryMetrics {
@@ -108,15 +108,15 @@ impl GetMetrics for MemoryMetrics {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct NetworkRates {
-    pub bytes_recv: u64,
-    pub bytes_sent: u64,
+    pub bytes_recv: i64,
+    pub bytes_sent: i64,
 }
 
 impl GetMetrics for NetworkRates {
     fn get_metrics() -> Self {
         let (bytes_recv, bytes_sent) = Networks::new_with_refreshed_list()
             .iter()
-            .map(|(_, network)| (network.received(), network.transmitted()))
+            .map(|(_, network)| (network.received() as i64, network.transmitted() as i64))
             .fold((0, 0), |(acc_recv, acc_sent), (recv, sent)| {
                 (acc_recv + recv, acc_sent + sent)
             });

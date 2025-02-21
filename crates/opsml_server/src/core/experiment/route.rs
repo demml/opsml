@@ -8,16 +8,12 @@ use axum::{
     Json, Router,
 };
 use opsml_sql::base::SqlClient;
-use opsml_sql::schemas::schema::{
-    CardResults, HardwareMetricsRecord, MetricRecord, ParameterRecord,
-};
-use opsml_types::{cards::*, contracts::*, *};
+use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
+use opsml_types::{cards::*, contracts::*};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::Path;
 use std::sync::Arc;
-use tempfile::TempDir;
 use tracing::error;
 
 pub async fn insert_metrics(
@@ -29,7 +25,7 @@ pub async fn insert_metrics(
         .iter()
         .map(|m| {
             MetricRecord::new(
-                req.run_uid.clone(),
+                req.experiment_uid.clone(),
                 m.name.clone(),
                 m.value,
                 m.step,
@@ -60,7 +56,7 @@ pub async fn get_metrics(
     // something is going on with how serde_qs is parsing the query when using names as a list
     let metrics = state
         .sql_client
-        .get_run_metric(&req.run_uid, &req.names)
+        .get_run_metric(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -91,7 +87,7 @@ pub async fn get_metric_names(
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
     let names = state
         .sql_client
-        .get_run_metric_names(&req.run_uid)
+        .get_run_metric_names(&req.experiment_uid)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -111,7 +107,7 @@ pub async fn insert_parameters(
     let records = req
         .parameters
         .iter()
-        .map(|p| ParameterRecord::new(req.run_uid.clone(), p.name.clone(), p.value.clone()))
+        .map(|p| ParameterRecord::new(req.experiment_uid.clone(), p.name.clone(), p.value.clone()))
         .collect::<Vec<_>>();
 
     state
@@ -135,7 +131,7 @@ pub async fn get_parameter(
 ) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<serde_json::Value>)> {
     let params = state
         .sql_client
-        .get_run_parameter(&req.run_uid, &req.names)
+        .get_run_parameter(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -164,27 +160,23 @@ pub async fn insert_hardware_metrics(
 ) -> Result<Json<HardwareMetricResponse>, (StatusCode, Json<serde_json::Value>)> {
     let created_at = get_utc_datetime();
 
-    let records = req
-        .metrics
-        .iter()
-        .map(|p| HardwareMetricsRecord {
-            experiment_uid: req.experiment_uid.clone(),
-            created_at: created_at.clone(),
-            cpu_percent_utilization: p.cpu.cpu_percent_utilization,
-            cpu_percent_per_core: SqlxJson(p.cpu.cpu_percent_per_core.clone()),
-            free_memory: p.memory.free_memory,
-            total_memory: p.memory.total_memory,
-            used_memory: p.memory.used_memory,
-            available_memory: p.memory.available_memory,
-            used_percent_memory: p.memory.used_percent_memory,
-            bytes_recv: p.network.bytes_recv,
-            bytes_sent: p.network.bytes_sent,
-        })
-        .collect::<Vec<_>>();
+    let record = HardwareMetricsRecord {
+        experiment_uid: req.experiment_uid.clone(),
+        created_at: created_at.clone(),
+        cpu_percent_utilization: req.metrics.cpu.cpu_percent_utilization,
+        cpu_percent_per_core: SqlxJson(req.metrics.cpu.cpu_percent_per_core.clone()),
+        free_memory: req.metrics.memory.free_memory,
+        total_memory: req.metrics.memory.total_memory,
+        used_memory: req.metrics.memory.used_memory,
+        available_memory: req.metrics.memory.available_memory,
+        used_percent_memory: req.metrics.memory.used_percent_memory,
+        bytes_recv: req.metrics.network.bytes_recv,
+        bytes_sent: req.metrics.network.bytes_sent,
+    };
 
     state
         .sql_client
-        .insert_hardware_metrics(&records)
+        .insert_hardware_metrics(&record)
         .await
         .map_err(|e| {
             error!("Failed to insert hardware metrics: {}", e);
@@ -203,7 +195,7 @@ pub async fn get_hardware_metrics(
 ) -> Result<Json<Vec<HardwareMetrics>>, (StatusCode, Json<serde_json::Value>)> {
     let metrics = state
         .sql_client
-        .get_hardware_metric(&req.run_uid)
+        .get_hardware_metric(&req.experiment_uid)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -219,179 +211,53 @@ pub async fn get_hardware_metrics(
         .map(|m| HardwareMetrics {
             cpu: CPUMetrics {
                 cpu_percent_utilization: m.cpu_percent_utilization,
-                cpu_percent_per_core: m.cpu_percent_per_core.map(|c| c.0),
-                compute_overall: m.compute_overall,
-                compute_utilized: m.compute_utilized,
-                load_avg: m.load_avg,
+                cpu_percent_per_core: m.cpu_percent_per_core.to_vec(),
             },
             memory: MemoryMetrics {
-                sys_ram_total: m.sys_ram_total,
-                sys_ram_used: m.sys_ram_used,
-                sys_ram_available: m.sys_ram_available,
-                sys_ram_percent_used: m.sys_ram_percent_used,
-                sys_swap_total: m.sys_swap_total,
-                sys_swap_used: m.sys_swap_used,
-                sys_swap_free: m.sys_swap_free,
-                sys_swap_percent: m.sys_swap_percent,
+                free_memory: m.free_memory,
+                total_memory: m.total_memory,
+                used_memory: m.used_memory,
+                available_memory: m.available_memory,
+                used_percent_memory: m.used_percent_memory,
             },
             network: NetworkRates {
                 bytes_recv: m.bytes_recv,
                 bytes_sent: m.bytes_sent,
             },
-            gpu,
         })
         .collect::<Vec<_>>();
 
     Ok(Json(metrics))
 }
 
-pub async fn get_run_graphs(
-    State(state): State<Arc<AppState>>,
-    Query(req): Query<GetRunGraphsRequest>,
-) -> Result<Json<Vec<RunGraph>>, (StatusCode, Json<serde_json::Value>)> {
-    // get the run card
-    let args = CardQueryArgs {
-        uid: Some(req.run_uid.to_owned()),
-        ..Default::default()
-    };
-
-    let card_result = state
-        .sql_client
-        .query_cards(&CardTable::Experiment, &args)
-        .await
-        .map_err(|e| {
-            error!("Failed to get run graphs: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-    // get first run card from CardResults enum
-    let (repo, name, version) = match card_result {
-        CardResults::Experiment(card) => {
-            // get the card UID
-            let run_card = card.first().ok_or_else(|| {
-                error!("Failed to get run card");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-            (
-                run_card.repository.to_owned(),
-                run_card.name.to_owned(),
-                run_card.version.to_owned(),
-            )
-        }
-
-        _ => {
-            error!("Failed to get run card");
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            ));
-        }
-    };
-
-    // format uri to get the run graphs (this is a standardized route for all run graphs)
-    let uri = format!(
-        "{}/{}/{}/v{}/{}",
-        CardTable::Experiment,
-        repo,
-        name,
-        version,
-        SaveName::Graphs
-    );
-
-    let rpath = Path::new(&uri);
-
-    // create temporary directory
-    let tmp_dir = TempDir::new().map_err(|e| {
-        error!("Failed to create temporary directory: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
-    })?;
-
-    let tmp_path = tmp_dir.path();
-
-    state
-        .storage_client
-        .get(tmp_path, rpath, true)
-        .await
-        .map_err(|e| {
-            error!("Failed to get run graphs: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-    // load all files in the temp directory as Vec<RunGraph>
-
-    let files: Vec<RunGraph> = std::fs::read_dir(tmp_path)
-        .map_err(|e| {
-            error!("Failed to read temp directory: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?
-        .filter_map(|entry| {
-            entry.ok().and_then(|e| {
-                let path = e.path();
-                let run_graph = match std::fs::read_to_string(&path) {
-                    Ok(content) => content,
-                    Err(e) => {
-                        error!("Failed to read file: {}", e);
-                        return None;
-                    }
-                };
-
-                let run_graph: RunGraph = match serde_json::from_str(&run_graph) {
-                    Ok(parsed) => parsed,
-                    Err(e) => {
-                        error!("Failed to parse run graph: {}", e);
-                        return None;
-                    }
-                };
-
-                Some(run_graph)
-            })
-        })
-        .collect();
-
-    Ok(Json(files))
-
-    // load all run graphs. Can be either SingleRunGraph or MultiRunGraph
-}
-
 pub async fn get_run_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
-            .route(&format!("{}/run/metrics", prefix), put(insert_metrics))
-            .route(&format!("{}/run/metrics", prefix), post(get_metrics))
             .route(
-                &format!("{}/run/metrics/names", prefix),
+                &format!("{}/experiment/metrics", prefix),
+                put(insert_metrics),
+            )
+            .route(&format!("{}/experiment/metrics", prefix), post(get_metrics))
+            .route(
+                &format!("{}/experiment/metrics/names", prefix),
                 get(get_metric_names),
             )
             .route(
-                &format!("{}/run/parameters", prefix),
+                &format!("{}/experiment/parameters", prefix),
                 put(insert_parameters),
             )
-            .route(&format!("{}/run/parameters", prefix), post(get_parameter))
             .route(
-                &format!("{}/run/hardware/metrics", prefix),
+                &format!("{}/experiment/parameters", prefix),
+                post(get_parameter),
+            )
+            .route(
+                &format!("{}/experiment/hardware/metrics", prefix),
                 put(insert_hardware_metrics),
             )
             .route(
-                &format!("{}/run/hardware/metrics", prefix),
+                &format!("{}/experiment/hardware/metrics", prefix),
                 get(get_hardware_metrics),
             )
-            .route(&format!("{}/run/graphs", prefix), get(get_run_graphs))
     }));
 
     match result {

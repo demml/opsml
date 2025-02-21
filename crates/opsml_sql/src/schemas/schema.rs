@@ -659,15 +659,15 @@ impl ServerCard {
 pub struct HardwareMetricsRecord {
     pub experiment_uid: String,
     pub created_at: NaiveDateTime,
-    pub cpu_percent_utilization: f64,
-    pub cpu_percent_per_core: Json<Vec<f64>>,
-    pub free_memory: u64,
-    pub total_memory: u64,
-    pub used_memory: u64,
-    pub available_memory: u64,
+    pub cpu_percent_utilization: f32,
+    pub cpu_percent_per_core: Json<Vec<f32>>,
+    pub free_memory: i64,
+    pub total_memory: i64,
+    pub used_memory: i64,
+    pub available_memory: i64,
     pub used_percent_memory: f32,
-    pub bytes_recv: u64,
-    pub bytes_sent: u64,
+    pub bytes_recv: i64,
+    pub bytes_sent: i64,
 }
 
 impl Default for HardwareMetricsRecord {
