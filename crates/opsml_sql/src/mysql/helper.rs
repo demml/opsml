@@ -41,16 +41,16 @@ impl MySQLQueryHelper {
     }
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
-            "SELECT * FROM {} WHERE run_uid = ?",
+            "SELECT * FROM {} WHERE experiment_uid = ?",
             CardTable::HardwareMetrics
         );
 
         query
     }
-    pub fn get_run_metric_insert_query() -> String {
+    pub fn get_experiment_metric_insert_query() -> String {
         format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -61,11 +61,11 @@ impl MySQLQueryHelper {
         .to_string()
     }
 
-    pub fn get_run_metrics_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
         // values will be a vec of tuples
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -91,11 +91,11 @@ impl MySQLQueryHelper {
         // remove last co
     }
 
-    pub fn get_run_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Metrics
         );
 
@@ -292,10 +292,10 @@ impl MySQLQueryHelper {
         Ok(query)
     }
 
-    pub fn get_run_parameters_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value
             ) VALUES ",
@@ -317,11 +317,11 @@ impl MySQLQueryHelper {
         query
     }
 
-    pub fn get_run_parameter_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_parameter_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Parameters
         );
 
@@ -345,7 +345,7 @@ impl MySQLQueryHelper {
     pub fn get_hardware_metrics_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 created_at,
                 cpu_percent_utilization, 
                 cpu_percent_per_core, 

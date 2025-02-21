@@ -104,10 +104,10 @@ pub trait SqlClient: Sized {
     ///
     /// # Returns
     ///
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError>;
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError>;
 
     /// Insert run metrics
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         record: &'life1 [MetricRecord],
     ) -> Result<(), SqlError>;
@@ -120,7 +120,7 @@ pub trait SqlClient: Sized {
     ///
     /// # Returns
     ///
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         records: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError>;
@@ -136,7 +136,7 @@ pub trait SqlClient: Sized {
     ///
     /// * `Vec<MetricRecord>` - The metrics
     ///
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
@@ -152,7 +152,7 @@ pub trait SqlClient: Sized {
     ///
     /// * `Vec<String>` - The names of the metrics
     ///
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError>;
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError>;
 
     /// Get run parameter
     ///
@@ -164,7 +164,7 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `Vec<ParameterRecord>` - The parameters
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],

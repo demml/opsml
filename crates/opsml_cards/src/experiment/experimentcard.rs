@@ -1,9 +1,12 @@
-use crate::ComputeEnvironment;
 use chrono::NaiveDateTime;
 use opsml_error::{CardError, OpsmlError};
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{Card, ExperimentCardClientRecord};
-use opsml_types::{cards::BaseArgs, contracts::ArtifactKey, RegistryType, SaveName, Suffix};
+use opsml_types::{
+    cards::{BaseArgs, ComputeEnvironment},
+    contracts::ArtifactKey,
+    RegistryType, SaveName, Suffix,
+};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;

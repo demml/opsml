@@ -36,7 +36,7 @@ pub async fn insert_metrics(
 
     state
         .sql_client
-        .insert_run_metrics(&records)
+        .insert_experiment_metrics(&records)
         .await
         .map_err(|e| {
             error!("Failed to insert metric: {}", e);
@@ -56,7 +56,7 @@ pub async fn get_metrics(
     // something is going on with how serde_qs is parsing the query when using names as a list
     let metrics = state
         .sql_client
-        .get_run_metric(&req.experiment_uid, &req.names)
+        .get_experiment_metric(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -87,7 +87,7 @@ pub async fn get_metric_names(
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<serde_json::Value>)> {
     let names = state
         .sql_client
-        .get_run_metric_names(&req.experiment_uid)
+        .get_experiment_metric_names(&req.experiment_uid)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -112,7 +112,7 @@ pub async fn insert_parameters(
 
     state
         .sql_client
-        .insert_run_parameters(&records)
+        .insert_experiment_parameters(&records)
         .await
         .map_err(|e| {
             error!("Failed to insert parameter: {}", e);
@@ -131,7 +131,7 @@ pub async fn get_parameter(
 ) -> Result<Json<Vec<Parameter>>, (StatusCode, Json<serde_json::Value>)> {
     let params = state
         .sql_client
-        .get_run_parameter(&req.experiment_uid, &req.names)
+        .get_experiment_parameter(&req.experiment_uid, &req.names)
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
@@ -230,7 +230,7 @@ pub async fn get_hardware_metrics(
     Ok(Json(metrics))
 }
 
-pub async fn get_run_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
+pub async fn get_experiment_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(

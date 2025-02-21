@@ -189,42 +189,42 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_metric(record).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_metric(record).await,
-            SqlClientEnum::MySql(client) => client.insert_run_metric(record).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_metric(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_metric(record).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_metric(record).await,
         }
     }
 
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         records: &'life1 [MetricRecord],
     ) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_metrics(records).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_metrics(records).await,
-            SqlClientEnum::MySql(client) => client.insert_run_metrics(records).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_metrics(records).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_metrics(records).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_metrics(records).await,
         }
     }
 
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<MetricRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_metric(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_metric(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_run_metric(uid, names).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_metric(uid, names).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_metric(uid, names).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_metric(uid, names).await,
         }
     }
 
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_metric_names(uid).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_metric_names(uid).await,
-            SqlClientEnum::MySql(client) => client.get_run_metric_names(uid).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_metric_names(uid).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_metric_names(uid).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_metric_names(uid).await,
         }
     }
 
@@ -247,26 +247,26 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         record: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_parameters(record).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_parameters(record).await,
-            SqlClientEnum::MySql(client) => client.insert_run_parameters(record).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_parameters(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_parameters(record).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_parameters(record).await,
         }
     }
 
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_parameter(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_parameter(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_run_parameter(uid, names).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_parameter(uid, names).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_parameter(uid, names).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_parameter(uid, names).await,
         }
     }
 
@@ -976,7 +976,7 @@ mod tests {
 
         for name in metric_names {
             let metric = MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: name.to_string(),
                 value: 1.0,
                 step: None,
@@ -985,12 +985,15 @@ mod tests {
                 idx: None,
             };
 
-            client.insert_run_metric(&metric).await.unwrap();
+            client.insert_experiment_metric(&metric).await.unwrap();
         }
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
 
-        let names = client.get_run_metric_names(&uid).await.unwrap();
+        let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -1032,7 +1035,7 @@ mod tests {
         // create a loop of 10
         for i in 0..10 {
             let parameter = ParameterRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: format!("param{}", i),
                 ..Default::default()
             };
@@ -1040,13 +1043,16 @@ mod tests {
             params.push(parameter);
         }
 
-        client.insert_run_parameters(&params).await.unwrap();
-        let records = client.get_run_parameter(&uid, &Vec::new()).await.unwrap();
+        client.insert_experiment_parameters(&params).await.unwrap();
+        let records = client
+            .get_experiment_parameter(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 10);
 
         let param_records = client
-            .get_run_parameter(&uid, &["param1".to_string()])
+            .get_experiment_parameter(&uid, &["param1".to_string()])
             .await
             .unwrap();
 

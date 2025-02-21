@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
 
 -- MetricSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
-    run_uid VARCHAR(64),
+    experiment_uid VARCHAR(64),
     name VARCHAR(128),
     value FLOAT,
     step INT,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
 
 -- ParameterSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
-    run_uid VARCHAR(64),
+    experiment_uid VARCHAR(64),
     name VARCHAR(128),
     value VARCHAR(128),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

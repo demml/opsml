@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MetricRecord {
-    pub run_uid: String,
+    pub experiment_uid: String,
     pub name: String,
     pub value: f64,
     pub step: Option<i32>,
@@ -22,14 +22,14 @@ pub struct MetricRecord {
 
 impl MetricRecord {
     pub fn new(
-        run_uid: String,
+        experiment_uid: String,
         name: String,
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
     ) -> Self {
         MetricRecord {
-            run_uid,
+            experiment_uid,
             name,
             value,
             step,
@@ -43,7 +43,7 @@ impl MetricRecord {
 impl Default for MetricRecord {
     fn default() -> Self {
         MetricRecord {
-            run_uid: Uuid::new_v4().to_string(),
+            experiment_uid: Uuid::new_v4().to_string(),
             name: CommonKwargs::Undefined.to_string(),
             value: 0.0,
             step: None,
@@ -56,7 +56,7 @@ impl Default for MetricRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ParameterRecord {
-    pub run_uid: String,
+    pub experiment_uid: String,
     pub name: String,
     pub value: String,
     pub created_at: Option<NaiveDateTime>,
@@ -64,9 +64,9 @@ pub struct ParameterRecord {
 }
 
 impl ParameterRecord {
-    pub fn new(run_uid: String, name: String, value: String) -> Self {
+    pub fn new(experiment_uid: String, name: String, value: String) -> Self {
         ParameterRecord {
-            run_uid,
+            experiment_uid,
             name,
             value,
             created_at: None,
@@ -78,7 +78,7 @@ impl ParameterRecord {
 impl Default for ParameterRecord {
     fn default() -> Self {
         ParameterRecord {
-            run_uid: Uuid::new_v4().to_string(),
+            experiment_uid: Uuid::new_v4().to_string(),
             name: CommonKwargs::Undefined.to_string(),
             value: CommonKwargs::Undefined.to_string(),
             created_at: None,

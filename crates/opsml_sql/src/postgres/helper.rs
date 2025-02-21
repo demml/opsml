@@ -89,16 +89,16 @@ impl PostgresQueryHelper {
 
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
-            "SELECT * FROM {} WHERE run_uid = $1",
+            "SELECT * FROM {} WHERE experiment_uid = $1",
             CardTable::HardwareMetrics
         );
 
         query
     }
-    pub fn get_run_metric_insert_query() -> String {
+    pub fn get_experiment_metric_insert_query() -> String {
         format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -109,10 +109,10 @@ impl PostgresQueryHelper {
         .to_string()
     }
 
-    pub fn get_run_metrics_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -137,16 +137,16 @@ impl PostgresQueryHelper {
 
         query
     }
-    pub fn get_run_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = $1",
+            WHERE experiment_uid = $1",
             CardTable::Metrics
         );
 
         let mut bindings: Vec<String> = Vec::new();
-        let mut param_index = 2; // Start from 2 because $1 is used for run_uid
+        let mut param_index = 2; // Start from 2 because $1 is used for experiment_uid
 
         if !names.is_empty() {
             query.push_str(" AND (");
@@ -325,10 +325,10 @@ impl PostgresQueryHelper {
 
         Ok(query)
     }
-    pub fn get_run_parameters_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value
             ) VALUES ",
@@ -345,16 +345,16 @@ impl PostgresQueryHelper {
 
         query
     }
-    pub fn get_run_parameter_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_parameter_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = $1",
+            WHERE experiment_uid = $1",
             CardTable::Parameters
         );
 
         let mut bindings: Vec<String> = Vec::new();
-        let mut param_index = 2; // Start from 2 because $1 is used for run_uid
+        let mut param_index = 2; // Start from 2 because $1 is used for experiment_uid
 
         if !names.is_empty() {
             query.push_str(" AND (");
@@ -374,7 +374,7 @@ impl PostgresQueryHelper {
     pub fn get_hardware_metrics_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 created_at,
                 cpu_percent_utilization, 
                 cpu_percent_per_core, 
