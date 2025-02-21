@@ -256,12 +256,7 @@ pub fn start_experiment<'py>(
     };
 
     // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
-    let active = Experiment::new(
-        experiment.unbind(),
-        registries,
-        Arc::new(TokioMutex::new(fs)),
-        rt,
-    )?;
+    let active = Experiment::new(experiment.unbind(), registries, fs, rt)?;
 
     Ok(Py::new(py, active)?.bind(py).clone())
 }
