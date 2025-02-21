@@ -1,7 +1,6 @@
 use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
-use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::ApiError;
@@ -210,24 +209,6 @@ impl HttpStorageClient {
             })?;
         }
 
-        let chunk_count = ((file_size / DOWNLOAD_CHUNK_SIZE as i64) + 1) as u64;
-
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Downloading file:");
-        let msg2 = Colorize::purple(local_path.file_name().unwrap().to_string_lossy().as_ref());
-
-        let msg = format!("{} {}", msg1, msg2);
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
-
         // create local file
         let mut file = std::fs::File::create(local_path).map_err(|e| {
             error!("Failed to create file: {}", e);
@@ -287,7 +268,6 @@ impl HttpStorageClient {
                     StorageError::Error(format!("Failed to write chunk: {}", e))
                 })?;
                 buffer.clear();
-                bar.inc(1);
             }
         }
 
@@ -299,7 +279,6 @@ impl HttpStorageClient {
             })?;
         }
 
-        bar.finish_with_message("Download complete");
         Ok(())
     }
 

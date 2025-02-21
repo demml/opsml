@@ -186,11 +186,6 @@ pub async fn upload_card_artifacts(
         .put(&path, &key.storage_path(), true)
         .await?;
 
-    println!(
-        "...✓ {}",
-        Colorize::green("saved card artifacts to storage")
-    );
-
     debug!("Saved card artifacts to storage");
 
     Ok(())
@@ -259,7 +254,6 @@ pub async fn verify_card(
     }
 
     debug!("Verified card");
-    println!("...✓ {}", Colorize::green("verified card"));
 
     Ok(())
 }

@@ -18,12 +18,10 @@ use google_cloud_storage::http::resumable_upload_client::ResumableUploadClient;
 use google_cloud_storage::http::resumable_upload_client::UploadStatus;
 use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
-use indicatif::ProgressBar;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
-use opsml_utils::progress::Progress;
 use opsml_utils::FileUtils;
 use serde_json::Value;
 use std::env;
@@ -167,7 +165,6 @@ impl GoogleMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-        bar: &ProgressBar,
     ) -> Result<(), StorageError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -184,12 +181,9 @@ impl GoogleMultipartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-
-            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
-        bar.finish_with_message("Upload complete");
 
         Ok(())
 
@@ -705,8 +699,6 @@ impl FileSystem for GCSFSStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
-        let progress = Progress::new()?;
-
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -719,9 +711,6 @@ impl FileSystem for GCSFSStorageClient {
             for file in files {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
-
-                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
-                let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -737,16 +726,12 @@ impl FileSystem for GCSFSStorageClient {
                     .await?;
 
                 uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                     .await?;
-
-                pb.finish_and_clear();
             }
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
-
-            let pb = ProgressBar::new(chunk_count);
 
             let mut uploader = self
                 .client
@@ -758,12 +743,9 @@ impl FileSystem for GCSFSStorageClient {
                 .await?;
 
             uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
-            pb.finish_and_clear();
         };
-
-        progress.finish()?;
 
         Ok(())
     }

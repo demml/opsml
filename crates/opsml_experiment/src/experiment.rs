@@ -1,5 +1,6 @@
 use names::Generator;
 use opsml_cards::ExperimentCard;
+use opsml_crypt::{decrypt_directory, encrypt_directory, encrypt_file};
 use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
@@ -7,7 +8,7 @@ use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
 use opsml_types::SaveName;
 use opsml_types::{contracts::ArtifactKey, RegistryType};
-
+use opsml_utils::progress::Progress;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -52,11 +53,7 @@ fn extract_code(
             .experiment
             .registry
             .get_artifact_key(&uid, &RegistryType::Experiment)
-            .await
-            .map_err(|e| {
-                error!("Failed to get artifact key: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?;
+            .await?;
 
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
@@ -66,7 +63,6 @@ fn extract_code(
 
         // 2. Set rpath based on file or directory
         let rpath = if lpath.is_file() {
-            // append file name to the path
             &key.storage_path()
                 .join(SaveName::Artifacts)
                 .join(SaveName::Code)
@@ -77,8 +73,16 @@ fn extract_code(
                 .join(SaveName::Code)
         };
 
-        // 3. Save the code to the storage
+        let encryption_key = key.get_decrypt_key()?;
+
+        // 3. Encrypt the file or directory
+        encrypt_directory(&lpath, &encryption_key)?;
+
+        // 4. Save the code to the storage
         fs.lock().await.put(&lpath, &rpath, recursive).await?;
+
+        // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
+        decrypt_directory(&lpath, &encryption_key)?;
 
         Ok::<(), ExperimentError>(())
     })

@@ -1,11 +1,9 @@
 use crate::base::*;
 use crate::types::*;
-use opsml_crypt::decrypt_key;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_types::{cards::CardTable, contracts::*, RegistryMode, RegistryType};
-use opsml_utils::uid_to_byte_key;
 use tracing::instrument;
 use tracing::{debug, error};
 
@@ -148,8 +146,6 @@ impl ClientRegistry {
                 None,
             )
             .await?;
-
-        println!("Response {:?}", response);
 
         let updated = response
             .json::<UpdateCardResponse>()

@@ -11,13 +11,11 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use indicatif::ProgressBar;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
-use opsml_utils::progress::Progress;
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
 use std::fs::File;
@@ -237,7 +235,6 @@ impl AWSMulitPartUpload {
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
-        bar: &ProgressBar,
     ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
 
@@ -280,7 +277,6 @@ impl AWSMulitPartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
@@ -795,7 +791,6 @@ impl FileSystem for S3FStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
-        let progress = Progress::new()?;
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -808,9 +803,6 @@ impl FileSystem for S3FStorageClient {
             for file in files {
                 let (chunk_count, size_of_last_chunk, _) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
-
-                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
-                let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
@@ -827,15 +819,12 @@ impl FileSystem for S3FStorageClient {
                     .await?;
 
                 uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, &pb)
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk)
                     .await?;
-                pb.finish_and_clear();
             }
         } else {
             let (chunk_count, size_of_last_chunk, _) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
-
-            let pb = ProgressBar::new(chunk_count);
 
             let mut uploader = self
                 .client
@@ -848,12 +837,10 @@ impl FileSystem for S3FStorageClient {
                 .await?;
 
             uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, &pb)
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk)
                 .await?;
-            pb.finish_and_clear();
         };
 
-        progress.finish()?;
         Ok(())
     }
 }
