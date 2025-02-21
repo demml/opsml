@@ -6,13 +6,13 @@ use opsml_error::{CardError, OpsmlError};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::{Card, RunCardClientRecord};
+use opsml_types::contracts::{Card, ExperimentCardClientRecord};
 use opsml_types::{cards::BaseArgs, contracts::ArtifactKey, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
+use serde_json;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tracing::error;
@@ -24,7 +24,7 @@ use serde::{
 };
 
 #[pyclass]
-pub struct RunCard {
+pub struct ExperimentCard {
     #[pyo3(get, set)]
     pub repository: String,
 
@@ -47,7 +47,7 @@ pub struct RunCard {
     pub modelcard_uids: Vec<String>,
 
     #[pyo3(get, set)]
-    pub runcard_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
 
     #[pyo3(get, set)]
     pub artifacts: Vec<String>,
@@ -72,7 +72,7 @@ pub struct RunCard {
 }
 
 #[pymethods]
-impl RunCard {
+impl ExperimentCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (repository=None, name=None, version=None, uid=None, tags=None))]
@@ -117,47 +117,17 @@ impl RunCard {
             compute_environment: ComputeEnvironment::new(py)?,
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
-            runcard_uids: Vec::new(),
+            experimentcard_uids: Vec::new(),
             artifacts: Vec::new(),
         })
     }
 
     pub fn add_child_run(&mut self, uid: &str) {
-        self.runcard_uids.push(uid.to_string());
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
-    pub fn start_run<'py>(
-        py: Python<'py>,
-        repository: Option<&str>,
-        name: Option<&str>,
-        code_dir: Option<&str>,
-        log_hardware: bool,
-    ) -> PyResult<Bound<'py, ActiveRun>> {
-        let run = Py::new(py, RunCard::new(py, repository, name, None, None, None)?)?
-            .into_bound_py_any(py)
-            .map_err(|e| {
-                error!("Failed to register run card: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
-
-        let mut registries = CardRegistries::new()?;
-        registries
-            .run
-            .register_card(&run, VersionType::Minor, None, None, None)?;
-
-        let _hardware = log_hardware;
-        let _code_dir = code_dir.unwrap_or("");
-
-        // Return the new ActiveRun wrapped in a PyRef which implements context manager protocol
-        let active = ActiveRun::new(run.unbind(), Arc::new(Mutex::new(registries)))?;
-
-        Ok(Py::new(py, active)?.bind(py).clone())
+        self.experimentcard_uids.push(uid.to_string());
     }
 
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
-        let record = RunCardClientRecord {
+        let record = ExperimentCardClientRecord {
             created_at: self.created_at,
             app_env: self.app_env.clone(),
             repository: self.repository.clone(),
@@ -167,7 +137,7 @@ impl RunCard {
             tags: self.tags.clone(),
             datacard_uids: self.datacard_uids.clone(),
             modelcard_uids: self.modelcard_uids.clone(),
-            runcard_uids: self.runcard_uids.clone(),
+            experimentcard_uids: self.experimentcard_uids.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
@@ -181,14 +151,25 @@ impl RunCard {
 
         Ok(())
     }
+
+    #[staticmethod]
+    #[pyo3(signature = (json_string))]
+    pub fn model_validate_json(py: Python, json_string: String) -> PyResult<ExperimentCard> {
+        let mut card: experimentcard = serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
+
+        Ok(card)
+    }
 }
 
-impl Serialize for RunCard {
+impl Serialize for ExperimentCard {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("RunCard", 13)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 13)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -202,13 +183,13 @@ impl Serialize for RunCard {
         state.serialize_field("compute_environment", &self.compute_environment)?;
         state.serialize_field("datacard_uids", &self.datacard_uids)?;
         state.serialize_field("modelcard_uids", &self.modelcard_uids)?;
-        state.serialize_field("runcard_uids", &self.runcard_uids)?;
+        state.serialize_field("experimentcard_uids", &self.experimentcard_uids)?;
         state.serialize_field("artifacts", &self.artifacts)?;
         state.end()
     }
 }
 
-impl<'de> Deserialize<'de> for RunCard {
+impl<'de> Deserialize<'de> for ExperimentCard {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -227,20 +208,20 @@ impl<'de> Deserialize<'de> for RunCard {
             ComputeEnvironment,
             DatacardUids,
             ModelcardUids,
-            RuncardUids,
+            ExperimentCardUids,
             Artifacts,
         }
 
-        struct RunCardVisitor;
+        struct ExperimentCardVisitor;
 
-        impl<'de> Visitor<'de> for RunCardVisitor {
-            type Value = RunCard;
+        impl<'de> Visitor<'de> for ExperimentCardVisitor {
+            type Value = ExperimentCard;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("struct RunCard")
+                formatter.write_str("struct ExperimentCard")
             }
 
-            fn visit_map<V>(self, mut map: V) -> Result<RunCard, V::Error>
+            fn visit_map<V>(self, mut map: V) -> Result<ExperimentCard, V::Error>
             where
                 V: MapAccess<'de>,
             {
@@ -255,7 +236,7 @@ impl<'de> Deserialize<'de> for RunCard {
                 let mut compute_environment = None;
                 let mut datacard_uids = None;
                 let mut modelcard_uids = None;
-                let mut runcard_uids = None;
+                let mut experimentcard_uids = None;
                 let mut artifacts = None;
 
                 while let Some(key) = map.next_key()? {
@@ -295,8 +276,8 @@ impl<'de> Deserialize<'de> for RunCard {
                         Field::ModelcardUids => {
                             modelcard_uids = Some(map.next_value()?);
                         }
-                        Field::RuncardUids => {
-                            runcard_uids = Some(map.next_value()?);
+                        Field::ExperimentCardUids => {
+                            experimentcard_uids = Some(map.next_value()?);
                         }
                         Field::Artifacts => {
                             artifacts = Some(map.next_value()?);
@@ -321,11 +302,11 @@ impl<'de> Deserialize<'de> for RunCard {
                     datacard_uids.ok_or_else(|| de::Error::missing_field("datacard_uids"))?;
                 let modelcard_uids =
                     modelcard_uids.ok_or_else(|| de::Error::missing_field("modelcard_uids"))?;
-                let runcard_uids =
-                    runcard_uids.ok_or_else(|| de::Error::missing_field("runcard_uids"))?;
+                let experimentcard_uids = experimentcard_uids
+                    .ok_or_else(|| de::Error::missing_field("experimentcard_uids"))?;
                 let artifacts = artifacts.ok_or_else(|| de::Error::missing_field("artifacts"))?;
 
-                Ok(RunCard {
+                Ok(ExperimentCard {
                     name,
                     repository,
                     version,
@@ -340,14 +321,13 @@ impl<'de> Deserialize<'de> for RunCard {
                     compute_environment,
                     datacard_uids,
                     modelcard_uids,
-                    runcard_uids,
+                    experimentcard_uids,
                     artifacts,
                 })
             }
         }
 
         const FIELDS: &[&str] = &[
-            "interface",
             "name",
             "repository",
             "version",
@@ -357,12 +337,12 @@ impl<'de> Deserialize<'de> for RunCard {
             "registry_type",
             "app_env",
             "created_at",
+            "compute_environment",
+            "datacard_uids",
+            "modelcard_uids",
+            "experimentcard_uids",
+            "artifacts",
         ];
-        deserializer.deserialize_struct("RunCard", FIELDS, RunCardVisitor)
+        deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
     }
 }
-
-//run_name: str | None = None,
-//log_hardware: bool = False,
-//hardware_interval: int = _DEFAULT_INTERVAL,
-//code_dir: str | Path | None = None

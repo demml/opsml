@@ -72,7 +72,7 @@
                                 <a class="variable" href="#OpsmlConfig.opsml_password">opsml_password</a>
                         </li>
                         <li>
-                                <a class="variable" href="#OpsmlConfig.opsml_run_id">opsml_run_id</a>
+                                <a class="variable" href="#OpsmlConfig.opsml_experiment_id">opsml_experiment_id</a>
                         </li>
                         <li>
                                 <a class="function" href="#OpsmlConfig.set_opsml_storage_uri">set_opsml_storage_uri</a>
@@ -154,7 +154,7 @@ opsml<wbr>.settings<wbr>.config    </h1>
 </span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>    <span class="n">opsml_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a>
 </span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>    <span class="c1"># The current RUN_ID to load when creating a new project</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>    <span class="n">opsml_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>    <span class="n">opsml_experiment_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>
 </span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a>    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;opsml_storage_uri&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
 </span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>    <span class="nd">@classmethod</span>
@@ -233,7 +233,7 @@ opsml<wbr>.settings<wbr>.config    </h1>
 </span><span id="OpsmlConfig-31"><a href="#OpsmlConfig-31"><span class="linenos">31</span></a>    <span class="n">opsml_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="OpsmlConfig-32"><a href="#OpsmlConfig-32"><span class="linenos">32</span></a>
 </span><span id="OpsmlConfig-33"><a href="#OpsmlConfig-33"><span class="linenos">33</span></a>    <span class="c1"># The current RUN_ID to load when creating a new project</span>
-</span><span id="OpsmlConfig-34"><a href="#OpsmlConfig-34"><span class="linenos">34</span></a>    <span class="n">opsml_run_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="OpsmlConfig-34"><a href="#OpsmlConfig-34"><span class="linenos">34</span></a>    <span class="n">opsml_experiment_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="OpsmlConfig-35"><a href="#OpsmlConfig-35"><span class="linenos">35</span></a>
 </span><span id="OpsmlConfig-36"><a href="#OpsmlConfig-36"><span class="linenos">36</span></a>    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;opsml_storage_uri&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
 </span><span id="OpsmlConfig-37"><a href="#OpsmlConfig-37"><span class="linenos">37</span></a>    <span class="nd">@classmethod</span>
@@ -436,13 +436,13 @@ into <code>None</code> type(None). Defaults to <code>None</code> type(None), whi
     
 
                             </div>
-                            <div id="OpsmlConfig.opsml_run_id" class="classattr">
+                            <div id="OpsmlConfig.opsml_experiment_id" class="classattr">
                                 <div class="attr variable">
-            <span class="name">opsml_run_id</span><span class="annotation">: Optional[str]</span>
+            <span class="name">opsml_experiment_id</span><span class="annotation">: Optional[str]</span>
 
         
     </div>
-    <a class="headerlink" href="#OpsmlConfig.opsml_run_id"></a>
+    <a class="headerlink" href="#OpsmlConfig.opsml_experiment_id"></a>
     
     
 
@@ -577,7 +577,7 @@ in absolutes, so we need to convert relative paths to absolute paths.</p>
                                 <div class="attr variable">
             <span class="name">model_fields</span>        =
 <input id="OpsmlConfig.model_fields-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-            <label class="view-value-button pdoc-button" for="OpsmlConfig.model_fields-view-value"></label><span class="default_value">{&#39;app_name&#39;: FieldInfo(annotation=str, required=False, default=&#39;opsml&#39;), &#39;app_env&#39;: FieldInfo(annotation=str, required=False, default=&#39;development&#39;), &#39;opsml_storage_uri&#39;: FieldInfo(annotation=str, required=False, default=&#39;./opsml_registries&#39;), &#39;opsml_tracking_uri&#39;: FieldInfo(annotation=str, required=False, default=&#39;sqlite:///tmp.db&#39;), &#39;opsml_prod_token&#39;: FieldInfo(annotation=str, required=False, default=&#39;staging&#39;), &#39;opsml_proxy_root&#39;: FieldInfo(annotation=str, required=False, default=&#39;opsml-root:/&#39;), &#39;opsml_registry_path&#39;: FieldInfo(annotation=str, required=False, default=&#39;model_registry&#39;), &#39;opsml_testing&#39;: FieldInfo(annotation=bool, required=False, default=False), &#39;download_chunk_size&#39;: FieldInfo(annotation=int, required=False, default=31457280), &#39;upload_chunk_size&#39;: FieldInfo(annotation=int, required=False, default=31457280), &#39;opsml_username&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;opsml_password&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;opsml_run_id&#39;: FieldInfo(annotation=Union[str, NoneType], required=False)}</span>
+            <label class="view-value-button pdoc-button" for="OpsmlConfig.model_fields-view-value"></label><span class="default_value">{&#39;app_name&#39;: FieldInfo(annotation=str, required=False, default=&#39;opsml&#39;), &#39;app_env&#39;: FieldInfo(annotation=str, required=False, default=&#39;development&#39;), &#39;opsml_storage_uri&#39;: FieldInfo(annotation=str, required=False, default=&#39;./opsml_registries&#39;), &#39;opsml_tracking_uri&#39;: FieldInfo(annotation=str, required=False, default=&#39;sqlite:///tmp.db&#39;), &#39;opsml_prod_token&#39;: FieldInfo(annotation=str, required=False, default=&#39;staging&#39;), &#39;opsml_proxy_root&#39;: FieldInfo(annotation=str, required=False, default=&#39;opsml-root:/&#39;), &#39;opsml_registry_path&#39;: FieldInfo(annotation=str, required=False, default=&#39;model_registry&#39;), &#39;opsml_testing&#39;: FieldInfo(annotation=bool, required=False, default=False), &#39;download_chunk_size&#39;: FieldInfo(annotation=int, required=False, default=31457280), &#39;upload_chunk_size&#39;: FieldInfo(annotation=int, required=False, default=31457280), &#39;opsml_username&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;opsml_password&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;opsml_experiment_id&#39;: FieldInfo(annotation=Union[str, NoneType], required=False)}</span>
 
         
     </div>
@@ -641,7 +641,7 @@ in absolutes, so we need to convert relative paths to absolute paths.</p>
                     <div class="attr variable">
             <span class="name">config</span>        =
 <input id="config-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-            <label class="view-value-button pdoc-button" for="config-view-value"></label><span class="default_value">OpsmlConfig(app_name=&#39;opsml&#39;, app_env=&#39;development&#39;, opsml_storage_uri=&#39;gs://opsml-integration&#39;, opsml_tracking_uri=&#39;sqlite:///tmp.db&#39;, opsml_prod_token=&#39;staging&#39;, opsml_proxy_root=&#39;opsml-root:/&#39;, opsml_registry_path=&#39;model_registry&#39;, opsml_testing=False, download_chunk_size=31457280, upload_chunk_size=31457280, opsml_username=None, opsml_password=None, opsml_run_id=None)</span>
+            <label class="view-value-button pdoc-button" for="config-view-value"></label><span class="default_value">OpsmlConfig(app_name=&#39;opsml&#39;, app_env=&#39;development&#39;, opsml_storage_uri=&#39;gs://opsml-integration&#39;, opsml_tracking_uri=&#39;sqlite:///tmp.db&#39;, opsml_prod_token=&#39;staging&#39;, opsml_proxy_root=&#39;opsml-root:/&#39;, opsml_registry_path=&#39;model_registry&#39;, opsml_testing=False, download_chunk_size=31457280, upload_chunk_size=31457280, opsml_username=None, opsml_password=None, opsml_experiment_id=None)</span>
 
         
     </div>

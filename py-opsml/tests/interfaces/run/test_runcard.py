@@ -1,14 +1,14 @@
-from opsml.card import RunCard
+from opsml.card import experimentcard
 from opsml.test import OpsmlTestServer
 
 
-def _test_runcard():
-    card = RunCard(repository="test", name="test")
+def _test_experimentcard():
+    card = experimentcard(repository="test", name="test")
 
 
-def test_runcard_context():
+def test_experimentcard_context():
     with OpsmlTestServer(False):
-        with RunCard.start_run(repository="test") as run:
+        with experimentcard.start_run(repository="test") as run:
             with run.start_run(repository="test") as _run2:
                 print("hello")
 

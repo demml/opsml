@@ -2,8 +2,9 @@ use crate::base::SqlClient;
 
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
-    ModelCardRecord, ParameterRecord, QueryStats, RunCardRecord, ServerCard, User, VersionResult,
+    experimentcardRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, QueryStats, ServerCard,
+    User, VersionResult,
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
@@ -193,7 +194,7 @@ impl SqlClient for PostgresClient {
                 return Ok(CardResults::Model(card));
             }
             CardTable::Run => {
-                let card: Vec<RunCardRecord> = sqlx::query_as(&query)
+                let card: Vec<experimentcardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.repository.as_ref())
@@ -244,7 +245,7 @@ impl SqlClient for PostgresClient {
                         .bind(&data.data_type)
                         .bind(&data.interface_type)
                         .bind(&data.tags)
-                        .bind(&data.runcard_uid)
+                        .bind(&data.experimentcard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
@@ -278,7 +279,7 @@ impl SqlClient for PostgresClient {
                         .bind(&model.interface_type)
                         .bind(&model.task_type)
                         .bind(&model.tags)
-                        .bind(&model.runcard_uid)
+                        .bind(&model.experimentcard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
@@ -296,7 +297,7 @@ impl SqlClient for PostgresClient {
             },
             CardTable::Run => match card {
                 ServerCard::Run(run) => {
-                    let query = PostgresQueryHelper::get_runcard_insert_query();
+                    let query = PostgresQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
                         .bind(&run.uid)
                         .bind(&run.app_env)
@@ -309,7 +310,7 @@ impl SqlClient for PostgresClient {
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.runcard_uids)
+                        .bind(&run.experimentcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -340,7 +341,7 @@ impl SqlClient for PostgresClient {
                         .bind(audit.approved)
                         .bind(&audit.datacard_uids)
                         .bind(&audit.modelcard_uids)
-                        .bind(&audit.runcard_uids)
+                        .bind(&audit.experimentcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
                         .bind(&audit.username)
@@ -380,7 +381,7 @@ impl SqlClient for PostgresClient {
                         .bind(&data.data_type)
                         .bind(&data.interface_type)
                         .bind(&data.tags)
-                        .bind(&data.runcard_uid)
+                        .bind(&data.experimentcard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
@@ -414,7 +415,7 @@ impl SqlClient for PostgresClient {
                         .bind(&model.interface_type)
                         .bind(&model.task_type)
                         .bind(&model.tags)
-                        .bind(&model.runcard_uid)
+                        .bind(&model.experimentcard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
@@ -433,7 +434,7 @@ impl SqlClient for PostgresClient {
             },
             CardTable::Run => match card {
                 ServerCard::Run(run) => {
-                    let query = PostgresQueryHelper::get_runcard_update_query();
+                    let query = PostgresQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
                         .bind(&run.app_env)
                         .bind(&run.name)
@@ -445,7 +446,7 @@ impl SqlClient for PostgresClient {
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.runcard_uids)
+                        .bind(&run.experimentcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -476,7 +477,7 @@ impl SqlClient for PostgresClient {
                         .bind(audit.approved)
                         .bind(&audit.datacard_uids)
                         .bind(&audit.modelcard_uids)
-                        .bind(&audit.runcard_uids)
+                        .bind(&audit.experimentcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
                         .bind(&audit.username)
@@ -937,19 +938,19 @@ mod tests {
             FROM opsml_model_registry;
 
             DELETE
-            FROM opsml_run_registry;
+            FROM opsml_experiment_registry;
 
             DELETE
             FROM opsml_audit_registry;
 
             DELETE
-            FROM opsml_run_metrics;
+            FROM opsml_experiment_metrics;
 
             DELETE
-            FROM opsml_run_hardware_metrics;
+            FROM opsml_experiment_hardware_metrics;
 
             DELETE
-            FROM opsml_run_parameters;
+            FROM opsml_experiment_parameters;
 
             DELETE
             FROM opsml_users;
@@ -1213,8 +1214,8 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
-        // insert runcard
-        let run_card = RunCardRecord::default();
+        // insert experimentcard
+        let run_card = experimentcardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
         client.insert_card(&CardTable::Run, &card).await.unwrap();
@@ -1335,8 +1336,8 @@ mod tests {
             assert_eq!(cards[0].name, "UpdatedModelName");
         }
 
-        // Test RunCardRecord
-        let mut run_card = RunCardRecord::default();
+        // Test experimentcardRecord
+        let mut run_card = experimentcardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
         client.insert_card(&CardTable::Run, &card).await.unwrap();

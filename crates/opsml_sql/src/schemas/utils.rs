@@ -1,7 +1,10 @@
-use crate::schemas::schema::{AuditCardRecord, DataCardRecord, ModelCardRecord, RunCardRecord};
+use crate::schemas::schema::{
+    experimentcardRecord, AuditCardRecord, DataCardRecord, ModelCardRecord,
+};
 
 use opsml_types::contracts::{
-    AuditCardClientRecord, Card, DataCardClientRecord, ModelCardClientRecord, RunCardClientRecord,
+    AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
+    ModelCardClientRecord,
 };
 
 pub fn convert_datacard(record: DataCardRecord) -> Card {
@@ -14,7 +17,7 @@ pub fn convert_datacard(record: DataCardRecord) -> Card {
         version: record.version,
         tags: record.tags.0, // Assuming Json<HashMap<String, String>> is used
         data_type: record.data_type,
-        runcard_uid: record.runcard_uid,
+        experimentcard_uid: record.experimentcard_uid,
         auditcard_uid: record.auditcard_uid,
         interface_type: record.interface_type,
         username: record.username,
@@ -35,7 +38,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
         datacard_uid: record.datacard_uid,
         data_type: record.data_type,
         model_type: record.model_type,
-        runcard_uid: record.runcard_uid,
+        experimentcard_uid: record.experimentcard_uid,
         auditcard_uid: record.auditcard_uid,
         interface_type: record.interface_type,
         task_type: record.task_type,
@@ -45,8 +48,8 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
     Card::Model(card)
 }
 
-pub fn convert_runcard(record: RunCardRecord) -> Card {
-    let card = RunCardClientRecord {
+pub fn convert_experimentcard(record: experimentcardRecord) -> Card {
+    let card = ExperimentCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
         app_env: record.app_env,
@@ -56,7 +59,7 @@ pub fn convert_runcard(record: RunCardRecord) -> Card {
         tags: record.tags.0,
         datacard_uids: record.datacard_uids.0,
         modelcard_uids: record.modelcard_uids.0,
-        runcard_uids: record.runcard_uids.0,
+        experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
     };
 
@@ -75,7 +78,7 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
         approved: record.approved,
         datacard_uids: record.datacard_uids.0,
         modelcard_uids: record.modelcard_uids.0,
-        runcard_uids: record.runcard_uids.0,
+        experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
     };
 

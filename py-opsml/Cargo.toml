@@ -13,7 +13,7 @@ opsml-cards = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
-opsml-run = { workspace = true }
+opsml-experiment = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-server = { workspace = true, optional = true }
 opsml-settings = { workspace = true }

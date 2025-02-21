@@ -70,7 +70,7 @@ pub async fn insert_card_into_db(
                 version,
                 client_card.tags,
                 client_card.data_type,
-                client_card.runcard_uid,
+                client_card.experimentcard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.username,
@@ -86,7 +86,7 @@ pub async fn insert_card_into_db(
                 client_card.datacard_uid,
                 client_card.data_type,
                 client_card.model_type,
-                client_card.runcard_uid,
+                client_card.experimentcard_uid,
                 client_card.auditcard_uid,
                 client_card.interface_type,
                 client_card.task_type,
@@ -96,14 +96,14 @@ pub async fn insert_card_into_db(
         }
 
         Card::Run(client_card) => {
-            let server_card = RunCardRecord::new(
+            let server_card = experimentcardRecord::new(
                 client_card.name,
                 client_card.repository,
                 version,
                 client_card.tags,
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
-                client_card.runcard_uids,
+                client_card.experimentcard_uids,
                 client_card.username,
             );
             ServerCard::Run(server_card)
@@ -118,7 +118,7 @@ pub async fn insert_card_into_db(
                 client_card.approved,
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
-                client_card.runcard_uids,
+                client_card.experimentcard_uids,
                 client_card.username,
             );
             ServerCard::Audit(server_card)

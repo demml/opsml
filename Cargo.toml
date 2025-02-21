@@ -25,7 +25,7 @@ opsml-colors = { path = "crates/opsml_colors" }
 opsml-error = { path = "crates/opsml_error" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-registry = { path = "crates/opsml_registry" }
-opsml-run = { path = "crates/opsml_run" }
+opsml-experiment = { path = "crates/opsml_experiment" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
 opsml-settings = { path = "crates/opsml_settings" }

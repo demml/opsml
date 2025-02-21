@@ -389,7 +389,9 @@ pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum>
 mod tests {
 
     use super::*;
-    use crate::schemas::schema::{AuditCardRecord, DataCardRecord, ModelCardRecord, RunCardRecord};
+    use crate::schemas::schema::{
+        experimentcardRecord, AuditCardRecord, DataCardRecord, ModelCardRecord,
+    };
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 
@@ -652,8 +654,8 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
-        // insert runcard
-        let run_card = RunCardRecord::default();
+        // insert experimentcard
+        let run_card = experimentcardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
         client.insert_card(&CardTable::Run, &card).await.unwrap();
@@ -776,8 +778,8 @@ mod tests {
             assert_eq!(cards[0].name, "UpdatedModelName");
         }
 
-        // Test RunCardRecord
-        let mut run_card = RunCardRecord::default();
+        // Test experimentcardRecord
+        let mut run_card = experimentcardRecord::default();
         let card = ServerCard::Run(run_card.clone());
 
         client.insert_card(&CardTable::Run, &card).await.unwrap();

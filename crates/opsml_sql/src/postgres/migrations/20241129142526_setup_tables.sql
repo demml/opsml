@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     version VARCHAR(64),
     tags JSONB DEFAULT '[]',
     data_type VARCHAR(64),
-    runcard_uid VARCHAR(64),
+    experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     datacard_uid VARCHAR(64),
     data_type VARCHAR(64),
     model_type VARCHAR(64),
-    runcard_uid VARCHAR(64),
+    experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     interface_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
     task_type VARCHAR(64) NOT NULL DEFAULT 'undefined',
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
 );
 
 -- RunSchema
-CREATE TABLE IF NOT EXISTS opsml_run_registry (
+CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     uid VARCHAR(64) PRIMARY KEY,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     app_env VARCHAR(32) DEFAULT 'development',
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     tags JSONB DEFAULT '[]',
     datacard_uids JSONB,
     modelcard_uids JSONB,
-    runcard_uids JSONB,
+    experimentcard_uids JSONB,
     artifact_uris JSONB,
     compute_environment JSONB,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
@@ -82,13 +82,13 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     approved BOOLEAN,
     datacard_uids JSONB,
     modelcard_uids JSONB,
-    runcard_uids JSONB NOT NULL DEFAULT '{}',
+    experimentcard_uids JSONB NOT NULL DEFAULT '{}',
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
 
 
 -- MetricSchema
-CREATE TABLE IF NOT EXISTS opsml_run_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
     run_uid VARCHAR(64),
     name VARCHAR(128),
     value FLOAT,
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_metrics (
 );
 
 -- ParameterSchema
-CREATE TABLE IF NOT EXISTS opsml_run_parameters (
+CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     run_uid VARCHAR(64),
     name VARCHAR(128),
     value VARCHAR(128),
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_parameters (
 );
 
 -- HardwareMetricSchema
-CREATE TABLE IF NOT EXISTS opsml_run_hardware_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     run_uid VARCHAR(64) NOT NULL,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     cpu_percent_utilization FLOAT,

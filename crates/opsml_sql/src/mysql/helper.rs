@@ -384,7 +384,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, runcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
+        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -403,7 +403,7 @@ impl MySQLQueryHelper {
         interface_type, 
         task_type, 
         tags, 
-        runcard_uid, 
+        experimentcard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
@@ -413,8 +413,8 @@ impl MySQLQueryHelper {
             .to_string()
     }
 
-    pub fn get_runcard_insert_query() -> String {
-        "INSERT INTO opsml_run_registry (
+    pub fn get_experimentcard_insert_query() -> String {
+        "INSERT INTO opsml_experiment_registry (
         uid, 
         app_env, 
         name, 
@@ -426,7 +426,7 @@ impl MySQLQueryHelper {
         tags, 
         datacard_uids,
         modelcard_uids, 
-        runcard_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
         username
@@ -449,7 +449,7 @@ impl MySQLQueryHelper {
         approved, 
         datacard_uids, 
         modelcard_uids, 
-        runcard_uids, 
+        experimentcard_uids, 
         pre_tag, 
         build_tag,
         username
@@ -470,7 +470,7 @@ impl MySQLQueryHelper {
         data_type = ?, 
         interface_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -494,7 +494,7 @@ impl MySQLQueryHelper {
         interface_type = ?, 
         task_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -503,8 +503,8 @@ impl MySQLQueryHelper {
             .to_string()
     }
 
-    pub fn get_runcard_update_query() -> String {
-        "UPDATE opsml_run_registry SET 
+    pub fn get_experimentcard_update_query() -> String {
+        "UPDATE opsml_experiment_registry SET 
         app_env = ?, 
         name = ?, 
         repository = ?, 
@@ -515,7 +515,7 @@ impl MySQLQueryHelper {
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        runcard_uids = ?,
+        experimentcard_uids = ?,
         pre_tag = ?, 
         build_tag = ?,
         username = ?
@@ -536,7 +536,7 @@ impl MySQLQueryHelper {
         approved = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        runcard_uids = ?, 
+        experimentcard_uids = ?, 
         pre_tag = ?, 
         build_tag = ?,
         username = ?

@@ -12,7 +12,7 @@ RegistryType = card.RegistryType
 RegistryMode = card.RegistryMode
 ModelCard = card.ModelCard
 ModelCardMetadata = card.ModelCardMetadata
-RunCard = card.RunCard
+experimentcard = card.experimentcard
 ActiveRun = card.ActiveRun
 ComputeEnvironment = card.ComputeEnvironment
 
@@ -28,7 +28,7 @@ __all__ = [
     "RegistryMode",
     "ModelCard",
     "ModelCardMetadata",
-    "RunCard",
+    "experimentcard",
     "ComputeEnvironment",
     "ActiveRun",
 ]

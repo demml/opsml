@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
     version VARCHAR(64),
     tags TEXT,
     data_type TEXT,
-    runcard_uid TEXT,
+    experimentcard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     username TEXT NOT NULL DEFAULT 'guest'
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
     datacard_uid TEXT,
     data_type TEXT,
     model_type TEXT,
-    runcard_uid TEXT,
+    experimentcard_uid TEXT,
     auditcard_uid TEXT,
     interface_type TEXT NOT NULL DEFAULT 'undefined',
     task_type TEXT NOT NULL DEFAULT 'undefined',
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
 );
 
 -- RunSchema
-CREATE TABLE IF NOT EXISTS opsml_run_registry (
+CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     uid TEXT PRIMARY KEY,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     app_env TEXT DEFAULT 'development',
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_registry (
     tags TEXT,
     datacard_uids TEXT,
     modelcard_uids TEXT,
-    runcard_uids TEXT,
+    experimentcard_uids TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
@@ -83,13 +83,13 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     approved BOOLEAN,
     datacard_uids TEXT,
     modelcard_uids TEXT,
-    runcard_uids TEXT,
+    experimentcard_uids TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
 
 
 -- MetricSchema
-CREATE TABLE IF NOT EXISTS opsml_run_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
     run_uid TEXT,
     name TEXT,
     value REAL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_metrics (
 );
 
 -- ParameterSchema
-CREATE TABLE IF NOT EXISTS opsml_run_parameters (
+CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     run_uid TEXT,
     name TEXT,
     value TEXT,
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS opsml_run_parameters (
 );
 
 -- HardwareMetricSchema
-CREATE TABLE IF NOT EXISTS opsml_run_hardware_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     run_uid TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cpu_percent_utilization REAL,

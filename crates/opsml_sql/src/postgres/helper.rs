@@ -424,7 +424,7 @@ impl PostgresQueryHelper {
         data_type, 
         interface_type, 
         tags, 
-        runcard_uid, 
+        experimentcard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
@@ -452,7 +452,7 @@ impl PostgresQueryHelper {
         interface_type, 
         task_type, 
         tags, 
-        runcard_uid, 
+        experimentcard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
@@ -461,7 +461,7 @@ impl PostgresQueryHelper {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model).to_string()
     }
 
-    pub fn get_runcard_insert_query() -> String {
+    pub fn get_experimentcard_insert_query() -> String {
         format!(
             "INSERT INTO {} (
         uid,
@@ -475,7 +475,7 @@ impl PostgresQueryHelper {
         tags, 
         datacard_uids, 
         modelcard_uids, 
-        runcard_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
         username
@@ -501,7 +501,7 @@ impl PostgresQueryHelper {
         approved, 
         datacard_uids, 
         modelcard_uids, 
-        runcard_uids, 
+        experimentcard_uids, 
         pre_tag, 
         build_tag,
         username
@@ -525,7 +525,7 @@ impl PostgresQueryHelper {
         data_type = $8, 
         interface_type = $9, 
         tags = $10, 
-        runcard_uid = $11, 
+        experimentcard_uid = $11, 
         auditcard_uid = $12, 
         pre_tag = $13, 
         build_tag = $14,
@@ -552,7 +552,7 @@ impl PostgresQueryHelper {
         interface_type = $11, 
         task_type = $12, 
         tags = $13, 
-        runcard_uid = $14, 
+        experimentcard_uid = $14, 
         auditcard_uid = $15, 
         pre_tag = $16, 
         build_tag = $17,
@@ -563,7 +563,7 @@ impl PostgresQueryHelper {
         .to_string()
     }
 
-    pub fn get_runcard_update_query() -> String {
+    pub fn get_experimentcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
         app_env = $1, 
@@ -576,7 +576,7 @@ impl PostgresQueryHelper {
         tags = $8, 
         datacard_uids = $9, 
         modelcard_uids = $10, 
-        runcard_uids = $11, 
+        experimentcard_uids = $11, 
         pre_tag = $12, 
         build_tag = $13,
         username = $14
@@ -600,7 +600,7 @@ impl PostgresQueryHelper {
         approved = $9, 
         datacard_uids = $10, 
         modelcard_uids = $11, 
-        runcard_uids = $12, 
+        experimentcard_uids = $12, 
         pre_tag = $13, 
         build_tag = $14,
         username = $15

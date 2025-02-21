@@ -155,7 +155,7 @@ pub struct DataCardRecord {
     pub version: String,
     pub tags: Json<Vec<String>>,
     pub data_type: String,
-    pub runcard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub username: String,
@@ -169,7 +169,7 @@ impl DataCardRecord {
         version: Version,
         tags: Vec<String>,
         data_type: String,
-        runcard_uid: Option<String>,
+        experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
         interface_type: String,
         username: String,
@@ -192,7 +192,7 @@ impl DataCardRecord {
             version: version.to_string(),
             tags: Json(tags),
             data_type,
-            runcard_uid,
+            experimentcard_uid,
             auditcard_uid,
             interface_type,
             username,
@@ -226,7 +226,7 @@ impl Default for DataCardRecord {
             version: Version::new(1, 0, 0).to_string(),
             tags: Json(Vec::new()),
             data_type: DataType::NotProvided.to_string(),
-            runcard_uid: None,
+            experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             username: CommonKwargs::Undefined.to_string(),
@@ -251,7 +251,7 @@ pub struct ModelCardRecord {
     pub datacard_uid: Option<String>,
     pub data_type: String,
     pub model_type: String,
-    pub runcard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
@@ -268,7 +268,7 @@ impl ModelCardRecord {
         datacard_uid: Option<String>,
         data_type: String,
         model_type: String,
-        runcard_uid: Option<String>,
+        experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
         interface_type: String,
         task_type: String,
@@ -294,7 +294,7 @@ impl ModelCardRecord {
             datacard_uid,
             data_type,
             model_type,
-            runcard_uid,
+            experimentcard_uid,
             auditcard_uid,
             interface_type,
             task_type,
@@ -331,7 +331,7 @@ impl Default for ModelCardRecord {
             datacard_uid: None,
             data_type: DataType::NotProvided.to_string(),
             model_type: ModelType::Unknown.to_string(),
-            runcard_uid: None,
+            experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
@@ -341,7 +341,7 @@ impl Default for ModelCardRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct RunCardRecord {
+pub struct experimentcardRecord {
     pub uid: String,
     pub created_at: NaiveDateTime,
     pub app_env: String,
@@ -356,13 +356,13 @@ pub struct RunCardRecord {
     pub tags: Json<Vec<String>>,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
-    pub runcard_uids: Json<Vec<String>>,
+    pub experimentcard_uids: Json<Vec<String>>,
     pub username: String,
 }
 
-impl Default for RunCardRecord {
+impl Default for experimentcardRecord {
     fn default() -> Self {
-        RunCardRecord {
+        experimentcardRecord {
             uid: Uuid::new_v4().to_string(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
@@ -377,14 +377,14 @@ impl Default for RunCardRecord {
             tags: Json(Vec::new()),
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
-            runcard_uids: Json(Vec::new()),
+            experimentcard_uids: Json(Vec::new()),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
 
 #[allow(clippy::too_many_arguments)]
-impl RunCardRecord {
+impl experimentcardRecord {
     pub fn new(
         name: String,
         repository: String,
@@ -392,14 +392,14 @@ impl RunCardRecord {
         tags: Vec<String>,
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
-        runcard_uids: Vec<String>,
+        experimentcard_uids: Vec<String>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
-        RunCardRecord {
+        experimentcardRecord {
             uid,
             created_at,
             app_env,
@@ -414,7 +414,7 @@ impl RunCardRecord {
             tags: Json(tags),
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
-            runcard_uids: Json(runcard_uids),
+            experimentcard_uids: Json(experimentcard_uids),
             username,
         }
     }
@@ -447,7 +447,7 @@ pub struct AuditCardRecord {
     pub approved: bool,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
-    pub runcard_uids: Json<Vec<String>>,
+    pub experimentcard_uids: Json<Vec<String>>,
     pub username: String,
 }
 
@@ -461,7 +461,7 @@ impl AuditCardRecord {
         approved: bool,
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
-        runcard_uids: Vec<String>,
+        experimentcard_uids: Vec<String>,
         username: String,
     ) -> Self {
         let created_at = get_utc_datetime();
@@ -484,7 +484,7 @@ impl AuditCardRecord {
             approved,
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
-            runcard_uids: Json(runcard_uids),
+            experimentcard_uids: Json(experimentcard_uids),
             username,
         }
     }
@@ -518,7 +518,7 @@ impl Default for AuditCardRecord {
             approved: false,
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
-            runcard_uids: Json(Vec::new()),
+            experimentcard_uids: Json(Vec::new()),
             username: CommonKwargs::Undefined.to_string(),
         }
     }
@@ -530,7 +530,7 @@ impl Default for AuditCardRecord {
 pub enum CardResults {
     Data(Vec<DataCardRecord>),
     Model(Vec<ModelCardRecord>),
-    Run(Vec<RunCardRecord>),
+    Run(Vec<experimentcardRecord>),
     Audit(Vec<AuditCardRecord>),
 }
 
@@ -577,7 +577,7 @@ impl CardResults {
 pub enum ServerCard {
     Data(DataCardRecord),
     Model(ModelCardRecord),
-    Run(RunCardRecord),
+    Run(experimentcardRecord),
     Audit(AuditCardRecord),
 }
 
