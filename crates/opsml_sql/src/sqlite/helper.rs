@@ -404,7 +404,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, runcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -425,7 +425,7 @@ impl SqliteQueryHelper {
         interface_type, 
         task_type, 
         tags, 
-        runcard_uid, 
+        experimentcard_uid, 
         auditcard_uid, 
         pre_tag, 
         build_tag,
@@ -437,7 +437,7 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_runcard_insert_query() -> String {
+    pub fn get_experimentcard_insert_query() -> String {
         format!(
             "INSERT INTO {} (
         uid, 
@@ -451,7 +451,7 @@ impl SqliteQueryHelper {
         tags, 
         datacard_uids,
         modelcard_uids, 
-        runcard_uids,
+        experimentcard_uids,
         pre_tag, 
         build_tag,
         username
@@ -477,7 +477,7 @@ impl SqliteQueryHelper {
         approved, 
         datacard_uids, 
         modelcard_uids, 
-        runcard_uids, 
+        experimentcard_uids, 
         pre_tag, 
         build_tag,
         username
@@ -501,7 +501,7 @@ impl SqliteQueryHelper {
         data_type = ?, 
         interface_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -528,7 +528,7 @@ impl SqliteQueryHelper {
         interface_type = ?, 
         task_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
         build_tag = ?,
@@ -539,7 +539,7 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_runcard_update_query() -> String {
+    pub fn get_experimentcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
         app_env = ?, 
@@ -552,7 +552,7 @@ impl SqliteQueryHelper {
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        runcard_uids = ?,  
+        experimentcard_uids = ?,  
         pre_tag = ?, 
         build_tag = ?,
         username = ?
@@ -576,7 +576,7 @@ impl SqliteQueryHelper {
         approved = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        runcard_uids = ?, 
+        experimentcard_uids = ?, 
         pre_tag = ?, 
         build_tag = ?,
         username = ?

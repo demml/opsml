@@ -56,7 +56,7 @@ pub struct ModelCardMetadata {
     pub datacard_uid: Option<String>,
 
     #[pyo3(get, set)]
-    pub runcard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
 
     #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
@@ -206,13 +206,13 @@ impl ModelCard {
     }
 
     #[getter]
-    pub fn runcard_uid(&self) -> Option<&str> {
-        self.metadata.runcard_uid.as_deref()
+    pub fn experimentcard_uid(&self) -> Option<&str> {
+        self.metadata.experimentcard_uid.as_deref()
     }
 
     #[setter]
-    pub fn set_runcard_uid(&mut self, runcard_uid: Option<&str>) {
-        self.metadata.runcard_uid = runcard_uid.map(|s| s.to_string());
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+        self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 
     #[getter]
@@ -371,7 +371,7 @@ impl ModelCard {
             datacard_uid: self.metadata.datacard_uid.clone(),
             data_type: self.metadata.interface_metadata.data_type.to_string(),
             model_type: self.metadata.interface_metadata.model_type.to_string(),
-            runcard_uid: self.metadata.runcard_uid.clone(),
+            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             interface_type: self.metadata.interface_metadata.interface_type.to_string(),
             task_type: self.metadata.interface_metadata.task_type.to_string(),

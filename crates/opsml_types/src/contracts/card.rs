@@ -115,7 +115,7 @@ pub struct DataCardClientRecord {
     pub version: String,
     pub tags: Vec<String>,
     pub data_type: String,
-    pub runcard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub username: String,
@@ -132,7 +132,7 @@ impl Default for DataCardClientRecord {
             version: "".to_string(),
             tags: Vec::new(),
             data_type: DataType::NotProvided.to_string(),
-            runcard_uid: None,
+            experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: DataInterfaceType::Base.to_string(),
             username: "guest".to_string(),
@@ -153,7 +153,7 @@ pub struct ModelCardClientRecord {
     pub datacard_uid: Option<String>,
     pub data_type: String,
     pub model_type: String,
-    pub runcard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
@@ -174,7 +174,7 @@ impl Default for ModelCardClientRecord {
             datacard_uid: None,
             data_type: DataType::NotProvided.to_string(),
             model_type: ModelType::Unknown.to_string(),
-            runcard_uid: None,
+            experimentcard_uid: None,
             auditcard_uid: None,
             interface_type: ModelInterfaceType::Base.to_string(),
             task_type: TaskType::Other.to_string(),
@@ -185,7 +185,7 @@ impl Default for ModelCardClientRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
-pub struct RunCardClientRecord {
+pub struct ExperimentCardClientRecord {
     pub uid: String,
     pub created_at: NaiveDateTime,
     pub app_env: String,
@@ -195,11 +195,11 @@ pub struct RunCardClientRecord {
     pub tags: Vec<String>,
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
-    pub runcard_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
     pub username: String,
 }
 
-impl Default for RunCardClientRecord {
+impl Default for ExperimentCardClientRecord {
     fn default() -> Self {
         Self {
             uid: "".to_string(),
@@ -211,7 +211,7 @@ impl Default for RunCardClientRecord {
             tags: Vec::new(),
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
-            runcard_uids: Vec::new(),
+            experimentcard_uids: Vec::new(),
             username: "guest".to_string(),
         }
     }
@@ -230,7 +230,7 @@ pub struct AuditCardClientRecord {
     pub approved: bool,
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
-    pub runcard_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
     pub username: String,
 }
 
@@ -247,7 +247,7 @@ impl Default for AuditCardClientRecord {
             approved: false,
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
-            runcard_uids: Vec::new(),
+            experimentcard_uids: Vec::new(),
             username: "guest".to_string(),
         }
     }
@@ -259,7 +259,7 @@ impl Default for AuditCardClientRecord {
 pub enum Card {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
-    Run(RunCardClientRecord),
+    Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
 }
 
@@ -274,7 +274,7 @@ impl Card {
         match self {
             Self::Data(card) => &card.uid,
             Self::Model(card) => &card.uid,
-            Self::Run(card) => &card.uid,
+            Self::Experiment(card) => &card.uid,
             Self::Audit(card) => &card.uid,
         }
     }
@@ -284,7 +284,7 @@ impl Card {
         match self {
             Self::Data(card) => card.created_at,
             Self::Model(card) => card.created_at,
-            Self::Run(card) => card.created_at,
+            Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
         }
     }
@@ -294,7 +294,7 @@ impl Card {
         match self {
             Self::Data(card) => card.app_env.as_ref(),
             Self::Model(card) => card.app_env.as_ref(),
-            Self::Run(card) => card.app_env.as_ref(),
+            Self::Experiment(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
         }
     }
@@ -304,7 +304,7 @@ impl Card {
         match self {
             Self::Data(card) => card.name.as_ref(),
             Self::Model(card) => card.name.as_ref(),
-            Self::Run(card) => card.name.as_ref(),
+            Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
         }
     }
@@ -314,7 +314,7 @@ impl Card {
         match self {
             Self::Data(card) => card.repository.as_ref(),
             Self::Model(card) => card.repository.as_ref(),
-            Self::Run(card) => card.repository.as_ref(),
+            Self::Experiment(card) => card.repository.as_ref(),
             Self::Audit(card) => card.repository.as_ref(),
         }
     }
@@ -324,7 +324,7 @@ impl Card {
         match self {
             Self::Data(card) => card.version.as_ref(),
             Self::Model(card) => card.version.as_ref(),
-            Self::Run(card) => card.version.as_ref(),
+            Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
         }
     }
@@ -334,7 +334,7 @@ impl Card {
         match self {
             Self::Data(card) => &card.tags,
             Self::Model(card) => &card.tags,
-            Self::Run(card) => &card.tags,
+            Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
         }
     }
@@ -344,7 +344,7 @@ impl Card {
         match self {
             Self::Data(card) => Some(vec![&card.uid]),
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
+            Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
         }
     }
@@ -354,18 +354,25 @@ impl Card {
         match self {
             Self::Data(_) => None,
             Self::Model(card) => Some(vec![&card.uid]),
-            Self::Run(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
+            Self::Experiment(card) => {
+                Some(card.modelcard_uids.iter().map(String::as_str).collect())
+            }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
         }
     }
 
     #[getter]
-    pub fn runcard_uids(&self) -> Option<Vec<&str>> {
+    pub fn experimentcard_uids(&self) -> Option<Vec<&str>> {
         match self {
-            Self::Data(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Model(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => Some(vec![&card.uid]),
-            Self::Audit(card) => Some(card.runcard_uids.iter().map(String::as_str).collect()),
+            Self::Data(card) => card.experimentcard_uid.as_deref().map(|uid| vec![uid]),
+            Self::Model(card) => card.experimentcard_uid.as_deref().map(|uid| vec![uid]),
+            Self::Experiment(card) => Some(vec![&card.uid]),
+            Self::Audit(card) => Some(
+                card.experimentcard_uids
+                    .iter()
+                    .map(String::as_str)
+                    .collect(),
+            ),
         }
     }
 
@@ -374,7 +381,7 @@ impl Card {
         match self {
             Self::Data(card) => card.auditcard_uid.as_deref(),
             Self::Model(card) => card.auditcard_uid.as_deref(),
-            Self::Run(_) => None,
+            Self::Experiment(_) => None,
             Self::Audit(card) => Some(&card.uid),
         }
     }
@@ -384,7 +391,7 @@ impl Card {
         match self {
             Self::Data(card) => Some(card.interface_type.to_string()),
             Self::Model(card) => Some(card.interface_type.to_string()),
-            Self::Run(_) => None,
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
         }
     }
@@ -394,7 +401,7 @@ impl Card {
         match self {
             Self::Data(card) => Some(card.data_type.to_string()),
             Self::Model(card) => Some(card.data_type.to_string()),
-            Self::Run(_) => None,
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
         }
     }
@@ -404,7 +411,7 @@ impl Card {
         match self {
             Self::Data(_) => None,
             Self::Model(card) => Some(card.model_type.to_string()),
-            Self::Run(_) => None,
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
         }
     }
@@ -414,7 +421,7 @@ impl Card {
         match self {
             Self::Data(_) => None,
             Self::Model(card) => Some(card.task_type.to_string()),
-            Self::Run(_) => None,
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
         }
     }
@@ -443,7 +450,7 @@ impl Card {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
-            Self::Run(card) => {
+            Self::Experiment(card) => {
                 let uri = format!(
                     "{}/{}/{}/v{}",
                     CardTable::Run,
@@ -471,7 +478,7 @@ impl Card {
         match self {
             Self::Data(_) => RegistryType::Data,
             Self::Model(_) => RegistryType::Model,
-            Self::Run(_) => RegistryType::Run,
+            Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
         }
     }

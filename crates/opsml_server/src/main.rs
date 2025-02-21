@@ -554,7 +554,7 @@ mod tests {
                 uid: card.uid.clone(),
                 app_env: card.app_env,
                 created_at: card.created_at,
-                runcard_uid: card.runcard_uid,
+                experimentcard_uid: card.experimentcard_uid,
                 auditcard_uid: card.auditcard_uid,
                 interface_type: card.interface_type,
                 data_type: card.data_type,
@@ -714,7 +714,7 @@ mod tests {
                 uid: card.uid.clone(),
                 app_env: card.app_env,
                 created_at: card.created_at,
-                runcard_uid: card.runcard_uid,
+                experimentcard_uid: card.experimentcard_uid,
                 auditcard_uid: card.auditcard_uid,
                 interface_type: card.interface_type,
                 datacard_uid: card.datacard_uid,
@@ -768,11 +768,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_opsml_server_runcard_crud() {
+    async fn test_opsml_server_experimentcard_crud() {
         let helper = TestHelper::new().await;
 
         let card_version_request = CardVersionRequest {
-            name: "RunCard".to_string(),
+            name: "experimentcard".to_string(),
             repository: "repo1".to_string(),
             version: Some("1.0.0".to_string()),
             version_type: VersionType::Minor,
@@ -780,13 +780,13 @@ mod tests {
             build_tag: None,
         };
 
-        // RunCard
+        // experimentcard
         let card_request = CreateCardRequest {
-            card: Card::Run(RunCardClientRecord {
-                name: "RunCard".to_string(),
+            card: Card::Run(ExperimentCardClientRecord {
+                name: "experimentcard".to_string(),
                 repository: "repo1".to_string(),
                 version: "1.0.0".to_string(),
-                ..RunCardClientRecord::default()
+                ..ExperimentCardClientRecord::default()
             }),
             registry_type: RegistryType::Run,
             version_request: card_version_request,
@@ -839,7 +839,7 @@ mod tests {
 
         let card_request = UpdateCardRequest {
             registry_type: RegistryType::Run,
-            card: Card::Run(RunCardClientRecord {
+            card: Card::Run(ExperimentCardClientRecord {
                 name: "DataCard".to_string(),
                 repository: "repo1".to_string(),
                 version: "1.0.1".to_string(),
@@ -847,7 +847,7 @@ mod tests {
                 app_env: card.app_env,
                 created_at: card.created_at,
                 datacard_uids: card.datacard_uids,
-                runcard_uids: card.runcard_uids,
+                experimentcard_uids: card.experimentcard_uids,
                 modelcard_uids: card.modelcard_uids,
                 tags: card.tags,
                 username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
@@ -976,7 +976,7 @@ mod tests {
                 created_at: card.created_at,
                 datacard_uids: card.datacard_uids,
                 modelcard_uids: card.modelcard_uids,
-                runcard_uids: card.runcard_uids,
+                experimentcard_uids: card.experimentcard_uids,
                 tags: card.tags,
                 approved: card.approved,
                 username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
@@ -1249,7 +1249,7 @@ mod tests {
         .unwrap();
 
         let write_path = format!(
-            "{}/opsml_run_registry/repo1/Run1/v0.0.0/graphs",
+            "{}/opsml_experiment_registry/repo1/Run1/v0.0.0/graphs",
             helper.write_dir
         );
 

@@ -1,5 +1,5 @@
 [package]
-name = "opsml-run"
+name = "opsml-experiment"
 version = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
@@ -8,6 +8,7 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
+opsml-cards = { workspace = true }
 opsml-error = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-semver = { workspace = true }
@@ -19,6 +20,7 @@ chrono = { workspace = true }
 names = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sysinfo = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

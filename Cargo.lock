@@ -3617,6 +3617,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-experiment"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "names",
+ "opsml-cards",
+ "opsml-error",
+ "opsml-registry",
+ "opsml-semver",
+ "opsml-storage",
+ "opsml-types",
+ "opsml-utils",
+ "pyo3",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-interfaces"
 version = "0.1.0"
 dependencies = [
@@ -3652,25 +3673,6 @@ dependencies = [
  "semver",
  "sqlx",
  "tempfile",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "opsml-run"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "names",
- "opsml-error",
- "opsml-registry",
- "opsml-semver",
- "opsml-storage",
- "opsml-types",
- "opsml-utils",
- "pyo3",
- "serde",
- "sysinfo",
  "tokio",
  "tracing",
 ]
@@ -4318,9 +4320,9 @@ version = "0.1.0"
 dependencies = [
  "opsml-cards",
  "opsml-error",
+ "opsml-experiment",
  "opsml-interfaces",
  "opsml-registry",
- "opsml-run",
  "opsml-semver",
  "opsml-server",
  "opsml-settings",

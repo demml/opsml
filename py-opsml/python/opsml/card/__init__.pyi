@@ -28,7 +28,7 @@ class Card:
     tags: Dict[str, str]
     datacard_uids: Optional[List[str]]
     modelcard_uids: Optional[List[str]]
-    runcard_uids: Optional[List[str]]
+    experimentcard_uids: Optional[List[str]]
     auditcard_uid: Optional[str]
     interface_type: Optional[str]
     data_type: Optional[str]
@@ -223,12 +223,12 @@ class DataCardMetadata:
         """Return the feature map"""
 
     @property
-    def runcard_uid(self) -> Optional[str]:
-        """Return the runcard uid"""
+    def experimentcard_uid(self) -> Optional[str]:
+        """Return the experimentcard uid"""
 
     @property
     def auditcard_uid(self) -> Optional[str]:
-        """Return the runcard uid"""
+        """Return the experimentcard uid"""
 
 class RegistryTestHelper:
     """Helper class for testing the registry"""
@@ -247,20 +247,20 @@ class ModelCardMetadata:
         """Set the datacard uid"""
 
     @property
-    def runcard_uid(self) -> str:
-        """Returns the runcard uid"""
+    def experimentcard_uid(self) -> str:
+        """Returns the experimentcard uid"""
 
-    @runcard_uid.setter
-    def runcard_uid(self, runcard_uid: str) -> None:
-        """Set the runcard uid"""
+    @experimentcard_uid.setter
+    def experimentcard_uid(self, experimentcard_uid: str) -> None:
+        """Set the experimentcard uid"""
 
     @property
     def auditcard_uid(self) -> str:
-        """Returns the runcard uid"""
+        """Returns the experimentcard uid"""
 
     @auditcard_uid.setter
     def auditcard_uid(self, auditcard_uid: str) -> None:
-        """Set the runcard uid"""
+        """Set the experimentcard uid"""
 
 class ModelCard:
     def __init__(
@@ -317,12 +317,12 @@ class ModelCard:
         """Set the datacard uid"""
 
     @property
-    def runcard_uid(self) -> str:
-        """Returns the runcard uid"""
+    def experimentcard_uid(self) -> str:
+        """Returns the experimentcard uid"""
 
-    @runcard_uid.setter
-    def runcard_uid(self, runcard_uid: str) -> None:
-        """Set the runcard uid"""
+    @experimentcard_uid.setter
+    def experimentcard_uid(self, experimentcard_uid: str) -> None:
+        """Set the experimentcard uid"""
 
     @property
     def uri(self) -> Path:
@@ -489,7 +489,7 @@ class ActiveRun:
     def log_params(self, params: Dict[str, Union[int, float, str]]) -> None: ...
     def log_tag(self, tag: str) -> None: ...
 
-class RunCard:
+class experimentcard:
     def __init__(
         self,
         repository: Optional[str] = None,
@@ -498,23 +498,23 @@ class RunCard:
         uid: Optional[str] = None,
         tags: List[str] = [],
     ) -> None:
-        """Creates a RunCard.
+        """Creates a experimentcard.
 
-        Cards are stored in the RunCard Registry and follow the naming convention of:
+        Cards are stored in the experimentcard Registry and follow the naming convention of:
         {registry}/{repository}/{name}/v{version}
 
         Args:
             repository (str | None):
-                Repository to associate with `RunCard`
+                Repository to associate with `experimentcard`
             name (str | None):
-                Name to associate with `RunCard`
+                Name to associate with `experimentcard`
             version (str | None):
                 Current version (assigned if card has been registered). Follows
                 semantic versioning.
             uid (str | None):
                 Unique id (assigned if card has been registered)
             tags (List[str]):
-                Tags to associate with `RunCard`. Can be a dictionary of strings or
+                Tags to associate with `experimentcard`. Can be a dictionary of strings or
                 a `Tags` object.
         """
 
@@ -533,41 +533,41 @@ class RunCard:
 
     @property
     def repository(self) -> str:
-        """Returns the repository of the `RunCard`"""
+        """Returns the repository of the `experimentcard`"""
 
     @repository.setter
     def repository(self, repository: str) -> None:
-        """Set the repository of the `RunCard`
+        """Set the repository of the `experimentcard`
 
         Args:
             repository (str):
-                The repository of the `RunCard`
+                The repository of the `experimentcard`
         """
 
     @property
     def version(self) -> str:
-        """Returns the version of the `RunCard`"""
+        """Returns the version of the `experimentcard`"""
 
     @version.setter
     def version(self, version: str) -> None:
-        """Set the version of the `RunCard`
+        """Set the version of the `experimentcard`
 
         Args:
             version (str):
-                The version of the `RunCard`
+                The version of the `experimentcard`
         """
 
     @property
     def uid(self) -> str:
-        """Returns the uid of the `RunCard`"""
+        """Returns the uid of the `experimentcard`"""
 
     @property
     def tags(self) -> List[str]:
         """Returns the tags of the `RuncCard`"""
 
     @property
-    def runcard_uids(self) -> List[str]:
-        """Returns the runcard uids"""
+    def experimentcard_uids(self) -> List[str]:
+        """Returns the experimentcard uids"""
 
     @property
     def datacard_uids(self) -> List[str]:
@@ -587,7 +587,7 @@ class RunCard:
 
     @property
     def registry_type(self) -> RegistryType:
-        """Returns the card type of the `RunCard`"""
+        """Returns the card type of the `experimentcard`"""
 
     @property
     def app_env(self) -> str:
@@ -608,9 +608,9 @@ class RunCard:
 
         Args:
             repository (str | None):
-                Repository to associate with `RunCard`
+                Repository to associate with `experimentcard`
             name (str | None):
-                Name to associate with `RunCard`
+                Name to associate with `experimentcard`
             code_dir (str | None):
                 Directory to log code from
             log_hardware (bool):
@@ -704,7 +704,7 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to register. Can be a DataCard, ModelCard,
-                RunCard.
+                experimentcard.
             version_type (VersionType):
                 How to increment the version SemVer.
             pre_tag (str):
@@ -755,7 +755,7 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to update. Can be a DataCard, ModelCard,
-                RunCard.
+                experimentcard.
         """
 
     def delete_card(
@@ -768,5 +768,5 @@ class CardRegistry:
         Args:
             card (ArtifactCard):
                 Card to delete. Can be a DataCard, ModelCard,
-                RunCard.
+                experimentcard.
         """

@@ -1,4 +1,4 @@
-use crate::RunCard;
+use opsml_cards::ExperimentCard;
 use opsml_error::{CardError, OpsmlError};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
@@ -7,14 +7,17 @@ use std::sync::{Arc, Mutex};
 use tracing::{debug, error};
 
 #[pyclass]
-pub struct ActiveRun {
-    pub run: PyObject,
+pub struct Experiment {
+    pub experiment: PyObject,
     pub registries: Arc<Mutex<CardRegistries>>,
 }
 
-impl ActiveRun {
-    pub fn new(run: PyObject, registries: Arc<Mutex<CardRegistries>>) -> PyResult<Self> {
-        Ok(Self { run, registries })
+impl Experiment {
+    pub fn new(experiment: PyObject, registries: Arc<Mutex<CardRegistries>>) -> PyResult<Self> {
+        Ok(Self {
+            experiment,
+            registries,
+        })
     }
 
     fn unlock_registries(&self) -> PyResult<std::sync::MutexGuard<'_, CardRegistries>> {
@@ -26,7 +29,7 @@ impl ActiveRun {
         Ok(registries)
     }
 
-    fn create_run_card<'py>(
+    fn create_experiment<'py>(
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
@@ -35,11 +38,11 @@ impl ActiveRun {
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let run = Self::initialize_run_card(py, repository, name, code_dir, log_hardware)?;
-        Self::register_run_card(&run, &mut registries)?;
+        Self::register_experiment(&run, &mut registries)?;
         Ok(run)
     }
 
-    fn initialize_run_card<'py>(
+    fn initialize_experiment<'py>(
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
@@ -49,52 +52,56 @@ impl ActiveRun {
         let _hardware = log_hardware;
         let _code_dir = code_dir.unwrap_or("");
 
-        let run = Py::new(py, RunCard::new(py, repository, name, None, None, None)?)?
-            .into_bound_py_any(py)
-            .map_err(|e| {
-                error!("Failed to register run card: {}", e);
-                CardError::Error(e.to_string())
-            })?;
+        let experiment = Py::new(
+            py,
+            ExperimentCard::new(py, repository, name, None, None, None)?,
+        )?
+        .into_bound_py_any(py)
+        .map_err(|e| {
+            error!("Failed to register experiment card: {}", e);
+            CardError::Error(e.to_string())
+        })?;
 
-        Ok(run)
+        Ok(experiment)
     }
 
-    fn register_run_card<'py>(
-        run: &Bound<'py, PyAny>,
+    fn register_experiment<'py>(
+        experiment: &Bound<'py, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
     ) -> PyResult<()> {
         registries
-            .run
-            .register_card(run, VersionType::Minor, None, None, None)
+            .experiment
+            .register_card(experiment, VersionType::Minor, None, None, None)
             .map_err(|e| {
-                error!("Failed to register run card: {}", e);
+                error!("Failed to register experiment card: {}", e);
                 OpsmlError::new_err(e.to_string())
             })
     }
 
-    fn add_child_run<'py>(
+    fn add_child_experiment<'py>(
         slf: &PyRefMut<'py, Self>,
         py: Python<'py>,
-        run: &Bound<'py, PyAny>,
+        experiment: &Bound<'py, PyAny>,
     ) -> PyResult<()> {
-        let child_uid = run.getattr("uid")?.extract::<String>()?;
-        slf.run.call_method1(py, "add_child_run", (&child_uid,))?;
+        let child_uid = experiment.getattr("uid")?.extract::<String>()?;
+        slf.experiment
+            .call_method1(py, "add_child_experiment", (&child_uid,))?;
         Ok(())
     }
 }
 
 #[pymethods]
-impl ActiveRun {
+impl Experiment {
     #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
-    pub fn start_run<'py>(
+    pub fn start_experiment<'py>(
         slf: PyRefMut<'py, Self>,
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
         code_dir: Option<&str>,
         log_hardware: bool,
-    ) -> PyResult<Bound<'py, ActiveRun>> {
-        let run = Self::create_run_card(
+    ) -> PyResult<Bound<'py, Experiment>> {
+        let experiment = Self::create_experiment_card(
             py,
             repository,
             name,
@@ -103,19 +110,22 @@ impl ActiveRun {
             slf.unlock_registries()?,
         )?;
 
-        // Add the new run's UID to the parent run's runcard_uids
-        Self::add_child_run(&slf, py, &run)?;
+        // Add the new experiment's UID to the parent experiment's experimentcard_uids
+        Self::add_child_experiment(&slf, py, &experiment)?;
 
-        debug!("Starting run: {}", run.getattr("uid")?.extract::<String>()?);
+        debug!(
+            "Starting experiment: {}",
+            experiment.getattr("uid")?.extract::<String>()?
+        );
 
-        // Return the new ActiveRun wrapped in a PyRef which implements context manager protocol
-        let active = ActiveRun::new(run.unbind(), slf.registries.clone())?;
+        // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
+        let active = Experiment::new(experiment.unbind(), slf.registries.clone())?;
 
         Ok(Py::new(py, active)?.bind(py).clone())
     }
 
     fn __enter__(slf: PyRef<'_, Self>) -> PyResult<PyRef<'_, Self>> {
-        debug!("Starting run");
+        debug!("Starting experiment");
         Ok(slf)
     }
 
@@ -134,13 +144,13 @@ impl ActiveRun {
                 exc_type, exc_value, traceback
             );
         } else {
-            debug!("Exiting run");
+            debug!("Exiting experiment");
             // update card
             self.unlock_registries()?
-                .run
-                .update_card(self.run.bind(py))?;
+                .experiment
+                .update_card(self.experiment.bind(py))?;
 
-            debug!("Run updated");
+            debug!("Experiment updated");
         }
 
         Ok(false) // Return false to propagate exceptions

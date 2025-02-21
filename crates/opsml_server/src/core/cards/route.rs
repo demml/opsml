@@ -145,7 +145,7 @@ pub async fn list_cards(
         }
 
         CardResults::Run(data) => {
-            let cards = data.into_iter().map(convert_runcard).collect();
+            let cards = data.into_iter().map(convert_experimentcard).collect();
             Ok(Json(cards))
         }
 
@@ -272,7 +272,7 @@ pub async fn update_card(
                 version: client_card.version,
                 tags: SqlxJson(client_card.tags),
                 data_type: client_card.data_type,
-                runcard_uid: client_card.runcard_uid,
+                experimentcard_uid: client_card.experimentcard_uid,
                 auditcard_uid: client_card.auditcard_uid,
                 interface_type: client_card.interface_type,
                 username: client_card.username,
@@ -305,7 +305,7 @@ pub async fn update_card(
                 datacard_uid: client_card.datacard_uid,
                 data_type: client_card.data_type,
                 model_type: client_card.model_type,
-                runcard_uid: client_card.runcard_uid,
+                experimentcard_uid: client_card.experimentcard_uid,
                 auditcard_uid: client_card.auditcard_uid,
                 interface_type: client_card.interface_type,
                 task_type: client_card.task_type,
@@ -323,7 +323,7 @@ pub async fn update_card(
                 )
             })?;
 
-            let server_card = RunCardRecord {
+            let server_card = experimentcardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
                 app_env: client_card.app_env,
@@ -338,7 +338,7 @@ pub async fn update_card(
                 tags: SqlxJson(client_card.tags),
                 datacard_uids: SqlxJson(client_card.datacard_uids),
                 modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                runcard_uids: SqlxJson(client_card.runcard_uids),
+                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                 username: client_card.username,
             };
             ServerCard::Run(server_card)
@@ -369,7 +369,7 @@ pub async fn update_card(
                 approved: client_card.approved,
                 datacard_uids: SqlxJson(client_card.datacard_uids),
                 modelcard_uids: SqlxJson(client_card.modelcard_uids),
-                runcard_uids: SqlxJson(client_card.runcard_uids),
+                experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                 username: client_card.username,
             };
             ServerCard::Audit(server_card)

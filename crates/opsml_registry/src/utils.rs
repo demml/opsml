@@ -75,6 +75,21 @@ pub fn card_from_string<'py>(
             })?
         }
 
+        //RegistryType::Experiment => {
+        //    let mut card = ExperimentCard::model_validate_json(py, card_json).map_err(|e| {
+        //        error!("Failed to validate data card: {}", e);
+        //        RegistryError::Error(e.to_string())
+        //    })?;
+
+        //    card.artifact_key = Some(key);
+        //    card.fs = Some(fs.clone());
+        //    card.rt = Some(rt.clone());
+
+        //    card.into_bound_py_any(py).map_err(|e| {
+        //        error!("Failed to convert card to bound: {}", e);
+        //        RegistryError::Error(e.to_string())
+        //    })?
+        //}
         _ => {
             return Err(RegistryError::Error(
                 "Registry type not supported".to_string(),

@@ -114,8 +114,8 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     # set uid
     card.datacard_uid = datacard.uid
 
-    card.runcard_uid = "test"
-    assert card.runcard_uid == "test"
+    card.experimentcard_uid = "test"
+    assert card.experimentcard_uid == "test"
 
     reg.register_card(card)
     cards = reg.list_cards()
