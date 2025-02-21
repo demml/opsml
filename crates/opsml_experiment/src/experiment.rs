@@ -94,11 +94,33 @@ impl Experiment {
             .call_method1(py, "add_child_experiment", (&child_uid,))?;
         Ok(())
     }
+
+    fn load_experiment<'py>(
+        py: Python<'py>,
+        experiment_uid: &str,
+        mut registries: std::sync::MutexGuard<'_, CardRegistries>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // Logic to load the existing experiment using the experiment_id
+        let experiment = registries
+            .experiment
+            .load_card(py, Some(experiment_uid.to_string()), None, None, None, None)
+            .map_err(|e| {
+                error!("Failed to load experiment card: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?
+            .into_bound_py_any(py)
+            .map_err(|e| {
+                error!("Failed to bind experiment card: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        Ok(experiment)
+    }
 }
 
 #[pymethods]
 impl Experiment {
-    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
+    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     pub fn start_experiment<'py>(
         slf: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -106,15 +128,22 @@ impl Experiment {
         name: Option<&str>,
         code_dir: Option<&str>,
         log_hardware: bool,
+        experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
-        let experiment = Self::create_experiment(
-            py,
-            repository,
-            name,
-            code_dir,
-            log_hardware,
-            slf.unlock_registries()?,
-        )?;
+        let experiment = if let Some(experiment_uid) = experiment_uid {
+            // Load the existing experiment
+            Self::load_experiment(py, experiment_uid, slf.unlock_registries()?)?
+        } else {
+            // Create a new experiment
+            Self::create_experiment(
+                py,
+                repository,
+                name,
+                code_dir,
+                log_hardware,
+                slf.unlock_registries()?,
+            )?
+        };
 
         // Add the new experiment's UID to the parent experiment's experimentcard_uids
         Self::add_child_experiment(&slf, py, &experiment)?;
@@ -163,20 +192,32 @@ impl Experiment {
     }
 }
 
+#[pyfunction]
+#[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
 pub fn start_experiment<'py>(
     py: Python<'py>,
     repository: Option<&str>,
     name: Option<&str>,
     code_dir: Option<&str>,
     log_hardware: bool,
+    experiment_uid: Option<&str>,
 ) -> PyResult<Bound<'py, Experiment>> {
     let registries = Arc::new(Mutex::new(CardRegistries::new()?));
 
-    let experiment =
-        Experiment::initialize_experiment(py, repository, name, code_dir, log_hardware)?;
-
-    // Register the new experiment
-    Experiment::register_experiment(&experiment, &mut registries.lock().unwrap())?;
+    let experiment = if let Some(experiment_uid) = experiment_uid {
+        // Load the existing experiment
+        Experiment::load_experiment(py, experiment_uid, registries.lock().unwrap())?
+    } else {
+        // Create a new experiment
+        Experiment::create_experiment(
+            py,
+            repository,
+            name,
+            code_dir,
+            log_hardware,
+            registries.lock().unwrap(),
+        )?
+    };
 
     // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
     let active = Experiment::new(experiment.unbind(), registries)?;
