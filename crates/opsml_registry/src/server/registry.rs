@@ -458,6 +458,18 @@ pub mod server_logic {
 
             Ok(key)
         }
+
+        pub async fn insert_hardware_metrics(
+            &mut self,
+            metrics: Vec<HardwareMetrics>,
+        ) -> Result<(), RegistryError> {
+            self.sql_client
+                .insert_hardware_metrics(&metrics)
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
+                })
+        }
     }
 
     #[pyclass]

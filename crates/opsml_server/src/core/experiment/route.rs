@@ -168,28 +168,17 @@ pub async fn insert_hardware_metrics(
         .metrics
         .iter()
         .map(|p| HardwareMetricsRecord {
-            run_uid: req.run_uid.clone(),
-            created_at,
+            experiment_uid: req.experiment_uid.clone(),
+            created_at: created_at.clone(),
             cpu_percent_utilization: p.cpu.cpu_percent_utilization,
-            cpu_percent_per_core: p.cpu.cpu_percent_per_core.clone().map(SqlxJson),
-            compute_overall: p.cpu.compute_overall,
-            compute_utilized: p.cpu.compute_utilized,
-            load_avg: p.cpu.load_avg,
-            sys_ram_total: p.memory.sys_ram_total,
-            sys_ram_used: p.memory.sys_ram_used,
-            sys_ram_available: p.memory.sys_ram_available,
-            sys_ram_percent_used: p.memory.sys_ram_percent_used,
-            sys_swap_total: p.memory.sys_swap_total,
-            sys_swap_used: p.memory.sys_swap_used,
-            sys_swap_free: p.memory.sys_swap_free,
-            sys_swap_percent: p.memory.sys_swap_percent,
+            cpu_percent_per_core: SqlxJson(p.cpu.cpu_percent_per_core.clone()),
+            free_memory: p.memory.free_memory,
+            total_memory: p.memory.total_memory,
+            used_memory: p.memory.used_memory,
+            available_memory: p.memory.available_memory,
+            used_percent_memory: p.memory.used_percent_memory,
             bytes_recv: p.network.bytes_recv,
             bytes_sent: p.network.bytes_sent,
-            gpu_percent_utilization: p.gpu.as_ref().map(|gpu| gpu.gpu_percent_utilization),
-            gpu_percent_per_core: p
-                .gpu
-                .as_ref()
-                .and_then(|gpu| gpu.gpu_percent_per_core.clone().map(SqlxJson)),
         })
         .collect::<Vec<_>>();
 
@@ -227,40 +216,29 @@ pub async fn get_hardware_metrics(
     // map to the HardwareMetrics struct
     let metrics = metrics
         .into_iter()
-        .map(|m| {
-            let gpu = if let Some(gpu_percent_utilization) = m.gpu_percent_utilization {
-                Some(GPUMetrics {
-                    gpu_percent_utilization,
-                    gpu_percent_per_core: m.gpu_percent_per_core.map(|c| c.0),
-                })
-            } else {
-                None
-            };
-
-            HardwareMetrics {
-                cpu: CPUMetrics {
-                    cpu_percent_utilization: m.cpu_percent_utilization,
-                    cpu_percent_per_core: m.cpu_percent_per_core.map(|c| c.0),
-                    compute_overall: m.compute_overall,
-                    compute_utilized: m.compute_utilized,
-                    load_avg: m.load_avg,
-                },
-                memory: MemoryMetrics {
-                    sys_ram_total: m.sys_ram_total,
-                    sys_ram_used: m.sys_ram_used,
-                    sys_ram_available: m.sys_ram_available,
-                    sys_ram_percent_used: m.sys_ram_percent_used,
-                    sys_swap_total: m.sys_swap_total,
-                    sys_swap_used: m.sys_swap_used,
-                    sys_swap_free: m.sys_swap_free,
-                    sys_swap_percent: m.sys_swap_percent,
-                },
-                network: NetworkRates {
-                    bytes_recv: m.bytes_recv,
-                    bytes_sent: m.bytes_sent,
-                },
-                gpu,
-            }
+        .map(|m| HardwareMetrics {
+            cpu: CPUMetrics {
+                cpu_percent_utilization: m.cpu_percent_utilization,
+                cpu_percent_per_core: m.cpu_percent_per_core.map(|c| c.0),
+                compute_overall: m.compute_overall,
+                compute_utilized: m.compute_utilized,
+                load_avg: m.load_avg,
+            },
+            memory: MemoryMetrics {
+                sys_ram_total: m.sys_ram_total,
+                sys_ram_used: m.sys_ram_used,
+                sys_ram_available: m.sys_ram_available,
+                sys_ram_percent_used: m.sys_ram_percent_used,
+                sys_swap_total: m.sys_swap_total,
+                sys_swap_used: m.sys_swap_used,
+                sys_swap_free: m.sys_swap_free,
+                sys_swap_percent: m.sys_swap_percent,
+            },
+            network: NetworkRates {
+                bytes_recv: m.bytes_recv,
+                bytes_sent: m.bytes_sent,
+            },
+            gpu,
         })
         .collect::<Vec<_>>();
 
