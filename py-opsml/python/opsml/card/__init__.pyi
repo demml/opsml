@@ -11,7 +11,7 @@ from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
 class RegistryType:
     Data: "RegistryType"
     Model: "RegistryType"
-    Run: "RegistryType"
+    Experiment: "RegistryType"
     Audit: "RegistryType"
 
 class RegistryMode:
@@ -467,29 +467,7 @@ class ComputeEnvironment:
 
     def __str__(self): ...
 
-class ActiveRun:
-    def __enter__(self) -> "ActiveRun": ...
-    def __exit__(self, exc_type, exc_value, traceback) -> None: ...
-    def start_run(
-        self,
-        repository: Optional[str] = None,
-        name: Optional[str] = None,
-        code_dir: Optional[str] = None,
-        log_hardware: bool = False,
-    ) -> "ActiveRun": ...
-    def log_artifact(self, artifact: Any, name: str, description: str) -> None: ...
-    def log_artifacts(self, artifacts: Dict[str, Any]) -> None: ...
-    def log_metric(
-        self, metric: Union[int, float], name: str, description: str
-    ) -> None: ...
-    def log_metrics(self, metrics: Dict[str, Union[int, float]]) -> None: ...
-    def log_param(
-        self, param: Union[int, float, str], name: str, description: str
-    ) -> None: ...
-    def log_params(self, params: Dict[str, Union[int, float, str]]) -> None: ...
-    def log_tag(self, tag: str) -> None: ...
-
-class experimentcard:
+class ExperimentCard:
     def __init__(
         self,
         repository: Optional[str] = None,
@@ -498,23 +476,23 @@ class experimentcard:
         uid: Optional[str] = None,
         tags: List[str] = [],
     ) -> None:
-        """Creates a experimentcard.
+        """Creates a ExperimentCard.
 
-        Cards are stored in the experimentcard Registry and follow the naming convention of:
+        Cards are stored in the ExperimentCard Registry and follow the naming convention of:
         {registry}/{repository}/{name}/v{version}
 
         Args:
             repository (str | None):
-                Repository to associate with `experimentcard`
+                Repository to associate with `ExperimentCard`
             name (str | None):
-                Name to associate with `experimentcard`
+                Name to associate with `ExperimentCard`
             version (str | None):
                 Current version (assigned if card has been registered). Follows
                 semantic versioning.
             uid (str | None):
                 Unique id (assigned if card has been registered)
             tags (List[str]):
-                Tags to associate with `experimentcard`. Can be a dictionary of strings or
+                Tags to associate with `ExperimentCard`. Can be a dictionary of strings or
                 a `Tags` object.
         """
 
@@ -563,7 +541,7 @@ class experimentcard:
 
     @property
     def tags(self) -> List[str]:
-        """Returns the tags of the `RuncCard`"""
+        """Returns the tags of the `ExperimentCard`"""
 
     @property
     def experimentcard_uids(self) -> List[str]:
@@ -596,29 +574,6 @@ class experimentcard:
     @property
     def created_at(self) -> datetime:
         """Returns the created at timestamp"""
-
-    @staticmethod
-    def start_run(
-        repository: Optional[str] = None,
-        name: Optional[str] = None,
-        code_dir: Optional[str] = None,
-        log_hardware: bool = False,
-    ) -> ActiveRun:
-        """Start a run
-
-        Args:
-            repository (str | None):
-                Repository to associate with `experimentcard`
-            name (str | None):
-                Name to associate with `experimentcard`
-            code_dir (str | None):
-                Directory to log code from
-            log_hardware (bool):
-                Whether to log hardware information or not
-
-        Returns:
-            ActiveRun
-        """
 
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
@@ -770,3 +725,10 @@ class CardRegistry:
                 Card to delete. Can be a DataCard, ModelCard,
                 experimentcard.
         """
+
+class CardRegistries:
+    def __init__(self) -> None: ...
+    def data(self) -> CardRegistry: ...
+    def model(self) -> CardRegistry: ...
+    def experiment(self) -> CardRegistry: ...
+    def audit(self) -> CardRegistry: ...
