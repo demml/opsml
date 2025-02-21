@@ -5,7 +5,11 @@ use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
+use opsml_types::SaveName;
+use opsml_types::{contracts::ArtifactKey, RegistryType};
+
 use pyo3::{prelude::*, IntoPyObjectExt};
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error};
@@ -23,6 +27,61 @@ fn initialize_experiment_environment() -> Result<
     let mut settings = OpsmlConfig::default().storage_settings()?;
     let fs = rt.block_on(async { FileSystemStorage::new(&mut settings).await })?;
     Ok((rt, registries, Arc::new(TokioMutex::new(fs))))
+}
+
+fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
+    let inspect = py.import("inspect")?;
+    let current_frame = inspect.call_method0("currentframe")?;
+    let f_code = current_frame.getattr("f_code")?;
+    let filename = f_code.getattr("co_filename")?;
+
+    Ok(PathBuf::from(filename.to_string()))
+}
+
+fn extract_code(
+    py: Python<'_>,
+    code_dir: Option<PathBuf>,
+    uid: &str,
+    fs: Arc<tokio::sync::Mutex<FileSystemStorage>>,
+    registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
+    rt: Arc<tokio::runtime::Runtime>,
+) -> Result<(), ExperimentError> {
+    rt.block_on(async {
+        // 1. Get artifact key
+        let key = registries
+            .experiment
+            .registry
+            .get_artifact_key(&uid, &RegistryType::Experiment)
+            .await
+            .map_err(|e| {
+                error!("Failed to get artifact key: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?;
+
+        // Attempt to get file
+        let (lpath, recursive) = match code_dir {
+            Some(path) => (path.to_path_buf(), true),
+            None => (get_py_filename(py)?, false),
+        };
+
+        // 2. Set rpath based on file or directory
+        let rpath = if lpath.is_file() {
+            // append file name to the path
+            &key.storage_path()
+                .join(SaveName::Artifacts)
+                .join(SaveName::Code)
+                .join(lpath.file_name().unwrap())
+        } else {
+            &key.storage_path()
+                .join(SaveName::Artifacts)
+                .join(SaveName::Code)
+        };
+
+        // 3. Save the code to the storage
+        fs.lock().await.put(&lpath, &rpath, recursive).await?;
+
+        Ok::<(), ExperimentError>(())
+    })
 }
 
 #[pyclass]
@@ -61,25 +120,21 @@ impl Experiment {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        code_dir: Option<&str>,
+        code_dir: Option<PathBuf>,
         log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
         subexperiment: bool,
+        fs: Arc<TokioMutex<FileSystemStorage>>,
+        rt: Arc<tokio::runtime::Runtime>,
     ) -> PyResult<Bound<'py, PyAny>> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
             generator.next().unwrap_or_else(|| "experiment".to_string())
         });
 
-        let experiment = Self::initialize_experiment(
-            py,
-            repository,
-            Some(&name),
-            code_dir,
-            log_hardware,
-            subexperiment,
-        )?;
-        Self::register_experiment(&experiment, &mut registries)?;
+        let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
+
+        Self::register_experiment(&experiment, &mut registries, code_dir, log_hardware, fs, rt)?;
         Ok(experiment)
     }
 
@@ -87,13 +142,8 @@ impl Experiment {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        code_dir: Option<&str>,
-        log_hardware: bool,
         subexperiment: bool,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let _hardware = log_hardware;
-        let _code_dir = code_dir.unwrap_or("");
-
         let mut card = ExperimentCard::new(py, repository, name, None, None, None)?;
         card.subexperiment = subexperiment;
 
@@ -108,6 +158,10 @@ impl Experiment {
     fn register_experiment<'py>(
         experiment: &Bound<'py, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
+        code_dir: Option<PathBuf>,
+        _log_hardware: bool,
+        fs: Arc<TokioMutex<FileSystemStorage>>,
+        rt: Arc<tokio::runtime::Runtime>,
     ) -> PyResult<()> {
         registries
             .experiment
@@ -115,7 +169,14 @@ impl Experiment {
             .map_err(|e| {
                 error!("Failed to register experiment card: {}", e);
                 OpsmlError::new_err(e.to_string())
-            })
+            })?;
+
+        let uid = experiment.getattr("uid")?.extract::<String>()?;
+        let py = experiment.py();
+
+        extract_code(py, code_dir, &uid, fs, registries, rt)?;
+
+        Ok(())
     }
 
     fn add_subexperiment_experiment<'py>(
@@ -160,7 +221,7 @@ impl Experiment {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        code_dir: Option<&str>,
+        code_dir: Option<PathBuf>,
         log_hardware: bool,
         experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
@@ -177,6 +238,8 @@ impl Experiment {
                 log_hardware,
                 slf.unlock_registries()?,
                 true,
+                slf.fs.clone(),
+                slf.rt.clone(),
             )?
         };
 
@@ -238,7 +301,7 @@ pub fn start_experiment<'py>(
     py: Python<'py>,
     repository: Option<&str>,
     name: Option<&str>,
-    code_dir: Option<&str>,
+    code_dir: Option<PathBuf>,
     log_hardware: bool,
     experiment_uid: Option<&str>,
 ) -> PyResult<Bound<'py, Experiment>> {
@@ -246,7 +309,6 @@ pub fn start_experiment<'py>(
     // runtime should be shared across all registries
     let (rt, registries, fs) = initialize_experiment_environment()?;
 
-    debug!("Creating experiment");
     let experiment = if let Some(experiment_uid) = experiment_uid {
         // Load the existing experiment
         Experiment::load_experiment(py, experiment_uid, registries.lock().unwrap())?
@@ -260,6 +322,8 @@ pub fn start_experiment<'py>(
             log_hardware,
             registries.lock().unwrap(),
             false,
+            fs.clone(),
+            rt.clone(),
         )?
     };
 

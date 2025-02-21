@@ -116,7 +116,7 @@ impl OpsmlRegistry {
         &mut self,
         uid: &str,
         registry_type: &RegistryType,
-    ) -> Result<Vec<u8>, RegistryError> {
+    ) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
                 client_registry.get_artifact_key(uid, registry_type).await
