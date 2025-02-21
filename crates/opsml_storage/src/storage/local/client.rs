@@ -3,11 +3,7 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use futures_util::stream::Stream;
-use futures_util::task::{Context, Poll};
-use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::OpsmlApiClient;
-use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{
@@ -17,49 +13,11 @@ use opsml_types::{
 use reqwest::multipart::{Form, Part};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use std::time::SystemTime;
 use tokio::fs::File as TokioFile;
-use tokio::io::AsyncRead;
 use tokio_util::io::ReaderStream;
 use tracing::{debug, error, instrument};
 use walkdir::WalkDir;
-
-// left off here
-// removed multiupload part and implemented put on each storage client
-// need to fix up http client
-// - method for creating resumable upload
-// - method for creating uploader from resumable upload
-// - method for uploading part (special handling for local storage, or do we just use the same method?)
-
-struct ProgressStream<R> {
-    inner: ReaderStream<R>,
-    progress_bar: ProgressBar,
-}
-
-impl<R: AsyncRead + Unpin> ProgressStream<R> {
-    fn new(reader: R, progress_bar: ProgressBar) -> Self {
-        Self {
-            inner: ReaderStream::new(reader),
-            progress_bar,
-        }
-    }
-}
-
-impl<R: AsyncRead + Unpin> Stream for ProgressStream<R> {
-    type Item = Result<bytes::Bytes, std::io::Error>;
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let this = self.get_mut();
-        match Pin::new(&mut this.inner).poll_next(cx) {
-            Poll::Ready(Some(Ok(bytes))) => {
-                this.progress_bar.inc(bytes.len() as u64);
-                Poll::Ready(Some(Ok(bytes)))
-            }
-            other => other,
-        }
-    }
-}
 
 pub struct LocalMultiPartUpload {
     pub lpath: PathBuf,
@@ -120,26 +78,7 @@ impl LocalMultiPartUpload {
                 .await
                 .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
-            let file_size = file
-                .metadata()
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?
-                .len();
-
-            let bar = ProgressBar::new(file_size);
-            let msg1 = Colorize::green("Uploading file:");
-            let msg2 = Colorize::purple(&self.filename);
-            let msg = format!("{} {}", msg1, msg2);
-            let template = format!(
-                "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-                msg
-            );
-            let style = ProgressStyle::with_template(&template)
-                .unwrap()
-                .progress_chars("#--");
-            bar.set_style(style);
-
-            let stream = ProgressStream::new(file, bar.clone());
+            let stream = ReaderStream::new(file);
 
             let part = Part::stream(reqwest::Body::wrap_stream(stream))
                 .file_name(self.rpath.to_str().unwrap().to_string())
@@ -152,8 +91,6 @@ impl LocalMultiPartUpload {
                 .multipart_upload(form)
                 .await
                 .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
-
-            bar.finish_with_message("Upload complete");
 
             let value = response
                 .json::<serde_json::Value>()
@@ -584,7 +521,6 @@ impl FileSystem for LocalFSStorageClient {
             }
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
-
             for file in files {
                 let stripped_lpath_clone = stripped_lpath.clone();
                 let stripped_rpath_clone = stripped_rpath.clone();
@@ -597,18 +533,18 @@ impl FileSystem for LocalFSStorageClient {
                     .create_multipart_uploader(&stripped_file_path, &remote_path, None)
                     .await?;
 
+                println!("Uploading file: {}", file.display());
                 uploader.upload_file_in_chunks().await?;
             }
-
-            Ok(())
         } else {
             let uploader = self
                 .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None)
                 .await?;
 
             uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+        };
+
+        Ok(())
     }
 }
 

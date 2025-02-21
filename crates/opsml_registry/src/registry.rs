@@ -589,7 +589,13 @@ impl CardRegistry {
                 e
             })?;
 
-        println!("...✓ {}", Colorize::green("Updated card"));
+        println!(
+            "...✓ {} - {}/{} - v{}",
+            Colorize::green("Updated card"),
+            registry_card.repository(),
+            registry_card.name(),
+            registry_card.version()
+        );
         debug!("Successfully updated card");
 
         Ok(key)

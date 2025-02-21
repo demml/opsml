@@ -20,7 +20,6 @@ futures = { workspace = true }
 futures-util = { workspace = true }
 google-cloud-auth = { workspace = true }
 google-cloud-storage = { workspace = true }
-indicatif = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-error = { workspace = true }

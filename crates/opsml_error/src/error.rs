@@ -362,6 +362,18 @@ pub enum ExperimentError {
 
     #[error(transparent)]
     StorageError(#[from] StorageError),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    RegistryError(#[from] RegistryError),
 }
 
 impl From<ExperimentError> for PyErr {

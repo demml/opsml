@@ -58,7 +58,6 @@ google-cloud-storage = { version = "0.*", features  = ["auth"] }
 google-cloud-auth = "0.*"
 hmac = "0.*"
 hkdf = "0.*"
-indicatif = "0.*"
 jsonwebtoken = "9.*"
 names = "0.*"
 ort = { version = "2.0.0-rc.9" }

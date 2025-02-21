@@ -9,12 +9,11 @@ use azure_storage_blobs::container::operations::BlobItem;
 use azure_storage_blobs::prelude::*;
 use base64::prelude::*;
 use futures::stream::StreamExt;
-use indicatif::ProgressBar;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
-use opsml_utils::{progress::Progress as MultiProgress, FileUtils};
+use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
 use std::env;
 use std::fs::File;
@@ -92,7 +91,6 @@ impl AzureMultipartUpload {
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
-        bar: &ProgressBar,
     ) -> Result<(), StorageError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -109,8 +107,6 @@ impl AzureMultipartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-
-            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
@@ -586,8 +582,6 @@ impl FileSystem for AzureFSStorageClient {
         let stripped_lpath = lpath.strip_path(self.client.bucket().await);
         let stripped_rpath = rpath.strip_path(self.client.bucket().await);
 
-        let progress = MultiProgress::new()?;
-
         if recursive {
             if !stripped_lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -601,9 +595,6 @@ impl FileSystem for AzureFSStorageClient {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
 
-                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
-                let bar = progress.create_bar(msg, chunk_count);
-
                 let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
@@ -613,31 +604,21 @@ impl FileSystem for AzureFSStorageClient {
                     .await?;
 
                 uploader
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &bar)
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                     .await?;
-                bar.finish_and_clear();
             }
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
-
-            let msg = format!(
-                "Uploading: {}",
-                &stripped_lpath.file_name().unwrap().to_str().unwrap()
-            );
-            let bar = progress.create_bar(msg, chunk_count);
 
             let mut uploader = self
                 .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None, None)
                 .await?;
 
             uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &bar)
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
-            bar.finish_and_clear();
         };
-
-        progress.finish()?;
 
         Ok(())
     }

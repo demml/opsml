@@ -5,11 +5,9 @@ use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
-use opsml_utils::progress::Progress;
 use opsml_utils::FileUtils;
 use std::path::{Path, PathBuf};
 use tracing::debug;
-
 pub struct HttpFSStorageClient {
     pub client: HttpStorageClient,
 }
@@ -115,8 +113,6 @@ impl HttpFSStorageClient {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
-        let progress = Progress::new()?;
-
         if recursive {
             if !lpath.is_dir() {
                 return Err(StorageError::Error(
@@ -125,15 +121,11 @@ impl HttpFSStorageClient {
             }
 
             let files: Vec<PathBuf> = get_files(lpath)?;
-
             let mut tasks = Vec::new();
 
             for file in files {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, 5 * 1024 * 1024)?;
-
-                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
-                let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_lpath_clone = lpath_clone.clone();
                 let stripped_rpath_clone = rpath_clone.clone();
@@ -155,12 +147,12 @@ impl HttpFSStorageClient {
                         .await?;
 
                     uploader
-                        .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                        .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                         .await?;
 
-                    pb.finish_and_clear();
                     Ok::<(), StorageError>(())
                 });
+
                 tasks.push(task);
             }
 
@@ -173,21 +165,11 @@ impl HttpFSStorageClient {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
 
-            let msg = format!(
-                "Uploading: {}",
-                &lpath_clone.file_name().unwrap().to_str().unwrap()
-            );
-            let pb = progress.create_bar(msg, chunk_count);
-
             let mut uploader = self.client.create_multipart_uploader(rpath, lpath).await?;
             uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
-
-            pb.finish_and_clear();
         };
-
-        progress.finish()?;
 
         Ok(())
     }
