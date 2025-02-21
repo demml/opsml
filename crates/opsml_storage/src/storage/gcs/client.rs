@@ -720,7 +720,7 @@ impl FileSystem for GCSFSStorageClient {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
 
-                let msg = format!("Uploading: {}", file.to_str().unwrap());
+                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
                 let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_file_path = file.strip_path(self.client.bucket().await);

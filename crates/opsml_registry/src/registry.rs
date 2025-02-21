@@ -82,7 +82,7 @@ pub struct CardArgs {
 pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
-    registry: OpsmlRegistry,
+    pub registry: OpsmlRegistry,
     runtime: Arc<tokio::runtime::Runtime>,
     fs: Arc<Mutex<FileSystemStorage>>,
 }

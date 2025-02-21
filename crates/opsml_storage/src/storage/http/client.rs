@@ -132,7 +132,7 @@ impl HttpFSStorageClient {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, 5 * 1024 * 1024)?;
 
-                let msg = format!("Uploading: {}", file.to_str().unwrap());
+                let msg = format!("Uploading: {}", file.file_name().unwrap().to_str().unwrap());
                 let pb = progress.create_bar(msg, chunk_count);
 
                 let stripped_lpath_clone = lpath_clone.clone();
@@ -173,13 +173,18 @@ impl HttpFSStorageClient {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
 
-            let msg = format!("Uploading: {}", &lpath_clone.to_str().unwrap());
+            let msg = format!(
+                "Uploading: {}",
+                &lpath_clone.file_name().unwrap().to_str().unwrap()
+            );
             let pb = progress.create_bar(msg, chunk_count);
 
             let mut uploader = self.client.create_multipart_uploader(rpath, lpath).await?;
             uploader
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size, &pb)
                 .await?;
+
+            pb.finish_and_clear();
         };
 
         progress.finish()?;

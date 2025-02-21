@@ -1,11 +1,12 @@
 from typing import Optional
+from pathlib import Path
 
 class Experiment:
     def start_experiment(
         self,
         repository: Optional[str] = None,
         name: Optional[str] = None,
-        code_dir: Optional[str] = None,
+        code_dir: Optional[Path] = None,
         log_hardware: bool = False,
         experiment_uid: Optional[str] = None,
     ) -> "Experiment":
@@ -17,7 +18,7 @@ class Experiment:
                 Repository to associate with `ExperimentCard`
             name (str | None):
                 Name to associate with `ExperimentCard`
-            code_dir (str | None):
+            code_dir (Path | None):
                 Directory to log code from
             log_hardware (bool):
                 Whether to log hardware information or not
@@ -37,7 +38,7 @@ class Experiment:
 def start_experiment(
     repository: Optional[str] = None,
     name: Optional[str] = None,
-    code_dir: Optional[str] = None,
+    code_dir: Optional[Path] = None,
     log_hardware: bool = False,
 ) -> Experiment:
     """
@@ -48,7 +49,7 @@ def start_experiment(
             Repository to associate with `ExperimentCard`
         name (str | None):
             Name to associate with `ExperimentCard`
-        code_dir (str | None):
+        code_dir (Path | None):
             Directory to log code from
         log_hardware (bool):
             Whether to log hardware information or not

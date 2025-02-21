@@ -253,7 +253,7 @@ impl ClientRegistry {
         uid: &str,
         registry_type: &RegistryType,
         route: Routes,
-    ) -> Result<Vec<u8>, RegistryError> {
+    ) -> Result<ArtifactKey, RegistryError> {
         let key_request = ArtifactKeyRequest {
             uid: uid.to_string(),
             registry_type: registry_type.clone(),
@@ -278,26 +278,14 @@ impl ClientRegistry {
             RegistryError::Error(format!("Failed to parse response {}", e))
         })?;
 
-        let uid_key = uid_to_byte_key(uid)?;
-
-        let decrypted_key = decrypt_key(&uid_key, &key.encrypted_key)?;
-
-        Ok(decrypted_key)
-    }
-
-    pub async fn create_artifact_key(
-        &mut self,
-        uid: &str,
-        registry_type: &RegistryType,
-    ) -> Result<Vec<u8>, RegistryError> {
-        self.artifact_key(uid, registry_type, Routes::Encrypt).await
+        Ok(key)
     }
 
     pub async fn get_artifact_key(
         &mut self,
         uid: &str,
         registry_type: &RegistryType,
-    ) -> Result<Vec<u8>, RegistryError> {
+    ) -> Result<ArtifactKey, RegistryError> {
         self.artifact_key(uid, registry_type, Routes::Decrypt).await
     }
 }

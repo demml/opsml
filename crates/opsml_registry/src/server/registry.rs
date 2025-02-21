@@ -449,18 +449,14 @@ pub mod server_logic {
             &mut self,
             uid: &str,
             registry_type: &RegistryType,
-        ) -> Result<Vec<u8>, RegistryError> {
+        ) -> Result<ArtifactKey, RegistryError> {
             let key = self
                 .sql_client
                 .get_artifact_key(uid, &registry_type.to_string())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get artifact key {}", e)))?;
 
-            let uid_key = uid_to_byte_key(uid)?;
-
-            let decrypted_key = decrypt_key(&uid_key, &key.encrypted_key)?;
-
-            Ok(decrypted_key)
+            Ok(key)
         }
     }
 
