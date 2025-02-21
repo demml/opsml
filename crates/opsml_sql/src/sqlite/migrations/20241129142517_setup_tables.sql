@@ -110,25 +110,17 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
 
 -- HardwareMetricSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
-    run_uid TEXT NOT NULL,
+    experiment_uid TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cpu_percent_utilization REAL,
     cpu_percent_per_core TEXT, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
-    compute_overall REAL,
-    compute_utilized REAL,
-    load_avg REAL,
-    sys_ram_total INTEGER,
-    sys_ram_used INTEGER,
-    sys_ram_available INTEGER,
-    sys_ram_percent_used REAL,
-    sys_swap_total INTEGER,
-    sys_swap_used INTEGER,
-    sys_swap_free INTEGER,
-    sys_swap_percent REAL,
+    free_memory INTEGER,
+    total_memory INTEGER,
+    used_memory INTEGER,
+    available_memory INTEGER,
+    user_percent_memory REAL,
     bytes_recv INTEGER,
-    bytes_sent INTEGER,
-    gpu_percent_utilization REAL,
-    gpu_percent_per_core TEXT, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
+    bytes_sent INTEGER,-- JSONB is not supported in SQLite, use TEXT to store JSON strings
     idx INTEGER PRIMARY KEY AUTOINCREMENT
 );
 

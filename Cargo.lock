@@ -3819,6 +3819,7 @@ dependencies = [
  "opsml-utils",
  "pyo3",
  "serde",
+ "sysinfo",
  "tabled",
  "tracing",
 ]

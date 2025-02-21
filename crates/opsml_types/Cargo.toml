@@ -17,6 +17,7 @@ opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
+sysinfo = { workspace = true }
 tabled = { workspace = true, features = ["ansi"] }
 tracing = { workspace = true }
 

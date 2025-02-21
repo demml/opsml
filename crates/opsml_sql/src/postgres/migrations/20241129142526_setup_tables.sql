@@ -107,29 +107,23 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     idx SERIAL PRIMARY KEY
 );
 
--- HardwareMetricSchema
+-- HardwareSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
-    run_uid VARCHAR(64) NOT NULL,
+    experiment_uid VARCHAR(64) NOT NULL,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     cpu_percent_utilization FLOAT,
-    cpu_percent_per_core JSONB,
-    compute_overall FLOAT,
-    compute_utilized FLOAT,
-    load_avg FLOAT,
-    sys_ram_total INT,
-    sys_ram_used INT,
-    sys_ram_available  INT,
-    sys_ram_percent_used FLOAT,
-    sys_swap_total INT,
-    sys_swap_used INT,
-    sys_swap_free INT,
-    sys_swap_percent FLOAT,
+    cpu_percent_per_core JSONB, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
+    free_memory INT,
+    total_memory INT,
+    used_memory INT,
+    available_memory INT,
+    user_percent_memory FLOAT,
     bytes_recv INT,
     bytes_sent INT,
-    gpu_percent_utilization FLOAT,
-    gpu_percent_per_core JSONB,
     idx SERIAL PRIMARY KEY
 );
+CREATE INDEX idx_created_at ON opsml_experiment_hardware_metrics (experiment_uid);
+
 
 CREATE TABLE IF NOT EXISTS opsml_users (
     id SERIAL PRIMARY KEY,

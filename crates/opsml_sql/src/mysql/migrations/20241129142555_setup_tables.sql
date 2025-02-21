@@ -107,28 +107,21 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     idx INT PRIMARY KEY AUTO_INCREMENT
 );
 
--- HardwareMetricSchema
+-- HardwareSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
-    run_uid VARCHAR(64) NOT NULL,
+    experiment_uid VARCHAR(64) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     cpu_percent_utilization FLOAT,
-    cpu_percent_per_core JSON, -- MySQL uses JSON instead of JSONB
-    compute_overall FLOAT,
-    compute_utilized FLOAT,
-    load_avg FLOAT,
-    sys_ram_total INT,
-    sys_ram_used INT,
-    sys_ram_available INT,
-    sys_ram_percent_used FLOAT,
-    sys_swap_total INT,
-    sys_swap_used INT,
-    sys_swap_free INT,
-    sys_swap_percent FLOAT,
+    cpu_percent_per_core JSON, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
+    free_memory INT,
+    total_memory INT,
+    used_memory INT,
+    available_memory INT,
+    user_percent_memory FLOAT,
     bytes_recv INT,
     bytes_sent INT,
-    gpu_percent_utilization FLOAT,
-    gpu_percent_per_core JSON, -- MySQL uses JSON instead of JSONB
-    idx INT AUTO_INCREMENT PRIMARY KEY -- MySQL uses AUTO_INCREMENT instead of SERIAL
+    idx INT AUTO_INCREMENT PRIMARY KEY,
+    INDEX idx_experiment_uid (experiment_uid)
 );
 
 CREATE TABLE IF NOT EXISTS opsml_users (
