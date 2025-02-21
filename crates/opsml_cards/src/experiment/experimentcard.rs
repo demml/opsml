@@ -9,7 +9,8 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::error;
 
 use serde::{
