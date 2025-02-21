@@ -14,8 +14,9 @@ pub mod server_logic {
         schemas::*,
     };
     use opsml_storage::StorageClientEnum;
+    use opsml_types::cards::HardwareMetrics;
     use opsml_types::{cards::CardTable, contracts::*, *};
-    use opsml_utils::uid_to_byte_key;
+    use opsml_utils::{get_utc_datetime, uid_to_byte_key};
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;
@@ -461,10 +462,25 @@ pub mod server_logic {
 
         pub async fn insert_hardware_metrics(
             &mut self,
-            metrics: Vec<HardwareMetrics>,
+            metrics: &HardwareMetricRequest,
         ) -> Result<(), RegistryError> {
+            let created_at = get_utc_datetime();
+
+            let record = HardwareMetricsRecord {
+                experiment_uid: metrics.experiment_uid.clone(),
+                created_at: created_at.clone(),
+                cpu_percent_utilization: metrics.metrics.cpu.cpu_percent_utilization,
+                cpu_percent_per_core: SqlxJson(metrics.metrics.cpu.cpu_percent_per_core.clone()),
+                free_memory: metrics.metrics.memory.free_memory,
+                total_memory: metrics.metrics.memory.total_memory,
+                used_memory: metrics.metrics.memory.used_memory,
+                available_memory: metrics.metrics.memory.available_memory,
+                used_percent_memory: metrics.metrics.memory.used_percent_memory,
+                bytes_recv: metrics.metrics.network.bytes_recv,
+                bytes_sent: metrics.metrics.network.bytes_sent,
+            };
             self.sql_client
-                .insert_hardware_metrics(&metrics)
+                .insert_hardware_metrics(&record)
                 .await
                 .map_err(|e| {
                     RegistryError::Error(format!("Failed to insert hardware metrics {}", e))

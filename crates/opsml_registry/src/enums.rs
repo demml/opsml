@@ -1,7 +1,7 @@
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
+use opsml_types::contracts::{ArtifactKey, DeleteCardRequest, HardwareMetricRequest};
 use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
 use opsml_types::*;
 use tracing::{debug, instrument};
@@ -166,6 +166,21 @@ impl OpsmlRegistry {
             Self::ClientRegistry(client_registry) => client_registry.update_card(card).await,
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => server_registry.update_card(card).await,
+        }
+    }
+
+    pub async fn insert_hardware_metrics(
+        &mut self,
+        metrics: HardwareMetricRequest,
+    ) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.insert_hardware_metrics(metrics)
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.insert_hardware_metrics(&metrics).await
+            }
         }
     }
 }

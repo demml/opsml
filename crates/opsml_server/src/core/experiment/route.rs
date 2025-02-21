@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    routing::{get, post, put},
+    routing::{get, put},
     Json, Router,
 };
 use opsml_sql::base::SqlClient;
@@ -235,28 +235,19 @@ pub async fn get_run_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         Router::new()
             .route(
                 &format!("{}/experiment/metrics", prefix),
-                put(insert_metrics),
+                put(insert_metrics).post(get_metrics),
             )
-            .route(&format!("{}/experiment/metrics", prefix), post(get_metrics))
             .route(
                 &format!("{}/experiment/metrics/names", prefix),
                 get(get_metric_names),
             )
             .route(
                 &format!("{}/experiment/parameters", prefix),
-                put(insert_parameters),
-            )
-            .route(
-                &format!("{}/experiment/parameters", prefix),
-                post(get_parameter),
+                put(insert_parameters).post(get_parameter),
             )
             .route(
                 &format!("{}/experiment/hardware/metrics", prefix),
-                put(insert_hardware_metrics),
-            )
-            .route(
-                &format!("{}/experiment/hardware/metrics", prefix),
-                get(get_hardware_metrics),
+                put(insert_hardware_metrics).get(get_hardware_metrics),
             )
     }));
 
