@@ -2,7 +2,7 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
-    use opsml_crypt::{decrypt_key, derive_encryption_key, encrypted_key, generate_salt};
+    use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
