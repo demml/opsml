@@ -53,16 +53,16 @@ impl SqliteQueryHelper {
             used_percent_memory,
             bytes_recv,
             bytes_sent
-            FROM {} WHERE run_uid = ?",
+            FROM {} WHERE experiment_uid = ?",
             CardTable::HardwareMetrics
         );
 
         query
     }
-    pub fn get_run_metric_insert_query() -> String {
+    pub fn get_experiment_metric_insert_query() -> String {
         format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -73,11 +73,11 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_run_metrics_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
         // values will be a vec of tuples
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -102,11 +102,11 @@ impl SqliteQueryHelper {
 
         // remove last co
     }
-    pub fn get_run_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Metrics
         );
 
@@ -304,10 +304,10 @@ impl SqliteQueryHelper {
 
         Ok(query)
     }
-    pub fn get_run_parameters_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value
             ) VALUES ",
@@ -328,11 +328,11 @@ impl SqliteQueryHelper {
 
         query
     }
-    pub fn get_run_parameter_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_parameter_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Parameters
         );
 

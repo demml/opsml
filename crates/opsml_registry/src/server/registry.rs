@@ -14,8 +14,13 @@ pub mod server_logic {
         schemas::*,
     };
     use opsml_storage::StorageClientEnum;
-    use opsml_types::cards::HardwareMetrics;
-    use opsml_types::{cards::CardTable, contracts::*, *};
+    use opsml_types::{
+        cards::{
+            CPUMetrics, CardTable, HardwareMetrics, MemoryMetrics, Metric, NetworkRates, Parameter,
+        },
+        contracts::*,
+        *,
+    };
     use opsml_utils::{get_utc_datetime, uid_to_byte_key};
     use pyo3::prelude::*;
     use semver::Version;
@@ -485,6 +490,136 @@ pub mod server_logic {
                 .map_err(|e| {
                     RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
                 })
+        }
+
+        pub async fn get_hardware_metrics(
+            &mut self,
+            request: &GetHardwareMetricRequest,
+        ) -> Result<Vec<HardwareMetrics>, RegistryError> {
+            let records = self
+                .sql_client
+                .get_hardware_metric(&request.experiment_uid)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to get metrics {}", e)))?;
+
+            let metrics = records
+                .into_iter()
+                .map(|m| HardwareMetrics {
+                    cpu: CPUMetrics {
+                        cpu_percent_utilization: m.cpu_percent_utilization,
+                        cpu_percent_per_core: m.cpu_percent_per_core.to_vec(),
+                    },
+                    memory: MemoryMetrics {
+                        free_memory: m.free_memory,
+                        total_memory: m.total_memory,
+                        used_memory: m.used_memory,
+                        available_memory: m.available_memory,
+                        used_percent_memory: m.used_percent_memory,
+                    },
+                    network: NetworkRates {
+                        bytes_recv: m.bytes_recv,
+                        bytes_sent: m.bytes_sent,
+                    },
+                })
+                .collect::<Vec<_>>();
+
+            Ok(metrics)
+        }
+
+        pub async fn insert_metrics(
+            &mut self,
+            metrics: &MetricRequest,
+        ) -> Result<(), RegistryError> {
+            let records = metrics
+                .metrics
+                .iter()
+                .map(|m| {
+                    MetricRecord::new(
+                        metrics.experiment_uid.clone(),
+                        m.name.clone(),
+                        m.value,
+                        m.step,
+                        m.timestamp,
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            self.sql_client
+                .insert_experiment_metrics(&records)
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to insert experiment metrics {}", e))
+                })
+        }
+
+        pub async fn get_metrics(
+            &mut self,
+            metrics: &GetMetricRequest,
+        ) -> Result<Vec<Metric>, RegistryError> {
+            let records = self
+                .sql_client
+                .get_experiment_metric(&metrics.experiment_uid, &metrics.names)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to get metrics {}", e)))?;
+
+            let metrics = records
+                .into_iter()
+                .map(|m| Metric {
+                    created_at: m.created_at,
+                    name: m.name,
+                    value: m.value,
+                    step: m.step,
+                    timestamp: m.timestamp,
+                })
+                .collect::<Vec<_>>();
+
+            Ok(metrics)
+        }
+
+        pub async fn insert_parameters(
+            &mut self,
+            parameters: &ParameterRequest,
+        ) -> Result<(), RegistryError> {
+            let records = parameters
+                .parameters
+                .iter()
+                .map(|p| {
+                    ParameterRecord::new(
+                        parameters.experiment_uid.clone(),
+                        p.name.clone(),
+                        p.value.clone(),
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            self.sql_client
+                .insert_experiment_parameters(&records)
+                .await
+                .map_err(|e| {
+                    RegistryError::Error(format!("Failed to insert experiment parameters {}", e))
+                })
+        }
+
+        pub async fn get_parameters(
+            &mut self,
+            parameters: &GetParameterRequest,
+        ) -> Result<Vec<Parameter>, RegistryError> {
+            let records = self
+                .sql_client
+                .get_experiment_parameter(&parameters.experiment_uid, &parameters.names)
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to get parameters {}", e)))?;
+
+            let params = records
+                .into_iter()
+                .map(|m| Parameter {
+                    name: m.name,
+                    value: m.value,
+                    created_at: m.created_at,
+                })
+                .collect::<Vec<_>>();
+
+            Ok(params)
         }
     }
 

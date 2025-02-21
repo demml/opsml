@@ -615,11 +615,11 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
-        let query = MySQLQueryHelper::get_run_metric_insert_query();
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
+        let query = MySQLQueryHelper::get_experiment_metric_insert_query();
 
         sqlx::query(&query)
-            .bind(&record.run_uid)
+            .bind(&record.experiment_uid)
             .bind(&record.name)
             .bind(record.value)
             .bind(record.step)
@@ -631,17 +631,17 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         records: &'life1 [MetricRecord],
     ) -> Result<(), SqlError> {
-        let query = MySQLQueryHelper::get_run_metrics_insert_query(records.len());
+        let query = MySQLQueryHelper::get_experiment_metrics_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
         for r in records {
             query_builder = query_builder
-                .bind(&r.run_uid)
+                .bind(&r.experiment_uid)
                 .bind(&r.name)
                 .bind(r.value)
                 .bind(r.step)
@@ -656,12 +656,12 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = MySQLQueryHelper::get_run_metric_query(names);
+        let (query, bindings) = MySQLQueryHelper::get_experiment_metric_query(names);
 
         let mut query_builder = sqlx::query_as::<_, MetricRecord>(&query).bind(uid);
 
@@ -677,9 +677,9 @@ impl SqlClient for MySqlClient {
         Ok(records)
     }
 
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         let query = format!(
-            "SELECT DISTINCT name FROM {} WHERE run_uid = ?",
+            "SELECT DISTINCT name FROM {} WHERE experiment_uid = ?",
             CardTable::Metrics
         );
 
@@ -717,7 +717,7 @@ impl SqlClient for MySqlClient {
 
     async fn get_hardware_metric(&self, uid: &str) -> Result<Vec<HardwareMetricsRecord>, SqlError> {
         let query = format!(
-            "SELECT * FROM {} WHERE run_uid = ?",
+            "SELECT * FROM {} WHERE experiment_uid = ?",
             CardTable::HardwareMetrics
         );
 
@@ -730,17 +730,17 @@ impl SqlClient for MySqlClient {
         Ok(records)
     }
 
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         records: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError> {
-        let query = MySQLQueryHelper::get_run_parameters_insert_query(records.len());
+        let query = MySQLQueryHelper::get_experiment_parameters_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
         for record in records {
             query_builder = query_builder
-                .bind(&record.run_uid)
+                .bind(&record.experiment_uid)
                 .bind(&record.name)
                 .bind(&record.value);
         }
@@ -753,12 +753,12 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError> {
-        let (query, bindings) = MySQLQueryHelper::get_run_parameter_query(names);
+        let (query, bindings) = MySQLQueryHelper::get_experiment_parameter_query(names);
         let mut query_builder = sqlx::query_as::<_, ParameterRecord>(&query).bind(uid);
 
         for binding in bindings {
@@ -1583,17 +1583,20 @@ mod tests {
 
         for name in metric_names {
             let metric = MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: name.to_string(),
                 value: 1.0,
                 ..Default::default()
             };
 
-            client.insert_run_metric(&metric).await.unwrap();
+            client.insert_experiment_metric(&metric).await.unwrap();
         }
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
-        let names = client.get_run_metric_names(&uid).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
+        let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -1603,22 +1606,25 @@ mod tests {
         // insert vec
         let records = vec![
             MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: "vec1".to_string(),
                 value: 1.0,
                 ..Default::default()
             },
             MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: "vec2".to_string(),
                 value: 1.0,
                 ..Default::default()
             },
         ];
 
-        client.insert_run_metrics(&records).await.unwrap();
+        client.insert_experiment_metrics(&records).await.unwrap();
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 5);
     }
@@ -1661,7 +1667,7 @@ mod tests {
         // create a loop of 10
         for i in 0..10 {
             let param = ParameterRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: format!("param{}", i),
                 ..Default::default()
             };
@@ -1669,13 +1675,16 @@ mod tests {
             params.push(param);
         }
 
-        client.insert_run_parameters(&params).await.unwrap();
-        let records = client.get_run_parameter(&uid, &Vec::new()).await.unwrap();
+        client.insert_experiment_parameters(&params).await.unwrap();
+        let records = client
+            .get_experiment_parameter(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 10);
 
         let records = client
-            .get_run_parameter(&uid, &["param1".to_string()])
+            .get_experiment_parameter(&uid, &["param1".to_string()])
             .await
             .unwrap();
 

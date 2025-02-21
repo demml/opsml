@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
 
 -- MetricSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
-    run_uid TEXT,
+    experiment_uid TEXT,
     name TEXT,
     value REAL,
     step INTEGER,
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
 
 -- ParameterSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
-    run_uid TEXT,
+    experiment_uid TEXT,
     name TEXT,
     value TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

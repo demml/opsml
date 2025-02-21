@@ -1,9 +1,17 @@
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_types::contracts::{ArtifactKey, DeleteCardRequest, HardwareMetricRequest};
-use opsml_types::contracts::{Card, CardQueryArgs, CreateCardResponse};
+use opsml_types::contracts::{
+    Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
+};
 use opsml_types::*;
+use opsml_types::{
+    cards::{HardwareMetrics, Metric, Parameter},
+    contracts::{
+        ArtifactKey, DeleteCardRequest, GetHardwareMetricRequest, GetParameterRequest,
+        HardwareMetricRequest, ParameterRequest,
+    },
+};
 use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
@@ -175,11 +183,75 @@ impl OpsmlRegistry {
     ) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                client_registry.insert_hardware_metrics(metrics)
+                client_registry.insert_hardware_metrics(&metrics).await
             }
             #[cfg(feature = "server")]
             Self::ServerRegistry(server_registry) => {
                 server_registry.insert_hardware_metrics(&metrics).await
+            }
+        }
+    }
+
+    pub async fn get_hardware_metrics(
+        &mut self,
+        request: &GetHardwareMetricRequest,
+    ) -> Result<Vec<HardwareMetrics>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.get_hardware_metrics(request).await
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.get_hardware_metrics(request).await
+            }
+        }
+    }
+
+    pub async fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => client_registry.insert_metrics(&metrics).await,
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.insert_metrics(&metrics).await,
+        }
+    }
+
+    pub async fn get_metrics(
+        &mut self,
+        metrics: &GetMetricRequest,
+    ) -> Result<Vec<Metric>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => client_registry.get_metrics(metrics).await,
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => server_registry.get_metrics(metrics).await,
+        }
+    }
+
+    pub async fn insert_parameters(
+        &mut self,
+        parameters: &ParameterRequest,
+    ) -> Result<(), RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.insert_parameters(parameters).await
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.insert_parameters(parameters).await
+            }
+        }
+    }
+
+    pub async fn get_parameters(
+        &mut self,
+        parameters: &GetParameterRequest,
+    ) -> Result<Vec<Parameter>, RegistryError> {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.get_parameters(parameters).await
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.get_parameters(parameters).await
             }
         }
     }
