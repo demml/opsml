@@ -575,6 +575,14 @@ class ExperimentCard:
     def created_at(self) -> datetime:
         """Returns the created at timestamp"""
 
+    def add_child_experiment(self, uid: str) -> None:
+        """Add a child experiment to the experiment card
+
+        Args:
+            experimentcard_uid (str):
+                The experiment card uid to add
+        """
+
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
         """Interface for connecting to any of the Card registries

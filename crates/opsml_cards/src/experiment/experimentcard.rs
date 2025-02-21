@@ -112,7 +112,7 @@ impl ExperimentCard {
         })
     }
 
-    pub fn add_child_run(&mut self, uid: &str) {
+    pub fn add_child_experiment(&mut self, uid: &str) {
         self.experimentcard_uids.push(uid.to_string());
     }
 

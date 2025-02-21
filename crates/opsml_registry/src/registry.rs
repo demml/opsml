@@ -597,10 +597,10 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
-    pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
-        // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
-
+    pub fn rust_new(
+        registry_type: &RegistryType,
+        rt: Arc<tokio::runtime::Runtime>,
+    ) -> Result<Self, RegistryError> {
         let (registry, fs) = rt.block_on(async {
             let mut settings = OpsmlConfig::default().storage_settings()?;
             let registry = OpsmlRegistry::new(registry_type.clone()).await?;
@@ -629,6 +629,8 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub data: CardRegistry,
+
+    pub rt: Arc<tokio::runtime::Runtime>,
 }
 
 #[pymethods]
@@ -636,14 +638,31 @@ impl CardRegistries {
     #[new]
     #[instrument(skip_all)]
     pub fn new() -> PyResult<Self> {
-        let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
-        let model = CardRegistry::rust_new(&RegistryType::Model)?;
-        let data = CardRegistry::rust_new(&RegistryType::Data)?;
+        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+        let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
+        let model = CardRegistry::rust_new(&RegistryType::Model, rt.clone())?;
+        let data = CardRegistry::rust_new(&RegistryType::Data, rt.clone())?;
 
         Ok(Self {
             experiment,
             model,
             data,
+            rt,
+        })
+    }
+}
+
+impl CardRegistries {
+    pub fn new_with_rt(rt: Arc<tokio::runtime::Runtime>) -> PyResult<Self> {
+        let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
+        let model = CardRegistry::rust_new(&RegistryType::Model, rt.clone())?;
+        let data = CardRegistry::rust_new(&RegistryType::Data, rt.clone())?;
+
+        Ok(Self {
+            experiment,
+            model,
+            data,
+            rt,
         })
     }
 }
