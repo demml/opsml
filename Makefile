@@ -59,6 +59,11 @@ build.server:
 stop.server:
 	lsof -ti:3000 | xargs kill -9
 
+######## Experiment tests ########
+
+test.experiment:
+	cargo test -p opsml-experiment -- --nocapture
+
 ######## Storage tests
 .PHONY: test.storage.client
 test.storage.client:
