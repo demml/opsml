@@ -405,7 +405,7 @@ impl CardRegistry {
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
-            RegistryType::Run => {
+            RegistryType::Experiment => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .map_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -449,7 +449,7 @@ impl CardRegistry {
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
-            RegistryType::Run => {
+            RegistryType::Experiment => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .map_err(|e| {
                         error!("Failed to save card: {}", e);
@@ -622,7 +622,7 @@ impl CardRegistry {
 #[pyclass]
 pub struct CardRegistries {
     #[pyo3(get)]
-    pub run: CardRegistry,
+    pub experiment: CardRegistry,
 
     #[pyo3(get)]
     pub model: CardRegistry,
@@ -636,10 +636,14 @@ impl CardRegistries {
     #[new]
     #[instrument(skip_all)]
     pub fn new() -> PyResult<Self> {
-        let run = CardRegistry::rust_new(&RegistryType::Run)?;
+        let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
         let model = CardRegistry::rust_new(&RegistryType::Model)?;
         let data = CardRegistry::rust_new(&RegistryType::Data)?;
 
-        Ok(Self { run, model, data })
+        Ok(Self {
+            experiment,
+            model,
+            data,
+        })
     }
 }

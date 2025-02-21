@@ -1,3 +1,4 @@
+use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_error::{CardError, OpsmlError};
 use opsml_registry::CardRegistries;
@@ -37,7 +38,12 @@ impl Experiment {
         log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
     ) -> PyResult<Bound<'py, PyAny>> {
-        let run = Self::initialize_run_card(py, repository, name, code_dir, log_hardware)?;
+        let name = name.map(String::from).unwrap_or_else(|| {
+            let mut generator = Generator::default();
+            generator.next().unwrap_or_else(|| "run".to_string())
+        });
+
+        let run = Self::initialize_experiment(py, repository, Some(&name), code_dir, log_hardware)?;
         Self::register_experiment(&run, &mut registries)?;
         Ok(run)
     }
@@ -101,7 +107,7 @@ impl Experiment {
         code_dir: Option<&str>,
         log_hardware: bool,
     ) -> PyResult<Bound<'py, Experiment>> {
-        let experiment = Self::create_experiment_card(
+        let experiment = Self::create_experiment(
             py,
             repository,
             name,
@@ -157,7 +163,23 @@ impl Experiment {
     }
 }
 
-//run_name: str | None = None,
-//log_hardware: bool = False,
-//hardware_interval: int = _DEFAULT_INTERVAL,
-//code_dir: str | Path | None = None
+pub fn start_experiment<'py>(
+    py: Python<'py>,
+    repository: Option<&str>,
+    name: Option<&str>,
+    code_dir: Option<&str>,
+    log_hardware: bool,
+) -> PyResult<Bound<'py, Experiment>> {
+    let registries = Arc::new(Mutex::new(CardRegistries::new()?));
+
+    let experiment =
+        Experiment::initialize_experiment(py, repository, name, code_dir, log_hardware)?;
+
+    // Register the new experiment
+    Experiment::register_experiment(&experiment, &mut registries.lock().unwrap())?;
+
+    // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
+    let active = Experiment::new(experiment.unbind(), registries)?;
+
+    Ok(Py::new(py, active)?.bind(py).clone())
+}
