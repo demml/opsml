@@ -205,7 +205,7 @@ pub mod server_logic {
                 }
 
                 Card::Experiment(client_card) => {
-                    let server_card = experimentcardRecord::new(
+                    let server_card = ExperimentCardRecord::new(
                         client_card.name,
                         client_card.repository,
                         version,
@@ -331,7 +331,7 @@ pub mod server_logic {
                         RegistryError::Error("Failed to parse version".to_string())
                     })?;
 
-                    let server_card = experimentcardRecord {
+                    let server_card = ExperimentCardRecord {
                         uid: client_card.uid,
                         created_at: client_card.created_at,
                         app_env: client_card.app_env,

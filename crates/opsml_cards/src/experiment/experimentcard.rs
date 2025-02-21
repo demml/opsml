@@ -1,17 +1,12 @@
-use crate::ActiveRun;
 use crate::ComputeEnvironment;
 use chrono::NaiveDateTime;
-use names::Generator;
 use opsml_error::{CardError, OpsmlError};
-use opsml_registry::CardRegistries;
-use opsml_semver::VersionType;
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{Card, ExperimentCardClientRecord};
 use opsml_types::{cards::BaseArgs, contracts::ArtifactKey, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use pyo3::IntoPyObjectExt;
 use serde_json;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -84,11 +79,6 @@ impl ExperimentCard {
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
     ) -> PyResult<Self> {
-        let name = name.map(String::from).unwrap_or_else(|| {
-            let mut generator = Generator::default();
-            generator.next().unwrap_or_else(|| "run".to_string())
-        });
-
         let tags = match tags {
             None => Vec::new(),
             Some(t) => t
@@ -96,11 +86,10 @@ impl ExperimentCard {
                 .map_err(|e| OpsmlError::new_err(e.to_string()))?,
         };
 
-        let base_args =
-            BaseArgs::create_args(Some(&name), repository, version, uid).map_err(|e| {
-                error!("Failed to create base args: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let base_args = BaseArgs::create_args(name, repository, version, uid).map_err(|e| {
+            error!("Failed to create base args: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         Ok(Self {
             repository: base_args.0,
@@ -108,7 +97,7 @@ impl ExperimentCard {
             version: base_args.2,
             uid: base_args.3,
             tags,
-            registry_type: RegistryType::Run,
+            registry_type: RegistryType::Experiment,
             rt: None,
             fs: None,
             artifact_key: None,
@@ -154,13 +143,11 @@ impl ExperimentCard {
 
     #[staticmethod]
     #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(py: Python, json_string: String) -> PyResult<ExperimentCard> {
-        let mut card: experimentcard = serde_json::from_str(&json_string).map_err(|e| {
+    pub fn model_validate_json(json_string: String) -> PyResult<ExperimentCard> {
+        serde_json::from_str(&json_string).map_err(|e| {
             error!("Failed to validate json: {}", e);
             OpsmlError::new_err(e.to_string())
-        })?;
-
-        Ok(card)
+        })
     }
 }
 
