@@ -144,7 +144,7 @@ pub async fn list_cards(
             Ok(Json(cards))
         }
 
-        CardResults::Run(data) => {
+        CardResults::Experiment(data) => {
             let cards = data.into_iter().map(convert_experimentcard).collect();
             Ok(Json(cards))
         }
@@ -314,7 +314,7 @@ pub async fn update_card(
             ServerCard::Model(server_card)
         }
 
-        Card::Run(client_card) => {
+        Card::Experiment(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
                 (
@@ -323,7 +323,7 @@ pub async fn update_card(
                 )
             })?;
 
-            let server_card = experimentcardRecord {
+            let server_card = ExperimentCardRecord {
                 uid: client_card.uid,
                 created_at: client_card.created_at,
                 app_env: client_card.app_env,
@@ -341,7 +341,7 @@ pub async fn update_card(
                 experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                 username: client_card.username,
             };
-            ServerCard::Run(server_card)
+            ServerCard::Experiment(server_card)
         }
 
         Card::Audit(client_card) => {

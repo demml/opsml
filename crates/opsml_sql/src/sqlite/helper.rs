@@ -457,7 +457,7 @@ impl SqliteQueryHelper {
         username
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Run
+            CardTable::Experiment
         )
         .to_string()
     }
@@ -557,7 +557,7 @@ impl SqliteQueryHelper {
         build_tag = ?,
         username = ?
         WHERE uid = ?",
-            CardTable::Run
+            CardTable::Experiment
         )
         .to_string()
     }

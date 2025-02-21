@@ -341,7 +341,7 @@ impl Default for ModelCardRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct experimentcardRecord {
+pub struct ExperimentCardRecord {
     pub uid: String,
     pub created_at: NaiveDateTime,
     pub app_env: String,
@@ -360,9 +360,9 @@ pub struct experimentcardRecord {
     pub username: String,
 }
 
-impl Default for experimentcardRecord {
+impl Default for ExperimentCardRecord {
     fn default() -> Self {
-        experimentcardRecord {
+        ExperimentCardRecord {
             uid: Uuid::new_v4().to_string(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
@@ -384,7 +384,7 @@ impl Default for experimentcardRecord {
 }
 
 #[allow(clippy::too_many_arguments)]
-impl experimentcardRecord {
+impl ExperimentCardRecord {
     pub fn new(
         name: String,
         repository: String,
@@ -399,7 +399,7 @@ impl experimentcardRecord {
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
-        experimentcardRecord {
+        ExperimentCardRecord {
             uid,
             created_at,
             app_env,
@@ -422,7 +422,7 @@ impl experimentcardRecord {
     pub fn uri(&self) -> String {
         format!(
             "{}/{}/{}/v{}",
-            CardTable::Run,
+            CardTable::Experiment,
             self.repository,
             self.name,
             self.version
@@ -530,7 +530,7 @@ impl Default for AuditCardRecord {
 pub enum CardResults {
     Data(Vec<DataCardRecord>),
     Model(Vec<ModelCardRecord>),
-    Run(Vec<experimentcardRecord>),
+    Experiment(Vec<ExperimentCardRecord>),
     Audit(Vec<AuditCardRecord>),
 }
 
@@ -539,7 +539,7 @@ impl CardResults {
         match self {
             CardResults::Data(cards) => cards.len(),
             CardResults::Model(cards) => cards.len(),
-            CardResults::Run(cards) => cards.len(),
+            CardResults::Experiment(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
         }
     }
@@ -547,7 +547,7 @@ impl CardResults {
         match self {
             CardResults::Data(cards) => cards.is_empty(),
             CardResults::Model(cards) => cards.is_empty(),
-            CardResults::Run(cards) => cards.is_empty(),
+            CardResults::Experiment(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
         }
     }
@@ -561,7 +561,7 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
-            CardResults::Run(cards) => cards
+            CardResults::Experiment(cards) => cards
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
@@ -577,7 +577,7 @@ impl CardResults {
 pub enum ServerCard {
     Data(DataCardRecord),
     Model(ModelCardRecord),
-    Run(experimentcardRecord),
+    Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
 }
 
@@ -586,7 +586,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.uid.as_str(),
             ServerCard::Model(card) => card.uid.as_str(),
-            ServerCard::Run(card) => card.uid.as_str(),
+            ServerCard::Experiment(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
         }
     }
@@ -595,7 +595,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(_) => RegistryType::Data.to_string(),
             ServerCard::Model(_) => RegistryType::Model.to_string(),
-            ServerCard::Run(_) => RegistryType::Run.to_string(),
+            ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
         }
     }
@@ -604,7 +604,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.version.clone(),
             ServerCard::Model(card) => card.version.clone(),
-            ServerCard::Run(card) => card.version.clone(),
+            ServerCard::Experiment(card) => card.version.clone(),
             ServerCard::Audit(card) => card.version.clone(),
         }
     }
@@ -613,7 +613,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.repository.clone(),
             ServerCard::Model(card) => card.repository.clone(),
-            ServerCard::Run(card) => card.repository.clone(),
+            ServerCard::Experiment(card) => card.repository.clone(),
             ServerCard::Audit(card) => card.repository.clone(),
         }
     }
@@ -622,7 +622,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.name.clone(),
             ServerCard::Model(card) => card.name.clone(),
-            ServerCard::Run(card) => card.name.clone(),
+            ServerCard::Experiment(card) => card.name.clone(),
             ServerCard::Audit(card) => card.name.clone(),
         }
     }
@@ -631,7 +631,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.uri(),
             ServerCard::Model(card) => card.uri(),
-            ServerCard::Run(card) => card.uri(),
+            ServerCard::Experiment(card) => card.uri(),
             ServerCard::Audit(card) => card.uri(),
         }
     }
@@ -640,7 +640,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.app_env.clone(),
             ServerCard::Model(card) => card.app_env.clone(),
-            ServerCard::Run(card) => card.app_env.clone(),
+            ServerCard::Experiment(card) => card.app_env.clone(),
             ServerCard::Audit(card) => card.app_env.clone(),
         }
     }
@@ -649,7 +649,7 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.created_at,
             ServerCard::Model(card) => card.created_at,
-            ServerCard::Run(card) => card.created_at,
+            ServerCard::Experiment(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
         }
     }

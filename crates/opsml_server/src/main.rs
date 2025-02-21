@@ -782,13 +782,13 @@ mod tests {
 
         // experimentcard
         let card_request = CreateCardRequest {
-            card: Card::Run(ExperimentCardClientRecord {
+            card: Card::Experiment(ExperimentCardClientRecord {
                 name: "experimentcard".to_string(),
                 repository: "repo1".to_string(),
                 version: "1.0.0".to_string(),
                 ..ExperimentCardClientRecord::default()
             }),
-            registry_type: RegistryType::Run,
+            registry_type: RegistryType::Experiment,
             version_request: card_version_request,
         };
 
@@ -811,7 +811,7 @@ mod tests {
         // get card by uid
         let list_cards = CardQueryArgs {
             uid: Some(create_response.key.uid),
-            registry_type: RegistryType::Run,
+            registry_type: RegistryType::Experiment,
             ..Default::default()
         };
 
@@ -833,13 +833,13 @@ mod tests {
 
         // Update the card (get card from CardResults)
         let card = match card_results[0].clone() {
-            Card::Run(card) => card,
+            Card::Experiment(card) => card,
             _ => panic!("Card not found"),
         };
 
         let card_request = UpdateCardRequest {
-            registry_type: RegistryType::Run,
-            card: Card::Run(ExperimentCardClientRecord {
+            registry_type: RegistryType::Experiment,
+            card: Card::Experiment(ExperimentCardClientRecord {
                 name: "DataCard".to_string(),
                 repository: "repo1".to_string(),
                 version: "1.0.1".to_string(),
@@ -873,7 +873,7 @@ mod tests {
         let delete_args = DeleteCardRequest {
             uid: card.uid.clone(),
             repository: card.repository.clone(),
-            registry_type: RegistryType::Run,
+            registry_type: RegistryType::Experiment,
         };
 
         let query_string = serde_qs::to_string(&delete_args).unwrap();

@@ -279,7 +279,7 @@ pub async fn get_run_graphs(
 
     let card_result = state
         .sql_client
-        .query_cards(&CardTable::Run, &args)
+        .query_cards(&CardTable::Experiment, &args)
         .await
         .map_err(|e| {
             error!("Failed to get run graphs: {}", e);
@@ -291,7 +291,7 @@ pub async fn get_run_graphs(
 
     // get first run card from CardResults enum
     let (repo, name, version) = match card_result {
-        CardResults::Run(card) => {
+        CardResults::Experiment(card) => {
             // get the card UID
             let run_card = card.first().ok_or_else(|| {
                 error!("Failed to get run card");
@@ -320,7 +320,7 @@ pub async fn get_run_graphs(
     // format uri to get the run graphs (this is a standardized route for all run graphs)
     let uri = format!(
         "{}/{}/{}/v{}/{}",
-        CardTable::Run,
+        CardTable::Experiment,
         repo,
         name,
         version,

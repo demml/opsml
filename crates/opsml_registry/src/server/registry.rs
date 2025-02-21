@@ -75,7 +75,7 @@ pub mod server_logic {
                     Ok(cards)
                 }
 
-                CardResults::Run(data) => {
+                CardResults::Experiment(data) => {
                     let cards = data.into_iter().map(convert_experimentcard).collect();
                     Ok(cards)
                 }
@@ -204,7 +204,7 @@ pub mod server_logic {
                     ServerCard::Model(server_card)
                 }
 
-                Card::Run(client_card) => {
+                Card::Experiment(client_card) => {
                     let server_card = experimentcardRecord::new(
                         client_card.name,
                         client_card.repository,
@@ -215,7 +215,7 @@ pub mod server_logic {
                         client_card.experimentcard_uids,
                         client_card.username,
                     );
-                    ServerCard::Run(server_card)
+                    ServerCard::Experiment(server_card)
                 }
 
                 Card::Audit(client_card) => {
@@ -325,7 +325,7 @@ pub mod server_logic {
                     ServerCard::Model(server_card)
                 }
 
-                Card::Run(client_card) => {
+                Card::Experiment(client_card) => {
                     let version = Version::parse(&client_card.version).map_err(|e| {
                         error!("Failed to parse version: {}", e);
                         RegistryError::Error("Failed to parse version".to_string())
@@ -349,7 +349,7 @@ pub mod server_logic {
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
                     };
-                    ServerCard::Run(server_card)
+                    ServerCard::Experiment(server_card)
                 }
 
                 Card::Audit(client_card) => {

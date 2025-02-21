@@ -481,7 +481,7 @@ impl PostgresQueryHelper {
         username
         ) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
-            CardTable::Run
+            CardTable::Experiment
         )
         .to_string()
     }
@@ -581,7 +581,7 @@ impl PostgresQueryHelper {
         build_tag = $13,
         username = $14
         WHERE uid = $15",
-            CardTable::Run
+            CardTable::Experiment
         )
         .to_string()
     }

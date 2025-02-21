@@ -1,5 +1,5 @@
 use crate::schemas::schema::{
-    experimentcardRecord, AuditCardRecord, DataCardRecord, ModelCardRecord,
+    AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
 };
 
 use opsml_types::contracts::{
@@ -48,7 +48,7 @@ pub fn convert_modelcard(record: ModelCardRecord) -> Card {
     Card::Model(card)
 }
 
-pub fn convert_experimentcard(record: experimentcardRecord) -> Card {
+pub fn convert_experimentcard(record: ExperimentCardRecord) -> Card {
     let card = ExperimentCardClientRecord {
         uid: record.uid,
         created_at: record.created_at,
@@ -63,7 +63,7 @@ pub fn convert_experimentcard(record: experimentcardRecord) -> Card {
         username: record.username,
     };
 
-    Card::Run(card)
+    Card::Experiment(card)
 }
 
 pub fn convert_auditcard(record: AuditCardRecord) -> Card {

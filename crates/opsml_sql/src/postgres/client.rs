@@ -2,7 +2,7 @@ use crate::base::SqlClient;
 
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    experimentcardRecord, AuditCardRecord, CardResults, CardSummary, DataCardRecord,
+    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, QueryStats, ServerCard,
     User, VersionResult,
 };
@@ -193,8 +193,8 @@ impl SqlClient for PostgresClient {
 
                 return Ok(CardResults::Model(card));
             }
-            CardTable::Run => {
-                let card: Vec<experimentcardRecord> = sqlx::query_as(&query)
+            CardTable::Experiment => {
+                let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.repository.as_ref())
@@ -204,7 +204,7 @@ impl SqlClient for PostgresClient {
                     .await
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Run(card));
+                return Ok(CardResults::Experiment(card));
             }
 
             CardTable::Audit => {
@@ -295,8 +295,8 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardTable::Run => match card {
-                ServerCard::Run(run) => {
+            CardTable::Experiment => match card {
+                ServerCard::Experiment(run) => {
                     let query = PostgresQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
                         .bind(&run.uid)
@@ -432,8 +432,8 @@ impl SqlClient for PostgresClient {
                     ));
                 }
             },
-            CardTable::Run => match card {
-                ServerCard::Run(run) => {
+            CardTable::Experiment => match card {
+                ServerCard::Experiment(run) => {
                     let query = PostgresQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
                         .bind(&run.app_env)
@@ -1122,7 +1122,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
@@ -1215,10 +1215,13 @@ mod tests {
         assert_eq!(results.len(), 1);
 
         // insert experimentcard
-        let run_card = experimentcardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
+        let run_card = ExperimentCardRecord::default();
+        let card = ServerCard::Experiment(run_card.clone());
 
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
+        client
+            .insert_card(&CardTable::Experiment, &card)
+            .await
+            .unwrap();
 
         // check if the card was inserted
 
@@ -1228,7 +1231,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
@@ -1337,10 +1340,13 @@ mod tests {
         }
 
         // Test experimentcardRecord
-        let mut run_card = experimentcardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
+        let mut run_card = ExperimentCardRecord::default();
+        let card = ServerCard::Experiment(run_card.clone());
 
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
+        client
+            .insert_card(&CardTable::Experiment, &card)
+            .await
+            .unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -1348,7 +1354,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
@@ -1356,21 +1362,21 @@ mod tests {
 
         // update the card
         run_card.name = "UpdatedRunName".to_string();
-        let updated_card = ServerCard::Run(run_card.clone());
+        let updated_card = ServerCard::Experiment(run_card.clone());
 
         client
-            .update_card(&CardTable::Run, &updated_card)
+            .update_card(&CardTable::Experiment, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
         assert_eq!(updated_results.len(), 1);
-        if let CardResults::Run(cards) = updated_results {
+        if let CardResults::Experiment(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedRunName");
         }
 
