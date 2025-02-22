@@ -12,9 +12,9 @@ use opsml_types::SaveName;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, warn};
-use std::time::Duration;
 
 fn initialize_experiment_environment() -> Result<
     (
@@ -99,6 +99,9 @@ pub struct Experiment {
 }
 
 impl Experiment {
+    pub fn uid(&self, py: Python) -> PyResult<String> {
+        self.experiment.getattr(py, "uid")?.extract(py)
+    }
     pub fn new(
         experiment: PyObject,
         registries: Arc<Mutex<CardRegistries>>,
@@ -116,7 +119,7 @@ impl Experiment {
                     rt.clone(),
                     Duration::from_secs(30),
                     arc_reg,
-                    experiment_uid
+                    experiment_uid,
                 )?;
                 Some(hardware_queue)
             }
@@ -147,12 +150,11 @@ impl Experiment {
         repository: Option<&str>,
         name: Option<&str>,
         code_dir: Option<PathBuf>,
-        log_hardware: bool,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
         subexperiment: bool,
         fs: Arc<TokioMutex<FileSystemStorage>>,
         rt: Arc<tokio::runtime::Runtime>,
-    ) -> PyResult<(Bound<'py, PyAny>,String)> {
+    ) -> PyResult<(Bound<'py, PyAny>, String)> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
             generator.next().unwrap_or_else(|| "experiment".to_string())
@@ -160,7 +162,7 @@ impl Experiment {
 
         let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
 
-        let uid = Self::register_experiment(&experiment, &mut registries, code_dir, log_hardware, fs, rt)?;
+        let uid = Self::register_experiment(&experiment, &mut registries, code_dir, fs, rt)?;
         Ok((experiment, uid))
     }
 
@@ -185,7 +187,6 @@ impl Experiment {
         experiment: &Bound<'py, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
         code_dir: Option<PathBuf>,
-        _log_hardware: bool,
         fs: Arc<TokioMutex<FileSystemStorage>>,
         rt: Arc<tokio::runtime::Runtime>,
     ) -> PyResult<String> {
@@ -211,9 +212,9 @@ impl Experiment {
     fn add_subexperiment_experiment<'py>(
         slf: &PyRefMut<'py, Self>,
         py: Python<'py>,
-        experiment: &Bound<'py, PyAny>,
+        subexperiment: &Experiment,
     ) -> PyResult<()> {
-        let subexperiment_uid = experiment.getattr("uid")?.extract::<String>()?;
+        let subexperiment_uid = subexperiment.uid(py)?;
         slf.experiment
             .call_method1(py, "add_subexperiment_experiment", (&subexperiment_uid,))?;
         Ok(())
@@ -240,11 +241,18 @@ impl Experiment {
 
         Ok(experiment)
     }
+
+    fn stop_queue(&mut self) -> Result<(), ExperimentError> {
+        if let Some(mut queue) = self.hardware_queue.take() {
+            queue.stop();
+        }
+        Ok(())
+    }
 }
 
 #[pymethods]
 impl Experiment {
-    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false))]
+    #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     pub fn start_experiment<'py>(
         slf: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -252,40 +260,49 @@ impl Experiment {
         name: Option<&str>,
         code_dir: Option<PathBuf>,
         log_hardware: bool,
+        experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
-        let (experiment, uid ) = 
-            // Create a new experiment
-            Self::create_experiment(
-                py,
-                repository,
-                name,
-                code_dir,
-                log_hardware,
-                slf.unlock_registries()?,
-                true,
-                slf.fs.clone(),
-                slf.rt.clone(),
-            )?;
+        let experiment = match experiment_uid {
+            Some(uid) => {
+                let card = Experiment::load_experiment(py, uid, slf.unlock_registries()?)?;
+                Experiment::new(
+                    card.unbind(),
+                    slf.registries.clone(),
+                    slf.fs.clone(),
+                    slf.rt.clone(),
+                    false, // we can always revisit, but it doesn't make sense to log hardware for a completed experiment
+                    uid.to_string(),
+                )?
+            }
+            None => {
+                let (card, uid) = Experiment::create_experiment(
+                    py,
+                    repository,
+                    name,
+                    code_dir,
+                    slf.unlock_registries()?,
+                    true,
+                    slf.fs.clone(),
+                    slf.rt.clone(),
+                )?;
+
+                Experiment::new(
+                    card.unbind(),
+                    slf.registries.clone(),
+                    slf.fs.clone(),
+                    slf.rt.clone(),
+                    log_hardware,
+                    uid,
+                )?
+            }
+        };
 
         // Add the new experiment's UID to the parent experiment's experimentcard_uids
         Self::add_subexperiment_experiment(&slf, py, &experiment)?;
 
-        debug!(
-            "Starting experiment: {}",
-            experiment.getattr("uid")?.extract::<String>()?
-        );
+        debug!("Starting experiment");
 
-        // Return the new Activeexperiment wrapped in a PyRef which implements context manager protocol
-        let active = Experiment::new(
-            experiment.unbind(),
-            slf.registries.clone(),
-            slf.fs.clone(),
-            slf.rt.clone(),
-            log_hardware,
-            uid,
-        )?;
-
-        Ok(Py::new(py, active)?.bind(py).clone())
+        Ok(Py::new(py, experiment)?.bind(py).clone())
     }
 
     fn __enter__(slf: PyRef<'_, Self>) -> PyResult<PyRef<'_, Self>> {
@@ -295,7 +312,7 @@ impl Experiment {
 
     #[pyo3(signature = (exc_type=None, exc_value=None, traceback=None))]
     fn __exit__(
-        &self,
+        &mut self,
         py: Python<'_>,
         exc_type: Option<PyObject>,
         exc_value: Option<PyObject>,
@@ -313,6 +330,9 @@ impl Experiment {
             self.unlock_registries()?
                 .experiment
                 .update_card(self.experiment.bind(py))?;
+
+            debug!("Stopping hardware queue");
+            self.stop_queue()?;
 
             debug!("Experiment updated");
         }
@@ -341,13 +361,11 @@ pub fn start_experiment<'py>(
             Experiment::new(card.unbind(), registries, fs, rt, false, uid.to_string())?
         }
         None => {
-
             let (card, uid) = Experiment::create_experiment(
                 py,
                 repository,
                 name,
                 code_dir,
-                log_hardware,
                 registries.lock().unwrap(),
                 false,
                 fs.clone(),
@@ -355,10 +373,8 @@ pub fn start_experiment<'py>(
             )?;
 
             Experiment::new(card.unbind(), registries, fs, rt, log_hardware, uid)?
-            
         }
     };
 
-   
     Ok(Py::new(py, active_experiment)?.bind(py).clone())
 }
