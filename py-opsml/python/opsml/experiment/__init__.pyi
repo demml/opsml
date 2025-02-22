@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from pathlib import Path
 from datetime import datetime
 
@@ -35,6 +35,89 @@ class Experiment:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         pass
+
+    def log_metric(
+        self,
+        name: str,
+        value: float,
+        step: Optional[int] = None,
+        timestamp: Optional[int] = None,
+        created_at: Optional[datetime] = None,
+    ) -> None:
+        """
+        Log a metric
+
+        Args:
+            name (str):
+                Name of the metric
+            value (float):
+                Value of the metric
+            step (int | None):
+                Step of the metric
+            timestamp (int | None):
+                Timestamp of the metric
+            created_at (datetime | None):
+                Created at of the metric
+        """
+
+    def log_metrics(self, metrics: list[Metric]) -> None:
+        """
+        Log multiple metrics
+
+        Args:
+            metrics (list[Metric]):
+                List of metrics to log
+        """
+
+    def log_parameter(
+        self,
+        name: str,
+        value: Union[int, float, str],
+    ) -> None:
+        """
+        Log a parameter
+
+        Args:
+            name (str):
+                Name of the parameter
+            value (int | float | str):
+                Value of the parameter
+        """
+
+    def log_parameters(self, parameters: list[Parameter]) -> None:
+        """
+        Log multiple parameters
+
+        Args:
+            parameters (list[Parameter]):
+                List of parameters to log
+        """
+
+    def log_artifact(
+        self,
+        path: Path,
+    ) -> None:
+        """
+        Log an artifact
+
+        Args:
+            path (Path):
+                Path to the artifact file. Path must be a file.
+                If logging multiple artifacts, use `log_artifacts` instead.
+        """
+
+    def log_artifacts(
+        self,
+        paths: Path,
+    ) -> None:
+        """
+        Log multiple artifacts
+
+        Args:
+            paths (Path):
+                Paths to a directory containing artifacts.
+                All files in the directory will be logged.
+        """
 
 def start_experiment(
     repository: Optional[str] = None,
@@ -115,4 +198,32 @@ class Metric:
     def created_at(self) -> Optional[datetime]:
         """
         Created at of the metric
+        """
+
+class Parameter:
+    def __init__(
+        self,
+        name: str,
+        value: Union[int, float, str],
+    ) -> None:
+        """
+        Initialize a Parameter
+
+        Args:
+            name (str):
+                Name of the parameter
+            value (int | float | str):
+                Value of the parameter
+        """
+
+    @property
+    def name(self) -> str:
+        """
+        Name of the parameter
+        """
+
+    @property
+    def value(self) -> Union[int, float, str]:
+        """
+        Value of the parameter
         """
