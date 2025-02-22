@@ -8,7 +8,7 @@ use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::{MetricRequest, ParameterRequest};
+use opsml_types::contracts::{ArtifactKey, MetricRequest, ParameterRequest};
 use opsml_types::RegistryType;
 use opsml_types::{
     cards::experiment::{Metric, Parameter},
@@ -90,19 +90,11 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
-    uid: &str,
     fs: Arc<tokio::sync::Mutex<FileSystemStorage>>,
-    registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
     rt: Arc<tokio::runtime::Runtime>,
+    artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
     rt.block_on(async {
-        // 1. Get artifact key
-        let key = registries
-            .experiment
-            .registry
-            .get_artifact_key(&uid, &RegistryType::Experiment)
-            .await?;
-
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
             Some(path) => (path.to_path_buf(), true),
@@ -111,17 +103,19 @@ fn extract_code(
 
         // 2. Set rpath based on file or directory
         let rpath = if lpath.is_file() {
-            &key.storage_path()
+            &artifact_key
+                .storage_path()
                 .join(SaveName::Artifacts)
                 .join(SaveName::Code)
                 .join(lpath.file_name().unwrap())
         } else {
-            &key.storage_path()
+            &artifact_key
+                .storage_path()
                 .join(SaveName::Artifacts)
                 .join(SaveName::Code)
         };
 
-        let encryption_key = key.get_decrypt_key()?;
+        let encryption_key = artifact_key.get_decrypt_key()?;
 
         // 3. Encrypt the file or directory
         encrypt_directory(&lpath, &encryption_key)?;
@@ -144,17 +138,38 @@ pub struct Experiment {
     pub rt: Arc<tokio::runtime::Runtime>,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
+    artifact_key: ArtifactKey,
 }
 
 impl Experiment {
     pub fn new(
+        py: Python,
         experiment: PyObject,
         registries: Arc<Mutex<CardRegistries>>,
         fs: Arc<TokioMutex<FileSystemStorage>>,
         rt: Arc<tokio::runtime::Runtime>,
         log_hardware: bool,
+        code_dir: Option<PathBuf>,
         experiment_uid: String,
     ) -> PyResult<Self> {
+        // need artifact key for encryption/decryption
+        let artifact_key = rt.block_on(async {
+            registries
+                .lock()
+                .unwrap()
+                .experiment
+                .registry
+                .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
+                .await
+        })?;
+
+        // extract code
+        match extract_code(py, code_dir, fs.clone(), rt.clone(), &artifact_key) {
+            Ok(_) => debug!("Code extracted successfully"),
+            Err(e) => warn!("Failed to extract code: {}", e),
+        };
+
+        // start hardware queue if log_hardware is true
         let hardware_queue = match log_hardware {
             true => {
                 // clone the experiment registry
@@ -175,6 +190,7 @@ impl Experiment {
             rt,
             hardware_queue,
             uid: experiment_uid,
+            artifact_key,
         })
     }
 
@@ -212,11 +228,8 @@ impl Experiment {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        code_dir: Option<PathBuf>,
         mut registries: std::sync::MutexGuard<'_, CardRegistries>,
         subexperiment: bool,
-        fs: Arc<TokioMutex<FileSystemStorage>>,
-        rt: Arc<tokio::runtime::Runtime>,
     ) -> PyResult<(Bound<'py, PyAny>, String)> {
         let name = name.map(String::from).unwrap_or_else(|| {
             let mut generator = Generator::default();
@@ -224,8 +237,8 @@ impl Experiment {
         });
 
         let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
+        let uid = Self::register_experiment(&experiment, &mut registries)?;
 
-        let uid = Self::register_experiment(&experiment, &mut registries, code_dir, fs, rt)?;
         Ok((experiment, uid))
     }
 
@@ -282,9 +295,6 @@ impl Experiment {
     fn register_experiment<'py>(
         experiment: &Bound<'py, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
-        code_dir: Option<PathBuf>,
-        fs: Arc<TokioMutex<FileSystemStorage>>,
-        rt: Arc<tokio::runtime::Runtime>,
     ) -> PyResult<String> {
         registries
             .experiment
@@ -295,12 +305,6 @@ impl Experiment {
             })?;
 
         let uid = experiment.getattr("uid")?.extract::<String>()?;
-        let py = experiment.py();
-
-        match extract_code(py, code_dir, &uid, fs, registries, rt) {
-            Ok(_) => debug!("Code extracted successfully"),
-            Err(e) => warn!("Failed to extract code: {}", e),
-        }
 
         Ok(uid)
     }
@@ -405,11 +409,13 @@ impl Experiment {
             Some(uid) => {
                 let card = Experiment::load_experiment(py, uid, slf.unlock_registries()?)?;
                 Experiment::new(
+                    py,
                     card.unbind(),
                     slf.registries.clone(),
                     slf.fs.clone(),
                     slf.rt.clone(),
-                    false, // we can always revisit, but it doesn't make sense to log hardware for a completed experiment
+                    false,
+                    code_dir, // we can always revisit, but it doesn't make sense to log hardware for a completed experiment
                     uid.to_string(),
                 )?
             }
@@ -418,19 +424,18 @@ impl Experiment {
                     py,
                     repository,
                     name,
-                    code_dir,
                     slf.unlock_registries()?,
                     true,
-                    slf.fs.clone(),
-                    slf.rt.clone(),
                 )?;
 
                 Experiment::new(
+                    py,
                     card.unbind(),
                     slf.registries.clone(),
                     slf.fs.clone(),
                     slf.rt.clone(),
                     log_hardware,
+                    code_dir,
                     uid,
                 )?
             }
@@ -480,7 +485,7 @@ impl Experiment {
     }
 
     #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
-    pub fn insert_metric(
+    pub fn log_metric(
         &self,
         name: String,
         value: f64,
@@ -511,7 +516,7 @@ impl Experiment {
         Ok(())
     }
 
-    pub fn insert_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
+    pub fn log_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
         let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
 
         let metric_request = MetricRequest {
@@ -530,7 +535,7 @@ impl Experiment {
     }
 
     #[pyo3(signature = (name, value))]
-    pub fn insert_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
+    pub fn log_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
         let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
 
         let param_request = ParameterRequest {
@@ -548,7 +553,7 @@ impl Experiment {
         Ok(())
     }
 
-    pub fn insert_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
+    pub fn log_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
         let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
 
         let param_request = ParameterRequest {
@@ -562,6 +567,52 @@ impl Experiment {
                 error!("Failed to insert metric: {}", e);
                 ExperimentError::Error(e.to_string())
             })?;
+
+        Ok(())
+    }
+
+    pub fn log_artifact(&self, path: PathBuf) -> PyResult<()> {
+        // get current working directory
+        let cwd = std::env::current_dir().map_err(|e| {
+            error!("Failed to get current working directory: {}", e);
+            ExperimentError::Error(e.to_string())
+        })?;
+
+        // check that path exists
+        if !path.exists() {
+            return Err(OpsmlError::new_err("Path does not exist".to_string()));
+        }
+
+        // check that path is a file
+        if !path.is_file() {
+            return Err(OpsmlError::new_err(
+                "Path is not a file. Use log_artifacts if you wish to log multiple artifacts "
+                    .to_string(),
+            ));
+        }
+
+        // get relative path
+        let relative_path = if path.is_absolute() {
+            path.strip_prefix(&cwd).unwrap_or(&path)
+        } else {
+            path.as_path()
+        };
+
+        let rpath = self
+            .artifact_key
+            .storage_path()
+            .join(SaveName::Artifacts)
+            .join(relative_path);
+
+        let encryption_key = self.artifact_key.get_decrypt_key()?;
+        encrypt_directory(&path, &encryption_key)?;
+
+        self.rt.block_on(async {
+            self.fs.lock().await.put(&path, &rpath, false).await?;
+            Ok::<(), ExperimentError>(())
+        })?;
+
+        decrypt_directory(&path, &encryption_key)?;
 
         Ok(())
     }
@@ -604,22 +655,37 @@ pub fn start_experiment<'py>(
 
     let active_experiment = match experiment_uid {
         Some(uid) => {
-            let card = Experiment::load_experiment(py, uid, registries.lock().unwrap())?;
-            Experiment::new(card.unbind(), registries, fs, rt, false, uid.to_string())?
+            let experiment = Experiment::load_experiment(py, uid, registries.lock().unwrap())?;
+            Experiment::new(
+                py,
+                experiment.unbind(),
+                registries,
+                fs,
+                rt,
+                false,
+                None,
+                uid.to_string(),
+            )?
         }
         None => {
-            let (card, uid) = Experiment::create_experiment(
+            let (experiment, uid) = Experiment::create_experiment(
                 py,
                 repository,
                 name,
-                code_dir,
                 registries.lock().unwrap(),
                 false,
-                fs.clone(),
-                rt.clone(),
             )?;
 
-            Experiment::new(card.unbind(), registries, fs, rt, log_hardware, uid)?
+            Experiment::new(
+                py,
+                experiment.unbind(),
+                registries,
+                fs,
+                rt,
+                log_hardware,
+                code_dir,
+                uid,
+            )?
         }
     };
 
