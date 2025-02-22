@@ -48,9 +48,6 @@ pub struct ExperimentCard {
     #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
 
-    #[pyo3(get, set)]
-    pub artifacts: Vec<String>,
-
     #[pyo3(get)]
     pub compute_environment: ComputeEnvironment,
 
@@ -113,7 +110,6 @@ impl ExperimentCard {
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
-            artifacts: Vec::new(),
             subexperiment: false,
         })
     }
@@ -163,7 +159,7 @@ impl Serialize for ExperimentCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ExperimentCard", 14)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 13)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -178,7 +174,6 @@ impl Serialize for ExperimentCard {
         state.serialize_field("datacard_uids", &self.datacard_uids)?;
         state.serialize_field("modelcard_uids", &self.modelcard_uids)?;
         state.serialize_field("experimentcard_uids", &self.experimentcard_uids)?;
-        state.serialize_field("artifacts", &self.artifacts)?;
         state.serialize_field("subexperiment", &self.subexperiment)?;
         state.end()
     }
@@ -204,7 +199,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             DatacardUids,
             ModelcardUids,
             ExperimentcardUids,
-            Artifacts,
             Subexperiment,
         }
 
@@ -233,7 +227,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut datacard_uids = None;
                 let mut modelcard_uids = None;
                 let mut experimentcard_uids = None;
-                let mut artifacts = None;
                 let mut subexperiment = None;
 
                 while let Some(key) = map.next_key()? {
@@ -276,9 +269,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::ExperimentcardUids => {
                             experimentcard_uids = Some(map.next_value()?);
                         }
-                        Field::Artifacts => {
-                            artifacts = Some(map.next_value()?);
-                        }
                         Field::Subexperiment => {
                             subexperiment = Some(map.next_value()?);
                         }
@@ -304,7 +294,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     modelcard_uids.ok_or_else(|| de::Error::missing_field("modelcard_uids"))?;
                 let experimentcard_uids = experimentcard_uids
                     .ok_or_else(|| de::Error::missing_field("experimentcard_uids"))?;
-                let artifacts = artifacts.ok_or_else(|| de::Error::missing_field("artifacts"))?;
                 let subexperiment =
                     subexperiment.ok_or_else(|| de::Error::missing_field("subexperiment"))?;
 
@@ -324,7 +313,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     datacard_uids,
                     modelcard_uids,
                     experimentcard_uids,
-                    artifacts,
                     subexperiment,
                 })
             }
@@ -344,7 +332,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "datacard_uids",
             "modelcard_uids",
             "experimentcard_uids",
-            "artifacts",
             "subexperiment",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)

@@ -617,6 +617,27 @@ impl Experiment {
         Ok(())
     }
 
+    fn log_artifacts(&self, path: PathBuf) -> PyResult<()> {
+        let encryption_key = self.artifact_key.get_decrypt_key()?;
+        encrypt_directory(&path, &encryption_key)?;
+
+        let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
+
+        self.rt.block_on(async {
+            self.fs.lock().await.put(&path, &rpath, true).await?;
+            Ok::<(), ExperimentError>(())
+        })?;
+
+        decrypt_directory(&path, &encryption_key)?;
+
+        Ok(())
+    }
+
+    #[getter]
+    pub fn card<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        Ok(self.experiment.bind(py).clone())
+    }
+
     // work on logging artifacts
     // then registering other cards
 }
