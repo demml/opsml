@@ -661,13 +661,13 @@ pub struct HardwareMetricsRecord {
     pub created_at: NaiveDateTime,
     pub cpu_percent_utilization: f32,
     pub cpu_percent_per_core: Json<Vec<f32>>,
-    pub free_memory: i64,
-    pub total_memory: i64,
-    pub used_memory: i64,
-    pub available_memory: i64,
+    pub free_memory: i32,
+    pub total_memory: i32,
+    pub used_memory: i32,
+    pub available_memory: i32,
     pub used_percent_memory: f32,
-    pub bytes_recv: i64,
-    pub bytes_sent: i64,
+    pub bytes_recv: f32,
+    pub bytes_sent: f32,
 }
 
 impl Default for HardwareMetricsRecord {
@@ -682,8 +682,8 @@ impl Default for HardwareMetricsRecord {
             used_memory: 0,
             available_memory: 0,
             used_percent_memory: 0.0,
-            bytes_recv: 0,
-            bytes_sent: 0,
+            bytes_recv: 0.0,
+            bytes_sent: 0.0,
         }
     }
 }

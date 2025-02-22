@@ -67,8 +67,12 @@ impl GetMetrics for CPUMetrics {
     fn get_metrics() -> Self {
         let mut system = System::new_all();
         system.refresh_cpu_all();
-        let cpu_percent_utilization = system.global_cpu_usage();
-        let cpu_percent_per_core = system.cpus().iter().map(|cpu| cpu.cpu_usage()).collect();
+        let cpu_percent_utilization = system.global_cpu_usage() as f32;
+        let cpu_percent_per_core = system
+            .cpus()
+            .iter()
+            .map(|cpu| cpu.cpu_usage() as f32)
+            .collect();
         CPUMetrics {
             cpu_percent_utilization,
             cpu_percent_per_core,
@@ -78,10 +82,10 @@ impl GetMetrics for CPUMetrics {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct MemoryMetrics {
-    pub free_memory: i64,
-    pub total_memory: i64,
-    pub used_memory: i64,
-    pub available_memory: i64,
+    pub free_memory: i32,
+    pub total_memory: i32,
+    pub used_memory: i32,
+    pub available_memory: i32,
     pub used_percent_memory: f32,
 }
 
@@ -90,10 +94,10 @@ impl GetMetrics for MemoryMetrics {
         let mut system = System::new_all();
         system.refresh_memory();
 
-        let free = system.free_memory() as i64;
-        let total = system.total_memory() as i64;
-        let used = system.used_memory() as i64;
-        let available = system.available_memory() as i64;
+        let free = system.free_memory() as i32;
+        let total = system.total_memory() as i32;
+        let used = system.used_memory() as i32;
+        let available = system.available_memory() as i32;
         let used_percent_memory = used as f32 / total as f32;
 
         MemoryMetrics {
@@ -108,22 +112,22 @@ impl GetMetrics for MemoryMetrics {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct NetworkRates {
-    pub bytes_recv: i64,
-    pub bytes_sent: i64,
+    pub bytes_recv: f32,
+    pub bytes_sent: f32,
 }
 
 impl GetMetrics for NetworkRates {
     fn get_metrics() -> Self {
         let (bytes_recv, bytes_sent) = Networks::new_with_refreshed_list()
             .iter()
-            .map(|(_, network)| (network.received() as i64, network.transmitted() as i64))
-            .fold((0, 0), |(acc_recv, acc_sent), (recv, sent)| {
+            .map(|(_, network)| (network.received() as f32, network.transmitted() as f32))
+            .fold((0.0, 0.0), |(acc_recv, acc_sent), (recv, sent)| {
                 (acc_recv + recv, acc_sent + sent)
             });
 
         // convert to kb
-        let bytes_recv = bytes_recv / 1024;
-        let bytes_sent = bytes_sent / 1024;
+        let bytes_recv = bytes_recv / 1024 as f32;
+        let bytes_sent = bytes_sent / 1024 as f32;
 
         NetworkRates {
             bytes_recv,
