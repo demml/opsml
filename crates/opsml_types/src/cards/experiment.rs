@@ -149,7 +149,8 @@ impl NetworkRateLogger {
     fn get_metrics(&mut self) -> NetworkRates {
         self.networks.refresh(true);
 
-        let (bytes_recv, bytes_sent) = Networks::new_with_refreshed_list()
+        let (bytes_recv, bytes_sent) = self
+            .networks
             .iter()
             .map(|(_, network)| (network.received() as i64, network.transmitted() as i64))
             .fold((0, 0), |(acc_recv, acc_sent), (recv, sent)| {

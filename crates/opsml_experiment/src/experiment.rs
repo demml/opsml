@@ -12,10 +12,21 @@ use opsml_types::SaveName;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, warn};
 
+/// Initialize the experiment environment
+///
+///
+/// # Returns
+///
+/// * `Arc<tokio::runtime::Runtime>` - The tokio runtime
+/// * `Arc<Mutex<CardRegistries>` - The registries
+/// * `Arc<TokioMutex<FileSystemStorage>>` - The file system storage
+///
+/// # Errors
+///
+/// * `ExperimentError` - Error initializing the experiment environment
 fn initialize_experiment_environment() -> Result<
     (
         Arc<tokio::runtime::Runtime>,
@@ -31,6 +42,19 @@ fn initialize_experiment_environment() -> Result<
     Ok((rt, registries, Arc::new(TokioMutex::new(fs))))
 }
 
+/// Get the filename of the python file
+///
+/// # Arguments
+///
+/// * `py` - The python interpreter
+///
+/// # Returns
+///
+/// * `PathBuf` - The path to the python file
+///
+/// # Errors
+///
+/// * `ExperimentError` - Error getting the python filename
 fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
     let inspect = py.import("inspect")?;
     let current_frame = inspect.call_method0("currentframe")?;
@@ -40,6 +64,24 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
     Ok(PathBuf::from(filename.to_string()))
 }
 
+/// Extract the code related to the experiment
+///
+/// # Arguments
+///
+/// * `py` - The python interpreter
+/// * `code_dir` - The directory containing the code
+/// * `uid` - The experiment UID
+/// * `fs` - The file system storage
+/// * `registries` - The registries
+/// * `rt` - The tokio runtime
+///
+/// # Returns
+///
+/// * `None`
+///
+/// # Errors
+///
+/// * `ExperimentError` - Error extracting the code
 fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
@@ -140,6 +182,27 @@ impl Experiment {
         Ok(registries)
     }
 
+    /// Create an experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - The python interpreter
+    /// * `repository` - The repository URL
+    /// * `name` - The name of the experiment
+    /// * `code_dir` - The directory containing the code
+    /// * `registries` - The registries
+    /// * `subexperiment` - Whether the experiment is a subexperiment
+    /// * `fs` - The file system storage
+    /// * `rt` - The tokio runtime
+    ///
+    /// # Returns
+    ///
+    /// * `Bound<PyAny>` - The experiment card
+    /// * `String` - The experiment UID
+    ///
+    /// # Errors
+    ///
+    /// * `ExperimentError` - Error creating the experiment
     fn create_experiment<'py>(
         py: Python<'py>,
         repository: Option<&str>,
@@ -161,6 +224,22 @@ impl Experiment {
         Ok((experiment, uid))
     }
 
+    /// Initialize the experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - The python interpreter
+    /// * `repository` - The repository URL
+    /// * `name` - The name of the experiment
+    /// * `subexperiment` - Whether the experiment is a subexperiment
+    ///
+    /// # Returns
+    ///
+    /// * `Bound<PyAny>` - The experiment card
+    ///
+    /// # Errors
+    ///
+    /// * `ExperimentError` - Error initializing the experiment
     fn initialize_experiment<'py>(
         py: Python<'py>,
         repository: Option<&str>,
@@ -178,6 +257,23 @@ impl Experiment {
         Ok(experiment)
     }
 
+    /// Register the experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `experiment` - The experiment
+    /// * `registries` - The registries
+    /// * `code_dir` - The directory containing the code
+    /// * `fs` - The file system storage
+    /// * `rt` - The tokio runtime
+    ///
+    /// # Returns
+    ///
+    /// * `String` - The experiment UID
+    ///
+    /// # Errors
+    ///
+    /// * `OpsmlError` - Error registering the experiment
     fn register_experiment<'py>(
         experiment: &Bound<'py, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
@@ -204,6 +300,19 @@ impl Experiment {
         Ok(uid)
     }
 
+    /// Add a subexperiment to the experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `subexperiment` - The subexperiment
+    ///
+    /// # Returns
+    ///
+    /// * `None`
+    ///
+    /// # Errors
+    ///
+    /// * `OpsmlError` - Error adding the subexperiment
     fn add_subexperiment_experiment<'py>(
         slf: &PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -215,6 +324,19 @@ impl Experiment {
         Ok(())
     }
 
+    /// Load an existing experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `experiment_uid` - The experiment UID
+    ///
+    /// # Returns
+    ///
+    /// * `Bound<Experiment>` - The experiment
+    ///
+    /// # Errors
+    ///
+    /// * `OpsmlError` - Error loading the experiment
     fn load_experiment<'py>(
         py: Python<'py>,
         experiment_uid: &str,
@@ -247,6 +369,23 @@ impl Experiment {
 
 #[pymethods]
 impl Experiment {
+    /// Start a child experiment
+    ///
+    /// # Arguments
+    ///
+    /// * `repository` - The repository URL
+    /// * `name` - The name of the experiment
+    /// * `code_dir` - The directory containing the code
+    /// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
+    /// * `experiment_uid` - The experiment UID
+    ///
+    /// # Returns
+    ///
+    /// * `Bound<Experiment>` - The experiment
+    ///
+    /// # Errors
+    ///
+    /// * `ExperimentError` - Error starting the experiment
     #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     pub fn start_experiment<'py>(
         slf: PyRefMut<'py, Self>,
@@ -336,6 +475,23 @@ impl Experiment {
     }
 }
 
+/// Start an experiment
+///
+/// # Arguments
+///
+/// * `repository` - The repository URL
+/// * `name` - The name of the experiment
+/// * `code_dir` - The directory containing the code
+/// * `log_hardware` - Whether to log hardware metrics. Will log hardware metrics every 30 seconds
+/// * `experiment_uid` - The experiment UID
+///
+/// # Returns
+///
+/// * `Bound<Experiment>` - The experiment
+///
+/// # Errors
+///
+/// * `ExperimentError` - Error starting the experiment
 #[pyfunction]
 #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
 pub fn start_experiment<'py>(
@@ -347,7 +503,8 @@ pub fn start_experiment<'py>(
     experiment_uid: Option<&str>,
 ) -> PyResult<Bound<'py, Experiment>> {
     debug!("Initializing experiment");
-    // runtime should be shared across all registries
+
+    // runtime should be shared across all registries and all child experiments to prevent deadlocks
     let (rt, registries, fs) = initialize_experiment_environment()?;
 
     let active_experiment = match experiment_uid {
