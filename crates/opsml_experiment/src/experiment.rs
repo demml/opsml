@@ -7,8 +7,12 @@ use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
+use opsml_types::contracts::MetricRequest;
 use opsml_types::RegistryType;
-use opsml_types::SaveName;
+use opsml_types::{
+    cards::experiment::{Metric, Parameter},
+    SaveName,
+};
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -138,12 +142,10 @@ pub struct Experiment {
     pub fs: Arc<TokioMutex<FileSystemStorage>>,
     pub rt: Arc<tokio::runtime::Runtime>,
     pub hardware_queue: Option<HardwareQueue>,
+    uid: String,
 }
 
 impl Experiment {
-    pub fn uid(&self, py: Python) -> PyResult<String> {
-        self.experiment.getattr(py, "uid")?.extract(py)
-    }
     pub fn new(
         experiment: PyObject,
         registries: Arc<Mutex<CardRegistries>>,
@@ -157,7 +159,8 @@ impl Experiment {
                 // clone the experiment registry
                 let registry = registries.lock().unwrap().experiment.registry.clone();
                 let arc_reg = Arc::new(TokioMutex::new(registry));
-                let hardware_queue = HardwareQueue::start(rt.clone(), arc_reg, experiment_uid)?;
+                let hardware_queue =
+                    HardwareQueue::start(rt.clone(), arc_reg, experiment_uid.clone())?;
                 Some(hardware_queue)
             }
 
@@ -170,6 +173,7 @@ impl Experiment {
             fs,
             rt,
             hardware_queue,
+            uid: experiment_uid,
         })
     }
 
@@ -318,7 +322,7 @@ impl Experiment {
         py: Python<'py>,
         subexperiment: &Experiment,
     ) -> PyResult<()> {
-        let subexperiment_uid = subexperiment.uid(py)?;
+        let subexperiment_uid = subexperiment.uid.clone();
         slf.experiment
             .call_method1(py, "add_subexperiment_experiment", (&subexperiment_uid,))?;
         Ok(())
@@ -472,6 +476,21 @@ impl Experiment {
         }
 
         Ok(false) // Return false to propagate exceptions
+    }
+
+    pub fn insert_metric(&self, metric: Metric) -> PyResult<()> {
+        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+
+        let metric_request = MetricRequest {
+            experiment_uid: self.uid.clone(),
+            metrics: vec![metric],
+        };
+
+        let response = self
+            .rt
+            .block_on(async { registry.insert_metrics(&metric_request).await })?;
+
+        Ok(())
     }
 }
 

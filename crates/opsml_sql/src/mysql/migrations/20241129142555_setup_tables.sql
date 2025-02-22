@@ -102,9 +102,8 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
 CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     experiment_uid VARCHAR(64),
     name VARCHAR(128),
-    value VARCHAR(128),
+    value JSON,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    idx INT PRIMARY KEY AUTO_INCREMENT
 );
 
 -- HardwareSchema

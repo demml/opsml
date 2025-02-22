@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
-use opsml_types::cards::CardTable;
+use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
@@ -58,19 +58,15 @@ impl Default for MetricRecord {
 pub struct ParameterRecord {
     pub experiment_uid: String,
     pub name: String,
-    pub value: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub idx: Option<i32>,
+    pub value: Json<ParameterValue>,
 }
 
 impl ParameterRecord {
-    pub fn new(experiment_uid: String, name: String, value: String) -> Self {
+    pub fn new(experiment_uid: String, name: String, value: ParameterValue) -> Self {
         ParameterRecord {
             experiment_uid,
             name,
-            value,
-            created_at: None,
-            idx: None,
+            value: Json(value),
         }
     }
 }
@@ -80,9 +76,7 @@ impl Default for ParameterRecord {
         ParameterRecord {
             experiment_uid: Uuid::new_v4().to_string(),
             name: CommonKwargs::Undefined.to_string(),
-            value: CommonKwargs::Undefined.to_string(),
-            created_at: None,
-            idx: None,
+            value: Json(ParameterValue::Int(0)),
         }
     }
 }

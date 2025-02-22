@@ -1,17 +1,55 @@
+use std::f32::consts::E;
+
 use chrono::NaiveDateTime;
 use opsml_error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use sysinfo::{Networks, System};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
 pub struct Metric {
+    #[pyo3(get)]
     pub name: String,
+
+    #[pyo3(get)]
     pub value: f64,
+
+    #[pyo3(get)]
     pub step: Option<i32>,
+
+    #[pyo3(get)]
     pub timestamp: Option<i64>,
+
+    #[pyo3(get)]
     pub created_at: Option<NaiveDateTime>,
+}
+
+#[pymethods]
+impl Metric {
+    #[new]
+    #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
+    pub fn new(
+        name: String,
+        value: f64,
+        step: Option<i32>,
+        timestamp: Option<i64>,
+        created_at: Option<NaiveDateTime>,
+    ) -> Self {
+        Self {
+            name,
+            value,
+            step,
+            timestamp,
+            created_at,
+        }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }
 
 impl Default for Metric {
@@ -27,18 +65,50 @@ impl Default for Metric {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Parameter {
-    pub name: String,
-    pub value: String,
-    pub created_at: Option<NaiveDateTime>,
+pub enum ParameterValue {
+    Int(i64),
+    Float(f64),
+    Str(String),
 }
 
+impl ParameterValue {
+    pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
+        if let Ok(value) = value.extract::<i64>() {
+            Ok(ParameterValue::Int(value))
+        } else if let Ok(value) = value.extract::<f64>() {
+            Ok(ParameterValue::Float(value))
+        } else if let Ok(value) = value.extract::<String>() {
+            Ok(ParameterValue::Str(value))
+        } else {
+            Err(TypeError::Error("Invalid type for value".to_string()))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct Parameter {
+    #[pyo3(get)]
+    pub name: String,
+    pub value: ParameterValue,
+}
+
+#[pymethods]
 impl Parameter {
-    pub fn new(name: String, value: String) -> Self {
-        Self {
-            name,
-            value,
-            created_at: None,
+    #[new]
+    #[pyo3(signature = (name, value))]
+    pub fn new(name: String, value: Bound<'_, PyAny>) -> PyResult<Self> {
+        let value = ParameterValue::from_any(value)?;
+
+        Ok(Self { name, value })
+    }
+
+    #[getter]
+    pub fn value<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        match &self.value {
+            ParameterValue::Int(value) => Ok(value.into_bound_py_any(py)?),
+            ParameterValue::Float(value) => Ok(value.into_bound_py_any(py)?),
+            ParameterValue::Str(value) => Ok(value.into_bound_py_any(py)?),
         }
     }
 }
@@ -47,8 +117,7 @@ impl Default for Parameter {
     fn default() -> Self {
         Self {
             name: "".to_string(),
-            value: "".to_string(),
-            created_at: None,
+            value: ParameterValue::Int(0),
         }
     }
 }

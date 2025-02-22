@@ -1105,12 +1105,12 @@ mod tests {
             parameters: vec![
                 Parameter {
                     name: "param1".to_string(),
-                    value: "value1".to_string(),
+                    value: ParameterValue::Int(1),
                     ..Default::default()
                 },
                 Parameter {
                     name: "param2".to_string(),
-                    value: "value2".to_string(),
+                    value: ParameterValue::Int(1),
                     ..Default::default()
                 },
             ],
