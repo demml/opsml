@@ -56,15 +56,17 @@ def test_experimentcard_context():
             exp.log_parameters([Parameter(name="test", value=1.0)])
 
             # create fake items
-            save_path = create_fake_file()
-            exp.log_artifact(save_path)
+            file_path = create_fake_file()
+            exp.log_artifact(file_path)
 
             # create fake directory
-            save_path = create_fake_directory()
-            exp.log_artifacts(save_path)
+            dir_path = create_fake_directory()
+            exp.log_artifacts(dir_path)
 
         # cleanup fake items
-        cleanup_fake_file(save_path)
+        cleanup_fake_file(file_path)
 
         # cleanup fake directory
-        cleanup_fake_directory(save_path)
+        cleanup_fake_directory(dir_path)
+
+        card = exp.card

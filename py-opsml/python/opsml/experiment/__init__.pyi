@@ -1,6 +1,7 @@
 from typing import Optional, Union
 from pathlib import Path
 from datetime import datetime
+from ..card import ExperimentCard
 
 class Experiment:
     def start_experiment(
@@ -117,6 +118,12 @@ class Experiment:
             paths (Path):
                 Paths to a directory containing artifacts.
                 All files in the directory will be logged.
+        """
+
+    @property
+    def card(self) -> "ExperimentCard":
+        """
+        ExperimentCard associated with the Experiment
         """
 
 def start_experiment(
