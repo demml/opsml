@@ -567,6 +567,7 @@ impl Experiment {
     }
 
     // work on logging artifacts
+    // then registering other cards
 }
 
 /// Start an experiment
