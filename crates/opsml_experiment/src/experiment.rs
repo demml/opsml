@@ -115,12 +115,7 @@ impl Experiment {
                 // clone the experiment registry
                 let registry = registries.lock().unwrap().experiment.registry.clone();
                 let arc_reg = Arc::new(TokioMutex::new(registry));
-                let hardware_queue = HardwareQueue::start(
-                    rt.clone(),
-                    Duration::from_secs(30),
-                    arc_reg,
-                    experiment_uid,
-                )?;
+                let hardware_queue = HardwareQueue::start(rt.clone(), arc_reg, experiment_uid)?;
                 Some(hardware_queue)
             }
 

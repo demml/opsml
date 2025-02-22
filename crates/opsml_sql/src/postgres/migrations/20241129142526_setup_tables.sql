@@ -113,13 +113,13 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
     cpu_percent_utilization REAL,
     cpu_percent_per_core JSONB, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
-    free_memory INT,
-    total_memory INT,
-    used_memory INT,
-    available_memory INT,
-    used_percent_memory REAL,
-    bytes_recv REAL,
-    bytes_sent REAL,
+    free_memory BIGINT,
+    total_memory BIGINT,
+    used_memory BIGINT,
+    available_memory BIGINT,
+    used_percent_memory DOUBLE PRECISION,
+    bytes_recv BIGINT,
+    bytes_sent BIGINT,
     idx SERIAL PRIMARY KEY
 );
 CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hardware_metrics (created_at);
