@@ -1,6 +1,6 @@
 from opsml.card import ExperimentCard
 from opsml.test import OpsmlTestServer
-from opsml.experiment import start_experiment
+from opsml.experiment import start_experiment, Metric, Parameter
 import time
 # Sets up logging for tests
 

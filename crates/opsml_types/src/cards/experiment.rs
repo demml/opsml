@@ -1,5 +1,3 @@
-use std::f32::consts::E;
-
 use chrono::NaiveDateTime;
 use opsml_error::TypeError;
 use opsml_utils::PyHelperFuncs;
