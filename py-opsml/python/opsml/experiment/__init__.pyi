@@ -22,8 +22,6 @@ class Experiment:
                 Directory to log code from
             log_hardware (bool):
                 Whether to log hardware information or not
-            experiment_uid (str | None):
-                Experiment UID. If provided, the experiment will be loaded from the server.
 
         Returns:
             Experiment
@@ -40,6 +38,7 @@ def start_experiment(
     name: Optional[str] = None,
     code_dir: Optional[Path] = None,
     log_hardware: bool = False,
+    experiment_uid: Optional[str] = None,
 ) -> Experiment:
     """
     Start an Experiment
