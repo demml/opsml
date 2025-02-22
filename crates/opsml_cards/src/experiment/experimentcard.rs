@@ -12,7 +12,7 @@ use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
-use std::path::{self, Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::error;
@@ -177,10 +177,24 @@ impl ExperimentCard {
                 OpsmlError::new_err(e.to_string())
             })?;
 
+        // iterate through and remove storage_path if it exists
+        let storage_path_str = storage_path
+            .into_os_string()
+            .into_string()
+            .map_err(|e| OpsmlError::new_err(e))?;
+
+        let files = files
+            .iter()
+            .map(|f| {
+                let path = f.strip_prefix(&storage_path_str).unwrap_or(f);
+                path.to_string()
+            })
+            .collect();
+
         Ok(files)
     }
 
-    #[pyo3(signature = (path, lpath=None))]
+    #[pyo3(signature = (path=None, lpath=None))]
     pub fn download_artifacts(
         &self,
         path: Option<PathBuf>,
@@ -192,6 +206,14 @@ impl ExperimentCard {
 
         // if lpath is None, download to "artifacts" directory
         let mut lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
+
+        // assert that lpath exists, if not create it
+        if !lpath.exists() {
+            std::fs::create_dir_all(&lpath).map_err(|e| {
+                error!("Failed to create directory: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+        }
 
         let rpath = if path.is_none() {
             // download everything to "artifacts" directory
@@ -224,7 +246,7 @@ impl ExperimentCard {
                 error!("Failed to get decryption key: {}", e);
                 OpsmlError::new_err(e.to_string())
             })?;
-        decrypt_directory(&rpath, &decrypt_key)?;
+        decrypt_directory(&lpath, &decrypt_key)?;
 
         Ok(())
     }

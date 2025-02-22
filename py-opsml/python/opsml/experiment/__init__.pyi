@@ -234,3 +234,37 @@ class Parameter:
         """
         Value of the parameter
         """
+
+def get_experiment_metrics(
+    experiment_uid: str,
+    names: Optional[list[str]] = None,
+) -> list[Metric]:
+    """
+    Get metrics of an experiment
+
+    Args:
+        experiment_uid (str):
+            UID of the experiment
+        names (list[str] | None):
+            Names of the metrics to get. If None, all metrics will be returned.
+
+    Returns:
+        list[Metric]
+    """
+
+def get_experiment_parameters(
+    experiment_uid: str,
+    names: Optional[list[str]] = None,
+) -> list[Parameter]:
+    """
+    Get parameters of an experiment
+
+    Args:
+        experiment_uid (str):
+            UID of the experiment
+        names (list[str] | None):
+            Names of the parameters to get. If None, all parameters will be returned.
+
+    Returns:
+        list[Parameter]
+    """

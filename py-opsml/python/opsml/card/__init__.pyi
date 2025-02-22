@@ -600,6 +600,23 @@ class ExperimentCard:
                     you would pass Path("data") as the path.
         """
 
+    def download_artifacts(
+        self,
+        path: Optional[Path] = None,
+        lpath: Optional[Path] = None,
+    ) -> None:
+        """Download artifacts associated with the ExperimentCard
+
+        Args:
+            path (Path | None):
+                Specific path you wish to download artifacts from. If not provided,
+                all artifacts will be downloaded.
+
+            lpath (Path | None):
+                Local path to save the artifacts. If not provided, the artifacts will be saved
+                to a directory called "artifacts"
+        """
+
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
         """Interface for connecting to any of the Card registries

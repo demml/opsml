@@ -4,11 +4,14 @@ use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{ExperimentError, OpsmlError};
+use opsml_registry::enums::OpsmlRegistry;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::{ArtifactKey, MetricRequest, ParameterRequest};
+use opsml_types::contracts::{
+    ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
+};
 use opsml_types::RegistryType;
 use opsml_types::{
     cards::experiment::{Metric, Parameter},
@@ -722,4 +725,48 @@ pub fn start_experiment<'py>(
     };
 
     Ok(Py::new(py, active_experiment)?.bind(py).clone())
+}
+
+#[pyfunction]
+#[pyo3(signature = (experiment_uid, names = None))]
+pub fn get_experiment_metrics(
+    experiment_uid: &str,
+    names: Option<Vec<String>>,
+) -> Result<Vec<Metric>, ExperimentError> {
+    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+
+    let metric_request = GetMetricRequest {
+        experiment_uid: experiment_uid.to_string(),
+        names: names.unwrap_or_default(),
+    };
+
+    let metrics = rt.block_on(async {
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
+
+        registry.get_metrics(&metric_request).await
+    })?;
+
+    Ok(metrics)
+}
+
+#[pyfunction]
+#[pyo3(signature = (experiment_uid, names = None))]
+pub fn get_experiment_parameters(
+    experiment_uid: &str,
+    names: Option<Vec<String>>,
+) -> PyResult<Vec<Parameter>> {
+    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+
+    let param_request = GetParameterRequest {
+        experiment_uid: experiment_uid.to_string(),
+        names: names.unwrap_or_default(),
+    };
+
+    let parameters = rt.block_on(async {
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
+
+        registry.get_parameters(&param_request).await
+    })?;
+
+    Ok(parameters)
 }
