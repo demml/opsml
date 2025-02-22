@@ -146,8 +146,7 @@ pub async fn get_parameter(
         .into_iter()
         .map(|m| Parameter {
             name: m.name,
-            value: m.value,
-            created_at: m.created_at,
+            value: m.value.0,
         })
         .collect::<Vec<_>>();
 
