@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     name TEXT,
     value TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    idx INTEGER PRIMARY KEY AUTOINCREMENT
 );
 
 -- HardwareMetricSchema
