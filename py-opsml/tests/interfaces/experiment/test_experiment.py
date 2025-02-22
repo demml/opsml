@@ -1,6 +1,6 @@
 from opsml.card import ExperimentCard
 from opsml.test import OpsmlTestServer
-from opsml.experiment import start_experiment, Metric, Parameter
+from opsml.experiment import start_experiment, Metric, Parameter, Experiment
 import joblib
 from pathlib import Path
 import uuid
@@ -70,3 +70,7 @@ def test_experimentcard_context():
         cleanup_fake_directory(dir_path)
 
         card = exp.card
+
+        print(card.list_artifacts())
+
+    a

@@ -1,4 +1,5 @@
 use chrono::NaiveDateTime;
+use opsml_crypt::decrypt_directory;
 use opsml_error::{CardError, OpsmlError};
 use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{Card, ExperimentCardClientRecord};
@@ -11,7 +12,7 @@ use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
-use std::path::PathBuf;
+use std::path::{self, Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::error;
@@ -60,6 +61,7 @@ pub struct ExperimentCard {
     #[pyo3(get, set)]
     pub created_at: NaiveDateTime,
 
+    #[pyo3(get)]
     pub subexperiment: bool,
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
@@ -151,6 +153,80 @@ impl ExperimentCard {
             error!("Failed to validate json: {}", e);
             OpsmlError::new_err(e.to_string())
         })
+    }
+
+    #[pyo3(signature = (path=None))]
+    pub fn list_artifacts(&self, path: Option<PathBuf>) -> PyResult<Vec<String>> {
+        let rt = self.rt.as_ref().unwrap();
+        let fs = self.fs.as_ref().unwrap();
+        let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
+
+        let rpath = if path.is_none() {
+            storage_path.join(SaveName::Artifacts)
+        } else {
+            storage_path.join(SaveName::Artifacts).join(path.unwrap())
+        };
+
+        let files = rt
+            .block_on(async {
+                let mut storage = fs.lock().await;
+                storage.find(&rpath).await
+            })
+            .map_err(|e| {
+                error!("Failed to list artifacts: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+
+        Ok(files)
+    }
+
+    #[pyo3(signature = (path, lpath=None))]
+    pub fn download_artifacts(
+        &self,
+        path: Option<PathBuf>,
+        lpath: Option<PathBuf>,
+    ) -> PyResult<()> {
+        let rt = self.rt.as_ref().unwrap();
+        let fs = self.fs.as_ref().unwrap();
+        let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
+
+        // if lpath is None, download to "artifacts" directory
+        let mut lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
+
+        let rpath = if path.is_none() {
+            // download everything to "artifacts" directory
+            storage_path.join(SaveName::Artifacts)
+        } else {
+            lpath = lpath.join(path.as_ref().unwrap());
+            storage_path
+                .join(SaveName::Artifacts)
+                .join(path.as_ref().unwrap())
+        };
+
+        // if rpath has an extension, set recursive to false
+        let recursive = rpath.extension().is_none();
+
+        rt.block_on(async {
+            let mut storage = fs.lock().await;
+            storage.get(&lpath, &rpath, recursive).await
+        })
+        .map_err(|e| {
+            error!("Failed to download artifacts: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
+
+        let decrypt_key = self
+            .artifact_key
+            .as_ref()
+            .unwrap()
+            .get_decrypt_key()
+            .map_err(|e| {
+                error!("Failed to get decryption key: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
+        decrypt_directory(&rpath, &decrypt_key)?;
+
+        Ok(())
     }
 }
 
@@ -335,5 +411,45 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "subexperiment",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
+    }
+}
+
+impl FromPyObject<'_> for ExperimentCard {
+    fn extract_bound(ob: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let repository = ob.getattr("repository")?.extract()?;
+        let name = ob.getattr("name")?.extract()?;
+        let version = ob.getattr("version")?.extract()?;
+        let uid = ob.getattr("uid")?.extract()?;
+        let tags = ob.getattr("tags")?.extract()?;
+        let datacard_uids = ob.getattr("datacard_uids")?.extract()?;
+        let modelcard_uids = ob.getattr("modelcard_uids")?.extract()?;
+        let experimentcard_uids = ob.getattr("experimentcard_uids")?.extract()?;
+        let compute_environment = ob.getattr("compute_environment")?.extract()?;
+        let registry_type = RegistryType::Experiment;
+        let app_env = ob.getattr("app_env")?.extract()?;
+        let created_at = ob.getattr("created_at")?.extract()?;
+        let subexperiment = ob.getattr("subexperiment")?.extract()?;
+        let rt = None;
+        let fs = None;
+        let artifact_key = None;
+
+        Ok(ExperimentCard {
+            repository,
+            name,
+            version,
+            uid,
+            tags,
+            datacard_uids,
+            modelcard_uids,
+            experimentcard_uids,
+            compute_environment,
+            registry_type,
+            app_env,
+            created_at,
+            subexperiment,
+            rt,
+            fs,
+            artifact_key,
+        })
     }
 }
