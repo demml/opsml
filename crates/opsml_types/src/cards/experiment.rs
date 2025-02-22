@@ -57,18 +57,28 @@ pub trait GetMetrics {
     fn get_metrics() -> Self;
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct CPUMetrics {
     pub cpu_percent_utilization: f32,
     pub cpu_percent_per_core: Vec<f32>,
 }
 
-impl GetMetrics for CPUMetrics {
-    fn get_metrics() -> Self {
+pub struct CPUMetricLogger {
+    system: System,
+}
+
+impl CPUMetricLogger {
+    pub fn new() -> Self {
         let mut system = System::new_all();
         system.refresh_cpu_all();
-        let cpu_percent_utilization = system.global_cpu_usage() as f32;
-        let cpu_percent_per_core = system
+        CPUMetricLogger { system }
+    }
+
+    pub fn get_metrics(&mut self) -> CPUMetrics {
+        self.system.refresh_cpu_all();
+        let cpu_percent_utilization = self.system.global_cpu_usage() as f32;
+        let cpu_percent_per_core = self
+            .system
             .cpus()
             .iter()
             .map(|cpu| cpu.cpu_usage() as f32)
@@ -89,15 +99,25 @@ pub struct MemoryMetrics {
     pub used_percent_memory: f32,
 }
 
-impl GetMetrics for MemoryMetrics {
-    fn get_metrics() -> Self {
+pub struct MemoryMetricLogger {
+    system: System,
+}
+
+impl MemoryMetricLogger {
+    pub fn new() -> Self {
         let mut system = System::new_all();
         system.refresh_memory();
 
-        let free = system.free_memory() as i32;
-        let total = system.total_memory() as i32;
-        let used = system.used_memory() as i32;
-        let available = system.available_memory() as i32;
+        MemoryMetricLogger { system }
+    }
+
+    pub fn get_metrics(&mut self) -> MemoryMetrics {
+        self.system.refresh_memory();
+
+        let free = self.system.free_memory() as i32;
+        let total = self.system.total_memory() as i32;
+        let used = self.system.used_memory() as i32;
+        let available = self.system.available_memory() as i32;
         let used_percent_memory = used as f32 / total as f32;
 
         MemoryMetrics {
@@ -110,14 +130,25 @@ impl GetMetrics for MemoryMetrics {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct NetworkRates {
     pub bytes_recv: f32,
     pub bytes_sent: f32,
 }
 
-impl GetMetrics for NetworkRates {
-    fn get_metrics() -> Self {
+pub struct NetworkRateLogger {
+    networks: Networks,
+}
+
+impl NetworkRateLogger {
+    pub fn new() -> Self {
+        let networks = Networks::new_with_refreshed_list();
+        NetworkRateLogger { networks }
+    }
+
+    fn get_metrics(&mut self) -> NetworkRates {
+        self.networks.refresh(true);
+
         let (bytes_recv, bytes_sent) = Networks::new_with_refreshed_list()
             .iter()
             .map(|(_, network)| (network.received() as f32, network.transmitted() as f32))
@@ -136,19 +167,33 @@ impl GetMetrics for NetworkRates {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct HardwareMetrics {
     pub cpu: CPUMetrics,
     pub memory: MemoryMetrics,
     pub network: NetworkRates,
 }
 
-impl GetMetrics for HardwareMetrics {
-    fn get_metrics() -> Self {
+pub struct HardwareMetricLogger {
+    cpu_logger: CPUMetricLogger,
+    memory_logger: MemoryMetricLogger,
+    network_logger: NetworkRateLogger,
+}
+
+impl HardwareMetricLogger {
+    pub fn new() -> Self {
+        HardwareMetricLogger {
+            cpu_logger: CPUMetricLogger::new(),
+            memory_logger: MemoryMetricLogger::new(),
+            network_logger: NetworkRateLogger::new(),
+        }
+    }
+
+    pub fn get_metrics(&mut self) -> HardwareMetrics {
         HardwareMetrics {
-            cpu: CPUMetrics::get_metrics(),
-            memory: MemoryMetrics::get_metrics(),
-            network: NetworkRates::get_metrics(),
+            cpu: self.cpu_logger.get_metrics(),
+            memory: self.memory_logger.get_metrics(),
+            network: self.network_logger.get_metrics(),
         }
     }
 }
@@ -192,11 +237,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_hardware_metrics() {
-        let _metrics = HardwareMetrics::get_metrics();
+    fn test_hardware_metrics_logger() {
+        let mut logger = HardwareMetricLogger::new();
         // sleep for 5 seconds
         std::thread::sleep(std::time::Duration::from_secs(2));
 
-        let _metrics = HardwareMetrics::get_metrics();
+        logger.get_metrics();
     }
 }
