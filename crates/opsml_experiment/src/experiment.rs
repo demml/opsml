@@ -565,6 +565,8 @@ impl Experiment {
 
         Ok(())
     }
+
+    // work on logging artifacts
 }
 
 /// Start an experiment
