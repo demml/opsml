@@ -314,12 +314,15 @@ impl ClientRegistry {
                 RegistryError::Error(format!("Failed to insert hardware metrics {}", e))
             })?;
 
-        let inserted = response.json::<UidResponse>().await.map_err(|e| {
-            error!("Failed to parse response {}", e);
-            RegistryError::Error(format!("Failed to parse response {}", e))
-        })?;
+        let inserted = response
+            .json::<HardwareMetricResponse>()
+            .await
+            .map_err(|e| {
+                error!("Failed to parse response {}", e);
+                RegistryError::Error(format!("Failed to parse response {}", e))
+            })?;
 
-        if inserted.exists {
+        if inserted.success {
             Ok(())
         } else {
             Err(RegistryError::Error(

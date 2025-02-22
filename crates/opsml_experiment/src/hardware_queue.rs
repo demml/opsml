@@ -13,7 +13,7 @@ async fn insert_metrics(
     hw_logger: &mut HardwareMetricLogger,
     experiment_uid: &str,
 ) -> Result<(), ExperimentError> {
-    debug!("Locking registry");
+    debug!("Locking registry for metrics");
     let mut registry = registry.lock().await;
 
     debug!("Getting metrics");
@@ -45,15 +45,11 @@ fn start_background_task(
         loop {
             tokio::select! {
 
-                _ = time::sleep(Duration::from_secs(5)) => {
-
-                    debug!("Getting metrics");
+                _ = time::sleep(Duration::from_secs(30)) => {
                     let now = Utc::now().naive_utc();
                     let elapsed = now - last_inserted;
 
-                    debug!("Elapsed: {:?}", elapsed);
-
-                    if elapsed.num_seconds() >= 5 {
+                    if elapsed.num_seconds() >= 30 {
                         let inserted = insert_metrics(registry.clone(), &mut hw_logger, &experiment_uid).await;
 
                         if let Err(e) = inserted {
