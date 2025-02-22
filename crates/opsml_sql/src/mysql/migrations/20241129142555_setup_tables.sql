@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     name VARCHAR(128),
     value JSON,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    idx INT PRIMARY KEY AUTO_INCREMENT
 );
 
 -- HardwareSchema

@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     name VARCHAR(128),
     value JSONB,
     created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    idx SERIAL PRIMARY KEY
 );
 
 -- HardwareSchema
