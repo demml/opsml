@@ -670,7 +670,7 @@ impl SqlClient for PostgresClient {
         &self,
         record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
-        let query = PostgresQueryHelper::get_hardware_metrics_insert_query(0);
+        let query = PostgresQueryHelper::get_hardware_metrics_insert_query();
 
         sqlx::query(&query)
             .bind(&record.experiment_uid)
