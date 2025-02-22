@@ -342,45 +342,24 @@ impl MySQLQueryHelper {
 
         (query, bindings)
     }
-    pub fn get_hardware_metrics_insert_query(nbr_records: usize) -> String {
-        let mut query = format!(
+    pub fn get_hardware_metrics_insert_query() -> String {
+        format!(
             "INSERT INTO {} (
-                experiment_uid, 
+                experiment_uid,
                 created_at,
-                cpu_percent_utilization, 
-                cpu_percent_per_core, 
-                compute_overall, 
-                compute_utilized, 
-                load_avg, 
-                sys_ram_total, 
-                sys_ram_used, 
-                sys_ram_available, 
-                sys_ram_percent_used, 
-                sys_swap_total, 
-                sys_swap_used, 
-                sys_swap_free, 
-                sys_swap_percent, 
-                bytes_recv, 
-                bytes_sent, 
-                gpu_percent_utilization, 
-                gpu_percent_per_core
-            ) VALUES ",
+                cpu_percent_utilization,
+                cpu_percent_per_core,
+                free_memory,
+                total_memory,
+                used_memory,
+                available_memory,
+                used_percent_memory,
+                bytes_recv,
+                bytes_sent
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             CardTable::HardwareMetrics
         )
-        .to_string();
-
-        for i in 0..nbr_records {
-            query.push_str("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-            // add comma if not last record
-            if i < nbr_records - 1 {
-                query.push_str(", ");
-            } else {
-                query.push(';');
-            }
-        }
-
-        query
+        .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {

@@ -371,43 +371,24 @@ impl PostgresQueryHelper {
 
         (query, bindings)
     }
-    pub fn get_hardware_metrics_insert_query(nbr_records: usize) -> String {
-        let mut query = format!(
+    pub fn get_hardware_metrics_insert_query() -> String {
+        format!(
             "INSERT INTO {} (
-                experiment_uid, 
+                experiment_uid,
                 created_at,
-                cpu_percent_utilization, 
-                cpu_percent_per_core, 
-                compute_overall, 
-                compute_utilized, 
-                load_avg, 
-                sys_ram_total, 
-                sys_ram_used, 
-                sys_ram_available, 
-                sys_ram_percent_used, 
-                sys_swap_total, 
-                sys_swap_used, 
-                sys_swap_free, 
-                sys_swap_percent, 
-                bytes_recv, 
-                bytes_sent, 
-                gpu_percent_utilization, 
-                gpu_percent_per_core
-            ) VALUES ",
+                cpu_percent_utilization,
+                cpu_percent_per_core,
+                free_memory,
+                total_memory,
+                used_memory,
+                available_memory,
+                used_percent_memory,
+                bytes_recv,
+                bytes_sent
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
             CardTable::HardwareMetrics
         )
-        .to_string();
-
-        for i in 0..nbr_records {
-            query.push_str(&format!("(${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${}, ${})", 19 * i + 1, 19 * i + 2, 19 * i + 3, 19 * i + 4, 19 * i + 5, 19 * i + 6, 19 * i + 7, 19 * i + 8, 19 * i + 9, 19 * i + 10, 19 * i + 11, 19 * i + 12, 19 * i + 13, 19 * i + 14, 19 * i + 15, 19 * i + 16, 19 * i + 17, 19 * i + 18, 19 * i + 19));
-            if i < nbr_records - 1 {
-                query.push_str(", ");
-            } else {
-                query.push(';');
-            }
-        }
-
-        query
+        .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {

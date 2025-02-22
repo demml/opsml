@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     total_memory INTEGER,
     used_memory INTEGER,
     available_memory INTEGER,
-    user_percent_memory REAL,
+    used_percent_memory REAL,
     bytes_recv INTEGER,
     bytes_sent INTEGER,-- JSONB is not supported in SQLite, use TEXT to store JSON strings
     idx INTEGER PRIMARY KEY AUTOINCREMENT

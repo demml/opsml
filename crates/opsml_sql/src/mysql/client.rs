@@ -695,7 +695,7 @@ impl SqlClient for MySqlClient {
         &self,
         record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
-        let query = MySQLQueryHelper::get_hardware_metrics_insert_query(0);
+        let query = MySQLQueryHelper::get_hardware_metrics_insert_query();
         sqlx::query(&query)
             .bind(&record.experiment_uid)
             .bind(record.created_at)
