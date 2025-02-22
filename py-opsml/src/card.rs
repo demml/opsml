@@ -1,9 +1,7 @@
-use opsml_cards::{
-    ComputeEnvironment, DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata,
-};
+use opsml_cards::{DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata};
 use opsml_registry::CardRegistry;
 use opsml_types::contracts::{Card, CardList};
-use opsml_types::{RegistryMode, RegistryType};
+use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 
 #[cfg(feature = "server")]
 use opsml_registry::RegistryTestHelper;

@@ -1,6 +1,8 @@
 from opsml.card import ExperimentCard
 from opsml.test import OpsmlTestServer
 from opsml.experiment import start_experiment
+import time
+# Sets up logging for tests
 
 
 def _test_experimentcard():
@@ -13,4 +15,5 @@ def test_experimentcard_context():
             with exp.start_experiment(repository="test") as _exp2:
                 print("hello")
 
+                time.sleep(40)
     a
