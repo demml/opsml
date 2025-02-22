@@ -6,5 +6,14 @@ Experiment = experiment.Experiment
 start_experiment = experiment.start_experiment
 Metric = experiment.Metric
 Parameter = experiment.Parameter
+get_experiment_metrics = experiment.get_experiment_metrics
+get_experiment_parameters = experiment.get_experiment_parameters
 
-__all__ = ["Experiment", "start_experiment", "Metric", "Parameter"]
+__all__ = [
+    "Experiment",
+    "start_experiment",
+    "Metric",
+    "Parameter",
+    "get_experiment_metrics",
+    "get_experiment_parameters",
+]
