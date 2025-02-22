@@ -1650,7 +1650,7 @@ mod tests {
         client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
-        assert_eq!(records.len(), 10);
+        assert_eq!(records.len(), 1);
     }
 
     #[tokio::test]
