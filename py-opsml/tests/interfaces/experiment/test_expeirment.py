@@ -12,7 +12,11 @@ def _test_experimentcard():
 def test_experimentcard_context():
     with OpsmlTestServer(False):
         with start_experiment(repository="test", log_hardware=True) as exp:
-            with exp.start_experiment(repository="test", log_hardware=True) as _exp2:
-                print("hello")
-                time.sleep(15)
-    a
+            metric1 = Metric(name="test", value=1.0)
+            metric2 = Metric(name="test", value=2.0)
+
+            exp.log_metric(name="test", value=1.0)
+            exp.log_metrics([metric1, metric2])
+
+            exp.log_parameter(name="test", value=1.0)
+            exp.log_parameters([Parameter(name="test", value=1.0)])
