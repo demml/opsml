@@ -119,8 +119,8 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     used_memory INTEGER,
     available_memory INTEGER,
     used_percent_memory REAL,
-    bytes_recv REAL,
-    bytes_sent REAL,
+    bytes_recv INTEGER,
+    bytes_sent INTEGER,
     idx INTEGER PRIMARY KEY AUTOINCREMENT
 );
 

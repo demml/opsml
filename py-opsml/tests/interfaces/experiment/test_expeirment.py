@@ -11,9 +11,6 @@ def _test_experimentcard():
 
 def test_experimentcard_context():
     with OpsmlTestServer(False):
-        with start_experiment(repository="test") as exp:
-            with exp.start_experiment(repository="test") as _exp2:
-                print("hello")
-
-                time.sleep(40)
+        with start_experiment(repository="test", log_hardware=True) as exp:
+            time.sleep(15)
     a

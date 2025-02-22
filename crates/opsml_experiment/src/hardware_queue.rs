@@ -31,7 +31,6 @@ fn start_background_task(
     rt: Arc<tokio::runtime::Runtime>,
     registry: Arc<Mutex<OpsmlRegistry>>,
     mut stop_rx: watch::Receiver<()>,
-    duration: Duration,
     experiment_uid: String,
 ) -> Result<(), ExperimentError> {
     let registry = registry.clone();
@@ -39,18 +38,22 @@ fn start_background_task(
     let mut last_inserted = Utc::now().naive_utc();
     let mut hw_logger = HardwareMetricLogger::new();
 
+    debug!("Starting background task");
+
     // spawn the background task using the already cloned handle
     let future = async move {
         loop {
             tokio::select! {
 
-                _ = time::sleep(duration) => {
+                _ = time::sleep(Duration::from_secs(5)) => {
 
                     debug!("Getting metrics");
                     let now = Utc::now().naive_utc();
                     let elapsed = now - last_inserted;
 
-                    if elapsed.num_seconds() >= 30 {
+                    debug!("Elapsed: {:?}", elapsed);
+
+                    if elapsed.num_seconds() >= 5 {
                         let inserted = insert_metrics(registry.clone(), &mut hw_logger, &experiment_uid).await;
 
                         if let Err(e) = inserted {
@@ -69,7 +72,7 @@ fn start_background_task(
         }
     };
 
-    handle.spawn(future.instrument(info_span!("PSI Background Polling")));
+    handle.spawn(future.instrument(info_span!("Hardware Queue")));
 
     Ok(())
 }
@@ -81,13 +84,12 @@ pub struct HardwareQueue {
 impl HardwareQueue {
     pub fn start(
         rt: Arc<tokio::runtime::Runtime>,
-        duration: Duration,
         registry: Arc<Mutex<OpsmlRegistry>>,
         experiment_uid: String,
     ) -> Result<Self, ExperimentError> {
         let (stop_tx, stop_rx) = watch::channel(());
 
-        start_background_task(rt, registry, stop_rx, duration, experiment_uid)?;
+        start_background_task(rt, registry, stop_rx, experiment_uid)?;
 
         Ok(Self { stop_tx })
     }

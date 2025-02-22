@@ -81,7 +81,7 @@ impl CPUMetricLogger {
             .system
             .cpus()
             .iter()
-            .map(|cpu| cpu.cpu_usage() as f32)
+            .map(|cpu| cpu.cpu_usage())
             .collect();
         CPUMetrics {
             cpu_percent_utilization,
@@ -92,11 +92,11 @@ impl CPUMetricLogger {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct MemoryMetrics {
-    pub free_memory: i32,
-    pub total_memory: i32,
-    pub used_memory: i32,
-    pub available_memory: i32,
-    pub used_percent_memory: f32,
+    pub free_memory: i64,
+    pub total_memory: i64,
+    pub used_memory: i64,
+    pub available_memory: i64,
+    pub used_percent_memory: f64,
 }
 
 pub struct MemoryMetricLogger {
@@ -114,11 +114,11 @@ impl MemoryMetricLogger {
     pub fn get_metrics(&mut self) -> MemoryMetrics {
         self.system.refresh_memory();
 
-        let free = self.system.free_memory() as i32;
-        let total = self.system.total_memory() as i32;
-        let used = self.system.used_memory() as i32;
-        let available = self.system.available_memory() as i32;
-        let used_percent_memory = used as f32 / total as f32;
+        let free = self.system.free_memory() as i64;
+        let total = self.system.total_memory() as i64;
+        let used = self.system.used_memory() as i64;
+        let available = self.system.available_memory() as i64;
+        let used_percent_memory = used as f64 / total as f64;
 
         MemoryMetrics {
             free_memory: free,
@@ -132,8 +132,8 @@ impl MemoryMetricLogger {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct NetworkRates {
-    pub bytes_recv: f32,
-    pub bytes_sent: f32,
+    pub bytes_recv: i64,
+    pub bytes_sent: i64,
 }
 
 pub struct NetworkRateLogger {
@@ -151,14 +151,10 @@ impl NetworkRateLogger {
 
         let (bytes_recv, bytes_sent) = Networks::new_with_refreshed_list()
             .iter()
-            .map(|(_, network)| (network.received() as f32, network.transmitted() as f32))
-            .fold((0.0, 0.0), |(acc_recv, acc_sent), (recv, sent)| {
+            .map(|(_, network)| (network.received() as i64, network.transmitted() as i64))
+            .fold((0, 0), |(acc_recv, acc_sent), (recv, sent)| {
                 (acc_recv + recv, acc_sent + sent)
             });
-
-        // convert to kb
-        let bytes_recv = bytes_recv / 1024 as f32;
-        let bytes_sent = bytes_sent / 1024 as f32;
 
         NetworkRates {
             bytes_recv,
