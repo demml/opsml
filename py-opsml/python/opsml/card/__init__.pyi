@@ -583,6 +583,23 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
+    def list_artifacts(self, path: Optional[Path]) -> List[str]:
+        """List the artifacts associated with the experiment card
+
+        Args:
+            path (Path):
+                Specific path you wish to list artifacts from. If not provided,
+                all artifacts will be listed.
+
+                Example:
+                    You logged artifacts with the following paths:
+                    - "data/processed/my_data.csv"
+                    - "model/my_model.pkl"
+
+                    If you wanted to list all artifacts in the "data" directory,
+                    you would pass Path("data") as the path.
+        """
+
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
         """Interface for connecting to any of the Card registries

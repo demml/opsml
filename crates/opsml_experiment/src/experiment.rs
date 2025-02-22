@@ -163,6 +163,14 @@ impl Experiment {
                 .await
         })?;
 
+        // extract card into ExperimentCard for adding needed fields for use outside of experiment
+        // a little but of overhead here, but it's necessary
+        // the card must be usable after the experiment is finished (downloading artifacts, etc.)
+        let mut experiment: ExperimentCard = experiment.extract(py)?;
+        experiment.fs = Some(fs.clone());
+        experiment.rt = Some(rt.clone());
+        experiment.artifact_key = Some(artifact_key.clone());
+
         // extract code
         match extract_code(py, code_dir, fs.clone(), rt.clone(), &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
@@ -184,7 +192,10 @@ impl Experiment {
         };
 
         Ok(Self {
-            experiment,
+            experiment: experiment.into_py_any(py).map_err(|e| {
+                error!("Failed to bind experiment card: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?,
             registries,
             fs,
             rt,
