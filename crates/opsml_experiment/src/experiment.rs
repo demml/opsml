@@ -1,4 +1,5 @@
 use crate::HardwareQueue;
+use chrono::NaiveDateTime;
 use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
@@ -7,7 +8,7 @@ use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
-use opsml_types::contracts::MetricRequest;
+use opsml_types::contracts::{MetricRequest, ParameterRequest};
 use opsml_types::RegistryType;
 use opsml_types::{
     cards::experiment::{Metric, Parameter},
@@ -478,17 +479,89 @@ impl Experiment {
         Ok(false) // Return false to propagate exceptions
     }
 
-    pub fn insert_metric(&self, metric: Metric) -> PyResult<()> {
+    #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
+    pub fn insert_metric(
+        &self,
+        name: String,
+        value: f64,
+        step: Option<i32>,
+        timestamp: Option<i64>,
+        created_at: Option<NaiveDateTime>,
+    ) -> PyResult<()> {
         let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
 
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
-            metrics: vec![metric],
+            metrics: vec![Metric {
+                name,
+                value,
+                step,
+                timestamp,
+                created_at,
+            }],
         };
 
-        let response = self
-            .rt
-            .block_on(async { registry.insert_metrics(&metric_request).await })?;
+        self.rt
+            .block_on(async { registry.insert_metrics(&metric_request).await })
+            .map_err(|e| {
+                error!("Failed to insert metric: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?;
+
+        Ok(())
+    }
+
+    pub fn insert_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
+        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+
+        let metric_request = MetricRequest {
+            experiment_uid: self.uid.clone(),
+            metrics,
+        };
+
+        self.rt
+            .block_on(async { registry.insert_metrics(&metric_request).await })
+            .map_err(|e| {
+                error!("Failed to insert metric: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?;
+
+        Ok(())
+    }
+
+    #[pyo3(signature = (name, value))]
+    pub fn insert_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
+        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+
+        let param_request = ParameterRequest {
+            experiment_uid: self.uid.clone(),
+            parameters: vec![Parameter::new(name, value)?],
+        };
+
+        self.rt
+            .block_on(async { registry.insert_parameters(&param_request).await })
+            .map_err(|e| {
+                error!("Failed to insert metric: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?;
+
+        Ok(())
+    }
+
+    pub fn insert_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
+        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+
+        let param_request = ParameterRequest {
+            experiment_uid: self.uid.clone(),
+            parameters,
+        };
+
+        self.rt
+            .block_on(async { registry.insert_parameters(&param_request).await })
+            .map_err(|e| {
+                error!("Failed to insert metric: {}", e);
+                ExperimentError::Error(e.to_string())
+            })?;
 
         Ok(())
     }
