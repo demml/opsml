@@ -56,10 +56,6 @@ def cleanup_fake_directory(save_path: Path):
     shutil.rmtree(save_path)
 
 
-def _test_experimentcard():
-    ExperimentCard(repository="test", name="test")
-
-
 def test_experimentcard():
     with OpsmlTestServer():
         cleanup_manually_created_directories()
@@ -149,6 +145,7 @@ def test_experimentcard_register(
                 name="test",
                 tags=["foo:bar", "baz:qux"],
             )
+            exp.register_card(datacard)
 
             modelcard = ModelCard(
                 interface=random_forest_classifier,
@@ -158,6 +155,4 @@ def test_experimentcard_register(
                 tags=["foo:bar", "baz:qux"],
                 metadata=ModelCardMetadata(datacard_uid=datacard.uid),
             )
-
-            exp.register_card(datacard)
             exp.register_card(modelcard)
