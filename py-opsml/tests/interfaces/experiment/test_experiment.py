@@ -1,6 +1,12 @@
 from opsml.card import ExperimentCard
 from opsml.test import OpsmlTestServer
-from opsml.experiment import start_experiment, Metric, Parameter, Experiment
+from opsml.experiment import (
+    start_experiment,
+    Metric,
+    Parameter,
+    get_experiment_metrics,
+    get_experiment_parameters,
+)
 import joblib
 from pathlib import Path
 import uuid
@@ -111,3 +117,8 @@ def test_experimentcard_context():
         # get parameters
 
     cleanup_manually_created_directories()
+
+    metrics = get_experiment_metrics(card.uid)
+
+    print(metrics)
+    a

@@ -140,10 +140,10 @@ class Experiment:
         """Register a Card as part of an experiment
 
         Args:
-            card (ArtifactCard):
+            card (DataCard | ModelCard):
                 Card to register. Can be a DataCard or a ModelCard
             version_type (VersionType):
-                How to increment the version SemVer.
+                How to increment the version SemVer. Default is VersionType.Minor.
             pre_tag (str):
                 Optional pre tag to associate with the version.
             build_tag (str):
