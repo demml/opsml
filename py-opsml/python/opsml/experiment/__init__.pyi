@@ -1,6 +1,7 @@
-from typing import Optional, Union
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Optional, Union
+
 from ..card import ExperimentCard
 
 class Experiment:
