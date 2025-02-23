@@ -7,12 +7,12 @@ from opsml.experiment import (
     get_experiment_metrics,
     get_experiment_parameters,
 )
-import joblib
+import joblib  # type: ignore
 from pathlib import Path
 import uuid
 import shutil
 from opsml.data import PandasData
-from opsml.model import SklearnModel, Mode
+from opsml.model import SklearnModel
 from opsml.card import DataCard, ModelCard, ModelCardMetadata
 # Sets up logging for tests
 
