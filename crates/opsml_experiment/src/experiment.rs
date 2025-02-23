@@ -9,6 +9,7 @@ use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
 use opsml_storage::FileSystemStorage;
+use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
 };
@@ -791,7 +792,7 @@ pub fn start_experiment<'py>(
 pub fn get_experiment_metrics(
     experiment_uid: &str,
     names: Option<Vec<String>>,
-) -> Result<Vec<Metric>, ExperimentError> {
+) -> PyResult<Metrics> {
     let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
 
     let metric_request = GetMetricRequest {
@@ -805,7 +806,7 @@ pub fn get_experiment_metrics(
         registry.get_metrics(&metric_request).await
     })?;
 
-    Ok(metrics)
+    Ok(Metrics { metrics })
 }
 
 #[pyfunction]
@@ -813,7 +814,7 @@ pub fn get_experiment_metrics(
 pub fn get_experiment_parameters(
     experiment_uid: &str,
     names: Option<Vec<String>>,
-) -> PyResult<Vec<Parameter>> {
+) -> PyResult<Parameters> {
     let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
 
     let param_request = GetParameterRequest {
@@ -827,5 +828,5 @@ pub fn get_experiment_parameters(
         registry.get_parameters(&param_request).await
     })?;
 
-    Ok(parameters)
+    Ok(Parameters { parameters })
 }

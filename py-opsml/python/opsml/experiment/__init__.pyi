@@ -235,6 +235,18 @@ class Metric:
         Created at of the metric
         """
 
+class Metrics:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Metric: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
+
+class Parameters:
+    def __str__(self): ...
+    def __getitem__(self, index: int) -> Parameter: ...
+    def __iter__(self): ...
+    def __len__(self) -> int: ...
+
 class Parameter:
     def __init__(
         self,
@@ -266,7 +278,7 @@ class Parameter:
 def get_experiment_metrics(
     experiment_uid: str,
     names: Optional[list[str]] = None,
-) -> list[Metric]:
+) -> Metrics:
     """
     Get metrics of an experiment
 
@@ -277,13 +289,13 @@ def get_experiment_metrics(
             Names of the metrics to get. If None, all metrics will be returned.
 
     Returns:
-        list[Metric]
+        Metrics
     """
 
 def get_experiment_parameters(
     experiment_uid: str,
     names: Optional[list[str]] = None,
-) -> list[Parameter]:
+) -> Parameters:
     """
     Get parameters of an experiment
 
@@ -294,5 +306,5 @@ def get_experiment_parameters(
             Names of the parameters to get. If None, all parameters will be returned.
 
     Returns:
-        list[Parameter]
+        Parameters
     """

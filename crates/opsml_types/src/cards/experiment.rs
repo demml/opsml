@@ -63,6 +63,51 @@ impl Default for Metric {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct Metrics {
+    #[pyo3(get)]
+    pub metrics: Vec<Metric>,
+}
+
+#[pyclass]
+struct MetricIter {
+    inner: std::vec::IntoIter<Metric>,
+}
+
+#[pymethods]
+impl MetricIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Metric> {
+        slf.inner.next()
+    }
+}
+
+#[pymethods]
+impl Metrics {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+    // make it iterable and indexable
+    pub fn __getitem__(&self, index: usize) -> Option<Metric> {
+        self.metrics.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<MetricIter>> {
+        let iter = MetricIter {
+            inner: slf.metrics.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.metrics.len()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ParameterValue {
     Int(i64),
     Float(f64),
@@ -117,6 +162,51 @@ impl Default for Parameter {
             name: "".to_string(),
             value: ParameterValue::Int(0),
         }
+    }
+}
+
+#[pyclass]
+struct ParamIter {
+    inner: std::vec::IntoIter<Parameter>,
+}
+
+#[pymethods]
+impl ParamIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Parameter> {
+        slf.inner.next()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct Parameters {
+    #[pyo3(get)]
+    pub parameters: Vec<Parameter>,
+}
+
+#[pymethods]
+impl Parameters {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+    // make it iterable and indexable
+    pub fn __getitem__(&self, index: usize) -> Option<Parameter> {
+        self.parameters.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<ParamIter>> {
+        let iter = ParamIter {
+            inner: slf.parameters.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.parameters.len()
     }
 }
 
