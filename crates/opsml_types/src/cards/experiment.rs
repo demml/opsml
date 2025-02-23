@@ -233,7 +233,7 @@ impl CPUMetricLogger {
 
     pub fn get_metrics(&mut self) -> CPUMetrics {
         self.system.refresh_cpu_all();
-        let cpu_percent_utilization = self.system.global_cpu_usage() as f32;
+        let cpu_percent_utilization = self.system.global_cpu_usage();
         let cpu_percent_per_core = self
             .system
             .cpus()
@@ -244,6 +244,12 @@ impl CPUMetricLogger {
             cpu_percent_utilization,
             cpu_percent_per_core,
         }
+    }
+}
+
+impl Default for CPUMetricLogger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -287,6 +293,12 @@ impl MemoryMetricLogger {
     }
 }
 
+impl Default for MemoryMetricLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct NetworkRates {
     pub bytes_recv: i64,
@@ -321,6 +333,12 @@ impl NetworkRateLogger {
     }
 }
 
+impl Default for NetworkRateLogger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct HardwareMetrics {
     pub cpu: CPUMetrics,
@@ -349,6 +367,12 @@ impl HardwareMetricLogger {
             memory: self.memory_logger.get_metrics(),
             network: self.network_logger.get_metrics(),
         }
+    }
+}
+
+impl Default for HardwareMetricLogger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
