@@ -24,6 +24,11 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, warn};
 
+type ExperimentRuntime = Arc<tokio::runtime::Runtime>;
+type ExperimentRegistries = Arc<Mutex<CardRegistries>>;
+type ExperimentStorage = Arc<TokioMutex<FileSystemStorage>>;
+type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, ExperimentStorage);
+
 /// Initialize the experiment environment
 ///
 ///
@@ -36,14 +41,7 @@ use tracing::{debug, error, warn};
 /// # Errors
 ///
 /// * `ExperimentError` - Error initializing the experiment environment
-fn initialize_experiment_environment() -> Result<
-    (
-        Arc<tokio::runtime::Runtime>,
-        Arc<Mutex<CardRegistries>>,
-        Arc<TokioMutex<FileSystemStorage>>,
-    ),
-    ExperimentError,
-> {
+fn initialize_experiment_environment() -> Result<ExperimentEnvironment, ExperimentError> {
     let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
     let registries = Arc::new(Mutex::new(CardRegistries::new_with_rt(rt.clone())?));
     let mut settings = OpsmlConfig::default().storage_settings()?;
@@ -125,7 +123,7 @@ fn extract_code(
         encrypt_directory(&lpath, &encryption_key)?;
 
         // 4. Save the code to the storage
-        fs.lock().await.put(&lpath, &rpath, recursive).await?;
+        fs.lock().await.put(&lpath, rpath, recursive).await?;
 
         // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
         decrypt_directory(&lpath, &encryption_key)?;
@@ -146,6 +144,7 @@ pub struct Experiment {
 }
 
 impl Experiment {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         py: Python,
         experiment: PyObject,
@@ -157,12 +156,9 @@ impl Experiment {
         experiment_uid: String,
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
+        let mut experiment_registry = registries.lock().unwrap().experiment.registry.clone();
         let artifact_key = rt.block_on(async {
-            registries
-                .lock()
-                .unwrap()
-                .experiment
-                .registry
+            experiment_registry
                 .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
                 .await
         })?;
@@ -307,8 +303,8 @@ impl Experiment {
     /// # Errors
     ///
     /// * `OpsmlError` - Error registering the experiment
-    fn register_experiment<'py>(
-        experiment: &Bound<'py, PyAny>,
+    fn register_experiment(
+        experiment: &Bound<'_, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
     ) -> PyResult<String> {
         registries
