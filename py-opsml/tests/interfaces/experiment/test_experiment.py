@@ -150,13 +150,11 @@ def test_experimentcard_register(
                 tags=["foo:bar", "baz:qux"],
             )
 
-            interface: SklearnModel = random_forest_classifier
             modelcard = ModelCard(
-                interface=interface,
+                interface=random_forest_classifier,
                 repository="test",
                 name="test",
                 to_onnx=True,
                 tags=["foo:bar", "baz:qux"],
-                metadata = ModelCardMetadata(
-                    
+                metadata=ModelCardMetadata(datacard_uid=datacard.uid),
             )
