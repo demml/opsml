@@ -68,7 +68,7 @@ def test_experimentcard_context():
             exp.log_metrics([metric1, metric2])
 
             exp.log_parameter(name="test", value=1.0)
-            exp.log_parameters([Parameter(name="test", value=1.0)])
+            exp.log_parameters([Parameter(name="test1", value=1.0)])
 
             # create fake items
             file_path = create_fake_file()
@@ -116,12 +116,19 @@ def test_experimentcard_context():
 
         metrics = get_experiment_metrics(card.uid)
 
-        print(metrics)
-
         assert len(metrics) == 3
 
         # ensure metrics are iterable
         for _ in metrics:
+            continue
+
+        # parameters
+        parameters = get_experiment_parameters(card.uid)
+
+        assert len(parameters) == 2
+
+        # ensure parameters are iterable
+        for _ in parameters:
             continue
 
     # get parameters
