@@ -653,7 +653,7 @@ impl Experiment {
         Ok(self.experiment.bind(py).clone())
     }
 
-    #[pyo3(signature = (card, version_type, pre_tag = None, build_tag = None, save_kwargs = None))]
+    #[pyo3(signature = (card, version_type = VersionType::Minor, pre_tag = None, build_tag = None, save_kwargs = None))]
     pub fn register_card(
         &self,
         card: &Bound<'_, PyAny>,

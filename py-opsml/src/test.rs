@@ -66,7 +66,7 @@ impl OpsmlTestServer {
 
             let client = reqwest::blocking::Client::new();
             let mut attempts = 0;
-            let max_attempts = 5;
+            let max_attempts = 20;
 
             while attempts < max_attempts {
                 let res = client.get("http://localhost:3000/opsml/healthcheck").send();
@@ -78,7 +78,7 @@ impl OpsmlTestServer {
                     }
                 }
                 attempts += 1;
-                sleep(Duration::from_secs(2));
+                sleep(Duration::from_millis(100));
 
                 // set env vars for OPSML_TRACKING_URI
             }
