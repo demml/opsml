@@ -238,6 +238,23 @@ class RegistryTestHelper:
     def cleanup(self) -> None: ...
 
 class ModelCardMetadata:
+    def __init__(
+        self,
+        datacard_uid: Optional[str] = None,
+        experimentcard_uid: Optional[str] = None,
+        auditcard_uid: Optional[str] = None,
+    ) -> None:
+        """Create a ModelCardMetadata object
+
+        Args:
+            datacard_uid (str | None):
+                The datacard uid
+            experimentcard_uid (str | None):
+                The experimentcard uid
+            auditcard_uid (str | None):
+                The auditcard uid
+        """
+
     @property
     def datacard_uid(self) -> str:
         """Returns the datacard uid"""
@@ -435,7 +452,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_str: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:

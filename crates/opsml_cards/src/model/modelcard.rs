@@ -64,6 +64,28 @@ pub struct ModelCardMetadata {
     pub interface_metadata: ModelInterfaceMetadata,
 }
 
+#[pymethods]
+impl ModelCardMetadata {
+    #[new]
+    #[pyo3(signature = (datacard_uid=None, experimentcard_uid=None, auditcard_uid=None))]
+    pub fn new(
+        datacard_uid: Option<&str>,
+        experimentcard_uid: Option<&str>,
+        auditcard_uid: Option<&str>,
+    ) -> Self {
+        Self {
+            datacard_uid: datacard_uid.map(|s| s.to_string()),
+            experimentcard_uid: experimentcard_uid.map(|s| s.to_string()),
+            auditcard_uid: auditcard_uid.map(|s| s.to_string()),
+            interface_metadata: ModelInterfaceMetadata::default(),
+        }
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
 #[pyclass]
 pub struct ModelCard {
     #[pyo3(get, set)]
