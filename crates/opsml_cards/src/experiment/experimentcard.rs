@@ -120,6 +120,14 @@ impl ExperimentCard {
         self.experimentcard_uids.push(uid.to_string());
     }
 
+    pub fn add_datacard_uid(&mut self, uid: &str) {
+        self.datacard_uids.push(uid.to_string());
+    }
+
+    pub fn add_modelcard_uid(&mut self, uid: &str) {
+        self.modelcard_uids.push(uid.to_string());
+    }
+
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
         let record = ExperimentCardClientRecord {
             created_at: self.created_at,

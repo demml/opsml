@@ -17,6 +17,7 @@ use opsml_types::{
     cards::experiment::{Metric, Parameter},
     SaveName,
 };
+use pyo3::intern;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -650,6 +651,65 @@ impl Experiment {
     #[getter]
     pub fn card<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         Ok(self.experiment.bind(py).clone())
+    }
+
+    #[pyo3(signature = (card, version_type, pre_tag = None, build_tag = None, save_kwargs = None))]
+    pub fn register_card(
+        &self,
+        card: &Bound<'_, PyAny>,
+        version_type: VersionType,
+        pre_tag: Option<String>,
+        build_tag: Option<String>,
+        save_kwargs: Option<&Bound<'_, PyAny>>,
+    ) -> PyResult<()> {
+        let py = card.py();
+        // get registry type of card
+        let registry_type = card.getattr("registry_type")?.extract::<RegistryType>()?;
+
+        // set exerimentcard_uid on card
+        match card.setattr("experimentcard_uid", self.uid.clone()) {
+            Ok(_) => debug!("Set experimentcard_uid on card"),
+            Err(e) => warn!("Failed to set experimentcard_uid on card: {}", e),
+        };
+
+        match registry_type {
+            RegistryType::Data => {
+                self.unlock_registries()?.data.register_card(
+                    card,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                    save_kwargs,
+                )?;
+
+                // update experimentcard_uids on experiment card
+                let datacard_uid = &card.getattr("uid")?.extract::<String>()?;
+                self.experiment
+                    .bind(py)
+                    .call_method1("add_datacard_uid", (datacard_uid,))?;
+            }
+            RegistryType::Model => {
+                self.unlock_registries()?.model.register_card(
+                    card,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                    save_kwargs,
+                )?;
+
+                // update experimentcard_uids on experiment card
+                let modelcard_uid = &card.getattr("uid")?.extract::<String>()?;
+                self.experiment
+                    .bind(py)
+                    .call_method1("add_modelcard_uid", (modelcard_uid,))?;
+            }
+
+            _ => {
+                warn!("Registry type not supported for {} when registering card from inside an experiment", registry_type);
+            }
+        }
+
+        Ok(())
     }
 
     // work on logging artifacts
