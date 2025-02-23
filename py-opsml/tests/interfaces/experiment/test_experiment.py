@@ -11,6 +11,9 @@ import joblib
 from pathlib import Path
 import uuid
 import shutil
+from opsml.data import PandasData
+from opsml.model import SklearnModel, Mode
+from opsml.card import DataCard, ModelCard, ModelCardMetadata
 # Sets up logging for tests
 
 
@@ -57,8 +60,8 @@ def _test_experimentcard():
     ExperimentCard(repository="test", name="test")
 
 
-def test_experimentcard_context():
-    with OpsmlTestServer(False):
+def test_experimentcard():
+    with OpsmlTestServer():
         cleanup_manually_created_directories()
         with start_experiment(repository="test", log_hardware=True) as exp:
             metric1 = Metric(name="test", value=1.0)
@@ -131,7 +134,29 @@ def test_experimentcard_context():
         for _ in parameters:
             continue
 
-    # get parameters
-
     cleanup_manually_created_directories()
-    a
+
+
+def test_experimentcard_register(
+    pandas_data: PandasData,
+    random_forest_classifier: SklearnModel,
+):
+    with OpsmlTestServer():
+        with start_experiment(repository="test", log_hardware=True) as exp:
+            datacard = DataCard(
+                interface=pandas_data,
+                repository="test",
+                name="test",
+                tags=["foo:bar", "baz:qux"],
+            )
+
+            interface: SklearnModel = random_forest_classifier
+            modelcard = ModelCard(
+                interface=interface,
+                repository="test",
+                name="test",
+                to_onnx=True,
+                tags=["foo:bar", "baz:qux"],
+                metadata = ModelCardMetadata(
+                    
+            )
