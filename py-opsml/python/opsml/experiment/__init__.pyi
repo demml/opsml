@@ -1,8 +1,10 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
-
-from ..card import ExperimentCard
+from ..core import VersionType
+from ..card import ExperimentCard, ModelCard, DataCard
+from ..model import ModelSaveKwargs
+from ..data import DataSaveKwargs
 
 class Experiment:
     def start_experiment(
@@ -125,6 +127,31 @@ class Experiment:
     def card(self) -> "ExperimentCard":
         """
         ExperimentCard associated with the Experiment
+        """
+
+    def register_card(
+        self,
+        card: Union[DataCard, ModelCard],
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs] = None,
+    ) -> None:
+        """Register a Card as part of an experiment
+
+        Args:
+            card (ArtifactCard):
+                Card to register. Can be a DataCard or a ModelCard
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+            save_kwargs (SaveKwargs):
+                Optional SaveKwargs to pass to the Card interface (If using DataCards
+                and ModelCards).
+
         """
 
 def start_experiment(
