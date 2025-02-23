@@ -17,7 +17,6 @@ use opsml_types::{
     cards::experiment::{Metric, Parameter},
     SaveName,
 };
-use pyo3::intern;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
