@@ -158,3 +158,6 @@ def test_experimentcard_register(
                 tags=["foo:bar", "baz:qux"],
                 metadata=ModelCardMetadata(datacard_uid=datacard.uid),
             )
+
+            exp.register_card(datacard)
+            exp.register_card(modelcard)
