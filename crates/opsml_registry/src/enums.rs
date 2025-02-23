@@ -209,9 +209,9 @@ impl OpsmlRegistry {
 
     pub async fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
         match self {
-            Self::ClientRegistry(client_registry) => client_registry.insert_metrics(&metrics).await,
+            Self::ClientRegistry(client_registry) => client_registry.insert_metrics(metrics).await,
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => server_registry.insert_metrics(&metrics).await,
+            Self::ServerRegistry(server_registry) => server_registry.insert_metrics(metrics).await,
         }
     }
 

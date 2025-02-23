@@ -161,7 +161,7 @@ pub async fn insert_hardware_metrics(
 
     let record = HardwareMetricsRecord {
         experiment_uid: req.experiment_uid.clone(),
-        created_at: created_at.clone(),
+        created_at,
         cpu_percent_utilization: req.metrics.cpu.cpu_percent_utilization,
         cpu_percent_per_core: SqlxJson(req.metrics.cpu.cpu_percent_per_core.clone()),
         free_memory: req.metrics.memory.free_memory,

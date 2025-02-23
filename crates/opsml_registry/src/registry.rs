@@ -294,6 +294,7 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
+    #[allow(clippy::too_many_arguments)]
     async fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
@@ -619,7 +620,7 @@ impl CardRegistry {
 
         Ok(Self {
             registry_type: registry_type.clone(),
-            table_name: CardTable::from_registry_type(&registry_type).to_string(),
+            table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
             runtime: rt,
             fs,

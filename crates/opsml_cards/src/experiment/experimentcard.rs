@@ -149,7 +149,7 @@ impl ExperimentCard {
     #[pyo3(signature = (path))]
     pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, &card_save_path)?;
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
         Ok(())
     }
@@ -169,10 +169,9 @@ impl ExperimentCard {
         let fs = self.fs.as_ref().unwrap();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
-        let rpath = if path.is_none() {
-            storage_path.join(SaveName::Artifacts)
-        } else {
-            storage_path.join(SaveName::Artifacts).join(path.unwrap())
+        let rpath = match path {
+            None => storage_path.join(SaveName::Artifacts),
+            Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
         let files = rt
@@ -189,7 +188,7 @@ impl ExperimentCard {
         let storage_path_str = storage_path
             .into_os_string()
             .into_string()
-            .map_err(|e| OpsmlError::new_err(e))?;
+            .map_err(OpsmlError::new_err)?;
 
         let files = files
             .iter()
