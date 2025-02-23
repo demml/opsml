@@ -114,11 +114,17 @@ def test_experimentcard_context():
 
         # get metrics
 
-        # get parameters
+        metrics = get_experiment_metrics(card.uid)
+
+        print(metrics)
+
+        assert len(metrics) == 3
+
+        # ensure metrics are iterable
+        for _ in metrics:
+            continue
+
+    # get parameters
 
     cleanup_manually_created_directories()
-
-    metrics = get_experiment_metrics(card.uid)
-
-    print(metrics)
     a
