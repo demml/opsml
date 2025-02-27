@@ -194,12 +194,6 @@ impl PyHelperFuncs {
     }
 }
 
-/// Converts a UUID string to a byte key
-///
-/// # Errors
-///
-/// This function will return an error if:
-/// - The UUID string cannot be parsed.
 pub fn json_to_pyobject<'py>(
     py: Python,
     value: &Value,
@@ -254,12 +248,6 @@ pub fn json_to_pyobject<'py>(
     Ok(dict.clone())
 }
 
-/// Converts a UUID string to a byte key
-///
-/// # Errors
-///
-/// This function will return an error if:
-/// - Any downcasting or extraction fails.
 pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
     Ok(match value {
         Value::Null => py.None(),
@@ -300,12 +288,6 @@ pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
     })
 }
 
-/// Converts a UUID string to a byte key
-///
-/// # Errors
-///
-/// This function will return an error if:
-/// - Any downcasting or extraction fails.
 pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
     if obj.is_instance_of::<PyDict>() {
         let dict = obj.downcast::<PyDict>()?;
