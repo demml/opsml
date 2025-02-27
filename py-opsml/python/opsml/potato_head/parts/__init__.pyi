@@ -1,6 +1,7 @@
 # type: ignore
 
 from typing import Any, Iterator, Optional, overload
+
 from ..openai import ChatCompletionChunk, OpenAIConfig
 from ..prompts import ChatPrompt
 

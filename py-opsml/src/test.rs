@@ -123,6 +123,10 @@ impl OpsmlTestServer {
         let db_file = current_dir.join("opsml.db");
         let storage_dir = current_dir.join("opsml_registries");
 
+        // unset env vars
+        std::env::remove_var("APP_ENV");
+        std::env::remove_var("OPSML_TRACKING_URI");
+
         if db_file.exists() {
             std::fs::remove_file(db_file).unwrap();
         }
