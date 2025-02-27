@@ -3,7 +3,6 @@ use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
-    TaskType,
 };
 use opsml_utils::get_utc_datetime;
 use potato_lib::ChatPrompt;
@@ -11,13 +10,11 @@ use potato_lib::PromptType;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tracing::{debug, error};
+use tracing::error;
 
-enum Prompt {
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Prompt {
     Chat(ChatPrompt),
 }
 
@@ -29,7 +26,7 @@ pub struct PromptCardMetadata {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PromptCard {
     pub prompt: Prompt,
 
@@ -65,9 +62,8 @@ pub struct PromptCard {
 impl PromptCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (prompt, repository=None, name=None,   version=None, uid=None, tags=None,    metadata=None, to_onnx=None))]
+    #[pyo3(signature = (prompt, repository=None, name=None, version=None, uid=None, tags=None))]
     pub fn new(
-        py: Python,
         prompt: &Bound<'_, PyAny>,
         repository: Option<&str>,
         name: Option<&str>,
