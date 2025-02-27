@@ -4,18 +4,34 @@ use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
 };
-use opsml_utils::get_utc_datetime;
 use potato_lib::ChatPrompt;
 use potato_lib::PromptType;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use tracing::error;
+use opsml_utils::{get_utc_datetime, PyHelperFuncs}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Prompt {
     Chat(ChatPrompt),
+}
+
+impl Prompt {
+    pub fn save_prompt(&self, path: PathBuf) -> Result<(), CardError> {
+        // each enum variant has a save_prompt method
+        match self {
+            Prompt::Chat(chat_prompt) => {
+
+                let card_save_path = path.join(SaveName::Prompt).with_extension(Suffix::Json);
+                PyHelperFuncs::save_to_json(&chat_prompt, &card_save_path)?;
+
+                Ok(())
+            }
+        }
+    }
 }
 
 #[pyclass]
@@ -115,5 +131,32 @@ impl PromptCard {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
         })
+    }
+
+    #[getter]
+    pub fn experimentcard_uid(&self) -> Option<&str> {
+        self.metadata.experimentcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+        self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
+    }
+
+    pub fn add_tags(&mut self, tags: Vec<String>) {
+        self.tags.extend(tags);
+    }
+
+    #[pyo3(signature = (path))]
+    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        // save model interface
+        // if option raise error
+        self.prompt.save_prompt(path.clone())?;
+
+        // save modelcard
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(&self, &card_save_path)?;
+
+        Ok(())
     }
 }

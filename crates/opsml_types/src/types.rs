@@ -308,6 +308,7 @@ pub enum SaveName {
     Drift,
     Sql,
     Code,
+    Prompt,
 }
 
 #[pymethods]
@@ -338,6 +339,7 @@ impl SaveName {
             "sql" => Some(SaveName::Sql),
             "drift" => Some(SaveName::Drift),
             "code" => Some(SaveName::Code),
+            "prompt" => Some(SaveName::Prompt),
             _ => None,
         }
     }
@@ -367,6 +369,7 @@ impl SaveName {
             SaveName::Sql => "sql",
             SaveName::Drift => "drift",
             SaveName::Code => "code",
+            SaveName::Prompt => "prompt",
         }
     }
 
@@ -407,6 +410,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Sql => Path::new("sql"),
             SaveName::Drift => Path::new("drift"),
             SaveName::Code => Path::new("code"),
+            SaveName::Prompt => Path::new("prompt"),
         }
     }
 }
