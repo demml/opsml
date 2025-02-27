@@ -49,6 +49,7 @@ jobs:
         with:
           name: opsml_server
           path: ./target/debug/opsml-server
+          retention-days: 1
 
       - name: Run opsml_server in the background
         run: ./target/debug/opsml-server &
