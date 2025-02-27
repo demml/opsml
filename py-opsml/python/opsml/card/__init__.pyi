@@ -81,6 +81,14 @@ class DataCard:
         """
 
     @property
+    def experimentcard_uid(self) -> Optional[str]:
+        """Return the experimentcard uid"""
+
+    @experimentcard_uid.setter
+    def experimentcard_uid(self, experimentcard_uid: Optional[str]) -> None:
+        """Set the experimentcard uid"""
+
+    @property
     def interface(self) -> Optional[DataInterface]:
         """Return the data interface"""
 

@@ -192,6 +192,16 @@ impl DataCard {
         self.tags.extend(tags);
     }
 
+    #[getter]
+    pub fn experimentcard_uid(&self) -> Option<&str> {
+        self.metadata.experimentcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+        self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
+    }
+
     #[pyo3(signature = (path, save_kwargs=None))]
     pub fn save(
         &mut self,
