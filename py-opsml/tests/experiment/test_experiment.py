@@ -1,18 +1,23 @@
 from opsml.test import OpsmlTestServer
 from opsml.experiment import (
-    start_experiment,
     Metric,
     Parameter,
+)
+from opsml import (
+    start_experiment,
     get_experiment_metrics,
     get_experiment_parameters,
+    DataCard,
+    ModelCard,
+    ModelCardMetadata,
+    PandasData,
+    SklearnModel,
 )
 import joblib  # type: ignore
 from pathlib import Path
 import uuid
 import shutil
-from opsml.data import PandasData
-from opsml.model import SklearnModel
-from opsml.card import DataCard, ModelCard, ModelCardMetadata
+
 # Sets up logging for tests
 
 
@@ -55,7 +60,7 @@ def cleanup_fake_directory(save_path: Path):
     shutil.rmtree(save_path)
 
 
-def _test_experimentcard():
+def test_experimentcard():
     with OpsmlTestServer():
         cleanup_manually_created_directories()
         with start_experiment(repository="test", log_hardware=True) as exp:
@@ -136,7 +141,7 @@ def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
 ):
-    with OpsmlTestServer(False):
+    with OpsmlTestServer(True):
         with start_experiment(repository="test", log_hardware=True) as exp:
             datacard = DataCard(
                 interface=pandas_data,
@@ -157,6 +162,3 @@ def test_experimentcard_register(
                 ),
             )
             exp.register_card(modelcard)
-
-            print(modelcard)
-    a
