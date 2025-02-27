@@ -59,6 +59,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ahash"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
+dependencies = [
+ "cfg-if",
+ "once_cell",
+ "version_check",
+ "zerocopy",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2900,15 +2912,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3101,6 +3104,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "metrics"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a7deb012b3b2767169ff203fadb4c6b0b82b947512e5eb9e0b78c2e186ad9e3"
+dependencies = [
+ "ahash",
+ "portable-atomic",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3259,7 +3272,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17ebbe97acce52d06aebed4cd4a87c0941f4b2519b59b82b4feb5bd0ce003dfd"
 dependencies = [
  "indexmap 2.7.1",
- "itertools 0.13.0",
+ "itertools",
  "ndarray",
  "noisy_float",
  "num-integer",
@@ -4210,6 +4223,142 @@ dependencies = [
 ]
 
 [[package]]
+name = "potato-client"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "colored_json",
+ "potato-error",
+ "pyo3",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "potato-error"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "thiserror 2.0.11",
+]
+
+[[package]]
+name = "potato-head"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "chrono",
+ "colored_json",
+ "potato-error",
+ "potato-prompts",
+ "potato-providers",
+ "potato-tools",
+ "potato-traits",
+ "pyo3",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.11",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "potato-lib"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "potato-error",
+ "potato-head",
+ "potato-prompts",
+ "potato-providers",
+ "potato-tools",
+]
+
+[[package]]
+name = "potato-prompts"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "chrono",
+ "colored_json",
+ "potato-client",
+ "potato-error",
+ "potato-tools",
+ "pyo3",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.11",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "potato-providers"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "colored_json",
+ "potato-client",
+ "potato-error",
+ "potato-prompts",
+ "potato-tools",
+ "pyo3",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.11",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "potato-tools"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "chrono",
+ "colored_json",
+ "potato-client",
+ "potato-error",
+ "pyo3",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.11",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "potato-traits"
+version = "0.1.0"
+source = "git+https://github.com/demml/potatohead.git#828b4826dd8e7754b6fd1c3c03a4bb355a43eec0"
+dependencies = [
+ "futures-core",
+ "futures-util",
+ "potato-client",
+ "potato-error",
+ "potato-prompts",
+ "potato-providers",
+ "pyo3",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4328,6 +4477,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
+ "potato-lib",
  "pyo3",
  "reqwest",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
@@ -5044,8 +5194,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5063,15 +5213,15 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.13.0",
+ "serde_qs 0.8.5",
  "tokio",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-contracts"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5082,8 +5232,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "futures",
  "pyo3",
@@ -5097,13 +5247,13 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "cron",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5123,22 +5273,23 @@ dependencies = [
 
 [[package]]
 name = "scouter-error"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "pyo3",
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
 name = "scouter-events"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "futures",
  "lapin",
+ "metrics",
  "pyo3",
  "rdkafka",
  "reqwest",
@@ -5157,10 +5308,10 @@ dependencies = [
 
 [[package]]
 name = "scouter-observability"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5174,12 +5325,12 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -5196,8 +5347,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "scouter-error",
  "serde",
@@ -5205,8 +5356,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.4.1"
-source = "git+https://github.com/demml/scouter.git?branch=feature%2Frefactor-drift-profiles#de735deff23da1559ab4e0d43f245e24e9bd634f"
+version = "0.4.5"
+source = "git+https://github.com/demml/scouter.git#b2df6a335bf08eb6e60de3e473719fec2d9640dc"
 dependencies = [
  "chrono",
  "colored_json",

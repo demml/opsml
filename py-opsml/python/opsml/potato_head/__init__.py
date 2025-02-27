@@ -1,4 +1,4 @@
 # pylint: disable=no-name-in-module
 # type: ignore
 
-from .. import scouter  # noqa: F401
+from .. import potato_head  # noqa: F401
