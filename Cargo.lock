@@ -3567,6 +3567,7 @@ dependencies = [
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
+ "potato-lib",
  "pyo3",
  "serde",
  "serde_json",
