@@ -24,6 +24,22 @@ use serde::{
 };
 
 #[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UidMetadata {
+    #[pyo3(get, set)]
+    pub datacard_uids: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub modelcard_uids: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub promptcard_uids: Vec<String>,
+
+    #[pyo3(get, set)]
+    pub experimentcard_uids: Vec<String>,
+}
+
+#[pyclass]
 pub struct ExperimentCard {
     #[pyo3(get, set)]
     pub repository: String,
@@ -41,13 +57,7 @@ pub struct ExperimentCard {
     pub tags: Vec<String>,
 
     #[pyo3(get, set)]
-    pub datacard_uids: Vec<String>,
-
-    #[pyo3(get, set)]
-    pub modelcard_uids: Vec<String>,
-
-    #[pyo3(get, set)]
-    pub experimentcard_uids: Vec<String>,
+    pub uids: UidMetadata,
 
     #[pyo3(get)]
     pub compute_environment: ComputeEnvironment,
@@ -109,23 +119,25 @@ impl ExperimentCard {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             compute_environment: ComputeEnvironment::new(py)?,
-            datacard_uids: Vec::new(),
-            modelcard_uids: Vec::new(),
-            experimentcard_uids: Vec::new(),
+            uids: UidMetadata::default(),
             subexperiment: false,
         })
     }
 
     pub fn add_subexperiment_experiment(&mut self, uid: &str) {
-        self.experimentcard_uids.push(uid.to_string());
+        self.uids.experimentcard_uids.push(uid.to_string());
+    }
+
+    pub fn add_promptcard_uid(&mut self, uid: &str) {
+        self.uids.promptcard_uids.push(uid.to_string());
     }
 
     pub fn add_datacard_uid(&mut self, uid: &str) {
-        self.datacard_uids.push(uid.to_string());
+        self.uids.datacard_uids.push(uid.to_string());
     }
 
     pub fn add_modelcard_uid(&mut self, uid: &str) {
-        self.modelcard_uids.push(uid.to_string());
+        self.uids.modelcard_uids.push(uid.to_string());
     }
 
     pub fn get_registry_card(&self) -> Result<Card, CardError> {
@@ -137,9 +149,10 @@ impl ExperimentCard {
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
-            datacard_uids: self.datacard_uids.clone(),
-            modelcard_uids: self.modelcard_uids.clone(),
-            experimentcard_uids: self.experimentcard_uids.clone(),
+            datacard_uids: self.uids.datacard_uids.clone(),
+            modelcard_uids: self.uids.modelcard_uids.clone(),
+            promptcard_uids: self.uids.promptcard_uids.clone(),
+            experimentcard_uids: self.uids.experimentcard_uids.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
         };
 
@@ -264,7 +277,7 @@ impl Serialize for ExperimentCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ExperimentCard", 13)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 11)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -276,9 +289,7 @@ impl Serialize for ExperimentCard {
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
         state.serialize_field("compute_environment", &self.compute_environment)?;
-        state.serialize_field("datacard_uids", &self.datacard_uids)?;
-        state.serialize_field("modelcard_uids", &self.modelcard_uids)?;
-        state.serialize_field("experimentcard_uids", &self.experimentcard_uids)?;
+        state.serialize_field("uids", &self.uids)?;
         state.serialize_field("subexperiment", &self.subexperiment)?;
         state.end()
     }
@@ -301,9 +312,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             AppEnv,
             CreatedAt,
             ComputeEnvironment,
-            DatacardUids,
-            ModelcardUids,
-            ExperimentcardUids,
+            Uids,
             Subexperiment,
         }
 
@@ -329,9 +338,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut app_env = None;
                 let mut created_at = None;
                 let mut compute_environment = None;
-                let mut datacard_uids = None;
-                let mut modelcard_uids = None;
-                let mut experimentcard_uids = None;
+                let mut uids = None;
                 let mut subexperiment = None;
 
                 while let Some(key) = map.next_key()? {
@@ -365,15 +372,10 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::ComputeEnvironment => {
                             compute_environment = Some(map.next_value()?);
                         }
-                        Field::DatacardUids => {
-                            datacard_uids = Some(map.next_value()?);
+                        Field::Uids => {
+                            uids = Some(map.next_value()?);
                         }
-                        Field::ModelcardUids => {
-                            modelcard_uids = Some(map.next_value()?);
-                        }
-                        Field::ExperimentcardUids => {
-                            experimentcard_uids = Some(map.next_value()?);
-                        }
+
                         Field::Subexperiment => {
                             subexperiment = Some(map.next_value()?);
                         }
@@ -393,12 +395,8 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
                 let compute_environment = compute_environment
                     .ok_or_else(|| de::Error::missing_field("compute_environment"))?;
-                let datacard_uids =
-                    datacard_uids.ok_or_else(|| de::Error::missing_field("datacard_uids"))?;
-                let modelcard_uids =
-                    modelcard_uids.ok_or_else(|| de::Error::missing_field("modelcard_uids"))?;
-                let experimentcard_uids = experimentcard_uids
-                    .ok_or_else(|| de::Error::missing_field("experimentcard_uids"))?;
+                let uids = uids.ok_or_else(|| de::Error::missing_field("uids"))?;
+
                 let subexperiment =
                     subexperiment.ok_or_else(|| de::Error::missing_field("subexperiment"))?;
 
@@ -415,9 +413,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     app_env,
                     created_at,
                     compute_environment,
-                    datacard_uids,
-                    modelcard_uids,
-                    experimentcard_uids,
+                    uids,
                     subexperiment,
                 })
             }
@@ -434,9 +430,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "app_env",
             "created_at",
             "compute_environment",
-            "datacard_uids",
-            "modelcard_uids",
-            "experimentcard_uids",
+            "uids",
             "subexperiment",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
@@ -450,9 +444,7 @@ impl FromPyObject<'_> for ExperimentCard {
         let version = ob.getattr("version")?.extract()?;
         let uid = ob.getattr("uid")?.extract()?;
         let tags = ob.getattr("tags")?.extract()?;
-        let datacard_uids = ob.getattr("datacard_uids")?.extract()?;
-        let modelcard_uids = ob.getattr("modelcard_uids")?.extract()?;
-        let experimentcard_uids = ob.getattr("experimentcard_uids")?.extract()?;
+        let uids = ob.getattr("uids")?.extract()?;
         let compute_environment = ob.getattr("compute_environment")?.extract()?;
         let registry_type = RegistryType::Experiment;
         let app_env = ob.getattr("app_env")?.extract()?;
@@ -468,9 +460,7 @@ impl FromPyObject<'_> for ExperimentCard {
             version,
             uid,
             tags,
-            datacard_uids,
-            modelcard_uids,
-            experimentcard_uids,
+            uids,
             compute_environment,
             registry_type,
             app_env,
