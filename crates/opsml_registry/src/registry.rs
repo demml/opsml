@@ -639,6 +639,9 @@ pub struct CardRegistries {
     #[pyo3(get)]
     pub data: CardRegistry,
 
+    #[pyo3(get)]
+    pub prompt: CardRegistry,
+
     pub rt: Arc<tokio::runtime::Runtime>,
 }
 
@@ -651,11 +654,13 @@ impl CardRegistries {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
         let model = CardRegistry::rust_new(&RegistryType::Model, rt.clone())?;
         let data = CardRegistry::rust_new(&RegistryType::Data, rt.clone())?;
+        let prompt = CardRegistry::rust_new(&RegistryType::Prompt, rt.clone())?;
 
         Ok(Self {
             experiment,
             model,
             data,
+            prompt,
             rt,
         })
     }
@@ -666,11 +671,13 @@ impl CardRegistries {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
         let model = CardRegistry::rust_new(&RegistryType::Model, rt.clone())?;
         let data = CardRegistry::rust_new(&RegistryType::Data, rt.clone())?;
+        let prompt = CardRegistry::rust_new(&RegistryType::Prompt, rt.clone())?;
 
         Ok(Self {
             experiment,
             model,
             data,
+            prompt,
             rt,
         })
     }

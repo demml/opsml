@@ -700,6 +700,22 @@ impl Experiment {
                     .call_method1("add_modelcard_uid", (modelcard_uid,))?;
             }
 
+            RegistryType::Prompt => {
+                self.unlock_registries()?.prompt.register_card(
+                    card,
+                    version_type,
+                    pre_tag,
+                    build_tag,
+                    save_kwargs,
+                )?;
+
+                // update experimentcard_uids on experiment card
+                let promptcard_uid = &card.getattr("uid")?.extract::<String>()?;
+                self.experiment
+                    .bind(py)
+                    .call_method1("add_promptcard_uid", (promptcard_uid,))?;
+            }
+
             _ => {
                 warn!("Registry type not supported for {} when registering card from inside an experiment", registry_type);
             }
