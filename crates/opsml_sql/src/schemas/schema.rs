@@ -350,6 +350,7 @@ pub struct ExperimentCardRecord {
     pub tags: Json<Vec<String>>,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
+    pub promptcard_uids: Json<Vec<String>>,
     pub experimentcard_uids: Json<Vec<String>>,
     pub username: String,
 }
@@ -371,6 +372,7 @@ impl Default for ExperimentCardRecord {
             tags: Json(Vec::new()),
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
+            promptcard_uids: Json(Vec::new()),
             experimentcard_uids: Json(Vec::new()),
             username: CommonKwargs::Undefined.to_string(),
         }
@@ -386,6 +388,7 @@ impl ExperimentCardRecord {
         tags: Vec<String>,
         datacard_uids: Vec<String>,
         modelcard_uids: Vec<String>,
+        promptcard_uids: Vec<String>,
         experimentcard_uids: Vec<String>,
         username: String,
     ) -> Self {
@@ -408,6 +411,7 @@ impl ExperimentCardRecord {
             tags: Json(tags),
             datacard_uids: Json(datacard_uids),
             modelcard_uids: Json(modelcard_uids),
+            promptcard_uids: Json(promptcard_uids),
             experimentcard_uids: Json(experimentcard_uids),
             username,
         }

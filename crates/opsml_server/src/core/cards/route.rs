@@ -338,6 +338,7 @@ pub async fn update_card(
                 tags: SqlxJson(client_card.tags),
                 datacard_uids: SqlxJson(client_card.datacard_uids),
                 modelcard_uids: SqlxJson(client_card.modelcard_uids),
+                promptcard_uids: SqlxJson(client_card.promptcard_uids),
                 experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                 username: client_card.username,
             };

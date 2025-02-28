@@ -833,6 +833,7 @@ mod tests {
                 app_env: card.app_env,
                 created_at: card.created_at,
                 datacard_uids: card.datacard_uids,
+                promptcard_uids: card.promptcard_uids,
                 experimentcard_uids: card.experimentcard_uids,
                 modelcard_uids: card.modelcard_uids,
                 tags: card.tags,
