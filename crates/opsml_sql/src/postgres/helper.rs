@@ -417,6 +417,31 @@ impl PostgresQueryHelper {
         .to_string()
     }
 
+    pub fn get_promptcard_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (
+        uid, 
+        app_env, 
+        name, 
+        repository, 
+        major, 
+        minor, 
+        patch, 
+        version, 
+        prompt_type, 
+        tags, 
+        experimentcard_uid, 
+        auditcard_uid, 
+        pre_tag, 
+        build_tag,
+        username
+        ) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+            CardTable::Prompt
+        )
+        .to_string()
+    }
+
     pub fn get_modelcard_insert_query() -> String {
         format!("INSERT INTO {} (
         uid, 
@@ -456,12 +481,13 @@ impl PostgresQueryHelper {
         tags, 
         datacard_uids, 
         modelcard_uids, 
+        promptcard_uids,
         experimentcard_uids,
         pre_tag, 
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Experiment
         )
         .to_string()
@@ -517,6 +543,29 @@ impl PostgresQueryHelper {
         .to_string()
     }
 
+    pub fn get_promptcard_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+        app_env = $1, 
+        name = $2, 
+        repository = $3, 
+        major = $4, 
+        minor = $5, 
+        patch = $6, 
+        version = $7, 
+        prompt_type = $8, 
+        tags = $9, 
+        experimentcard_uid = $10, 
+        auditcard_uid = $11, 
+        pre_tag = $12, 
+        build_tag = $13,
+        username = $14
+        WHERE uid = $15",
+            CardTable::Prompt
+        )
+        .to_string()
+    }
+
     pub fn get_modelcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
@@ -557,11 +606,12 @@ impl PostgresQueryHelper {
         tags = $8, 
         datacard_uids = $9, 
         modelcard_uids = $10, 
-        experimentcard_uids = $11, 
-        pre_tag = $12, 
-        build_tag = $13,
-        username = $14
-        WHERE uid = $15",
+        promptcard_uids = $11,
+        experimentcard_uids = $12, 
+        pre_tag = $13, 
+        build_tag = $14,
+        username = $15
+        WHERE uid = $16",
             CardTable::Experiment
         )
         .to_string()
