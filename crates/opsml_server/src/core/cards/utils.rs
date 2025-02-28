@@ -103,6 +103,7 @@ pub async fn insert_card_into_db(
                 client_card.tags,
                 client_card.datacard_uids,
                 client_card.modelcard_uids,
+                client_card.promptcard_uids,
                 client_card.experimentcard_uids,
                 client_card.username,
             );

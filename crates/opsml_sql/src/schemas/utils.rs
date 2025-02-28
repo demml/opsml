@@ -59,6 +59,7 @@ pub fn convert_experimentcard(record: ExperimentCardRecord) -> Card {
         tags: record.tags.0,
         datacard_uids: record.datacard_uids.0,
         modelcard_uids: record.modelcard_uids.0,
+        promptcard_uids: record.promptcard_uids.0,
         experimentcard_uids: record.experimentcard_uids.0,
         username: record.username,
     };

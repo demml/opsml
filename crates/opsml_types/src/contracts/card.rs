@@ -195,6 +195,7 @@ pub struct ExperimentCardClientRecord {
     pub tags: Vec<String>,
     pub datacard_uids: Vec<String>,
     pub modelcard_uids: Vec<String>,
+    pub promptcard_uids: Vec<String>,
     pub experimentcard_uids: Vec<String>,
     pub username: String,
 }
@@ -211,6 +212,7 @@ impl Default for ExperimentCardClientRecord {
             tags: Vec::new(),
             datacard_uids: Vec::new(),
             modelcard_uids: Vec::new(),
+            promptcard_uids: Vec::new(),
             experimentcard_uids: Vec::new(),
             username: "guest".to_string(),
         }

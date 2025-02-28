@@ -218,6 +218,7 @@ pub mod server_logic {
                         client_card.tags,
                         client_card.datacard_uids,
                         client_card.modelcard_uids,
+                        client_card.promptcard_uids,
                         client_card.experimentcard_uids,
                         client_card.username,
                     );
@@ -352,6 +353,7 @@ pub mod server_logic {
                         tags: SqlxJson(client_card.tags),
                         datacard_uids: SqlxJson(client_card.datacard_uids),
                         modelcard_uids: SqlxJson(client_card.modelcard_uids),
+                        promptcard_uids: SqlxJson(client_card.promptcard_uids),
                         experimentcard_uids: SqlxJson(client_card.experimentcard_uids),
                         username: client_card.username,
                     };
