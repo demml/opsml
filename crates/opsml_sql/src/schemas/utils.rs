@@ -1,10 +1,10 @@
 use crate::schemas::schema::{
-    AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
+    AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord, PromptCardRecord,
 };
 
 use opsml_types::contracts::{
     AuditCardClientRecord, Card, DataCardClientRecord, ExperimentCardClientRecord,
-    ModelCardClientRecord,
+    ModelCardClientRecord, PromptCardClientRecord,
 };
 
 pub fn convert_datacard(record: DataCardRecord) -> Card {
@@ -84,4 +84,20 @@ pub fn convert_auditcard(record: AuditCardRecord) -> Card {
     };
 
     Card::Audit(card)
+}
+
+pub fn convert_promptcard(record: PromptCardRecord) -> Card {
+    let card = PromptCardClientRecord {
+        uid: record.uid,
+        created_at: record.created_at,
+        app_env: record.app_env,
+        name: record.name,
+        repository: record.repository,
+        version: record.version,
+        tags: record.tags.0,
+        prompt_type: record.prompt_type,
+        username: record.username,
+    };
+
+    Card::Prompt(card)
 }
