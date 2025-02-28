@@ -4,6 +4,7 @@ use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
 };
+use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_lib::ChatPrompt;
 use potato_lib::PromptType;
 use pyo3::prelude::*;
@@ -11,7 +12,6 @@ use pyo3::types::PyList;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tracing::error;
-use opsml_utils::{get_utc_datetime, PyHelperFuncs}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -24,7 +24,6 @@ impl Prompt {
         // each enum variant has a save_prompt method
         match self {
             Prompt::Chat(chat_prompt) => {
-
                 let card_save_path = path.join(SaveName::Prompt).with_extension(Suffix::Json);
                 PyHelperFuncs::save_to_json(&chat_prompt, &card_save_path)?;
 
