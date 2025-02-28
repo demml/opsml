@@ -374,6 +374,11 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
+    pub fn get_promptcard_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, prompt_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+            .to_string()
+    }
+
     pub fn get_datacard_insert_query() -> String {
         format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
@@ -455,6 +460,29 @@ impl SqliteQueryHelper {
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
+        )
+        .to_string()
+    }
+
+    pub fn get_promptcard_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+        app_env = ?, 
+        name = ?, 
+        repository = ?, 
+        major = ?, 
+        minor = ?, 
+        patch = ?, 
+        version = ?, 
+        prompt_type = ?,
+        tags = ?, 
+        experimentcard_uid = ?, 
+        auditcard_uid = ?, 
+        pre_tag = ?, 
+        build_tag = ?,
+        username = ?
+        WHERE uid = ?",
+            CardTable::Data
         )
         .to_string()
     }
