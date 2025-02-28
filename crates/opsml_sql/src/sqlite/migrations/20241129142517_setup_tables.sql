@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     tags TEXT,
     datacard_uids TEXT,
     modelcard_uids TEXT,
+    promptcard_uids TEXT,
     experimentcard_uids TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
