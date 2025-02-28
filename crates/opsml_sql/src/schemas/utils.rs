@@ -97,6 +97,8 @@ pub fn convert_promptcard(record: PromptCardRecord) -> Card {
         tags: record.tags.0,
         prompt_type: record.prompt_type,
         username: record.username,
+        experimentcard_uid: record.experimentcard_uid,
+        auditcard_uid: record.auditcard_uid,
     };
 
     Card::Prompt(card)
