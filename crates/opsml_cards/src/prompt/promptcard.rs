@@ -1,9 +1,6 @@
 use chrono::NaiveDateTime;
-use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
-use opsml_types::{
-    cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
-};
+use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_lib::ChatPrompt;
 use potato_lib::PromptType;
