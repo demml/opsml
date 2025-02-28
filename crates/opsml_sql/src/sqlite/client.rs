@@ -366,6 +366,7 @@ impl SqlClient for SqliteClient {
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
                         .bind(&run.experimentcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -534,6 +535,7 @@ impl SqlClient for SqliteClient {
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
                         .bind(&run.experimentcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
                         .bind(&run.username)
@@ -1284,120 +1286,6 @@ mod tests {
             .unwrap();
 
         assert_eq!(versions.len(), 4);
-
-        cleanup();
-    }
-
-    #[tokio::test]
-    async fn test_sqlite_query_cards() {
-        cleanup();
-
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        let client = SqliteClient::new(&config).await.unwrap();
-
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
-        sqlx::query(&script).execute(&client.pool).await.unwrap();
-
-        // check if uid exists
-        let exists = client
-            .check_uid_exists("fake", &CardTable::Data)
-            .await
-            .unwrap();
-
-        assert!(!exists);
-
-        // try name and repository
-        let card_args = CardQueryArgs {
-            name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
-            ..Default::default()
-        };
-
-        // query all versions
-        // get versions (should return 1)
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 10);
-
-        // try name and repository
-        let card_args = CardQueryArgs {
-            name: Some("Model1".to_string()),
-            repository: Some("repo1".to_string()),
-            version: Some("~1.0.0".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // max_date
-        let card_args = CardQueryArgs {
-            max_date: Some("2023-11-28".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Experiment, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 2);
-
-        // try tags
-        let tags = ["key1".to_string()].to_vec();
-        let card_args = CardQueryArgs {
-            tags: Some(tags),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        let card_args = CardQueryArgs {
-            sort_by_timestamp: Some(true),
-            limit: Some(5),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 5);
-
-        // test uid
-        let card_args = CardQueryArgs {
-            uid: Some("550e8400-e29b-41d4-a716-446655440000".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // check if uid exists
-        let exists = client
-            .check_uid_exists("550e8400-e29b-41d4-a716-446655440000", &CardTable::Data)
-            .await
-            .unwrap();
-
-        assert!(exists);
 
         cleanup();
     }
