@@ -256,6 +256,40 @@ impl Default for AuditCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct PromptCardClientRecord {
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
+    pub name: String,
+    pub repository: String,
+    pub version: String,
+    pub tags: Vec<String>,
+    pub prompt_type: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
+    pub username: String,
+}
+
+impl Default for PromptCardClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            name: "".to_string(),
+            repository: "".to_string(),
+            version: "".to_string(),
+            tags: Vec::new(),
+            prompt_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
+            username: "guest".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum Card {
@@ -263,6 +297,7 @@ pub enum Card {
     Model(ModelCardClientRecord),
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
+    Prompt(PromptCardClientRecord),
 }
 
 #[pymethods]
@@ -278,6 +313,7 @@ impl Card {
             Self::Model(card) => &card.uid,
             Self::Experiment(card) => &card.uid,
             Self::Audit(card) => &card.uid,
+            Self::Prompt(card) => &card.uid,
         }
     }
 
@@ -288,6 +324,7 @@ impl Card {
             Self::Model(card) => card.created_at,
             Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
+            Self::Prompt(card) => card.created_at,
         }
     }
 
@@ -298,6 +335,7 @@ impl Card {
             Self::Model(card) => card.app_env.as_ref(),
             Self::Experiment(card) => card.app_env.as_ref(),
             Self::Audit(card) => card.app_env.as_ref(),
+            Self::Prompt(card) => card.app_env.as_ref(),
         }
     }
 
@@ -308,6 +346,7 @@ impl Card {
             Self::Model(card) => card.name.as_ref(),
             Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
+            Self::Prompt(card) => card.name.as_ref(),
         }
     }
 
@@ -318,6 +357,7 @@ impl Card {
             Self::Model(card) => card.repository.as_ref(),
             Self::Experiment(card) => card.repository.as_ref(),
             Self::Audit(card) => card.repository.as_ref(),
+            Self::Prompt(card) => card.repository.as_ref(),
         }
     }
 
@@ -328,6 +368,7 @@ impl Card {
             Self::Model(card) => card.version.as_ref(),
             Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
+            Self::Prompt(card) => card.version.as_ref(),
         }
     }
 
@@ -338,6 +379,7 @@ impl Card {
             Self::Model(card) => &card.tags,
             Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
+            Self::Prompt(card) => &card.tags,
         }
     }
 
@@ -348,6 +390,7 @@ impl Card {
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
             Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
+            Self::Prompt(_) => None,
         }
     }
 
@@ -360,6 +403,7 @@ impl Card {
                 Some(card.modelcard_uids.iter().map(String::as_str).collect())
             }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
+            Self::Prompt(_) => None,
         }
     }
 
@@ -375,6 +419,7 @@ impl Card {
                     .map(String::as_str)
                     .collect(),
             ),
+            Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
         }
     }
 
@@ -385,6 +430,7 @@ impl Card {
             Self::Model(card) => card.auditcard_uid.as_deref(),
             Self::Experiment(_) => None,
             Self::Audit(card) => Some(&card.uid),
+            Self::Prompt(card) => card.auditcard_uid.as_deref(),
         }
     }
 
@@ -395,6 +441,7 @@ impl Card {
             Self::Model(card) => Some(card.interface_type.to_string()),
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
@@ -405,6 +452,7 @@ impl Card {
             Self::Model(card) => Some(card.data_type.to_string()),
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
@@ -415,6 +463,7 @@ impl Card {
             Self::Model(card) => Some(card.model_type.to_string()),
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
@@ -425,6 +474,7 @@ impl Card {
             Self::Model(card) => Some(card.task_type.to_string()),
             Self::Experiment(_) => None,
             Self::Audit(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 }
@@ -473,6 +523,17 @@ impl Card {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+
+            Self::Prompt(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Prompt,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -482,6 +543,7 @@ impl Card {
             Self::Model(_) => RegistryType::Model,
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
+            Self::Prompt(_) => RegistryType::Prompt,
         }
     }
 }

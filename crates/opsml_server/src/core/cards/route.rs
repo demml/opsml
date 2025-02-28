@@ -153,6 +153,11 @@ pub async fn list_cards(
             let cards = data.into_iter().map(convert_auditcard).collect();
             Ok(Json(cards))
         }
+
+        CardResults::Prompt(data) => {
+            let cards = data.into_iter().map(convert_promptcard).collect();
+            Ok(Json(cards))
+        }
     }
 }
 
