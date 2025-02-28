@@ -2,7 +2,7 @@ use crate::base::SqlClient;
 
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
+    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord, PromptCardRecord
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, QueryStats, ServerCard,
     User, VersionResult,
 };
@@ -310,6 +310,7 @@ impl SqlClient for PostgresClient {
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.experimentcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
@@ -350,6 +351,38 @@ impl SqlClient for PostgresClient {
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = PostgresQueryHelper::get_promptcard_insert_query();
+                    sqlx::query(&query)
+                        .bind(&card.uid)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -446,6 +479,7 @@ impl SqlClient for PostgresClient {
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.experimentcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
@@ -487,6 +521,38 @@ impl SqlClient for PostgresClient {
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = PostgresQueryHelper::get_promptcard_update_query();
+                    sqlx::query(&query)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
+                        .bind(&card.uid)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -939,6 +1005,9 @@ mod tests {
             FROM opsml_experiment_parameters;
 
             DELETE
+            FROM opsml_prompt_registry;
+
+            DELETE
             FROM opsml_users;
 
             DELETE
@@ -951,6 +1020,113 @@ mod tests {
         .fetch_all(pool)
         .await
         .unwrap();
+    }
+
+    async fn test_card_crud(
+        client: &PostgresClient,
+        table: &CardTable,
+        updated_name: &str,
+    ) -> Result<(), SqlError> {
+        // Create initial card
+        let card = match table {
+            CardTable::Data => ServerCard::Data(DataCardRecord::default()),
+            CardTable::Model => ServerCard::Model(ModelCardRecord::default()),
+            CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
+            CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
+            CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
+            _ => panic!("Invalid card type"),
+        };
+
+        // Get UID for queries
+        let uid = match &card {
+            ServerCard::Data(c) => c.uid.clone(),
+            ServerCard::Model(c) => c.uid.clone(),
+            ServerCard::Experiment(c) => c.uid.clone(),
+            ServerCard::Audit(c) => c.uid.clone(),
+            ServerCard::Prompt(c) => c.uid.clone(),
+        };
+
+        // Test Insert
+        client.insert_card(table, &card).await?;
+
+        // Verify Insert
+        let card_args = CardQueryArgs {
+            uid: Some(uid.clone()),
+            ..Default::default()
+        };
+        let results = client.query_cards(table, &card_args).await?;
+        assert_eq!(results.len(), 1);
+
+        // Create updated card with new name
+        let updated_card = match table {
+            CardTable::Data => {
+                let c = DataCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Data(c)
+            }
+            CardTable::Model => {
+                let c = ModelCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+
+                ServerCard::Model(c)
+            }
+            CardTable::Experiment => {
+                let c = ExperimentCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Experiment(c)
+            }
+            CardTable::Audit => {
+                let c = AuditCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Audit(c)
+            }
+            CardTable::Prompt => {
+                let c = PromptCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Prompt(c)
+            }
+            _ => panic!("Invalid card type"),
+        };
+
+        // Test Update
+        client.update_card(table, &updated_card).await?;
+
+        // Verify Update
+        let updated_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(updated_results.len(), 1);
+
+        // Verify updated name
+        match updated_results {
+            CardResults::Data(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Model(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
+        }
+
+        // delete card
+        client.delete_card(table, &uid).await?;
+
+        // Verify Delete
+        let deleted_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(deleted_results.len(), 0);
+
+        Ok(())
     }
 
     pub fn db_config() -> DatabaseSettings {
