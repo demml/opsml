@@ -1309,6 +1309,9 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
+        // insert promptcard
+        let prompt_card = PromptCardRecord::default();
+
         cleanup();
     }
 
