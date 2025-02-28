@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     tags JSONB DEFAULT '[]',
     datacard_uids JSONB,
     modelcard_uids JSONB,
+    promptcard_uids JSONB,
     experimentcard_uids JSONB,
     artifact_uris JSONB,
     compute_environment JSONB,
