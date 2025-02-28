@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::{ArtifactKey, Card};
+use opsml_types::contracts::ArtifactKey;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
@@ -1066,7 +1066,6 @@ mod tests {
             ServerCard::Experiment(c) => c.uid.clone(),
             ServerCard::Audit(c) => c.uid.clone(),
             ServerCard::Prompt(c) => c.uid.clone(),
-            _ => panic!("Invalid card type"),
         };
 
         // Test Insert
@@ -1083,33 +1082,44 @@ mod tests {
         // Create updated card with new name
         let updated_card = match table {
             CardTable::Data => {
-                let mut c = DataCardRecord::default();
-                c.uid = uid.clone();
-                c.name = updated_name.to_string();
+                let c = DataCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
                 ServerCard::Data(c)
             }
             CardTable::Model => {
-                let mut c = ModelCardRecord::default();
-                c.uid = uid.clone();
-                c.name = updated_name.to_string();
+                let c = ModelCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+
                 ServerCard::Model(c)
             }
             CardTable::Experiment => {
-                let mut c = ExperimentCardRecord::default();
-                c.uid = uid.clone();
-                c.name = updated_name.to_string();
+                let c = ExperimentCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
                 ServerCard::Experiment(c)
             }
             CardTable::Audit => {
-                let mut c = AuditCardRecord::default();
-                c.uid = uid.clone();
-                c.name = updated_name.to_string();
+                let c = AuditCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
                 ServerCard::Audit(c)
             }
             CardTable::Prompt => {
-                let mut c = PromptCardRecord::default();
-                c.uid = uid.clone();
-                c.name = updated_name.to_string();
+                let c = PromptCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
                 ServerCard::Prompt(c)
             }
             _ => panic!("Invalid card type"),
