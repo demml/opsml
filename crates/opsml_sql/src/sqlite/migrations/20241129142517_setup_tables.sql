@@ -149,3 +149,23 @@ CREATE TABLE IF NOT EXISTS opsml_operations (
     access_type TEXT,
     access_location TEXT
 );
+
+CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
+    uid TEXT PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    app_env TEXT DEFAULT 'development',
+    name TEXT,
+    repository TEXT,
+    major INT NOT NULL,
+    minor INT NOT NULL,
+    patch INT NOT NULL,
+    pre_tag VARCHAR(16),
+    build_tag VARCHAR(16),
+    version VARCHAR(64),
+    tags TEXT,
+    prompt_type TEXT,
+    experimentcard_uid TEXT,
+    auditcard_uid TEXT,
+    username TEXT NOT NULL DEFAULT 'guest'
+);
+
