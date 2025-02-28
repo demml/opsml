@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     tags JSON,
     datacard_uids JSON,
     modelcard_uids JSON,
+    promptcard_uids JSON,
     experimentcard_uids JSON,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );
