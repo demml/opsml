@@ -124,6 +124,19 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Audit(server_card)
         }
+        Card::Prompt(client_card) => {
+            let server_card = PromptCardRecord::new(
+                client_card.name,
+                client_card.repository,
+                version,
+                client_card.tags,
+                client_card.prompt_type,
+                client_card.experimentcard_uid,
+                client_card.auditcard_uid,
+                client_card.username,
+            );
+            ServerCard::Prompt(server_card)
+        }
     };
     sql_client.insert_card(table, &card).await.map_err(|e| {
         error!("Failed to insert card: {}", e);
