@@ -22,7 +22,7 @@ impl Prompt {
         match self {
             Prompt::Chat(chat_prompt) => {
                 let card_save_path = path.join(SaveName::Prompt).with_extension(Suffix::Json);
-                PyHelperFuncs::save_to_json(&chat_prompt, &card_save_path)?;
+                PyHelperFuncs::save_to_json(chat_prompt, &card_save_path)?;
 
                 Ok(())
             }
