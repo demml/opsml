@@ -522,6 +522,96 @@ impl Default for AuditCardRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct PromptCardRecord {
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
+    pub name: String,
+    pub repository: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub version: String,
+    pub tags: Json<Vec<String>>,
+    pub prompt_type: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
+    pub username: String,
+}
+
+#[allow(clippy::too_many_arguments)]
+impl PromptCardRecord {
+    pub fn new(
+        name: String,
+        repository: String,
+        version: Version,
+        tags: Vec<String>,
+        prompt_type: String,
+        experimentcard_uid: Option<String>,
+        auditcard_uid: Option<String>,
+        username: String,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = Uuid::new_v4().to_string();
+
+        PromptCardRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            repository,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: version.pre.to_string().parse().ok(),
+            build_tag: version.build.to_string().parse().ok(),
+            version: version.to_string(),
+            tags: Json(tags),
+            prompt_type,
+            experimentcard_uid,
+            auditcard_uid,
+            username,
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Data,
+            self.repository,
+            self.name,
+            self.version
+        )
+    }
+}
+
+impl Default for PromptCardRecord {
+    fn default() -> Self {
+        PromptCardRecord {
+            uid: Uuid::new_v4().to_string(),
+            created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            repository: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            tags: Json(Vec::new()),
+            prompt_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
+            username: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
@@ -530,6 +620,7 @@ pub enum CardResults {
     Model(Vec<ModelCardRecord>),
     Experiment(Vec<ExperimentCardRecord>),
     Audit(Vec<AuditCardRecord>),
+    Prompt(Vec<PromptCardRecord>),
 }
 
 impl CardResults {
@@ -539,6 +630,7 @@ impl CardResults {
             CardResults::Model(cards) => cards.len(),
             CardResults::Experiment(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
+            CardResults::Prompt(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -547,6 +639,7 @@ impl CardResults {
             CardResults::Model(cards) => cards.is_empty(),
             CardResults::Experiment(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
+            CardResults::Prompt(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -567,6 +660,10 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
+            CardResults::Prompt(cards) => cards
+                .iter()
+                .map(|card| serde_json::to_string_pretty(card).unwrap())
+                .collect(),
         }
     }
 }
@@ -577,6 +674,7 @@ pub enum ServerCard {
     Model(ModelCardRecord),
     Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
+    Prompt(PromptCardRecord),
 }
 
 impl ServerCard {
@@ -586,6 +684,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.uid.as_str(),
             ServerCard::Experiment(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
+            ServerCard::Prompt(card) => card.uid.as_str(),
         }
     }
 
@@ -595,6 +694,7 @@ impl ServerCard {
             ServerCard::Model(_) => RegistryType::Model.to_string(),
             ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
+            ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
         }
     }
 
@@ -604,6 +704,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.version.clone(),
             ServerCard::Experiment(card) => card.version.clone(),
             ServerCard::Audit(card) => card.version.clone(),
+            ServerCard::Prompt(card) => card.version.clone(),
         }
     }
 
@@ -613,6 +714,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.repository.clone(),
             ServerCard::Experiment(card) => card.repository.clone(),
             ServerCard::Audit(card) => card.repository.clone(),
+            ServerCard::Prompt(card) => card.repository.clone(),
         }
     }
 
@@ -622,6 +724,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.name.clone(),
             ServerCard::Experiment(card) => card.name.clone(),
             ServerCard::Audit(card) => card.name.clone(),
+            ServerCard::Prompt(card) => card.name.clone(),
         }
     }
 
@@ -631,6 +734,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.uri(),
             ServerCard::Experiment(card) => card.uri(),
             ServerCard::Audit(card) => card.uri(),
+            ServerCard::Prompt(card) => card.uri(),
         }
     }
 
@@ -640,6 +744,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.app_env.clone(),
             ServerCard::Experiment(card) => card.app_env.clone(),
             ServerCard::Audit(card) => card.app_env.clone(),
+            ServerCard::Prompt(card) => card.app_env.clone(),
         }
     }
 
@@ -649,6 +754,7 @@ impl ServerCard {
             ServerCard::Model(card) => card.created_at,
             ServerCard::Experiment(card) => card.created_at,
             ServerCard::Audit(card) => card.created_at,
+            ServerCard::Prompt(card) => card.created_at,
         }
     }
 }
