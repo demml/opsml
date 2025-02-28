@@ -152,3 +152,23 @@ CREATE TABLE IF NOT EXISTS opsml_operations (
     access_location VARCHAR(255) NOT NULL
 );
 CREATE INDEX idx_opsml_operations_created_at ON opsml_operations (created_at);
+
+-- DataSchema
+CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
+    uid VARCHAR(64) PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    app_env VARCHAR(32) DEFAULT 'development',
+    name VARCHAR(128),
+    repository VARCHAR(128),
+    major INTEGER NOT NULL,
+    minor INTEGER NOT NULL,
+    patch INTEGER NOT NULL,
+    pre_tag VARCHAR(16),
+    build_tag VARCHAR(16),
+    version VARCHAR(64),
+    tags JSONB DEFAULT '[]',
+    prompt_type VARCHAR(64),
+    experimentcard_uid VARCHAR(64),
+    auditcard_uid VARCHAR(64),
+    username VARCHAR(255) NOT NULL DEFAULT 'guest'
+);
