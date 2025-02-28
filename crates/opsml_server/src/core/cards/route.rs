@@ -380,6 +380,36 @@ pub async fn update_card(
             };
             ServerCard::Audit(server_card)
         }
+
+        Card::Prompt(client_card) => {
+            let version = Version::parse(&client_card.version).map_err(|e| {
+                error!("Failed to parse version: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({})),
+                )
+            })?;
+
+            let server_card = PromptCardRecord {
+                uid: client_card.uid,
+                created_at: client_card.created_at,
+                app_env: client_card.app_env,
+                name: client_card.name,
+                repository: client_card.repository,
+                major: version.major as i32,
+                minor: version.minor as i32,
+                patch: version.patch as i32,
+                pre_tag: Some(version.pre.to_string()),
+                build_tag: Some(version.build.to_string()),
+                version: client_card.version,
+                tags: SqlxJson(client_card.tags),
+                prompt_type: client_card.prompt_type,
+                experimentcard_uid: client_card.experimentcard_uid,
+                auditcard_uid: client_card.auditcard_uid,
+                username: client_card.username,
+            };
+            ServerCard::Prompt(server_card)
+        }
     };
 
     state
