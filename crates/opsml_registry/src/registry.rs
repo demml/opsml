@@ -1,5 +1,5 @@
 use crate::enums::OpsmlRegistry;
-use crate::utils::{download_card, upload_card_artifacts, verify_card};
+use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
@@ -259,6 +259,8 @@ impl CardRegistry {
     pub fn delete_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
         debug!("Deleting card");
 
+        check_if_card(card)?;
+
         self.runtime
             .block_on(async {
                 // update card
@@ -278,6 +280,7 @@ impl CardRegistry {
     #[instrument(skip_all)]
     pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
         debug!("Updating card");
+        check_if_card(card)?;
         self.runtime
             .block_on(async {
                 // update card
