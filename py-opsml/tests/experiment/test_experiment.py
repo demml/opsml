@@ -3,7 +3,7 @@ from opsml.experiment import (
     Metric,
     Parameter,
 )
-from opsml import (
+from opsml import (  # type: ignore
     start_experiment,
     get_experiment_metrics,
     get_experiment_parameters,

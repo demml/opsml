@@ -9,8 +9,7 @@ use hkdf::Hkdf;
 use hmac::Hmac;
 use opsml_error::CryptError;
 use pbkdf2::pbkdf2;
-use rand::rngs::OsRng as RandOsRng;
-use rand::RngCore;
+use rand::{rngs::OsRng as RandOsRng, TryRngCore};
 use sha2::Sha256;
 
 const PBKDF2_ITERATIONS: u32 = 100_000;
@@ -69,10 +68,12 @@ pub fn derive_encryption_key(
 }
 
 /// Generate a random salt
-pub fn generate_salt() -> [u8; 16] {
+pub fn generate_salt() -> Result<[u8; 16], CryptError> {
     let mut salt = [0u8; 16];
-    RandOsRng.fill_bytes(&mut salt);
-    salt
+    RandOsRng
+        .try_fill_bytes(&mut salt)
+        .map_err(|_| CryptError::Error("Failed to generate salt".to_string()))?;
+    Ok(salt)
 }
 
 /// Encrypt a key using AES-256-GCM
@@ -156,24 +157,24 @@ mod tests {
     fn test_derive_master_key() {
         let password = b"password";
         let salt = generate_salt();
-        let master_key = derive_master_key(password, &salt, Some(2)).unwrap();
+        let master_key = derive_master_key(password, &salt.unwrap(), Some(2)).unwrap();
         assert_eq!(master_key.len(), 32);
     }
 
     #[test]
     fn test_generate_salt() {
-        let salt = generate_salt();
+        let salt = generate_salt().unwrap();
         assert_eq!(salt.len(), 16);
 
         let password = b"password";
         let salt = generate_salt();
-        let _key = derive_master_key(password, &salt, Some(1)).unwrap();
+        let _key = derive_master_key(password, &salt.unwrap(), Some(1)).unwrap();
     }
 
     #[test]
     fn test_derive_encryption_key() {
         let password = b"password";
-        let salt = generate_salt();
+        let salt = generate_salt().unwrap();
         let master_key = derive_master_key(password, &salt, Some(2)).unwrap();
         let info = b"info";
         let derived_key = derive_encryption_key(&master_key, &salt, info).unwrap();

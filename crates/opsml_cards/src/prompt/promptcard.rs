@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::{CardError, OpsmlError};
+use opsml_types::contracts::{Card, PromptCardClientRecord};
 use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use potato_lib::ChatPrompt;
@@ -28,6 +29,12 @@ impl Prompt {
             }
         }
     }
+
+    pub fn prompt_type(&self) -> PromptType {
+        match self {
+            Prompt::Chat(prompt) => prompt.prompt_type.clone(),
+        }
+    }
 }
 
 #[pyclass]
@@ -35,6 +42,9 @@ impl Prompt {
 pub struct PromptCardMetadata {
     #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
+
+    #[pyo3(get, set)]
+    pub auditcard_uid: Option<String>,
 }
 
 #[pyclass]
@@ -163,5 +173,23 @@ impl PromptCard {
             error!("Failed to validate json: {}", e);
             OpsmlError::new_err(e.to_string())
         })
+    }
+
+    pub fn get_registry_card(&self) -> Result<Card, CardError> {
+        let record = PromptCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            repository: self.repository.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            prompt_type: self.prompt.prompt_type().to_string(),
+            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(Card::Prompt(record))
     }
 }

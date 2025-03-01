@@ -155,8 +155,8 @@ pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 mod tests {
     use super::*;
     use crate::key::{derive_encryption_key, derive_master_key, generate_salt};
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::io::Read;
 
@@ -165,7 +165,7 @@ mod tests {
         let file_size = *chunk_size as f64 * 2.1;
 
         while file.metadata().unwrap().len() <= file_size as u64 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
@@ -208,8 +208,10 @@ mod tests {
             .unwrap();
 
         // setup keys
-        let master_key = derive_master_key(b"password", &generate_salt(), Some(2)).unwrap();
-        let derived_key = derive_encryption_key(&master_key, &generate_salt(), b"info").unwrap();
+        let master_key =
+            derive_master_key(b"password", &generate_salt().unwrap(), Some(2)).unwrap();
+        let derived_key =
+            derive_encryption_key(&master_key, &generate_salt().unwrap(), b"info").unwrap();
 
         // encrypt the directory
         encrypt_directory(&input_path, &derived_key).unwrap();

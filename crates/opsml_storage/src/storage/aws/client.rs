@@ -894,8 +894,8 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::path::Path;
     use tempfile::TempDir;
@@ -904,7 +904,7 @@ mod tests {
         let mut file = File::create(name).expect("Could not create sample file.");
 
         while file.metadata().unwrap().len() <= chunk_size * 2 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
