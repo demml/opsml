@@ -54,7 +54,7 @@ pub struct PostgresQueryHelper;
 
 impl PostgresQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = $1", table).to_string()
+        format!("SELECT uid FROM {} WHERE uid = $1", table)
     }
 
     pub fn get_user_insert_query() -> String {
@@ -62,7 +62,6 @@ impl PostgresQueryHelper {
             "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES ($1, $2, $3, $4)",
             CardTable::Users
         )
-        .to_string()
     }
 
     pub fn get_user_query() -> String {
@@ -70,7 +69,6 @@ impl PostgresQueryHelper {
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = $1",
             CardTable::Users
         )
-        .to_string()
     }
 
     pub fn get_user_update_query() -> String {
@@ -84,7 +82,6 @@ impl PostgresQueryHelper {
             WHERE username = $6",
             CardTable::Users
         )
-        .to_string()
     }
 
     pub fn get_hardware_metric_query() -> String {
@@ -106,7 +103,6 @@ impl PostgresQueryHelper {
             ) VALUES ($1, $2, $3, $4, $5)",
             CardTable::Metrics
         )
-        .to_string()
     }
 
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
@@ -333,8 +329,7 @@ impl PostgresQueryHelper {
                 value
             ) VALUES ",
             CardTable::Parameters
-        )
-        .to_string();
+        );
 
         for i in 0..nbr_records {
             if i > 0 {
