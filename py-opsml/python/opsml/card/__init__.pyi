@@ -2,7 +2,7 @@
 # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, overload, Literal
+from typing import Any, Dict, List, Optional, Union
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
