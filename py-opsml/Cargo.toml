@@ -29,3 +29,10 @@ tokio = { workspace = true, optional = true }
 [features]
 default = []
 server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest"]
+
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+debug = false
