@@ -28,7 +28,7 @@ impl AuthManager {
     }
 
     fn generate_salt(&self) -> String {
-        rand::thread_rng()
+        rand::rng()
             .sample_iter(&Alphanumeric)
             .take(16)
             .map(char::from)
