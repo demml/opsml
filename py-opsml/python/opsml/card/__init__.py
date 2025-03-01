@@ -14,6 +14,7 @@ ModelCard = card.ModelCard
 ModelCardMetadata = card.ModelCardMetadata
 ExperimentCard = card.ExperimentCard
 ComputeEnvironment = card.ComputeEnvironment
+PromptCard = card.PromptCard
 
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "ModelCardMetadata",
     "ExperimentCard",
     "ComputeEnvironment",
+    "PromptCard",
 ]

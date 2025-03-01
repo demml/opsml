@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
-from ..card import DataCard, ExperimentCard, ModelCard
+from ..card import DataCard, ExperimentCard, ModelCard, PromptCard
 from ..core import VersionType
 from ..data import DataSaveKwargs
 from ..model import ModelSaveKwargs
@@ -132,7 +132,7 @@ class Experiment:
 
     def register_card(
         self,
-        card: Union[DataCard, ModelCard],
+        card: Union[DataCard, ModelCard, PromptCard],
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,

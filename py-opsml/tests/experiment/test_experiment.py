@@ -12,6 +12,8 @@ from opsml import (
     ModelCardMetadata,
     PandasData,
     SklearnModel,
+    ChatPrompt,
+    PromptCard,
 )
 import joblib  # type: ignore
 from pathlib import Path
@@ -162,3 +164,17 @@ def test_experimentcard_register(
                 ),
             )
             exp.register_card(modelcard)
+
+            # test prompt
+            prompt = ChatPrompt(
+                model="gpt-4o",
+                messages=[
+                    {"role": "developer", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "Hello!"},
+                ],
+                logprobs=True,
+                top_logprobs=2,
+            )
+
+            prompt_card = PromptCard(interface=prompt, repository="test", name="test")
+            exp.register_card(prompt_card)

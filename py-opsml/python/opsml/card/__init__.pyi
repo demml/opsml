@@ -1,8 +1,8 @@
 # pylint: disable=dangerous-default-value
-
+# type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, overload, Literal
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
@@ -951,7 +951,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: Union[DataCard, ModelCard],
+        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
@@ -1004,7 +1004,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: Union[DataCard, ModelCard],
+        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
     ) -> None:
         """Update a Card in the registry.
         Note: This will only update the registry record for a given card. It
@@ -1018,7 +1018,7 @@ class CardRegistry:
 
     def delete_card(
         self,
-        card: Union[DataCard, ModelCard],
+        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
     ) -> None:
         """Delete a Card from the registry. This will also remove
         the underlying artifacts associated with the card.
@@ -1035,3 +1035,4 @@ class CardRegistries:
     def model(self) -> CardRegistry: ...
     def experiment(self) -> CardRegistry: ...
     def audit(self) -> CardRegistry: ...
+    def prompt(self) -> CardRegistry: ...
