@@ -138,7 +138,7 @@ pub mod server_logic {
             registry_type: &str,
             storage_key: &str,
         ) -> Result<ArtifactKey, RegistryError> {
-            let salt = generate_salt();
+            let salt = generate_salt()?;
 
             let derived_key = derive_encryption_key(
                 &self.storage_settings.encryption_key,
