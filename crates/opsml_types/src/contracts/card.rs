@@ -557,6 +557,22 @@ struct CardTableEntry {
     uid: String,
 }
 
+#[pyclass]
+struct CardListIter {
+    inner: std::vec::IntoIter<Card>,
+}
+
+#[pymethods]
+impl CardListIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Card> {
+        slf.inner.next()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[pyclass]
 pub struct CardList {
@@ -568,6 +584,17 @@ pub struct CardList {
 impl CardList {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn __getitem__(&self, index: usize) -> Option<Card> {
+        self.cards.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
+        let iter = CardListIter {
+            inner: slf.cards.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
     }
 
     pub fn __len__(&self) -> usize {
