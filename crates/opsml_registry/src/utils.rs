@@ -6,12 +6,39 @@ use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use pyo3::prelude::*;
+use pyo3::types::PyString;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
 use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
+
+pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
+    let is_card: bool = card
+        .getattr("is_card")
+        .map_err(|e| {
+            error!("Failed to access is_card attribute: {}", e);
+            RegistryError::Error("Invalid card structure".to_string())
+        })?
+        .extract()
+        .map_err(|e| {
+            error!("Failed to extract is_card value: {}", e);
+            RegistryError::Error("Invalid card type".to_string())
+        })?;
+
+    if is_card {
+        Ok(())
+    } else {
+        let type_name = card
+            .get_type()
+            .name()
+            .unwrap_or_else(|_| PyString::new(card.py(), &CommonKwargs::Undefined.to_string()));
+        Err(RegistryError::Error(format!(
+            "Invalid card type: {type_name}"
+        )))
+    }
+}
 
 /// Create a card from a json string
 ///
@@ -221,6 +248,8 @@ pub async fn verify_card(
     card: &Bound<'_, PyAny>,
     registry_type: &RegistryType,
 ) -> Result<(), RegistryError> {
+    check_if_card(card)?;
+
     if card.is_instance_of::<ModelCard>() {
         let datacard_uid = card
             .getattr("metadata")
