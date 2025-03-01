@@ -412,12 +412,13 @@ impl MySQLQueryHelper {
             tags, 
             datacard_uids,
             modelcard_uids, 
+            promptcard_uids,
             experimentcard_uids,
             pre_tag, 
             build_tag,
             username
             ) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Experiment
         )
     }
@@ -531,6 +532,7 @@ impl MySQLQueryHelper {
             tags = ?, 
             datacard_uids = ?, 
             modelcard_uids = ?, 
+            promptcard_uids = ?,
             experimentcard_uids = ?,
             pre_tag = ?, 
             build_tag = ?,

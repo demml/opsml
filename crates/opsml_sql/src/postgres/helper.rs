@@ -388,7 +388,6 @@ impl PostgresQueryHelper {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
             CardTable::HardwareMetrics
         )
-        .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
@@ -414,32 +413,30 @@ impl PostgresQueryHelper {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Data
         )
-        .to_string()
     }
 
     pub fn get_promptcard_insert_query() -> String {
         format!(
             "INSERT INTO {} (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        prompt_type, 
-        tags, 
-        experimentcard_uid, 
-        auditcard_uid, 
-        pre_tag, 
-        build_tag,
-        username
-        ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+            uid, 
+            app_env, 
+            name, 
+            repository, 
+            major, 
+            minor, 
+            patch, 
+            version, 
+            prompt_type, 
+            tags, 
+            experimentcard_uid, 
+            auditcard_uid, 
+            pre_tag, 
+            build_tag,
+            username
+            ) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
             CardTable::Prompt
         )
-        .to_string()
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -464,7 +461,7 @@ impl PostgresQueryHelper {
         build_tag,
         username
         ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model).to_string()
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", CardTable::Model)
     }
 
     pub fn get_experimentcard_insert_query() -> String {
@@ -490,7 +487,6 @@ impl PostgresQueryHelper {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Experiment
         )
-        .to_string()
     }
 
     pub fn get_auditcard_insert_query() -> String {
@@ -516,31 +512,29 @@ impl PostgresQueryHelper {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
             CardTable::Audit
         )
-        .to_string()
     }
 
     pub fn get_datacard_update_query() -> String {
         format!(
             "UPDATE {} SET 
-        app_env = $1, 
-        name = $2, 
-        repository = $3, 
-        major = $4, 
-        minor = $5, 
-        patch = $6, 
-        version = $7, 
-        data_type = $8, 
-        interface_type = $9, 
-        tags = $10, 
-        experimentcard_uid = $11, 
-        auditcard_uid = $12, 
-        pre_tag = $13, 
-        build_tag = $14,
-        username = $15
-        WHERE uid = $16",
+            app_env = $1, 
+            name = $2, 
+            repository = $3, 
+            major = $4, 
+            minor = $5, 
+            patch = $6, 
+            version = $7, 
+            data_type = $8, 
+            interface_type = $9, 
+            tags = $10, 
+            experimentcard_uid = $11, 
+            auditcard_uid = $12, 
+            pre_tag = $13, 
+            build_tag = $14,
+            username = $15
+            WHERE uid = $16",
             CardTable::Data
         )
-        .to_string()
     }
 
     pub fn get_promptcard_update_query() -> String {
@@ -563,7 +557,6 @@ impl PostgresQueryHelper {
         WHERE uid = $15",
             CardTable::Prompt
         )
-        .to_string()
     }
 
     pub fn get_modelcard_update_query() -> String {
@@ -590,31 +583,29 @@ impl PostgresQueryHelper {
         WHERE uid = $19",
             CardTable::Model
         )
-        .to_string()
     }
 
     pub fn get_experimentcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
-        app_env = $1, 
-        name = $2, 
-        repository = $3, 
-        major = $4, 
-        minor = $5, 
-        patch = $6, 
-        version = $7, 
-        tags = $8, 
-        datacard_uids = $9, 
-        modelcard_uids = $10, 
-        promptcard_uids = $11,
-        experimentcard_uids = $12, 
-        pre_tag = $13, 
-        build_tag = $14,
-        username = $15
-        WHERE uid = $16",
+            app_env = $1, 
+            name = $2, 
+            repository = $3, 
+            major = $4, 
+            minor = $5, 
+            patch = $6, 
+            version = $7, 
+            tags = $8, 
+            datacard_uids = $9, 
+            modelcard_uids = $10, 
+            promptcard_uids = $11,
+            experimentcard_uids = $12, 
+            pre_tag = $13, 
+            build_tag = $14,
+            username = $15
+            WHERE uid = $16",
             CardTable::Experiment
         )
-        .to_string()
     }
 
     pub fn get_auditcard_update_query() -> String {
@@ -638,7 +629,6 @@ impl PostgresQueryHelper {
         WHERE uid = $16",
             CardTable::Audit
         )
-        .to_string()
     }
 
     pub fn get_artifact_key_insert_query() -> String {
@@ -646,7 +636,6 @@ impl PostgresQueryHelper {
             "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES ($1, $2, $3, $4)",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_artifact_key_select_query() -> String {
@@ -654,7 +643,6 @@ impl PostgresQueryHelper {
             "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_artifact_key_update_query() -> String {
@@ -662,7 +650,6 @@ impl PostgresQueryHelper {
             "UPDATE {} SET encrypted_key = $1, created_at = NOW() WHERE uid = $2 AND registry_type = $3",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_operation_insert_query() -> String {
@@ -670,7 +657,6 @@ impl PostgresQueryHelper {
             "INSERT INTO {} (username, access_type, access_location) VALUES ($1, $2, $3)",
             CardTable::Operations
         )
-        .to_string()
     }
 
     pub fn get_load_card_query(
@@ -701,6 +687,5 @@ impl PostgresQueryHelper {
             "DELETE FROM {} WHERE uid = $1 AND registry_type = $2",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 }
