@@ -66,7 +66,7 @@ password-auth = "1.*"
 pbkdf2 = "0.*"
 potato-lib = { git = "https://github.com/demml/potatohead.git", branch = "add-rust-release" }
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
-rand = { version = "0.*", features = ["os_rng"] }
+rand = { version = "0.*"}
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
