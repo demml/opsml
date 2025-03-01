@@ -42,3 +42,4 @@ from .model import TensorFlowModel as TensorFlowModel
 from .model import TorchModel as TorchModel
 from .model import XGBoostModel as XGBoostModel
 from .potato_head import ChatPrompt as ChatPrompt
+from .card import PromptCard as PromptCard

@@ -103,16 +103,6 @@ class Message:
         $1, $2, $3, etc. These arguments will be replaced with the corresponding context
         when bound.
 
-        Example:
-        ```python
-            message = Message("system", "Params: $1, $2")
-            message.bind("world")
-            message.bind("hello")
-
-
-
-        ```
-
         Args:
             role (str)
                 The role to assign the message. Refer to the
@@ -132,6 +122,13 @@ class Message:
                 The content of the message.
             name (Optional[str]):
                 An optional name for the participant.
+
+        Example:
+        ```python
+            message = Message("system", "Params: $1, $2")
+            message.bind("world")
+            message.bind("hello")
+        ```
         """
 
     @property
@@ -151,30 +148,6 @@ class ChatPrompt:
         **kwargs,
     ) -> None:
         """ChatPrompt for interacting with an LLM Chat API.
-
-
-        Example:
-        ```python
-            ChatPrompt(
-                model="gpt-4o",
-                messages=[
-                    {"role": "developer", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "Hello!"},
-                ],
-                logprobs=True,
-                top_logprobs=2,
-            )
-
-
-            ChatPrompt(
-                model="gpt-4o",
-                messages=[
-                    Message("developer", "You are a helpful assistant."),
-                ],
-                logprobs=True,
-                top_logprobs=2,
-            )
-        ```
 
         Args:
             model (str):
@@ -201,6 +174,29 @@ class ChatPrompt:
                     Number of most likely tokens to return log probabilities for.
                 - max_tokens (int):
                     Maximum number of tokens to generate.
+
+         Example:
+        ```python
+        ChatPrompt(
+            model="gpt-4o",
+            messages=[
+                {"role": "developer", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Hello!"},
+            ],
+            logprobs=True,
+            top_logprobs=2,
+        )
+
+
+        ChatPrompt(
+            model="gpt-4o",
+            messages=[
+                Message("developer", "You are a helpful assistant."),
+            ],
+            logprobs=True,
+            top_logprobs=2,
+        )
+        ```
         """
 
     @property

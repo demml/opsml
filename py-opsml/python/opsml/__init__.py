@@ -55,3 +55,4 @@ VersionType = core.VersionType
 
 # Potato Head
 ChatPrompt = potato_head.ChatPrompt
+PromptCard = card.PromptCard
