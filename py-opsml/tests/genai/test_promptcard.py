@@ -48,4 +48,3 @@ def test_promptcard_crud() -> None:
         cards = reg.list_cards()
 
         assert cards.__len__() == 0
-    a
