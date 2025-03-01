@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
+from ..potato_head import ChatPrompt
 
 class RegistryType:
     Data: "RegistryType"
@@ -78,6 +79,29 @@ class DataCard:
                 The uid of the card
             tags (List[str]):
                 The tags of the card
+
+        Example:
+        ```python
+        from opsml import DataCard, CardRegistry, RegistryType, PandasData
+
+        # for testing purposes
+        from opsml.helpers.data import create_fake_data
+
+        # pandas data
+        X, _ = create_fake_data(n_samples=1200)
+
+        interface = PandasData(data=X)
+        datacard = DataCard(
+            interface=interface,
+            repository="my-repo",
+            name="my-name",
+            tags=["foo:bar", "baz:qux"],
+        )
+
+        # register card
+        registry = CardRegistry(RegistryType.Data)
+        registry.register_card(datacard)
+        ```
         """
 
     @property
@@ -225,6 +249,21 @@ class DataCard:
     def model_dump_json(self) -> str:
         """Return the model dump as a json string"""
 
+    @staticmethod
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
+        """Validate the model json string
+
+        Args:
+            json_str (str):
+                The json string to validate
+            interface (DataInterface):
+                By default, the interface will be inferred and instantiated
+                from the interface metadata. If an interface is provided
+                (as in the case of custom interfaces), it will be used.
+        """
+
 class DataCardMetadata:
     @property
     def schema(self) -> FeatureSchema:
@@ -323,6 +362,41 @@ class ModelCard:
                 Metadata to associate with the `ModelCard. Defaults to an empty `ModelCardMetadata` object.
             to_onnx:
                 Whether to convert the model to onnx or not during registration
+
+        Example:
+        ```python
+        from opsml import ModelCard, CardRegistry, RegistryType, SklearnModel, TaskType
+        from sklearn import ensemble
+
+        # for testing purposes
+        from opsml.helpers.data import create_fake_data
+
+        # pandas data
+        X, y = create_fake_data(n_samples=1200)
+
+        # train model
+        reg = ensemble.RandomForestClassifier(n_estimators=5)
+        reg.fit(X_train.to_numpy(), y_train)
+
+        # create interface and card
+        interface = SklearnModel(
+            model=reg,
+            sample_data=X_train,
+            task_type=TaskType.Classification,
+        )
+
+        modelcard = ModelCard(
+            interface=random_forest_classifier,
+            repository="my-repo",
+            name="my-model",
+            to_onnx=True, # auto-convert to onnx
+            tags=["foo:bar", "baz:qux"],
+        )
+
+        # register card
+        registry = CardRegistry(RegistryType.Model)
+        registry.register_card(modelcard)
+        ```
         """
 
     @property
@@ -460,15 +534,17 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_str: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
             json_str (str):
                 The json string to validate
             interface (ModelInterface):
-                By default, the interface willbe inferred and insantiated
-                from the interface metdata. If an interface is provided
+                By default, the interface will be inferred and instantiated
+                from the interface metadata. If an interface is provided
                 (as in the case of custom interfaces), it will be used.
         """
 
@@ -517,6 +593,16 @@ class ExperimentCard:
             tags (List[str]):
                 Tags to associate with `ExperimentCard`. Can be a dictionary of strings or
                 a `Tags` object.
+
+        Example:
+        ```python
+        from opsml import start_experiment
+
+        # start an experiment
+        with start_experiment(repository="test", log_hardware=True) as exp:
+            exp.log_metric("accuracy", 0.95)
+            exp.log_parameter("epochs", 10)
+        ```
         """
 
     @property
@@ -640,6 +726,156 @@ class ExperimentCard:
                 to a directory called "artifacts"
         """
 
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ExperimentCard":
+        """Load card from json string
+
+        Args:
+            json_string (str):
+                The json string to validate
+        """
+
+    def __str__(self) -> str:
+        """Return a string representation of the `ExperimentCard`.
+
+        Returns:
+            String representation of the ModelCard.
+        """
+
+class PromptCard:
+    def __init__(
+        self,
+        prompt: ChatPrompt,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        uid: Optional[str] = None,
+        tags: List[str] = [],
+    ) -> None:
+        """Creates a `PromptCard`.
+
+        Cards are stored in the PromptCard Registry and follow the naming convention of:
+        {registry}/{repository}/{name}/v{version}
+
+
+        Args:
+            prompt (ChatPrompt):
+                Prompt to associate with `PromptCard`
+            repository (str | None):
+                Repository to associate with `PromptCard`
+            name (str | None):
+                Name to associate with `PromptCard`
+            version (str | None):
+                Current version (assigned if card has been registered). Follows
+                semantic versioning.
+            uid (str | None):
+                Unique id (assigned if card has been registered)
+            tags (List[str]):
+                Tags to associate with `PromptCard`. Can be a dictionary of strings or
+                a `Tags` object.
+
+        Example:
+        ```python
+        from opsml import ChatPrompt, PromptCard, CardRegistry, RegistryType
+
+        # create prompt
+        prompt = ChatPrompt(
+            model="gpt-4o",
+            messages=[
+                {"role": "developer", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Hello!"},
+            ],
+            logprobs=True,
+            top_logprobs=2,
+        )
+
+        # create card
+        card = PromptCard(
+            prompt=prompt,
+            repository="my-repo",
+            name="my-prompt",
+            version="0.0.1",
+            tags=["gpt-4o", "prompt"],
+        )
+
+        # register card
+        registry = CardRegistry(RegistryType.Prompt)
+        registry.register_card(card)
+        ```
+        """
+
+    @property
+    def experimentcard_uid(self) -> str:
+        """Returns the experimentcard uid"""
+
+    @experimentcard_uid.setter
+    def experimentcard_uid(self, experimentcard_uid: str) -> None:
+        """Set the experimentcard uid"""
+
+    @property
+    def name(self) -> str:
+        """Returns the name of the `ModelCard`"""
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the name of the `ModelCard`
+
+        Args:
+            name (str):
+                The name of the `ModelCard`
+        """
+
+    @property
+    def repository(self) -> str:
+        """Returns the repository of the `ModelCard`"""
+
+    @repository.setter
+    def repository(self, repository: str) -> None:
+        """Set the repository of the `ModelCard`
+
+        Args:
+            repository (str):
+                The repository of the `ModelCard`
+        """
+
+    @property
+    def version(self) -> str:
+        """Returns the version of the `ModelCard`"""
+
+    @version.setter
+    def version(self, version: str) -> None:
+        """Set the version of the `ModelCard`
+
+        Args:
+            version (str):
+                The version of the `ModelCard`
+        """
+
+    @property
+    def uid(self) -> str:
+        """Returns the uid of the `ModelCard`"""
+
+    @property
+    def tags(self) -> List[str]:
+        """Returns the tags of the `ModelCard`"""
+
+    def save(self, path: Path) -> None:
+        """Save the `PromptCard` to a directory
+
+        Args:
+            path (Path):
+                Path to save the prompt card.
+        """
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "PromptCard":
+        """Load card from json string
+
+        Args:
+            json_str (str):
+                The json string to validate
+        """
+
 class CardRegistry:
     def __init__(self, registry_type: RegistryType | str) -> None:
         """Interface for connecting to any of the Card registries
@@ -653,12 +889,14 @@ class CardRegistry:
 
 
         Example:
+        ```python
             data_registry = CardRegistry(RegistryType.Data)
             data_registry.list_cards()
 
             or
             data_registry = CardRegistry("data")
             data_registry.list_cards()
+        ```
         """
 
     @property
