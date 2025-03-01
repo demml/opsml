@@ -5,6 +5,8 @@ from opsml import (
     RegistryMode,
     ModelCard,
     DataCard,
+    PromptCard,
+    ChatPrompt,
 )
 from opsml.card import CardList
 from opsml.model import SklearnModel
@@ -88,6 +90,38 @@ def crud_datacard(pandas_data: PandasData):
     assert updated_card.name == "test2"
 
     return updated_card, reg
+
+
+def crud_promptcard(prompt: ChatPrompt):
+    reg = CardRegistry(registry_type="prompt")
+
+    assert reg.registry_type == RegistryType.Prompt
+    assert reg.mode == RegistryMode.Client
+
+    cards = reg.list_cards()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 0
+
+    card = PromptCard(
+        prompt=prompt,
+        repository="test",
+        name="test",
+    )
+
+    reg.register_card(card)
+    cards = reg.list_cards()
+    cards.as_table()
+
+    assert isinstance(cards, CardList)
+    assert len(cards) == 1
+    loaded_card: PromptCard = reg.load_card(uid=card.uid)
+
+    assert loaded_card.name == card.name
+    assert loaded_card.repository == card.repository
+    assert loaded_card.tags == card.tags
+    assert loaded_card.uid == card.uid
+    assert loaded_card.version == card.version
 
 
 def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
