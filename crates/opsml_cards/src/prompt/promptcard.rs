@@ -89,6 +89,7 @@ pub struct PromptCard {
     #[pyo3(get, set)]
     pub created_at: NaiveDateTime,
 
+    #[pyo3(get)]
     pub is_card: bool,
 }
 

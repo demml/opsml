@@ -97,6 +97,7 @@ pub struct DataCard {
 
     pub artifact_key: Option<ArtifactKey>,
 
+    #[pyo3(get)]
     pub is_card: bool,
 }
 
