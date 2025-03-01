@@ -363,164 +363,204 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_datacard_insert_query() -> String {
-        "INSERT INTO opsml_data_registry (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)".to_string()
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version,  data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+    }
+
+    pub fn get_promptcard_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, prompt_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
     }
 
     pub fn get_modelcard_insert_query() -> String {
-        "INSERT INTO opsml_model_registry (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        datacard_uid, 
-        data_type, 
-        model_type, 
-        interface_type, 
-        task_type, 
-        tags, 
-        experimentcard_uid, 
-        auditcard_uid, 
-        pre_tag, 
-        build_tag,
-        username
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            .to_string()
+        format!(
+            "INSERT INTO {} (
+            uid, 
+            app_env, 
+            name, 
+            repository, 
+            major, 
+            minor, 
+            patch, 
+            version, 
+            datacard_uid, 
+            data_type, 
+            model_type, 
+            interface_type, 
+            task_type, 
+            tags, 
+            experimentcard_uid, 
+            auditcard_uid, 
+            pre_tag, 
+            build_tag,
+            username
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::Model
+        )
     }
 
     pub fn get_experimentcard_insert_query() -> String {
-        "INSERT INTO opsml_experiment_registry (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version,
-        tags, 
-        datacard_uids,
-        modelcard_uids, 
-        experimentcard_uids,
-        pre_tag, 
-        build_tag,
-        username
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            .to_string()
+        format!(
+            "INSERT INTO {} (
+            uid, 
+            app_env, 
+            name, 
+            repository, 
+            major, 
+            minor, 
+            patch, 
+            version,
+            tags, 
+            datacard_uids,
+            modelcard_uids, 
+            experimentcard_uids,
+            pre_tag, 
+            build_tag,
+            username
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::Experiment
+        )
     }
 
     pub fn get_auditcard_insert_query() -> String {
-        "INSERT INTO opsml_audit_registry (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        tags, 
-        approved, 
-        datacard_uids, 
-        modelcard_uids, 
-        experimentcard_uids, 
-        pre_tag, 
-        build_tag,
-        username
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-            .to_string()
+        format!(
+            "INSERT INTO {} (
+            uid, 
+            app_env, 
+            name, 
+            repository, 
+            major, 
+            minor, 
+            patch, 
+            version, 
+            tags, 
+            approved, 
+            datacard_uids, 
+            modelcard_uids, 
+            experimentcard_uids, 
+            pre_tag, 
+            build_tag,
+            username
+            ) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::Audit
+        )
+    }
+
+    pub fn get_promptcard_update_query() -> String {
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            repository = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            prompt_type = ?, 
+            tags = ?, 
+            experimentcard_uid = ?, 
+            auditcard_uid = ?, 
+            pre_tag = ?, 
+            build_tag = ?,
+            username = ?
+            WHERE uid = ?",
+            CardTable::Prompt
+        )
     }
 
     pub fn get_datacard_update_query() -> String {
-        "UPDATE opsml_data_registry SET 
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?, 
-        data_type = ?, 
-        interface_type = ?, 
-        tags = ?, 
-        experimentcard_uid = ?, 
-        auditcard_uid = ?, 
-        pre_tag = ?, 
-        build_tag = ?,
-        username = ?
-        WHERE uid = ?"
-            .to_string()
+        format!(
+            "UPDATE {} SET  
+            app_env = ?, 
+            name = ?, 
+            repository = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            data_type = ?, 
+            interface_type = ?, 
+            tags = ?, 
+            experimentcard_uid = ?, 
+            auditcard_uid = ?, 
+            pre_tag = ?, 
+            build_tag = ?,
+            username = ?
+            WHERE uid = ?",
+            CardTable::Data
+        )
     }
 
     pub fn get_modelcard_update_query() -> String {
-        "UPDATE opsml_model_registry SET 
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?, 
-        datacard_uid = ?, 
-        data_type = ?, 
-        model_type = ?, 
-        interface_type = ?, 
-        task_type = ?, 
-        tags = ?, 
-        experimentcard_uid = ?, 
-        auditcard_uid = ?, 
-        pre_tag = ?, 
-        build_tag = ?,
-        username = ?
-        WHERE uid = ?"
-            .to_string()
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            repository = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            datacard_uid = ?, 
+            data_type = ?, 
+            model_type = ?, 
+            interface_type = ?, 
+            task_type = ?, 
+            tags = ?, 
+            experimentcard_uid = ?, 
+            auditcard_uid = ?, 
+            pre_tag = ?, 
+            build_tag = ?,
+            username = ?
+            WHERE uid = ?",
+            CardTable::Model
+        )
     }
 
     pub fn get_experimentcard_update_query() -> String {
-        "UPDATE opsml_experiment_registry SET 
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?,
-        tags = ?, 
-        datacard_uids = ?, 
-        modelcard_uids = ?, 
-        experimentcard_uids = ?,
-        pre_tag = ?, 
-        build_tag = ?,
-        username = ?
-        WHERE uid = ?"
-            .to_string()
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            repository = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?,
+            tags = ?, 
+            datacard_uids = ?, 
+            modelcard_uids = ?, 
+            experimentcard_uids = ?,
+            pre_tag = ?, 
+            build_tag = ?,
+            username = ?
+            WHERE uid = ?",
+            CardTable::Experiment
+        )
     }
 
     pub fn get_auditcard_update_query() -> String {
-        "UPDATE opsml_audit_registry SET 
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?, 
-        tags = ?, 
-        approved = ?, 
-        datacard_uids = ?, 
-        modelcard_uids = ?, 
-        experimentcard_uids = ?, 
-        pre_tag = ?, 
-        build_tag = ?,
-        username = ?
-        WHERE uid = ?"
-            .to_string()
+        format!(
+            "UPDATE {} SET 
+            app_env = ?, 
+            name = ?, 
+            repository = ?, 
+            major = ?, 
+            minor = ?, 
+            patch = ?, 
+            version = ?, 
+            tags = ?, 
+            approved = ?, 
+            datacard_uids = ?, 
+            modelcard_uids = ?, 
+            experimentcard_uids = ?, 
+            pre_tag = ?, 
+            build_tag = ?,
+            username = ?
+            WHERE uid = ?",
+            CardTable::Audit
+        )
     }
 
     pub fn get_artifact_key_insert_query() -> String {

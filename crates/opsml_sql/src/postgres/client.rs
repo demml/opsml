@@ -2,9 +2,9 @@ use crate::base::SqlClient;
 
 use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord, PromptCardRecord
-    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, QueryStats, ServerCard,
-    User, VersionResult,
+    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
+    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
+    QueryStats, ServerCard, User, VersionResult,
 };
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
@@ -219,6 +219,20 @@ impl SqlClient for PostgresClient {
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
                 return Ok(CardResults::Audit(card));
+            }
+
+            CardTable::Prompt => {
+                let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.limit.unwrap_or(50))
+                    .fetch_all(&self.pool)
+                    .await
+                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+                return Ok(CardResults::Prompt(card));
             }
             _ => {
                 return Err(SqlError::QueryError(
@@ -1337,248 +1351,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_postgres_insert_cards() {
+    async fn test_postgres_crud_cards() {
         let client = db_client().await;
 
-        let data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
+        test_card_crud(&client, &CardTable::Data, "UpdatedDataName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert modelcard
-        let model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
+        test_card_crud(&client, &CardTable::Model, "UpdatedModelName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert experimentcard
-        let run_card = ExperimentCardRecord::default();
-        let card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .insert_card(&CardTable::Experiment, &card)
+        test_card_crud(&client, &CardTable::Experiment, "UpdatedRunName")
             .await
             .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Experiment, &card_args)
+        test_card_crud(&client, &CardTable::Audit, "UpdatedAuditName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert auditcard
-
-        let audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
+        test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn test_postgres_update_cards() {
-        let client = db_client().await;
-
-        // Test DataCardRecord
-        let mut data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        data_card.name = "UpdatedDataName".to_string();
-        let updated_card = ServerCard::Data(data_card.clone());
-
-        client
-            .update_card(&CardTable::Data, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Data(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedDataName");
-        }
-
-        // Test ModelCardRecord
-        let mut model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        model_card.name = "UpdatedModelName".to_string();
-        let updated_card = ServerCard::Model(model_card.clone());
-
-        client
-            .update_card(&CardTable::Model, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Model(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedModelName");
-        }
-
-        // Test experimentcardRecord
-        let mut run_card = ExperimentCardRecord::default();
-        let card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .insert_card(&CardTable::Experiment, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Experiment, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        run_card.name = "UpdatedRunName".to_string();
-        let updated_card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .update_card(&CardTable::Experiment, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Experiment, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Experiment(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedRunName");
-        }
-
-        // Test AuditCardRecord
-        let mut audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        audit_card.name = "UpdatedAuditName".to_string();
-        let updated_card = ServerCard::Audit(audit_card.clone());
-
-        client
-            .update_card(&CardTable::Audit, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Audit(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedAuditName");
-        }
     }
 
     #[tokio::test]
