@@ -2,7 +2,7 @@
 # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal, overload, TypeVar, Generic
 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
@@ -46,6 +46,12 @@ class Card:
 
 class CardList:
     cards: List[Card]
+
+    def __getitem__(self, key: int) -> Optional[Card]:
+        """Return the card at the specified index"""
+
+    def __iter__(self) -> Card:
+        """Return an iterator for the card list"""
 
     def as_table(self) -> None:
         """Print cards as a table"""
@@ -257,7 +263,7 @@ class DataCard:
         """Validate the model json string
 
         Args:
-            json_str (str):
+            json_string (str):
                 The json string to validate
             interface (DataInterface):
                 By default, the interface will be inferred and instantiated
@@ -541,7 +547,7 @@ class ModelCard:
         """Validate the model json string
 
         Args:
-            json_str (str):
+            json_string (str):
                 The json string to validate
             interface (ModelInterface):
                 By default, the interface will be inferred and instantiated
@@ -689,7 +695,7 @@ class ExperimentCard:
         """Add a child experiment to the experiment card
 
         Args:
-            experimentcard_uid (str):
+            uid (str):
                 The experiment card uid to add
         """
 
@@ -806,6 +812,19 @@ class PromptCard:
         """
 
     @property
+    def prompt(self) -> ChatPrompt:
+        """Returns the prompt"""
+
+    @prompt.setter
+    def prompt(self, prompt: ChatPrompt) -> None:
+        """Set the prompt
+
+        Args:
+            prompt (ChatPrompt):
+                The prompt to set
+        """
+
+    @property
     def experimentcard_uid(self) -> str:
         """Returns the experimentcard uid"""
 
@@ -873,12 +892,55 @@ class PromptCard:
         """Load card from json string
 
         Args:
-            json_str (str):
+            json_string (str):
                 The json string to validate
         """
 
-class CardRegistry:
-    def __init__(self, registry_type: RegistryType | str) -> None:
+    def __str__(self): ...
+
+# Define a TypeVar that can only be one of our card types
+CardType = TypeVar("CardType", DataCard, ModelCard, PromptCard, ExperimentCard)  # pylint: disable=invalid-name
+
+class CardRegistry(Generic[CardType]):
+    @overload
+    def __init__(
+        self, registry_type: Literal[RegistryType.Data]
+    ) -> "CardRegistry[DataCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal[RegistryType.Model]
+    ) -> "CardRegistry[ModelCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal[RegistryType.Prompt]
+    ) -> "CardRegistry[PromptCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal[RegistryType.Experiment]
+    ) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal[RegistryType.Audit]
+    ) -> "CardRegistry[Any]": ...
+
+    # String literal overloads
+    @overload
+    def __init__(self, registry_type: Literal["data"]) -> "CardRegistry[DataCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal["model"]
+    ) -> "CardRegistry[ModelCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal["prompt"]
+    ) -> "CardRegistry[PromptCard]": ...
+    @overload
+    def __init__(
+        self, registry_type: Literal["experiment"]
+    ) -> "CardRegistry[ExperimentCard]": ...
+    @overload
+    def __init__(self, registry_type: Literal["audit"]) -> "CardRegistry[Any]": ...
+    def __init__(self, registry_type: Union[RegistryType, str]) -> None:
         """Interface for connecting to any of the Card registries
 
         Args:
@@ -952,7 +1014,7 @@ class CardRegistry:
 
     def register_card(
         self,
-        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
+        card: CardType,
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
@@ -976,6 +1038,42 @@ class CardRegistry:
 
         """
 
+    @overload
+    def load_card(
+        self: "CardRegistry[DataCard]",
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[DataInterface] = None,
+    ) -> DataCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[ModelCard]",
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: Optional[ModelInterface] = None,
+    ) -> ModelCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[PromptCard]",
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: None = None,
+    ) -> PromptCard: ...
+    @overload
+    def load_card(
+        self: "CardRegistry[ExperimentCard]",
+        uid: Optional[str] = None,
+        repository: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        interface: None = None,
+    ) -> ExperimentCard: ...
     def load_card(
         self,
         uid: Optional[str] = None,
@@ -983,7 +1081,7 @@ class CardRegistry:
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[Union[DataInterface, ModelInterface]] = None,
-    ) -> Any:
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
         """Load a Card from the registry
 
         Args:
@@ -1005,7 +1103,7 @@ class CardRegistry:
 
     def update_card(
         self,
-        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
+        card: CardType,
     ) -> None:
         """Update a Card in the registry.
         Note: This will only update the registry record for a given card. It
@@ -1019,7 +1117,7 @@ class CardRegistry:
 
     def delete_card(
         self,
-        card: Union[DataCard, ModelCard, ExperimentCard, PromptCard],
+        card: CardType,
     ) -> None:
         """Delete a Card from the registry. This will also remove
         the underlying artifacts associated with the card.
@@ -1032,8 +1130,8 @@ class CardRegistry:
 
 class CardRegistries:
     def __init__(self) -> None: ...
-    def data(self) -> CardRegistry: ...
-    def model(self) -> CardRegistry: ...
-    def experiment(self) -> CardRegistry: ...
-    def audit(self) -> CardRegistry: ...
-    def prompt(self) -> CardRegistry: ...
+    def data(self) -> CardRegistry[DataCard]: ...
+    def model(self) -> CardRegistry[ModelCard]: ...
+    def experiment(self) -> CardRegistry[ExperimentCard]: ...
+    def audit(self) -> CardRegistry[Any]: ...
+    def prompt(self) -> CardRegistry[PromptCard]: ...

@@ -126,6 +126,8 @@ pub struct ModelCard {
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
 
     pub artifact_key: Option<ArtifactKey>,
+
+    pub is_card: bool,
 }
 
 #[pymethods]
@@ -214,6 +216,7 @@ impl ModelCard {
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
+            is_card: true,
         })
     }
 
@@ -428,12 +431,11 @@ impl Serialize for ModelCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ModelCard", 10)?;
+        let mut state = serializer.serialize_struct("ModelCard", 11)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
         state.serialize_field("repository", &self.repository)?;
-
         state.serialize_field("version", &self.version)?;
         state.serialize_field("uid", &self.uid)?;
         state.serialize_field("tags", &self.tags)?;
@@ -442,6 +444,7 @@ impl Serialize for ModelCard {
         state.serialize_field("to_onnx", &self.to_onnx)?;
         state.serialize_field("created_at", &self.created_at)?;
         state.serialize_field("app_env", &self.app_env)?;
+        state.serialize_field("is_card", &self.is_card)?;
         state.end()
     }
 }
@@ -477,6 +480,7 @@ impl FromPyObject<'_> for ModelCard {
             artifact_key: None,
             app_env,
             created_at,
+            is_card: true,
         })
     }
 }
@@ -492,7 +496,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             Interface,
             Name,
             Repository,
-
             Version,
             Uid,
             Tags,
@@ -501,6 +504,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             ToOnnx,
             AppEnv,
             CreatedAt,
+            IsCard,
         }
 
         struct ModelCardVisitor;
@@ -527,6 +531,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut to_onnx = None;
                 let mut app_env = None;
                 let mut created_at = None;
+                let mut is_card = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -565,6 +570,9 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::CreatedAt => {
                             created_at = Some(map.next_value()?);
                         }
+                        Field::IsCard => {
+                            is_card = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -581,6 +589,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let created_at =
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
+                let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
 
                 Ok(ModelCard {
                     interface,
@@ -597,6 +606,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     artifact_key: None,
                     app_env,
                     created_at,
+                    is_card,
                 })
             }
         }
@@ -613,6 +623,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             "to_onnx",
             "app_env",
             "created_at",
+            "is_card",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
     }

@@ -79,6 +79,8 @@ pub struct ExperimentCard {
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
 
     pub artifact_key: Option<ArtifactKey>,
+
+    pub is_card: bool,
 }
 
 #[pymethods]
@@ -121,6 +123,7 @@ impl ExperimentCard {
             compute_environment: ComputeEnvironment::new(py)?,
             uids: UidMetadata::default(),
             subexperiment: false,
+            is_card: true,
         })
     }
 
@@ -277,7 +280,7 @@ impl Serialize for ExperimentCard {
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("ExperimentCard", 11)?;
+        let mut state = serializer.serialize_struct("ExperimentCard", 12)?;
 
         // set session to none
         state.serialize_field("name", &self.name)?;
@@ -291,6 +294,7 @@ impl Serialize for ExperimentCard {
         state.serialize_field("compute_environment", &self.compute_environment)?;
         state.serialize_field("uids", &self.uids)?;
         state.serialize_field("subexperiment", &self.subexperiment)?;
+        state.serialize_field("is_card", &self.is_card)?;
         state.end()
     }
 }
@@ -314,6 +318,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             ComputeEnvironment,
             Uids,
             Subexperiment,
+            IsCard,
         }
 
         struct ExperimentCardVisitor;
@@ -340,6 +345,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut compute_environment = None;
                 let mut uids = None;
                 let mut subexperiment = None;
+                let mut is_card = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -379,6 +385,9 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Subexperiment => {
                             subexperiment = Some(map.next_value()?);
                         }
+                        Field::IsCard => {
+                            is_card = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -399,6 +408,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
 
                 let subexperiment =
                     subexperiment.ok_or_else(|| de::Error::missing_field("subexperiment"))?;
+                let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
 
                 Ok(ExperimentCard {
                     name,
@@ -415,6 +425,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     compute_environment,
                     uids,
                     subexperiment,
+                    is_card,
                 })
             }
         }
@@ -432,6 +443,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "compute_environment",
             "uids",
             "subexperiment",
+            "is_card",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
     }
@@ -469,6 +481,7 @@ impl FromPyObject<'_> for ExperimentCard {
             rt,
             fs,
             artifact_key,
+            is_card: true,
         })
     }
 }

@@ -7,9 +7,9 @@ from opsml import (  # type: ignore
 from opsml.test import OpsmlTestServer
 
 
-def test_promptcard():
+def test_promptcard_crud() -> None:
     with OpsmlTestServer():
-        reg = CardRegistry(RegistryType.Prompt)
+        reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
 
         prompt = ChatPrompt(
             model="gpt-4o",
@@ -21,7 +21,31 @@ def test_promptcard():
             top_logprobs=2,
         )
 
-        prompt_card = PromptCard(prompt=prompt, repository="test", name="test")
-        reg.register_card(prompt_card)
+        card = PromptCard(prompt=prompt, repository="test", name="test")
+        reg.register_card(card)
 
-        assert prompt_card.uid is not None
+        assert card.uid is not None
+
+        loaded_card = reg.load_card(uid=card.uid)
+        assert loaded_card.name == card.name
+
+        assert loaded_card.version == card.version
+
+        loaded_card.name = "updated"
+        reg.update_card(loaded_card)
+
+        loaded_card2 = reg.load_card(uid=card.uid)
+        assert loaded_card2.name == "updated"
+
+        # list cards
+        cards = reg.list_cards()
+
+        assert cards.__len__() == 1
+
+        # delete the card
+        reg.delete_card(loaded_card)
+
+        cards = reg.list_cards()
+
+        assert cards.__len__() == 0
+    a

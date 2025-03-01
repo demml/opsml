@@ -7,6 +7,7 @@ use potato_lib::ChatPrompt;
 use potato_lib::PromptType;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
+use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tracing::error;
@@ -33,6 +34,15 @@ impl Prompt {
     pub fn prompt_type(&self) -> PromptType {
         match self {
             Prompt::Chat(prompt) => prompt.prompt_type.clone(),
+        }
+    }
+
+    pub fn to_bound_py_any<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            Prompt::Chat(prompt) => {
+                let chat_prompt = prompt.clone().into_bound_py_any(py)?;
+                Ok(chat_prompt)
+            }
         }
     }
 }
@@ -78,6 +88,8 @@ pub struct PromptCard {
 
     #[pyo3(get, set)]
     pub created_at: NaiveDateTime,
+
+    pub is_card: bool,
 }
 
 #[pymethods]
@@ -136,7 +148,37 @@ impl PromptCard {
             registry_type: RegistryType::Prompt,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
+            is_card: true,
         })
+    }
+
+    #[getter]
+    pub fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        self.prompt.to_bound_py_any(py)
+    }
+
+    #[setter]
+    pub fn set_prompt(&mut self, prompt: &Bound<'_, PyAny>) -> PyResult<()> {
+        let prompt_type = prompt
+            .getattr("prompt_type")
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?
+            .extract::<PromptType>()
+            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+        self.prompt = match &prompt_type {
+            PromptType::Chat => {
+                let chat_prompt = prompt
+                    .extract::<ChatPrompt>()
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+
+                Prompt::Chat(chat_prompt)
+            }
+            _ => {
+                return Err(OpsmlError::new_err("Invalid prompt type"));
+            }
+        };
+
+        Ok(())
     }
 
     #[getter]
@@ -191,5 +233,12 @@ impl PromptCard {
         };
 
         Ok(Card::Prompt(record))
+    }
+
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
+
+        Ok(())
     }
 }

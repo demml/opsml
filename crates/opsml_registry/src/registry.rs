@@ -406,13 +406,14 @@ impl CardRegistry {
         let tmp_path = tmp_dir.into_path();
 
         match registry_type {
-            RegistryType::Experiment => {
+            RegistryType::Experiment | RegistryType::Prompt => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .map_err(|e| {
                         error!("Failed to save card: {}", e);
                         RegistryError::Error(e.to_string())
                     })?;
             }
+
             _ => {
                 card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
                     .map_err(|e| {
