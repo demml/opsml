@@ -52,3 +52,6 @@ get_experiment_parameters = experiment.get_experiment_parameters
 RustyLogger = core.RustyLogger
 LoggingConfig = core.LoggingConfig
 VersionType = core.VersionType
+
+# Potato Head
+ChatPrompt = potato_head.ChatPrompt

@@ -1,5 +1,5 @@
 use crate::enums::OpsmlRegistry;
-use opsml_cards::{DataCard, ExperimentCard, ModelCard};
+use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::RegistryError;
 use opsml_storage::FileSystemStorage;
@@ -43,7 +43,7 @@ pub fn card_from_string<'py>(
         RegistryType::Model => {
             let mut card =
                 ModelCard::model_validate_json(py, card_json, interface).map_err(|e| {
-                    error!("Failed to validate model card: {}", e);
+                    error!("Failed to validate ModelCard: {}", e);
                     RegistryError::Error(e.to_string())
                 })?;
 
@@ -60,7 +60,7 @@ pub fn card_from_string<'py>(
         RegistryType::Data => {
             let mut card =
                 DataCard::model_validate_json(py, card_json, interface).map_err(|e| {
-                    error!("Failed to validate data card: {}", e);
+                    error!("Failed to validate DataCard: {}", e);
                     RegistryError::Error(e.to_string())
                 })?;
 
@@ -76,13 +76,25 @@ pub fn card_from_string<'py>(
 
         RegistryType::Experiment => {
             let mut card = ExperimentCard::model_validate_json(card_json).map_err(|e| {
-                error!("Failed to validate data card: {}", e);
+                error!("Failed to validate ExperimentCard: {}", e);
                 RegistryError::Error(e.to_string())
             })?;
 
             card.artifact_key = Some(key);
             card.fs = Some(fs.clone());
             card.rt = Some(rt.clone());
+            card.into_bound_py_any(py).map_err(|e| {
+                error!("Failed to convert card to bound: {}", e);
+                RegistryError::Error(e.to_string())
+            })?
+        }
+
+        RegistryType::Prompt => {
+            let card = PromptCard::model_validate_json(card_json).map_err(|e| {
+                error!("Failed to validate PromptCard: {}", e);
+                RegistryError::Error(e.to_string())
+            })?;
+
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
