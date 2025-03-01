@@ -1,7 +1,16 @@
 # type: ignore
 # pylint: disable=no-name-in-module
 
-from .opsml import card, core, data, experiment, model, scouter, test, potato_head  # noqa: F401
+from .opsml import (  # noqa: F401
+    card,
+    core,
+    data,
+    experiment,
+    model,
+    potato_head,
+    scouter,
+    test,
+)
 
 CardRegistry = card.CardRegistry
 RegistryType = card.RegistryType
