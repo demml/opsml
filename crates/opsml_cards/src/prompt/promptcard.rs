@@ -155,4 +155,13 @@ impl PromptCard {
 
         Ok(())
     }
+
+    #[staticmethod]
+    #[pyo3(signature = (json_string))]
+    pub fn model_validate_json(json_string: String) -> PyResult<PromptCard> {
+        serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })
+    }
 }
