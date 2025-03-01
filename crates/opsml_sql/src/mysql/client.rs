@@ -2,7 +2,7 @@ use crate::base::SqlClient;
 use crate::mysql::helper::MySQLQueryHelper;
 use crate::schemas::schema::{
     AuditCardRecord, CardSummary, DataCardRecord, ExperimentCardRecord, HardwareMetricsRecord,
-    MetricRecord, ModelCardRecord, ParameterRecord, QueryStats, ServerCard, User,
+    MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord, QueryStats, ServerCard, User,
 };
 use crate::schemas::schema::{CardResults, VersionResult};
 use async_trait::async_trait;
@@ -234,6 +234,24 @@ impl SqlClient for MySqlClient {
                 return Ok(CardResults::Audit(card));
             }
 
+            CardTable::Prompt => {
+                let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.uid.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.name.as_ref())
+                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.repository.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.max_date.as_ref())
+                    .bind(query_args.limit.unwrap_or(50))
+                    .fetch_all(&self.pool)
+                    .await
+                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+                return Ok(CardResults::Prompt(card));
+            }
+
             _ => {
                 return Err(SqlError::QueryError(
                     "Invalid table name for query".to_string(),
@@ -364,6 +382,38 @@ impl SqlClient for MySqlClient {
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = MySQLQueryHelper::get_promptcard_insert_query();
+                    sqlx::query(&query)
+                        .bind(&card.uid)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -502,6 +552,38 @@ impl SqlClient for MySqlClient {
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+                _ => {
+                    return Err(SqlError::QueryError(
+                        "Invalid card type for insert".to_string(),
+                    ));
+                }
+            },
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = MySQLQueryHelper::get_promptcard_update_query();
+                    sqlx::query(&query)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
+                        .bind(&card.uid)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+                    Ok(())
+                }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
