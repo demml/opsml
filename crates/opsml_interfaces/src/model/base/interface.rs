@@ -606,8 +606,8 @@ impl ModelInterface {
             // add small hex to filename to avoid overwriting
             // this would only have if someone creates multiple drift profiles of the same type
             // probably won't happen, but lets be a little safe
-            let random_hex: String = rand::thread_rng()
-                .sample_iter(&rand::distributions::Alphanumeric)
+            let random_hex: String = rand::rng()
+                .sample_iter(&rand::distr::Alphanumeric)
                 .take(3)
                 .map(char::from)
                 .collect();

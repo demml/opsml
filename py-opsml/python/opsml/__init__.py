@@ -63,5 +63,5 @@ LoggingConfig = core.LoggingConfig
 VersionType = core.VersionType
 
 # Potato Head
-ChatPrompt = potato_head.ChatPrompt
+ChatPrompt = potato_head.prompts.ChatPrompt
 PromptCard = card.PromptCard

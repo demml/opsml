@@ -22,7 +22,7 @@ pub async fn create_artifact_key(
     storage_key: &str,
 ) -> Result<ArtifactKey, ApiError> {
     debug!("Creating artifact key for: {:?}", uid);
-    let salt = generate_salt();
+    let salt = generate_salt()?;
 
     // create derived key
     let derived_key = derive_encryption_key(&encryption_key, &salt, registry_type.as_bytes())?;

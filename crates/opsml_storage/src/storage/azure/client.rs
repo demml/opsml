@@ -656,7 +656,7 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
+    use rand::distr::Alphanumeric;
     use rand::thread_rng;
     use rand::Rng;
     use std::path::Path;

@@ -39,7 +39,8 @@ aes-gcm = "0.*"
 anyhow = "1.0.93"
 async-trait = "0.*"
 aws-sdk-s3 = "1.*"
-azure_identity = "0.*"
+azure_core = "0.*"
+azure_identity = "0.21.0" 
 azure_storage = "0.21.0"
 azure_storage_blobs = "0.21.0"
 aws-config = {version = "1.5.10", features = ["sso"]}
@@ -54,8 +55,8 @@ colored_json = "5.*"
 dynfmt = { version = "0.*", features = ["curly"] }
 futures = "0.*"
 futures-util = "0.*"
-google-cloud-storage = { version = "0.*", features  = ["auth"] }
-google-cloud-auth = "0.*"
+google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
+google-cloud-auth = { version = "0.17.2" }
 hmac = "0.*"
 hkdf = "0.*"
 jsonwebtoken = "9.*"
@@ -64,9 +65,9 @@ ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-potato-lib = { git = "https://github.com/demml/potatohead.git" }
+potato-lib = { git = "https://github.com/demml/potatohead.git", branch = "add-rust-release" }
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
-rand = "0.*"
+rand = { version = "0.*", features = ["os_rng"] }
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
