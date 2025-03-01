@@ -7,7 +7,7 @@ pub struct MySQLQueryHelper;
 
 impl MySQLQueryHelper {
     pub fn get_uid_query(table: &CardTable) -> String {
-        format!("SELECT uid FROM {} WHERE uid = ?", table).to_string()
+        format!("SELECT uid FROM {} WHERE uid = ?", table)
     }
 
     pub fn get_user_insert_query() -> String {
@@ -15,7 +15,6 @@ impl MySQLQueryHelper {
             "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES (?, ?, ?, ?)",
             CardTable::Users
         )
-        .to_string()
     }
 
     pub fn get_user_query() -> String {
@@ -23,7 +22,6 @@ impl MySQLQueryHelper {
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = ?",
             CardTable::Users
         )
-        .to_string()
     }
 
     pub fn get_user_update_query() -> String {
@@ -37,7 +35,6 @@ impl MySQLQueryHelper {
             WHERE username = ? ",
             CardTable::Users
         )
-        .to_string()
     }
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
@@ -58,7 +55,6 @@ impl MySQLQueryHelper {
             ) VALUES (?, ?, ?, ?, ?)",
             CardTable::Metrics
         )
-        .to_string()
     }
 
     pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
@@ -72,8 +68,7 @@ impl MySQLQueryHelper {
                 timestamp
             ) VALUES ",
             CardTable::Metrics
-        )
-        .to_string();
+        );
 
         for i in 0..nbr_records {
             query.push_str("(?, ?, ?, ?, ?) ");
@@ -300,8 +295,7 @@ impl MySQLQueryHelper {
                 value
             ) VALUES ",
             CardTable::Parameters
-        )
-        .to_string();
+        );
 
         for i in 0..nbr_records {
             query.push_str("(?, ?, ?)");
@@ -359,7 +353,6 @@ impl MySQLQueryHelper {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             CardTable::HardwareMetrics
         )
-        .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
@@ -570,7 +563,6 @@ impl MySQLQueryHelper {
             "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_artifact_key_select_query() -> String {
@@ -578,7 +570,6 @@ impl MySQLQueryHelper {
             "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_artifact_key_update_query() -> String {
@@ -586,7 +577,6 @@ impl MySQLQueryHelper {
             "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 
     pub fn get_operation_insert_query() -> String {
@@ -594,7 +584,6 @@ impl MySQLQueryHelper {
             "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
             CardTable::Operations
         )
-        .to_string()
     }
 
     pub fn get_load_card_query(
@@ -625,6 +614,5 @@ impl MySQLQueryHelper {
             "DELETE FROM {} WHERE uid = ? AND registry_type = ?",
             CardTable::ArtifactKey
         )
-        .to_string()
     }
 }
