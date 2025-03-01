@@ -1046,6 +1046,9 @@ mod tests {
             FROM opsml_audit_registry;
 
             DELETE
+            FROM opsml_prompt_registry;
+
+            DELETE
             FROM opsml_experiment_metrics;
 
             DELETE
@@ -1067,6 +1070,113 @@ mod tests {
         .fetch_all(pool)
         .await
         .unwrap();
+    }
+
+    async fn test_card_crud(
+        client: &MySqlClient,
+        table: &CardTable,
+        updated_name: &str,
+    ) -> Result<(), SqlError> {
+        // Create initial card
+        let card = match table {
+            CardTable::Data => ServerCard::Data(DataCardRecord::default()),
+            CardTable::Model => ServerCard::Model(ModelCardRecord::default()),
+            CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
+            CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
+            CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
+            _ => panic!("Invalid card type"),
+        };
+
+        // Get UID for queries
+        let uid = match &card {
+            ServerCard::Data(c) => c.uid.clone(),
+            ServerCard::Model(c) => c.uid.clone(),
+            ServerCard::Experiment(c) => c.uid.clone(),
+            ServerCard::Audit(c) => c.uid.clone(),
+            ServerCard::Prompt(c) => c.uid.clone(),
+        };
+
+        // Test Insert
+        client.insert_card(table, &card).await?;
+
+        // Verify Insert
+        let card_args = CardQueryArgs {
+            uid: Some(uid.clone()),
+            ..Default::default()
+        };
+        let results = client.query_cards(table, &card_args).await?;
+        assert_eq!(results.len(), 1);
+
+        // Create updated card with new name
+        let updated_card = match table {
+            CardTable::Data => {
+                let c = DataCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Data(c)
+            }
+            CardTable::Model => {
+                let c = ModelCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+
+                ServerCard::Model(c)
+            }
+            CardTable::Experiment => {
+                let c = ExperimentCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Experiment(c)
+            }
+            CardTable::Audit => {
+                let c = AuditCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Audit(c)
+            }
+            CardTable::Prompt => {
+                let c = PromptCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Prompt(c)
+            }
+            _ => panic!("Invalid card type"),
+        };
+
+        // Test Update
+        client.update_card(table, &updated_card).await?;
+
+        // Verify Update
+        let updated_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(updated_results.len(), 1);
+
+        // Verify updated name
+        match updated_results {
+            CardResults::Data(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Model(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
+        }
+
+        // delete card
+        client.delete_card(table, &uid).await?;
+
+        // Verify Delete
+        let deleted_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(deleted_results.len(), 0);
+
+        Ok(())
     }
 
     pub fn db_config() -> DatabaseSettings {
@@ -1275,248 +1385,24 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mysql_insert_cards() {
+    async fn test_mysql_crud_cards() {
         let client = db_client().await;
 
-        let data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
+        test_card_crud(&client, &CardTable::Data, "UpdatedDataName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert modelcard
-        let model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
+        test_card_crud(&client, &CardTable::Model, "UpdatedModelName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert experimentcard
-        let run_card = ExperimentCardRecord::default();
-        let card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .insert_card(&CardTable::Experiment, &card)
+        test_card_crud(&client, &CardTable::Experiment, "UpdatedRunName")
             .await
             .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Experiment, &card_args)
+        test_card_crud(&client, &CardTable::Audit, "UpdatedAuditName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert auditcard
-
-        let audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
+        test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn test_mysql_update_cards() {
-        let client = db_client().await;
-
-        // Test DataCardRecord
-        let mut data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        data_card.name = "UpdatedDataName".to_string();
-        let updated_card = ServerCard::Data(data_card.clone());
-
-        client
-            .update_card(&CardTable::Data, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Data(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedDataName");
-        }
-
-        // Test ModelCardRecord
-        let mut model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        model_card.name = "UpdatedModelName".to_string();
-        let updated_card = ServerCard::Model(model_card.clone());
-
-        client
-            .update_card(&CardTable::Model, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Model(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedModelName");
-        }
-
-        // Test experimentcardRecord
-        let mut run_card = ExperimentCardRecord::default();
-        let card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .insert_card(&CardTable::Experiment, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Experiment, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        run_card.name = "UpdatedRunName".to_string();
-        let updated_card = ServerCard::Experiment(run_card.clone());
-
-        client
-            .update_card(&CardTable::Experiment, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Experiment, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Experiment(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedRunName");
-        }
-
-        // Test AuditCardRecord
-        let mut audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        audit_card.name = "UpdatedAuditName".to_string();
-        let updated_card = ServerCard::Audit(audit_card.clone());
-
-        client
-            .update_card(&CardTable::Audit, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Audit(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedAuditName");
-        }
     }
 
     #[tokio::test]
@@ -1591,67 +1477,6 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 1);
-    }
-
-    #[tokio::test]
-    async fn test_mysql_delete_card() {
-        let client = db_client().await;
-
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_mysql_test.sql").unwrap();
-        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
-
-        // try name and repository
-        let card_args = CardQueryArgs {
-            name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
-            ..Default::default()
-        };
-
-        // query all versions
-        // get versions (should return 1)
-        let cards = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 10);
-
-        // delete the card
-        let uid = match cards {
-            CardResults::Data(cards) => cards[0].uid.clone(),
-            _ => "".to_string(),
-        };
-
-        assert!(!uid.is_empty());
-
-        // delete the card
-        client.delete_card(&CardTable::Data, &uid).await.unwrap();
-
-        // check if the card was deleted
-        let args = CardQueryArgs {
-            uid: Some(uid),
-            ..Default::default()
-        };
-
-        let results = client.query_cards(&CardTable::Data, &args).await.unwrap();
-
-        assert_eq!(results.len(), 0);
-
-        let card_args = CardQueryArgs {
-            name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
-            ..Default::default()
-        };
-
-        // query all versions
-        // get versions (should return 1)
-        let cards = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 9);
     }
 
     #[tokio::test]
