@@ -7,6 +7,7 @@ from .card import DataCardMetadata as DataCardMetadata
 from .card import ExperimentCard as ExperimentCard
 from .card import ModelCard as ModelCard
 from .card import ModelCardMetadata as ModelCardMetadata
+from .card import PromptCard as PromptCard
 from .card import RegistryType as RegistryType
 from .core import LoggingConfig as LoggingConfig
 from .core import RustyLogger as RustyLogger
@@ -42,4 +43,3 @@ from .model import TensorFlowModel as TensorFlowModel
 from .model import TorchModel as TorchModel
 from .model import XGBoostModel as XGBoostModel
 from .potato_head import ChatPrompt as ChatPrompt
-from .card import PromptCard as PromptCard
