@@ -15,6 +15,7 @@ from opsml import (  # type: ignore
     ChatPrompt,
     PromptCard,
 )
+from opsml.card import CardRegistries
 import joblib  # type: ignore
 from pathlib import Path
 import uuid
@@ -142,6 +143,7 @@ def test_experimentcard():
 def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
+    chat_prompt: ChatPrompt,
 ):
     with OpsmlTestServer(True):
         with start_experiment(repository="test", log_hardware=True) as exp:
@@ -152,6 +154,8 @@ def test_experimentcard_register(
                 tags=["foo:bar", "baz:qux"],
             )
             exp.register_card(datacard)
+
+            assert datacard.experimentcard_uid == exp.card.uid
 
             modelcard = ModelCard(
                 interface=random_forest_classifier,
@@ -165,16 +169,17 @@ def test_experimentcard_register(
             )
             exp.register_card(modelcard)
 
-            # test prompt
-            prompt = ChatPrompt(
-                model="gpt-4o",
-                messages=[
-                    {"role": "developer", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": "Hello!"},
-                ],
-                logprobs=True,
-                top_logprobs=2,
-            )
+            assert modelcard.experimentcard_uid == exp.card.uid
 
-            prompt_card = PromptCard(interface=prompt, repository="test", name="test")
+            prompt_card = PromptCard(
+                prompt=chat_prompt,
+                repository="test",
+                name="test",
+            )
             exp.register_card(prompt_card)
+
+            assert prompt_card.experimentcard_uid == exp.card.uid
+
+            # test starting a random registry in the experiment context
+            # (this is not recommended, but need to test if it causes a tokio::runtime deadlock)
+            _reg = CardRegistries()

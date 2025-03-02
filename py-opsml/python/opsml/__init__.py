@@ -13,6 +13,7 @@ from .opsml import (  # noqa: F401
 )
 
 CardRegistry = card.CardRegistry
+CardRegistries = card.CardRegistries
 RegistryType = card.RegistryType
 
 # model

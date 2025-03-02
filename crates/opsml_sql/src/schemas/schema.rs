@@ -581,7 +581,7 @@ impl PromptCardRecord {
     pub fn uri(&self) -> String {
         format!(
             "{}/{}/{}/v{}",
-            CardTable::Data,
+            CardTable::Prompt,
             self.repository,
             self.name,
             self.version

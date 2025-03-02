@@ -2,12 +2,12 @@ from opsml.test import OpsmlTestServer
 from opsml import (
     CardRegistry,
     RegistryType,
-    RegistryMode,
     ModelCard,
     DataCard,
     PromptCard,
     ChatPrompt,
 )
+from opsml.card import RegistryMode
 from opsml.card import CardList
 from opsml.model import SklearnModel
 from opsml.data import PandasData
@@ -123,7 +123,7 @@ def crud_promptcard(prompt: ChatPrompt):
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
 
-    assert isinstance(loaded_card.interface, ChatPrompt)
+    assert isinstance(loaded_card.prompt, ChatPrompt)
 
     # update the card
     loaded_card.name = "test2"
@@ -221,10 +221,6 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     # assert that the card was updated
     assert updated_card.name == "test2"
 
-    reg.delete_card(updated_card)
-    cards = reg.list_cards(uid=updated_card.uid)
-    assert len(cards) == 0
-
     return updated_card, reg
 
 
@@ -241,7 +237,7 @@ def test_crud_artifactcard(
     chat_prompt: ChatPrompt,
 ):
     # start server
-    with OpsmlTestServer(True):
+    with OpsmlTestServer(False):
         # datacard is required for modelcard, so we cant delete it before using it,
         # which is why there is a separate delete_card function
 
