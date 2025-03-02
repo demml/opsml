@@ -3,7 +3,7 @@ use opsml_error::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
-use semver::{BuildMetadata, Op, Prerelease, Version};
+use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::env;
