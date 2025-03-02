@@ -10,6 +10,9 @@ ChatPartAudio = potato_head.prompts.ChatPartAudio
 ImageUrl = potato_head.prompts.ImageUrl
 Message = potato_head.prompts.Message
 PromptType = potato_head.prompts.PromptType
+SanitizationConfig = potato_head.prompts.SanitizationConfig
+SanitizationResult = potato_head.prompts.SanitizationResult
+RiskLevel = potato_head.prompts.RiskLevel
 
 
 __all__ = [
@@ -20,4 +23,6 @@ __all__ = [
     "ImageUrl",
     "Message",
     "PromptType",
+    "SanitizationConfig",
+    "SanitizationResult",
 ]

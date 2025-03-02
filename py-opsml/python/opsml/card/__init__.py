@@ -5,6 +5,7 @@ from .. import card
 Card = card.Card
 CardList = card.CardList
 CardRegistry = card.CardRegistry
+CardRegistries = card.CardRegistries
 DataCard = card.DataCard
 DataCardMetadata = card.DataCardMetadata
 RegistryTestHelper = card.RegistryTestHelper
@@ -31,4 +32,5 @@ __all__ = [
     "ExperimentCard",
     "ComputeEnvironment",
     "PromptCard",
+    "CardRegistries",
 ]

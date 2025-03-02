@@ -1,7 +1,7 @@
 use opsml_cards::{
     DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
 };
-use opsml_registry::CardRegistry;
+use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_types::contracts::{Card, CardList};
 use opsml_types::{cards::ComputeEnvironment, RegistryMode, RegistryType};
 
@@ -19,6 +19,7 @@ pub fn card(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // opsml_registry
     m.add_class::<CardRegistry>()?;
+    m.add_class::<CardRegistries>()?;
     m.add_class::<RegistryType>()?;
     m.add_class::<RegistryMode>()?;
 

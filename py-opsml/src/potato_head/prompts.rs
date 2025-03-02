@@ -1,5 +1,6 @@
 use ::potato_lib::{
     ChatPartAudio, ChatPartImage, ChatPartText, ChatPrompt, ImageUrl, Message, PromptType,
+    RiskLevel, SanitizationConfig, SanitizationResult,
 };
 
 use pyo3::prelude::*;
@@ -13,5 +14,8 @@ pub fn prompts(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ImageUrl>()?;
     m.add_class::<Message>()?;
     m.add_class::<PromptType>()?;
+    m.add_class::<RiskLevel>()?;
+    m.add_class::<SanitizationConfig>()?;
+    m.add_class::<SanitizationResult>()?;
     Ok(())
 }

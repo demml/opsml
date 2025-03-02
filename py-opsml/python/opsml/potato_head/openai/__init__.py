@@ -16,9 +16,6 @@ ChoiceDeltaToolCall = potato_head.openai.ChoiceDeltaToolCall
 ChoiceDelta = potato_head.openai.ChoiceDelta
 ChunkChoice = potato_head.openai.ChunkChoice
 ChatCompletionChunk = potato_head.openai.ChatCompletionChunk
-SanitizationConfig = potato_head.prompts.SanitizationConfig
-SanitizationResult = potato_head.prompts.SanitizationResult
-RiskLevel = potato_head.prompts.RiskLevel
 
 __all__ = [
     "OpenAIConfig",
@@ -34,7 +31,4 @@ __all__ = [
     "ChoiceDelta",
     "ChunkChoice",
     "ChatCompletionChunk",
-    "SanitizationConfig",
-    "SanitizationResult",
-    "RiskLevel",
 ]
