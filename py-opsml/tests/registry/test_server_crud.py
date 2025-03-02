@@ -123,6 +123,21 @@ def crud_promptcard(prompt: ChatPrompt):
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
 
+    assert isinstance(loaded_card.interface, ChatPrompt)
+
+    # update the card
+    loaded_card.name = "test2"
+    # update the card
+    reg.update_card(loaded_card)
+
+    # load the updated card
+    updated_card: PromptCard = reg.load_card(uid=loaded_card.uid)
+
+    # assert that the card was updated
+    assert updated_card.name == "test2"
+
+    return updated_card, reg
+
 
 def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     reg = CardRegistry(registry_type=RegistryType.Model)
@@ -206,6 +221,10 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     # assert that the card was updated
     assert updated_card.name == "test2"
 
+    reg.delete_card(updated_card)
+    cards = reg.list_cards(uid=updated_card.uid)
+    assert len(cards) == 0
+
     return updated_card, reg
 
 
@@ -216,14 +235,20 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     assert len(cards) == 0
 
 
-def test_crud_modelcard(
+def test_crud_artifactcard(
     random_forest_classifier: SklearnModel,
     pandas_data: PandasData,
+    chat_prompt: ChatPrompt,
 ):
     # start server
     with OpsmlTestServer(True):
+        # datacard is required for modelcard, so we cant delete it before using it,
+        # which is why there is a separate delete_card function
+
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
+        promptcard, prompt_registry = crud_promptcard(chat_prompt)
 
         delete_card(datacard, data_registry)
         delete_card(modelcard, model_registry)
+        delete_card(promptcard, prompt_registry)
