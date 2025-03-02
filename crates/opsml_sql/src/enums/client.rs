@@ -294,6 +294,30 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_users().await,
+            SqlClientEnum::Sqlite(client) => client.get_users().await,
+            SqlClientEnum::MySql(client) => client.get_users().await,
+        }
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_user(username).await,
+            SqlClientEnum::Sqlite(client) => client.delete_user(username).await,
+            SqlClientEnum::MySql(client) => client.delete_user(username).await,
+        }
+    }
+
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.is_last_admin(username).await,
+            SqlClientEnum::Sqlite(client) => client.is_last_admin(username).await,
+            SqlClientEnum::MySql(client) => client.is_last_admin(username).await,
+        }
+    }
+
     async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.insert_artifact_key(key).await,
