@@ -801,6 +801,7 @@ pub struct User {
     pub password_hash: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
+    pub role: String,
     pub refresh_token: Option<String>,
 }
 
@@ -821,6 +822,7 @@ impl User {
             password_hash,
             permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
+            role: "user".to_string(),
             refresh_token: None,
         }
     }

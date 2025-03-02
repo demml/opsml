@@ -59,7 +59,7 @@ impl PostgresQueryHelper {
 
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES ($1, $2, $3, $4, $5, $6)",
             CardTable::Users
         )
     }

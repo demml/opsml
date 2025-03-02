@@ -1,21 +1,5 @@
-use crate::core::state::AppState;
-use anyhow::{Context, Result};
-use axum::{
-    extract::{Path, Query, State},
-    http::{HeaderMap, StatusCode},
-    response::Json,
-    routing::{delete, get, post, put},
-    Router,
-};
-use opsml_auth::permission::UserPermissions;
-use opsml_error::error::AuthError;
-use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
-use password_auth::generate_hash;
 use serde::{Deserialize, Serialize};
-use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::sync::Arc;
-use tracing::{error, info};
 
 #[derive(Deserialize)]
 pub struct CreateUserRequest {
@@ -28,7 +12,6 @@ pub struct CreateUserRequest {
 
 #[derive(Deserialize)]
 pub struct UpdateUserRequest {
-    pub username: String,
     pub password: Option<String>,
     pub permissions: Option<Vec<String>>,
     pub group_permissions: Option<Vec<String>>,

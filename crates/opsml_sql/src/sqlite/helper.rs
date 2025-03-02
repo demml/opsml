@@ -12,7 +12,7 @@ impl SqliteQueryHelper {
     }
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES (?, ?, ?, ?)",
+            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?)",
             CardTable::Users
         )
         .to_string()

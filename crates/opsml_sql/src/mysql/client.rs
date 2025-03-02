@@ -38,7 +38,7 @@ impl FromRow<'_, MySqlRow> for User {
         let group_permissions: serde_json::Value = row.try_get("group_permissions")?;
         let group_permissions: Vec<String> =
             serde_json::from_value(group_permissions).unwrap_or_default();
-
+        let role = row.try_get("role")?;
         let refresh_token: Option<String> = row.try_get("refresh_token")?;
 
         Ok(User {
@@ -49,6 +49,7 @@ impl FromRow<'_, MySqlRow> for User {
             password_hash,
             permissions,
             group_permissions,
+            role,
             refresh_token,
         })
     }
@@ -871,6 +872,8 @@ impl SqlClient for MySqlClient {
             .bind(&user.password_hash)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&user.role)
+            .bind(&user.active)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;

@@ -35,6 +35,7 @@ impl FromRow<'_, SqliteRow> for User {
         let group_permissions: String = row.try_get("group_permissions")?;
         let group_permissions: Vec<String> =
             serde_json::from_str(&group_permissions).unwrap_or_default();
+        let role = row.try_get("role")?;
 
         let refresh_token: Option<String> = row.try_get("refresh_token")?;
 
@@ -46,6 +47,7 @@ impl FromRow<'_, SqliteRow> for User {
             password_hash,
             permissions,
             group_permissions,
+            role,
             refresh_token,
         })
     }
@@ -892,6 +894,8 @@ impl SqlClient for SqliteClient {
             .bind(&user.password_hash)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&user.role)
+            .bind(&user.active)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
