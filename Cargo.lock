@@ -1438,9 +1438,9 @@ dependencies = [
 
 [[package]]
 name = "console"
-version = "0.15.10"
+version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea3c6ecd8059b57859df5c69830340ed3c41d30e3da0c1cbed90a96ac853041b"
+checksum = "054ccb5b10f9f2cbf51eb355ca1d05c2d279ce1804688d0db74b4733a5aeafd8"
 dependencies = [
  "encode_unicode",
  "libc",
@@ -4226,7 +4226,7 @@ dependencies = [
 [[package]]
 name = "potato-client"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4242,7 +4242,7 @@ dependencies = [
 [[package]]
 name = "potato-error"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "pyo3",
  "serde",
@@ -4252,7 +4252,7 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4273,7 +4273,7 @@ dependencies = [
 [[package]]
 name = "potato-lib"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "potato-error",
  "potato-head",
@@ -4285,7 +4285,7 @@ dependencies = [
 [[package]]
 name = "potato-prompts"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4305,7 +4305,7 @@ dependencies = [
 [[package]]
 name = "potato-providers"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4326,7 +4326,7 @@ dependencies = [
 [[package]]
 name = "potato-tools"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "chrono",
  "colored_json",
@@ -4344,7 +4344,7 @@ dependencies = [
 [[package]]
 name = "potato-traits"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#104591434b75b75d8c0415a83881d71ff97d58dd"
+source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "futures-core",
  "futures-util",
