@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS opsml_users (
     password_hash VARCHAR(255) NOT NULL,
     permissions JSON NOT NULL,
     group_permissions JSON NOT NULL,
+    role VARCHAR(32) DEFAULT 'user',
     refresh_token VARCHAR(255)
 );
 

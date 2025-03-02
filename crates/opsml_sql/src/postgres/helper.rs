@@ -66,7 +66,7 @@ impl PostgresQueryHelper {
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = $1",
+            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = $1",
             CardTable::Users
         )
     }
