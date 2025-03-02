@@ -71,6 +71,10 @@ impl PostgresQueryHelper {
         )
     }
 
+    pub fn get_user_delete_query() -> String {
+        format!("DELETE FROM {} WHERE username = $1", CardTable::Users).to_string()
+    }
+
     pub fn get_users_query() -> String {
         format!(
             "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
