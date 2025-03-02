@@ -254,9 +254,12 @@ pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         Router::new()
             .route(&format!("{}/users", prefix), post(create_user))
             .route(&format!("{}/users", prefix), get(list_users))
-            .route(&format!("{}/users/:username", prefix), get(get_user))
-            .route(&format!("{}/users/:username", prefix), put(update_user))
-            .route(&format!("{}/users/:username", prefix), delete(delete_user))
+            .route(&format!("{}/users/{{username}}", prefix), get(get_user))
+            .route(&format!("{}/users/{{username}}", prefix), put(update_user))
+            .route(
+                &format!("{}/users/{{username}}", prefix),
+                delete(delete_user),
+            )
     }));
 
     match result {

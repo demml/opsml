@@ -133,7 +133,7 @@ mod tests {
                     Request::builder()
                         .uri("/opsml/auth/api/login")
                         .header("Username", "admin")
-                        .header("Password", "test_password")
+                        .header("Password", "admin")
                         .body(Body::empty())
                         .unwrap(),
                 )
@@ -190,7 +190,8 @@ mod tests {
             .unwrap();
 
         // false will use the invalid token
-        let response = helper.send_oneshot(request).await;
+        // clone the app to avoid using the default auth header (want to force it to fail)
+        let response = helper.app.clone().oneshot(request).await.unwrap();
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
         // refresh token

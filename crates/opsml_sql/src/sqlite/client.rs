@@ -116,7 +116,6 @@ impl SqlClient for SqliteClient {
             .run(&self.pool)
             .await
             .map_err(|e| SqlError::MigrationError(format!("{}", e)))?;
-
         Ok(())
     }
 
