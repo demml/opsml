@@ -569,6 +569,12 @@ class ComputeEnvironment:
 
     def __str__(self): ...
 
+class UidMetadata:
+    datacard_uids: List[str]
+    modelcard_uids: List[str]
+    promptcard_uids: List[str]
+    experimentcard_uids: List[str]
+
 class ExperimentCard:
     def __init__(
         self,
@@ -652,20 +658,12 @@ class ExperimentCard:
         """Returns the uid of the `experimentcard`"""
 
     @property
+    def uids(self) -> UidMetadata:
+        """Returns the uids of the `experimentcard`"""
+
+    @property
     def tags(self) -> List[str]:
         """Returns the tags of the `ExperimentCard`"""
-
-    @property
-    def experimentcard_uids(self) -> List[str]:
-        """Returns the experimentcard uids"""
-
-    @property
-    def datacard_uids(self) -> List[str]:
-        """Returns the datacard uids"""
-
-    @property
-    def modelcard_uids(self) -> List[str]:
-        """Returns the modelcard uids"""
 
     @property
     def artifacts(self) -> List[str]:
@@ -1110,8 +1108,13 @@ class CardRegistry(Generic[CardType]):
 
 class CardRegistries:
     def __init__(self) -> None: ...
+    @property
     def data(self) -> CardRegistry[DataCard]: ...
+    @property
     def model(self) -> CardRegistry[ModelCard]: ...
+    @property
     def experiment(self) -> CardRegistry[ExperimentCard]: ...
+    @property
     def audit(self) -> CardRegistry[Any]: ...
+    @property
     def prompt(self) -> CardRegistry[PromptCard]: ...
