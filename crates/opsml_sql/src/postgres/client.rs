@@ -898,18 +898,17 @@ impl SqlClient for PostgresClient {
         Ok(users)
     }
 
-    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
+    async fn is_last_admin(&self) -> Result<bool, SqlError> {
         // Count admins in the system
         let query = PostgresQueryHelper::get_last_admin_query();
 
         let count: i64 = sqlx::query_scalar(&query)
-            .bind(username)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
         // If there are no other admins, this is the last one
-        Ok(count == 0)
+        Ok(count <= 1)
     }
 
     async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
@@ -1620,7 +1619,13 @@ mod tests {
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 
-        // check if last admin
+        // get users
+        let users = client.get_users().await.unwrap();
+        assert_eq!(users.len(), 1);
+
+        // get last admin
+        let is_last_admin = client.is_last_admin().await.unwrap();
+        assert!(is_last_admin);
 
         // delete
         client.delete_user("user").await.unwrap();

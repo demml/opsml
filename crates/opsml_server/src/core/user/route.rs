@@ -218,7 +218,7 @@ async fn delete_user(
     }
 
     // Prevent deleting the last admin user
-    let is_last_admin = match state.sql_client.is_last_admin(&username).await {
+    let is_last_admin = match state.sql_client.is_last_admin().await {
         Ok(is_last) => is_last,
         Err(e) => {
             error!("Failed to check if user is last admin: {}", e);
