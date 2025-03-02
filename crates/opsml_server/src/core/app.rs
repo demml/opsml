@@ -11,7 +11,6 @@ use tracing::{info, warn};
 pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
     let (config, storage_client, sql_client) = setup_components().await?;
-    let auth_enabled = config.auth_settings.enabled;
     let storage_settings = config.storage_settings()?;
 
     // Create shared state for the application (storage client, auth manager, config)
@@ -32,12 +31,6 @@ pub async fn create_app() -> Result<Router> {
     let app = create_router(app_state).await?;
 
     info!("✅ Router created");
-
-    if auth_enabled {
-        info!("✅ Auth enabled");
-    } else {
-        warn!("Auth disabled");
-    }
 
     Ok(app)
 }

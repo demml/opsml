@@ -106,7 +106,6 @@ mod tests {
     impl TestHelper {
         pub async fn new() -> Self {
             // set OPSML_AUTH to true
-            env::set_var("OPSML_AUTH", "true");
             env::set_var("RUST_LOG", "info");
             env::set_var("LOG_LEVEL", "info");
 
@@ -155,16 +154,12 @@ mod tests {
             request
         }
 
-        pub async fn send_oneshot(&self, request: Request<Body>, use_auth: bool) -> Response<Body> {
-            if use_auth {
-                self.app
-                    .clone()
-                    .oneshot(self.with_auth_header(request))
-                    .await
-                    .unwrap()
-            } else {
-                self.app.clone().oneshot(request).await.unwrap()
-            }
+        pub async fn send_oneshot(&self, request: Request<Body>) -> Response<Body> {
+            self.app
+                .clone()
+                .oneshot(self.with_auth_header(request))
+                .await
+                .unwrap()
         }
 
         pub fn cleanup(&self) {
@@ -181,7 +176,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         // add invalid token
@@ -192,7 +187,7 @@ mod tests {
             .unwrap();
 
         // false will use the invalid token
-        let response = helper.send_oneshot(request, false).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
         // refresh token
@@ -201,7 +196,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -235,7 +230,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -259,7 +254,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -289,7 +284,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -319,7 +314,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -338,7 +333,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -363,7 +358,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -387,7 +382,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -422,7 +417,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -450,7 +445,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -495,7 +490,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -517,7 +512,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -558,7 +553,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -579,7 +574,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -624,7 +619,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -649,7 +644,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
 
         assert_eq!(response.status(), StatusCode::OK);
         // get response body
@@ -677,7 +672,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -721,7 +716,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -742,7 +737,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -787,7 +782,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -809,7 +804,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -850,7 +845,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -871,7 +866,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -916,7 +911,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -938,7 +933,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -979,7 +974,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1000,7 +995,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1041,7 +1036,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let query_string = serde_qs::to_string(&GetMetricNamesRequest {
@@ -1055,7 +1050,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1073,7 +1068,7 @@ mod tests {
             .body(Body::from(serde_json::to_string(&body).unwrap()))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1091,7 +1086,7 @@ mod tests {
             .body(Body::from(serde_json::to_string(&body).unwrap()))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1124,7 +1119,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         // get parameters by experiment_uid
@@ -1136,7 +1131,7 @@ mod tests {
             .body(Body::from(serde_json::to_string(&body).unwrap()))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1154,7 +1149,7 @@ mod tests {
             .body(Body::from(serde_json::to_string(&body).unwrap()))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
@@ -1177,7 +1172,7 @@ mod tests {
             .body(Body::from(body))
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         // get hardware metrics by experiment_uid
@@ -1193,7 +1188,7 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let response = helper.send_oneshot(request, true).await;
+        let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
         let body = response.into_body().collect().await.unwrap().to_bytes();

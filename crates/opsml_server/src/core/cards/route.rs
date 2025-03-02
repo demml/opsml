@@ -436,7 +436,7 @@ pub async fn delete_card(
 ) -> Result<Json<UidResponse>, (StatusCode, Json<serde_json::Value>)> {
     debug!("Deleting card: {}", &params.uid);
 
-    if state.config.auth_settings.enabled && !perms.has_delete_permission(&params.repository) {
+    if !perms.has_delete_permission(&params.repository) {
         error!("Permission denied");
         return Err((
             StatusCode::FORBIDDEN,

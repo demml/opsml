@@ -65,24 +65,18 @@ impl OpsmlApiClient {
             ),
         };
 
-        if settings.api_settings.use_auth {
-            api_client.get_jwt_token().await?;
+        api_client.get_jwt_token().await?;
 
-            // mask the password
-            api_client.settings.api_settings.password = REDACTED.to_string();
+        // mask the password
+        api_client.settings.api_settings.password = REDACTED.to_string();
 
-            // mask the env variables
-            std::env::set_var("OPSML_PASSWORD", REDACTED);
-        }
+        // mask the env variables
+        std::env::set_var("OPSML_PASSWORD", REDACTED);
 
         Ok(api_client)
     }
 
     async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
-        if !self.settings.api_settings.use_auth {
-            return Ok(());
-        }
-
         let url = format!("{}/{}", self.base_path, Routes::AuthApiLogin.as_str());
         let response = self
             .client
@@ -102,10 +96,6 @@ impl OpsmlApiClient {
     /// Refresh the JWT token when it expires
     /// This function is called with the old JWT token, which is then verified with the server refresh token
     async fn refresh_token(&mut self) -> Result<(), ApiError> {
-        if !self.settings.api_settings.use_auth {
-            return Ok(());
-        }
-
         let url = format!("{}/{}", self.base_path, Routes::AuthApiRefresh.as_str());
         let response = self
             .client
@@ -312,14 +302,13 @@ mod tests {
         (server, server_url)
     }
 
-    async fn setup_client(server_url: String, use_auth: Option<bool>) -> OpsmlApiClient {
+    async fn setup_client(server_url: String) -> OpsmlApiClient {
         let config = OpsmlConfig::new(None);
         let mut settings = config.storage_settings().unwrap();
 
         // set up some auth
         settings.api_settings.username = "username".to_string();
         settings.api_settings.password = "password".to_string();
-        settings.api_settings.use_auth = use_auth.unwrap_or(false);
         settings.api_settings.base_url = server_url.to_string();
 
         let client = build_http_client(&settings.api_settings).unwrap();
@@ -329,7 +318,7 @@ mod tests {
     #[tokio::test]
     async fn test_api_client_no_auth() {
         let (mut server, server_url) = setup_server().await;
-        let mut api_client = setup_client(server_url, None).await;
+        let mut api_client = setup_client(server_url).await;
 
         let _mock = server
             .mock("GET", "/opsml/files")
@@ -366,7 +355,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url, Some(true)).await;
+        let mut api_client = setup_client(server_url).await;
 
         let response = api_client
             .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
@@ -397,7 +386,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url, Some(true)).await;
+        let mut api_client = setup_client(server_url).await;
 
         let response = api_client
             .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
@@ -427,7 +416,7 @@ mod tests {
             .expect(3)
             .create();
 
-        let mut api_client = setup_client(server_url, Some(true)).await;
+        let mut api_client = setup_client(server_url).await;
         let result = api_client
             .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
             .await;
@@ -472,7 +461,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url, Some(true)).await;
+        let mut api_client = setup_client(server_url).await;
 
         let response = api_client
             .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
