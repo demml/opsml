@@ -14,7 +14,6 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub struct ApiSettings {
     pub base_url: String,
-    pub use_auth: bool,
     pub opsml_dir: String,
     pub scouter_dir: String,
     pub username: String,
@@ -58,7 +57,6 @@ impl OpsmlStorageSettings {
             client_mode,
             api_settings: ApiSettings {
                 base_url: "".to_string(),
-                use_auth: false,
                 opsml_dir: "".to_string(),
                 scouter_dir: "".to_string(),
                 username: "guest".to_string(),
@@ -83,7 +81,6 @@ pub struct DatabaseSettings {
 #[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct AuthSettings {
-    pub enabled: bool,
     pub jwt_secret: String,
     pub refresh_secret: String,
     pub username: String,
@@ -157,10 +154,7 @@ impl Default for OpsmlConfig {
 
             username: env::var("OPSML_USERNAME").unwrap_or("guest".to_string()),
             password: env::var("OPSML_PASSWORD").unwrap_or("guest".to_string()),
-            enabled: env::var("OPSML_AUTH")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
+
             prod_token: env::var("OPSML_PROD_TOKEN").ok(),
         };
 
@@ -286,7 +280,6 @@ impl OpsmlConfig {
             storage_type: self.get_storage_type(),
             api_settings: ApiSettings {
                 base_url: self.opsml_tracking_uri.clone(),
-                use_auth: self.auth_settings.enabled,
                 opsml_dir: "opsml".to_string(),
                 scouter_dir: "scouter".to_string(),
                 username: self.auth_settings.username.clone(),
@@ -436,29 +429,6 @@ mod tests {
     }
 
     #[test]
-    fn test_auth_settings() {
-        let opsml_config = OpsmlConfig {
-            auth_settings: AuthSettings {
-                enabled: true,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-        assert!(opsml_config.auth_settings.enabled);
-
-        let opsml_config = OpsmlConfig {
-            auth_settings: AuthSettings {
-                enabled: false,
-                ..Default::default()
-            },
-            ..Default::default()
-        };
-
-        assert!(!opsml_config.auth_settings.enabled);
-        cleanup();
-    }
-
-    #[test]
     fn test_default() {
         let opsml_config = OpsmlConfig::default();
         assert_eq!(opsml_config.app_name, "opsml");
@@ -487,7 +457,6 @@ mod tests {
         assert_eq!(opsml_config.scouter_settings.username, None);
         assert_eq!(opsml_config.scouter_settings.password, None);
         assert!(!opsml_config.scouter_settings.auth);
-        assert!(!opsml_config.auth_settings.enabled);
 
         cleanup();
     }

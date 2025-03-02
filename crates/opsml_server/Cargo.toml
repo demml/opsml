@@ -21,6 +21,7 @@ opsml-sql = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
+password-auth = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

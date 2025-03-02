@@ -819,7 +819,7 @@ impl User {
             active: true,
             username,
             password_hash,
-            permissions: permissions.unwrap_or(vec!["read".to_string()]),
+            permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
             refresh_token: None,
         }

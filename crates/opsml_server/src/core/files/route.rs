@@ -74,21 +74,19 @@ pub async fn create_multipart_upload(
         headers.get("username")
     );
 
-    if state.config.auth_settings.enabled {
-        let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(json!({ "error": "Invalid path" })),
-            )
-        })?;
+    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Invalid path" })),
+        )
+    })?;
 
-        // check if user has permission to write to the repo
-        if !perms.has_write_permission(repository_id.to_str().unwrap()) {
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(json!({ "error": "Permission denied" })),
-            ));
-        }
+    // check if user has permission to write to the repo
+    if !perms.has_write_permission(repository_id.to_str().unwrap()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
     }
 
     let path = Path::new(&params.path);
@@ -144,14 +142,12 @@ pub async fn generate_presigned_url(
     headers: HeaderMap,
 ) -> Result<Json<PresignedUrl>, (StatusCode, Json<serde_json::Value>)> {
     // check for read access
-    if state.config.auth_settings.enabled {
-        // check if user has permission to write to the repo
-        if !perms.has_read_permission() {
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(json!({ "error": "Permission denied" })),
-            ));
-        }
+
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
     }
 
     let path = Path::new(&params.path);
@@ -318,21 +314,20 @@ pub async fn delete_file(
     headers: HeaderMap,
 ) -> Result<Json<DeleteFileResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for delete access
-    if state.config.auth_settings.enabled {
-        // check if user has permission to write to the repo
-        let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(json!({ "error": "Invalid path" })),
-            )
-        })?;
 
-        if !perms.has_delete_permission(repository_id.to_str().unwrap()) {
-            return Err((
-                StatusCode::FORBIDDEN,
-                Json(json!({ "error": "Permission denied" })),
-            ));
-        }
+    // check if user has permission to write to the repo
+    let repository_id = Path::new(&params.path).iter().next().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Invalid path" })),
+        )
+    })?;
+
+    if !perms.has_delete_permission(repository_id.to_str().unwrap()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
     }
 
     let path = Path::new(&params.path);

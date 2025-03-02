@@ -317,4 +317,35 @@ pub trait SqlClient: Sized {
     ///
     /// * `Result<(), SqlError>` - The result of the operation
     async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError>;
+
+    // Add to the SqlClient trait:
+
+    /// Get all users
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<User>` - The list of users
+    async fn get_users(&self) -> Result<Vec<User>, SqlError>;
+
+    /// Delete a user
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username of the user to delete
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError>;
+
+    /// Check if a user is the last admin
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username to check
+    ///
+    /// # Returns
+    ///
+    /// * `Result<bool, SqlError>` - True if the user is the last admin
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError>;
 }

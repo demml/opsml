@@ -10,3 +10,4 @@ pub mod router;
 pub mod settings;
 pub mod setup;
 pub mod state;
+pub mod user;

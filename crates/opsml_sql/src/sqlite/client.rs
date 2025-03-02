@@ -910,6 +910,44 @@ impl SqlClient for SqliteClient {
 
         Ok(user)
     }
+
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        let query = SqliteQueryHelper::get_users_query();
+
+        let users = sqlx::query_as::<_, User>(&query)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(users)
+    }
+
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
+        // Count admins in the system
+        let query = SqliteQueryHelper::get_last_admin_query();
+
+        let count: i64 = sqlx::query_scalar(&query)
+            .bind(username)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        // If there are no other admins, this is the last one
+        Ok(count == 0)
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        let query = "DELETE FROM users WHERE username = ?";
+
+        sqlx::query(query)
+            .bind(username)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_update_query();
         let group_permissions = serde_json::to_string(&user.group_permissions)

@@ -71,6 +71,22 @@ impl PostgresQueryHelper {
         )
     }
 
+    pub fn get_users_query() -> String {
+        format!(
+            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            CardTable::Users
+        )
+        .to_string()
+    }
+
+    pub fn get_last_admin_query() -> String {
+        format!(
+            "SELECT count(1) FROM {} WHERE role = 'admin'",
+            CardTable::Users
+        )
+        .to_string()
+    }
+
     pub fn get_user_update_query() -> String {
         format!(
             "UPDATE {} SET 

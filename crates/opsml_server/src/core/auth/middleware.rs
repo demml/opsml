@@ -24,17 +24,6 @@ pub async fn auth_api_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<impl IntoResponse, (StatusCode, Json<AuthError>)> {
-    // if auth is disabled, just return
-    if !state.config.auth_settings.enabled {
-        req.extensions_mut().insert(UserPermissions {
-            username: "guest".to_string(),
-            permissions: vec![],
-            group_permissions: vec![],
-        });
-
-        return Ok(next.run(req).await);
-    }
-
     // get the access token from the cookie or the authorization header
     let access_token = cookie_jar
         .get("access_token")

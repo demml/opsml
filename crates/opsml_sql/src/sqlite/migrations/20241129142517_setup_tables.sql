@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS opsml_users (
     password_hash TEXT NOT NULL,
     permissions TEXT NOT NULL,
     group_permissions TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
     refresh_token TEXT
 );
 
