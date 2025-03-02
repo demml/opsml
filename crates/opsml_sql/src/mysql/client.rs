@@ -873,7 +873,7 @@ impl SqlClient for MySqlClient {
             .bind(&permissions)
             .bind(&group_permissions)
             .bind(&user.role)
-            .bind(&user.active)
+            .bind(user.active)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
