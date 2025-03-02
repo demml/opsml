@@ -1,6 +1,7 @@
 use ::potato_lib::{
     ChatPartAudio, ChatPartImage, ChatPartText, ChatPrompt, ImageUrl, Message, PromptType,
 };
+
 use pyo3::prelude::*;
 
 #[pymodule]
