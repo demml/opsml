@@ -1089,7 +1089,7 @@ mod tests {
     async fn test_enum_user() {
         let client = get_client().await;
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None);
+        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
         let mut user = client.get_user("user").await.unwrap();
@@ -1101,6 +1101,13 @@ mod tests {
         client.update_user(&user).await.unwrap();
         let user = client.get_user("user").await.unwrap();
         assert!(!user.active);
+
+        // get all users
+        let users = client.get_users().await.unwrap();
+        assert_eq!(users.len(), 1);
+
+        // delete user
+        client.delete_user("user").await.unwrap();
 
         cleanup();
     }

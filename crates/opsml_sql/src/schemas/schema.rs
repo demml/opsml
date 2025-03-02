@@ -3,7 +3,7 @@ use opsml_error::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
-use semver::{BuildMetadata, Prerelease, Version};
+use semver::{BuildMetadata, Op, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::env;
@@ -811,6 +811,7 @@ impl User {
         password_hash: String,
         permissions: Option<Vec<String>>,
         group_permissions: Option<Vec<String>>,
+        role: Option<String>,
     ) -> Self {
         let created_at = get_utc_datetime();
 
@@ -822,7 +823,7 @@ impl User {
             password_hash,
             permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
-            role: "user".to_string(),
+            role: role.unwrap_or("user".to_string()),
             refresh_token: None,
         }
     }
