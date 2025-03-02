@@ -1,5 +1,5 @@
 use crate::core::router::create_router;
-use crate::core::setup::setup_components;
+use crate::core::setup::{initialize_default_user, setup_components};
 use crate::core::state::AppState;
 use anyhow::Ok;
 use anyhow::Result;
@@ -12,6 +12,12 @@ pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
     let (config, storage_client, sql_client) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
+
+    // Initialize default user if none exists
+    if let Err(e) = initialize_default_user(&sql_client).await {
+        // Log error but don't fail startup
+        tracing::warn!("Failed to initialize default user: {}", e);
+    }
 
     // Create shared state for the application (storage client, auth manager, config)
     let app_state = Arc::new(AppState {
