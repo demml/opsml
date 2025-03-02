@@ -46,15 +46,15 @@ async fn create_user(
     let password_hash = generate_hash(&create_req.password);
 
     // Create the user
-    let user = User::new(
+    let mut user = User::new(
         create_req.username,
         password_hash,
         create_req.permissions,
         create_req.group_permissions,
+        create_req.role,
     );
 
     // Set active status if provided
-    let mut user = user;
     if let Some(active) = create_req.active {
         user.active = active;
     }

@@ -51,5 +51,5 @@ INSERT INTO opsml_audit_registry (uid, app_env, name, repository, major, minor, 
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Audit10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', 0, '[]', '[]', '[]');
 
 
-INSERT INTO opsml_users (username, password_hash, permissions, group_permissions, refresh_token) VALUES
-('admin', '$argon2id$v=19$m=19456,t=2,p=1$+OB+o3Q2x9jwj0Tz1Y8vcA$TXAyajadxyCdaYwjU3zvEylBt9KMosfwfx7xC6PERgI', '["read", "write"]', '["admin"]', NULL)
+INSERT INTO opsml_users (username, password_hash, permissions, group_permissions, role, refresh_token) VALUES
+('admin', '$argon2id$v=19$m=19456,t=2,p=1$+OB+o3Q2x9jwj0Tz1Y8vcA$TXAyajadxyCdaYwjU3zvEylBt9KMosfwfx7xC6PERgI', '["read", "write"]', '["admin"]', "admin", NULL)

@@ -1643,7 +1643,7 @@ mod tests {
     async fn test_mysql_user() {
         let client = db_client().await;
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None);
+        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
         let mut user = client.get_user("user").await.unwrap();
@@ -1664,7 +1664,7 @@ mod tests {
 
         // get last admin
         let is_last_admin = client.is_last_admin().await.unwrap();
-        assert!(is_last_admin);
+        assert!(!is_last_admin);
 
         // delete
         client.delete_user("user").await.unwrap();
