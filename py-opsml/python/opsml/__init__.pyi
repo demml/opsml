@@ -1,8 +1,8 @@
 # type: ignore
 # pylint: disable=useless-import-alias
 
-from .card import CardRegistry as CardRegistry
 from .card import CardRegistries as CardRegistries
+from .card import CardRegistry as CardRegistry
 from .card import DataCard as DataCard
 from .card import DataCardMetadata as DataCardMetadata
 from .card import ExperimentCard as ExperimentCard

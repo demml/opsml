@@ -182,4 +182,16 @@ def test_experimentcard_register(
 
             # test starting a random registry in the experiment context
             # (this is not recommended, but need to test if it causes a tokio::runtime deadlock)
-            _reg = CardRegistries()
+            reg = CardRegistries()
+
+        loaded_card = reg.experiment.load_card(uid=exp.card.uid)
+
+        assert loaded_card.name == exp.card.name
+        assert loaded_card.repository == exp.card.repository
+        assert loaded_card.tags == exp.card.tags
+        assert loaded_card.uid == exp.card.uid
+        assert loaded_card.version == exp.card.version
+
+        loaded_card.uids.datacard_uids = [datacard.uid]
+        loaded_card.uids.modelcard_uids = [modelcard.uid]
+        loaded_card.uids.promptcard_uids = [prompt_card.uid]
