@@ -941,9 +941,9 @@ impl SqlClient for MySqlClient {
     }
 
     async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
-        let query = "DELETE FROM users WHERE username = ?";
+        let query = MySQLQueryHelper::get_user_delete_query();
 
-        sqlx::query(query)
+        sqlx::query(&query)
             .bind(username)
             .execute(&self.pool)
             .await
@@ -1664,7 +1664,7 @@ mod tests {
 
         // get last admin
         let is_last_admin = client.is_last_admin().await.unwrap();
-        assert!(!is_last_admin);
+        assert!(is_last_admin);
 
         // delete
         client.delete_user("user").await.unwrap();

@@ -40,6 +40,10 @@ impl MySQLQueryHelper {
         .to_string()
     }
 
+    pub fn get_user_delete_query() -> String {
+        format!("DELETE FROM {} WHERE username = ?", CardTable::Users).to_string()
+    }
+
     pub fn get_user_update_query() -> String {
         format!(
             "UPDATE {} SET 
