@@ -913,6 +913,43 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        let query = MySQLQueryHelper::get_users_query();
+
+        let users = sqlx::query_as::<_, User>(&query)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(users)
+    }
+
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
+        // Count admins in the system
+        let query = MySQLQueryHelper::get_last_admin_query();
+
+        let count: i64 = sqlx::query_scalar(&query)
+            .bind(username)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        // If there are no other admins, this is the last one
+        Ok(count == 0)
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        let query = "DELETE FROM users WHERE username = ?";
+
+        sqlx::query(query)
+            .bind(username)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
     async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         let query = MySQLQueryHelper::get_artifact_key_insert_query();
         sqlx::query(&query)
