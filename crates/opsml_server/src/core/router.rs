@@ -7,6 +7,7 @@ use crate::core::files::route::get_file_router;
 use crate::core::health::route::get_health_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
+use crate::core::user::route::get_user_router;
 use anyhow::Result;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
@@ -37,6 +38,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let card_routes = get_card_router(ROUTE_PREFIX).await?;
     let run_routes = get_experiment_router(ROUTE_PREFIX).await?;
     let auth_routes = get_auth_router(ROUTE_PREFIX).await?;
+    let user_routes = get_user_router(ROUTE_PREFIX).await?;
 
     // merge all the routes except the auth routes
     // All routes except the auth routes will be protected by the auth middleware
@@ -47,6 +49,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(file_routes)
         .merge(card_routes)
         .merge(run_routes)
+        .merge(user_routes)
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_api_middleware,

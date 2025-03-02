@@ -6,7 +6,7 @@ use anyhow::Result;
 use axum::Router;
 use opsml_auth::auth::AuthManager;
 use std::sync::Arc;
-use tracing::{info, warn};
+use tracing::info;
 
 pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)

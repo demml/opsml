@@ -5,24 +5,20 @@ use crate::core::user::schema::{
 use anyhow::{Context, Result};
 use axum::extract::Path;
 use axum::{
-    body::Body,
-    extract::{Query, State},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
-    routing::{delete, get, post},
+    extract::State,
+    http::StatusCode,
+    routing::{delete, get, post, put},
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
-use opsml_error::error::AuthError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::schema::User;
 use password_auth::generate_hash;
-use serde::{Deserialize, Serialize};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{error, info};
 
-/// Create a new user via SDK. This route requires admin permissions.
+/// Create a new user via SDK
 ///
 /// Requires admin permissions
 async fn create_user(

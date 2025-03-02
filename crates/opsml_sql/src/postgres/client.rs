@@ -39,6 +39,8 @@ impl FromRow<'_, PgRow> for User {
         let group_permissions: Vec<String> =
             serde_json::from_value(group_permissions).unwrap_or_default();
 
+        let role: String = row.try_get("role")?;
+
         let refresh_token: Option<String> = row.try_get("refresh_token")?;
 
         Ok(User {
@@ -49,6 +51,7 @@ impl FromRow<'_, PgRow> for User {
             password_hash,
             permissions,
             group_permissions,
+            role,
             refresh_token,
         })
     }
@@ -840,6 +843,8 @@ impl SqlClient for PostgresClient {
             .bind(&user.password_hash)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&user.role)
+            .bind(&user.active)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1597,9 +1602,11 @@ mod tests {
     async fn test_postgres_user() {
         let client = db_client().await;
 
+        // Create
         let user = User::new("user".to_string(), "pass".to_string(), None, None);
         client.insert_user(&user).await.unwrap();
 
+        // Read
         let mut user = client.get_user("user").await.unwrap();
         assert_eq!(user.username, "user");
 
@@ -1607,10 +1614,16 @@ mod tests {
         user.active = false;
         user.refresh_token = Some("token".to_string());
 
+        // Update
         client.update_user(&user).await.unwrap();
         let user = client.get_user("user").await.unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
+
+        // check if last admin
+
+        // delete
+        client.delete_user("user").await.unwrap();
     }
 
     #[tokio::test]
