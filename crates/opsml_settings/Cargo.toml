@@ -14,3 +14,4 @@ base64 = { workspace = true }
 pyo3 = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }

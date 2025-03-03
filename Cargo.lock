@@ -3750,6 +3750,7 @@ dependencies = [
  "pyo3",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
  "serde",
+ "tracing",
 ]
 
 [[package]]
