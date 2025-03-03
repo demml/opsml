@@ -8,6 +8,7 @@ use serde::Serialize;
 use std::default::Default;
 use std::env;
 use std::path::PathBuf;
+use tracing::warn;
 
 /// ApiSettings for use with ApiClient
 #[pyclass]
@@ -148,13 +149,27 @@ impl Default for OpsmlConfig {
 
         // set auth settings
         let auth_settings = AuthSettings {
-            jwt_secret: env::var("OPSML_ENCRYPT_SECRET").unwrap_or_else(|_| generate_jwt_secret()),
-            refresh_secret: env::var("OPSML_REFRESH_SECRET")
-                .unwrap_or_else(|_| generate_jwt_secret()),
+            jwt_secret: env::var("OPSML_ENCRYPT_SECRET").unwrap_or_else(|_| {
+                if !using_client {
+                    warn!(
+                        "Using default secret for encryption 
+                        This is not recommended for production use."
+                    );
+                }
+                generate_default_secret()
+            }),
+            refresh_secret: env::var("OPSML_REFRESH_SECRET").unwrap_or_else(|_| {
+                if !using_client {
+                    warn!(
+                        "Using default secret for refreshing. 
+                        This is not recommended for production use."
+                    );
+                }
+                generate_default_secret()
+            }),
 
             username: env::var("OPSML_USERNAME").unwrap_or("guest".to_string()),
             password: env::var("OPSML_PASSWORD").unwrap_or("guest".to_string()),
-
             prod_token: env::var("OPSML_PROD_TOKEN").ok(),
         };
 
@@ -190,12 +205,13 @@ impl Default for OpsmlConfig {
     }
 }
 
-fn generate_jwt_secret() -> String {
-    // always creates a deterministic key
-    // this should be replaced when using AUTH and Encryption in production
+fn generate_default_secret() -> String {
+    // Creates a deterministic key for development purposes
+    // Should be replaced with a proper secret in production
     let mut key = [0u8; 32];
     for (i, item) in key.iter_mut().enumerate() {
-        *item = i as u8;
+        // Different pattern than the JWT secret (reversed index)
+        *item = (31 - i) as u8;
     }
 
     BASE64_STANDARD.encode(key)
@@ -329,8 +345,8 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_jwt_secret() {
-        let jwt_secret = generate_jwt_secret();
+    fn test_generate_default_secret() {
+        let jwt_secret = generate_default_secret();
         assert_eq!(jwt_secret.len(), 32);
     }
 
