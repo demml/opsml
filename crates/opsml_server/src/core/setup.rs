@@ -42,8 +42,23 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
         .await
         .context(Colorize::purple("❌ Failed to create default admin user"))?;
 
+    // create guest user
+    let guest_user = User::new(
+        "guest".to_string(),
+        password_auth::generate_hash("guest"),
+        Some(vec!["read".to_string(), "write".to_string()]),
+        Some(vec!["user".to_string()]),
+        Some("guest".to_string()),
+    );
+
+    // Insert the user
+    sql_client
+        .insert_user(&guest_user)
+        .await
+        .context(Colorize::purple("❌ Failed to create default guest user"))?;
+
     info!(
-        "✅ Created default admin user: {} (change password on first login)",
+        "✅ Created default admin and guest user: {} (change password on first login)",
         default_username
     );
 
