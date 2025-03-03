@@ -12,7 +12,7 @@ docs/site/
 expressions.txt
 test.png
 blob/
-opsml/app/static/site/
+opsml/crates/opsml_server/opsml_ui/site/
 mlruns/
 
 # Byte-compiled / optimized / DLL files
