@@ -23,6 +23,9 @@ export default {
       "$routes/*": "./src/routes/*",
     },
   },
+  compilerOptions: {
+    runes: true,
+  },
   preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
   vitePlugin: { exclude: ["./node_modules", "./.svelte-kit", "./.svelte"] },
 };

@@ -1,5 +1,7 @@
 <script lang="ts">
 
+import {user} from "$lib/components/auth/AuthStore.svelte";
+
 </script>
 
-<h1>Hello World</h1>
+<h1>{user.name}</h1>

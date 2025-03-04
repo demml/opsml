@@ -50,7 +50,7 @@ test.storage.local.server:
 ######## Server tests
 
 .PHONE: build.server
-build.server:
+build.server: ui.build
 	cargo build -p opsml-server
 	./target/debug/opsml-server &
 
@@ -85,3 +85,18 @@ test.server:
 .PHONY: test.opsml.registry.client
 test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
+
+
+###### UI ######
+UI_DIR = crates/opsml_server/opsml_ui
+
+ui.update.deps:
+	cd $(UI_DIR) && pnpm update
+
+.PHONY: ui.install
+ui.install:
+	cd $(UI_DIR) && pnpm install
+
+.PHONY: ui.build
+ui.build:
+	cd $(UI_DIR) && pnpm build

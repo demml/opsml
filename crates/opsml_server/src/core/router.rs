@@ -9,15 +9,30 @@ use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
 use crate::core::user::route::get_user_router;
 use anyhow::Result;
+use axum::http::StatusCode;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     Method,
 };
-use axum::{middleware, Router};
+use axum::{handler::HandlerWithoutStateExt, middleware, Router};
+use include_dir::{include_dir, Dir};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use tower_http::{services::ServeDir, trace::TraceLayer};
+use tracing::info;
+
+// include dir
+const OPSML_UI: Dir = include_dir!("crates/opsml_server/opsml_ui/site");
+const FRONT_END: &str = "crates/opsml_server/opsml_ui/site";
 
 const ROUTE_PREFIX: &str = "/opsml";
+
+async fn handle_error() -> (StatusCode, &'static str) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Something went wrong accessing static files...",
+    )
+}
 
 pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let cors = CorsLayer::new()
@@ -55,9 +70,15 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
             auth_api_middleware,
         ));
 
+    // Set up static file serving for the site
+    let static_site = Router::new()
+        .fallback_service(ServeDir::new(FRONT_END).not_found_service(handle_error.into_service()))
+        .layer(TraceLayer::new_for_http());
+
     Ok(Router::new()
         .merge(merged_routes)
         .merge(auth_routes)
+        .merge(static_site)
         .layer(cors)
         .with_state(app_state))
 }
