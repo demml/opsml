@@ -58,6 +58,7 @@ google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
 google-cloud-auth = { version = "0.17.2" }
 hmac = "0.*"
 hkdf = "0.*"
+include_dir = "0.*"
 jsonwebtoken = "9.*"
 names = "0.*"
 ort = { version = "2.0.0-rc.9" }
@@ -87,7 +88,7 @@ time = "0.*"
 
 tokio = { version = ">1.13.0", features = ["rt", "rt-multi-thread", "macros"] }
 tokio-util = { version = "0.*",  features = ["codec", "io"]}
-tower-http = { version = "0.*", features = ["cors"] }
+tower-http = { version = "0.*", features = ["cors", "fs", "trace"] }
 tracing = "0.*"
 tracing-appender = "0.*"
 tracing-core = "0.*"

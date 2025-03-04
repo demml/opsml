@@ -137,6 +137,11 @@ impl DataCard {
             ));
         }
 
+
+        let enum_config= if data.is_instance_of()::SlackConfig {
+            data.extract::<SlackConfig>().unwrap()
+        }
+
         let interface_type = interface
             .getattr("interface_type")
             .map_err(|e| OpsmlError::new_err(e.to_string()))?

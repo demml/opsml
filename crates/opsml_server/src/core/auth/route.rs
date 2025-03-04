@@ -9,6 +9,8 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::error;
 
+use super::schema::Authenticated;
+
 /// Route for the login endpoint when using the API
 ///
 /// # Parameters
@@ -142,6 +144,40 @@ pub async fn api_refresh_token_handler(
     }
 }
 
+pub async fn validate_jwt_token(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> Result<Json<Authenticated>, (StatusCode, Json<serde_json::Value>)> {
+    let bearer_token = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|auth_header| auth_header.to_str().ok())
+        .and_then(|auth_value| {
+            auth_value
+                .strip_prefix("Bearer ")
+                .map(|token| token.to_owned())
+        });
+
+    if let Some(bearer_token) = bearer_token {
+        match state.auth_manager.validate_jwt(&bearer_token) {
+            Ok(_) => Ok(Json(Authenticated {
+                is_authenticated: true,
+            })),
+            Err(e) => {
+                error!("Failed to validate JWT token: {}", e);
+                Err((
+                    StatusCode::UNAUTHORIZED,
+                    Json(serde_json::json!({ "error": "Invalid token" })),
+                ))
+            }
+        }
+    } else {
+        Err((
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({ "error": "No refresh token found" })),
+        ))
+    }
+}
+
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -152,6 +188,10 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/auth/api/refresh", prefix),
                 get(api_refresh_token_handler),
+            )
+            .route(
+                &format!("{}/auth/api/validate", prefix),
+                get(validate_jwt_token),
             )
     }));
 
