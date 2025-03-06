@@ -56,7 +56,7 @@
     <div class="mb-8 grid grid-cols-1 gap-3">
       <label class="text-surface-950">Username
         <input
-          class="input rounded-base border-black bg-surface-50 hover:bg-surface-200 text-black disabled:opacity-50"
+          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
           placeholder="Username"
           bind:value={username}
@@ -66,7 +66,7 @@
 
       <label class="text-surface-950">Password
         <input
-          class="input rounded-base border-black bg-surface-50 hover:bg-surface-200 text-black disabled:opacity-50"
+          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
           type="text" 
           placeholder="Password"
           bind:value={password}
