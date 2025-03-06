@@ -237,10 +237,10 @@ async fn validate_jwt_token(
             }
         }
     } else {
-        debug!("No refresh token found");
+        debug!("No bearer token found");
         Err((
             StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "No refresh token found" })),
+            Json(serde_json::json!({ "error": "No bearer token found" })),
         ))
     }
 }

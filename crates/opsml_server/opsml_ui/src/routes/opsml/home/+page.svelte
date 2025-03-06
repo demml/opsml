@@ -1,7 +1,11 @@
 <script lang="ts">
 
-import {user} from "$lib/components/auth/AuthStore.svelte";
-
-</script>
-
-<h1>hellooooooo</h1>
+    import Homepage from "$lib/Homepage.svelte";
+    import { getRecentCards } from "$lib/scripts/homepage";
+  
+    const cards: any = getRecentCards();
+  
+  </script>
+  
+  <Homepage cards={cards} />
+  
