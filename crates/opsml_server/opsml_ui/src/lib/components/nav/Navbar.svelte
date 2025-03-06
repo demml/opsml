@@ -8,6 +8,8 @@
   import { user } from "$lib/components/auth/AuthStore.svelte";
   import { Popover } from '@skeletonlabs/skeleton-svelte';
   import IconX from 'lucide-svelte/icons/x';
+  import { KeySquare } from 'lucide-svelte';
+
 
   let popupState = $state(false);
   let popupMessage = $state('');
@@ -107,8 +109,17 @@
             </path>
           </svg>
         </a>
+
+        <a target="_blank" aria-label="Close" href="/opsml/auth/login" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-border shadow p-2 transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50">
+          <KeySquare color="#5948a3"/>
+        </a>
       </div>
+
+
     </div>
+
+   
+
   </div>  
 </nav>
 
