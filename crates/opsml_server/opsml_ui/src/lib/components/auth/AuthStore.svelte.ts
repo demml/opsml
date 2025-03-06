@@ -1,6 +1,6 @@
 import { RoutePaths } from "$lib/components/api/routes";
 import { apiHandler } from "$lib/components/api/apiHandler";
-
+import { goto } from "$app/navigation";
 /**
  * AuthStore
  *
@@ -70,6 +70,21 @@ class AuthManager {
   public async logout(): Promise<void> {
     // remove token from user
     user.user = { username: "", jwt_token: "", logged_in: false };
+  }
+
+  public async validateAuth(): Promise<void> {
+    const response = await apiHandler.get(RoutePaths.VALIDATE_AUTH);
+
+    if (!response.ok) {
+      console.error("Failed to validate auth");
+      void goto(RoutePaths.LOGIN);
+    }
+
+    const authenticated = (await response.json()) as Authenticated;
+
+    if (!authenticated.is_authenticated) {
+      void goto(RoutePaths.LOGIN);
+    }
   }
 }
 
