@@ -1,6 +1,7 @@
 import { goto } from "$app/navigation";
 import { RoutePaths } from "$lib/components/api/routes";
 import { user } from "$lib/components/auth/AuthStore.svelte";
+import { browser } from "$app/environment";
 
 async function handleError(response: Response): Promise<Response> {
   const errorMessage = await response.text();
@@ -24,23 +25,28 @@ class ApiHandler {
   ): Promise<Response> {
     const headers = {
       "Content-Type": contentType,
-      Authorization: `Bearer ${user.user.token}`,
+      Authorization: `Bearer ${user.user.jwt_token}`,
       ...additionalHeaders,
     };
+    if (browser) {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (response.ok) {
-      return response;
+      if (response.ok) {
+        return response;
+      } else {
+        return await handleError(response);
+      }
     } else {
-      return await handleError(response);
+      return new Response(null, {
+        status: 500,
+        statusText: "Failure",
+      });
     }
   }
-
   async get(url: string): Promise<Response> {
     return this.request(url, "GET");
   }

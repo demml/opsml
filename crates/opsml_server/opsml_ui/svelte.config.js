@@ -1,13 +1,14 @@
+import { mdsvex } from "mdsvex";
 import adapter from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
-import { preprocessMeltUI, sequence } from "@melt-ui/pp";
 
-export default {
+/** @type {import('@sveltejs/kit').Config} */
+const config = {
+  // Consult https://svelte.dev/docs/kit/integrations
+  // for more information about preprocessors
+  preprocess: [vitePreprocess(), mdsvex()],
+
   kit: {
-    prerender: {
-      handleHttpError: "ignore",
-    },
-    appDir: "app",
     paths: {
       relative: false,
     },
@@ -18,14 +19,9 @@ export default {
       precompress: false,
       strict: true,
     }),
-    alias: {
-      $routes: "./src/routes",
-      "$routes/*": "./src/routes/*",
-    },
   },
-  compilerOptions: {
-    runes: true,
-  },
-  preprocess: sequence([vitePreprocess(), preprocessMeltUI()]),
-  vitePlugin: { exclude: ["./node_modules", "./.svelte-kit", "./.svelte"] },
+
+  extensions: [".svelte", ".svx"],
 };
+
+export default config;

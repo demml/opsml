@@ -29,6 +29,7 @@ function UserStore() {
     logged_in: false,
   };
 
+  //@ts-ignore
   let user = $state(baseUser);
 
   return {
@@ -44,7 +45,9 @@ function UserStore() {
 export const user = UserStore();
 
 class AuthManager {
-  async login(username: string, password: string): Promise<boolean> {
+  constructor() {}
+
+  public async login(username: string, password: string): Promise<boolean> {
     const response = await apiHandler.post(RoutePaths.LOGIN, {
       username,
       password,
@@ -64,8 +67,10 @@ class AuthManager {
     }
   }
 
-  async logout(): Promise<void> {
+  public async logout(): Promise<void> {
     // remove token from user
     user.user = { username: "", jwt_token: "", logged_in: false };
   }
 }
+
+export const authManager = new AuthManager();
