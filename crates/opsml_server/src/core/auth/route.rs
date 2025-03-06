@@ -1,15 +1,21 @@
+use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
+use crate::core::debug;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 /// Route for debugging information
 use axum::extract::State;
-use axum::{http::header, http::header::HeaderMap, http::StatusCode, routing::get, Json, Router};
+use axum::{
+    http::header,
+    http::header::HeaderMap,
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+};
 use opsml_client::JwtToken;
 use opsml_sql::base::SqlClient;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::error;
-
-use super::schema::Authenticated;
+use tracing::{debug, error};
 
 /// Route for the login endpoint when using the API
 ///
@@ -74,6 +80,65 @@ pub async fn api_login_handler(
     })?;
 
     Ok(Json(JwtToken { token: jwt_token }))
+}
+
+/// Route for the login endpoint when using the API
+///
+/// # Parameters
+///
+/// - `state` - The application state
+/// - `req` - The request body (username and password)
+///
+/// # Returns
+///
+/// Returns a `Result` containing either the JWT token or an error
+async fn ui_login_handler(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<LoginRequest>,
+) -> Result<Json<LoginResponse>, (StatusCode, Json<serde_json::Value>)> {
+    // get Username and Password from headers
+
+    // get user from database
+    let mut user = state
+        .sql_client
+        .get_user(&req.username)
+        .await
+        .map_err(|e| {
+            error!("Failed to get user from database: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+    // check if password is correct
+    state
+        .auth_manager
+        .validate_user(&user, &req.password)
+        .map_err(|e| {
+            error!("Failed to validate user: {}", e);
+            (StatusCode::UNAUTHORIZED, Json(serde_json::json!({})))
+        })?;
+
+    // generate JWT token
+    let jwt_token = state.auth_manager.generate_jwt(&user);
+    let refresh_token = state.auth_manager.generate_refresh_token(&user);
+
+    user.refresh_token = Some(refresh_token);
+
+    // set refresh token in db
+    state.sql_client.update_user(&user).await.map_err(|e| {
+        error!("Failed to set refresh token in database: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    Ok(Json(LoginResponse {
+        username: user.username,
+        jwt_token: jwt_token,
+    }))
 }
 
 /// Route for the refresh token endpoint when using the API
@@ -144,7 +209,7 @@ pub async fn api_refresh_token_handler(
     }
 }
 
-pub async fn validate_jwt_token(
+async fn validate_jwt_token(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<Authenticated>, (StatusCode, Json<serde_json::Value>)> {
@@ -158,6 +223,7 @@ pub async fn validate_jwt_token(
         });
 
     if let Some(bearer_token) = bearer_token {
+        debug!("Validating JWT token");
         match state.auth_manager.validate_jwt(&bearer_token) {
             Ok(_) => Ok(Json(Authenticated {
                 is_authenticated: true,
@@ -171,6 +237,7 @@ pub async fn validate_jwt_token(
             }
         }
     } else {
+        debug!("No refresh token found");
         Err((
             StatusCode::UNAUTHORIZED,
             Json(serde_json::json!({ "error": "No refresh token found" })),
@@ -193,6 +260,7 @@ pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 &format!("{}/auth/api/validate", prefix),
                 get(validate_jwt_token),
             )
+            .route(&format!("{}/auth/login", prefix), post(ui_login_handler))
     }));
 
     match result {

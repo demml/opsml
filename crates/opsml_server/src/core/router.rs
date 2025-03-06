@@ -7,6 +7,7 @@ use crate::core::files::route::get_file_router;
 use crate::core::health::route::get_health_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
+use crate::core::ui::get_ui_router;
 use crate::core::user::route::get_user_router;
 use anyhow::Result;
 use axum::http::StatusCode;
@@ -15,24 +16,13 @@ use axum::http::{
     Method,
 };
 use axum::{handler::HandlerWithoutStateExt, middleware, Router};
-use include_dir::{include_dir, Dir};
+use rust_embed::Embed;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing::info;
 
-// include dir
-const OPSML_UI: Dir = include_dir!("crates/opsml_server/opsml_ui/site");
-const FRONT_END: &str = "crates/opsml_server/opsml_ui/site";
-
-const ROUTE_PREFIX: &str = "/opsml";
-
-async fn handle_error() -> (StatusCode, &'static str) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        "Something went wrong accessing static files...",
-    )
-}
+const ROUTE_PREFIX: &str = "/opsml/api";
 
 pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let cors = CorsLayer::new()
@@ -54,6 +44,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let run_routes = get_experiment_router(ROUTE_PREFIX).await?;
     let auth_routes = get_auth_router(ROUTE_PREFIX).await?;
     let user_routes = get_user_router(ROUTE_PREFIX).await?;
+    let ui_routes = get_ui_router().await?;
 
     // merge all the routes except the auth routes
     // All routes except the auth routes will be protected by the auth middleware
@@ -70,15 +61,10 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
             auth_api_middleware,
         ));
 
-    // Set up static file serving for the site
-    let static_site = Router::new()
-        .fallback_service(ServeDir::new(FRONT_END).not_found_service(handle_error.into_service()))
-        .layer(TraceLayer::new_for_http());
-
     Ok(Router::new()
         .merge(merged_routes)
         .merge(auth_routes)
-        .merge(static_site)
+        .merge(ui_routes)
         .layer(cors)
         .with_state(app_state))
 }

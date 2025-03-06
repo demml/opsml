@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct AuthError {
@@ -11,7 +11,7 @@ pub struct Authenticated {
     pub is_authenticated: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,

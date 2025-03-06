@@ -58,8 +58,8 @@ google-cloud-storage = { version = "0.24.*", features  = ["auth"] }
 google-cloud-auth = { version = "0.17.2" }
 hmac = "0.*"
 hkdf = "0.*"
-include_dir = "0.*"
 jsonwebtoken = "9.*"
+mime_guess = "2.*"
 names = "0.*"
 ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
@@ -71,6 +71,7 @@ rand = { version = "0.*"}
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
+rust-embed = "8.*"
 reqwest-middleware = "0.*"
 rusty-logging = { git = "https://github.com/demml/rusty-logger.git", version = "0.4.0", branch = "add-serialization" }
 scouter-client = { git = "https://github.com/demml/scouter.git"}

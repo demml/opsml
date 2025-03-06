@@ -50,7 +50,7 @@ test.storage.local.server:
 ######## Server tests
 
 .PHONE: build.server
-build.server: ui.build
+build.server: stop.server build.ui
 	cargo build -p opsml-server
 	./target/debug/opsml-server &
 
@@ -94,9 +94,12 @@ ui.update.deps:
 	cd $(UI_DIR) && pnpm update
 
 .PHONY: ui.install
-ui.install:
+install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
 .PHONY: ui.build
-ui.build:
+build.ui:
 	cd $(UI_DIR) && pnpm build
+
+ui.dev:
+	cd $(UI_DIR) && pnpm run dev
