@@ -1,23 +1,23 @@
-import { CommonPaths } from "$lib/scripts/types";
+import { RoutePaths } from "$lib/components/api/routes";
+import type { PageLoad } from "./$types";
 
 export const ssr = false;
 
-/** @type {import('./$types').PageLoad} */
-export function load({ url }) {
+export const load: PageLoad = ({ url }) => {
   const currentPath = (url as URL).pathname;
   let previousPath = (url as URL).searchParams.get("redirect") as
     | string
     | undefined;
 
   if (
-    previousPath === CommonPaths.LOGIN ||
-    previousPath === CommonPaths.REGISTER
+    previousPath === RoutePaths.LOGIN ||
+    previousPath === RoutePaths.REGISTER
   ) {
-    previousPath = CommonPaths.HOME;
+    previousPath = RoutePaths.HOME;
   }
 
   return {
     currentPath,
     previousPath,
   };
-}
+};
