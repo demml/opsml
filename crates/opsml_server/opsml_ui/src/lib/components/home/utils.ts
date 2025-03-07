@@ -1,65 +1,37 @@
-import { apiHandler } from "$lib/components/api/apiHandler";
+import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-
-interface BaseCardJson {
-  uid: string;
-  created_at: string;
-  app_env: string;
-  name: string;
-  repository: string;
-  version: string;
-  timestamp: number;
-  tags: string[];
-}
-
-// Type discriminated union for different card types
-type CardJson = BaseCardJson & {
-  type: "Data" | "Model" | "Experiment" | "Audit" | "Prompt";
-  data: Record<string, any>; // Type for additional fields specific to each card type
-};
+import { type CardQueryArgs, type Card } from "$lib/components/home/types";
+import { RegistryType } from "$lib/utils";
 
 interface RecentCards {
-  modelcards: CardJson[];
-  datacards: CardJson[];
-  runcards: CardJson[];
+  modelcards: Card[];
+  datacards: Card[];
+  experimentcards: Card[];
 }
 
-interface CardQueryArgs {
-  registry_type: string;
-  limit?: number;
-  sort_by_timestamp?: boolean;
-}
-
-async function getCards(registry: string): Promise<CardJson[]> {
-  const response = await apiHandler.post(
-    RoutePaths.LIST_CARDS,
-    {
-      registry_type: registry,
-      limit: 10,
-      sort_by_timestamp: true,
-    } as CardQueryArgs,
-    "application/json",
-    { Accept: "application/json" }
-  );
-
-  const data = (await response.json()) as CardJson[];
-
+async function getCards(registry: string): Promise<Card[]> {
+  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, {
+    registry_type: registry,
+    limit: "10",
+    sort_by_timestamp: "true",
+  });
+  const data = (await response.json()) as Card[];
   return data;
 }
 
 async function getRecentCards(): Promise<RecentCards> {
-  const [modelcards, datacards, runcards] = await Promise.all([
-    getCards("model"),
-    getCards("data"),
-    getCards("run"),
+  const [modelcards, datacards, experimentcards] = await Promise.all([
+    getCards(RegistryType.Model),
+    getCards(RegistryType.Data),
+    getCards(RegistryType.Experiment),
   ]);
 
   return {
     modelcards,
     datacards,
-    runcards,
+    experimentcards,
   };
 }
 
 export { getRecentCards, getCards };
-export type { CardJson, RecentCards };
+export type { RecentCards };

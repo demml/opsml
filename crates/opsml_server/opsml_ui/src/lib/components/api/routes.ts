@@ -1,9 +1,11 @@
 export enum RoutePaths {
-  VALIDATE_AUTH = "/opsml/auth/api/validate",
-  LOGIN = "/opsml/auth/login",
+  VALIDATE_AUTH = "/opsml/api/auth/validate",
+  LOGIN = "/opsml/api/auth/ui/login",
+  LIST_CARDS = "/opsml/api/card/list",
+  ERROR = "/opsml/error",
+  HOME = "/opsml/home",
 
   // everything below is old
-  HOME = "/opsml/index",
 
   REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",
@@ -11,7 +13,6 @@ export enum RoutePaths {
   TOKEN = "/opsml/auth/token",
   USER_AUTH = "/opsml/auth/user",
   EXISTS = "/opsml/auth/user/exists",
-  LIST_CARDS = "/opsml/cards/list",
   REGISTRY_STATS = "/opsml/cards/registry/stats",
   QUERY_PAGE = "/opsml/cards/registry/query/page",
   DATACARD = "/opsml/data/card",
@@ -30,7 +31,7 @@ export enum RoutePaths {
   TEMP_TOKEN = "/opsml/auth/temp",
   ROTATE_TOKEN = "/opsml/auth/token/rotate",
   REFRESH_TOKEN = "/opsml/auth/token/refresh",
-  ERROR = "/opsml/error/page",
+
   HARDWARE = "/opsml/metrics/hardware",
   DRIFT_PROFILE = "/opsml/scouter/drift/profile",
   DRIFT_VALUES = "/opsml/scouter/drift/values",

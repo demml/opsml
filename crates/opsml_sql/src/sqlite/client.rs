@@ -108,6 +108,13 @@ impl SqlClient for SqliteClient {
         // run migrations
         client.run_migrations().await?;
 
+        // populate db if "POPULATE_TEST_DB" is set
+        if std::env::var("POPULATE_TEST_DB").is_ok() {
+            debug!("Populating test database");
+            let script = include_str!("../../tests/populate_sqlite_test.sql");
+            sqlx::query(script).execute(&client.pool).await.unwrap();
+        }
+
         Ok(client)
     }
     async fn run_migrations(&self) -> Result<(), SqlError> {

@@ -119,6 +119,7 @@ pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
+    debug!("Listing cards for registry: {:?}", &params.registry_type);
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let cards = state

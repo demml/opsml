@@ -6,7 +6,7 @@ use anyhow::Result;
 use axum::Router;
 use opsml_auth::auth::AuthManager;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, warn};
 
 pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
@@ -16,7 +16,7 @@ pub async fn create_app() -> Result<Router> {
     // Initialize default user if none exists
     if let Err(e) = initialize_default_user(&sql_client).await {
         // Log error but don't fail startup
-        tracing::warn!("Failed to initialize default user: {}", e);
+        warn!("Failed to initialize default user: {}", e);
     }
 
     // Create shared state for the application (storage client, auth manager, config)

@@ -1,6 +1,9 @@
-import { authManager } from "$lib/components/auth/AuthStore.svelte";
+import { getRecentCards } from "$lib/components/home/utils";
+import { opsmlClient } from "$lib/components/api/client.svelte";
+import type { PageLoad } from "./$types";
 
-/** @type {import('./$types').PageLoad} */
-export async function load() {
-  await authManager.validateAuth();
-}
+export const load: PageLoad = async () => {
+  await opsmlClient.validateAuth(true);
+  let cards = await getRecentCards();
+  return { cards: cards };
+};

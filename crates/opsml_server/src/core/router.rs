@@ -10,17 +10,13 @@ use crate::core::state::AppState;
 use crate::core::ui::get_ui_router;
 use crate::core::user::route::get_user_router;
 use anyhow::Result;
-use axum::http::StatusCode;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     Method,
 };
-use axum::{handler::HandlerWithoutStateExt, middleware, Router};
-use rust_embed::Embed;
+use axum::{middleware, Router};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
-use tower_http::{services::ServeDir, trace::TraceLayer};
-use tracing::info;
 
 const ROUTE_PREFIX: &str = "/opsml/api";
 
@@ -50,7 +46,6 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     // All routes except the auth routes will be protected by the auth middleware
     let merged_routes = Router::new()
         .merge(debug_routes)
-        .merge(health_routes)
         .merge(settings_routes)
         .merge(file_routes)
         .merge(card_routes)
@@ -63,6 +58,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
 
     Ok(Router::new()
         .merge(merged_routes)
+        .merge(health_routes)
         .merge(auth_routes)
         .merge(ui_routes)
         .layer(cors)

@@ -49,15 +49,18 @@ test.storage.local.server:
 
 ######## Server tests
 
-.PHONE: build.server
+.PHONY: build.server
 build.server: stop.server build.ui
 	cargo build -p opsml-server
 	./target/debug/opsml-server &
 
 
-.PHONE: stop.server
+.PHONY: stop.server
 stop.server:
 	lsof -ti:3000 | xargs kill -9
+	rm -f opsml.db || true
+	rm -rf opsml_registries || true
+	
 
 ######## Experiment tests ########
 

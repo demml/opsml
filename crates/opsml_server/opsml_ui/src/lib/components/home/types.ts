@@ -61,9 +61,14 @@ interface PromptCard extends BaseCard {
   };
 }
 
-type Card = DataCard | ModelCard | ExperimentCard | AuditCard | PromptCard;
+export type Card =
+  | DataCard
+  | ModelCard
+  | ExperimentCard
+  | AuditCard
+  | PromptCard;
 
-interface CardQueryArgs {
+export interface CardQueryArgs {
   registry_type: string;
   limit?: number;
   sort_by_timestamp?: boolean;
