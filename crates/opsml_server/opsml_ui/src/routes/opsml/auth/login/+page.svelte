@@ -46,10 +46,10 @@
     />
   {/if}
 
-  <form class="z-10 mx-auto rounded-2xl bg-surface-50 border shadow p-4 md:w-96 md:px-5" onsubmit={handleLogin}>
+  <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5" onsubmit={handleLogin}>
 
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
-    <h1 class="pt-1 text-center text-3xl font-bold text-primary-600">Log In</h1>
+    <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">Log In</h1>
     <p class="mb-6 text-center text-surface-950">New to OpsML?
       <a class="underline hover:text-primary-700" href={RoutePaths.REGISTER}>Register</a>
     </p>
