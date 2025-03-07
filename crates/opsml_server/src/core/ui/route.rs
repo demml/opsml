@@ -2,17 +2,12 @@ use crate::core::state::AppState;
 use crate::core::ui::schema::CardsRequest;
 use anyhow::Result;
 use axum::extract::{Path, Query};
-use axum::response::Html;
-use axum::{handler::HandlerWithoutStateExt, middleware, Router};
+use axum::Router;
 use axum::{
-    http::{
-        header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
-        Method, StatusCode, Uri,
-    },
-    response::{IntoResponse, Redirect, Response},
+    http::{header::CONTENT_TYPE, StatusCode, Uri},
+    response::{IntoResponse, Response},
     routing::get,
 };
-use core::error;
 use rust_embed::Embed;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -21,13 +16,6 @@ use tracing::{debug, error, info};
 #[derive(Embed)]
 #[folder = "opsml_ui/site/"]
 struct Assets;
-
-async fn handle_error() -> (StatusCode, &'static str) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        "Something went wrong accessing static files...",
-    )
-}
 
 #[derive(Deserialize)]
 struct CardPath {

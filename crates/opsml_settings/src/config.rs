@@ -183,7 +183,7 @@ impl Default for OpsmlConfig {
             sql_type: OpsmlConfig::get_sql_type(&opsml_tracking_uri),
         };
 
-        let logging_config = LoggingConfig::json_default();
+        let logging_config = LoggingConfig::default();
 
         OpsmlConfig {
             app_name: "opsml".to_string(),

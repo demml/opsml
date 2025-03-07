@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
   import LogoutModal from "$lib/components/auth/LogoutModal.svelte";
   import { goto } from "$app/navigation";
   import { browser } from '$app/environment';
-  import { user } from "$lib/components/auth/AuthStore.svelte";
   import { Popover } from '@skeletonlabs/skeleton-svelte';
   import IconX from 'lucide-svelte/icons/x';
   import { KeySquare } from 'lucide-svelte';
   import { RoutePaths } from "../api/routes";
+
 
 
   let popupState = $state(false);

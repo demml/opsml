@@ -1,5 +1,4 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
-use crate::core::debug;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 /// Route for debugging information
@@ -248,19 +247,16 @@ async fn validate_jwt_token(
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
+            .route(&format!("{}/auth/login", prefix), get(api_login_handler))
             .route(
-                &format!("{}/auth/api/login", prefix),
-                get(api_login_handler),
-            )
-            .route(
-                &format!("{}/auth/api/refresh", prefix),
+                &format!("{}/auth/refresh", prefix),
                 get(api_refresh_token_handler),
             )
             .route(
-                &format!("{}/auth/api/validate", prefix),
+                &format!("{}/auth/validate", prefix),
                 get(validate_jwt_token),
             )
-            .route(&format!("{}/auth/login", prefix), post(ui_login_handler))
+            .route(&format!("{}/auth/ui/login", prefix), post(ui_login_handler))
     }));
 
     match result {

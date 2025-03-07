@@ -1,12 +1,13 @@
 
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import logo from "$lib/images/opsml-logo.png";
   import LoginWarning from "$lib/components/auth/LoginWarning.svelte";
   import { RoutePaths } from "$lib/components/api/routes";
   import { goTop } from "$lib/utils";
-  import { user, authManager } from "$lib/components/auth/AuthStore.svelte";
+  import { opsmlClient } from "$lib/components/api/client.svelte";
   import type { PageProps } from './$types';
+
 
 
   let username: string = $state('');
@@ -19,7 +20,7 @@
 
   async function handleLogin() {
     // Handle login logic here
-    let authenticated = await authManager.login(username, password);
+    let authenticated = await opsmlClient.login(username, password);
 
     if (authenticated === true) {
       // need to reload the page to update the nav bar

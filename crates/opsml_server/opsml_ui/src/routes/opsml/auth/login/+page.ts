@@ -1,7 +1,7 @@
+export const ssr = false;
+
 import { RoutePaths } from "$lib/components/api/routes";
 import type { PageLoad } from "./$types";
-
-export const ssr = false;
 
 export const load: PageLoad = ({ url }) => {
   const currentPath = (url as URL).pathname;
