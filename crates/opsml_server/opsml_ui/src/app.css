@@ -32,6 +32,17 @@
     --reverse-box-shadow-x-small: -2px;
     --reverse-box-shadow-y-small: -2px;
     --shadow-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--border);
+    --reverse-shadow-small: var(--reverse-box-shadow-x-small) var(--reverse-box-shadow-y-small) 0px 0px var(--border);
   }
 
- 
+.shadow-hover {
+    @apply transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none;
+}
+
+.shadow-hover-small {
+    @apply transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none;
+}
+
+.reverse-shadow-hover-small {
+    @apply transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-small;
+}

@@ -24,3 +24,14 @@ export function calculateTimeBetween(created_at: string): string {
   }
   return `${Math.round(hours)} hours ago`;
 }
+
+export function delay(fn: any, ms: number) {
+  let timer = 0;
+  return function (...args: any) {
+    clearTimeout(timer);
+
+    // @ts-expect-error "ignore"
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,  @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+    timer = window.setTimeout(fn.bind(this, ...args), ms || 0);
+  };
+}

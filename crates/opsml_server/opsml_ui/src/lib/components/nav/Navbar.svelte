@@ -105,11 +105,11 @@
     <div class="flex items-center gap-5 m1000:gap-5">
       <div class="flex items-center justify-end gap-5 m800:w-[unset] m400:gap-3">
 
-        <a aria-label="Close" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50">
+        <a aria-label="Close" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50">
           <Github color="#5948a3"/>
         </a>
 
-        <button aria-label="Close" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none bg-surface-50">
+        <button aria-label="Close" onclick={logInHandle} class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50">
           <KeySquare color="#5948a3"/>
         </button>
       </div>

@@ -2,6 +2,10 @@ export enum RoutePaths {
   VALIDATE_AUTH = "/opsml/api/auth/validate",
   LOGIN = "/opsml/api/auth/ui/login",
   LIST_CARDS = "/opsml/api/card/list",
+  LIST_SPACES = "/opsml/api/card/repositories",
+  GET_STATS = "/opsml/api/card/registry/stats",
+  GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
+
   ERROR = "/opsml/error",
   HOME = "/opsml/home",
 
