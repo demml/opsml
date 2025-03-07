@@ -26,6 +26,12 @@
     --ring: #000;
     --mtext: #000;
     --ring-offset: #fff;
+
+    --box-shadow-x-small: 2px;
+    --box-shadow-y-small: 2px;
+    --reverse-box-shadow-x-small: -2px;
+    --reverse-box-shadow-y-small: -2px;
+    --shadow-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--border);
   }
 
  
