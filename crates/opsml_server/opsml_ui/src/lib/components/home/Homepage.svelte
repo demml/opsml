@@ -16,11 +16,11 @@
     {:then cards}
     <div class="mx-auto w-container max-w-full py-20 m500:py-14 lg:py-[100px]">
       <h2 class="mb-10 text-center text-4xl font-heading m1300:text-3xl m700:text-2xl m500:text-xl text-black font-bold">Recent Cards</h2>
-      <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8">
-        <HomeCard header="ModelCards" cards={cards.modelcards}/>
-        <HomeCard header="DataCards" cards={cards.datacards}/>
-        <HomeCard header="ExperimentCards" cards={cards.experimentcards}/>
-        <HomeCard header="PromptCards" cards={cards.datacards}/>
+      <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
+        <HomeCard header="ModelCards" headerColor="text-primary-800" cardColor="bg-primary-400" cards={cards.modelcards}/>
+        <HomeCard header="DataCards" headerColor="text-secondary-800" cardColor="bg-secondary-400" cards={cards.datacards}/>
+        <HomeCard header="ExperimentCards" headerColor="text-tertiary-800" cardColor="bg-tertiary-400" cards={cards.experimentcards}/>
+        <HomeCard header="PromptCards" headerColor="text-error-800" cardColor="bg-error-400" cards={cards.datacards}/>
       </div>
     </div>
   {/await}
