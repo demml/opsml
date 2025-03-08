@@ -14,13 +14,51 @@
   {#await cards}
     <div></div>
     {:then cards}
-    <div class="mx-auto w-container max-w-full py-20 m500:py-14 lg:py-[100px]">
+
+    <div class="mx-auto w-container max-w-full pt-20 pb-8 m500:pt-14 lg:pt-[100px] bg-primary-100">
       <h2 class="mb-10 text-center text-4xl font-heading m1300:text-3xl m700:text-2xl m500:text-xl text-black font-bold">Recent Cards</h2>
       <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
-        <HomeCard header="ModelCards" headerColor="text-primary-800" cardColor="bg-primary-400" cards={cards.modelcards}/>
-        <HomeCard header="DataCards" headerColor="text-secondary-800" cardColor="bg-secondary-400" cards={cards.datacards}/>
-        <HomeCard header="ExperimentCards" headerColor="text-tertiary-800" cardColor="bg-tertiary-400" cards={cards.experimentcards}/>
-        <HomeCard header="PromptCards" headerColor="text-error-800" cardColor="bg-error-400" cards={cards.datacards}/>
+        <HomeCard 
+          header="ModelCards" 
+          cards={cards.modelcards}
+
+          headerColor="bg-primary-500" 
+          headerTextColor="text-black" 
+
+          cardColor="bg-primary-500"
+        />
+        <HomeCard 
+          header="DataCards"
+          cards={cards.datacards}
+
+          headerColor="bg-primary-500" 
+          headerTextColor="text-black" 
+
+          cardColor="bg-primary-500"
+        />
+      </div>
+    </div>
+
+    <div class="mx-auto w-container pt-4 max-w-full border-2 border-black bg-secondary-100 pb-8">
+      <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
+        <HomeCard 
+          header="PromptCards" 
+          cards={cards.modelcards}
+
+          headerColor="bg-secondary-500" 
+          headerTextColor="text-black" 
+
+          cardColor="bg-secondary-500" 
+        />
+        <HomeCard 
+          header="ExperimentCards"
+          cards={cards.datacards}
+
+          headerColor="bg-secondary-500" 
+          headerTextColor="text-black"
+
+          cardColor="bg-secondary-500" 
+        />
       </div>
     </div>
   {/await}

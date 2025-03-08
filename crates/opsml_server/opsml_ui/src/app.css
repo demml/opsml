@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
@@ -12,7 +12,7 @@
 
 
 @theme {
-    --font-work-sans: "Work Sans", sans-serif; 
+    --font-sans: Roboto, sans-serif; 
     --border: #000;
     --border-radius: 5px;
     --box-shadow-x: 5px;
@@ -46,3 +46,5 @@
 .reverse-shadow-hover-small {
     @apply transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-small;
 }
+
+
