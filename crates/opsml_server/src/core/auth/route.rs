@@ -12,6 +12,7 @@ use axum::{
 };
 use opsml_client::JwtToken;
 use opsml_sql::base::SqlClient;
+use std::os::macos::raw::stat;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{debug, error};
@@ -63,10 +64,26 @@ pub async fn api_login_handler(
             (StatusCode::UNAUTHORIZED, Json(serde_json::json!({})))
         })?;
 
+    // we may get multiple requests for the same user (setting up storage and registries), so we
+    // need to check is current refresh and jwt tokens are valid and return them if they are
+
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user);
-    let refresh_token = state.auth_manager.generate_refresh_token(&user);
 
+    // check if refresh token is already set.
+    // if it is, check if its valid and return it
+    // if it is not, generate a new one
+    if let Some(refresh_token) = &user.refresh_token {
+        if state
+            .auth_manager
+            .validate_refresh_token(refresh_token)
+            .is_ok()
+        {
+            return Ok(Json(JwtToken { token: jwt_token }));
+        }
+    }
+
+    let refresh_token = state.auth_manager.generate_refresh_token(&user);
     user.refresh_token = Some(refresh_token);
 
     // set refresh token in db
