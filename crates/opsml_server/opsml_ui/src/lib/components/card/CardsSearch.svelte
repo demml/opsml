@@ -6,6 +6,7 @@
   import  CardPage  from "$lib/components/card/CardPage.svelte";
   import  { RegistryType, delay } from "$lib/utils";
   import { Settings } from 'lucide-svelte';
+  import { Search } from 'lucide-svelte';
 
   
 
@@ -65,19 +66,24 @@
 </script>
 
 <div class="mx-auto w-11/12 min-h-screen pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full bg-primary-500">
+  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
     <!-- Left column -->
-    <div class="col-span-1 md:col-span-2 bg-surface-200 p-4 flex flex-col rounded-base border-black border-2 shadow-small">
+    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base border-black border-2 shadow-small">
       <!-- Top Section -->
       <div class="mb-4">
-        <h2 class="font-bold text-black text-xl mb-1">Search Spaces</h2>
+        <h2 class="font-bold text-black text-xl pb-3">Search Spaces</h2>
+        <div class="flex flex-row gap-1 items-center">
+          <div class="mr-1">
+            <Search color="#5948a3" />
+          </div>  
           <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
             type="text"
             bind:value={searchQuery}
             placeholder="Search..."
             oninput={searchSpaces}
           />
+        </div>
       </div>
 
       <!-- Bottom Section -->
@@ -89,9 +95,9 @@
           {#each filteredSpaces as space}
 
             {#if activeSpace === space}
-              <button class="chip text-black bg-secondary-400 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black bg-secondary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" onclick={() => setActiveRepo(space)}>{space}</button>
             {:else}
-              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50" onclick={() => setActiveRepo(space)}>{space}</button>
             {/if}
           
           {/each}
@@ -100,7 +106,7 @@
     </div>
 
     <!-- Right column -->
-    <div class="col-span-1 md:col-span-4 gap-1 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow-small">
+    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow-small bg-secondary-300">
       <!-- Add your items here -->
       <div class="flex flex-row gap-1 items-center">
         <div class="ml-2">
@@ -110,17 +116,17 @@
       </div>
       <div class="flex flex-row gap-1 items-center">
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small">{registryStats.stats.nbr_names} artifacts</span>
+          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
         </div>
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small">{registryStats.stats.nbr_versions} versions</span>
+          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
         </div>
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small">{registryStats.stats.nbr_repositories} spaces</span>
+          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_repositories} spaces</span>
         </div>
         <div class="ml-1 md:w-full">
           <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
             type="text"
             bind:value={artifactSearchQuery}
             placeholder="Search artifacts"
@@ -137,7 +143,7 @@
             nbr_versions={summary.versions}
             updated_at={summary.updated_at}
             registry={registryType}
-            bgColor={getBgColor()}
+            bgColor={"bg-surface-50"}
           />
         {/each}
       </div>
