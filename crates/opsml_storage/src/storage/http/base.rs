@@ -90,7 +90,7 @@ impl HttpStorageClient {
     #[instrument(skip(client))]
     async fn get_storage_setting(client: &mut OpsmlApiClient) -> Result<StorageType, StorageError> {
         let response = client
-            .request_with_retry(Routes::StorageSettings, RequestType::Get, None, None, None)
+            .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .await
             .map_err(|e| {
                 let error = Colorize::alert(&format!("Failed to get storage settings: {}", e));
@@ -126,7 +126,7 @@ impl HttpStorageClient {
         // need to clone because self is borrowed
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::List,
                 RequestType::Get,
                 None,
@@ -166,7 +166,7 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ListInfo,
                 RequestType::Get,
                 None,
@@ -230,7 +230,7 @@ impl HttpStorageClient {
             })?;
 
             self.api_client
-                .request_with_retry(
+                .request(
                     Routes::Files,
                     RequestType::Get,
                     None,
@@ -296,7 +296,7 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
                 None,
@@ -334,7 +334,7 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
                 None,
@@ -368,7 +368,7 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::Multipart,
                 RequestType::Get,
                 None,
@@ -424,7 +424,7 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::Presigned,
                 RequestType::Get,
                 None,
