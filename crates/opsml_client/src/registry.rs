@@ -52,7 +52,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::CardList,
                 RequestType::Get,
                 None,
@@ -101,7 +101,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::CardCreate,
                 RequestType::Post,
                 Some(body),
@@ -143,7 +143,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::CardUpdate,
                 RequestType::Post,
                 Some(body),
@@ -173,7 +173,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::CardDelete,
                 RequestType::Delete,
                 None,
@@ -205,7 +205,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::CardLoad,
                 RequestType::Get,
                 None,
@@ -231,7 +231,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::Card,
                 RequestType::Get,
                 None,
@@ -267,7 +267,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(route, RequestType::Get, None, Some(query_string), None)
+            .request(route, RequestType::Get, None, Some(query_string), None)
             .await
             .map_err(|e| {
                 error!("Failed to get artifact key {}", e);
@@ -301,7 +301,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentHardwareMetrics,
                 RequestType::Put,
                 Some(body),
@@ -342,7 +342,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentHardwareMetrics,
                 RequestType::Get,
                 None,
@@ -369,7 +369,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentMetrics,
                 RequestType::Put,
                 Some(body),
@@ -405,7 +405,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentMetrics,
                 RequestType::Post,
                 Some(body),
@@ -435,7 +435,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentParameters,
                 RequestType::Put,
                 Some(body),
@@ -473,7 +473,7 @@ impl ClientRegistry {
 
         let response = self
             .api_client
-            .request_with_retry(
+            .request(
                 Routes::ExperimentParameters,
                 RequestType::Post,
                 Some(body),

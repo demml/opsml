@@ -3,6 +3,7 @@ use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
 use opsml_types::contracts::{PresignedQuery, PresignedUrl};
 
+use reqwest::header;
 use reqwest::multipart::Form;
 use reqwest::Response;
 use reqwest::{
@@ -103,28 +104,19 @@ impl OpsmlApiClient {
         Ok(())
     }
 
-    /// Refresh the JWT token when it expires
-    /// This function is called with the old JWT token, which is then verified with the server refresh token
-    async fn refresh_token(&mut self) -> Result<(), ApiError> {
-        let url = format!("{}/{}", self.base_path, Routes::AuthRefresh.as_str());
-        let response = self
-            .client
-            .get(url)
-            .bearer_auth(&self.settings.api_settings.auth_token)
-            .send()
-            .await
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?
-            .json::<JwtToken>()
-            .await
-            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
-
-        self.settings.api_settings.auth_token = response.token;
-
-        Ok(())
+    async fn update_token_from_response(&mut self, response: &Response) {
+        if let Some(new_token) = response
+            .headers()
+            .get(header::AUTHORIZATION)
+            .and_then(|h| h.to_str().ok())
+            .and_then(|h| h.strip_prefix("Bearer "))
+        {
+            self.settings.api_settings.auth_token = new_token.to_string();
+        }
     }
 
-    async fn request(
-        self,
+    async fn _request(
+        &self,
         route: Routes,
         request_type: RequestType,
         body_params: Option<Value>,
@@ -157,7 +149,7 @@ impl OpsmlApiClient {
                 .post(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(self.settings.api_settings.auth_token)
+                .bearer_auth(&self.settings.api_settings.auth_token)
                 .send()
                 .await
                 .map_err(|e| {
@@ -168,7 +160,7 @@ impl OpsmlApiClient {
                 .put(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(self.settings.api_settings.auth_token)
+                .bearer_auth(&self.settings.api_settings.auth_token)
                 .send()
                 .await
                 .map_err(|e| {
@@ -183,7 +175,7 @@ impl OpsmlApiClient {
                 self.client
                     .delete(url)
                     .headers(headers)
-                    .bearer_auth(self.settings.api_settings.auth_token)
+                    .bearer_auth(&self.settings.api_settings.auth_token)
                     .send()
                     .await
                     .map_err(|e| {
@@ -195,7 +187,7 @@ impl OpsmlApiClient {
         Ok(response)
     }
 
-    pub async fn request_with_retry(
+    pub async fn request(
         &mut self,
         route: Routes,
         request_type: RequestType,
@@ -203,41 +195,18 @@ impl OpsmlApiClient {
         query_params: Option<String>,
         headers: Option<HeaderMap>,
     ) -> Result<Response, ApiError> {
-        // this will attempt to send a request. If the request fails, it will refresh the token and try again. If it fails all 3 times it will return an error
-        let mut attempts = 0;
-        let max_attempts = 3;
-        let mut response: Result<Response, ApiError>;
+        let response = self
+            ._request(
+                route.clone(),
+                request_type,
+                body_params,
+                query_params,
+                headers,
+            )
+            .await?;
 
-        loop {
-            attempts += 1;
-
-            let client = self.clone();
-            response = client
-                .request(
-                    route.clone(),
-                    request_type.clone(),
-                    body_params.clone(),
-                    query_params.clone(),
-                    headers.clone(),
-                )
-                .await;
-
-            if response.is_ok() || attempts >= max_attempts {
-                break;
-            }
-
-            if response.is_err() {
-                self.refresh_token().await.map_err(|e| {
-                    error!("Failed to refresh token: {}", e);
-                    ApiError::Error(format!("Failed to refresh token with error: {}", e))
-                })?;
-            }
-        }
-
-        let response = response.map_err(|e| {
-            error!("Failed to send request: {}", e);
-            ApiError::Error(format!("Failed to send request with error: {}", e))
-        })?;
+        // Check and update token if a new one was provided
+        self.update_token_from_response(&response).await;
 
         Ok(response)
     }
@@ -276,7 +245,7 @@ impl OpsmlApiClient {
         })?;
 
         let response = self
-            .request_with_retry(
+            .request(
                 Routes::Presigned,
                 RequestType::Get,
                 None,
@@ -337,7 +306,7 @@ mod tests {
             .create();
 
         let response = api_client
-            .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
+            .request(Routes::Files, RequestType::Get, None, None, None)
             .await
             .unwrap();
 
@@ -368,7 +337,7 @@ mod tests {
         let mut api_client = setup_client(server_url).await;
 
         let response = api_client
-            .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
+            .request(Routes::Files, RequestType::Get, None, None, None)
             .await
             .unwrap();
 
@@ -376,7 +345,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_request_with_retry_success() {
+    async fn test_request_success() {
         let (mut server, server_url) = setup_server().await;
 
         // Mock auth token endpoint
@@ -399,7 +368,7 @@ mod tests {
         let mut api_client = setup_client(server_url).await;
 
         let response = api_client
-            .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
+            .request(Routes::Files, RequestType::Get, None, None, None)
             .await
             .unwrap();
 
@@ -407,7 +376,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_request_with_retry_failure() {
+    async fn test_request_failure() {
         let (mut server, server_url) = setup_server().await;
 
         // Mock auth token endpoint - will be called multiple times
@@ -428,14 +397,14 @@ mod tests {
 
         let mut api_client = setup_client(server_url).await;
         let result = api_client
-            .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
+            .request(Routes::Files, RequestType::Get, None, None, None)
             .await;
 
         assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn test_request_with_retry_auth_refresh() {
+    async fn test_request_auth_refresh() {
         let (mut server, server_url) = setup_server().await;
 
         // Mock auth token endpoint - first token
@@ -474,7 +443,7 @@ mod tests {
         let mut api_client = setup_client(server_url).await;
 
         let response = api_client
-            .request_with_retry(Routes::Files, RequestType::Get, None, None, None)
+            .request(Routes::Files, RequestType::Get, None, None, None)
             .await
             .unwrap();
 
