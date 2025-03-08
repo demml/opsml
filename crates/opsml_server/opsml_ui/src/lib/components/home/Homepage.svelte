@@ -25,16 +25,16 @@
           headerColor="bg-primary-500" 
           headerTextColor="text-black" 
 
-          cardColor="bg-primary-500"
+          cardColor="bg-primary-300"
         />
         <HomeCard 
           header="DataCards"
           cards={cards.datacards}
 
-          headerColor="bg-primary-500" 
+          headerColor="bg-primary-500"
           headerTextColor="text-black" 
 
-          cardColor="bg-primary-500"
+          cardColor="bg-primary-300"
         />
       </div>
     </div>
@@ -48,7 +48,7 @@
           headerColor="bg-secondary-500" 
           headerTextColor="text-black" 
 
-          cardColor="bg-secondary-500" 
+          cardColor="bg-secondary-300" 
         />
         <HomeCard 
           header="ExperimentCards"
@@ -57,7 +57,7 @@
           headerColor="bg-secondary-500" 
           headerTextColor="text-black"
 
-          cardColor="bg-secondary-500" 
+          cardColor="bg-secondary-300" 
         />
       </div>
     </div>
