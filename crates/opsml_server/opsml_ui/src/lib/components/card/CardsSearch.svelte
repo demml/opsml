@@ -7,15 +7,17 @@
   import  { RegistryType, delay } from "$lib/utils";
   import { Settings } from 'lucide-svelte';
   import { Search } from 'lucide-svelte';
+  import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 
   
-
-
   let { selectedSpace, page } = $props<{
     selectedSpace: string | null;
     page: RegistryPageReturn;
   }>();
  
+  let currentPage = $state(0);
+  let totalPages = $state(0);
+
   let searchQuery = $state('');
   let artifactSearchQuery = $state('');
   let activeSpace = $state<string | undefined>(undefined);
@@ -36,6 +38,8 @@
       console.log("selectedSpace", selectedSpace);
     }
 
+    totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
+
   });
 
   async function setActiveRepo(space: string) {
@@ -49,6 +53,7 @@
 
     registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, 0);
     registryStats = await getRegistryStats(registryType,activeSpace);
+    currentPage = 0;
   }
 
   const searchSpaces = () => {	
@@ -61,6 +66,13 @@
   const searchPage = async function () {
   registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 0);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery);
+  currentPage = 0;
+  }
+
+  const changePage = async function (page: number) {
+    registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, page);
+    registryStats = await getRegistryStats(registryType, artifactSearchQuery);
+    currentPage = page;
   }
 
 </script>
@@ -146,6 +158,27 @@
             bgColor={"bg-surface-50"}
           />
         {/each}
+      </div>
+
+      <div class="flex justify-center pt-4 gap-2">
+
+        {#if currentPage > 0}
+          <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
+            <ArrowLeft color="#5948a3"/>
+          </button>
+        {/if}
+       
+        <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
+          <span class="text-primary-800 mr-1">{currentPage + 1}</span>
+          <span class="text-primary-400">of {totalPages}</span>
+        </div>
+
+        {#if currentPage < totalPages - 1}
+          <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
+            <ArrowRight color="#5948a3"/>
+          </button>
+        {/if}
+      
       </div>
     </div>
   </div>
