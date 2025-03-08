@@ -3,6 +3,7 @@
     import "github-markdown-css/github-markdown-light.css";
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
+    import lightningBolt from "$lib/images/lightningbolt.webp";
     import { onMount } from 'svelte';
 
 
@@ -24,7 +25,7 @@
   </svelte:head>
 
 {#if show}
-  <div class="bg-center layout overflow-auto min-h-screen bg-surface-50 font-work-sans" id="page">
+  <div class="layout overflow-auto min-h-screen font-sans" id="page">
     <Navbar/>
     {@render children()}
   </div>
@@ -33,5 +34,3 @@
       <div class="animate-spin h-8 w-8 border-4 border-primary-500 rounded-full border-t-transparent"></div>
   </div>
 {/if}
-
-  

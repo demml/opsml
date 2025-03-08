@@ -10,7 +10,8 @@
     version,
     created_at,
     registry,
-    cardColor
+    cardColor,
+    iconColor = "#000000"
   } = $props<{
     name: string;
     repository: string;
@@ -29,17 +30,17 @@
 
 </script>
 
-<button class="text-black rounded-base shadow border-2 border-border {cardColor} w-[450px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+<button class="text-black rounded-base shadow border-2 border-border {cardColor} w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
   <div class="flex items-center justify-start gap-2 mb-1">
     <div class="ml-2">
-      <CircuitBoard color="#000000" />
+      <CircuitBoard color={iconColor} />
     </div>
-    <div><h4 class="truncate font-bold">{repository}/{name}</h4></div>
+    <div><h4 class="truncate font-bold text-lg">{repository}/{name}</h4></div>
   </div>
-  <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-sm">
+  <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs">
     <div class="flex items-center gap-1 ">
       <div class="ml-2">
-        <Clock color="#000000" />
+        <Clock color={iconColor} />
       </div>
       <div>
         <time datetime={ Date() } >
@@ -49,7 +50,7 @@
     </div>
     <div class="flex items-center gap-1 ">
       <div class="ml-2">
-        <Tag color="#000000" />
+        <Tag color={iconColor} />
       </div>
       <div class="text-black">Version: {version}</div>
     </div>

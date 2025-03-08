@@ -1,8 +1,9 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getRegistryPage, getRegistryStats } from "./utils";
+  import { getRegistryPage, getRegistryStats, getBgColor } from "./utils";
   import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse} from "$lib/components/card/types";
+  import  CardPage  from "$lib/components/card/CardPage.svelte";
   import  { RegistryType, delay } from "$lib/utils";
   import { Settings } from 'lucide-svelte';
 
@@ -63,15 +64,13 @@
 
 </script>
 
-
-
 <div class="mx-auto w-11/12 min-h-screen pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
+  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full bg-primary-500">
     <!-- Left column -->
     <div class="col-span-1 md:col-span-2 bg-surface-200 p-4 flex flex-col rounded-base border-black border-2 shadow-small">
       <!-- Top Section -->
       <div class="mb-4">
-        <h2 class="font-bold text-primary-500 text-xl mb-1">Search Spaces</h2>
+        <h2 class="font-bold text-black text-xl mb-1">Search Spaces</h2>
           <input
             class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
             type="text"
@@ -128,6 +127,19 @@
             onkeydown={delay(searchPage, 1000)}
           />
         </div>
+      </div>
+      <div class="pt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {#each registryPage.summaries as summary}
+          <CardPage
+            repository={summary.repository}
+            name={summary.name}
+            version={summary.version}
+            nbr_versions={summary.versions}
+            updated_at={summary.updated_at}
+            registry={registryType}
+            bgColor={getBgColor()}
+          />
+        {/each}
       </div>
     </div>
   </div>

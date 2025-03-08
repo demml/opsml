@@ -85,3 +85,16 @@ export async function setupRegistryPage(
     registryPage: registryPage,
   };
 }
+
+export function getBgColor(): string {
+  const classes = [
+    "bg-primary-500",
+    "bg-secondary-500",
+    "bg-tertiary-500",
+    "bg-success-500",
+    "bg-warning-500",
+    "bg-error-500",
+  ];
+  const randomIndex = Math.floor(Math.random() * classes.length);
+  return classes[randomIndex];
+}
