@@ -10,8 +10,10 @@ pub enum RequestType {
 
 #[derive(Debug, Clone)]
 pub enum Routes {
-    AuthApiLogin,
-    AuthApiRefresh,
+    AuthLogin,
+    AuthRefresh,
+    AuthValidate,
+    AuthUiLogin,
     Card,
     CardCreate,
     CardDelete,
@@ -48,8 +50,10 @@ impl Routes {
             Routes::Healthcheck => "healthcheck",
             Routes::StorageSettings => "storage/settings",
             Routes::DeleteFiles => "files/delete",
-            Routes::AuthApiLogin => "auth/api/login",
-            Routes::AuthApiRefresh => "auth/api/refresh",
+            Routes::AuthLogin => "auth/login",
+            Routes::AuthRefresh => "auth/refresh",
+            Routes::AuthValidate => "auth/validate",
+            Routes::AuthUiLogin => "auth/ui/login",
             Routes::Card => "card",
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",

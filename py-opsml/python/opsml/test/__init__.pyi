@@ -23,3 +23,9 @@ class OpsmlTestServer:
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """Stops the test server."""
+
+    def set_env_vars_for_client(self) -> None:
+        """Sets the env vars for the client to connect to the server."""
+
+    def remove_env_vars_for_client(self) -> None:
+        """Removes the env vars for the client to connect to the server."""

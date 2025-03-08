@@ -296,7 +296,7 @@ impl OpsmlConfig {
             storage_type: self.get_storage_type(),
             api_settings: ApiSettings {
                 base_url: self.opsml_tracking_uri.clone(),
-                opsml_dir: "opsml".to_string(),
+                opsml_dir: "opsml/api".to_string(),
                 scouter_dir: "scouter".to_string(),
                 username: self.auth_settings.username.clone(),
                 password: self.auth_settings.password.clone(),
