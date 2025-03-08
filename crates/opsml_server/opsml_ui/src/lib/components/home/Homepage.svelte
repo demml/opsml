@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { RecentCards } from "$lib/components/home/utils";
   import HomeCard from "$lib/components/home/HomeCard.svelte";
+  import { FlaskConical, Table, BrainCircuit, NotebookText } from 'lucide-svelte';
 
   let { cards } = $props<{
      cards: RecentCards;
@@ -15,52 +16,65 @@
     <div></div>
     {:then cards}
 
-    <div class="mx-auto w-container max-w-full pt-20 pb-8 m500:pt-14 lg:pt-[100px] bg-primary-100">
-      <h2 class="mb-10 text-center text-4xl font-heading m1300:text-3xl m700:text-2xl m500:text-xl text-black font-bold">Recent Cards</h2>
-      <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
-        <HomeCard 
-          header="ModelCards" 
-          cards={cards.modelcards}
-
-          headerColor="bg-primary-500" 
-          headerTextColor="text-black" 
-
-          cardColor="bg-primary-300"
-        />
-        <HomeCard 
-          header="DataCards"
-          cards={cards.datacards}
-
-          headerColor="bg-primary-500"
-          headerTextColor="text-black" 
-
-          cardColor="bg-primary-300"
-        />
+  
+    <div class="flex items-center justify-center border-2 border-black bg-surface-50 pt-20 m500:pt-14 lg:pt-[80px] p-2 gap-2">
+      <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <BrainCircuit color="#8059b6" />
+      </div>
+      <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <Table color="#5fd68d" />
+      </div>
+      <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <h2 class="text-center text-xl font-heading m1300:text-xl m700:text-xl m500:text-xl text-black font-bold">Recent Cards</h2>
+      </div>
+      <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <NotebookText color="#f9b25e" />
+      </div>
+      <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <FlaskConical color="#f54c54" />
       </div>
     </div>
-
-    <div class="mx-auto w-container pt-4 max-w-full border-2 border-black bg-secondary-100 pb-8">
-      <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
-        <HomeCard 
-          header="PromptCards" 
-          cards={cards.modelcards}
-
-          headerColor="bg-secondary-500" 
-          headerTextColor="text-black" 
-
-          cardColor="bg-secondary-300" 
-        />
-        <HomeCard 
-          header="ExperimentCards"
-          cards={cards.datacards}
-
-          headerColor="bg-secondary-500" 
-          headerTextColor="text-black"
-
-          cardColor="bg-secondary-300" 
-        />
+  
+    <div class="mx-auto w-container grid grid-cols-1 2xl:grid-cols-2 min-h-screen">
+      <div class="max-w-full bg-primary-100 border-r-2 border-black pt-4 pb-10">
+        <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
+          <HomeCard 
+            header="ModelCards" 
+            cards={cards.modelcards}
+            headerColor="bg-primary-500" 
+            headerTextColor="text-white" 
+            iconColor="#8059b6"
+          />
+          <HomeCard 
+            header="DataCards"
+            cards={cards.datacards}
+            headerColor="bg-primary-500"
+            headerTextColor="text-white" 
+            iconColor="#8059b6"
+          />
+        </div>
       </div>
+      <div class="max-w-full bg-secondary-100 pt-4 pb-10">
+        <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
+          <HomeCard 
+            header="PromptCards" 
+            cards={cards.modelcards}
+            headerColor="bg-secondary-500" 
+            headerTextColor="text-black" 
+            iconColor="#5fd68d"
+          />
+          <HomeCard 
+            header="ExperimentCards"
+            cards={cards.datacards}
+            headerColor="bg-secondary-500" 
+            headerTextColor="text-black"
+            iconColor="#5fd68d"
+          />
+        </div>
+      </div>
+
+
+        
     </div>
   {/await}
-
 

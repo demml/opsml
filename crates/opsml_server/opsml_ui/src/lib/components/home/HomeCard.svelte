@@ -1,23 +1,21 @@
 <script lang="ts">
   import Card from "$lib/components/card/Card.svelte";
   import { type Card as Cards } from "$lib/components/home/types";
+  import type { RegistryType } from "$lib/utils";
   let { 
     header, 
     cards, 
-
     // header attributes
     headerColor, 
     headerTextColor = "text-black",
-
-    // card attributes
-    cardColor, 
+    iconColor,
 
   } = $props<{
     header: string;
     cards: Cards[];
     headerTextColor?: string;
     headerColor: string; 
-    cardColor: string;
+    iconColor: string;
 
 
   }>();
@@ -38,7 +36,8 @@
   <div class="flex flex-col items-center gap-4">
     {#each cards as card}
       <Card 
-        cardColor={cardColor} 
+        iconColor={iconColor} 
+        registry={card.type.toLowerCase()}
         {...card.data} 
         />
     {/each}

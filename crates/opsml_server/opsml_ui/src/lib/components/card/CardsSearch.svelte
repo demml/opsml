@@ -80,7 +80,7 @@
 <div class="mx-auto w-11/12 min-h-screen pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
   <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
     <!-- Left column -->
-    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base border-black border-2 shadow-small">
+    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base border-black border-2 shadow">
       <!-- Top Section -->
       <div class="mb-4">
         <h2 class="font-bold text-black text-xl pb-3">Search Spaces</h2>
@@ -118,11 +118,11 @@
     </div>
 
     <!-- Right column -->
-    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow-small bg-secondary-300">
+    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow bg-secondary-100">
       <!-- Add your items here -->
-      <div class="flex flex-row gap-1 items-center">
-        <div class="ml-2">
-          <Settings color="#37b98e" />
+      <div class="flex flex-row items-center gap-2">
+        <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+          <Settings color="#5fd68d" />
         </div>
         <h2 class="font-bold text-black text-xl">Artifacts</h2>
       </div>
