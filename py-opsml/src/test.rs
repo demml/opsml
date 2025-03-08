@@ -35,7 +35,7 @@ impl OpsmlTestServer {
         }
     }
 
-    fn set_env_vars_for_client(&self) -> PyResult<()> {
+    pub fn set_env_vars_for_client(&self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
             std::env::set_var("OPSML_TRACKING_URI", "http://localhost:3000");
@@ -69,7 +69,9 @@ impl OpsmlTestServer {
             let max_attempts = 20;
 
             while attempts < max_attempts {
-                let res = client.get("http://localhost:3000/opsml/healthcheck").send();
+                let res = client
+                    .get("http://localhost:3000/opsml/api/healthcheck")
+                    .send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
                         self.set_env_vars_for_client()?;
@@ -118,14 +120,19 @@ impl OpsmlTestServer {
         }
     }
 
+    pub fn remove_env_vars_for_client(&self) -> PyResult<()> {
+        std::env::remove_var("APP_ENV");
+        std::env::remove_var("OPSML_TRACKING_URI");
+        Ok(())
+    }
+
     fn cleanup(&self) -> PyResult<()> {
         let current_dir = std::env::current_dir().unwrap();
         let db_file = current_dir.join("opsml.db");
         let storage_dir = current_dir.join("opsml_registries");
 
         // unset env vars
-        std::env::remove_var("APP_ENV");
-        std::env::remove_var("OPSML_TRACKING_URI");
+        self.remove_env_vars_for_client()?;
 
         if db_file.exists() {
             std::fs::remove_file(db_file).unwrap();

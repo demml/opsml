@@ -26,11 +26,11 @@ impl ClientRegistry {
     ) -> Result<Self, RegistryError> {
         let storage_settings = config.storage_settings()?;
         let client = build_http_client(&storage_settings.api_settings)
-            .map_err(|e| RegistryError::NewError(format!("Failed to create http client {}", e)))?;
+            .map_err(|e| RegistryError::NewError(format!("Failed to build http client {}", e)))?;
 
         let api_client = OpsmlApiClient::new(&storage_settings, &client)
             .await
-            .map_err(|e| RegistryError::NewError(format!("Failed to create http client {}", e)))?;
+            .map_err(|e| RegistryError::NewError(format!("Failed to create api client {}", e)))?;
 
         Ok(Self {
             registry_type,

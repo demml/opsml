@@ -92,6 +92,7 @@ test.opsml.registry.client:
 
 ###### UI ######
 UI_DIR = crates/opsml_server/opsml_ui
+PY_DIR = py-opsml
 
 ui.update.deps:
 	cd $(UI_DIR) && pnpm update
@@ -106,3 +107,6 @@ build.ui:
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
+
+ui.populate:
+	cd $(PY_DIR) && uv run python dev/populate_db.py

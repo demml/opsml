@@ -10,7 +10,7 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
-use tracing::error;
+use tracing::{debug, error};
 
 const TIMEOUT_SECS: u64 = 30;
 const REDACTED: &str = "REDACTED";
@@ -49,7 +49,7 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
 pub struct OpsmlApiClient {
     pub client: Client,
     settings: OpsmlStorageSettings,
-    base_path: String,
+    pub base_path: String,
 }
 
 impl OpsmlApiClient {
@@ -77,7 +77,7 @@ impl OpsmlApiClient {
     }
 
     async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
-        let url = format!("{}/{}", self.base_path, Routes::AuthApiLogin.as_str());
+        let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
         let response = self
             .client
             .get(url)
@@ -96,7 +96,7 @@ impl OpsmlApiClient {
     /// Refresh the JWT token when it expires
     /// This function is called with the old JWT token, which is then verified with the server refresh token
     async fn refresh_token(&mut self) -> Result<(), ApiError> {
-        let url = format!("{}/{}", self.base_path, Routes::AuthApiRefresh.as_str());
+        let url = format!("{}/{}", self.base_path, Routes::AuthRefresh.as_str());
         let response = self
             .client
             .get(url)
