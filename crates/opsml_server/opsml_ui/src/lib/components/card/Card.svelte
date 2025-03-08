@@ -2,7 +2,7 @@
 
   import { calculateTimeBetween } from "$lib/utils";
   import { goto } from "$app/navigation";
-  import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
+  import {CircuitBoard, Clock, Tag, FlaskConical, Table, BrainCircuit, NotebookText } from 'lucide-svelte';
 
   let {
     name,
@@ -10,8 +10,7 @@
     version,
     created_at,
     registry,
-    cardColor,
-    iconColor = "#000000"
+    iconColor,
   } = $props<{
     name: string;
     repository: string;
@@ -30,12 +29,27 @@
 
 </script>
 
-<button class="text-black rounded-base shadow border-2 border-border {cardColor} w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
-  <div class="flex items-center justify-start gap-2 mb-1">
-    <div class="ml-2">
-      <CircuitBoard color={iconColor} />
+<button class="text-black rounded-base shadow border-2 border-black bg-surface-300 w-[400px] h-[75px] overflow-hidden whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={navigateToCardPage}>
+  <div class="flex items-center justify-between">
+    <div class="flex items-center justify-start gap-2 mb-1">
+      <div class="ml-2">
+        <CircuitBoard color={iconColor} />
+      </div>
+      <div><h4 class="truncate font-bold text-lg">{repository}/{name}</h4></div>
     </div>
-    <div><h4 class="truncate font-bold text-lg">{repository}/{name}</h4></div>
+    <div class="mr-2">
+
+      {#if registry === "model"}
+        <BrainCircuit color="#8059b6" />
+      {:else if registry === "data"}
+        <Table color="#5fd68d" />
+      {:else if registry === "prompt"}
+        <NotebookText color="#f9b25e" />
+      {:else if registry === "experiment"}
+        <FlaskConical color="#f54c54" />
+      {/if}
+  
+    </div>
   </div>
   <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs">
     <div class="flex items-center gap-1 ">

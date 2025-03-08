@@ -60,7 +60,7 @@
 
 </script>
 
-<nav class="fixed left-0 top-0 z-20 mx-auto flex h-[75px] w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 m500:h-16">
+<nav class="fixed left-0 top-0 z-20 mx-auto flex h-[75px] w-full items-center border-b-4 border-border bg-primary-500 border-b-2 border-black px-5 m500:h-16">
   <div class="mx-auto flex w-[1300px] max-w-full items-center justify-between">
 
     <div class="w-[236px] md:hidden" aria-label="hamburger">
