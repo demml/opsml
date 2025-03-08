@@ -10,7 +10,7 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
-use tracing::{debug, error};
+use tracing::error;
 
 const TIMEOUT_SECS: u64 = 30;
 const REDACTED: &str = "REDACTED";
@@ -65,25 +65,35 @@ impl OpsmlApiClient {
             ),
         };
 
-        api_client.get_jwt_token().await?;
+        api_client.get_jwt_token().await.map_err(|e| {
+            error!("Failed to get JWT token: {}", e);
+            ApiError::Error(format!("Failed to get JWT token with error: {}", e))
+        })?;
 
         // mask the password
         api_client.settings.api_settings.password = REDACTED.to_string();
 
         // mask the env variables
-        std::env::set_var("OPSML_PASSWORD", REDACTED);
+        //std::env::set_var("OPSML_PASSWORD", REDACTED);
 
         Ok(api_client)
     }
 
     async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
         let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
-        let response = self
-            .client
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?
+        let response =
+            self.client.get(url).send().await.map_err(|e| {
+                ApiError::Error(format!("Failed to send request with error: {}", e))
+            })?;
+
+        // check if unauthorized
+        if response.status().is_client_error() {
+            return Err(ApiError::Error("Unauthorized".to_string()));
+        }
+
+        // print response body
+
+        let response = response
             .json::<JwtToken>()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
