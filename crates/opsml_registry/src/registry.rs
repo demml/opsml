@@ -742,4 +742,9 @@ impl CardRegistries {
             rt,
         })
     }
+
+    // helper for accessing the file system storage
+    pub fn get_fs(&self) -> Arc<Mutex<FileSystemStorage>> {
+        self.experiment.fs.clone()
+    }
 }

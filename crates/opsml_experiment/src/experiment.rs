@@ -4,7 +4,7 @@ use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{ExperimentError, OpsmlError};
-use opsml_registry::enums::OpsmlRegistry;
+use opsml_registry::enums::{OpsmlRegistry, RegistryArgs};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
@@ -44,9 +44,10 @@ type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, Experimen
 fn initialize_experiment_environment() -> Result<ExperimentEnvironment, ExperimentError> {
     let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
     let registries = Arc::new(Mutex::new(CardRegistries::new_with_rt(rt.clone())?));
-    let mut settings = OpsmlConfig::default().storage_settings()?;
-    let fs = rt.block_on(async { FileSystemStorage::new(&mut settings).await })?;
-    Ok((rt, registries, Arc::new(TokioMutex::new(fs))))
+
+    // experiment needs its own file system for storing objects independently of registries
+    let fs = registries.lock().unwrap().get_fs();
+    Ok((rt, registries, fs))
 }
 
 /// Get the filename of the python file
@@ -813,7 +814,9 @@ pub fn get_experiment_metrics(
     };
 
     let metrics = rt.block_on(async {
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
+        let config = OpsmlConfig::default();
+        let registry_args = RegistryArgs::from_config(&config).await?;
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment, registry_args).await?;
 
         registry.get_metrics(&metric_request).await
     })?;
@@ -835,7 +838,9 @@ pub fn get_experiment_parameters(
     };
 
     let parameters = rt.block_on(async {
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
+        let config = OpsmlConfig::default();
+        let registry_args = RegistryArgs::from_config(&config).await?;
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment, registry_args).await?;
 
         registry.get_parameters(&param_request).await
     })?;
