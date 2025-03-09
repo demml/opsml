@@ -46,7 +46,7 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
     let guest_user = User::new(
         "guest".to_string(),
         password_auth::generate_hash("guest"),
-        Some(vec!["read".to_string(), "write".to_string()]),
+        Some(vec!["read".to_string(), "write:all".to_string()]),
         Some(vec!["user".to_string()]),
         Some("guest".to_string()),
     );

@@ -12,10 +12,9 @@ use axum::{
 };
 use opsml_client::JwtToken;
 use opsml_sql::base::SqlClient;
-use std::os::macos::raw::stat;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::{debug, error, instrument};
 
 /// Route for the login endpoint when using the API
 ///
@@ -27,23 +26,49 @@ use tracing::{debug, error};
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[instrument(skip_all)]
 pub async fn api_login_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<JwtToken>, (StatusCode, Json<serde_json::Value>)> {
+    debug!("Headers: {:?}", headers);
     // get Username and Password from headers
     let username = headers
         .get("Username")
-        .expect("Username not found in headers")
+        .ok_or_else(|| {
+            error!("Username not found in headers");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Username not found in headers" })),
+            )
+        })?
         .to_str()
-        .expect("Failed to convert Username to string")
+        .map_err(|_| {
+            error!("Invalid UTF-8 in Username header");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Invalid username format" })),
+            )
+        })?
         .to_string();
 
     let password = headers
         .get("Password")
-        .expect("Password not found in headers")
+        .ok_or_else(|| {
+            error!("Password not found in headers");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Password not found in headers" })),
+            )
+        })?
         .to_str()
-        .expect("Failed to convert Password to string")
+        .map_err(|_| {
+            error!("Invalid UTF-8 in Password header");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({ "error": "Invalid password format" })),
+            )
+        })?
         .to_string();
 
     // get user from database
@@ -65,7 +90,7 @@ pub async fn api_login_handler(
         })?;
 
     // we may get multiple requests for the same user (setting up storage and registries), so we
-    // need to check is current refresh and jwt tokens are valid and return them if they are
+    // need to check if current refresh and jwt tokens are valid and return them if they are
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user);
@@ -153,7 +178,7 @@ async fn ui_login_handler(
 
     Ok(Json(LoginResponse {
         username: user.username,
-        jwt_token: jwt_token,
+        jwt_token,
     }))
 }
 

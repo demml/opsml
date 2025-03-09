@@ -1,6 +1,7 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
-use crate::storage::http::base::{build_http_client, HttpStorageClient};
+use crate::storage::http::base::HttpStorageClient;
+use opsml_client::build_http_client;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
@@ -25,7 +26,11 @@ impl HttpFSStorageClient {
             .map_err(|e| StorageError::Error(format!("Failed to create http client {}", e)))?;
 
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(settings, &client).await.unwrap(),
+            client: HttpStorageClient::new(settings, &client)
+                .await
+                .map_err(|e| {
+                    StorageError::Error(format!("Failed to create http storage client {}", e))
+                })?,
         })
     }
 
@@ -146,6 +151,7 @@ impl HttpFSStorageClient {
                         .create_multipart_uploader(&remote_path, &stripped_file_path)
                         .await?;
 
+                    debug!("Uploading file: {:?}", stripped_file_path);
                     uploader
                         .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                         .await?;

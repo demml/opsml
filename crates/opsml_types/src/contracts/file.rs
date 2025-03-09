@@ -98,6 +98,11 @@ pub struct UploadResponse {
     pub uploaded: bool,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct PermissionDenied {
+    pub error: String,
+}
+
 pub struct UploadPartArgs {
     pub presigned_url: Option<String>,
     pub chunk_size: u64,

@@ -94,7 +94,11 @@ pub async fn auth_api_middleware(
                 })?;
             // Validate stored refresh token
             if let Some(stored_refresh) = user.refresh_token.as_ref() {
-                if let Ok(_) = state.auth_manager.validate_refresh_token(&stored_refresh) {
+                if state
+                    .auth_manager
+                    .validate_refresh_token(stored_refresh)
+                    .is_ok()
+                {
                     // Generate new tokens
                     let new_access_token = state.auth_manager.generate_jwt(&user);
                     let new_refresh_token = state.auth_manager.generate_refresh_token(&user);
@@ -102,7 +106,7 @@ pub async fn auth_api_middleware(
                     // Update refresh token in database
                     user.refresh_token = Some(new_refresh_token.clone());
 
-                    if let Err(_) = state.sql_client.update_user(&user).await {
+                    if (state.sql_client.update_user(&user).await).is_err() {
                         return Err((
                             StatusCode::INTERNAL_SERVER_ERROR,
                             Json(AuthError {

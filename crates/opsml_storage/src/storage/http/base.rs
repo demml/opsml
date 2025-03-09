@@ -3,38 +3,15 @@ use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
 use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
-use opsml_error::error::ApiError;
 use opsml_error::error::StorageError;
-use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
+use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 
-use reqwest::{
-    header::{HeaderMap, HeaderValue},
-    Client,
-};
+use reqwest::Client;
 use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
 use tracing::{error, instrument};
-
-const TIMEOUT_SECS: u64 = 30;
-
-/// Create a new HTTP client that can be shared across different clients
-pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "X-Prod-Token",
-        HeaderValue::from_str(settings.prod_token.as_deref().unwrap_or(""))
-            .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
-    );
-
-    let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
-    let client = client_builder
-        .default_headers(headers)
-        .build()
-        .map_err(|e| ApiError::Error(format!("Failed to create client with error: {}", e)))?;
-    Ok(client)
-}
 
 #[derive(Clone)]
 pub struct HttpStorageClient {
@@ -381,10 +358,19 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
+        // check if unauthorized
+        if response.status().is_client_error() {
+            let error_resp = response
+                .json::<PermissionDenied>()
+                .await
+                .map_err(|e| StorageError::Error(e.to_string()))?;
+            return Err(StorageError::PermissionDenied(error_resp.error));
+        }
+
         // deserialize response into MultiPartSession
         let session = response.json::<MultiPartSession>().await.map_err(|e| {
             error!("Failed to parse response: {}", e);
-            StorageError::Error(format!("Failed to parse response: {}", e))
+            StorageError::Error(e.to_string())
         })?;
 
         let session_url = session.session_url;
@@ -400,12 +386,20 @@ impl HttpStorageClient {
     ) -> Result<MultiPartUploader, StorageError> {
         let session_url = self
             .create_multipart_upload(rpath.to_str().unwrap())
-            .await?;
+            .await
+            .map_err(|e| {
+                error!("Failed to create multipart upload: {}", e);
+                StorageError::Error(format!("Failed to create multipart upload: {}", e))
+            })?;
 
         let uploader = self
             .storage_client
             .create_multipart_uploader(lpath, rpath, session_url, Some(self.api_client.clone()))
-            .await?;
+            .await
+            .map_err(|e| {
+                error!("Failed to create multipart uploader: {}", e);
+                StorageError::Error(format!("Failed to create multipart uploader: {}", e))
+            })?;
 
         Ok(uploader)
     }

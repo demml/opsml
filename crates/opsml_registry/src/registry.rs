@@ -298,6 +298,7 @@ impl CardRegistry {
 
 impl CardRegistry {
     #[allow(clippy::too_many_arguments)]
+    #[instrument(skip_all)]
     async fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
@@ -309,9 +310,11 @@ impl CardRegistry {
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         // Verify card for registration
+        debug!("Verifying card");
         verify_card(card, registry_type).await?;
 
         // Register card
+        debug!("Registering card");
         let create_response = Self::_register_card(
             registry,
             card,
@@ -323,14 +326,18 @@ impl CardRegistry {
         .await?;
 
         // Update card attributes
+        debug!("Updating card with server response");
         Self::update_card_with_server_response(&create_response, card)?;
 
         // Save card artifacts to temp path
+        debug!("Saving card artifacts");
         let tmp_path = Self::save_card_artifacts(card, save_kwargs, registry_type).await?;
 
         // Save artifacts
+        debug!("Uploading card artifacts");
         upload_card_artifacts(tmp_path, fs, &create_response.key).await?;
 
+        debug!("Successfully registered card");
         Ok(())
     }
 
