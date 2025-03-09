@@ -6,9 +6,6 @@ use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
-use scouter_client::{
-    CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
-};
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
