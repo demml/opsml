@@ -126,6 +126,13 @@ pub struct CardRegistry {
 
 #[pymethods]
 impl CardRegistry {
+    /// Create new CardRegistry
+    /// CardRegistries is a primary interface that provides access to the inner workings of the
+    /// opsml registry system. The new method allows user to instantiate the registries from python
+    /// using the __init__ method. Given that the registry is instantiated in python and some of the
+    /// inner workings require an async runtime, the new method will create a new tokio runtime into an Arc so that
+    /// it can be shared, cloned and used across different methods in order to prevent deadlocks.
+    /// It is also cloned and passed to Cards for loading artifacts
     #[new]
     #[instrument(skip_all)]
     pub fn new(registry_type: &Bound<'_, PyAny>) -> PyResult<Self> {
@@ -701,6 +708,12 @@ pub struct CardRegistries {
 
 #[pymethods]
 impl CardRegistries {
+    /// Create new CardRegistries
+    /// CardRegistries is a primary interface that provides access to the inner workings of the
+    /// opsml registry system. The new method allows user to instantiate the registries from python
+    /// using the __init__ method. Given that the registries are instantiated in python and some of the
+    /// inner working require an async runtime, the new method will create a new tokio runtime into an Arc so that
+    /// it can be shared, cloned and used across the different registries in order to prevent deadlocks.
     #[new]
     #[instrument(skip_all)]
     pub fn new() -> PyResult<Self> {
