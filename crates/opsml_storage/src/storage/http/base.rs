@@ -1,13 +1,12 @@
 use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
-use opsml_client::{OpsmlApiClient, RequestType, Routes};
+use opsml_client::{build_api_client, OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 
-use reqwest::Client;
 use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
@@ -21,13 +20,14 @@ pub struct HttpStorageClient {
 }
 
 impl HttpStorageClient {
-    pub async fn new(settings: &mut OpsmlStorageSettings, client: &Client) -> AnyhowResult<Self> {
-        let mut api_client = OpsmlApiClient::new(settings, client)
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to create api client: {}", e)))
-            .context(Colorize::purple("Error occurred while creating api client"))?;
-
-        // get storage type from opsml_server
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        api_client: Option<OpsmlApiClient>,
+    ) -> AnyhowResult<Self> {
+        let mut api_client = match api_client {
+            Some(client) => client,
+            None => build_api_client(settings).await?,
+        };
 
         let storage_type =
             Self::get_storage_setting(&mut api_client)

@@ -2,7 +2,6 @@ use crate::base::*;
 use crate::types::*;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_settings::config::OpsmlConfig;
 use opsml_types::cards::HardwareMetrics;
 use opsml_types::{
     cards::{CardTable, Metric, Parameter},
@@ -16,22 +15,17 @@ use tracing::{debug, error};
 #[derive(Debug, Clone)]
 pub struct ClientRegistry {
     registry_type: RegistryType,
-    api_client: OpsmlApiClient,
+    pub api_client: OpsmlApiClient,
 }
 
 impl ClientRegistry {
+    pub fn update_registry_type(&mut self, registry_type: RegistryType) {
+        self.registry_type = registry_type;
+    }
     pub async fn new(
-        config: &OpsmlConfig,
         registry_type: RegistryType,
+        api_client: OpsmlApiClient,
     ) -> Result<Self, RegistryError> {
-        let storage_settings = config.storage_settings()?;
-        let client = build_http_client(&storage_settings.api_settings)
-            .map_err(|e| RegistryError::NewError(format!("Failed to build http client {}", e)))?;
-
-        let api_client = OpsmlApiClient::new(&storage_settings, &client)
-            .await
-            .map_err(|e| RegistryError::NewError(format!("Failed to create api client {}", e)))?;
-
         Ok(Self {
             registry_type,
             api_client,

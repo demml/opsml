@@ -10,7 +10,7 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
-use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
+use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     SqlType,
     {
@@ -398,15 +398,13 @@ impl SqlClient for SqlClientEnum {
     }
 }
 
-pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
-    SqlClientEnum::new(&config.database_settings)
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to create sql client for sql type: {:?}",
-                config.database_settings.sql_type
-            )
-        })
+pub async fn get_sql_client(db_settings: &DatabaseSettings) -> AnyhowResult<SqlClientEnum> {
+    SqlClientEnum::new(db_settings).await.with_context(|| {
+        format!(
+            "Failed to create sql client for sql type: {:?}",
+            db_settings.sql_type
+        )
+    })
 }
 
 #[cfg(test)]

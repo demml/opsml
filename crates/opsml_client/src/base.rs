@@ -266,6 +266,11 @@ impl OpsmlApiClient {
     }
 }
 
+pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
+    let client = build_http_client(&settings.api_settings)?;
+    OpsmlApiClient::new(settings, &client).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
