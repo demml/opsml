@@ -10,6 +10,7 @@ use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
+use tracing::debug;
 
 use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
 use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
@@ -225,6 +226,7 @@ impl StorageClientEnum {
     }
 
     pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
+        debug!("multipart name: {:?}", self.name());
         match self {
             StorageClientEnum::Google(client) => {
                 // google returns the session uri
@@ -238,6 +240,7 @@ impl StorageClientEnum {
             }
             StorageClientEnum::Local(client) => {
                 // local returns the path
+                debug!("Local create_multipart_upload: {:?}", path);
                 client.create_multipart_upload(path).await
             }
 

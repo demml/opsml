@@ -76,6 +76,7 @@ impl OpsmlTestServer {
                     if response.status() == 200 {
                         self.set_env_vars_for_client()?;
                         println!("Opsml Server started successfully");
+
                         return Ok(());
                     }
                 }

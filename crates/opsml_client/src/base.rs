@@ -11,12 +11,12 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
-use tracing::error;
+use tracing::{debug, error, instrument};
 
 const TIMEOUT_SECS: u64 = 30;
-const REDACTED: &str = "REDACTED";
 
 /// Create a new HTTP client that can be shared across different clients
+#[instrument(skip_all)]
 pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     let mut headers = HeaderMap::new();
 
@@ -38,6 +38,8 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
             .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
     );
 
+    debug!("Creating client with headers: {:?}", headers);
+
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
     let client = client_builder
         .default_headers(headers)
@@ -50,7 +52,7 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
 pub struct OpsmlApiClient {
     pub client: Client,
     settings: OpsmlStorageSettings,
-    pub base_path: String,
+    base_path: String,
 }
 
 impl OpsmlApiClient {
@@ -71,17 +73,14 @@ impl OpsmlApiClient {
             ApiError::Error(format!("Failed to get JWT token with error: {}", e))
         })?;
 
-        // mask the password
-        api_client.settings.api_settings.password = REDACTED.to_string();
-
-        // mask the env variables
-        //std::env::set_var("OPSML_PASSWORD", REDACTED);
-
         Ok(api_client)
     }
 
+    #[instrument(skip_all)]
     async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
         let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
+        debug!("Getting JWT token from {}", url);
+
         let response =
             self.client.get(url).send().await.map_err(|e| {
                 ApiError::Error(format!("Failed to send request with error: {}", e))
@@ -89,10 +88,9 @@ impl OpsmlApiClient {
 
         // check if unauthorized
         if response.status().is_client_error() {
+            error!("Failed to get JWT token: Unauthorized");
             return Err(ApiError::Error("Unauthorized".to_string()));
         }
-
-        // print response body
 
         let response = response
             .json::<JwtToken>()

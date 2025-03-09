@@ -29,6 +29,9 @@ pub enum StorageError {
 
     #[error(transparent)]
     ProgressError(#[from] ProgressError),
+
+    #[error("Unauthorized: {0}")]
+    PermissionDenied(String),
 }
 
 impl From<StorageError> for PyErr {
