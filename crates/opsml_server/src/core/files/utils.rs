@@ -26,13 +26,10 @@ pub async fn create_artifact_key(
 
     // create derived key
     let derived_key = derive_encryption_key(&encryption_key, &salt, registry_type.as_bytes())?;
-
-    debug!("Derived key: {:?}", derived_key);
     let uid_key = uid_to_byte_key(uid)?;
 
     // encrypt key before sending
     let encrypted_key = encrypted_key(&uid_key, &derived_key)?;
-    debug!("Encrypted key: {:?}", encrypted_key);
 
     // spawn a task to insert the key into the database
 

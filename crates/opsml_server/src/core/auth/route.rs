@@ -31,7 +31,6 @@ pub async fn api_login_handler(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<JwtToken>, (StatusCode, Json<serde_json::Value>)> {
-    debug!("Headers: {:?}", headers);
     // get Username and Password from headers
     let username = headers
         .get("Username")

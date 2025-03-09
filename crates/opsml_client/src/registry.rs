@@ -108,8 +108,6 @@ impl ClientRegistry {
                 RegistryError::Error(format!("Failed to create card {}", e))
             })?;
 
-        debug!("Response {:?}", response);
-
         let created = response
             .json::<CreateCardResponse>()
             .await

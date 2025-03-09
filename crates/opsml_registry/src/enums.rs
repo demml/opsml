@@ -29,7 +29,7 @@ pub struct ServerRegistryArgs {
 #[derive(Debug, Clone)]
 pub enum RegistryArgs {
     Client(ClientRegistryArgs),
-    Server(ServerRegistryArgs),
+    Server(Box<ServerRegistryArgs>),
 }
 
 impl RegistryArgs {
@@ -39,6 +39,7 @@ impl RegistryArgs {
             _ => None,
         }
     }
+
     pub async fn from_config(config: &OpsmlConfig) -> Result<Self, RegistryError> {
         let storage_settings = config.storage_settings()?;
 
@@ -47,10 +48,10 @@ impl RegistryArgs {
                 let client = build_api_client(&storage_settings).await?;
                 RegistryArgs::Client(ClientRegistryArgs { client })
             }
-            false => RegistryArgs::Server(ServerRegistryArgs {
+            false => RegistryArgs::Server(Box::new(ServerRegistryArgs {
                 storage_settings,
                 database_settings: config.database_settings.clone(),
-            }),
+            })),
         };
 
         Ok(args)
@@ -102,8 +103,8 @@ impl OpsmlRegistry {
             }
 
             #[cfg(not(feature = "server"))]
-            false => Err(RegistryError::Error(
-                "Server mode is not enabled in the Opsml Registry".to_string(),
+            RegistryArgs::Server(_) => Err(RegistryError::Error(
+                "Server feature not enabled".to_string(),
             )),
         }
     }
