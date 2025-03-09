@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::sync::{watch, Mutex};
 use tokio::time::{self, Duration};
 use tracing::Instrument;
-use tracing::{debug, error, info, info_span};
+use tracing::{debug, error, info_span};
 
 async fn insert_metrics(
     registry: Arc<Mutex<OpsmlRegistry>>,
