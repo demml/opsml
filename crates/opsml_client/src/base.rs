@@ -16,7 +16,6 @@ use tracing::{debug, error, instrument};
 const TIMEOUT_SECS: u64 = 30;
 
 /// Create a new HTTP client that can be shared across different clients
-#[instrument(skip_all)]
 pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     let mut headers = HeaderMap::new();
 
@@ -37,8 +36,6 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
         HeaderValue::from_str(&settings.password)
             .map_err(|e| ApiError::Error(format!("Failed to create header with error: {}", e)))?,
     );
-
-    debug!("Creating client with headers: {:?}", headers);
 
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
     let client = client_builder

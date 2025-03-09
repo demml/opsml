@@ -103,8 +103,6 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
 pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     let files = FileUtils::list_files(input_path.to_path_buf())?;
 
-    debug!("Encrypting files in directory: {:?}", files);
-
     let encrypted_files = files
         .into_par_iter()
         .map(|file| encrypt_file(&file, key_bytes))
@@ -116,6 +114,8 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
             return Err(file.err().unwrap());
         }
     }
+
+    debug!("Encrypted all files in directory");
 
     Ok(())
 }

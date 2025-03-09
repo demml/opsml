@@ -61,7 +61,6 @@ pub struct SqliteClient {
 #[async_trait]
 impl SqlClient for SqliteClient {
     async fn new(settings: &DatabaseSettings) -> Result<Self, SqlError> {
-        debug!("settings: {:?}", settings);
         // if the connection uri is not in memory, create the file
         if !settings.connection_uri.contains(":memory:") {
             // strip "sqlite://" from the connection uri

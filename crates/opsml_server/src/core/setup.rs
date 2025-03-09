@@ -86,7 +86,7 @@ pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum,
     info!("✅ Storage client: {}", storage.name());
 
     // setup storage client
-    let sql = get_sql_client(&config)
+    let sql = get_sql_client(&config.database_settings)
         .await
         .context(Colorize::purple("❌ Failed to setup sql client"))?;
 
