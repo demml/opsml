@@ -232,8 +232,6 @@ impl CardRegistry {
     ) -> PyResult<()> {
         debug!("Registering card");
 
-        println!("registry type: {:?}", self.registry_type);
-
         // Wrap all operations in a single block_on to handle async operations
         self.runtime
             .block_on(async {

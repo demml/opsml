@@ -397,27 +397,22 @@ impl SampleData {
     }
 }
 
-pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
+pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<PyObject>> {
+    let py = py_profiles.py();
+
     if py_profiles.is_instance_of::<PyList>() {
         let py_profiles = py_profiles.downcast::<PyList>()?;
-        py_profiles
-            .iter()
-            .map(|profile| extract_drift_profile(&profile))
-            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
-            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
+        let mut profiles = Vec::new();
+
+        for profile in py_profiles.iter() {
+            // For each profile in the list, get its profile attribute
+            let profile_obj = profile.getattr("profile")?;
+            profiles.push(profile_obj.into_py_any(py)?);
+        }
+
+        Ok(profiles)
     } else {
-        let drift_type = py_profiles
-            .getattr("config")?
-            .getattr("drift_type")?
-            .extract::<DriftType>()?;
-
-        let profile = match drift_type {
-            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
-            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
-            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
-        };
-
-        Ok(vec![profile])
+        Ok(vec![py_profiles.into_py_any(py)?])
     }
 }
 

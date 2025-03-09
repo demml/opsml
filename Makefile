@@ -49,8 +49,8 @@ test.storage.local.server:
 
 ######## Server tests
 
-.PHONY: build.server
-build.server: stop.server build.ui
+.PHONY: start.server
+start.server: stop.server build.ui
 	cargo build -p opsml-server
 	./target/debug/opsml-server &
 
@@ -108,5 +108,5 @@ build.ui:
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
 
-ui.populate:
+populate.db:
 	cd $(PY_DIR) && uv run python dev/populate_db.py

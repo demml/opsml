@@ -15,7 +15,7 @@ use opsml_types::{
 };
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::types::{PyDict, PyList};
 use pyo3::{IntoPyObjectExt, PyObject};
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{
@@ -286,6 +286,9 @@ impl ModelCard {
             .as_ref()
             .ok_or_else(|| CardError::Error("Model interface not found".to_string()))?;
 
+        // scouter integration: update drift config args
+        self.update_drift_config_args(py)?;
+
         let metadata = model
             .bind(py)
             .call_method("save", (path.clone(), self.to_onnx, save_kwargs), None)
@@ -416,6 +419,41 @@ impl ModelCard {
 }
 
 impl ModelCard {
+    fn update_drift_config_args(&self, py: Python) -> PyResult<()> {
+        let interface = self.interface.as_ref().unwrap().bind(py);
+        let drift_profiles = interface.getattr("drift_profile")?;
+        // downcast to list
+        let drift_profiles = drift_profiles.downcast::<PyList>()?;
+
+        // if drift_profiles is empty, return
+        if drift_profiles.len() == 0 {
+            return Ok(());
+        } else {
+            // iterate over drift_profiles and call "update_config_args"
+            let kwargs = PyDict::new(py);
+            kwargs.set_item("name", self.name.clone())?;
+            kwargs.set_item("repository", self.repository.clone())?;
+            kwargs.set_item("version", self.version.clone())?;
+
+            for drift_profile in drift_profiles.iter() {
+                // get actual profile from enum
+                let profile = drift_profile.getattr("profile")?;
+                profile.call_method("update_config_args", (), Some(&kwargs))?;
+            }
+
+            for drift_profile in drift_profiles.iter() {
+                let profile = drift_profile.getattr("profile")?;
+
+                // print name, repo
+                let config = profile.getattr("config")?;
+                let name = config.getattr("name")?;
+                let repository = config.getattr("repository")?;
+                println!("Name: {:?}, Repository: {:?}", name, repository);
+            }
+            Ok(())
+        }
+    }
+
     fn load_interface(&mut self, py: Python, interface: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
         if let Some(interface) = interface {
             self.set_interface(interface)
