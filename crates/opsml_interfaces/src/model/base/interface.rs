@@ -7,6 +7,7 @@ use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
+use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
@@ -19,7 +20,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use rand::Rng;
-use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile};
+use scouter_client::{drifter::PyDrifter, DataType as DriftDataType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -215,7 +216,7 @@ pub struct ModelInterface {
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
-    pub drift_profile: Vec<DriftProfile>,
+    pub drift_profile: Vec<PyObject>,
 
     pub sample_data: SampleData,
 }
@@ -400,7 +401,7 @@ impl ModelInterface {
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(&path).map_err(|e| {
+            Some(self.save_drift_profile(py, &path).map_err(|e| {
                 error!("Failed to save drift profile. Error: {}", e);
                 e
             })?)
@@ -469,11 +470,10 @@ impl ModelInterface {
             _ => None,
         });
 
-        let profile = drifter.internal_create_drift_profile(py, data, config, data_type)?;
-        let py_profile = profile.profile(py)?;
-        self.drift_profile.push(profile);
+        let profile = drifter.create_drift_profile(py, data, config, data_type)?;
+        self.drift_profile.push(profile.clone().into_py_any(py)?);
 
-        Ok(py_profile)
+        Ok(profile)
     }
 
     /// Dynamically load the model interface components
@@ -501,7 +501,7 @@ impl ModelInterface {
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        self.load_drift_profile(&path)?;
+        self.load_drift_profile(py, &path)?;
         self.load_data(py, &path, None)?;
 
         if onnx {
@@ -592,8 +592,8 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip(self, path) name = "save_drift_profile")]
-    pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
+    #[instrument(skip_all, name = "save_drift_profile")]
+    pub fn save_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<PathBuf> {
         let save_dir = PathBuf::from(SaveName::Drift);
         if !save_dir.exists() {
             fs::create_dir_all(&save_dir).unwrap();
@@ -601,7 +601,11 @@ impl ModelInterface {
 
         let save_path = path.join(save_dir.clone());
         for profile in self.drift_profile.iter() {
-            let drift_type = profile.drift_type();
+            let drift_type = profile
+                .bind(py)
+                .getattr("config")?
+                .getattr("drift_type")?
+                .extract::<String>()?;
 
             // add small hex to filename to avoid overwriting
             // this would only have if someone creates multiple drift profiles of the same type
@@ -612,15 +616,10 @@ impl ModelInterface {
                 .map(char::from)
                 .collect();
 
-            let filename = format!(
-                "{}_{}_{}",
-                drift_type.to_string(),
-                SaveName::DriftProfile,
-                random_hex
-            );
+            let filename = format!("{}-{}-{}", drift_type, SaveName::DriftProfile, random_hex);
             let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
 
-            profile.save_to_json(Some(profile_save_path))?
+            profile.call_method1(py, "save_to_json", (Some(profile_save_path),))?;
         }
         info!("Drift profile saved");
 
@@ -636,7 +635,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, path: &Path) -> PyResult<()> {
+    pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<()> {
         let load_dir = path.join(SaveName::Drift);
 
         if !load_dir.exists() {
@@ -647,10 +646,37 @@ impl ModelInterface {
         let files = FileUtils::list_files(load_dir)?;
 
         for filepath in files {
-            let drift_profile = DriftProfile::load_from_json(filepath).map_err(|e| {
-                OpsmlError::new_err(format!("Failed to load drift profile. Error: {}", e))
+            // get file name
+            let filename = filepath.file_name().unwrap().to_str().unwrap();
+            let drift_type = DriftType::from_value(&filename.split('-').next().unwrap());
+
+            // fail if drift type is not found
+            if drift_type.is_none() {
+                return Err(OpsmlError::new_err(format!(
+                    "Drift type not found in drift profile filename: {}",
+                    filename
+                )));
+            }
+
+            // load file to json string
+            let file = std::fs::read_to_string(&path).map_err(|_| {
+                OpsmlError::new_err(format!("Failed to read drift profile file: {}", filename))
             })?;
-            self.drift_profile.push(drift_profile);
+
+            match drift_type.unwrap() {
+                DriftType::Spc => {
+                    let profile = SpcDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+                DriftType::Psi => {
+                    let profile = PsiDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+                DriftType::Custom => {
+                    let profile = CustomDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+            }
         }
 
         Ok(())

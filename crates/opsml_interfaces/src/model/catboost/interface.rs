@@ -196,7 +196,7 @@ impl CatBoostModel {
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
-            Some(self_.as_super().save_drift_profile(&path)?)
+            Some(self_.as_super().save_drift_profile(py, &path)?)
         };
 
         // create the data processor map
@@ -279,7 +279,7 @@ impl CatBoostModel {
                 parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            parent.load_drift_profile(&path)?;
+            parent.load_drift_profile(py, &path)?;
             parent.load_data(py, &path, None)?;
         }
 
