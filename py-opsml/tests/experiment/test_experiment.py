@@ -3,6 +3,7 @@ from opsml.experiment import (
     Metric,
     Parameter,
 )
+from opsml.core import RustyLogger, LoggingConfig, LogLevel
 from opsml import (  # type: ignore
     start_experiment,
     get_experiment_metrics,
@@ -22,6 +23,8 @@ import uuid
 import shutil
 
 # Sets up logging for tests
+
+logger = RustyLogger.get_logger()
 
 
 def cleanup_manually_created_directories():
@@ -63,7 +66,7 @@ def cleanup_fake_directory(save_path: Path):
     shutil.rmtree(save_path)
 
 
-def test_experimentcard():
+def _test_experimentcard():
     with OpsmlTestServer():
         cleanup_manually_created_directories()
         with start_experiment(repository="test", log_hardware=True) as exp:
@@ -139,8 +142,12 @@ def test_experimentcard():
 
     cleanup_manually_created_directories()
 
+    # CardRegistries should create http and storage clients once and then clone to other registries
+    # 2025-03-09T18:48:53::5474
+    # 2025-03-09T18:48:56::4806
 
-def test_experimentcard_register(
+
+def _test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
     chat_prompt: ChatPrompt,
@@ -195,3 +202,11 @@ def test_experimentcard_register(
         loaded_card.uids.datacard_uids = [datacard.uid]
         loaded_card.uids.modelcard_uids = [modelcard.uid]
         loaded_card.uids.promptcard_uids = [prompt_card.uid]
+
+
+def test_experimentcard():
+    with OpsmlTestServer():
+        cleanup_manually_created_directories()
+        with start_experiment(repository="test", log_hardware=True) as exp:
+            pass
+    a

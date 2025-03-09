@@ -1,7 +1,7 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::http::base::HttpStorageClient;
-use opsml_client::build_http_client;
+use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
@@ -21,12 +21,12 @@ impl HttpFSStorageClient {
         "HttpFSStorageClient"
     }
 
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
-        let client = build_http_client(&settings.api_settings)
-            .map_err(|e| StorageError::Error(format!("Failed to create http client {}", e)))?;
-
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        api_client: Option<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(settings, &client)
+            client: HttpStorageClient::new(settings, api_client)
                 .await
                 .map_err(|e| {
                     StorageError::Error(format!("Failed to create http storage client {}", e))

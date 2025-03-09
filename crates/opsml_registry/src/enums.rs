@@ -1,6 +1,7 @@
+use opsml_client::{build_api_client, ClientRegistry, OpsmlApiClient};
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_settings::config::OpsmlConfig;
+use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::{
     Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
@@ -15,6 +16,48 @@ use opsml_types::{
 use tracing::{debug, instrument};
 
 #[derive(Debug, Clone)]
+pub struct ClientRegistryArgs {
+    pub client: OpsmlApiClient,
+}
+
+#[derive(Debug, Clone)]
+pub struct ServerRegistryArgs {
+    pub storage_settings: OpsmlStorageSettings,
+    pub database_settings: DatabaseSettings,
+}
+
+#[derive(Debug, Clone)]
+pub enum RegistryArgs {
+    Client(ClientRegistryArgs),
+    Server(ServerRegistryArgs),
+}
+
+impl RegistryArgs {
+    pub fn api_client(&self) -> Option<&OpsmlApiClient> {
+        match self {
+            Self::Client(client_registry_args) => Some(&client_registry_args.client),
+            _ => None,
+        }
+    }
+    pub async fn from_config(config: &OpsmlConfig) -> Result<Self, RegistryError> {
+        let storage_settings = config.storage_settings()?;
+
+        let args = match config.client_mode {
+            true => {
+                let client = build_api_client(&storage_settings).await?;
+                RegistryArgs::Client(ClientRegistryArgs { client })
+            }
+            false => RegistryArgs::Server(ServerRegistryArgs {
+                storage_settings,
+                database_settings: config.database_settings.clone(),
+            }),
+        };
+
+        Ok(args)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
     ClientRegistry(opsml_client::ClientRegistry),
 
@@ -23,24 +66,36 @@ pub enum OpsmlRegistry {
 }
 
 impl OpsmlRegistry {
+    pub fn update_registry_type(&mut self, registry_type: RegistryType) {
+        match self {
+            Self::ClientRegistry(client_registry) => {
+                client_registry.update_registry_type(registry_type);
+            }
+            #[cfg(feature = "server")]
+            Self::ServerRegistry(server_registry) => {
+                server_registry.update_registry_type(registry_type);
+            }
+        }
+    }
     #[instrument(skip_all)]
-    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let config = OpsmlConfig::default();
-
-        let storage_settings = config.storage_settings()?;
-        match storage_settings.client_mode {
-            true => {
+    pub async fn new(
+        registry_type: RegistryType,
+        registry_args: RegistryArgs,
+    ) -> Result<Self, RegistryError> {
+        match registry_args {
+            RegistryArgs::Client(client_registry_args) => {
                 debug!("Creating client registry");
                 let client_registry =
-                    opsml_client::ClientRegistry::new(&config, registry_type).await?;
+                    ClientRegistry::new(registry_type, client_registry_args.client).await?;
                 Ok(Self::ClientRegistry(client_registry))
             }
             #[cfg(feature = "server")]
-            false => {
+            RegistryArgs::Server(server_registry_args) => {
                 debug!("Creating server registry");
                 let server_registry = crate::server::registry::server_logic::ServerRegistry::new(
-                    &config,
                     registry_type,
+                    server_registry_args.storage_settings,
+                    server_registry_args.database_settings,
                 )
                 .await?;
                 Ok(Self::ServerRegistry(server_registry))

@@ -247,6 +247,7 @@ pub async fn upload_card_artifacts(
 pub async fn verify_card(
     card: &Bound<'_, PyAny>,
     registry_type: &RegistryType,
+    registry: &OpsmlRegistry,
 ) -> Result<(), RegistryError> {
     check_if_card(card)?;
 
@@ -260,11 +261,11 @@ pub async fn verify_card(
             .unwrap();
 
         if let Some(datacard_uid) = datacard_uid {
+            let mut data_registry = registry.clone();
+            data_registry.update_registry_type(RegistryType::Data);
+
             // check if datacard exists in the registry
-            let exists = OpsmlRegistry::new(RegistryType::Data)
-                .await?
-                .check_card_uid(&datacard_uid)
-                .await?;
+            let exists = data_registry.check_card_uid(&datacard_uid).await?;
 
             if !exists {
                 return Err(RegistryError::Error(

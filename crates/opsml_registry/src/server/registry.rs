@@ -6,7 +6,6 @@ pub mod server_logic {
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
-    use opsml_settings::config::OpsmlConfig;
     use opsml_settings::config::OpsmlStorageSettings;
     use opsml_sql::{
         base::SqlClient,
@@ -36,11 +35,17 @@ pub mod server_logic {
     }
 
     impl ServerRegistry {
+        pub fn update_registry_type(&mut self, registry_type: RegistryType) {
+            self.registry_type = registry_type.clone();
+            self.table_name = CardTable::from_registry_type(&registry_type);
+        }
+
         pub async fn new(
-            config: &OpsmlConfig,
             registry_type: RegistryType,
+            storage_settings: OpsmlStorageSettings,
+            database_settings: DatabaseSettings,
         ) -> Result<Self, RegistryError> {
-            let sql_client = get_sql_client(config).await.map_err(|e| {
+            let sql_client = get_sql_client(&database_settings).await.map_err(|e| {
                 RegistryError::NewError(format!("Failed to create sql client {}", e))
             })?;
 
@@ -49,7 +54,7 @@ pub mod server_logic {
                 sql_client,
                 table_name,
                 registry_type,
-                storage_settings: config.storage_settings()?,
+                storage_settings,
             })
         }
 

@@ -1,6 +1,7 @@
 use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
+use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
@@ -35,7 +36,10 @@ pub struct FileSystemStorage {
 
 impl FileSystemStorage {
     #[instrument(skip(settings))]
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        api_client: Option<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
         if !settings.client_mode {
             debug!("Creating FileSystemStorage with StorageClientEnum");
             Ok(FileSystemStorage {
@@ -47,7 +51,7 @@ impl FileSystemStorage {
             debug!("Creating FileSystemStorage with HttpFSStorageClient");
             Ok(FileSystemStorage {
                 fs: None,
-                http: Some(HttpFSStorageClient::new(&mut *settings).await?),
+                http: Some(HttpFSStorageClient::new(&mut *settings, api_client).await?),
                 client_mode: settings.client_mode,
             })
         }
@@ -245,7 +249,7 @@ mod tests {
     async fn test_gcs_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
@@ -289,7 +293,7 @@ mod tests {
     async fn test_aws_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
@@ -333,7 +337,7 @@ mod tests {
     async fn test_azure_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
@@ -387,7 +391,7 @@ mod tests {
 
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
