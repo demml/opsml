@@ -427,7 +427,7 @@ impl ModelCard {
 
         // if drift_profiles is empty, return
         if drift_profiles.len() == 0 {
-            return Ok(());
+            Ok(())
         } else {
             // iterate over drift_profiles and call "update_config_args"
             let kwargs = PyDict::new(py);
@@ -435,21 +435,11 @@ impl ModelCard {
             kwargs.set_item("repository", self.repository.clone())?;
             kwargs.set_item("version", self.version.clone())?;
 
-            for drift_profile in drift_profiles.iter() {
+            for profile in drift_profiles.iter() {
                 // get actual profile from enum
-                let profile = drift_profile.getattr("profile")?;
                 profile.call_method("update_config_args", (), Some(&kwargs))?;
             }
 
-            for drift_profile in drift_profiles.iter() {
-                let profile = drift_profile.getattr("profile")?;
-
-                // print name, repo
-                let config = profile.getattr("config")?;
-                let name = config.getattr("name")?;
-                let repository = config.getattr("repository")?;
-                println!("Name: {:?}, Repository: {:?}", name, repository);
-            }
             Ok(())
         }
     }

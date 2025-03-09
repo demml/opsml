@@ -223,7 +223,7 @@ impl SklearnModel {
                 parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            parent.load_drift_profile(&path)?;
+            parent.load_drift_profile(py, &path)?;
 
             parent.load_data(py, &path, None)?;
         }

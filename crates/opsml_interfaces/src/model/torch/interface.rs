@@ -224,7 +224,7 @@ impl TorchModel {
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
-            Some(self_.as_super().save_drift_profile(&path)?)
+            Some(self_.as_super().save_drift_profile(py, &path)?)
         };
 
         // parse the save args
@@ -340,7 +340,7 @@ impl TorchModel {
         self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
 
         debug!("Loading drift profile");
-        self_.as_super().load_drift_profile(&path)?;
+        self_.as_super().load_drift_profile(py, &path)?;
 
         Ok(())
     }
