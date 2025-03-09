@@ -356,7 +356,7 @@ impl CatBoostModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &self,
         py: Python,
@@ -390,7 +390,7 @@ impl CatBoostModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -458,7 +458,7 @@ impl CatBoostModel {
     ///
     /// * `PyResult<()>` - Result of the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model<'py>(
         &self,
         py: Python<'py>,

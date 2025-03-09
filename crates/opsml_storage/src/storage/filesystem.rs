@@ -35,7 +35,7 @@ pub struct FileSystemStorage {
 }
 
 impl FileSystemStorage {
-    #[instrument(skip(settings))]
+    #[instrument(skip_all)]
     pub async fn new(
         settings: &mut OpsmlStorageSettings,
         api_client: Option<OpsmlApiClient>,

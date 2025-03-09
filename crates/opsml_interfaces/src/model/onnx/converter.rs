@@ -19,10 +19,7 @@ use tracing::{debug, error, instrument};
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
-    #[instrument(
-        skip(py, model, sample_data, interface_type, model_type, path, kwargs),
-        name = "convert_model_to_onnx"
-    )]
+    #[instrument(skip_all, name = "convert_model_to_onnx")]
     pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,

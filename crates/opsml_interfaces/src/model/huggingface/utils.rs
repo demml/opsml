@@ -262,7 +262,7 @@ impl HuggingFaceSampleData {
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,

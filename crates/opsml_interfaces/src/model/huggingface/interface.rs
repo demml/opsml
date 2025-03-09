@@ -680,7 +680,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -731,7 +731,7 @@ impl HuggingFaceModel {
         Ok(())
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -766,7 +766,7 @@ impl HuggingFaceModel {
         Ok(paths)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_tokenizer(
         &self,
         py: Python,
@@ -792,7 +792,7 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_feature_extractor(
         &self,
         py: Python,
@@ -818,7 +818,7 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_image_processor(
         &self,
         py: Python,
@@ -851,7 +851,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_processors(
         &self,
         py: Python,
@@ -901,7 +901,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &self,
         py: Python,
@@ -927,7 +927,7 @@ impl HuggingFaceModel {
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -968,7 +968,7 @@ impl HuggingFaceModel {
     /// * `path` - Path to save the data
     /// * `kwargs` - Additional save kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
@@ -1011,7 +1011,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,

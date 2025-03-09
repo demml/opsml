@@ -89,7 +89,7 @@ impl HttpStorageClient {
         Ok(settings.storage_type)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     pub async fn find(&mut self, path: &str) -> Result<Vec<String>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
@@ -130,7 +130,7 @@ impl HttpStorageClient {
         Ok(response.files)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     pub async fn find_info(&mut self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
@@ -169,7 +169,7 @@ impl HttpStorageClient {
         Ok(response.files)
     }
 
-    #[instrument(skip(self, local_path, remote_path))]
+    #[instrument(skip_all)]
     pub async fn get_object(
         &mut self,
         local_path: &str,
@@ -259,7 +259,7 @@ impl HttpStorageClient {
         Ok(())
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     pub async fn delete_object(&mut self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
@@ -332,7 +332,7 @@ impl HttpStorageClient {
         Ok(response.deleted)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     pub async fn create_multipart_upload(&mut self, path: &str) -> Result<String, StorageError> {
         let query = MultiPartQuery {
             path: path.to_string(),
@@ -404,7 +404,7 @@ impl HttpStorageClient {
         Ok(uploader)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     pub async fn generate_presigned_url(&mut self, path: &str) -> Result<String, StorageError> {
         let query = PresignedQuery {
             path: path.to_string(),

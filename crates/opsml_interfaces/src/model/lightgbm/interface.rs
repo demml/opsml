@@ -137,7 +137,7 @@ impl LightGBMModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
+    #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -336,7 +336,7 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &self,
         py: Python,
@@ -396,7 +396,7 @@ impl LightGBMModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self_, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -436,7 +436,7 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of the load
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model<'py>(
         &self,
         py: Python<'py>,
