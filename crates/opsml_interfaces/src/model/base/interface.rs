@@ -605,7 +605,7 @@ impl ModelInterface {
                 .bind(py)
                 .getattr("config")?
                 .getattr("drift_type")?
-                .extract::<String>()?;
+                .extract::<DriftType>()?;
 
             // add small hex to filename to avoid overwriting
             // this would only have if someone creates multiple drift profiles of the same type
@@ -648,7 +648,8 @@ impl ModelInterface {
         for filepath in files {
             // get file name
             let filename = filepath.file_name().unwrap().to_str().unwrap();
-            let drift_type = DriftType::from_value(&filename.split('-').next().unwrap());
+            let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
+            let drift_type = DriftType::from_value(&drift_type_str);
 
             // fail if drift type is not found
             if drift_type.is_none() {
@@ -659,7 +660,7 @@ impl ModelInterface {
             }
 
             // load file to json string
-            let file = std::fs::read_to_string(&path).map_err(|_| {
+            let file = std::fs::read_to_string(path).map_err(|_| {
                 OpsmlError::new_err(format!("Failed to read drift profile file: {}", filename))
             })?;
 
