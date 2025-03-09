@@ -141,7 +141,7 @@ impl StorageClient for LocalStorageClient {
         Ok(Self { bucket })
     }
 
-    #[instrument(skip(self, lpath, rpath))]
+    #[instrument(skip_all)]
     async fn get_object(&self, lpath: &str, rpath: &str) -> Result<(), StorageError> {
         let src_path = self.bucket.join(rpath);
         let dest_path = Path::new(lpath);
@@ -169,7 +169,7 @@ impl StorageClient for LocalStorageClient {
         Ok(())
     }
 
-    #[instrument(skip(self, path, _expiration))]
+    #[instrument(skip_all)]
     async fn generate_presigned_url(
         &self,
         path: &str,
@@ -187,7 +187,7 @@ impl StorageClient for LocalStorageClient {
         }
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let mut files = Vec::new();
         let full_path = self.bucket.join(path);
@@ -217,7 +217,7 @@ impl StorageClient for LocalStorageClient {
         Ok(files)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let full_path = self.bucket.join(path);
         if !full_path.exists() {
@@ -275,7 +275,7 @@ impl StorageClient for LocalStorageClient {
         Ok(files_info)
     }
 
-    #[instrument(skip(self, src, dest))]
+    #[instrument(skip_all)]
     async fn copy_object(&self, src: &str, dest: &str) -> Result<bool, StorageError> {
         let src_path = self.bucket.join(src);
         let dest_path = self.bucket.join(dest);
@@ -338,7 +338,7 @@ impl StorageClient for LocalStorageClient {
         Ok(true)
     }
 
-    #[instrument(skip(self, path))]
+    #[instrument(skip_all)]
     async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let full_path = self.bucket.join(path);
 

@@ -145,7 +145,7 @@ impl SklearnModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(skip(self_, py, path, to_onnx, save_kwargs))]
+    #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,

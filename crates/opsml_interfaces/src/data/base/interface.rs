@@ -502,7 +502,7 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip(self, path) name = "save_drift_profile")]
+    #[instrument(skip_all)]
     pub fn save_data_profile(&self, path: &Path) -> PyResult<PathBuf> {
         let profile_save_path = path
             .join(SaveName::DataProfile)

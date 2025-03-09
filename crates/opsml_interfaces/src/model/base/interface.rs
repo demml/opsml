@@ -554,7 +554,7 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -663,7 +663,7 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_onnx_model(
         &mut self,
         py: Python,
@@ -699,7 +699,7 @@ impl ModelInterface {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &mut self,
         py: Python,
@@ -738,7 +738,7 @@ impl ModelInterface {
     /// * `path` - Path to save the data
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
@@ -778,7 +778,7 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
@@ -814,7 +814,7 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,

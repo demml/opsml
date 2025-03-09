@@ -212,10 +212,7 @@ impl TensorFlowModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(
-        skip(self_, py, path, to_onnx, save_kwargs),
-        name = "save_tensorflow_interface"
-    )]
+    #[instrument(skip_all, name = "save_tensorflow_interface")]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
@@ -405,7 +402,7 @@ impl TensorFlowModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -434,7 +431,7 @@ impl TensorFlowModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &self,
         py: Python,
@@ -468,7 +465,7 @@ impl TensorFlowModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -499,7 +496,7 @@ impl TensorFlowModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &self,
         py: Python,
@@ -529,7 +526,7 @@ impl TensorFlowModel {
         Ok(save_path)
     }
 
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -569,7 +566,7 @@ impl TensorFlowModel {
     }
 
     /// Load the sample data
-    #[instrument(skip(self, py, path, data_type, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_data(
         &mut self,
         py: Python,
@@ -593,7 +590,7 @@ impl TensorFlowModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_onnx_model(
         &mut self,
         py: Python,
@@ -629,7 +626,7 @@ impl TensorFlowModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,

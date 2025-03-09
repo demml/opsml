@@ -421,7 +421,7 @@ impl TorchModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -450,7 +450,7 @@ impl TorchModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &self,
         py: Python,
@@ -484,7 +484,7 @@ impl TorchModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -515,7 +515,7 @@ impl TorchModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &self,
         py: Python,
@@ -555,7 +555,7 @@ impl TorchModel {
         Ok(save_path)
     }
 
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -639,7 +639,7 @@ impl TorchModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_onnx_model(
         &mut self,
         py: Python,
@@ -675,7 +675,7 @@ impl TorchModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
