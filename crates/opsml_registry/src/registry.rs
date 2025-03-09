@@ -225,6 +225,8 @@ impl CardRegistry {
     ) -> PyResult<()> {
         debug!("Registering card");
 
+        println!("registry type: {:?}", self.registry_type);
+
         // Wrap all operations in a single block_on to handle async operations
         self.runtime
             .block_on(async {
@@ -672,6 +674,12 @@ impl CardRegistry {
             fs,
         })
     }
+
+    pub fn update_type(&mut self, registry_type: RegistryType) {
+        self.registry_type = registry_type.clone();
+        self.table_name = CardTable::from_registry_type(&registry_type).to_string();
+        self.registry.update_registry_type(registry_type);
+    }
 }
 
 #[pyclass]
@@ -700,15 +708,15 @@ impl CardRegistries {
 
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
 
-        // clone experiment to create other registries (prevents uneeded calls to server for each registry)
+        // clone experiment to create other registries
         let mut model = experiment.clone();
-        model.registry.update_registry_type(RegistryType::Model);
+        model.update_type(RegistryType::Model);
 
         let mut data = experiment.clone();
-        data.registry.update_registry_type(RegistryType::Data);
+        data.update_type(RegistryType::Data);
 
         let mut prompt = experiment.clone();
-        prompt.registry.update_registry_type(RegistryType::Prompt);
+        prompt.update_type(RegistryType::Prompt);
 
         Ok(Self {
             experiment,
@@ -724,15 +732,15 @@ impl CardRegistries {
     pub fn new_with_rt(rt: Arc<tokio::runtime::Runtime>) -> PyResult<Self> {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
 
-        // clone experiment to create other registries (prevents uneeded calls to server for each registry)
+        // clone experiment to create other registries
         let mut model = experiment.clone();
-        model.registry.update_registry_type(RegistryType::Model);
+        model.update_type(RegistryType::Model);
 
         let mut data = experiment.clone();
-        data.registry.update_registry_type(RegistryType::Data);
+        data.update_type(RegistryType::Data);
 
         let mut prompt = experiment.clone();
-        prompt.registry.update_registry_type(RegistryType::Prompt);
+        prompt.update_type(RegistryType::Prompt);
 
         Ok(Self {
             experiment,

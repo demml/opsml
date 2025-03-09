@@ -60,8 +60,7 @@ fn start_background_task(
                     }
                 },
                 _ = stop_rx.changed() => {
-                    info!("Stopping background task");
-
+                    debug!("Stopping background task");
                     break;
                 }
             }

@@ -174,7 +174,7 @@ impl HttpStorageClient {
         &mut self,
         local_path: &str,
         remote_path: &str,
-        file_size: i64,
+        _file_size: i64,
     ) -> Result<(), StorageError> {
         // check if local path exists, create it if it doesn't
         let local_path = Path::new(local_path);
