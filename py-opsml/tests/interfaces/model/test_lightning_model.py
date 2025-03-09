@@ -1,4 +1,4 @@
-from opsml.model import LightningModel, LoadKwargs
+from opsml.model import LightningModel, ModelLoadKwargs
 from opsml.data import DataType
 import lightning as L
 import torch
@@ -44,11 +44,8 @@ def test_lightning_regression(
 
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        preprocessor=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
 
 
@@ -71,8 +68,6 @@ def test_lightning_classification(
 
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )

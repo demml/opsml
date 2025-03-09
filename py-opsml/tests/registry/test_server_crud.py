@@ -151,6 +151,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     assert len(cards) == 0
 
     interface: SklearnModel = random_forest_classifier
+    interface.create_drift_profile(datacard.interface.data)
 
     card = ModelCard(
         interface=interface,

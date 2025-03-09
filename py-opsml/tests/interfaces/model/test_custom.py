@@ -5,7 +5,7 @@ from opsml.model import (
     ModelInterfaceSaveMetadata,
 )
 from opsml.core import SaveKwargs
-from sklearn import linear_model
+from sklearn import linear_model  # type: ignore
 from pathlib import Path
 
 
@@ -45,6 +45,3 @@ def test_custom_interface(tmp_path: Path, regression_data):
     interface = CustomInterface(foo=2, **kwargs)
 
     metadata = interface.save(tmp_path, False)
-
-    print(metadata)
-    a

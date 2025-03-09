@@ -50,12 +50,7 @@ def test_hugging_face_text_pipeline(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.onnx_session is not None
 
@@ -92,13 +87,7 @@ def test_hugging_face_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        preprocessor=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None
@@ -133,13 +122,7 @@ def test_hugging_face_tf_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=False,
-        preprocessor=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.tokenizer is not None
 
