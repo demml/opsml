@@ -8,8 +8,8 @@ use opsml_types::{
     contracts::*,
     RegistryMode, RegistryType,
 };
+use tracing::error;
 use tracing::instrument;
-use tracing::{debug, error};
 
 // TODO: Add trait for client and server registry
 #[derive(Debug, Clone)]
