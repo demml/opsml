@@ -595,11 +595,12 @@ impl ModelInterface {
     #[instrument(skip_all, name = "save_drift_profile")]
     pub fn save_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<PathBuf> {
         let save_dir = PathBuf::from(SaveName::Drift);
-        if !save_dir.exists() {
+        let save_path = path.join(save_dir.clone());
+
+        if !save_path.exists() {
             fs::create_dir_all(&save_dir).unwrap();
         }
 
-        let save_path = path.join(save_dir.clone());
         for profile in self.drift_profile.iter() {
             let drift_type = profile
                 .bind(py)
