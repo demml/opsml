@@ -36,12 +36,7 @@ async fn create_user(
     }
 
     // Check if user already exists
-    if state
-        .sql_client
-        .get_user(&create_req.username)
-        .await
-        .is_ok()
-    {
+    if let Ok(Some(_)) = state.sql_client.get_user(&create_req.username).await {
         return Err((
             StatusCode::CONFLICT,
             Json(serde_json::json!({"error": "User already exists"})),

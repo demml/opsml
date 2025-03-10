@@ -1,6 +1,5 @@
 use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
-use crate::core::cards::CardMetadata;
 use crate::core::files::utils::create_artifact_key;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -23,7 +22,7 @@ use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, instrument};
+use tracing::{debug, error, info, instrument};
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -195,6 +194,8 @@ pub async fn create_card(
             Json(serde_json::json!({})),
         )
     })?;
+
+    info!("Next version: {}", version);
 
     // (2) ------- Insert the card into the database
     let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
@@ -512,7 +513,7 @@ pub async fn get_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<CardMetadata>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
         return Err((
             StatusCode::FORBIDDEN,
@@ -583,8 +584,16 @@ pub async fn get_card(
         )
     })?;
 
-    let card = CardMetadata::from_file(&lpath, &params.registry_type).map_err(|e| {
-        error!("Failed to create card from file: {}", e);
+    let card = std::fs::read_to_string(lpath).map_err(|e| {
+        error!("Failed to read card from file: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let card = serde_json::from_str(&card).map_err(|e| {
+        error!("Failed to parse card: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({})),
@@ -598,7 +607,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/card", prefix), get(check_card_uid))
-            //.route(&format!("{}/card/metadata", prefix), get(get_card))
+            .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(
                 &format!("{}/card/repositories", prefix),
                 get(get_card_repositories),

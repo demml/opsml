@@ -18,21 +18,34 @@ pub async fn get_next_version(
     request: CardVersionRequest,
 ) -> Result<Version, ApiError> {
     let versions = sql_client
-        .get_versions(table, &request.repository, &request.name, request.version)
+        .get_versions(
+            table,
+            &request.repository,
+            &request.name,
+            request.version.clone(),
+        )
         .await
         .map_err(|e| {
             error!("Failed to get versions: {}", e);
             ApiError::Error("Failed to get versions".to_string())
         })?;
 
-    let version = versions.first().ok_or_else(|| {
-        error!("Failed to get first version");
-        ApiError::Error("Failed to get first version".to_string())
-    })?;
+    if versions.is_empty() {
+        return match &request.version {
+            Some(version_str) => Version::parse(version_str).map_err(|e| {
+                error!("Invalid version format: {}", e);
+                ApiError::Error("Invalid version format. Version must be a full semver".to_string())
+            }),
+            None => Ok(Version::new(0, 1, 0)),
+        };
+    }
+
+    // Get the latest version as base for bumping
+    let base_version = versions.first().unwrap().to_string();
 
     let args = VersionArgs {
-        version: version.to_string(),
-        version_type: request.version_type.clone(),
+        version: base_version,
+        version_type: request.version_type,
         pre: request.pre_tag,
         build: request.build_tag,
     };

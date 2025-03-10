@@ -18,6 +18,7 @@ use opsml_types::{
         contracts::{ArtifactKey, CardQueryArgs},
     },
 };
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {
@@ -319,6 +320,7 @@ impl SqlClient for SqlClientEnum {
     }
 
     async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        debug!("Inserting artifact key");
         match self {
             SqlClientEnum::Postgres(client) => client.insert_artifact_key(key).await,
             SqlClientEnum::Sqlite(client) => client.insert_artifact_key(key).await,
