@@ -574,7 +574,7 @@ pub async fn get_card(
         )
     })?;
 
-    decrypt_directory(&tmp_path, &decryption_key).map_err(|e| {
+    decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
         error!("Failed to decrypt directory: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -597,7 +597,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/card", prefix), get(check_card_uid))
-            .route(&format!("{}/card/metadata", prefix), get(get_card))
+            //.route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(
                 &format!("{}/card/repositories", prefix),
                 get(get_card_repositories),

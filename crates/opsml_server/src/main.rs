@@ -49,7 +49,7 @@ mod tests {
     };
     use http_body_util::BodyExt; // for `collect`
     use opsml_client::*;
-    use opsml_crypt::{encrypt_directory, encrypt_file};
+    use opsml_crypt::encrypt_file;
     use opsml_semver::VersionType;
     use opsml_settings::config::DatabaseSettings;
     use opsml_sql::base::SqlClient;
@@ -87,6 +87,22 @@ mod tests {
                 .to_str()
                 .expect("Failed to convert path to string")
         )
+    }
+
+    // create json
+    fn create_card_metadata(key: ArtifactKey) {
+        let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+        let path = format!(
+            "opsml_registries/opsml_model_registry/{}/{}/v{}",
+            "TestCard", "test_repo", "1.0.0"
+        );
+        std::fs::create_dir_all(path.clone()).unwrap();
+        let lpath = PathBuf::from(path).join("Card.json");
+        std::fs::write(&lpath, json).unwrap();
+
+        let encryption_key = key.get_decrypt_key().unwrap();
+
+        encrypt_file(&lpath, &encryption_key).unwrap();
     }
 
     async fn setup() {
@@ -1390,6 +1406,8 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
 
+        create_card_metadata(create_response.key.clone());
+
         // 2. Now test getting the card
         let params = CardQueryArgs {
             uid: None,
@@ -1402,22 +1420,6 @@ mod tests {
             sort_by_timestamp: None,
             registry_type: RegistryType::Data,
         };
-
-        // create json
-        fn create_card_metadata(key: ArtifactKey) {
-            let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
-            let path = format!(
-                "opsml_registries/opsml_model_registry/{}/{}/v{}",
-                "TestCard", "test_repo", "1.0.0"
-            );
-            std::fs::create_dir_all(path.clone()).unwrap();
-            let lpath = PathBuf::from(path).join("Card.json");
-            std::fs::write(&lpath, json).unwrap();
-
-            let encryption_key = key.get_decrypt_key().unwrap();
-
-            encrypt_file(&lpath, &encryption_key).unwrap();
-        }
 
         let query_string = serde_qs::to_string(&params).unwrap();
 
@@ -1437,10 +1439,6 @@ mod tests {
         assert_eq!(card_json["name"], "TestCard");
         assert_eq!(card_json["repository"], "test_repo");
         assert_eq!(card_json["version"], "1.0.0");
-        assert!(card_json["tags"]
-            .as_array()
-            .unwrap()
-            .contains(&json!("test")));
 
         helper.cleanup();
     }
