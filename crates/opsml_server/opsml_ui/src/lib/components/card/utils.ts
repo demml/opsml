@@ -7,6 +7,8 @@ import type {
   RegistryStatsResponse,
   RegistryPageReturn,
 } from "$lib/components/card/types";
+import type { CardQueryArgs } from "../api/schema";
+import type { CardMetadata } from "./card_interfaces/enum";
 
 export async function getSpaces(
   registry_type: RegistryType
@@ -99,18 +101,19 @@ export function getBgColor(): string {
   return classes[randomIndex];
 }
 
-export async function getMetadata(
+export async function getCardMetadata(
   name: string,
   repository: string,
-  version: string
-): Promise<Any> {
-  const params = {
+  version: string,
+  registry_type: RegistryType
+): Promise<CardMetadata> {
+  const params: CardQueryArgs = {
     name: name,
     repository: repository,
-    uid: uid,
     version: version,
+    registry_type: registry_type,
   };
 
-  const response = await opsmlClient.get(RoutePaths.GET_METADATA, params);
+  const response = await opsmlClient.get(RoutePaths.METADATA, params);
   return await response.json();
 }

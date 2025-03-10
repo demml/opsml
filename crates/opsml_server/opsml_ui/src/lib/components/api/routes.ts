@@ -8,7 +8,7 @@ export enum RoutePaths {
 
   ERROR = "/opsml/error",
   HOME = "/opsml/home",
-  METADATA = "/opsml/api/ui/metadata",
+  METADATA = "/opsml/api/card/metadata",
 
   // everything below is old
 

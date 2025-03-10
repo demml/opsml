@@ -1,6 +1,6 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import { type CardQueryArgs, type Card } from "$lib/components/home/types";
+import { type Card } from "$lib/components/home/types";
 import { RegistryType } from "$lib/utils";
 
 interface RecentCards {

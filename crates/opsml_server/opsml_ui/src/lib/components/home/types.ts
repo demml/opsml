@@ -67,9 +67,3 @@ export type Card =
   | ExperimentCard
   | AuditCard
   | PromptCard;
-
-export interface CardQueryArgs {
-  registry_type: string;
-  limit?: number;
-  sort_by_timestamp?: boolean;
-}
