@@ -11,8 +11,6 @@ anyhow = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 opsml-auth = { workspace = true }
-opsml-cards = { workspace = true }
-opsml-interfaces = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
