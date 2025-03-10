@@ -278,7 +278,7 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_user(&self, username: &str) -> Result<User, SqlError> {
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.get_user(username).await,
             SqlClientEnum::Sqlite(client) => client.get_user(username).await,
@@ -1090,14 +1090,14 @@ mod tests {
         let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
-        let mut user = client.get_user("user").await.unwrap();
+        let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
 
         // update user
         user.active = false;
 
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap();
+        let user = client.get_user("user").await.unwrap().unwrap();
         assert!(!user.active);
 
         // get all users

@@ -4,7 +4,7 @@ use opsml_interfaces::types::FeatureSchema;
 use opsml_types::RegistryType;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct DataCardMetadata {
     pub schema: FeatureSchema,
 

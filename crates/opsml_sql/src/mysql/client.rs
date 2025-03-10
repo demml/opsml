@@ -881,12 +881,12 @@ impl SqlClient for MySqlClient {
         Ok(())
     }
 
-    async fn get_user(&self, username: &str) -> Result<User, SqlError> {
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
         let query = MySQLQueryHelper::get_user_query();
 
-        let user: User = sqlx::query_as(&query)
+        let user: Option<User> = sqlx::query_as(&query)
             .bind(username)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
@@ -1646,7 +1646,7 @@ mod tests {
         let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
-        let mut user = client.get_user("user").await.unwrap();
+        let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
 
         // update user
@@ -1654,7 +1654,7 @@ mod tests {
         user.refresh_token = Some("token".to_string());
 
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap();
+        let user = client.get_user("user").await.unwrap().unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 

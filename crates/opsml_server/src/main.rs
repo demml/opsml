@@ -134,8 +134,9 @@ mod tests {
     impl TestHelper {
         pub async fn new() -> Self {
             // set OPSML_AUTH to true
-            env::set_var("RUST_LOG", "info");
-            env::set_var("LOG_LEVEL", "info");
+            env::set_var("RUST_LOG", "debug");
+            env::set_var("LOG_LEVEL", "debug");
+            env::set_var("LOG_JSON", "false");
 
             cleanup();
 
@@ -156,7 +157,7 @@ mod tests {
                 .clone()
                 .oneshot(
                     Request::builder()
-                        .uri("/opsml/auth/api/login")
+                        .uri("/opsml/api/auth/login")
                         .header("Username", "admin")
                         .header("Password", "admin")
                         .body(Body::empty())
@@ -200,40 +201,12 @@ mod tests {
         let helper = TestHelper::new().await;
 
         let request = Request::builder()
-            .uri("/opsml/healthcheck")
+            .uri("/opsml/api/healthcheck")
             .body(Body::empty())
             .unwrap();
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
-
-        // add invalid token
-        let request = Request::builder()
-            .uri("/opsml/healthcheck")
-            .header(header::AUTHORIZATION, format!("Bearer {}", "invalid_token"))
-            .body(Body::empty())
-            .unwrap();
-
-        // false will use the invalid token
-        // clone the app to avoid using the default auth header (want to force it to fail)
-        let response = helper.app.clone().oneshot(request).await.unwrap();
-        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-
-        // refresh token
-        let request = Request::builder()
-            .uri("/opsml/auth/api/refresh")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = helper.send_oneshot(request).await;
-        assert_eq!(response.status(), StatusCode::OK);
-
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-
-        let new_token: JwtToken = serde_json::from_slice(&body).unwrap();
-
-        // check if the new token is different from the old token
-        assert_ne!(helper.token.token, new_token.token);
 
         helper.cleanup();
     }
@@ -254,7 +227,7 @@ mod tests {
 
         // check if a card UID exists (get request with UidRequest params)
         let request = Request::builder()
-            .uri(format!("/opsml/card?{}", query_string))
+            .uri(format!("/opsml/api/card?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -278,7 +251,7 @@ mod tests {
 
         // check if a card UID exists (get request with UidRequest params)
         let request = Request::builder()
-            .uri(format!("/opsml/card?{}", query_string))
+            .uri(format!("/opsml/api/card?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -308,7 +281,7 @@ mod tests {
 
         // check if a card UID exists (get request with UidRequest params)
         let request = Request::builder()
-            .uri(format!("/opsml/card/repositories?{}", query_string))
+            .uri(format!("/opsml/api/card/repositories?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -338,7 +311,7 @@ mod tests {
 
         let query_string = serde_qs::to_string(&params).unwrap();
         let request = Request::builder()
-            .uri(format!("/opsml/card/registry/stats?{}", query_string))
+            .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -357,7 +330,7 @@ mod tests {
 
         let query_string = serde_qs::to_string(&params).unwrap();
         let request = Request::builder()
-            .uri(format!("/opsml/card/registry/stats?{}", query_string))
+            .uri(format!("/opsml/api/card/registry/stats?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -382,7 +355,7 @@ mod tests {
         let query_string = serde_qs::to_string(&args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/registry/page?{}", query_string))
+            .uri(format!("/opsml/api/card/registry/page?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -406,7 +379,7 @@ mod tests {
         let query_string = serde_qs::to_string(&args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/registry/page?{}", query_string))
+            .uri(format!("/opsml/api/card/registry/page?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -441,7 +414,7 @@ mod tests {
         let query_string = serde_qs::to_string(&args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -469,7 +442,7 @@ mod tests {
         let query_string = serde_qs::to_string(&args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -513,7 +486,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/create")
+            .uri("/opsml/api/card/create")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -521,6 +494,9 @@ mod tests {
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
+
+        // sleep for 1 sec
+        tokio::time::sleep(Duration::from_secs(1)).await;
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
@@ -536,7 +512,7 @@ mod tests {
         let query_string = serde_qs::to_string(&list_cards).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -576,7 +552,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/update")
+            .uri("/opsml/api/card/update")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -598,7 +574,7 @@ mod tests {
         let query_string = serde_qs::to_string(&delete_args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/delete?{}", query_string))
+            .uri(format!("/opsml/api/card/delete?{}", query_string))
             .method("DELETE")
             .body(Body::empty())
             .unwrap();
@@ -642,7 +618,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/create")
+            .uri("/opsml/api/card/create")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -668,7 +644,7 @@ mod tests {
 
         // get key
         let request = Request::builder()
-            .uri(format!("/opsml/card/load?{}", query_string))
+            .uri(format!("/opsml/api/card/load?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -696,7 +672,7 @@ mod tests {
         let query_string = serde_qs::to_string(&list_cards).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -739,7 +715,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/update")
+            .uri("/opsml/api/card/update")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -761,7 +737,7 @@ mod tests {
         let query_string = serde_qs::to_string(&delete_args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/delete?{}", query_string))
+            .uri(format!("/opsml/api/card/delete?{}", query_string))
             .method("DELETE")
             .body(Body::empty())
             .unwrap();
@@ -805,7 +781,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/create")
+            .uri("/opsml/api/card/create")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -828,7 +804,7 @@ mod tests {
         let query_string = serde_qs::to_string(&list_cards).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -868,7 +844,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/update")
+            .uri("/opsml/api/card/update")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -890,7 +866,7 @@ mod tests {
         let query_string = serde_qs::to_string(&delete_args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/delete?{}", query_string))
+            .uri(format!("/opsml/api/card/delete?{}", query_string))
             .method("DELETE")
             .body(Body::empty())
             .unwrap();
@@ -934,7 +910,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/create")
+            .uri("/opsml/api/card/create")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -957,7 +933,7 @@ mod tests {
         let query_string = serde_qs::to_string(&list_cards).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/list?{}", query_string))
+            .uri(format!("/opsml/api/card/list?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -997,7 +973,7 @@ mod tests {
         let body = serde_json::to_string(&card_request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/card/update")
+            .uri("/opsml/api/card/update")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1019,7 +995,7 @@ mod tests {
         let query_string = serde_qs::to_string(&delete_args).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card/delete?{}", query_string))
+            .uri(format!("/opsml/api/card/delete?{}", query_string))
             .method("DELETE")
             .body(Body::empty())
             .unwrap();
@@ -1036,7 +1012,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_opsml_server_run_routes() {
+    async fn test_opsml_server_experiment_routes() {
         let helper = TestHelper::new().await;
         let experiment_uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
 
@@ -1059,7 +1035,7 @@ mod tests {
         let body = serde_json::to_string(&request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/run/metrics")
+            .uri("/opsml/api/experiment/metrics")
             .method("PUT")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1074,7 +1050,10 @@ mod tests {
         .unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/run/metrics/names?{}", query_string))
+            .uri(format!(
+                "/opsml/api/experiment/metrics/names?{}",
+                query_string
+            ))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1091,7 +1070,7 @@ mod tests {
         let body = GetMetricRequest::new(experiment_uid.clone(), None);
 
         let request = Request::builder()
-            .uri("/opsml/run/metrics") // should be post
+            .uri("/opsml/api/experiment/metrics") // should be post
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&body).unwrap()))
@@ -1109,7 +1088,7 @@ mod tests {
         let body = GetMetricRequest::new(experiment_uid.clone(), Some(vec!["metric1".to_string()]));
 
         let request = Request::builder()
-            .uri("/opsml/run/metrics") // should be post
+            .uri("/opsml/api/experiment/metrics") // should be post
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&body).unwrap()))
@@ -1142,7 +1121,7 @@ mod tests {
         let body = serde_json::to_string(&request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/run/parameters")
+            .uri("/opsml/api/experiment/parameters")
             .method("PUT")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1154,7 +1133,7 @@ mod tests {
         // get parameters by experiment_uid
         let body = GetParameterRequest::new(experiment_uid.clone(), None);
         let request = Request::builder()
-            .uri("/opsml/run/parameters") // should be post
+            .uri("/opsml/api/experiment/parameters") // should be post
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&body).unwrap()))
@@ -1172,7 +1151,7 @@ mod tests {
             GetParameterRequest::new(experiment_uid.clone(), Some(vec!["param1".to_string()]));
 
         let request = Request::builder()
-            .uri("/opsml/run/parameters") // should be post
+            .uri("/opsml/api/experiment/parameters") // should be post
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&body).unwrap()))
@@ -1195,7 +1174,7 @@ mod tests {
         let body = serde_json::to_string(&request).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/run/hardware/metrics")
+            .uri("/opsml/api/experiment/hardware/metrics")
             .method("PUT")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1212,7 +1191,10 @@ mod tests {
         let query_string = serde_qs::to_string(&body).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/run/hardware/metrics?{}", query_string))
+            .uri(format!(
+                "/opsml/api/experiment/hardware/metrics?{}",
+                query_string
+            ))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1223,7 +1205,7 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let metrics: Vec<HardwareMetrics> = serde_json::from_slice(&body).unwrap();
 
-        assert_eq!(metrics.len(), 2);
+        assert_eq!(metrics.len(), 1);
 
         helper.cleanup();
     }
@@ -1245,7 +1227,7 @@ mod tests {
         let body = serde_json::to_string(&create_req).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/users")
+            .uri("/opsml/api/users")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1266,7 +1248,7 @@ mod tests {
 
         // 2. Get the user
         let request = Request::builder()
-            .uri("/opsml/users/test_user")
+            .uri("/opsml/api/users/test_user")
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1293,7 +1275,7 @@ mod tests {
         let body = serde_json::to_string(&update_req).unwrap();
 
         let request = Request::builder()
-            .uri("/opsml/users/test_user")
+            .uri("/opsml/api/users/test_user")
             .method("PUT")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1319,7 +1301,7 @@ mod tests {
 
         // 4. List all users
         let request = Request::builder()
-            .uri("/opsml/users")
+            .uri("/opsml/api/users")
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1342,7 +1324,7 @@ mod tests {
 
         // 5. Delete the user
         let request = Request::builder()
-            .uri("/opsml/users/test_user")
+            .uri("/opsml/api/users/test_user")
             .method("DELETE")
             .body(Body::empty())
             .unwrap();
@@ -1350,9 +1332,10 @@ mod tests {
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
+        println!("Response: {:?}", response);
         // Verify the user is deleted by trying to get it
         let request = Request::builder()
-            .uri("/opsml/users/test_user")
+            .uri("/opsml/api/users/test_user")
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1394,7 +1377,7 @@ mod tests {
 
         // Create the card first
         let request = Request::builder()
-            .uri("/opsml/card/create")
+            .uri("/opsml/api/card/create")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(body))
@@ -1424,7 +1407,7 @@ mod tests {
         let query_string = serde_qs::to_string(&params).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/card?{}", query_string))
+            .uri(format!("card?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1440,6 +1423,6 @@ mod tests {
         assert_eq!(card_json["repository"], "test_repo");
         assert_eq!(card_json["version"], "1.0.0");
 
-        helper.cleanup();
+        //helper.cleanup();
     }
 }

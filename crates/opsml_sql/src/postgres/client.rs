@@ -852,12 +852,12 @@ impl SqlClient for PostgresClient {
         Ok(())
     }
 
-    async fn get_user(&self, username: &str) -> Result<User, SqlError> {
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
         let query = PostgresQueryHelper::get_user_query();
 
-        let user: User = sqlx::query_as(&query)
+        let user: Option<User> = sqlx::query_as(&query)
             .bind(username)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
@@ -1606,7 +1606,7 @@ mod tests {
         client.insert_user(&user).await.unwrap();
 
         // Read
-        let mut user = client.get_user("user").await.unwrap();
+        let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
 
         // update user
@@ -1615,7 +1615,7 @@ mod tests {
 
         // Update
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap();
+        let user = client.get_user("user").await.unwrap().unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 
