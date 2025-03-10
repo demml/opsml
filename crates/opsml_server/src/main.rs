@@ -91,10 +91,10 @@ mod tests {
 
     // create json
     fn create_card_metadata(key: ArtifactKey) {
-        let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+        let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
         let path = format!(
-            "opsml_registries/opsml_model_registry/{}/{}/v{}",
-            "TestCard", "test_repo", "1.0.0"
+            "opsml_registries/opsml_data_registry/{}/{}/v{}",
+            "space", "name", "1.0.0"
         );
         std::fs::create_dir_all(path.clone()).unwrap();
         let lpath = PathBuf::from(path).join("Card.json");
@@ -116,12 +116,6 @@ mod tests {
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_db.sql").unwrap();
-
-        // create fake card.json file at opsml_registries/opsml_model_registry/space/name/v0.1.0/Card.json
-        let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z","experimentcard_uid":null,"auditcard_uid":null,"interface_type":"python","data_type":"csv","tags":["tag1","tag2"],"username":"admin"}"#;
-        let path = "opsml_registries/opsml_model_registry/space/name/v0.1.0/Card.json";
-        std::fs::create_dir_all("opsml_registries/opsml_model_registry/space/name/v0.1.0").unwrap();
-        std::fs::write(path, json).unwrap();
 
         client.query(&script).await;
     }
@@ -796,7 +790,9 @@ mod tests {
 
         // get card by uid
         let list_cards = CardQueryArgs {
-            uid: Some(create_response.key.uid),
+            name: Some(card_request.card.name().to_string()), // name of the card
+            repository: Some(card_request.card.repository().to_string()),
+            version: Some(card_request.card.version().to_string()),
             registry_type: RegistryType::Experiment,
             ..Default::default()
         };
@@ -918,6 +914,9 @@ mod tests {
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
+
+        // sleep for 1 sec
+        tokio::time::sleep(Duration::from_secs(1)).await;
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
@@ -1352,8 +1351,8 @@ mod tests {
 
         // 1. First create a card so we have something to get
         let card_version_request = CardVersionRequest {
-            name: "TestCard".to_string(),
-            repository: "test_repo".to_string(),
+            name: "name".to_string(),
+            repository: "space".to_string(),
             version: Some("1.0.0".to_string()),
             version_type: VersionType::Minor,
             pre_tag: None,
@@ -1363,8 +1362,8 @@ mod tests {
         // Create a test card with some data
         let card_request = CreateCardRequest {
             card: Card::Data(DataCardClientRecord {
-                name: "TestCard".to_string(),
-                repository: "test_repo".to_string(),
+                name: "name".to_string(),
+                repository: "space".to_string(),
                 version: "1.0.0".to_string(),
                 tags: vec!["test".to_string()],
                 ..DataCardClientRecord::default()
@@ -1385,17 +1384,20 @@ mod tests {
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
-
+        //
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
 
-        create_card_metadata(create_response.key.clone());
+        // wait 1 sec
+        tokio::time::sleep(Duration::from_secs(1)).await;
 
-        // 2. Now test getting the card
+        create_card_metadata(create_response.key.clone());
+        //
+        //// 2. Now test getting the card
         let params = CardQueryArgs {
             uid: None,
-            name: Some("TestCard".to_string()),
-            repository: Some("test_repo".to_string()),
+            name: Some("name".to_string()),
+            repository: Some("space".to_string()),
             version: Some(create_response.version),
             max_date: None,
             tags: None,
@@ -1403,26 +1405,26 @@ mod tests {
             sort_by_timestamp: None,
             registry_type: RegistryType::Data,
         };
-
+        //
         let query_string = serde_qs::to_string(&params).unwrap();
-
+        //
         let request = Request::builder()
-            .uri(format!("card?{}", query_string))
+            .uri(format!("/opsml/api/card/metadata?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
-
+        //
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let card_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-
-        // Verify the response contains the expected data
-        assert_eq!(card_json["name"], "TestCard");
-        assert_eq!(card_json["repository"], "test_repo");
+        //
+        //// Verify the response contains the expected data
+        assert_eq!(card_json["name"], "name");
+        assert_eq!(card_json["repository"], "space");
         assert_eq!(card_json["version"], "1.0.0");
-
-        //helper.cleanup();
+        //
+        helper.cleanup();
     }
 }
