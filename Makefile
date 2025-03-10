@@ -58,8 +58,8 @@ start.server: stop.server build.ui
 .PHONY: stop.server
 stop.server:
 	lsof -ti:3000 | xargs kill -9
-	rm -f opsml.db || true
-	rm -rf opsml_registries || true
+#	rm -f opsml.db || true
+#	rm -rf opsml_registries || true
 	
 
 ######## Experiment tests ########

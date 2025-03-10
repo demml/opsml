@@ -533,7 +533,6 @@ impl FileSystem for LocalFSStorageClient {
                     .create_multipart_uploader(&stripped_file_path, &remote_path, None)
                     .await?;
 
-                println!("Uploading file: {}", file.display());
                 uploader.upload_file_in_chunks().await?;
             }
         } else {

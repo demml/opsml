@@ -570,7 +570,7 @@ impl CardRegistry {
 
         println!(
             "{} - {} - {}/{} - v{}",
-            Colorize::green("registered card"),
+            Colorize::green("Registered card"),
             Colorize::purple(&registry_type.to_string()),
             response.repository,
             response.name,

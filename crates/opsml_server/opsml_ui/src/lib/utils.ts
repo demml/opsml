@@ -10,19 +10,25 @@ export function goTop() {
 }
 
 export function calculateTimeBetween(created_at: string): string {
-  const presentDate: Date = new Date();
-  const date1: Date = new Date(created_at);
-
-  const hours = Math.abs(presentDate.getTime() - date1.getTime()) / 3600000;
-
-  if (hours < 1) {
-    const minutes = Math.round(hours * 60);
-    return `${minutes} minutes ago`;
-  } else if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return `${days} days ago`;
+  if (!created_at.endsWith("Z")) {
+    created_at += "Z";
   }
-  return `${Math.round(hours)} hours ago`;
+
+  const presentDate = Date.now();
+  const date1 = new Date(created_at).getTime();
+
+  // Calculate difference in milliseconds
+  const diffMs = presentDate - date1;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes} minutes ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hours ago`;
+  }
+  return `${diffDays} days ago`;
 }
 
 export function delay(fn: any, ms: number) {
