@@ -1,5 +1,6 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
 use crate::core::state::AppState;
+use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
 /// Route for debugging information
 use axum::extract::State;
@@ -71,14 +72,7 @@ pub async fn api_login_handler(
         .to_string();
 
     // get user from database
-    let mut user = state.sql_client.get_user(&username).await.map_err(|e| {
-        error!("Failed to get user from database: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
-    })?;
-
+    let mut user = get_user(&state, &username).await?;
     // check if password is correct
     state
         .auth_manager
@@ -139,17 +133,7 @@ async fn ui_login_handler(
     // get Username and Password from headers
 
     // get user from database
-    let mut user = state
-        .sql_client
-        .get_user(&req.username)
-        .await
-        .map_err(|e| {
-            error!("Failed to get user from database: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
+    let mut user = get_user(&state, &req.username).await?;
 
     // check if password is correct
     state
@@ -215,13 +199,7 @@ pub async fn api_refresh_token_handler(
             })?;
 
         // get user from database
-        let mut user = state.sql_client.get_user(&claims.sub).await.map_err(|e| {
-            error!("Failed to get user from database: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
+        let mut user = get_user(&state, &claims.sub).await?;
 
         // generate JWT token
         let jwt_token = state.auth_manager.generate_jwt(&user);

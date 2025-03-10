@@ -11,6 +11,7 @@ anyhow = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true }
 opsml-auth = { workspace = true }
+opsml-cards = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
@@ -23,6 +24,7 @@ opsml-utils = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 
+chrono = { workspace = true }
 mime_guess = { workspace = true }
 password-auth = { workspace = true }
 rust-embed = { workspace = true }

@@ -3,13 +3,14 @@ use opsml_error::StorageError;
 use opsml_types::{SqlType, StorageType};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use rusty_logging::logger::LoggingConfig;
+use rusty_logging::logger::{LoggingConfig, WriteLevel};
+use rusty_logging::LogLevel;
 use serde::Serialize;
 use std::default::Default;
 use std::env;
 use std::path::PathBuf;
+use std::str::FromStr;
 use tracing::warn;
-
 /// ApiSettings for use with ApiClient
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -183,7 +184,17 @@ impl Default for OpsmlConfig {
             sql_type: OpsmlConfig::get_sql_type(&opsml_tracking_uri),
         };
 
-        let logging_config = LoggingConfig::default();
+        let log_level =
+            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "debug".to_string()))
+                .unwrap_or(LogLevel::Info);
+
+        let log_json = env::var("LOG_JSON")
+            .unwrap_or_else(|_| "true".to_string())
+            .parse()
+            .unwrap_or(true);
+
+        let logging_config =
+            LoggingConfig::rust_new(false, log_level, WriteLevel::Stdout, log_json);
 
         OpsmlConfig {
             app_name: "opsml".to_string(),

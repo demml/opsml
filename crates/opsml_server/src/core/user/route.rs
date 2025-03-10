@@ -2,6 +2,7 @@ use crate::core::state::AppState;
 use crate::core::user::schema::{
     CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
 };
+use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
 use axum::extract::Path;
 use axum::{
@@ -96,12 +97,18 @@ async fn get_user(
 
     // Get user from database
     let user = match state.sql_client.get_user(&username).await {
-        Ok(user) => user,
-        Err(e) => {
-            error!("Failed to get user: {}", e);
+        Ok(Some(user)) => user,
+        Ok(None) => {
             return Err((
                 StatusCode::NOT_FOUND,
                 Json(serde_json::json!({"error": "User not found"})),
+            ));
+        }
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to get user"})),
             ));
         }
     };
@@ -162,16 +169,7 @@ async fn update_user(
     }
 
     // Get the current user state
-    let mut user = match state.sql_client.get_user(&username).await {
-        Ok(user) => user,
-        Err(e) => {
-            error!("Failed to get user for update: {}", e);
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({"error": "User not found"})),
-            ));
-        }
-    };
+    let mut user = get_user_from_db(&state, &username).await?;
 
     // Update fields based on request
     if let Some(password) = update_req.password {

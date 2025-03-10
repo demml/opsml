@@ -1,5 +1,6 @@
 use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
+use crate::core::cards::CardMetadata;
 use crate::core::files::utils::create_artifact_key;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -511,7 +512,7 @@ pub async fn get_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<CardQueryArgs>,
-) -> Result<Json<opsml_cards::Card>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<CardMetadata>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
         return Err((
             StatusCode::FORBIDDEN,
@@ -582,7 +583,7 @@ pub async fn get_card(
         )
     })?;
 
-    let card = opsml_cards::Card::from_file(&lpath, &params.registry_type).map_err(|e| {
+    let card = CardMetadata::from_file(&lpath, &params.registry_type).map_err(|e| {
         error!("Failed to create card from file: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
