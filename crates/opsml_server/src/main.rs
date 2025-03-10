@@ -49,6 +49,7 @@ mod tests {
     };
     use http_body_util::BodyExt; // for `collect`
     use opsml_client::*;
+    use opsml_crypt::{encrypt_directory, encrypt_file};
     use opsml_semver::VersionType;
     use opsml_settings::config::DatabaseSettings;
     use opsml_sql::base::SqlClient;
@@ -57,6 +58,7 @@ mod tests {
     use opsml_types::{cards::*, contracts::*};
     use tokio::time::Duration;
 
+    use std::path::PathBuf;
     use std::{env, vec};
     use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
@@ -98,6 +100,13 @@ mod tests {
 
         // Run the SQL script to populate the database
         let script = std::fs::read_to_string("tests/populate_db.sql").unwrap();
+
+        // create fake card.json file at opsml_registries/opsml_model_registry/space/name/v0.1.0/Card.json
+        let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z","experimentcard_uid":null,"auditcard_uid":null,"interface_type":"python","data_type":"csv","tags":["tag1","tag2"],"username":"admin"}"#;
+        let path = "opsml_registries/opsml_model_registry/space/name/v0.1.0/Card.json";
+        std::fs::create_dir_all("opsml_registries/opsml_model_registry/space/name/v0.1.0").unwrap();
+        std::fs::write(path, json).unwrap();
+
         client.query(&script).await;
     }
 
@@ -1334,6 +1343,104 @@ mod tests {
 
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+        helper.cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_opsml_server_get_card() {
+        let helper = TestHelper::new().await;
+
+        // 1. First create a card so we have something to get
+        let card_version_request = CardVersionRequest {
+            name: "TestCard".to_string(),
+            repository: "test_repo".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
+        // Create a test card with some data
+        let card_request = CreateCardRequest {
+            card: Card::Data(DataCardClientRecord {
+                name: "TestCard".to_string(),
+                repository: "test_repo".to_string(),
+                version: "1.0.0".to_string(),
+                tags: vec!["test".to_string()],
+                ..DataCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Data,
+            version_request: card_version_request,
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        // Create the card first
+        let request = Request::builder()
+            .uri("/opsml/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+
+        // 2. Now test getting the card
+        let params = CardQueryArgs {
+            uid: None,
+            name: Some("TestCard".to_string()),
+            repository: Some("test_repo".to_string()),
+            version: Some(create_response.version),
+            max_date: None,
+            tags: None,
+            limit: None,
+            sort_by_timestamp: None,
+            registry_type: RegistryType::Data,
+        };
+
+        // create json
+        fn create_card_metadata(key: ArtifactKey) {
+            let json = r#"{"name":"Model1","repository":"repo1","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+            let path = format!(
+                "opsml_registries/opsml_model_registry/{}/{}/v{}",
+                "TestCard", "test_repo", "1.0.0"
+            );
+            std::fs::create_dir_all(path.clone()).unwrap();
+            let lpath = PathBuf::from(path).join("Card.json");
+            std::fs::write(&lpath, json).unwrap();
+
+            let encryption_key = key.get_decrypt_key().unwrap();
+
+            encrypt_file(&lpath, &encryption_key).unwrap();
+        }
+
+        let query_string = serde_qs::to_string(&params).unwrap();
+
+        let request = Request::builder()
+            .uri(format!("/opsml/card?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let card_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+        // Verify the response contains the expected data
+        assert_eq!(card_json["name"], "TestCard");
+        assert_eq!(card_json["repository"], "test_repo");
+        assert_eq!(card_json["version"], "1.0.0");
+        assert!(card_json["tags"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("test")));
 
         helper.cleanup();
     }

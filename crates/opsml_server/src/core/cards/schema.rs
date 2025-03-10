@@ -10,3 +10,8 @@ pub struct QueryPageResponse {
 pub struct RegistryStatsResponse {
     pub stats: QueryStats,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Card {
+    metadata: serde_json::Value,
+}
