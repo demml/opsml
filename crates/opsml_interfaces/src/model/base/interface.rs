@@ -597,10 +597,6 @@ impl ModelInterface {
         let save_dir = PathBuf::from(SaveName::Drift);
         let save_path = path.join(save_dir.clone());
 
-        if !save_path.exists() {
-            fs::create_dir_all(&save_dir).unwrap();
-        }
-
         for profile in self.drift_profile.iter() {
             let drift_type = profile
                 .bind(py)
@@ -622,7 +618,7 @@ impl ModelInterface {
 
             profile.call_method1(py, "save_to_json", (Some(profile_save_path),))?;
         }
-        info!("Drift profile saved");
+        debug!("Drift profile saved");
 
         Ok(save_dir)
     }

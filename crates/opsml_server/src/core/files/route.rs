@@ -90,7 +90,7 @@ pub async fn create_multipart_upload(
     }
 
     let path = Path::new(&params.path);
-    info!("Creating multipart upload for path: {}", path.display());
+    debug!("Creating multipart upload for path: {}", path.display());
 
     let session_url = state
         .storage_client
