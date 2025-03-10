@@ -98,3 +98,19 @@ export function getBgColor(): string {
   const randomIndex = Math.floor(Math.random() * classes.length);
   return classes[randomIndex];
 }
+
+export async function getMetadata(
+  name: string,
+  repository: string,
+  version: string
+): Promise<Any> {
+  const params = {
+    name: name,
+    repository: repository,
+    uid: uid,
+    version: version,
+  };
+
+  const response = await opsmlClient.get(RoutePaths.GET_METADATA, params);
+  return await response.json();
+}

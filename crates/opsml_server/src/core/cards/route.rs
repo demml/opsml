@@ -11,14 +11,17 @@ use axum::{
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_crypt::decrypt_directory;
 use opsml_sql::base::SqlClient;
 use opsml_sql::schemas::*;
 use opsml_types::{cards::*, contracts::*};
+use opsml_types::{SaveName, Suffix};
 use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
+use tempfile::tempdir;
 use tracing::{debug, error, instrument};
 
 /// Route for checking if a card UID exists
@@ -503,10 +506,98 @@ pub async fn load_card(
     Ok(Json(key))
 }
 
+#[instrument(skip_all)]
+pub async fn get_card(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<CardQueryArgs>,
+) -> Result<Json<opsml_cards::Card>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    let key = state
+        .sql_client
+        .get_card_key_for_loading(&table, &params)
+        .await
+        .map_err(|e| {
+            error!("Failed to get card key for loading: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+    // get uid
+
+    // create temp dir
+    let tmp_dir = tempdir().map_err(|e| {
+        error!("Failed to create temp dir: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let tmp_path = tmp_dir.path();
+    let lpath = tmp_dir
+        .path()
+        .join(SaveName::Card)
+        .with_extension(Suffix::Json);
+    let rpath = key
+        .storage_path()
+        .join(SaveName::Card)
+        .with_extension(Suffix::Json);
+
+    state
+        .storage_client
+        .get(&lpath, &rpath, false)
+        .await
+        .map_err(|e| {
+            error!("Failed to get card: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+    let decryption_key = key.get_decrypt_key().map_err(|e| {
+        error!("Failed to get decryption key: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    decrypt_directory(&tmp_path, &decryption_key).map_err(|e| {
+        error!("Failed to decrypt directory: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let card = opsml_cards::Card::from_file(&lpath, &params.registry_type).map_err(|e| {
+        error!("Failed to create card from file: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    Ok(Json(card))
+}
+
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/card", prefix), get(check_card_uid))
+            .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(
                 &format!("{}/card/repositories", prefix),
                 get(get_card_repositories),

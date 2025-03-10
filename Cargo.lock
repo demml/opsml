@@ -3720,6 +3720,7 @@ dependencies = [
  "mockall",
  "mockito",
  "opsml-auth",
+ "opsml-cards",
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",
