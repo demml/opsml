@@ -57,10 +57,7 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
         .await
         .context(Colorize::purple("❌ Failed to create default guest user"))?;
 
-    info!(
-        "✅ Created default admin and guest user: {} (change password on first login)",
-        default_username
-    );
+    info!("✅ Created default admin and guest user (change password on first login)",);
 
     Ok(())
 }
