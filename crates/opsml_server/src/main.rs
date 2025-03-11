@@ -37,7 +37,7 @@ async fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
+    use crate::core::cards::schema::{QueryPageResponse, ReadeMe, RegistryStatsResponse};
     use crate::core::user::schema::{
         CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
     };
@@ -98,6 +98,21 @@ mod tests {
         );
         std::fs::create_dir_all(path.clone()).unwrap();
         let lpath = PathBuf::from(path).join("Card.json");
+        std::fs::write(&lpath, json).unwrap();
+
+        let encryption_key = key.get_decrypt_key().unwrap();
+
+        encrypt_file(&lpath, &encryption_key).unwrap();
+    }
+
+    fn create_card_readme(key: ArtifactKey) {
+        let json = "This is a test README";
+        let path = format!(
+            "opsml_registries/opsml_data_registry/{}/{}",
+            "space", "name"
+        );
+        std::fs::create_dir_all(path.clone()).unwrap();
+        let lpath = PathBuf::from(path).join("README.md");
         std::fs::write(&lpath, json).unwrap();
 
         let encryption_key = key.get_decrypt_key().unwrap();
@@ -1426,5 +1441,85 @@ mod tests {
         assert_eq!(card_json["version"], "1.0.0");
         //
         helper.cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_opsml_server_get_readme() {
+        let helper = TestHelper::new().await;
+
+        // 1. First create a card so we have something to get
+        let card_version_request = CardVersionRequest {
+            name: "name".to_string(),
+            repository: "space".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
+        // Create a test card with some data
+        let card_request = CreateCardRequest {
+            card: Card::Data(DataCardClientRecord {
+                name: "name".to_string(),
+                repository: "space".to_string(),
+                version: "1.0.0".to_string(),
+                tags: vec!["test".to_string()],
+                ..DataCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Data,
+            version_request: card_version_request,
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        // Create the card first
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+
+        // wait 1 sec
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        create_card_readme(create_response.key.clone());
+        //
+        //// 2. Now test getting the card
+        let params = CardQueryArgs {
+            uid: None,
+            name: Some("name".to_string()),
+            repository: Some("space".to_string()),
+            version: Some(create_response.version),
+            max_date: None,
+            tags: None,
+            limit: None,
+            sort_by_timestamp: None,
+            registry_type: RegistryType::Data,
+        };
+        //
+        let query_string = serde_qs::to_string(&params).unwrap();
+        //
+        let request = Request::builder()
+            .uri(format!("/opsml/api/card/readme?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        //
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let card_readme: ReadeMe = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(card_readme.readme, "This is a test README");
+
+        //
     }
 }

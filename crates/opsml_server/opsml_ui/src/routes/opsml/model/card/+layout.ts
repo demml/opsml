@@ -6,6 +6,7 @@ import { getCardMetadata } from "$lib/components/card/utils";
 
 // @ts-ignore
 import type { LayoutServerLoad } from "./$types";
+import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
@@ -16,9 +17,12 @@ export const load: LayoutServerLoad = async ({ url }) => {
   const version = (url as URL).searchParams.get("version") as string;
   const registry = RegistryType.Model;
 
-  let metadata = getCardMetadata(name, repository, version, registry);
+  let metadata = (await getCardMetadata(
+    name,
+    repository,
+    version,
+    RegistryType.Model
+  )) as ModelCard;
 
-  console.log(metadata);
-
-  return {};
+  return { metadata, registry };
 };

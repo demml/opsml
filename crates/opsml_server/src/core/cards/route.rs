@@ -20,9 +20,12 @@ use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
+
+use super::schema::ReadeMe;
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -603,11 +606,125 @@ pub async fn get_card(
     Ok(Json(card))
 }
 
+#[instrument(skip_all)]
+pub async fn get_readme(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<CardQueryArgs>,
+) -> Result<Json<ReadeMe>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    // name and repository are required
+    if params.name.is_none() || params.repository.is_none() || params.version.is_none() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "Name and repository are required" })),
+        ));
+    }
+
+    let name = params.name.as_ref().unwrap();
+    let repository = params.repository.as_ref().unwrap();
+
+    let key = state
+        .sql_client
+        .get_card_key_for_loading(&table, &params)
+        .await
+        .map_err(|e| {
+            error!("Failed to get card key for loading: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+    let readme_path = format!("{}/{}/{}/README.md", table.to_string(), repository, name);
+    let rpath = PathBuf::from(&readme_path);
+
+    let files = state.storage_client.find(&rpath).await.map_err(|e| {
+        error!("Failed to get README: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    // if file exists, get it
+    if files.len() == 1 {
+        let rpath = PathBuf::from(files[0].clone());
+        let tmp_dir = tempdir().map_err(|e| {
+            error!("Failed to create temp dir: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+        let lpath = tmp_dir
+            .path()
+            .join(SaveName::ReadMe)
+            .with_extension(Suffix::Md);
+
+        state
+            .storage_client
+            .get(&lpath, &rpath, false)
+            .await
+            .map_err(|e| {
+                error!("Failed to get README: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({})),
+                )
+            })?;
+
+        let decryption_key = key.get_decrypt_key().map_err(|e| {
+            error!("Failed to get decryption key: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+        decrypt_directory(&lpath, &decryption_key).map_err(|e| {
+            error!("Failed to decrypt directory: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+        let readme = std::fs::read_to_string(lpath).map_err(|e| {
+            error!("Failed to read README from file: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
+        Ok(Json(ReadeMe {
+            readme,
+            exists: true,
+        }))
+    } else {
+        Ok(Json(ReadeMe {
+            readme: "".to_string(),
+            exists: false,
+        }))
+    }
+}
+
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/card", prefix), get(check_card_uid))
             .route(&format!("{}/card/metadata", prefix), get(get_card))
+            .route(&format!("{}/card/readme", prefix), get(get_readme))
             .route(
                 &format!("{}/card/repositories", prefix),
                 get(get_card_repositories),
