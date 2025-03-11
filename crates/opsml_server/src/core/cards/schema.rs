@@ -15,3 +15,9 @@ pub struct RegistryStatsResponse {
 pub struct Card {
     metadata: serde_json::Value,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ReadeMe {
+    pub readme: String,
+    pub exists: bool,
+}

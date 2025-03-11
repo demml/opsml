@@ -5,6 +5,10 @@ export enum RegistryType {
   Prompt = "Prompt",
 }
 
+export function getRegistryTypeLowerCase(type: RegistryType): string {
+  return type.toLowerCase();
+}
+
 export function goTop() {
   document.body.scrollIntoView();
 }

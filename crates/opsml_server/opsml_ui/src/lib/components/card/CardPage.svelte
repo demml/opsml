@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import { calculateTimeBetween } from "$lib/utils";
+    import { calculateTimeBetween, getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
     import { goto } from "$app/navigation";
     import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
   
@@ -16,7 +16,7 @@
       name: string;
       repository: string;
       version: string;
-      registry: string;
+      registry: RegistryType;
       updated_at: string;
       nbr_versions: number;
       bgColor: string;
@@ -25,7 +25,8 @@
     // function to navigate to the card page
     function navigateToCardPage() {
       // navigate to the card page
-      goto(`/opsml/${registry}/card/home?name=${name}&repository=${repository}&version=${version}`);
+      let registry_name = getRegistryTypeLowerCase(registry);
+      goto(`/opsml/${registry_name}/card/home?name=${name}&repository=${repository}&version=${version}`);
     }
   
   

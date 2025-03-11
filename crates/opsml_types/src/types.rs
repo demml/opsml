@@ -309,6 +309,7 @@ pub enum SaveName {
     Sql,
     Code,
     Prompt,
+    ReadMe,
 }
 
 #[pymethods]
@@ -340,6 +341,7 @@ impl SaveName {
             "drift" => Some(SaveName::Drift),
             "code" => Some(SaveName::Code),
             "prompt" => Some(SaveName::Prompt),
+            "README" => Some(SaveName::ReadMe),
             _ => None,
         }
     }
@@ -370,6 +372,7 @@ impl SaveName {
             SaveName::Drift => "drift",
             SaveName::Code => "code",
             SaveName::Prompt => "prompt",
+            SaveName::ReadMe => "README",
         }
     }
 
@@ -411,6 +414,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Drift => Path::new("drift"),
             SaveName::Code => Path::new("code"),
             SaveName::Prompt => Path::new("prompt"),
+            SaveName::ReadMe => Path::new("README"),
         }
     }
 }
@@ -443,6 +447,7 @@ pub enum Suffix {
     Sql,
     Bin,
     Keras,
+    Md,
 }
 
 #[pymethods]
@@ -468,6 +473,7 @@ impl Suffix {
             "sql" => Some(Suffix::Sql),
             "bin" => Some(Suffix::Bin),
             "keras" => Some(Suffix::Keras),
+            "md" => Some(Suffix::Md),
             _ => None,
         }
     }
@@ -492,6 +498,7 @@ impl Suffix {
             Suffix::Sql => "sql",
             Suffix::Bin => "bin",
             Suffix::Keras => "keras",
+            Suffix::Md => "md",
         }
     }
 

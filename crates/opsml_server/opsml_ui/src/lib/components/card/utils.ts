@@ -1,6 +1,6 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import type { RegistryType } from "$lib/utils";
+import { RegistryType } from "$lib/utils";
 import type {
   QueryPageResponse,
   RepositoryResponse,
@@ -8,7 +8,6 @@ import type {
   RegistryPageReturn,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
-import type { CardMetadata } from "./card_interfaces/enum";
 
 export async function getSpaces(
   registry_type: RegistryType
@@ -106,7 +105,7 @@ export async function getCardMetadata(
   repository: string,
   version: string,
   registry_type: RegistryType
-): Promise<CardMetadata> {
+): Promise<any> {
   const params: CardQueryArgs = {
     name: name,
     repository: repository,
