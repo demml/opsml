@@ -17,7 +17,7 @@
     {:then cards}
 
   
-    <div class="flex items-center justify-center border-2 border-black bg-surface-50 pt-20 m500:pt-14 lg:pt-[80px] p-2 gap-2">
+    <div class="flex items-center justify-center border-2 border-black bg-white pt-20 m500:pt-14 lg:pt-[80px] p-2 gap-2">
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <BrainCircuit color="#8059b6" />
       </div>
@@ -25,7 +25,7 @@
         <Table color="#5fd68d" />
       </div>
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-        <h2 class="text-center text-xl font-heading m1300:text-xl m700:text-xl m500:text-xl text-black font-bold">Recent Cards</h2>
+        <h2 class="text-center text-xl font-heading m1300:text-xl m700:text-xl m500:text-xl text-black font-bold">Recent</h2>
       </div>
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <NotebookText color="#f9b25e" />
@@ -39,14 +39,14 @@
       <div class="max-w-full bg-primary-100 border-r-2 border-black pt-4 pb-10">
         <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
           <HomeCard 
-            header="ModelCards" 
+            header="Models" 
             cards={cards.modelcards}
             headerColor="bg-primary-500" 
             headerTextColor="text-white" 
             iconColor="#8059b6"
           />
           <HomeCard 
-            header="DataCards"
+            header="Data"
             cards={cards.datacards}
             headerColor="bg-primary-500"
             headerTextColor="text-white" 
@@ -57,14 +57,14 @@
       <div class="max-w-full bg-secondary-100 pt-4 pb-10">
         <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
           <HomeCard 
-            header="PromptCards" 
+            header="Prompts" 
             cards={cards.modelcards}
             headerColor="bg-secondary-500" 
             headerTextColor="text-black" 
             iconColor="#5fd68d"
           />
           <HomeCard 
-            header="ExperimentCards"
+            header="Experiments"
             cards={cards.datacards}
             headerColor="bg-secondary-500" 
             headerTextColor="text-black"

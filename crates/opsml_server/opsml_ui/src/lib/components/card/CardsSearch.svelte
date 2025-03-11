@@ -107,9 +107,9 @@
           {#each filteredSpaces as space}
 
             {#if activeSpace === space}
-              <button class="chip text-black bg-secondary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black bg-secondary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
             {:else}
-              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
             {/if}
           
           {/each}

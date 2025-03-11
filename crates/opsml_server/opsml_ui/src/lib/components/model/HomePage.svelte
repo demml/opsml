@@ -98,12 +98,10 @@ class Hello:
 </script>
 
 
-<div class="mx-auto w-11/12 min-h-screen pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
+<div class="mx-auto w-11/12 min-h-screen pb-10 flex justify-center">
+  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full pt-4">
 
-   
-
-    <div class="col-span-1 md:col-span-4 gap-1 flex flex-col rounded-base border-black border-2 shadow bg-surface-50 w-full">
+    <div class="col-span-1 md:col-span-4 gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-full">
 
       <div class="grid justify-items-end py-4 px-4">
 
@@ -121,7 +119,7 @@ class Hello:
       </div>
     </div>
 
-    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base border-black border-2 shadow">
+    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base bg-surface-50 border-primary-700 border-3 shadow-primary">
     </div>
   </div>
 </div>
