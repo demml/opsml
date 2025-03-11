@@ -60,9 +60,9 @@
 
 </script>
 
-<nav class="fixed left-0 top-0 z-20 mx-auto flex h-[75px] w-full items-center border-b-4 border-border bg-primary-500 border-b-2 border-black px-5 m500:h-16">
-  <div class="mx-auto flex w-[1300px] max-w-full items-center justify-between">
-
+<nav class="fixed left-0 top-0 z-20 mx-auto flex h-[75px] w-full items-center border-b-4 border-border bg-primary-600 border-b-2 border-black px-5 m500:h-16">
+  <div class="mx-auto flex w-full items-center justify-between px-10 md:px-20">
+    
     <div class="w-[236px] md:hidden" aria-label="hamburger">
       <button 
         type="button" 
@@ -80,7 +80,7 @@
     </div>
 
     <div class="hidden md:block">
-      <div class="flex items-center gap-10">
+      <div class="flex items-center justify-start gap-10">
         <a href="/opsml/home" class="items-center">
           <div class="w-[120px] h-10">
             <img 
