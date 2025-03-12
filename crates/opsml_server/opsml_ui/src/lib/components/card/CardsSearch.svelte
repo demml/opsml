@@ -54,6 +54,7 @@
     registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, 0);
     registryStats = await getRegistryStats(registryType,activeSpace);
     currentPage = 0;
+    totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
   const searchSpaces = () => {	
@@ -67,6 +68,7 @@
   registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 0);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery);
   currentPage = 0;
+  totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
   const changePage = async function (page: number) {
@@ -77,19 +79,19 @@
 
 </script>
 
-<div class="mx-auto w-11/12 min-h-screen pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
+<div class="mx-auto w-11/12 pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
   <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
     <!-- Left column -->
-    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base border-black border-2 shadow">
+    <div class="col-span-1 md:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow h-[400px]">
       <!-- Top Section -->
       <div class="mb-4">
-        <h2 class="font-bold text-black text-xl pb-3">Search Spaces</h2>
+        <h2 class="font-bold text-primary-800 text-xl pb-3">Search Spaces</h2>
         <div class="flex flex-row gap-1 items-center">
           <div class="mr-1">
             <Search color="#5948a3" />
           </div>  
           <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
+            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-1/3"
             type="text"
             bind:value={searchQuery}
             placeholder="Search..."
@@ -99,15 +101,16 @@
       </div>
 
       <!-- Bottom Section -->
-      <div class="space-y-2 flex flex-wrap pt-4 gap-1">
+      <div class="h-1/3">
+      <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
         <!-- Add your tags or other content here -->
         {#if searchQuery && filteredSpaces.length == 0}
-          <p>No repositories found</p>
+          <p class="text-black">No repositories found</p>
         {:else if filteredSpaces.length > 0}
           {#each filteredSpaces as space}
 
             {#if activeSpace === space}
-              <button class="chip text-black bg-secondary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
+              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
             {:else}
               <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
             {/if}
@@ -116,25 +119,26 @@
         {/if}
       </div>
     </div>
+    </div>
 
     <!-- Right column -->
-    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow bg-secondary-100">
+    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow bg-primary-500 min-h-screen">
       <!-- Add your items here -->
-      <div class="flex flex-row items-center gap-2">
+      <div class="flex flex-row items-center gap-2 pb-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-          <Settings color="#5fd68d" />
+          <Settings color="#40328b" />
         </div>
         <h2 class="font-bold text-black text-xl">Artifacts</h2>
       </div>
       <div class="flex flex-row gap-1 items-center">
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
+          <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
         </div>
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
+          <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_versions} versions</span>
         </div>
         <div>
-          <span class="badge text-primary-600 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_repositories} spaces</span>
+          <span class="badge text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_repositories} spaces</span>
         </div>
         <div class="ml-1 md:w-full">
           <input
@@ -146,7 +150,7 @@
           />
         </div>
       </div>
-      <div class="pt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div class="pt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {#each registryPage.summaries as summary}
           <CardPage
             repository={summary.repository}
