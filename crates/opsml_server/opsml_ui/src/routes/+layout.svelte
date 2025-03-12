@@ -25,7 +25,7 @@
   </svelte:head>
 
 {#if show}
-  <div class="layout overflow-auto min-h-screen font-sans" id="page">
+  <div class="layout overflow-auto font-sans" id="page">
     <Navbar/>
     {@render children()}
   </div>

@@ -17,7 +17,7 @@
     {:then cards}
 
   
-    <div class="flex items-center justify-center border-2 border-black bg-white pt-20 m500:pt-14 lg:pt-[80px] p-2 gap-2">
+    <div class="flex items-center justify-center border-2 border-black bg-surface-50 pt-20 m500:pt-14 lg:pt-[80px] p-2 gap-2">
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
         <BrainCircuit color="#8059b6" />
       </div>
@@ -36,20 +36,20 @@
     </div>
   
     <div class="mx-auto w-container grid grid-cols-1 2xl:grid-cols-2 min-h-screen">
-      <div class="max-w-full bg-primary-100 border-r-2 border-black pt-4 pb-10">
+      <div class="max-w-full bg-primary-100 pt-4 pb-10">
         <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-2 md:mx-8 justify-self-center">
           <HomeCard 
             header="Models" 
             cards={cards.modelcards}
             headerColor="bg-primary-500" 
-            headerTextColor="text-white" 
+            headerTextColor="text-black" 
             iconColor="#8059b6"
           />
           <HomeCard 
             header="Data"
             cards={cards.datacards}
             headerColor="bg-primary-500"
-            headerTextColor="text-white" 
+            headerTextColor="text-black" 
             iconColor="#8059b6"
           />
         </div>

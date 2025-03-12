@@ -27,7 +27,7 @@
       />
     </div>
 
-    <div class="col-span-1 md:col-span-2 bg-primary-100 p-4 flex flex-col rounded-base bg-surface-50 border-primary-700 border-3 shadow-primary min-h-1/3 max-h-1/2">
+    <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-h-1/3 max-h-1/2">
       <Metadata metadata={metadata} />
     </div>
   </div>

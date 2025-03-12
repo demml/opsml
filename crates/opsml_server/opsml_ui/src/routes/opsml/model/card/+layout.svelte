@@ -29,9 +29,9 @@
           <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
           <div class="mx-0.5 text-gray-800">/</div>
         </div>
-        <div class="font-bold text-primary-700">{name}</div>
+        <div class="font-bold text-primary-800">{name}</div>
         <div class="mx-0.5 text-gray-800">/</div>
-        <div class="font-semibold text-primary-700">{version}</div>
+        <div class="font-semibold text-primary-800">{version}</div>
       </h1>
 
       <div class="flex flex-row gap-x-8 text-black text-lg pl-4 h-10 mb-2">

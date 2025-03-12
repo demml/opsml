@@ -100,7 +100,7 @@ class Hello:
   <div class="grid justify-items-end py-4 px-4">
     <div >
       <button 
-        class="mb-2 bg-primary-500 text-white rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
+        class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
         onclick={navigateToReadMe}
       >
         edit ReadMe
