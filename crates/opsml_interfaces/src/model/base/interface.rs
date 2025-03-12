@@ -148,6 +148,9 @@ pub struct ModelInterfaceMetadata {
     pub interface_type: ModelInterfaceType,
 
     pub model_specific_metadata: Value,
+
+    #[pyo3(get)]
+    pub opsml_version: String,
 }
 
 #[pymethods]
@@ -175,6 +178,7 @@ impl ModelInterfaceMetadata {
             save_metadata,
             extra_metadata,
             model_specific_metadata: Value::Null,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
         }
     }
     pub fn __str__(&self) -> String {
