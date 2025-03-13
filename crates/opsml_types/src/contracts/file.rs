@@ -96,6 +96,7 @@ pub struct StorageSettings {
 #[derive(Serialize, Deserialize)]
 pub struct UploadResponse {
     pub uploaded: bool,
+    pub message: String,
 }
 
 #[derive(Serialize, Deserialize)]

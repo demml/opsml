@@ -1,4 +1,5 @@
 use opsml_sql::schemas::schema::{CardSummary, QueryStats};
+use opsml_types::RegistryType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,4 +21,12 @@ pub struct Card {
 pub struct ReadeMe {
     pub readme: String,
     pub exists: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateReadeMe {
+    pub repository: String,
+    pub name: String,
+    pub registry_type: RegistryType,
+    pub readme: String,
 }

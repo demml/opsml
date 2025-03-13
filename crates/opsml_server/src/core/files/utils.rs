@@ -1,15 +1,21 @@
 use anyhow::Result;
-use opsml_crypt::key::{derive_encryption_key, encrypted_key, generate_salt};
+use opsml_crypt::{
+    encrypt_directory,
+    key::{derive_encryption_key, encrypted_key, generate_salt},
+};
 use opsml_error::ApiError;
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 
-use opsml_types::contracts::ArtifactKey;
+use opsml_storage::StorageClientEnum;
+use opsml_types::contracts::{ArtifactKey, UploadResponse};
 use opsml_types::RegistryType;
 use opsml_utils::uid_to_byte_key;
 
+use std::path::PathBuf;
 /// Route for debugging information
 use std::sync::Arc;
+use tempfile::TempDir;
 use tracing::debug;
 use tracing::{error, instrument};
 
@@ -50,4 +56,53 @@ pub async fn create_artifact_key(
     });
 
     Ok(artifact_key)
+}
+
+pub async fn create_and_store_encrypted_file(
+    storage_client: Arc<StorageClientEnum>,
+    content: &str,
+    lpath: &str,
+    rpath: &str,
+    key: ArtifactKey,
+) -> Result<UploadResponse, ApiError> {
+    let encryption_key = key.get_decrypt_key().map_err(|e| {
+        error!("Failed to get decryption key: {}", e);
+        ApiError::Error("Failed to get decryption key".to_string())
+    })?;
+
+    // Create temp directory
+    let tmp_dir = TempDir::new().map_err(|e| {
+        error!("Failed to create temp dir: {}", e);
+        ApiError::Error("Failed to create temp dir".to_string())
+    })?;
+
+    // Create local path
+    let local_path = tmp_dir.path().join(lpath);
+
+    // Write content to file
+    std::fs::write(&local_path, content).map_err(|e| {
+        error!("Failed to write content to file: {}", e);
+        ApiError::Error("Failed to write content to file".to_string())
+    })?;
+
+    // Encrypt directory
+    encrypt_directory(&local_path, &encryption_key).map_err(|e| {
+        error!("Failed to encrypt directory: {}", e);
+        ApiError::Error("Failed to encrypt directory".to_string())
+    })?;
+
+    let remote_path = PathBuf::from(rpath);
+    // Store file
+    storage_client
+        .put(&local_path, &remote_path, false)
+        .await
+        .map_err(|e| {
+            error!("Failed to store file: {}", e);
+            ApiError::Error("Failed to store file".to_string())
+        })?;
+
+    Ok(UploadResponse {
+        uploaded: true,
+        message: "File uploaded successfully".to_string(),
+    })
 }
