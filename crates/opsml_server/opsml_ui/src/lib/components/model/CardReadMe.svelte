@@ -8,54 +8,36 @@
   import { goto } from '$app/navigation';
   import { getRegistryTypeLowerCase, type RegistryType } from '$lib/utils';
   import type { ReadMe } from '../readme/util';
+  import { convertMarkdown } from '../readme/util';
 
   let html = $state('');
 
   let {
       name,
       repository,
-      registry,
+      registryPath,
       version,
       readMe,
     } = $props<{
       name: string;
       repository: string;
+      registryPath: string;
       version: string;
-      registry: RegistryType;
       readMe: ReadMe;
     }>();
  
 
-  function convertMarkdown(markdown: string) {
-      // @ts-ignore
-      html = marked.parse(markdown);
-  }
-
+  
   function navigateToReadMe() {
-    console.log('navigate to readme');
-      // navigate to the card page
-      let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/readme?name=${name}&repository=${repository}&version=${version}`);
+      goto(`/opsml/${registryPath}/card/readme?name=${name}&repository=${repository}&version=${version}`);
     }
 
-  // Configure marked with markedHighlight
-  const marked = new Marked(
-      markedHighlight({
-          langPrefix: 'hljs language-',
-          highlight(code, lang) {
-              const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-              return hljs.highlight(code, { language }).value;
-          }
-      })
-  );
 
- 
 
-  onMount(() => {
-
+  onMount(async () => {
 
     if (readMe.exists) {
-      convertMarkdown(readMe.content);
+      html = await convertMarkdown(readMe.readme);
     }
     
   });

@@ -5,6 +5,7 @@
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import lightningBolt from "$lib/images/lightningbolt.webp";
     import { onMount } from 'svelte';
+    import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
 
 
     let { children } = $props();
@@ -27,7 +28,9 @@
 {#if show}
   <div class="layout overflow-auto font-sans" id="page">
     <Navbar/>
-    {@render children()}
+      <ToastProvider messageBase="text-base" placement="top-end" stateError="bg-error-500 justify-center text-black border-2 border-black" stateSuccess="bg-secondary-500 text-black border-2 border-black">
+        {@render children()}
+      </ToastProvider>
   </div>
 {:else}
   <div class="flex items-center justify-center min-h-screen">

@@ -8,15 +8,21 @@
   import CardReadMe from '$lib/components/model/CardReadMe.svelte';
   import Metadata from '$lib/components/model/Metadata.svelte';
   import { getRegistryTypeLowerCase } from '$lib/utils';
+  import { Modal } from '@skeletonlabs/skeleton-svelte';
+
+  let openState = $state(false);
+
+  function modalClose() {
+    openState = false;
+  }
 
   let { data }: PageProps = $props();
   let metadata: ModelCard = data.metadata;
 
   function navigateToReadMe() {
     console.log('navigate to readme');
-      // navigate to the card page
-      let registry_name = getRegistryTypeLowerCase(data.registry);
-      goto(`/opsml/${registry_name}/card/readme?name=${metadata.name}&repository=${metadata.repository}&version=${metadata.version}`);
+      // navigate to readme
+      goto(`/opsml/${data.registryPath}/card/readme?name=${metadata.name}&repository=${metadata.repository}&version=${metadata.version}`);
     }
 
 </script>
@@ -30,11 +36,13 @@
         <CardReadMe
           name={metadata.name}
           repository={metadata.repository}
-          registry={data.registry}
+          registryPath={data.registryPath}
           version={metadata.version}
           readMe={data.readme}
         />
       </div>
+
+     
     {:else}
       <div class="col-span-1 md:col-span-4 mx-auto gap-1 flex flex-col rounded-base border-black border-3 shadow bg-primary-100 w-1/2 h-1/4">
         <div class="flex flex-col items-center justify-center h-full gap-4">

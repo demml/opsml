@@ -3,7 +3,7 @@ use crate::core::cards::schema::{
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
 use crate::core::files::utils::{
-    create_and_store_encrypted_file, create_artifact_key, download_artifact,
+    create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
 };
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -27,7 +27,6 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
-use uuid::Uuid;
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -127,7 +126,11 @@ pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<Vec<Card>>, (StatusCode, Json<serde_json::Value>)> {
-    debug!("Listing cards for registry: {:?}", &params.registry_type);
+    debug!(
+        "Listing cards for registry: {:?} with params: {:?}",
+        &params.registry_type, &params
+    );
+
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let cards = state
@@ -697,19 +700,16 @@ pub async fn create_readme(
         Suffix::Md
     );
 
-    let uid = Uuid::new_v4().to_string();
-    // (1) ------- Create the artifact key for card artifact encryption
-
-    let key = create_artifact_key(
+    // check if artifact key exists before creating a new key
+    let key = get_artifact_key(
         state.sql_client.clone(),
         state.storage_settings.encryption_key.clone(),
-        &uid,
         &req.registry_type.to_string(),
         &readme_path,
     )
     .await
     .map_err(|e| {
-        error!("Failed to create artifact key: {}", e);
+        error!("Failed to get artifact key: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({})),

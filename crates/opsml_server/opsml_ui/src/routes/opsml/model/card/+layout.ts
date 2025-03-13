@@ -1,7 +1,7 @@
 export const prerender = true;
 export const ssr = false;
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { RegistryType } from "$lib/utils";
+import { getRegistryTypeLowerCase, RegistryType } from "$lib/utils";
 import { getCardMetadata, getUID } from "$lib/components/card/utils";
 
 // @ts-ignore
@@ -15,11 +15,17 @@ export const load: LayoutServerLoad = async ({ url }) => {
 
   let registry = RegistryType.Model;
   let uid = await getUID(url, registry);
+
+  console.log("uid", uid);
+
   let metadata = (await getCardMetadata(uid, registry)) as ModelCard;
+
   let readme = await getCardReadMe(
     metadata.name,
     metadata.repository,
     registry
   );
-  return { metadata, registry, readme };
+
+  let registryPath = getRegistryTypeLowerCase(registry);
+  return { metadata, registry, readme, registryPath };
 };

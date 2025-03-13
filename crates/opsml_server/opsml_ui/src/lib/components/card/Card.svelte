@@ -10,6 +10,7 @@
     version,
     created_at,
     registry,
+    uid,
     iconColor,
   } = $props<{
     name: string;
@@ -17,13 +18,14 @@
     version: string;
     created_at: string;
     registry: string;
+    uid: string;
     cardColor: string;
   }>();
 
   // function to navigate to the card page
   function navigateToCardPage() {
     // navigate to the card page
-    goto(`/opsml/${registry}/card/home?name=${name}&repository=${repository}&version=${version}`);
+    goto(`/opsml/${registry}/card/home?uid=${uid}`);
   }
 
 

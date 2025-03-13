@@ -14,8 +14,9 @@
       <ReadMe
         name={data.metadata.name}
         repository={data.metadata.repository}
-        version={data.metadata.version}
+        uid={data.metadata.uid}
         registry={data.registry}
+        registryPath={data.registryPath}
         readme_content={data.content}
       />
     </div>
