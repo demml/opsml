@@ -632,7 +632,7 @@ pub async fn get_readme(
     let name = params.name.as_ref().unwrap();
     let repository = params.repository.as_ref().unwrap();
 
-    let storage_key = format!(
+    let readme_path = format!(
         "{}/{}/{}/{}.{}",
         table.to_string(),
         repository,
@@ -643,7 +643,7 @@ pub async fn get_readme(
 
     let key = state
         .sql_client
-        .get_artifact_key_from_path(&storage_key, &params.registry_type.to_string())
+        .get_artifact_key_from_path(&readme_path, &params.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
@@ -653,9 +653,18 @@ pub async fn get_readme(
             )
         })?;
 
-    let readme_path = format!("{}/{}/{}/README.md", table.to_string(), repository, name);
+    // if key is none, return empty readme
+    if key.is_none() {
+        return Ok(Json(ReadeMe {
+            readme: "".to_string(),
+            exists: false,
+        }));
+    }
+
+    let key = key.unwrap();
     let rpath = PathBuf::from(&readme_path);
 
+    // still need to check if exists
     let files = state.storage_client.find(&rpath).await.map_err(|e| {
         error!("Failed to get README: {}", e);
         (
