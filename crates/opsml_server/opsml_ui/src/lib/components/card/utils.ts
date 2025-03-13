@@ -117,7 +117,9 @@ export async function getCardUid(
 
   const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
   const data = (await response.json()) as Card[];
-  return data[0].uid;
+
+  // @ts-ignore
+  return data[0].data.uid;
 }
 
 export async function getUID(

@@ -94,7 +94,7 @@
         <div class="flex items-center gap-10 m1100:gap-8">
           {#each names as name}
             {@const path = '/opsml/' + name.replace(/s$/, '').toLowerCase()}
-              <a class="text-xl" href={path} class:active={page.url.pathname.includes(path)}>
+              <a class="text-xl" href={path} class:active={page.url.pathname.includes(path)} data-sveltekit-preload-data="hover">
                 {name}
               </a>
           {/each}

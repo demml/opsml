@@ -7,7 +7,7 @@ import type { PageLoad } from "./$types";
 export const load: PageLoad = async ({ parent, url }) => {
   await opsmlClient.validateAuth(true);
 
-  const { metadata, registry, readme } = await parent();
+  const { metadata, registry, readme, registryPath } = await parent();
 
-  return { metadata, registry, readme };
+  return { metadata, registry, readme, registryPath };
 };

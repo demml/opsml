@@ -6,21 +6,45 @@
   import { languages } from "@codemirror/language-data";
   import { Compartment } from '@codemirror/state';
   import { editorTheme } from './editor-theme';
-  import { onDestroy, onMount } from 'svelte';
-  import type { RegistryType } from "$lib/utils";
+  import {  onMount } from 'svelte';
+  import { type RegistryType } from "$lib/utils";
   import { convertMarkdown, createReadMe } from "./util";
+  import { goto } from "$app/navigation";
+  import { getContext } from 'svelte';
+  import { type ToastContext } from '@skeletonlabs/skeleton-svelte';
+
+  let error = $state('Failed to save ReadMe');
+  export const toast: ToastContext = getContext('toast');
+
+  function triggerError() {
+    toast.create({
+      title: 'Failed',
+      description: error,
+      type: 'error'
+    });
+  }
+
+  function triggerSuccess() {
+    toast.create({
+      title: 'Success',
+      description: 'ReadMe has been saved!',
+      type: 'success'
+    });
+  }
 
   let {
       name,
       repository,
-      version,
+      uid,
       registry,
+      registryPath,
       readme_content,
     } = $props<{
       name: string;
       repository: string;
-      version: string;
+      uid: string;
       registry: RegistryType;
+      registryPath: string;
       readme_content: string;
     }>();
 
@@ -37,18 +61,17 @@
 
   async function saveReadme() {
 
-    let body = {
-      name: name,
-      repository: repository,
-      registry_type: registry,
-      content: content
-    };
-    
 
-      // TODO: Implement save functionality
-      console.log('Saving readme:', body);
+    let response = await createReadMe(name, repository, registry, content);
 
-      let response = await createReadMe(name, repository, registry, content);
+    if (!response.uploaded) {
+      error = response.message;
+      triggerError();
+    } else {
+      triggerSuccess();
+    }
+
+    goto(`/opsml/${registryPath}/card/home?uid=${uid}`);
   }
 
 async function toggle(toggle: string) {

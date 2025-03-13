@@ -18,6 +18,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::debug;
 use tracing::{error, instrument};
+use uuid::Uuid;
 
 #[instrument(skip_all)]
 pub async fn create_artifact_key(
@@ -164,4 +165,32 @@ pub async fn download_artifact(
     })?;
 
     Ok(DownloadResponse { exists: true })
+}
+
+pub async fn get_artifact_key(
+    sql_client: Arc<SqlClientEnum>,
+    encryption_key: Vec<u8>,
+    registry_type: &str,
+    storage_key: &str,
+) -> Result<ArtifactKey, ApiError> {
+    match sql_client
+        .get_artifact_key_from_path(storage_key, registry_type)
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key: {}", e);
+            ApiError::Error("Failed to get artifact key".to_string())
+        })? {
+        Some(key) => Ok(key),
+        None => {
+            let uid = Uuid::new_v4().to_string();
+            create_artifact_key(
+                sql_client.clone(),
+                encryption_key,
+                &uid,
+                registry_type,
+                storage_key,
+            )
+            .await
+        }
+    }
 }

@@ -3,6 +3,8 @@
   import { onMount } from "svelte";
   import type { DataProcessor, ModelCard, ModelInterfaceSaveMetadata } from "../card/card_interfaces/modelcard";
   import { Info, Diamond, Tags, CheckCheck, Database } from 'lucide-svelte';
+  import CodeModal from "../card/CodeModal.svelte";
+  import { use } from "marked";
 
 let {
     metadata,
@@ -14,10 +16,22 @@ let {
 
   let data_processor_keys: string[] = $state([])
   let data_processor_values: DataProcessor[] = $state([])
+  let useCardContent = $state('');
 
   onMount(() => {
     data_processor_keys = Object.keys(savedata.data_processor_map);
     data_processor_values = Object.values(savedata.data_processor_map);
+
+    useCardContent = `\`\`\`python
+from opsml import CardRegistry
+
+# load the card
+registry = CardRegistry('model')
+modelcard = registry.load_card(uid="${metadata.uid}")
+
+# load the model
+modelcard.load()
+\`\`\``;
   })
 
 </script>
@@ -33,7 +47,8 @@ let {
     </div>
 
     <div>
-        <button type="button" class="btn btn-md bg-primary-500 text-black justify-end mb-2 text-base shadow shadow-hover border-black border-2" >Use this card</button>
+        <!--<button type="button" class="btn btn-md bg-primary-500 text-black justify-end mb-2 text-base shadow shadow-hover border-black border-2" >Use this card</button>-->
+        <CodeModal content={useCardContent} />
     </div>
   </div>
 

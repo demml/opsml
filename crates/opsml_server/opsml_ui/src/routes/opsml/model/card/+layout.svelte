@@ -12,7 +12,6 @@
   let name = data.metadata.name;
   let version = data.metadata.version;
   let registry = $state('');
-  let group = $state('card');
 
 
   onMount(() => {
