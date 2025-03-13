@@ -677,22 +677,22 @@ pub async fn get_readme(
 pub async fn create_readme(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Query(params): Query<CreateReadeMe>,
+    Json(req): Json<CreateReadeMe>,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
-    if !perms.has_write_permission(&params.repository) {
+    if !perms.has_write_permission(&req.repository) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
         ));
     }
 
-    let table = CardTable::from_registry_type(&params.registry_type);
+    let table = CardTable::from_registry_type(&req.registry_type);
 
     let readme_path = format!(
         "{}/{}/{}/{}.{}",
         table.to_string(),
-        &params.repository,
-        &params.name,
+        &req.repository,
+        &req.name,
         SaveName::ReadMe,
         Suffix::Md
     );
@@ -704,7 +704,7 @@ pub async fn create_readme(
         state.sql_client.clone(),
         state.storage_settings.encryption_key.clone(),
         &uid,
-        &params.registry_type.to_string(),
+        &req.registry_type.to_string(),
         &readme_path,
     )
     .await
@@ -719,7 +719,7 @@ pub async fn create_readme(
     let lpath = format!("{}.{}", SaveName::ReadMe, Suffix::Md);
     let result = create_and_store_encrypted_file(
         state.storage_client.clone(),
-        &params.readme,
+        &req.readme,
         &lpath,
         &readme_path,
         key,
