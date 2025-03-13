@@ -1,6 +1,8 @@
-use crate::core::cards::schema::{QueryPageResponse, RegistryStatsResponse};
+use crate::core::cards::schema::{
+    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+};
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
-use crate::core::files::utils::create_artifact_key;
+use crate::core::files::utils::{create_and_store_encrypted_file, create_artifact_key};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -24,8 +26,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
-
-use super::schema::ReadeMe;
+use uuid::Uuid;
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -737,12 +738,75 @@ pub async fn get_readme(
     }
 }
 
+#[instrument(skip_all)]
+pub async fn create_readme(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<CreateReadeMe>,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_write_permission(&params.repository) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let table = CardTable::from_registry_type(&params.registry_type);
+
+    let readme_path = format!(
+        "{}/{}/{}/{}.{}",
+        table.to_string(),
+        &params.repository,
+        &params.name,
+        SaveName::ReadMe,
+        Suffix::Md
+    );
+
+    let uid = Uuid::new_v4().to_string();
+    // (1) ------- Create the artifact key for card artifact encryption
+
+    let key = create_artifact_key(
+        state.sql_client.clone(),
+        state.storage_settings.encryption_key.clone(),
+        &uid,
+        &params.registry_type.to_string(),
+        &readme_path,
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to create artifact key: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let lpath = format!("{}.{}", SaveName::ReadMe, Suffix::Md);
+    let result = create_and_store_encrypted_file(
+        state.storage_client.clone(),
+        &params.readme,
+        &lpath,
+        &readme_path,
+        key,
+    )
+    .await;
+
+    match result {
+        Ok(uploaded) => Ok(Json(uploaded)),
+        Err(e) => Ok(Json(UploadResponse {
+            uploaded: false,
+            message: format!("Failed to upload readme: {}", e),
+        })),
+    }
+}
+
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
             .route(&format!("{}/card", prefix), get(check_card_uid))
             .route(&format!("{}/card/metadata", prefix), get(get_card))
             .route(&format!("{}/card/readme", prefix), get(get_readme))
+            .route(&format!("{}/card/readme", prefix), post(create_readme))
             .route(
                 &format!("{}/card/repositories", prefix),
                 get(get_card_repositories),

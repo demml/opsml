@@ -250,7 +250,10 @@ pub async fn upload_multipart(
         file.write_all(&data).await.unwrap();
     }
 
-    Ok(Json(UploadResponse { uploaded: true }))
+    Ok(Json(UploadResponse {
+        uploaded: true,
+        message: "".to_string(),
+    }))
 }
 
 pub async fn list_files(
