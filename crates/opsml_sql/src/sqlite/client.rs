@@ -1067,22 +1067,25 @@ impl SqlClient for SqliteClient {
         &self,
         storage_path: &str,
         registry_type: &str,
-    ) -> Result<ArtifactKey, SqlError> {
+    ) -> Result<Option<ArtifactKey>, SqlError> {
         let query = SqliteQueryHelper::get_artifact_key_from_storage_path_query();
 
-        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+        let key: Option<(String, String, Vec<u8>, String)> = sqlx::query_as(&query)
             .bind(storage_path)
             .bind(registry_type)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-        Ok(ArtifactKey {
-            uid: key.0,
-            registry_type: RegistryType::from_string(&key.1)?,
-            encrypted_key: key.2,
-            storage_key: key.3,
-        })
+        return match key {
+            Some(k) => Ok(Some(ArtifactKey {
+                uid: k.0,
+                registry_type: RegistryType::from_string(&k.1)?,
+                encrypted_key: k.2,
+                storage_key: k.3,
+            })),
+            None => Ok(None),
+        };
     }
 
     async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {

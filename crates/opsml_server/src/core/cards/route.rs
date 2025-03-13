@@ -632,9 +632,18 @@ pub async fn get_readme(
     let name = params.name.as_ref().unwrap();
     let repository = params.repository.as_ref().unwrap();
 
+    let storage_key = format!(
+        "{}/{}/{}/{}.{}",
+        table.to_string(),
+        repository,
+        name,
+        SaveName::ReadMe,
+        Suffix::Md
+    );
+
     let key = state
         .sql_client
-        .get_card_key_for_loading(&table, &params)
+        .get_artifact_key_from_path(&storage_key, &params.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);

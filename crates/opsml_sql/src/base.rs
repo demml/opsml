@@ -353,5 +353,5 @@ pub trait SqlClient: Sized {
         &self,
         storage_path: &str,
         registry_type: &str,
-    ) -> Result<ArtifactKey, SqlError>;
+    ) -> Result<Option<ArtifactKey>, SqlError>;
 }
