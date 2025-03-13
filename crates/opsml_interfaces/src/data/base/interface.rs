@@ -47,6 +47,9 @@ pub struct DataInterfaceMetadata {
     #[pyo3(get)]
     pub data_type: DataType,
 
+    #[pyo3(get)]
+    pub opsml_version: String,
+
     pub data_specific_metadata: Value,
 }
 
@@ -75,6 +78,7 @@ impl DataInterfaceMetadata {
             data_splits,
             data_type,
             data_specific_metadata: Value::Null,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
         }
     }
     pub fn __str__(&self) -> String {
