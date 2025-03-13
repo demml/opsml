@@ -12,8 +12,9 @@
   <div class="grid grid-cols-1 gap-4 w-full pt-4">
     <div class="col-span-1 md:col-span-4 gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-full">
       <ReadMe
-        name={data.name}
-        repository={data.repository}
+        name={data.metadata.name}
+        repository={data.metadata.repository}
+        version={data.metadata.version}
         registry={data.registry}
         readme_content={data.content}
       />
