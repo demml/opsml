@@ -23,7 +23,7 @@
         repository={metadata.repository}
         registry={data.registry}
         version={metadata.version}
-        content={data.content}
+        readMe={data.readme}
       />
     </div>
 

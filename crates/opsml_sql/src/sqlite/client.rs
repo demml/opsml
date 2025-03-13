@@ -1800,6 +1800,12 @@ mod tests {
         assert_eq!(key.uid, data_card.uid);
         assert_eq!(key.encrypted_key, encrypted_key);
 
+        let _ = client
+            .get_artifact_key_from_path(&key.storage_key, &RegistryType::Data.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+
         // delete
         client
             .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())

@@ -8,6 +8,7 @@ import type {
   RegistryPageReturn,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
+import { type Card } from "$lib/components/home/types";
 
 export async function getSpaces(
   registry_type: RegistryType
@@ -100,16 +101,51 @@ export function getBgColor(): string {
   return classes[randomIndex];
 }
 
-export async function getCardMetadata(
-  name: string,
-  repository: string,
-  version: string,
-  registry_type: RegistryType
-): Promise<any> {
+export async function getCardUid(
+  registry_type: RegistryType,
+  name?: string,
+  repository?: string,
+  version?: string
+): Promise<string> {
   const params: CardQueryArgs = {
     name: name,
     repository: repository,
     version: version,
+    registry_type: registry_type,
+    limit: 1,
+  };
+
+  const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
+  const data = (await response.json()) as Card[];
+  return data[0].uid;
+}
+
+export async function getUID(
+  url: URL,
+  registry: RegistryType
+): Promise<string> {
+  const name = (url as URL).searchParams.get("name") as string | undefined;
+  const repository = (url as URL).searchParams.get("repository") as
+    | string
+    | undefined;
+  const version = (url as URL).searchParams.get("version") as
+    | string
+    | undefined;
+  const uid = (url as URL).searchParams.get("uid") as string | undefined;
+
+  // If uid is provided, return it
+  if (uid) {
+    return uid;
+  }
+
+  return await getCardUid(registry, name, repository, version);
+}
+export async function getCardMetadata(
+  uid: string,
+  registry_type: RegistryType
+): Promise<any> {
+  const params: CardQueryArgs = {
+    uid: uid,
     registry_type: registry_type,
   };
 

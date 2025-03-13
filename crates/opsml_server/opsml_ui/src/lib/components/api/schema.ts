@@ -6,6 +6,7 @@ export interface CardQueryArgs {
   repository?: string;
   version?: string;
   registry_type: RegistryType;
+  limit?: number;
 }
 
 export interface ReadMeArgs {
