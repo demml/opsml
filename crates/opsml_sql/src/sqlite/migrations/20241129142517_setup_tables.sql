@@ -170,4 +170,3 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     auditcard_uid TEXT,
     username TEXT NOT NULL DEFAULT 'guest'
 );
-

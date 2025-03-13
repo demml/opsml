@@ -631,6 +631,13 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
+    pub fn get_artifact_key_from_storage_path_query() -> String {
+        format!(
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = ? AND registry_type = ?",
+            CardTable::ArtifactKey
+        )
+    }
+
     pub fn get_operation_insert_query() -> String {
         format!(
             "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
