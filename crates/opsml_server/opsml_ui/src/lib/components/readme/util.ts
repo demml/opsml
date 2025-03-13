@@ -16,13 +16,11 @@ export type ReadMe = {
 export async function getCardReadMe(
   name: string,
   repository: string,
-  version: string,
   registry_type: RegistryType
 ): Promise<ReadMe> {
   const params: CardQueryArgs = {
     name: name,
     repository: repository,
-    version: version,
     registry_type: registry_type,
   };
 

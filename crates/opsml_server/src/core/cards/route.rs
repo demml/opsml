@@ -50,7 +50,7 @@ pub async fn check_card_uid(
     Ok(Json(UidResponse { exists }))
 }
 
-/// Get card respositories
+/// Get card repositories
 pub async fn get_card_repositories(
     State(state): State<Arc<AppState>>,
     params: Query<RepositoryRequest>,
@@ -624,7 +624,7 @@ pub async fn get_readme(
     let table = CardTable::from_registry_type(&params.registry_type);
 
     // name and repository are required
-    if params.name.is_none() || params.repository.is_none() || params.version.is_none() {
+    if params.name.is_none() || params.repository.is_none() {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({ "error": "Name and repository are required" })),
