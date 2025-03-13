@@ -2,7 +2,9 @@ use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
-use crate::core::files::utils::{create_and_store_encrypted_file, create_artifact_key};
+use crate::core::files::utils::{
+    create_and_store_encrypted_file, create_artifact_key, download_artifact,
+};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
@@ -22,7 +24,6 @@ use semver::Version;
 use serde_json::json;
 use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
@@ -633,7 +634,20 @@ pub async fn get_readme(
     let name = params.name.as_ref().unwrap();
     let repository = params.repository.as_ref().unwrap();
 
-    let readme_path = format!(
+    let tmp_dir = tempdir().map_err(|e| {
+        error!("Failed to create temp dir: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let lpath = tmp_dir
+        .path()
+        .join(SaveName::ReadMe)
+        .with_extension(Suffix::Md);
+
+    let rpath = format!(
         "{}/{}/{}/{}.{}",
         table.to_string(),
         repository,
@@ -642,100 +656,21 @@ pub async fn get_readme(
         Suffix::Md
     );
 
-    let key = state
-        .sql_client
-        .get_artifact_key_from_path(&readme_path, &params.registry_type.to_string())
-        .await
-        .map_err(|e| {
-            error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
+    let download_result = download_artifact(
+        state.storage_client.clone(),
+        state.sql_client.clone(),
+        &lpath,
+        &rpath,
+        &params.registry_type.to_string(),
+    )
+    .await;
 
-    // if key is none, return empty readme
-    if key.is_none() {
-        return Ok(Json(ReadeMe {
-            readme: "".to_string(),
-            exists: false,
-        }));
-    }
+    let content = std::fs::read_to_string(&lpath).unwrap_or_default();
 
-    let key = key.unwrap();
-    let rpath = PathBuf::from(&readme_path);
-
-    // still need to check if exists
-    let files = state.storage_client.find(&rpath).await.map_err(|e| {
-        error!("Failed to get README: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
-    })?;
-
-    // if file exists, get it
-    if files.len() == 1 {
-        let rpath = PathBuf::from(files[0].clone());
-        let tmp_dir = tempdir().map_err(|e| {
-            error!("Failed to create temp dir: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-        let lpath = tmp_dir
-            .path()
-            .join(SaveName::ReadMe)
-            .with_extension(Suffix::Md);
-
-        state
-            .storage_client
-            .get(&lpath, &rpath, false)
-            .await
-            .map_err(|e| {
-                error!("Failed to get README: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
-            })?;
-
-        let decryption_key = key.get_decrypt_key().map_err(|e| {
-            error!("Failed to get decryption key: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-        decrypt_directory(&lpath, &decryption_key).map_err(|e| {
-            error!("Failed to decrypt directory: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-        let readme = std::fs::read_to_string(lpath).map_err(|e| {
-            error!("Failed to read README from file: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-        Ok(Json(ReadeMe {
-            readme,
-            exists: true,
-        }))
-    } else {
-        Ok(Json(ReadeMe {
-            readme: "".to_string(),
-            exists: false,
-        }))
-    }
+    Ok(Json(ReadeMe {
+        readme: content,
+        exists: download_result.is_ok(),
+    }))
 }
 
 #[instrument(skip_all)]

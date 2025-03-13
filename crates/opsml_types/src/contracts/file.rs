@@ -100,6 +100,11 @@ pub struct UploadResponse {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct DownloadResponse {
+    pub exists: bool,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct PermissionDenied {
     pub error: String,
 }
