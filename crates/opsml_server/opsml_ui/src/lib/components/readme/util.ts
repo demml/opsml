@@ -44,22 +44,23 @@ export async function convertMarkdown(markdown: string): Promise<string> {
   return await marked.parse(markdown);
 }
 
-/**
- * Update the readme for a card
- * @param readme The new readme
- */
-export async function putReadMe(
+export type UploadResponse = {
+  uploaded: boolean;
+  message: string;
+};
+
+export async function createReadMe(
   name: string,
   repository: string,
   registry_type: RegistryType,
   content: string
-) {
+): Promise<UploadResponse> {
   let args: ReadMeArgs = {
-    name: name,
     repository: repository,
+    name: name,
     registry_type: registry_type,
-    content: content,
+    readme: content,
   };
 
-  await opsmlClient.put(RoutePaths.README, args);
+  return (await opsmlClient.post(RoutePaths.README, args)).json();
 }

@@ -8,16 +8,18 @@
   import { editorTheme } from './editor-theme';
   import { onDestroy, onMount } from 'svelte';
   import type { RegistryType } from "$lib/utils";
-  import { convertMarkdown } from "./util";
+  import { convertMarkdown, createReadMe } from "./util";
 
   let {
       name,
       repository,
+      version,
       registry,
       readme_content,
     } = $props<{
       name: string;
       repository: string;
+      version: string;
       registry: RegistryType;
       readme_content: string;
     }>();
@@ -45,6 +47,8 @@
 
       // TODO: Implement save functionality
       console.log('Saving readme:', body);
+
+      let response = await createReadMe(name, repository, registry, content);
   }
 
 async function toggle(toggle: string) {

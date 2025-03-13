@@ -13,5 +13,5 @@ export interface ReadMeArgs {
   name: string;
   repository: string;
   registry_type: RegistryType;
-  content: string;
+  readme: string;
 }

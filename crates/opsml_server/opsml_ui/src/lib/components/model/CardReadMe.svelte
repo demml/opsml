@@ -63,36 +63,20 @@
 
 </script>
 
-{#if readMe.exists}
-  <div class="grid justify-items-end py-4 px-4">
-    <div>
-      <button 
-        class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
-        onclick={navigateToReadMe}
-      >
-        edit ReadMe
-      </button>
-    </div>
-  </div>
-  <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full">
-    {@html html}
-  </div>
-{:else}
-  <div class="grid justify-items-end py-4 px-4">
-    <div>
-      <button 
-        class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
-        onclick={navigateToReadMe}
-      >
-        add ReadMe
-      </button>
-    </div>
-  </div>
-  <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full">
-    <p class="text-center text-lg text-gray-500">No ReadMe found</p>
-  </div>
-{/if}
 
+<div class="grid justify-items-end py-4 px-4">
+  <div>
+    <button 
+      class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
+      onclick={navigateToReadMe}
+    >
+      edit ReadMe
+    </button>
+  </div>
+</div>
+<div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full">
+  {@html html}
+</div>
 <style>
 
 

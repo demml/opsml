@@ -2,19 +2,13 @@ import { getCardReadMe, type ReadMe } from "$lib/components/readme/util";
 import { RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 
-export const load: PageLoad = async ({ url }) => {
+export const load: PageLoad = async ({ parent, url }) => {
   const name = (url as URL).searchParams.get("name") as string;
   const repository = (url as URL).searchParams.get("repository") as string;
-  const version = (url as URL).searchParams.get("version") as string;
+
+  const { metadata, registry, readme } = await parent();
 
   let content: string = "";
-
-  const readme = (await getCardReadMe(
-    name,
-    repository,
-    version,
-    RegistryType.Model
-  )) as ReadMe;
 
   if (readme.exists) {
     content = readme.readme;
@@ -51,16 +45,12 @@ Provide a brief description of the bias, risk, and limitations of the model.
 ## Code Examples
 
 <!--- This section is used to provide code examples for the model -->
-
     `;
   }
 
   return {
-    status,
-    name,
-    repository,
-    registry: RegistryType.Model,
-    version,
+    metadata,
+    registry,
     content,
   };
 };
