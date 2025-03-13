@@ -960,6 +960,28 @@ impl SqlClient for PostgresClient {
         })
     }
 
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = PostgresQueryHelper::get_artifact_key_from_storage_path_query();
+
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(storage_path)
+            .bind(registry_type)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            registry_type: RegistryType::from_string(&key.1)?,
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
+    }
+
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         let query = PostgresQueryHelper::get_artifact_key_update_query();
         sqlx::query(&query)

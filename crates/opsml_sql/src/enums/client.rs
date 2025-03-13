@@ -340,6 +340,30 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+        }
+    }
+
     async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.update_artifact_key(key).await,

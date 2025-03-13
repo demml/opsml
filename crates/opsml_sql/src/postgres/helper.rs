@@ -697,6 +697,13 @@ impl PostgresQueryHelper {
         Ok(query)
     }
 
+    pub fn get_artifact_key_from_storage_path_query() -> String {
+        format!(
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = $1 AND registry_type = $2",
+            CardTable::ArtifactKey
+        )
+    }
+
     pub fn get_artifact_key_delete_query() -> String {
         format!(
             "DELETE FROM {} WHERE uid = $1 AND registry_type = $2",
