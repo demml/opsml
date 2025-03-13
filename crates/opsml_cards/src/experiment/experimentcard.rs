@@ -74,6 +74,9 @@ pub struct ExperimentCard {
     #[pyo3(get)]
     pub subexperiment: bool,
 
+    #[pyo3(get)]
+    pub opsml_version: String,
+
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
     pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
@@ -125,6 +128,7 @@ impl ExperimentCard {
             uids: UidMetadata::default(),
             subexperiment: false,
             is_card: true,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
         })
     }
 
@@ -296,6 +300,7 @@ impl Serialize for ExperimentCard {
         state.serialize_field("uids", &self.uids)?;
         state.serialize_field("subexperiment", &self.subexperiment)?;
         state.serialize_field("is_card", &self.is_card)?;
+        state.serialize_field("opsml_version", &self.opsml_version)?;
         state.end()
     }
 }
@@ -320,6 +325,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             Uids,
             Subexperiment,
             IsCard,
+            OpsmlVersion,
         }
 
         struct ExperimentCardVisitor;
@@ -347,6 +353,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let mut uids = None;
                 let mut subexperiment = None;
                 let mut is_card = None;
+                let mut opsml_version = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -389,6 +396,9 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::IsCard => {
                             is_card = Some(map.next_value()?);
                         }
+                        Field::OpsmlVersion => {
+                            opsml_version = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -410,6 +420,8 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let subexperiment =
                     subexperiment.ok_or_else(|| de::Error::missing_field("subexperiment"))?;
                 let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
+                let opsml_version =
+                    opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
 
                 Ok(ExperimentCard {
                     name,
@@ -427,6 +439,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     uids,
                     subexperiment,
                     is_card,
+                    opsml_version,
                 })
             }
         }
@@ -445,6 +458,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
             "uids",
             "subexperiment",
             "is_card",
+            "opsml_version",
         ];
         deserializer.deserialize_struct("ExperimentCard", FIELDS, ExperimentCardVisitor)
     }
@@ -466,6 +480,7 @@ impl FromPyObject<'_> for ExperimentCard {
         let rt = None;
         let fs = None;
         let artifact_key = None;
+        let opsml_version = ob.getattr("opsml_version")?.extract()?;
 
         Ok(ExperimentCard {
             repository,
@@ -483,6 +498,7 @@ impl FromPyObject<'_> for ExperimentCard {
             fs,
             artifact_key,
             is_card: true,
+            opsml_version,
         })
     }
 }
