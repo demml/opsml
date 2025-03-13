@@ -37,7 +37,9 @@ async fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::cards::schema::{QueryPageResponse, ReadeMe, RegistryStatsResponse};
+    use crate::core::cards::schema::{
+        CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    };
     use crate::core::user::schema::{
         CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
     };
@@ -98,21 +100,6 @@ mod tests {
         );
         std::fs::create_dir_all(path.clone()).unwrap();
         let lpath = PathBuf::from(path).join("Card.json");
-        std::fs::write(&lpath, json).unwrap();
-
-        let encryption_key = key.get_decrypt_key().unwrap();
-
-        encrypt_file(&lpath, &encryption_key).unwrap();
-    }
-
-    fn create_card_readme(key: ArtifactKey) {
-        let json = "This is a test README";
-        let path = format!(
-            "opsml_registries/opsml_data_registry/{}/{}",
-            "space", "name"
-        );
-        std::fs::create_dir_all(path.clone()).unwrap();
-        let lpath = PathBuf::from(path).join("README.md");
         std::fs::write(&lpath, json).unwrap();
 
         let encryption_key = key.get_decrypt_key().unwrap();
@@ -505,7 +492,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         // sleep for 1 sec
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
@@ -641,7 +628,7 @@ mod tests {
         assert!(create_response.registered);
 
         // sleep for 1 second to allow the key to be stored
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
 
         let load_request = CardQueryArgs {
             uid: Some(create_response.key.uid.clone()),
@@ -931,7 +918,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         // sleep for 1 sec
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
@@ -1404,7 +1391,7 @@ mod tests {
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
 
         // wait 1 sec
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
 
         create_card_metadata(create_response.key.clone());
         //
@@ -1486,11 +1473,28 @@ mod tests {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
 
-        // wait 1 sec
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        // Create and upload the readme
+        let read_me = "This is a test README";
+        let create_readme = CreateReadeMe {
+            repository: "space".to_string(),
+            name: "name".to_string(),
+            registry_type: RegistryType::Data,
+            readme: read_me.to_string(),
+        };
 
-        create_card_readme(create_response.key.clone());
-        //
+        let request = Request::builder()
+            .uri("/opsml/api/card/readme")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_string(&create_readme).unwrap()))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        // sleep for 1 sec
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
         //// 2. Now test getting the card
         let params = CardQueryArgs {
             uid: None,
