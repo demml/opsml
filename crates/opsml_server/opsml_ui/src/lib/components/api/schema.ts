@@ -7,3 +7,10 @@ export interface CardQueryArgs {
   version?: string;
   registry_type: RegistryType;
 }
+
+export interface ReadMeArgs {
+  name: string;
+  repository: string;
+  registry_type: RegistryType;
+  content: string;
+}
