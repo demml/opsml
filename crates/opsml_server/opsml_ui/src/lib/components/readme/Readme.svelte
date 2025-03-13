@@ -6,20 +6,20 @@
   import { languages } from "@codemirror/language-data";
   import { Compartment } from '@codemirror/state';
   import { editorTheme } from './editor-theme';
-  import Markdown from "./Markdown.svelte";
   import { onDestroy, onMount } from 'svelte';
   import type { RegistryType } from "$lib/utils";
+  import { convertMarkdown } from "./util";
 
   let {
       name,
       repository,
       registry,
-      content,
+      readme_content,
     } = $props<{
       name: string;
       repository: string;
       registry: RegistryType;
-      content: string;
+      readme_content: string;
     }>();
 
 
@@ -27,30 +27,13 @@
   let mode = $state('edit');
   let editor: EditorView;
 
+  let content: string = $state('');
+  let html_content: string = $state('');
+
   const themeConfig = new Compartment();
 
-  async function toggle( toggle:string ) {
-
-  if (toggle === 'edit') {
-    // show the editor
-    //document.getElementById("editor")!.style.display = "block";
-
-    mode = 'edit';
-
-  } else {
-    // hide the editor
-    //document.getElementById("editor")!.style.display = "none";
-    content = editor.state.doc.toString();
-
-    mode = 'preview';
-  }
-
-}
 
   async function saveReadme() {
-
-    // save the content
-    content = editor.state.doc.toString();
 
     let body = {
       name: name,
@@ -64,9 +47,20 @@
       console.log('Saving readme:', body);
   }
 
-  onMount(() => {
-    let parent = document.getElementById("editor")!;
+async function toggle(toggle: string) {
+  mode = toggle;
+  
+  if (toggle === 'preview') {
+    content = editor.state.doc.toString();
+    html_content = await convertMarkdown(content);
+  }
+}
 
+
+
+  onMount(() => {
+    content = readme_content;
+    let parent = document.getElementById("editor")!;
     editor = new EditorView({
       doc: content,
       extensions: [
@@ -84,16 +78,10 @@
 
   });
 
-  onDestroy(() => {
-      if (editor) {
-          editor.destroy();
-      }
-  });
-
 </script>
 
-<div class="flex flex-col">
-  <div class="flex px-3 py-2 min-w-96 justify-between border-black border-b-2 pb-4 bg-primary-300">
+<div class="flex flex-col h-screen rounded-base w-full">
+  <div class="flex px-3 py-2 min-w-96 rounded-t-base justify-between border-b-2 border-black pb-4 bg-primary-300">
     <div class="flex gap-4 justify-start">
       <button 
           class="btn btn-md bg-primary-500 border-black border-black border-2 text-black {mode === 'edit' ? '' : 'shadow shadow-hover'}"
@@ -119,11 +107,15 @@
     </div>
   </div>
 
-  <div class="min-w-96 w-full border border-gray overflow-scroll">
-    {#if mode === 'edit'}
-      <div id="editor"></div>
-    {:else}
-        <Markdown source={$content} />
+  <div class="min-w-96 w-full overflow-hidden relative">
+    <div id="editor" 
+         class="h-full overflow-y-auto pt-4" 
+         style="display: {mode === 'edit' ? 'block' : 'none'}">
+    </div>
+    {#if mode === 'preview'}
+      <div class="markdown-body p-4 md:p-11 w-full h-full overflow-y-auto rounded-base">
+        {@html html_content}
+      </div>
     {/if}
   </div>
   
@@ -136,6 +128,19 @@
       box-sizing: border-box;
       margin: 0 auto;
       width: 100%;
-      font-size: large;
+      font-size: 24px;
     }
+
+:global(.markdown-body) {
+  box-sizing: border-box;
+  margin: 0 auto;
+  width: 100%;
+  font-size: large;
+  max-height: 100%;
+}
+
+:global(.markdown-body pre) {
+  overflow-x: auto;
+  white-space: nowrap;
+}
 </style>
