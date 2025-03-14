@@ -7,7 +7,7 @@ use anyhow::{Context, Result as AnyhowResult};
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::contracts::FileInfo;
+use opsml_types::contracts::{FileInfo, MultiPartSession};
 use opsml_types::StorageType;
 use std::path::Path;
 use tracing::debug;
@@ -71,6 +71,14 @@ pub enum StorageClientEnum {
 }
 
 impl StorageClientEnum {
+    pub fn bucket(&self) -> &str {
+        match self {
+            StorageClientEnum::Google(client) => client.bucket(),
+            StorageClientEnum::AWS(client) => client.bucket(),
+            StorageClientEnum::Local(client) => client.bucket(),
+            StorageClientEnum::Azure(client) => client.bucket(),
+        }
+    }
     pub fn name(&self) -> &str {
         match self {
             StorageClientEnum::Google(client) => client.name(),
@@ -226,7 +234,6 @@ impl StorageClientEnum {
     }
 
     pub async fn create_multipart_upload(&self, path: &Path) -> Result<String, StorageError> {
-        debug!("multipart name: {:?}", self.name());
         match self {
             StorageClientEnum::Google(client) => {
                 // google returns the session uri
@@ -255,20 +262,26 @@ impl StorageClientEnum {
         &self,
         lpath: &Path,
         rpath: &Path,
-        session_url: String,
+        multipart_session: MultiPartSession,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
                 let uploader = client
-                    .create_multipart_uploader(lpath, rpath, Some(session_url))
+                    .create_multipart_uploader(lpath, rpath, Some(multipart_session.session_url))
                     .await?;
                 Ok(MultiPartUploader::Google(uploader))
             }
 
             StorageClientEnum::AWS(client) => {
                 let uploader = client
-                    .create_multipart_uploader(rpath, lpath, Some(session_url), api_client)
+                    .create_multipart_uploader(
+                        rpath,
+                        lpath,
+                        Some(multipart_session.session_url),
+                        multipart_session.bucket,
+                        api_client,
+                    )
                     .await?;
                 Ok(MultiPartUploader::AWS(uploader))
             }
@@ -287,7 +300,12 @@ impl StorageClientEnum {
                 };
 
                 let uploader = client
-                    .create_multipart_uploader(lpath, rpath, Some(session_url), api_client)
+                    .create_multipart_uploader(
+                        lpath,
+                        rpath,
+                        Some(multipart_session.session_url),
+                        api_client,
+                    )
                     .await?;
                 Ok(MultiPartUploader::Azure(uploader))
             }

@@ -27,7 +27,7 @@
 
       <div class="mb-8 grid grid-cols-1 gap-3">
         <h2 class="text-primary-800 font-bold">Error</h2>
-        <p class="mb-1 text-black text-center">{message}</p>
+        <p class="mb-1 text-black text-center overflow-x-scroll">{message}</p>
 
       </div>
 

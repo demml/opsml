@@ -12,6 +12,7 @@ use tracing::{debug, instrument};
 #[async_trait]
 pub trait FileSystem {
     fn name(&self) -> &str;
+    fn bucket(&self) -> &str;
     fn storage_type(&self) -> StorageType;
     async fn new(settings: &OpsmlStorageSettings) -> Self;
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError>;
@@ -211,7 +212,6 @@ mod tests {
         if !nested_dir.exists() {
             std::fs::create_dir_all(nested_dir.clone()).unwrap();
         }
-
         // random file name with uuid
         let key = format!("{}/temp_test_file_{}.txt", &nested_dir_path, &rand_name);
         create_file(&key, &chunk_size);
@@ -287,10 +287,12 @@ mod tests {
         std::fs::remove_dir_all(new_path).unwrap();
 
         client.rm(rpath, true).await.unwrap();
+        unset_env_vars();
     }
 
     #[tokio::test]
     async fn test_aws_storage_client() {
+        set_env_vars();
         let config = OpsmlConfig::new(Some(true));
 
         let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)

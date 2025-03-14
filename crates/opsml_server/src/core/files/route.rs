@@ -122,7 +122,16 @@ pub async fn create_multipart_upload(
         }
     });
 
-    Ok(Json(MultiPartSession { session_url }))
+    // if storageclient enum is aws then we need to get the bucket
+    let bucket = match state.storage_client.storage_type() {
+        StorageType::Aws => Some(state.storage_client.bucket().to_string()),
+        _ => None,
+    };
+
+    Ok(Json(MultiPartSession {
+        session_url,
+        bucket,
+    }))
 }
 
 /// Generate a presigned URL for a file (read)
@@ -282,16 +291,19 @@ pub async fn list_files(
 
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
     Query(params): Query<ListFileQuery>,
-    headers: HeaderMap,
 ) -> Result<Json<ListFileInfoResponse>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
     let path = Path::new(&params.path);
 
-    debug!(
-        "Getting file info for: {} user: {:?}",
-        path.display(),
-        headers.get("username").unwrap_or(&"guest".parse().unwrap())
-    );
+    debug!("Getting file info for: {}", path.display(),);
 
     let files = state
         .storage_client
@@ -308,6 +320,83 @@ pub async fn list_file_info(
     };
 
     Ok(Json(ListFileInfoResponse { files }))
+}
+
+pub async fn file_tree(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<ListFileQuery>,
+) -> Result<Json<FileTreeResponse>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let path = Path::new(&params.path);
+
+    let files = state
+        .storage_client
+        .find_info(path)
+        .await
+        .map_err(|e| ServerError::ListFileError(e.to_string()));
+
+    let files = match files {
+        Ok(files) => files,
+        Err(e) => {
+            error!("Failed to list files: {}", e);
+            return Err(internal_server_error(e));
+        }
+    };
+
+    let mut file_tree_nodes: Vec<FileTreeNode> = Vec::new();
+    let mut seen_directories: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    for file_info in files {
+        let stripped_path = file_info.stripped_path.clone();
+        let parts: Vec<&str> = stripped_path.split('/').collect();
+
+        if parts.len() > 1 {
+            let dir_name = parts[0].to_string();
+            let dir_path = file_info.name
+                [..file_info.name.find(&dir_name).unwrap() + dir_name.len()]
+                .to_string();
+
+            if !seen_directories.contains(&dir_path) {
+                seen_directories.insert(dir_path.clone());
+                file_tree_nodes.push(FileTreeNode {
+                    name: dir_name,
+                    created_at: file_info.created.clone(),
+                    object_type: "directory".to_string(),
+                    size: 0,
+                    path: dir_path,
+                });
+            }
+        } else if !stripped_path.is_empty() {
+            file_tree_nodes.push(FileTreeNode {
+                name: stripped_path.clone(),
+                created_at: file_info.created.clone(),
+                object_type: "file".to_string(),
+                size: file_info.size,
+                path: file_info.name.clone(),
+            });
+        }
+    }
+
+    file_tree_nodes.sort_by(|a, b| {
+        if a.object_type == b.object_type {
+            a.name.cmp(&b.name)
+        } else if a.object_type == "directory" {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        }
+    });
+
+    Ok(Json(FileTreeResponse {
+        files: file_tree_nodes,
+    }))
 }
 
 pub async fn delete_file(
@@ -449,6 +538,7 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(generate_presigned_url),
             )
             .route(&format!("{}/files/list", prefix), get(list_files))
+            .route(&format!("{}/files/tree", prefix), get(file_tree))
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
             .route(&format!("{}/files/decrypt", prefix), get(get_artifact_key))

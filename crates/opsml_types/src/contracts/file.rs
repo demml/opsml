@@ -53,6 +53,8 @@ pub struct FileInfo {
     pub created: String,
     #[pyo3(get)]
     pub suffix: String,
+
+    pub stripped_path: String,
 }
 
 #[pymethods]
@@ -61,6 +63,20 @@ impl FileInfo {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileTreeNode {
+    pub name: String,
+    pub created_at: String,
+    pub object_type: String,
+    pub size: i64,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FileTreeResponse {
+    pub files: Vec<FileTreeNode>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -86,6 +102,9 @@ pub struct DeleteFileResponse {
 #[derive(Serialize, Deserialize)]
 pub struct MultiPartSession {
     pub session_url: String,
+
+    // only used for aws
+    pub bucket: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -168,4 +187,17 @@ impl Display for Operation {
             Operation::Create => write!(f, "Create"),
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CompletedPart {
+    pub e_tag: String,
+    pub part_number: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompleteMultipartRequest {
+    pub parts: Vec<CompletedPart>,
+    pub upload_id: String,
+    pub path: String,
 }

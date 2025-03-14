@@ -333,7 +333,11 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn create_multipart_upload(&mut self, path: &str) -> Result<String, StorageError> {
+    pub async fn create_multipart_upload(
+        &mut self,
+        path: &str,
+    ) -> Result<MultiPartSession, StorageError> {
+        // 1 - create multipart upload request and send to server
         let query = MultiPartQuery {
             path: path.to_string(),
         };
@@ -373,9 +377,11 @@ impl HttpStorageClient {
             StorageError::Error(e.to_string())
         })?;
 
-        let session_url = session.session_url;
-
-        Ok(session_url.to_string())
+        // return session url
+        // For GCS - this returns the resumable upload session url
+        // For AWS - this returns the upload_id for a multipart upload
+        // for Azure - this is the presigned url for a block upload
+        Ok(session)
     }
 
     /// Create a multipart uploader based on configured storage type
@@ -384,7 +390,8 @@ impl HttpStorageClient {
         rpath: &Path,
         lpath: &Path,
     ) -> Result<MultiPartUploader, StorageError> {
-        let session_url = self
+        // 1 get session url from server
+        let multipart_session = self
             .create_multipart_upload(rpath.to_str().unwrap())
             .await
             .map_err(|e| {
@@ -392,9 +399,18 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
+        // 2 create multipart uploader from url and api client
+        // GCS - resumes resumable upload session given the session url
+        // AWS - passes the session_url to AwsMUltipartUploaader
+        // Azure - passes the session_url to AzureMultipartUploader
         let uploader = self
             .storage_client
-            .create_multipart_uploader(lpath, rpath, session_url, Some(self.api_client.clone()))
+            .create_multipart_uploader(
+                lpath,
+                rpath,
+                multipart_session,
+                Some(self.api_client.clone()),
+            )
             .await
             .map_err(|e| {
                 error!("Failed to create multipart uploader: {}", e);

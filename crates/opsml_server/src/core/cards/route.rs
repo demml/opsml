@@ -652,7 +652,7 @@ pub async fn get_readme(
 
     let rpath = format!(
         "{}/{}/{}/{}.{}",
-        table.to_string(),
+        table,
         repository,
         name,
         SaveName::ReadMe,
@@ -693,7 +693,7 @@ pub async fn create_readme(
 
     let readme_path = format!(
         "{}/{}/{}/{}.{}",
-        table.to_string(),
+        table,
         &req.repository,
         &req.name,
         SaveName::ReadMe,

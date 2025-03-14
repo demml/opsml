@@ -147,6 +147,7 @@ impl HttpFSStorageClient {
                         remote_path, stripped_file_path
                     );
 
+                    // setup multipart upload based on storage provider
                     let mut uploader = cloned_client
                         .create_multipart_uploader(&remote_path, &stripped_file_path)
                         .await?;

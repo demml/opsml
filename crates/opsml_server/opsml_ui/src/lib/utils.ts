@@ -9,6 +9,10 @@ export function getRegistryTypeLowerCase(type: RegistryType): string {
   return type.toLowerCase();
 }
 
+export function getRegistryTableName(type: RegistryType): string {
+  return "opsml_" + type.toLowerCase() + "_registry";
+}
+
 export function goTop() {
   document.body.scrollIntoView();
 }

@@ -27,6 +27,7 @@ pub enum Routes {
     List,
     ListInfo,
     Multipart,
+    CompleteMultipart,
     Presigned,
     StorageSettings,
     Encrypt,
@@ -42,6 +43,7 @@ impl Routes {
         match self {
             Routes::Files => "files",
             Routes::Multipart => "files/multipart",
+            Routes::CompleteMultipart => "files/multipart/complete",
             Routes::Presigned => "files/presigned",
             Routes::List => "files/list",
             Routes::ListInfo => "files/list/info",

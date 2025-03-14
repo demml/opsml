@@ -376,13 +376,26 @@ impl StorageClient for AzureStorageClient {
                 match blob {
                     BlobItem::Blob(blob) => {
                         let name = blob.name;
+
+                        let filepath = name
+                            .strip_prefix(&format!("{}/", self.bucket))
+                            .unwrap_or(&name);
+
+                        let stripped_path = name
+                            .strip_prefix(path)
+                            .unwrap_or(filepath)
+                            .strip_prefix("/")
+                            .unwrap_or(filepath)
+                            .to_string();
+
                         let suffix = name.split('.').last().unwrap().to_string();
                         let info = FileInfo {
-                            name,
+                            name: filepath.to_string(),
                             size: blob.properties.content_length as i64,
                             created: blob.properties.creation_time.to_string(),
                             object_type: "file".to_string(),
                             suffix,
+                            stripped_path,
                         };
                         results.push(info);
                     }
@@ -465,6 +478,10 @@ pub struct AzureFSStorageClient {
 impl FileSystem for AzureFSStorageClient {
     fn name(&self) -> &str {
         "AzureFSStorageClient"
+    }
+
+    fn bucket(&self) -> &str {
+        &self.client.bucket
     }
 
     fn storage_type(&self) -> StorageType {

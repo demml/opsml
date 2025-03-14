@@ -3,15 +3,27 @@
   import type { LayoutProps } from './$types';
   import { getRegistryTypeLowerCase } from '$lib/utils';
   import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
+  import { go } from 'svelte-highlight/languages';
+  import { goto } from '$app/navigation';
 
   let { data, children }: LayoutProps = $props();
 
-  let activeTab = $state('card');
+  let activeTab = $state('home');
 
   let repository = data.metadata.repository;
   let name = data.metadata.name;
   let version = data.metadata.version;
   let registry = $state('');
+
+  function navigateTab(tab: string) {
+
+    if (activeTab === tab) {
+      return;
+    }
+
+    activeTab = tab;
+    goto(`/opsml/${registry}/card/${activeTab}?name=${name}&repository=${repository}&version=${version}`);
+  };
 
 
   onMount(() => {
@@ -35,11 +47,11 @@
 
       <div class="flex flex-row gap-x-8 text-black text-lg pl-4 h-10 mb-2">
 
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'card' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'card'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'home' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('home')}>
           <IdCard color="#8059b6"/>
           <span>Card</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'files'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('files')}>
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </button>

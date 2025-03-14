@@ -4,17 +4,9 @@
   import { goto } from '$app/navigation';
   import type { ModelCard } from '$lib/components/card/card_interfaces/modelcard';
   import type { PageProps } from './$types';
-  import { onMount } from 'svelte';
   import CardReadMe from '$lib/components/model/CardReadMe.svelte';
   import Metadata from '$lib/components/model/Metadata.svelte';
-  import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { Modal } from '@skeletonlabs/skeleton-svelte';
 
-  let openState = $state(false);
-
-  function modalClose() {
-    openState = false;
-  }
 
   let { data }: PageProps = $props();
   let metadata: ModelCard = data.metadata;

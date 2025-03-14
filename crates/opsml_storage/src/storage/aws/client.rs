@@ -75,9 +75,10 @@ pub struct AWSMulitPartUpload {
     pub lpath: String,
     pub upload_id: String,
     pub api_client: Option<OpsmlApiClient>,
-    upload_parts: Vec<aws_sdk_s3::types::CompletedPart>,
+    upload_parts: Vec<CompletedPart>,
     pub file_size: u64,
     pub filename: String,
+    pub http_client: HttpClient,
 }
 
 impl AWSMulitPartUpload {
@@ -87,6 +88,7 @@ impl AWSMulitPartUpload {
         rpath: &str,
         upload_id: &str,
         api_client: Option<OpsmlApiClient>,
+        http_client: HttpClient,
     ) -> Result<Self, StorageError> {
         // create a resuable runtime for the multipart upload
 
@@ -118,6 +120,7 @@ impl AWSMulitPartUpload {
             api_client,
             file_size,
             filename,
+            http_client,
         })
     }
 
@@ -136,8 +139,8 @@ impl AWSMulitPartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to collect ByteStream: {}", e)))?;
 
         // convert to bytes::Bytes
-        let http_client = HttpClient::new();
-        let response = http_client
+        let response = self
+            .http_client
             .put(presigned_url)
             .body(body.into_bytes())
             .send()
@@ -183,9 +186,7 @@ impl AWSMulitPartUpload {
             .upload_id(&self.upload_id)
             .send()
             .await
-            .map_err(|e| {
-                StorageError::Error(format!("Failed to complete multipart upload: {}", e))
-            })?;
+            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
         Ok(())
     }
@@ -470,12 +471,24 @@ impl StorageClient for AWSStorageClient {
                     None => "".to_string(),
                 };
 
+                let filepath = key
+                    .strip_prefix(&format!("{}/", self.bucket))
+                    .unwrap_or(&key);
+
+                let stripped_path = filepath
+                    .strip_prefix(path)
+                    .unwrap_or(filepath)
+                    .strip_prefix("/")
+                    .unwrap_or(filepath)
+                    .to_string();
+
                 FileInfo {
-                    name: file.file_name().unwrap().to_str().unwrap().to_string(),
+                    name: filepath.to_string(),
                     size,
                     object_type,
                     created,
                     suffix: file.extension().unwrap().to_str().unwrap().to_string(),
+                    stripped_path,
                 }
             })
             .collect())
@@ -631,12 +644,21 @@ impl AWSStorageClient {
         rpath: &str,
         session_url: Option<String>,
         api_client: Option<OpsmlApiClient>,
+        http_client: HttpClient,
     ) -> Result<AWSMulitPartUpload, StorageError> {
         let upload_id = match session_url {
             Some(session_url) => session_url,
             None => self.create_multipart_upload(rpath).await?,
         };
-        AWSMulitPartUpload::new(&self.bucket, lpath, rpath, &upload_id, api_client).await
+        AWSMulitPartUpload::new(
+            &self.bucket,
+            lpath,
+            rpath,
+            &upload_id,
+            api_client,
+            http_client,
+        )
+        .await
     }
 
     /// Generate a presigned url for a part in the multipart upload
@@ -677,6 +699,11 @@ impl FileSystem for S3FStorageClient {
     fn name(&self) -> &str {
         "S3FStorageClient"
     }
+
+    fn bucket(&self) -> &str {
+        &self.client.bucket
+    }
+
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = AWSStorageClient::new(settings).await.unwrap();
         Self { client }
@@ -815,6 +842,7 @@ impl FileSystem for S3FStorageClient {
                         remote_path.to_str().unwrap(),
                         None,
                         None,
+                        HttpClient::new(),
                     )
                     .await?;
 
@@ -833,6 +861,7 @@ impl FileSystem for S3FStorageClient {
                     stripped_rpath.to_str().unwrap(),
                     None,
                     None,
+                    HttpClient::new(),
                 )
                 .await?;
 
@@ -857,6 +886,7 @@ impl S3FStorageClient {
         rpath: &Path,
         lpath: &Path,
         session_url: Option<String>,
+        bucket: Option<String>,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<AWSMulitPartUpload, StorageError> {
         let upload_id = match session_url {
@@ -867,12 +897,25 @@ impl S3FStorageClient {
                     .await?
             }
         };
+
+        let http_client = if let Some(client) = &api_client {
+            client.client.clone()
+        } else {
+            HttpClient::new()
+        };
+
+        let bucket = match bucket {
+            Some(bucket) => bucket,
+            None => self.client.bucket().await.to_string(),
+        };
+
         AWSMulitPartUpload::new(
-            &self.client.bucket,
+            &bucket,
             lpath.to_str().unwrap(),
             rpath.to_str().unwrap(),
             &upload_id,
             api_client,
+            http_client,
         )
         .await
     }

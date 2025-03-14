@@ -10,6 +10,7 @@ export enum RoutePaths {
   HOME = "/opsml/home",
   METADATA = "/opsml/api/card/metadata",
   README = "/opsml/api/card/readme",
+  FILE_INFO = "/opsml/api/files/list/info",
 
   // everything below is old
 
@@ -30,7 +31,6 @@ export enum RoutePaths {
   FILE_EXISTS = "/opsml/files/exists",
   FILES_VIEW = "/opsml/files/view",
   MODEL_METADATA = "/opsml/models/metadata",
-  FILE_INFO = "/opsml/files/list/info",
 
   FORGOT = "/opsml/auth/forgot",
   SECURITY_QUESTION = "/opsml/auth/security",
