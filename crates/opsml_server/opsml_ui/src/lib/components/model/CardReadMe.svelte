@@ -52,7 +52,7 @@
       class="mb-2 text-black bg-primary-500 rounded-lg shadow shadow-hover border-black border-2 justify-start w-38 h-10"
       onclick={navigateToReadMe}
     >
-      edit ReadMe
+      Edit ReadMe
     </button>
   </div>
 </div>
