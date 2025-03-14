@@ -1,21 +1,42 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
   import { onMount } from 'svelte';
-  import { convertMarkdown } from '../readme/util';
+  import Highlight, { LineNumbers } from "svelte-highlight";
+  import python from "svelte-highlight/languages/python";
 
-  let { content } = $props<{content: string;}>();
+  let { code, language } = $props<{code: string; language: string}>();
   let openState = $state(false);
-  let html = $state('');
+  let copied = $state(false);
+  let timeoutId: number = 0;
+
 
   function modalClose() {
       openState = false;
   }
 
-  
-  onMount(async () => {
-      html = await convertMarkdown(content);
-      console.log('mounted');
-  });
+
+	function onClickHandler(): void {
+		copied = true;
+		setTimeout(() => {
+			copied = false;
+		}, 1000);
+	}
+
+  async function copyToClipboard() {
+    try {
+      await navigator.clipboard.writeText(code);
+      copied = true;
+      
+      // Reset the copied state after 2 seconds
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        copied = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  }
+
 
 </script>
 
@@ -23,22 +44,29 @@
 open={openState}
 onOpenChange={(e) => (openState = e.open)}
 triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2"
-contentBase="card bg-white p-4 border-2 border-black space-y-4 shadow  max-w-screen-sm"
+contentBase="card p-2 bg-primary-500 border-2 border-black shadow max-w-screen-md"
 backdropClasses="backdrop-blur-sm"
 >
 {#snippet trigger()}Use this card{/snippet}
 {#snippet content()}
-  <header class="flex justify-between">
-    <h2 class="h3">Load Card</h2>
-  </header>
-  <article>
-    <p class="w-100 h-24">
-      {@html html}
-    </p>
-  </article>
-  <footer class="flex justify-end gap-4">
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
-    <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
+  <div class="flex flex-row justify-between">
+    <header class="pl-2 text-xl font-bold text-black">Usage</header> 
+    <button class="btn bg-white text-black shadow shadow-hover border-black border-2 mr-3 mt-1" onclick={copyToClipboard} disabled={copied}>
+      {copied ? 'Copied 👍' : 'Copy'}
+    </button>
+  </div>
+  <article class="pl-2 max-h-[200px] overflow-hidden text-black">Paste the following code into your Python script to load the card</article>
+  <div class="border-2 border-black m-2">
+    <Highlight language={python}  
+        code={code} 
+        let:highlighted>
+    </Highlight>
+  </div>
+  <footer class="flex justify-end gap-4 p-2">
+    <button type="button" class="btn bg-white text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Cancel</button>
+    <button type="button" class="btn bg-white text-black shadow shadow-hover border-black border-2" onclick={modalClose}>Confirm</button>
   </footer>
 {/snippet}
 </Modal>
+
+

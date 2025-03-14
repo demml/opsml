@@ -22,8 +22,7 @@ let {
     data_processor_keys = Object.keys(savedata.data_processor_map);
     data_processor_values = Object.values(savedata.data_processor_map);
 
-    useCardContent = `\`\`\`python
-from opsml import CardRegistry
+    useCardContent = `from opsml import CardRegistry
 
 # load the card
 registry = CardRegistry('model')
@@ -31,7 +30,7 @@ modelcard = registry.load_card(uid="${metadata.uid}")
 
 # load the model
 modelcard.load()
-\`\`\``;
+`;
   })
 
 </script>
@@ -48,7 +47,7 @@ modelcard.load()
 
     <div>
         <!--<button type="button" class="btn btn-md bg-primary-500 text-black justify-end mb-2 text-base shadow shadow-hover border-black border-2" >Use this card</button>-->
-        <CodeModal content={useCardContent} />
+        <CodeModal code={useCardContent} language="python" />
     </div>
   </div>
 

@@ -50,6 +50,9 @@ importers:
       marked-highlight:
         specifier: ^2.2.1
         version: 2.2.1(marked@15.0.7)
+      svelte-highlight:
+        specifier: ^7.8.2
+        version: 7.8.2
     devDependencies:
       '@eslint/compat':
         specifier: ^1.2.7
@@ -1972,6 +1975,9 @@ packages:
     resolution: {integrity: sha512-saZ8yACM0k9Aexey+2NXU1W0MBosU5lBsRgqFCJKM+Taw7d0HyimPaPAjmvY/Xkyi3UwEYL/Sdu1IZJv/p0Flw==}
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0
+
+  svelte-highlight@7.8.2:
+    resolution: {integrity: sha512-fJZOQtI71CIAOzv43h/cHVDABB3YfWFERGxZx4RisBVHjEuJXfnrrEOhPS0iE2uZUFyQKDWZyzPlcYyBAkH2iA==}
 
   svelte@5.22.6:
     resolution: {integrity: sha512-dxHyh3USJyayafSt5I5QD7KuoCM5ZGdIOtLQiKHEro7tymdh0jMcNkiSBVHW+LOA2jEqZEHhyfwN6/pCjx0Fug==}
@@ -4254,6 +4260,10 @@ snapshots:
   svelte-fa@4.0.3(svelte@5.22.6):
     dependencies:
       svelte: 5.22.6
+
+  svelte-highlight@7.8.2:
+    dependencies:
+      highlight.js: 11.11.1
 
   svelte@5.22.6:
     dependencies:
