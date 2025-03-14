@@ -247,16 +247,24 @@ impl StorageClient for LocalStorageClient {
                     .as_secs()
                     .to_string();
 
-                let path = entry.path().to_str().unwrap().to_string();
-                let path = path
+                let rpath = entry.path().to_str().unwrap().to_string();
+                let filepath = rpath
                     .strip_prefix(self.bucket.to_str().unwrap())
-                    .unwrap_or(&path)
+                    .unwrap_or(path)
                     .strip_prefix("/")
-                    .unwrap_or(&path)
+                    .unwrap_or(path)
+                    .to_string();
+
+                // strip path from rpath
+                let stripped_path = filepath
+                    .strip_prefix(path)
+                    .unwrap_or(&rpath)
+                    .strip_prefix("/")
+                    .unwrap_or(&rpath)
                     .to_string();
 
                 let file_info = FileInfo {
-                    name: path,
+                    name: filepath,
                     size: metadata.len() as i64,
                     object_type: "file".to_string(),
                     created,
@@ -267,6 +275,7 @@ impl StorageClient for LocalStorageClient {
                         .to_str()
                         .unwrap_or("")
                         .to_string(),
+                    stripped_path,
                 };
                 files_info.push(file_info);
             }
@@ -395,6 +404,9 @@ pub struct LocalFSStorageClient {
 impl FileSystem for LocalFSStorageClient {
     fn name(&self) -> &str {
         "LocalFSStorageClient"
+    }
+    fn bucket(&self) -> &str {
+        self.client.bucket.to_str().unwrap()
     }
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = LocalStorageClient::new(settings).await.unwrap();

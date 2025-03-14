@@ -146,7 +146,7 @@ pub async fn download_artifact(
 
     // Download file
     storage_client
-        .get(&lpath, &remote_file, false)
+        .get(lpath, &remote_file, false)
         .await
         .map_err(|e| {
             error!("Failed to download artifact: {}", e);
@@ -159,7 +159,7 @@ pub async fn download_artifact(
         ApiError::Error("Failed to get decryption key".to_string())
     })?;
 
-    decrypt_directory(&lpath, &decryption_key).map_err(|e| {
+    decrypt_directory(lpath, &decryption_key).map_err(|e| {
         error!("Failed to decrypt artifact: {}", e);
         ApiError::Error("Failed to decrypt artifact".to_string())
     })?;

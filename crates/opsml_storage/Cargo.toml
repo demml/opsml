@@ -27,6 +27,7 @@ opsml-settings = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 reqwest = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 serde_qs = { workspace = true }
 time = { workspace = true }
@@ -35,7 +36,6 @@ tokio-util = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 walkdir = { workspace = true }
-
 
 [dev-dependencies]
 mockall = "0.*"

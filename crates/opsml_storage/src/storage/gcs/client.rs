@@ -384,15 +384,33 @@ impl StorageClient for GoogleStorageClient {
             .items
             .unwrap_or_else(Vec::new)
             .iter()
-            .map(|o| FileInfo {
-                name: o.name.clone(),
-                size: o.size,
-                object_type: o.content_type.clone().unwrap_or_default(),
-                created: match o.time_created {
-                    Some(last_modified) => last_modified.to_string(),
-                    None => "".to_string(),
-                },
-                suffix: o.name.clone().split('.').last().unwrap_or("").to_string(),
+            .map(|o| {
+                let name = o.name.clone();
+                // strip bucket name from object name
+                let name = name
+                    .strip_prefix(&format!("{}/", self.bucket))
+                    .unwrap_or(&name);
+
+                // create stripped path
+                // remove path from name
+                let stripped_path = name
+                    .strip_prefix(path)
+                    .unwrap_or(name)
+                    .strip_prefix("/")
+                    .unwrap_or(name)
+                    .to_string();
+
+                FileInfo {
+                    name: name.to_string(),
+                    size: o.size,
+                    object_type: o.content_type.clone().unwrap_or_default(),
+                    created: match o.time_created {
+                        Some(last_modified) => last_modified.to_string(),
+                        None => "".to_string(),
+                    },
+                    suffix: name.split('.').last().unwrap_or("").to_string(),
+                    stripped_path,
+                }
             })
             .collect())
     }
@@ -581,6 +599,10 @@ pub struct GCSFSStorageClient {
 
 #[async_trait]
 impl FileSystem for GCSFSStorageClient {
+    fn bucket(&self) -> &str {
+        &self.client.bucket
+    }
+
     fn name(&self) -> &str {
         "GCSFSStorageClient"
     }

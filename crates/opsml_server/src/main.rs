@@ -1333,7 +1333,6 @@ mod tests {
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
-        println!("Response: {:?}", response);
         // Verify the user is deleted by trying to get it
         let request = Request::builder()
             .uri("/opsml/api/users/test_user")
