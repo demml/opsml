@@ -1,4 +1,5 @@
 use crate::core::error::internal_server_error;
+use crate::core::files::utils::download_artifact;
 use crate::core::state::AppState;
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
@@ -20,11 +21,14 @@ use tokio::io::AsyncWriteExt;
 use anyhow::{Context, Result};
 use opsml_error::error::ServerError;
 
+use base64::prelude::*;
+use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
 use std::sync::Arc;
+use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
@@ -371,6 +375,7 @@ pub async fn file_tree(
                     object_type: "directory".to_string(),
                     size: 0,
                     path: dir_path,
+                    suffix: "".to_string(),
                 });
             }
         } else if !stripped_path.is_empty() {
@@ -380,6 +385,7 @@ pub async fn file_tree(
                 object_type: "file".to_string(),
                 size: file_info.size,
                 path: file_info.name.clone(),
+                suffix: file_info.suffix.clone(),
             });
         }
     }
@@ -399,18 +405,68 @@ pub async fn file_tree(
     }))
 }
 
-//pub async fn render_file_for_ui(
-//    State(state): State<Arc<AppState>>,
-//    Extension(perms): Extension<UserPermissions>,
-//    Query(params): Query<DownloadFileQuery>,
-//) -> Result<Json<DownloadFileQuery>, (StatusCode, Json<serde_json::Value>)> {
-//    if !perms.has_read_permission() {
-//        return Err((
-//            StatusCode::FORBIDDEN,
-//            Json(json!({ "error": "Permission denied" })),
-//        ));
-//    }
-//}
+pub async fn get_file_for_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<RawFileRequest>,
+) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    // check if size is less than 50 mb
+    if req.file.size > 50_000_000 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "File size too large" })),
+        ));
+    }
+
+    let tmp_dir = tempdir().map_err(|e| {
+        error!("Failed to create temp dir: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let lpath = tmp_dir.path().join(req.file.name.clone());
+
+    download_artifact(
+        state.storage_client.clone(),
+        state.sql_client.clone(),
+        &lpath,
+        &req.file.path,
+        &req.registry_type.to_string(),
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to download artifact: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+
+    let content = std::fs::read_to_string(&lpath).unwrap_or_default();
+    let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
+
+    // if mime image the base64 encode the content
+    let content = if mime_type.type_() == mime::IMAGE {
+        BASE64_STANDARD.encode(&content)
+    } else {
+        content
+    };
+
+    Ok(Json(RawFile {
+        content,
+        suffix: req.file.suffix,
+        mime_type: mime_type.to_string(),
+    }))
+}
 
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
@@ -555,6 +611,7 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
             .route(&format!("{}/files/decrypt", prefix), get(get_artifact_key))
+            .route(&format!("{}/files/render", prefix), post(get_file_for_ui))
     }));
 
     match result {
