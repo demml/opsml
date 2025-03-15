@@ -72,6 +72,7 @@ pub struct FileTreeNode {
     pub object_type: String,
     pub size: i64,
     pub path: String,
+    pub suffix: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -190,7 +191,14 @@ impl Display for Operation {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RenderedFile {
+pub struct RawFileRequest {
+    pub file: FileTreeNode,
+    pub registry_type: RegistryType,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RawFile {
     pub content: String,
     pub suffix: String,
+    pub mime_type: String,
 }
