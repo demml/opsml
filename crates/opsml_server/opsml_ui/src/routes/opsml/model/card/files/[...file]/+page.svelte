@@ -12,12 +12,13 @@
     <div class="w-full pt-4">
       <FileTree 
         files={data.fileTree.files} 
-        path={page.url.pathname} 
+        currentPath={page.url.pathname} 
         previousPath={data.previousPath} 
         repository={data.metadata.repository}
         name={data.metadata.name}
         version={data.metadata.version}
         isRoot={data.isRoot}
+        registryPath={data.registryPath}
         />
     </div>  
   </div>

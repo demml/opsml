@@ -14,7 +14,7 @@ export const load: PageLoad = async ({ parent, params }) => {
   // split slug with '/'
   let slugs = slug.split("/");
 
-  const { metadata, registry, readme, registryPath } = await parent();
+  const { metadata, registry, registryPath } = await parent();
 
   let tableName = getRegistryTableName(registry);
   let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
@@ -32,5 +32,5 @@ export const load: PageLoad = async ({ parent, params }) => {
 
   let fileTree = await getFileTree(basePath);
 
-  return { fileTree, previousPath, isRoot: false };
+  return { fileTree, previousPath, isRoot: false, registryPath };
 };

@@ -1,6 +1,7 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import type { FileTreeResponse } from "./types";
+import type { FileTreeResponse, RawFile } from "./types";
+import { AcceptableSuffix } from "./types";
 
 export async function getFileTree(path: string): Promise<FileTreeResponse> {
   const params = {
@@ -47,4 +48,28 @@ export function formatBytes(bytes: number): string {
   return `${bytes.toFixed(1)} ${units[unitIndex]}`;
 }
 
-//export function getFile
+export function isAcceptableSuffix(suffix: string): boolean {
+  return Object.values(AcceptableSuffix).includes(
+    suffix.toLowerCase() as AcceptableSuffix
+  );
+}
+
+export async function getRawFile(
+  path: string,
+  uid: string,
+  registry_type: string
+): Promise<RawFile> {
+  const body = {
+    path: path,
+    uid: uid,
+    registry_type: registry_type,
+  };
+
+  const response = await opsmlClient.post(RoutePaths.FILE_CONTENT, body);
+  return (await response.json()) as RawFile;
+}
+
+function splitViewPath(path: string): string[] {
+  let splitPath = path.split("/");
+  return splitPath;
+}

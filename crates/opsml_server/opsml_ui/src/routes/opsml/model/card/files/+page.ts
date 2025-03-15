@@ -8,12 +8,12 @@ import { getRegistryTableName } from "$lib/utils";
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
 
-  const { metadata, registry } = await parent();
+  const { metadata, registry, registryPath } = await parent();
 
   let tableName = getRegistryTableName(registry);
   let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
 
   let fileTree = await getFileTree(basePath);
 
-  return { fileTree, previousPath: basePath, isRoot: true };
+  return { fileTree, previousPath: basePath, isRoot: true, registryPath };
 };

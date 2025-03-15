@@ -5,34 +5,40 @@
   import { Folder, File } from 'lucide-svelte';
   import { formatBytes, timeAgo } from "./utils";
   import { goto } from "$app/navigation";
+  import { isAcceptableSuffix } from "./utils";
   // Use runes for reactive state
   let { files, 
-        path, 
+        currentPath, 
         previousPath, 
         repository, 
         name, 
         version, 
-        isRoot 
+        isRoot ,
+        registryPath
       } = $props<{ 
         files: FileTreeNode[], 
-        path:string, 
-        previousPath: 
-        string, 
-        repository: 
-        string, 
-        name: 
-        string, 
+        currentPath:string, 
+        previousPath: string, 
+        repository:string, 
+        name:string, 
         version: string, 
-        isRoot: boolean 
+        isRoot: boolean ,
+        registryPath: string
       }>();
 
 
-  function navigateToPath(slug_name: string) {
-    let newPath = path + '/' + slug_name;
 
+  function navigateToPath(slug_name: string) {
+    let newPath = currentPath + '/' + slug_name;
     // add params to path
     newPath = newPath + `?repository=${repository}&name=${name}&version=${version}`;
     goto(newPath);
+  }
+
+  function navigateToView(path: string) {
+    // add params to path
+    let viewPath = `/opsml/${registryPath}/card/files/view?repository=${repository}&name=${name}&version=${version}&path=${path}`;
+    goto(viewPath);
   }
    
   </script>
@@ -70,12 +76,17 @@
                 <Folder />
               <div class="text-black">{file.name}</div>
             </button>
-          {:else}
-            <div class="flex flex-row gap-2">
-                <File />
-                <div class="text-black">{file.name}</div>
-            </div>
-          {/if}
+            {:else if file.size < 50 * 1024 * 1024 && isAcceptableSuffix(file.suffix)}
+              <button class="btn flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToView(file.path)}>
+                  <File />
+                  <div class="text-black">{file.name}</div>
+              </button>
+            {:else}
+              <div class="flex flex-row gap-2">
+                  <File />
+                  <div class="text-black">{file.name}</div>
+              </div>
+            {/if}
         </td>
         <td class="p-2">
           {#if file.object_type === 'directory'}

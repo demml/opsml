@@ -1605,13 +1605,13 @@ mod tests {
         assert!(file_tree.files.len() == 2);
 
         let file1req = RawFileRequest {
-            file: file_tree.files[0].clone(),
+            path: file_tree.files[0].path.clone(),
             uid: helper.key.uid.clone(),
             registry_type: RegistryType::Data,
         };
 
         let request = Request::builder()
-            .uri("/opsml/api/files/render")
+            .uri("/opsml/api/files/content")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&file1req).unwrap()))
@@ -1625,13 +1625,13 @@ mod tests {
         assert!(file1.mime_type == "application/json");
 
         let file2req = RawFileRequest {
-            file: file_tree.files[1].clone(),
+            path: file_tree.files[1].path.clone(),
             uid: helper.key.uid.clone(),
             registry_type: RegistryType::Data,
         };
 
         let request = Request::builder()
-            .uri("/opsml/api/files/render")
+            .uri("/opsml/api/files/content")
             .method("POST")
             .header(header::CONTENT_TYPE, "application/json")
             .body(Body::from(serde_json::to_string(&file2req).unwrap()))

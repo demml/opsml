@@ -1,6 +1,6 @@
 use anyhow::Result;
 use opsml_crypt::{
-    decrypt_directory, encrypt_directory,
+    decrypt_file, encrypt_directory,
     key::{derive_encryption_key, encrypted_key, generate_salt},
 };
 use opsml_error::ApiError;
@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 /// Route for debugging information
 use std::sync::Arc;
 use tempfile::TempDir;
-use tracing::debug;
+use tracing::{debug, info};
 use tracing::{error, instrument};
 use uuid::Uuid;
 
@@ -166,13 +166,15 @@ pub async fn download_artifact(
             ApiError::Error("Failed to download artifact".to_string())
         })?;
 
+    info!("Downloaded artifact");
+
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
         ApiError::Error("Failed to get decryption key".to_string())
     })?;
 
-    decrypt_directory(lpath, &decryption_key).map_err(|e| {
+    decrypt_file(lpath, &decryption_key).map_err(|e| {
         error!("Failed to decrypt artifact: {}", e);
         ApiError::Error("Failed to decrypt artifact".to_string())
     })?;

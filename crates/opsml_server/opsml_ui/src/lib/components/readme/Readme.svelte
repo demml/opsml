@@ -60,8 +60,7 @@
 
 
   async function saveReadme() {
-
-
+    content = editor.state.doc.toString();
     let response = await createReadMe(name, repository, registry, content);
 
     if (!response.uploaded) {
