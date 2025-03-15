@@ -10,6 +10,7 @@ pub enum RequestType {
 
 #[derive(Debug, Clone)]
 pub enum Routes {
+    ArtifactKey,
     AuthLogin,
     AuthRefresh,
     AuthValidate,
@@ -30,8 +31,6 @@ pub enum Routes {
     CompleteMultipart,
     Presigned,
     StorageSettings,
-    Encrypt,
-    Decrypt,
     ExperimentMetrics,
     ExperimentMetricNames,
     ExperimentHardwareMetrics,
@@ -47,8 +46,7 @@ impl Routes {
             Routes::Presigned => "files/presigned",
             Routes::List => "files/list",
             Routes::ListInfo => "files/list/info",
-            Routes::Encrypt => "files/encrypt",
-            Routes::Decrypt => "files/decrypt",
+            Routes::ArtifactKey => "files/key",
             Routes::Healthcheck => "healthcheck",
             Routes::StorageSettings => "storage/settings",
             Routes::DeleteFiles => "files/delete",
