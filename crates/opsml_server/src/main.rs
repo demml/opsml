@@ -211,19 +211,30 @@ mod tests {
         }
 
         pub fn create_files(&self) -> String {
-            // create temp directory
+            // get current directory
+            let current_dir = std::env::current_dir().unwrap();
+
             let base_path = format!(
                 "opsml_registries/opsml_data_registry/{}/{}/v{}",
                 self.repository, self.name, self.version
             );
+
+            let joined_path = current_dir.join(base_path.clone());
+            // create the directory
+            std::fs::create_dir_all(&joined_path).unwrap();
+
             let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
-            let path = format!("{}/file.json", base_path);
+            let path = &joined_path.join("file.json");
             std::fs::write(&path, json).unwrap();
 
-            let png = format!("{}/file.png", base_path);
+            let png = &joined_path.join("file.png");
             std::fs::write(&png, "PNG").unwrap();
 
-            base_path
+            let key_bytes = self.key.get_decrypt_key().unwrap();
+            let _ = encrypt_file(&path, &key_bytes);
+            let _ = encrypt_file(&png, &key_bytes);
+
+            joined_path.to_str().unwrap().to_string()
         }
 
         pub async fn create_card(&mut self) {
@@ -266,6 +277,9 @@ mod tests {
             let body = response.into_body().collect().await.unwrap().to_bytes();
             let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
             self.key = create_response.key.clone();
+
+            // sleep for 1 sec
+            tokio::time::sleep(Duration::from_millis(100)).await;
         }
     }
 
@@ -1531,9 +1545,6 @@ mod tests {
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
-        // sleep for 1 sec
-        tokio::time::sleep(Duration::from_millis(100)).await;
-
         //// 2. Now test getting the card
         let params = CardQueryArgs {
             uid: None,
@@ -1579,7 +1590,7 @@ mod tests {
 
         // check if a card UID exists (get request with UidRequest params)
         let request = Request::builder()
-            .uri(format!("/opsml/files/tree?{}", query_string))
+            .uri(format!("/opsml/api/files/tree?{}", query_string))
             .method("GET")
             .body(Body::empty())
             .unwrap();
@@ -1587,9 +1598,50 @@ mod tests {
         let response = helper.send_oneshot(request).await;
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        let file_tree: FileTreeResponse = serde_json::from_slice(&body).unwrap();
+        // get response text
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let file_tree: FileTreeResponse = serde_json::from_slice(&body_bytes).unwrap();
 
-        println!("{:?}", file_tree);
+        assert!(file_tree.files.len() == 2);
+
+        let file1req = RawFileRequest {
+            file: file_tree.files[0].clone(),
+            uid: helper.key.uid.clone(),
+            registry_type: RegistryType::Data,
+        };
+
+        let request = Request::builder()
+            .uri("/opsml/api/files/render")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_string(&file1req).unwrap()))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let file1: RawFile = serde_json::from_slice(&body_bytes).unwrap();
+        assert!(file1.mime_type == "application/json");
+
+        let file2req = RawFileRequest {
+            file: file_tree.files[1].clone(),
+            uid: helper.key.uid.clone(),
+            registry_type: RegistryType::Data,
+        };
+
+        let request = Request::builder()
+            .uri("/opsml/api/files/render")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_string(&file2req).unwrap()))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let file2: RawFile = serde_json::from_slice(&body_bytes).unwrap();
+        assert!(file2.mime_type == "image/png");
     }
 }

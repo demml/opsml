@@ -190,12 +190,28 @@ impl Display for Operation {
     }
 }
 
+/// Request to get a file from the registry
+///
+/// # Arguments
+///
+/// * `uid` - The unique identifier of card that is requesting the file
+/// * `file` - The file tree node
+/// * `registry_type` - The type of registry
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawFileRequest {
+    pub uid: String,
     pub file: FileTreeNode,
     pub registry_type: RegistryType,
 }
 
+/// Response to get a file from the registry
+///
+/// # Arguments
+///
+/// * `content` - The content of the file
+/// * `suffix` - The suffix of the file
+/// * `mime_type` - The mime type of the file
+///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawFile {
     pub content: String,

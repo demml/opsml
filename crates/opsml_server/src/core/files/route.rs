@@ -22,6 +22,7 @@ use anyhow::{Context, Result};
 use opsml_error::error::ServerError;
 
 use base64::prelude::*;
+use core::error;
 use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;
@@ -405,12 +406,14 @@ pub async fn file_tree(
     }))
 }
 
+#[instrument(skip_all)]
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
 ) -> Result<Json<RawFile>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
+        error!("Permission denied");
         return Err((
             StatusCode::FORBIDDEN,
             Json(json!({ "error": "Permission denied" })),
@@ -419,6 +422,7 @@ pub async fn get_file_for_ui(
 
     // check if size is less than 50 mb
     if req.file.size > 50_000_000 {
+        error!("File size too large");
         return Err((
             StatusCode::BAD_REQUEST,
             Json(json!({ "error": "File size too large" })),
@@ -441,6 +445,7 @@ pub async fn get_file_for_ui(
         &lpath,
         &req.file.path,
         &req.registry_type.to_string(),
+        Some(&req.uid),
     )
     .await
     .map_err(|e| {

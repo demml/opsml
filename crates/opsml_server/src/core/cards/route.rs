@@ -665,6 +665,7 @@ pub async fn get_readme(
         &lpath,
         &rpath,
         &params.registry_type.to_string(),
+        None,
     )
     .await;
 
