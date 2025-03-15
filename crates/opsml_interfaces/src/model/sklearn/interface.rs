@@ -339,7 +339,7 @@ impl SklearnModel {
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
 
         Ok(save_path)
     }

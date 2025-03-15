@@ -566,7 +566,7 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         if self.onnx_session.is_some() {
-            info!("Model has already been converted to ONNX. Skipping conversion.");
+            debug!("Model has already been converted to ONNX. Skipping conversion.");
             return Ok(());
         }
 
@@ -582,7 +582,7 @@ impl ModelInterface {
 
         self.onnx_session = Some(Py::new(py, session)?);
 
-        info!("Model converted to ONNX");
+        debug!("Model converted to ONNX");
 
         Ok(())
     }
@@ -715,7 +715,7 @@ impl ModelInterface {
 
         fs::write(&full_save_path, bytes)?;
 
-        info!("ONNX model saved");
+        debug!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -753,7 +753,7 @@ impl ModelInterface {
             kwargs,
         )?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
@@ -830,7 +830,7 @@ impl ModelInterface {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }
@@ -863,7 +863,7 @@ impl ModelInterface {
                 .unbind(),
         );
 
-        info!("Model loaded");
+        debug!("Model loaded");
 
         Ok(())
     }

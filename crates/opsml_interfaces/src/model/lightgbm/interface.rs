@@ -358,7 +358,7 @@ impl LightGBMModel {
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
 
         Ok(save_path)
     }
@@ -422,7 +422,7 @@ impl LightGBMModel {
             .unwrap()
             .call_method(py, "save_model", (full_save_path,), kwargs)?;
 
-        info!("Model saved");
+        debug!("Model saved");
         Ok(save_path)
     }
 
@@ -455,7 +455,7 @@ impl LightGBMModel {
             OpsmlError::new_err(format!("Failed to load model from file: {}", e))
         })?;
 
-        info!("Model loaded");
+        debug!("Model loaded");
 
         model.into_py_any(py)
     }

@@ -474,7 +474,7 @@ impl TorchModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
         Ok(save_path)
     }
     /// Load the preprocessor from a file
@@ -505,7 +505,7 @@ impl TorchModel {
 
         self.preprocessor = Some(preprocessor.unbind());
 
-        info!("Preprocessor loaded");
+        debug!("Preprocessor loaded");
         Ok(())
     }
     /// Save the model to a file
@@ -550,7 +550,7 @@ impl TorchModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
@@ -627,7 +627,7 @@ impl TorchModel {
 
         self.sample_data = TorchSampleData::load_data(py, path, data_type, kwargs)?;
 
-        info!("Sample data loaded");
+        debug!("Sample data loaded");
 
         Ok(())
     }
@@ -663,7 +663,7 @@ impl TorchModel {
 
         fs::write(&full_save_path, bytes)?;
 
-        info!("ONNX model saved");
+        debug!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -699,7 +699,7 @@ impl TorchModel {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }

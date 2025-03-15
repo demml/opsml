@@ -458,7 +458,7 @@ impl LightningModel {
 
         self.onnx_session = Some(Py::new(py, session)?);
 
-        info!("Model converted to ONNX");
+        debug!("Model converted to ONNX");
 
         Ok(())
     }
@@ -494,7 +494,7 @@ impl LightningModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
         Ok(save_path)
     }
     /// Load the preprocessor from a file
@@ -525,7 +525,7 @@ impl LightningModel {
 
         self.preprocessor = Some(preprocessor.into_py_any(py)?);
 
-        info!("Preprocessor loaded");
+        debug!("Preprocessor loaded");
         Ok(())
     }
     /// Save the model to a file
@@ -563,7 +563,7 @@ impl LightningModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Trainer model checkpoint saved");
+        debug!("Trainer model checkpoint saved");
 
         Ok(save_path)
     }
@@ -629,7 +629,7 @@ impl LightningModel {
 
         self.sample_data = TorchSampleData::load_data(py, path, data_type, kwargs)?;
 
-        info!("Sample data loaded");
+        debug!("Sample data loaded");
 
         Ok(())
     }
@@ -664,7 +664,7 @@ impl LightningModel {
 
         fs::write(&full_save_path, bytes)?;
 
-        info!("ONNX model saved");
+        debug!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -700,7 +700,7 @@ impl LightningModel {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }
