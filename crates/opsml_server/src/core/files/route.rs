@@ -399,6 +399,19 @@ pub async fn file_tree(
     }))
 }
 
+//pub async fn render_file_for_ui(
+//    State(state): State<Arc<AppState>>,
+//    Extension(perms): Extension<UserPermissions>,
+//    Query(params): Query<DownloadFileQuery>,
+//) -> Result<Json<DownloadFileQuery>, (StatusCode, Json<serde_json::Value>)> {
+//    if !perms.has_read_permission() {
+//        return Err((
+//            StatusCode::FORBIDDEN,
+//            Json(json!({ "error": "Permission denied" })),
+//        ));
+//    }
+//}
+
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
