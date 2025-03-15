@@ -9,16 +9,15 @@ doctest = false
 
 
 [dependencies]
-anyhow = { workspace = true }
 chrono = { workspace = true }
-colored_json = { workspace = true }
 opsml-colors = { workspace = true }
+opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
+sysinfo = { workspace = true }
 tabled = { workspace = true, features = ["ansi"] }
-walkdir = { workspace = true }
+tracing = { workspace = true }
 

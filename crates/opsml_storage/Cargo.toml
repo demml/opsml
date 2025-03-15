@@ -11,9 +11,6 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 aws-config = { workspace = true }
 aws-sdk-s3 = { workspace = true }
-aws-smithy-types = { workspace = true }
-aws-types = { workspace = true }
-azure_core = { workspace = true }
 azure_identity = { workspace = true }
 azure_storage = { workspace = true }
 azure_storage_blobs = { workspace = true }
@@ -23,29 +20,25 @@ futures = { workspace = true }
 futures-util = { workspace = true }
 google-cloud-auth = { workspace = true }
 google-cloud-storage = { workspace = true }
-google-cloud-token = { workspace = true }
-indicatif = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-error = { workspace = true }
 opsml-settings = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-pyo3 = { workspace = true }
 reqwest = { workspace = true }
-reqwest-middleware = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_qs = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
+tracing = { workspace = true }
 uuid = { workspace = true }
 walkdir = { workspace = true }
-
 
 [dev-dependencies]
 mockall = "0.*"
 mockito = "1.*"
-rand = "0.8.5"
+rand = "0.*"
 tempfile = "3.*"

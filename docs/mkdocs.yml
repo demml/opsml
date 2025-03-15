@@ -12,7 +12,7 @@ theme:
       toggle:
         icon: material/weather-night
         name: dark mode
-        
+
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: stylesheets/extra.css
@@ -28,56 +28,54 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-  logo: 'images/gear.png'
+  logo: "images/gear.png"
 
 repo_name: opsml
 repo_url: https://github.com/demml/opsml
 edit_uri: edit/main/docs/
 
-
-
 nav:
-  - Overview: 'index.md'
-  - Installation: 'installation.md'
-  - Quickstart: 'quickstart.md'
-  - Reference: 'reference.md'
+  - Overview: "index.md"
+  - Installation: "installation.md"
+  - Quickstart: "quickstart.md"
+  - Reference: "reference.md"
   - Interfaces:
-    - 'interfaces/overview.md'
-    - Data Interface:
-      - 'interfaces/data/interfaces.md'
-      - 'interfaces/data/data_splits.md'
-      - 'interfaces/data/datasets.md'
-      - 'interfaces/data/data_profile.md'
-      - 'interfaces/data/feature.md'
-      
-    - Model Interface:
-      - 'interfaces/model/interfaces.md'
-      - 'interfaces/model/onnx.md'
-      - 'interfaces/model/extras.md'
-      - 'interfaces/model/deployment.md'
+      - "interfaces/overview.md"
+      - Data Interface:
+          - "interfaces/data/interfaces.md"
+          - "interfaces/data/data_splits.md"
+          - "interfaces/data/datasets.md"
+          - "interfaces/data/data_profile.md"
+          - "interfaces/data/feature.md"
+
+      - Model Interface:
+          - "interfaces/model/interfaces.md"
+          - "interfaces/model/onnx.md"
+          - "interfaces/model/extras.md"
+          - "interfaces/model/deployment.md"
   - Cards:
-      - 'cards/overview.md'
-      - 'cards/versioning.md'
-      - 'cards/metadata.md'
+      - "cards/overview.md"
+      - "cards/versioning.md"
+      - "cards/metadata.md"
       - DataCard:
-        - 'cards/datacard.md'
+          - "cards/datacard.md"
       - ModelCard:
-        - 'cards/modelcard.md'
-        - 'cards/challenger.md'
-      - 'cards/runcard.md'
-      - 'cards/auditcard.md'
+          - "cards/modelcard.md"
+          - "cards/challenger.md"
+      - "cards/experimentcard.md"
+      - "cards/auditcard.md"
   - CLI:
-      - Overview: 'cli/overview.md'
+      - Overview: "cli/overview.md"
   - FAQ:
-      - Common Questions: 'faq/common_questions.md'
+      - Common Questions: "faq/common_questions.md"
   - Engineering:
-      - Ownership: 'engineering/ownership.md'
-      - Server: 'engineering/server.md'
-      - How It Works: 'engineering/how-it-works.md'
+      - Ownership: "engineering/ownership.md"
+      - Server: "engineering/server.md"
+      - How It Works: "engineering/how-it-works.md"
   - Contributing:
-      - Contributing: 'faq/contributing.md'
+      - Contributing: "faq/contributing.md"
   - API Documentation:
-      - Specs: 'api/index.html'
+      - Specs: "api/index.html"
 
 markdown_extensions:
   - tables
@@ -94,9 +92,9 @@ markdown_extensions:
 
   - pymdownx.superfences:
       custom_fences:
-      - name: mermaid
-        class: mermaid
-        format: !!python/name:pymdownx.superfences.fence_code_format ''
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format ""
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
@@ -106,9 +104,9 @@ plugins:
   - mkdocstrings
 
 extra_css:
-- css/custom.css
-- stylesheets/extra.css
-- css/termynal.css
+  - css/custom.css
+  - stylesheets/extra.css
+  - css/termynal.css
 extra_javascript:
-- js/termynal.js
-- js/custom.js
+  - js/termynal.js
+  - js/custom.js

@@ -10,12 +10,16 @@ pub enum RequestType {
 
 #[derive(Debug, Clone)]
 pub enum Routes {
-    AuthApiLogin,
-    AuthApiRefresh,
+    ArtifactKey,
+    AuthLogin,
+    AuthRefresh,
+    AuthValidate,
+    AuthUiLogin,
     Card,
     CardCreate,
     CardDelete,
     CardList,
+    CardLoad,
     CardVersion,
     CardUpdate,
     DeleteFiles,
@@ -24,8 +28,13 @@ pub enum Routes {
     List,
     ListInfo,
     Multipart,
+    CompleteMultipart,
     Presigned,
     StorageSettings,
+    ExperimentMetrics,
+    ExperimentMetricNames,
+    ExperimentHardwareMetrics,
+    ExperimentParameters,
 }
 
 impl Routes {
@@ -33,20 +42,29 @@ impl Routes {
         match self {
             Routes::Files => "files",
             Routes::Multipart => "files/multipart",
+            Routes::CompleteMultipart => "files/multipart/complete",
             Routes::Presigned => "files/presigned",
             Routes::List => "files/list",
             Routes::ListInfo => "files/list/info",
+            Routes::ArtifactKey => "files/key",
             Routes::Healthcheck => "healthcheck",
             Routes::StorageSettings => "storage/settings",
             Routes::DeleteFiles => "files/delete",
-            Routes::AuthApiLogin => "auth/api/login",
-            Routes::AuthApiRefresh => "auth/api/refresh",
+            Routes::AuthLogin => "auth/login",
+            Routes::AuthRefresh => "auth/refresh",
+            Routes::AuthValidate => "auth/validate",
+            Routes::AuthUiLogin => "auth/ui/login",
             Routes::Card => "card",
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",
             Routes::CardList => "card/list",
+            Routes::CardLoad => "card/load",
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
+            Routes::ExperimentMetrics => "experiment/metrics",
+            Routes::ExperimentMetricNames => "experiment/metrics/names",
+            Routes::ExperimentHardwareMetrics => "experiment/hardware/metrics",
+            Routes::ExperimentParameters => "experiment/parameters",
         }
     }
 }

@@ -40,7 +40,7 @@ from PIL import Image
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
 from catboost import CatBoostClassifier, CatBoostRanker, CatBoostRegressor, Pool  # type: ignore
-import tensorflow as tf  # type: ignore
+from opsml.data import ColType, ColumnSplit, DataSplit
 
 
 def cleanup() -> None:
@@ -606,40 +606,40 @@ def multioutput_regression():
 
 @pytest.fixture
 def multitask_elasticnet():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskElasticNet(alpha=0.1).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_elasticnet_cv():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskElasticNetCV(max_iter=5, cv=2).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_lasso():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskLasso(alpha=0.1).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multitask_lasso_cv():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([[0, 0], [1, 1], [2, 2]])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
     reg = linear_model.MultiTaskLassoCV(max_iter=5, cv=2).fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
 
 @pytest.fixture
 def multinomial_nb():
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    y = np.array([1, 2, 3])
+    X = np.array([[0, 0], [1, 1], [2, 2]]).astype(np.int64)
+    y = np.array([1, 2, 3]).astype(np.int64)
     reg = naive_bayes.MultinomialNB().fit(X, y)
     return SklearnModel(model=reg, sample_data=X)
 
@@ -1170,22 +1170,31 @@ def catboost_ranker() -> Generator[Tuple[CatBoostRanker, pd.DataFrame], None, No
 
 
 @pytest.fixture
-def tf_sequential_model() -> (
-    Generator[Tuple[tf.keras.Sequential, np.ndarray], None, None]
-):
-    model = tf.keras.Sequential(
-        [
-            tf.keras.layers.Dense(10, activation="relu", input_shape=(10,)),
-            tf.keras.layers.Dense(1),
-        ]
+def lightgbm_regression(regression_data) -> SklearnModel:
+    X, y = regression_data
+    reg = lgb.LGBMRegressor().fit(X, y)
+    return SklearnModel(
+        model=reg,
+        sample_data=X,
+        task_type=TaskType.Regression,
     )
-    # Compile
-    model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
 
-    X = np.random.rand(100, 10)
-    y = np.random.randint(0, 2, 100)
 
-    # fit model
-    model.fit(X, y, epochs=2)
+@pytest.fixture
+def pandas_data(example_dataframe) -> PandasData:
+    split = DataSplit(
+        label="train",
+        column_split=ColumnSplit(
+            column_name="col_1",
+            column_value=0.4,
+            column_type=ColType.Builtin,
+            inequality="<=",
+        ),
+    )
 
-    yield (model, X)
+    X_train, _, _, _ = example_dataframe
+    return PandasData(
+        data=X_train,
+        data_splits=[split],
+        dependent_vars=["col_2"],
+    )

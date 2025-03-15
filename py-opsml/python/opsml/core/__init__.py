@@ -2,7 +2,6 @@
 
 from .. import core
 
-Description = core.Description
 LogLevel = core.LogLevel
 RustyLogger = core.RustyLogger
 LoggingConfig = core.LoggingConfig
@@ -16,7 +15,9 @@ VersionType = core.VersionType
 Feature = core.Feature
 FeatureSchema = core.FeatureSchema
 OnnxSchema = core.OnnxSchema
-DataSchema = core.DataSchema
+ApiSettings = core.ApiSettings
+OpsmlStorageSettings = core.OpsmlStorageSettings
+ExtraMetadata = core.ExtraMetadata
 
 
 __all__ = [
@@ -32,5 +33,7 @@ __all__ = [
     "Feature",
     "FeatureSchema",
     "OnnxSchema",
-    "DataSchema",
+    "ApiSettings",
+    "OpsmlStorageSettings",
+    "ExtraMetadata",
 ]

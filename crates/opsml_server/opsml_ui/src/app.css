@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import "../opsml-theme.css";
+
+@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+
+@theme {
+    --font-sans: Roboto, sans-serif; 
+    --border: #000;
+    --border-radius: 5px;
+    --box-shadow-x: 5px;
+    --box-shadow-y: 5px;
+    --reverse-box-shadow-x: -5px;
+    --reverse-box-shadow-y: -5px;
+    --base-font-weight: 500;
+    --heading-font-weight: 700;
+    --text: #000;
+    --ring: #000;
+    --mtext: #000;
+    --ring-offset: #fff;
+
+    --box-shadow-x-small: 2px;
+    --box-shadow-y-small: 2px;
+    --reverse-box-shadow-x-small: -2px;
+    --reverse-box-shadow-y-small: -2px;
+    --shadow: var(--box-shadow-x) var(--box-shadow-y) 0px 0px var(--border);
+    --shadow-primary: var(--box-shadow-x) var(--box-shadow-y) 0px 0px var(--color-primary-700);
+    --shadow-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--border);
+    --shadow-primary-small: var(--box-shadow-x-small) var(--box-shadow-y-small) 0px 0px var(--color-primary-700);
+    --reverse-shadow-small: var(--reverse-box-shadow-x-small) var(--reverse-box-shadow-y-small) 0px 0px var(--border);
+  }
+
+.shadow-hover {
+    @apply transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none;
+}
+
+.shadow-hover-small {
+    @apply transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none;
+}
+
+.reverse-shadow-hover-small {
+    @apply transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-small;
+}
+
+
+::selection {
+    @apply bg-secondary-100; /* Replace with your desired color */
+    @apply text-secondary-900; /* Optional: change the text color when selected */
+  }
+

@@ -1,70 +1,115 @@
-use crate::data::{DataInterface, DataInterfaceSaveMetadata, SqlLogic};
-use crate::types::FeatureSchema;
+use crate::data::{
+    DataInterface, DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs,
+    DataSaveKwargs, SqlLogic,
+};
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::DataInterfaceType;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::IntoPyObjectExt;
+use scouter_client::DataProfile;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[pyclass(extends=DataInterface, subclass)]
-pub struct SqlData {
-    #[pyo3(get)]
-    pub data_type: DataType,
-}
+pub struct SqlData {}
 
 #[pymethods]
 impl SqlData {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    fn new(py: Python, sql_logic: SqlLogic) -> PyResult<(Self, DataInterface)> {
+    #[pyo3(signature = (sql_logic, data_profile=None))]
+    fn new(
+        py: Python,
+        sql_logic: SqlLogic,
+        data_profile: Option<DataProfile>,
+    ) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
 
-        let data_interface = DataInterface::new(py, None, None, None, None, Some(sql_logic), None)?;
+        let mut data_interface =
+            DataInterface::new(py, None, None, None, None, Some(sql_logic), data_profile)?;
+        data_interface.interface_type = DataInterfaceType::Sql;
 
-        Ok((
-            SqlData {
-                data_type: DataType::Sql,
-            },
-            data_interface,
+        Ok((SqlData {}, data_interface))
+    }
+
+    #[allow(unused_variables)]
+    #[pyo3(signature = (path, save_kwargs = None))]
+    pub fn save(
+        mut self_: PyRefMut<'_, Self>,
+        py: Python,
+        path: PathBuf,
+        save_kwargs: Option<DataSaveKwargs>,
+    ) -> PyResult<DataInterfaceMetadata> {
+        let sql_uri = self_.as_super().save_sql(path.clone())?;
+        let data_profile_uri = if self_.as_super().data_profile.is_none() {
+            None
+        } else {
+            Some(self_.as_super().save_data_profile(&path)?)
+        };
+
+        let save_metadata = DataInterfaceSaveMetadata::new(
+            PathBuf::new(),
+            sql_uri,
+            data_profile_uri,
+            None,
+            save_kwargs,
+        );
+
+        // need to implement save logic for SqlLogic
+        Ok(DataInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().schema.clone(),
+            HashMap::new(),
+            self_.as_super().sql_logic.clone(),
+            self_.as_super().interface_type.clone(),
+            self_.as_super().dependent_vars.clone(),
+            self_.as_super().data_splits.clone(),
+            self_.as_super().data_type.clone(),
         ))
     }
 
     #[allow(unused_variables)]
-    #[setter]
-    fn set_data(&mut self, data: &Bound<'_, PyAny>) -> PyResult<()> {
-        // this should return an error. Data cannot be set for SqlData
-        Err(OpsmlError::new_err("Data cannot be set for SqlData"))
-    }
-
-    #[allow(unused_variables)]
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save<'py>(
-        mut self_: PyRefMut<'py, Self>,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'py, PyDict>>,
-    ) -> PyResult<DataInterfaceSaveMetadata> {
-        let super_ = self_.as_super();
-        let sql_save_path = super_.save_sql(path)?;
-
-        // need to implement save logic for SqlLogic
-        Ok(DataInterfaceSaveMetadata {
-            data_type: self_.data_type.clone(),
-            feature_map: FeatureSchema::default(),
-            data_save_path: None,
-            sql_save_path,
-            data_profile_save_path: None,
-        })
-    }
-
-    #[allow(unused_variables)]
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data(
+    #[pyo3(signature = (path, load_kwargs=None))]
+    pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
+        load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
         Ok(())
+    }
+
+    #[pyo3(signature = (_bin_size=20, _compute_correlations=false))]
+    pub fn create_data_profile(
+        mut _self_: PyRefMut<'_, Self>,
+        _py: Python,
+        _bin_size: Option<usize>,
+        _compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        Err(OpsmlError::new_err(
+            "Data profiling not supported for Torch data",
+        ))
+    }
+}
+
+impl SqlData {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &DataInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let interface = DataInterface {
+            data_type: metadata.data_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            schema: metadata.schema.clone(),
+            dependent_vars: metadata.dependent_vars.clone(),
+            data_splits: metadata.data_splits.clone(),
+            sql_logic: metadata.sql_logic.clone(),
+            data_profile: None,
+            data: None,
+        };
+
+        let data_interface = SqlData {};
+
+        Py::new(py, (data_interface, interface))?.into_bound_py_any(py)
     }
 }

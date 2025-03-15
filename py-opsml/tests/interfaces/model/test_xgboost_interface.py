@@ -23,11 +23,6 @@ def test_xgboost_model_interface(
     interface.model = None
     assert interface.model is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.model is not None

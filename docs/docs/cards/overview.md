@@ -5,8 +5,8 @@ flowchart TD
 DS(["fa:fa-user-group" DS])
 DS --> Model([Model])
 Model --> Metrics([Metrics])
-Metrics --> RunCard(RunCard)
-RunCard --> RunRegistry[(RunRegistry)]
+Metrics --> experimentcard(experimentcard)
+experimentcard --> RunRegistry[(RunRegistry)]
 Model --> ModelCard(ModelCard)
 ModelCard --> ModelRegistry[(ModelRegistry)]
 ModelCard -->DeployableArtifact(Deployable Artifact)
@@ -19,7 +19,7 @@ style DS fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bold
 style Model fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 style Metrics fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 style Data fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
-style RunCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
+style experimentcard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 style DataCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 style ModelCard fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
 style DeployableArtifact fill:#028e6b,stroke:black,stroke-width:2px,color:white,font-weight:bolder
@@ -33,7 +33,7 @@ style DataRegistry fill:#5e0fb7,stroke:black,stroke-width:2px,color:white,font-w
 
 - `DataCard`: Card used to store data-related information (``, dependent variables, feature descriptions, split logic, etc.)
 - `ModelCard`: Card used to store trained model and model information
-- `RunCard`: Stores artifact and metric info related to Data, Model, or Pipeline cards.
+- `experimentcard`: Stores artifact and metric info related to Data, Model, or Pipeline cards.
 - `ProjectCard`: Stores information related to unique projects. You will most likely never interact with this card directly.
 
 ## Registries

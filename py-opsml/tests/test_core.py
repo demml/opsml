@@ -2,7 +2,6 @@ from opsml.model import HuggingFaceORTModel, HuggingFaceOnnxArgs
 from opsml.core import (
     Feature,
     OnnxSchema,
-    DataSchema,
     OpsmlError,
     Description,
     FeatureSchema,
@@ -126,32 +125,13 @@ def test_onnx_schema_creation():
 
 
 def test_data_schema_creation():
-    data_type = "example_type"
     input_features = FeatureSchema(
         {"input1": Feature("type1", [1, 2, 3], {"arg1": "value1"})}
     )
     output_features = FeatureSchema(
         {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
     )
-    onnx_schema = OnnxSchema(input_features, output_features, "1.0")
-
-    schema = DataSchema(data_type, input_features, output_features, onnx_schema)
-
-    assert schema.data_type == data_type
-    assert schema.input_features == input_features
-    assert schema.output_features == output_features
-    assert schema.onnx_schema == onnx_schema
-
-
-def test_data_schema_default_values():
-    data_type = "example_type"
-
-    schema = DataSchema(data_type)
-
-    assert schema.data_type == data_type
-    assert schema.input_features is None
-    assert schema.output_features is None
-    assert schema.onnx_schema is None
+    OnnxSchema(input_features, output_features, "1.0")
 
 
 def test_description_creation():

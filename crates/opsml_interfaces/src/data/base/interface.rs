@@ -1,22 +1,158 @@
+use crate::data::DataSaveKwargs;
 use crate::data::{
-    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataSplit, DataSplits, DependentVars,
-    SqlLogic,
+    generate_feature_schema, Data, DataInterfaceSaveMetadata, DataLoadKwargs, DataSplit,
+    DataSplits, DependentVars, SqlLogic,
 };
 use crate::types::FeatureSchema;
 use opsml_error::error::OpsmlError;
-use opsml_types::{DataType, InterfaceType, SaveName, Suffix};
+use opsml_error::InterfaceError;
+use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
+use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
-use pyo3::IntoPyObjectExt;
+use pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit};
 use scouter_client::{DataProfile, DataProfiler};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
+use std::path::Path;
 use std::path::PathBuf;
+use tracing::instrument;
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DataInterfaceMetadata {
+    #[pyo3(get)]
+    pub save_metadata: DataInterfaceSaveMetadata,
+
+    #[pyo3(get)]
+    pub schema: FeatureSchema,
+
+    #[pyo3(get)]
+    pub extra_metadata: HashMap<String, String>,
+
+    #[pyo3(get, set)]
+    pub sql_logic: SqlLogic,
+
+    #[pyo3(get)]
+    pub interface_type: DataInterfaceType,
+
+    #[pyo3(get)]
+    pub data_splits: DataSplits,
+
+    #[pyo3(get)]
+    pub dependent_vars: DependentVars,
+
+    #[pyo3(get)]
+    pub data_type: DataType,
+
+    #[pyo3(get)]
+    pub opsml_version: String,
+
+    pub data_specific_metadata: Value,
+}
+
+#[pymethods]
+impl DataInterfaceMetadata {
+    #[new]
+    #[pyo3(signature = (save_metadata, schema=FeatureSchema::default(), extra_metadata=HashMap::new(), sql_logic=SqlLogic::default(),interface_type=DataInterfaceType::Base, dependent_vars=DependentVars::default(), data_splits=DataSplits::default(), data_type=DataType::Base))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        save_metadata: DataInterfaceSaveMetadata,
+        schema: FeatureSchema,
+        extra_metadata: HashMap<String, String>,
+        sql_logic: SqlLogic,
+        interface_type: DataInterfaceType,
+        dependent_vars: DependentVars,
+        data_splits: DataSplits,
+        data_type: DataType,
+    ) -> Self {
+        DataInterfaceMetadata {
+            save_metadata,
+            schema,
+            extra_metadata,
+            sql_logic,
+            interface_type,
+            dependent_vars,
+            data_splits,
+            data_type,
+            data_specific_metadata: Value::Null,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+        }
+    }
+    pub fn __str__(&self) -> String {
+        // serialize the struct to a string
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> DataInterfaceMetadata {
+        serde_json::from_str(&json_string).unwrap()
+    }
+}
+
+pub fn check_data_splits(
+    data_splits: Option<&Bound<'_, PyAny>>,
+) -> Result<DataSplits, InterfaceError> {
+    let splits: DataSplits = {
+        if let Some(data_splits) = data_splits {
+            // check if data_splits is either Vec<DataSplit> or DataSplits
+            if data_splits.is_instance_of::<DataSplits>() {
+                data_splits.extract::<DataSplits>()?
+            } else if data_splits.is_instance_of::<PyList>() {
+                // pylist should be list of DataSplit
+                DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?)
+            } else {
+                DataSplits::default()
+            }
+        } else {
+            DataSplits::default()
+        }
+    };
+
+    Ok(splits)
+}
+
+pub fn check_dependent_vars(
+    dependent_vars: Option<&Bound<'_, PyAny>>,
+) -> Result<DependentVars, InterfaceError> {
+    // define dependent vars
+    let depen_vars: DependentVars = {
+        if let Some(dependent_vars) = dependent_vars {
+            // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
+            if dependent_vars.is_instance_of::<DependentVars>() {
+                dependent_vars.extract::<DependentVars>()?
+            } else if dependent_vars.is_instance_of::<PyList>() {
+                // pylist should be list of string or list of int
+                if dependent_vars.extract::<Vec<String>>().is_ok() {
+                    let column_names = dependent_vars.extract::<Vec<String>>()?;
+                    DependentVars::new(Some(column_names), None)
+                } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
+                    let column_indices = dependent_vars.extract::<Vec<usize>>()?;
+                    DependentVars::new(None, Some(column_indices))
+                } else {
+                    DependentVars::default()
+                }
+            } else {
+                DependentVars::default()
+            }
+        } else {
+            DependentVars::default()
+        }
+    };
+
+    Ok(depen_vars)
+}
 
 #[pyclass(subclass)]
 pub struct DataInterface {
     #[pyo3(get)]
-    pub data: PyObject,
+    pub data: Option<PyObject>,
 
     #[pyo3(get)]
     pub data_splits: DataSplits,
@@ -25,7 +161,7 @@ pub struct DataInterface {
     pub dependent_vars: DependentVars,
 
     #[pyo3(get, set)]
-    pub feature_map: FeatureSchema,
+    pub schema: FeatureSchema,
 
     #[pyo3(get, set)]
     pub sql_logic: SqlLogic,
@@ -37,80 +173,42 @@ pub struct DataInterface {
     pub data_type: DataType,
 
     #[pyo3(get)]
-    pub interface_type: InterfaceType,
+    pub interface_type: DataInterfaceType,
 }
 
 #[pymethods]
 impl DataInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
+    #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, schema=None, sql_logic=None, data_profile=None))]
     pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
         dependent_vars: Option<&Bound<'py, PyAny>>,
-        feature_map: Option<FeatureSchema>,
+        schema: Option<FeatureSchema>,
         sql_logic: Option<SqlLogic>,
         data_profile: Option<DataProfile>,
     ) -> PyResult<Self> {
         // define data splits
-        let splits: DataSplits = {
-            if let Some(data_splits) = data_splits {
-                // check if data_splits is either Vec<DataSplit> or DataSplits
-                if data_splits.is_instance_of::<DataSplits>() {
-                    data_splits.extract::<DataSplits>()?
-                } else if data_splits.is_instance_of::<PyList>() {
-                    // pylist should be list of DataSplit
-                    DataSplits::new(data_splits.extract::<Vec<DataSplit>>()?)
-                } else {
-                    DataSplits::default()
-                }
-            } else {
-                DataSplits::default()
-            }
-        };
+        let splits: DataSplits = check_data_splits(data_splits)?;
+        let depen_vars: DependentVars = check_dependent_vars(dependent_vars)?;
 
-        // define dependent vars
-        let depen_vars: DependentVars = {
-            if let Some(dependent_vars) = dependent_vars {
-                // check if dependent_vars is either DependentVars or Vec<String>, Vec<usize> or DependentVars
-                if dependent_vars.is_instance_of::<DependentVars>() {
-                    dependent_vars.extract::<DependentVars>()?
-                } else if dependent_vars.is_instance_of::<PyList>() {
-                    // pylist should be list of string or list of int
-                    if dependent_vars.extract::<Vec<String>>().is_ok() {
-                        let column_names = dependent_vars.extract::<Vec<String>>()?;
-                        DependentVars::new(Some(column_names), None)
-                    } else if dependent_vars.extract::<Vec<usize>>().is_ok() {
-                        let column_indices = dependent_vars.extract::<Vec<usize>>()?;
-                        DependentVars::new(None, Some(column_indices))
-                    } else {
-                        DependentVars::default()
-                    }
-                } else {
-                    DependentVars::default()
-                }
-            } else {
-                DependentVars::default()
-            }
-        };
-
-        let feature_map = feature_map.unwrap_or_default();
+        let schema = schema.unwrap_or_default();
         let sql_logic = sql_logic.unwrap_or_default();
 
         let data = match data {
-            Some(data) => data.into_py_any(py)?,
-            None => py.None(),
+            Some(data) => Some(data.into_py_any(py)?),
+            None => None,
         };
         Ok(DataInterface {
             data,
             data_splits: splits,
             dependent_vars: depen_vars,
-            feature_map,
+            schema,
             sql_logic,
             data_type: DataType::Base,
-            interface_type: InterfaceType::Data,
+            interface_type: DataInterfaceType::Base,
             data_profile,
         })
     }
@@ -121,10 +219,10 @@ impl DataInterface {
 
         // check if data is None
         if PyAnyMethods::is_none(data) {
-            self.data = py.None();
+            self.data = None;
             return Ok(());
         } else {
-            self.data = data.into_py_any(py)?;
+            self.data = Some(data.into_py_any(py)?);
         };
 
         Ok(())
@@ -180,6 +278,154 @@ impl DataInterface {
         Ok(())
     }
 
+    /// Save the data and SQL logic
+    ///
+    /// # Arguments
+    ///
+    /// * `py` - Python interpreter
+    /// * `path` - Path to save the data
+    /// * `kwargs` - Additional save kwargs
+    ///
+    /// # Returns
+    ///
+    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
+    #[pyo3(signature = (path, save_kwargs=None))]
+    pub fn save(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        save_kwargs: Option<DataSaveKwargs>,
+    ) -> PyResult<DataInterfaceMetadata> {
+        let data_kwargs = save_kwargs
+            .as_ref()
+            .and_then(|args| args.data_kwargs(py))
+            .cloned();
+
+        let data_uri = self.save_data(py, path.clone(), data_kwargs.as_ref())?;
+
+        // save sql logic
+        let sql_uri = self.save_sql(path.clone())?;
+        self.schema = self.create_schema(py)?;
+
+        let data_profile_uri = if self.data_profile.is_none() {
+            None
+        } else {
+            Some(self.save_data_profile(&path)?)
+        };
+
+        let save_metadata =
+            DataInterfaceSaveMetadata::new(data_uri, sql_uri, data_profile_uri, None, save_kwargs);
+
+        Ok(DataInterfaceMetadata::new(
+            save_metadata,
+            self.schema.clone(),
+            HashMap::new(),
+            self.sql_logic.clone(),
+            self.interface_type.clone(),
+            self.dependent_vars.clone(),
+            self.data_splits.clone(),
+            self.data_type.clone(),
+        ))
+    }
+    #[pyo3(signature = (path, load_kwargs = None))]
+    pub fn load(
+        &mut self,
+        py: Python,
+        path: PathBuf,
+        load_kwargs: Option<DataLoadKwargs>,
+    ) -> PyResult<()> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+        let joblib = py.import("joblib")?;
+        let load_kwargs = load_kwargs.unwrap_or_default();
+
+        // Load the data using joblib
+        let data = joblib.call_method("load", (load_path,), load_kwargs.data_kwargs(py))?;
+
+        self.data = Some(data.into());
+
+        Ok(())
+    }
+
+    #[pyo3(signature = (name, query=None, filepath=None))]
+    pub fn add_sql_logic(
+        &mut self,
+        name: String,
+        query: Option<String>,
+        filepath: Option<String>,
+    ) -> PyResult<()> {
+        self.sql_logic.add_sql_logic(name, query, filepath)?;
+
+        Ok(())
+    }
+
+    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
+        // check if data is None
+        if self.data.is_none() {
+            return Err(OpsmlError::new_err(
+                "No data detected in interface for saving",
+            ));
+        }
+
+        if self.data_splits.is_empty() {
+            return Err(OpsmlError::new_err(
+                "No data splits detected in interface for splitting",
+            ));
+        }
+
+        let dependent_vars = self.dependent_vars.clone();
+
+        self.data_splits.split_data(
+            self.data.as_ref().unwrap().bind(py),
+            &self.data_type,
+            &dependent_vars,
+        )
+    }
+
+    #[pyo3(signature = (bin_size=20, compute_correlations=false))]
+    pub fn create_data_profile(
+        &mut self,
+        py: Python,
+        bin_size: Option<usize>,
+        compute_correlations: Option<bool>,
+    ) -> PyResult<DataProfile> {
+        let mut profiler = DataProfiler::new();
+
+        // get ScouterDataType from opsml DataType
+
+        let data_type = match self.data_type {
+            DataType::Numpy => Some(&scouter_client::DataType::Numpy),
+            DataType::Pandas => Some(&scouter_client::DataType::Pandas),
+            DataType::Polars => Some(&scouter_client::DataType::Polars),
+            DataType::Arrow => Some(&scouter_client::DataType::Arrow),
+            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
+        };
+
+        let profile = profiler.create_data_profile(
+            py,
+            self.data.as_ref().unwrap().bind(py),
+            data_type,
+            bin_size,
+            compute_correlations,
+        )?;
+
+        self.data_profile = Some(profile.clone());
+
+        Ok(profile)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref data) = self.data {
+            visit.call(data)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.data = None;
+    }
+}
+
+impl DataInterface {
     /// Save the SQL logic to a file
     ///
     /// # Arguments
@@ -206,11 +452,12 @@ impl DataInterface {
     /// # Returns
     ///
     /// * `PyResult<FeatureMap>` - FeatureMap
-    pub fn create_feature_map(&mut self, py: Python) -> PyResult<FeatureSchema> {
+    pub fn create_schema(&mut self, py: Python) -> PyResult<FeatureSchema> {
         // Create and insert the feature
-        let feature_map = generate_feature_schema(self.data.bind(py), &self.data_type)?;
+        let feature_map =
+            generate_feature_schema(self.data.as_ref().unwrap().bind(py), &self.data_type)?;
 
-        self.feature_map = feature_map.clone();
+        self.schema = feature_map.clone();
 
         Ok(feature_map)
     }
@@ -227,7 +474,6 @@ impl DataInterface {
     ///
     /// * `PyResult<PathBuf>` - Path to the saved data
     ///
-    #[pyo3(signature = (path, **kwargs))]
     pub fn save_data(
         &mut self,
         py: Python,
@@ -235,7 +481,7 @@ impl DataInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
         // check if data is None
-        if self.data.is_none(py) {
+        if self.data.is_none() {
             return Err(OpsmlError::new_err(
                 "No data detected in interface for saving",
             ));
@@ -251,117 +497,25 @@ impl DataInterface {
         Ok(save_path)
     }
 
-    /// Save the data and SQL logic
+    /// Save drift profile
     ///
     /// # Arguments
     ///
-    /// * `py` - Python interpreter
-    /// * `path` - Path to save the data
-    /// * `kwargs` - Additional save kwargs
+    /// * `path` - Path to save drift profile
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn save(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<DataInterfaceSaveMetadata> {
-        // save data
-        let save_path = self.save_data(py, path.clone(), kwargs)?;
+    /// * `PyResult<PathBuf>` - Path to saved drift profile
+    #[instrument(skip_all)]
+    pub fn save_data_profile(&self, path: &Path) -> PyResult<PathBuf> {
+        let profile_save_path = path
+            .join(SaveName::DataProfile)
+            .with_extension(Suffix::Json);
+        self.data_profile
+            .as_ref()
+            .unwrap()
+            .save_to_json(Some(profile_save_path.clone()))?;
 
-        // save sql logic
-        let sql_save_path = self.save_sql(path.clone())?;
-        self.feature_map = self.create_feature_map(py)?;
-
-        Ok(DataInterfaceSaveMetadata {
-            data_type: self.data_type.clone(),
-            feature_map: self.feature_map.clone(),
-            data_save_path: Some(save_path),
-            sql_save_path,
-            data_profile_save_path: None,
-        })
-    }
-
-    #[pyo3(signature = (path, **kwargs))]
-    pub fn load_data(
-        &mut self,
-        py: Python,
-        path: PathBuf,
-        kwargs: Option<&Bound<'_, PyDict>>,
-    ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
-        let joblib = py.import("joblib")?;
-
-        // Load the data using joblib
-        self.data = joblib.call_method("load", (load_path,), kwargs)?.into();
-
-        Ok(())
-    }
-
-    #[pyo3(signature = (name, query=None, filepath=None))]
-    pub fn add_sql_logic(
-        &mut self,
-        name: String,
-        query: Option<String>,
-        filepath: Option<String>,
-    ) -> PyResult<()> {
-        self.sql_logic.add_sql_logic(name, query, filepath)?;
-
-        Ok(())
-    }
-
-    pub fn split_data(&mut self, py: Python) -> PyResult<HashMap<String, Data>> {
-        // check if data is None
-        if self.data.is_none(py) {
-            return Err(OpsmlError::new_err(
-                "No data detected in interface for saving",
-            ));
-        }
-
-        if self.data_splits.is_empty() {
-            return Err(OpsmlError::new_err(
-                "No data splits detected in interface for splitting",
-            ));
-        }
-
-        let dependent_vars = self.dependent_vars.clone();
-
-        self.data_splits
-            .split_data(self.data.bind(py), &self.data_type, &dependent_vars)
-    }
-
-    #[pyo3(signature = (bin_size=20, compute_correlations=false))]
-    pub fn create_data_profile(
-        &mut self,
-        py: Python,
-        bin_size: Option<usize>,
-        compute_correlations: Option<bool>,
-    ) -> PyResult<DataProfile> {
-        let mut profiler = DataProfiler::new();
-
-        // get ScouterDataType from opsml DataType
-
-        let data_type = match self.data_type {
-            DataType::Numpy => Some(&scouter_client::DataType::Numpy),
-            DataType::Pandas => Some(&scouter_client::DataType::Pandas),
-            DataType::Polars => Some(&scouter_client::DataType::Polars),
-            DataType::Arrow => Some(&scouter_client::DataType::Arrow),
-            _ => Err(OpsmlError::new_err("Data type not supported for profiling"))?,
-        };
-
-        let profile = profiler.create_data_profile(
-            py,
-            self.data.bind(py),
-            data_type,
-            bin_size,
-            compute_correlations,
-        )?;
-
-        self.data_profile = Some(profile.clone());
-
-        Ok(profile)
+        Ok(profile_save_path)
     }
 }

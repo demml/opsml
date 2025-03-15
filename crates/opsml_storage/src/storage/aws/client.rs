@@ -11,13 +11,12 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::OpsmlApiClient;
-use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
+use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
 use std::fs::File;
 use std::io::Write;
@@ -76,9 +75,10 @@ pub struct AWSMulitPartUpload {
     pub lpath: String,
     pub upload_id: String,
     pub api_client: Option<OpsmlApiClient>,
-    upload_parts: Vec<aws_sdk_s3::types::CompletedPart>,
+    upload_parts: Vec<CompletedPart>,
     pub file_size: u64,
     pub filename: String,
+    pub http_client: HttpClient,
 }
 
 impl AWSMulitPartUpload {
@@ -88,6 +88,7 @@ impl AWSMulitPartUpload {
         rpath: &str,
         upload_id: &str,
         api_client: Option<OpsmlApiClient>,
+        http_client: HttpClient,
     ) -> Result<Self, StorageError> {
         // create a resuable runtime for the multipart upload
 
@@ -119,6 +120,7 @@ impl AWSMulitPartUpload {
             api_client,
             file_size,
             filename,
+            http_client,
         })
     }
 
@@ -137,8 +139,8 @@ impl AWSMulitPartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to collect ByteStream: {}", e)))?;
 
         // convert to bytes::Bytes
-        let http_client = HttpClient::new();
-        let response = http_client
+        let response = self
+            .http_client
             .put(presigned_url)
             .body(body.into_bytes())
             .send()
@@ -184,9 +186,7 @@ impl AWSMulitPartUpload {
             .upload_id(&self.upload_id)
             .send()
             .await
-            .map_err(|e| {
-                StorageError::Error(format!("Failed to complete multipart upload: {}", e))
-            })?;
+            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
         Ok(())
     }
@@ -232,35 +232,12 @@ impl AWSMulitPartUpload {
         Ok(true)
     }
 
-    pub async fn upload_file_in_chunks(&mut self) -> Result<(), StorageError> {
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+    ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
-
-        // calculate the number of parts
-        let mut chunk_count = (self.file_size / chunk_size) + 1;
-        let mut size_of_last_chunk = self.file_size % chunk_size;
-
-        // if the last chunk is empty, reduce the number of parts
-        if size_of_last_chunk == 0 {
-            size_of_last_chunk = chunk_size;
-            chunk_count -= 1;
-        }
-
-        // TODO: add multi progress bar
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Uploading file:");
-        let msg2 = Colorize::purple(&self.filename);
-        let msg = format!("{} {}", msg1, msg2);
-
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
 
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -301,12 +278,9 @@ impl AWSMulitPartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-
-            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
-        bar.finish_with_message("Upload complete");
 
         Ok(())
 
@@ -323,7 +297,7 @@ pub struct AWSStorageClient {
 #[async_trait]
 impl StorageClient for AWSStorageClient {
     fn storage_type(&self) -> StorageType {
-        StorageType::AWS
+        StorageType::Aws
     }
     async fn bucket(&self) -> &str {
         &self.bucket
@@ -497,12 +471,24 @@ impl StorageClient for AWSStorageClient {
                     None => "".to_string(),
                 };
 
+                let filepath = key
+                    .strip_prefix(&format!("{}/", self.bucket))
+                    .unwrap_or(&key);
+
+                let stripped_path = filepath
+                    .strip_prefix(path)
+                    .unwrap_or(filepath)
+                    .strip_prefix("/")
+                    .unwrap_or(filepath)
+                    .to_string();
+
                 FileInfo {
-                    name: file.file_name().unwrap().to_str().unwrap().to_string(),
+                    name: filepath.to_string(),
                     size,
                     object_type,
                     created,
                     suffix: file.extension().unwrap().to_str().unwrap().to_string(),
+                    stripped_path,
                 }
             })
             .collect())
@@ -658,12 +644,21 @@ impl AWSStorageClient {
         rpath: &str,
         session_url: Option<String>,
         api_client: Option<OpsmlApiClient>,
+        http_client: HttpClient,
     ) -> Result<AWSMulitPartUpload, StorageError> {
         let upload_id = match session_url {
             Some(session_url) => session_url,
             None => self.create_multipart_upload(rpath).await?,
         };
-        AWSMulitPartUpload::new(&self.bucket, lpath, rpath, &upload_id, api_client).await
+        AWSMulitPartUpload::new(
+            &self.bucket,
+            lpath,
+            rpath,
+            &upload_id,
+            api_client,
+            http_client,
+        )
+        .await
     }
 
     /// Generate a presigned url for a part in the multipart upload
@@ -704,13 +699,18 @@ impl FileSystem for S3FStorageClient {
     fn name(&self) -> &str {
         "S3FStorageClient"
     }
+
+    fn bucket(&self) -> &str {
+        &self.client.bucket
+    }
+
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = AWSStorageClient::new(settings).await.unwrap();
         Self { client }
     }
 
     fn storage_type(&self) -> StorageType {
-        StorageType::AWS
+        StorageType::Aws
     }
 
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
@@ -828,8 +828,10 @@ impl FileSystem for S3FStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let stripped_file_path = file.strip_path(self.client.bucket().await);
+                let (chunk_count, size_of_last_chunk, _) =
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
+                let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
@@ -840,14 +842,18 @@ impl FileSystem for S3FStorageClient {
                         remote_path.to_str().unwrap(),
                         None,
                         None,
+                        HttpClient::new(),
                     )
                     .await?;
 
-                uploader.upload_file_in_chunks().await?;
+                uploader
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk)
+                    .await?;
             }
-
-            Ok(())
         } else {
+            let (chunk_count, size_of_last_chunk, _) =
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
+
             let mut uploader = self
                 .client
                 .create_multipart_uploader(
@@ -855,12 +861,16 @@ impl FileSystem for S3FStorageClient {
                     stripped_rpath.to_str().unwrap(),
                     None,
                     None,
+                    HttpClient::new(),
                 )
                 .await?;
 
-            uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk)
+                .await?;
+        };
+
+        Ok(())
     }
 }
 
@@ -876,6 +886,7 @@ impl S3FStorageClient {
         rpath: &Path,
         lpath: &Path,
         session_url: Option<String>,
+        bucket: Option<String>,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<AWSMulitPartUpload, StorageError> {
         let upload_id = match session_url {
@@ -886,12 +897,25 @@ impl S3FStorageClient {
                     .await?
             }
         };
+
+        let http_client = if let Some(client) = &api_client {
+            client.client.clone()
+        } else {
+            HttpClient::new()
+        };
+
+        let bucket = match bucket {
+            Some(bucket) => bucket,
+            None => self.client.bucket().await.to_string(),
+        };
+
         AWSMulitPartUpload::new(
-            &self.client.bucket,
+            &bucket,
             lpath.to_str().unwrap(),
             rpath.to_str().unwrap(),
             &upload_id,
             api_client,
+            http_client,
         )
         .await
     }
@@ -913,8 +937,8 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::path::Path;
     use tempfile::TempDir;
@@ -923,7 +947,7 @@ mod tests {
         let mut file = File::create(name).expect("Could not create sample file.");
 
         while file.metadata().unwrap().len() <= chunk_size * 2 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
@@ -949,7 +973,7 @@ mod tests {
         create_file(lpath.to_str().unwrap(), &1024);
 
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = S3FStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = S3FStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let rpath_dir = Path::new("test_dir");
         let rpath = rpath_dir.join(&filename);
@@ -1016,7 +1040,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = S3FStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = S3FStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let child = tmp_path.join("child");
         let grand_child = child.join("grandchild");

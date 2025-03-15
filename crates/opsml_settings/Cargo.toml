@@ -10,8 +10,8 @@ description = "Opsml settings rust and python bindings"
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-
+base64 = { workspace = true }
 pyo3 = { workspace = true }
-rand = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }

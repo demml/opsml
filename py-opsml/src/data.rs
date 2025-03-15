@@ -1,9 +1,10 @@
 use opsml_interfaces::data::{
     generate_feature_schema, ArrowData, ColType, ColValType, ColumnSplit, Data, DataInterface,
-    DataInterfaceSaveMetadata, DataSplit, DataSplits, DataSplitter, DependentVars, IndiceSplit,
-    Inequality, NumpyData, PandasData, PolarsData, SqlData, SqlLogic, StartStopSplit, TorchData,
+    DataInterfaceMetadata, DataInterfaceSaveMetadata, DataLoadKwargs, DataSaveKwargs, DataSplit,
+    DataSplits, DataSplitter, DependentVars, IndiceSplit, Inequality, NumpyData, PandasData,
+    PolarsData, SqlData, SqlLogic, StartStopSplit, TorchData,
 };
-use opsml_types::DataType;
+use opsml_types::{DataInterfaceType, DataType};
 
 use pyo3::prelude::*;
 
@@ -22,6 +23,9 @@ pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DependentVars>()?;
     m.add_class::<SqlLogic>()?;
     m.add_class::<DataSplits>()?;
+    m.add_class::<DataLoadKwargs>()?;
+    m.add_class::<DataSaveKwargs>()?;
+    m.add_class::<DataInterfaceType>()?;
 
     // data_interface
     m.add_class::<DataInterface>()?;
@@ -30,6 +34,7 @@ pub fn data(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PandasData>()?;
     m.add_class::<ArrowData>()?;
     m.add_class::<DataInterfaceSaveMetadata>()?;
+    m.add_class::<DataInterfaceMetadata>()?;
     m.add_class::<SqlData>()?;
     m.add_class::<TorchData>()?;
     m.add_function(wrap_pyfunction!(generate_feature_schema, m)?)?;

@@ -63,4 +63,4 @@ def test_model_interface_drift_profile(
     # save
     metadata = model.save(tmp_path)
 
-    assert metadata.drift_profile_uri is not None
+    assert metadata.save_metadata.drift_profile_uri is not None

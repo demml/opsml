@@ -81,7 +81,7 @@ print(data_card.version)
             - create_data_profile
             - split_data
             - load_data
-            - card_type
+            - registry_type
         show_root_heading: true
         show_source: true
         heading_level: 3

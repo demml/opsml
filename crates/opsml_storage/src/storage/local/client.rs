@@ -3,11 +3,7 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use futures_util::stream::Stream;
-use futures_util::task::{Context, Poll};
-use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::OpsmlApiClient;
-use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{
@@ -15,50 +11,13 @@ use opsml_types::{
     StorageType,
 };
 use reqwest::multipart::{Form, Part};
-use std::fs::{self};
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::pin::Pin;
 use std::time::SystemTime;
 use tokio::fs::File as TokioFile;
-use tokio::io::AsyncRead;
 use tokio_util::io::ReaderStream;
+use tracing::{debug, error, instrument};
 use walkdir::WalkDir;
-
-// left off here
-// removed multiupload part and implemented put on each storage client
-// need to fix up http client
-// - method for creating resumable upload
-// - method for creating uploader from resumable upload
-// - method for uploading part (special handling for local storage, or do we just use the same method?)
-
-struct ProgressStream<R> {
-    inner: ReaderStream<R>,
-    progress_bar: ProgressBar,
-}
-
-impl<R: AsyncRead + Unpin> ProgressStream<R> {
-    fn new(reader: R, progress_bar: ProgressBar) -> Self {
-        Self {
-            inner: ReaderStream::new(reader),
-            progress_bar,
-        }
-    }
-}
-
-impl<R: AsyncRead + Unpin> Stream for ProgressStream<R> {
-    type Item = Result<bytes::Bytes, std::io::Error>;
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let this = self.get_mut();
-        match Pin::new(&mut this.inner).poll_next(cx) {
-            Poll::Ready(Some(Ok(bytes))) => {
-                this.progress_bar.inc(bytes.len() as u64);
-                Poll::Ready(Some(Ok(bytes)))
-            }
-            other => other,
-        }
-    }
-}
 
 pub struct LocalMultiPartUpload {
     pub lpath: PathBuf,
@@ -102,6 +61,7 @@ impl LocalMultiPartUpload {
         if !self.client_mode {
             // join client bucket to rpath
             // create rpath parents if they don't exist
+            debug!("Uploading to {} via server", self.rpath.display());
             if let Some(parent) = self.rpath.parent() {
                 fs::create_dir_all(parent).map_err(|e| {
                     StorageError::Error(format!("Failed to create directory: {}", e))
@@ -111,35 +71,17 @@ impl LocalMultiPartUpload {
             fs::copy(&self.lpath, self.rpath.as_path())
                 .map_err(|e| StorageError::Error(format!("Failed to copy file: {}", e)))?;
         } else {
+            debug!("Uploading to {} via client", self.rpath.display());
             let client = self.api_client.as_ref().unwrap().clone();
 
             let file = TokioFile::open(&self.lpath)
                 .await
                 .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
-            let file_size = file
-                .metadata()
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?
-                .len();
-
-            let bar = ProgressBar::new(file_size);
-            let msg1 = Colorize::green("Uploading file:");
-            let msg2 = Colorize::purple(&self.filename);
-            let msg = format!("{} {}", msg1, msg2);
-            let template = format!(
-                "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-                msg
-            );
-            let style = ProgressStyle::with_template(&template)
-                .unwrap()
-                .progress_chars("#--");
-            bar.set_style(style);
-
-            let stream = ProgressStream::new(file, bar.clone());
+            let stream = ReaderStream::new(file);
 
             let part = Part::stream(reqwest::Body::wrap_stream(stream))
-                .file_name(self.lpath.to_str().unwrap().to_string())
+                .file_name(self.rpath.to_str().unwrap().to_string())
                 .mime_str("application/octet-stream")
                 .map_err(|e| StorageError::Error(format!("Failed to create part: {}", e)))?;
 
@@ -150,15 +92,9 @@ impl LocalMultiPartUpload {
                 .await
                 .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
-            bar.finish_with_message("Upload complete");
-
-            let value = response
-                .json::<serde_json::Value>()
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
-
-            let response = serde_json::from_value::<UploadResponse>(value)
-                .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+            let response = response.json::<UploadResponse>().await.map_err(|e| {
+                StorageError::Error(format!("Failed to parse upload response: {}", e))
+            })?;
 
             if !response.uploaded {
                 return Err(StorageError::Error("Failed to upload file".to_string()));
@@ -201,11 +137,13 @@ impl StorageClient for LocalStorageClient {
         Ok(Self { bucket })
     }
 
+    #[instrument(skip_all)]
     async fn get_object(&self, lpath: &str, rpath: &str) -> Result<(), StorageError> {
         let src_path = self.bucket.join(rpath);
         let dest_path = Path::new(lpath);
 
         if !src_path.exists() {
+            error!("Source path does not exist: {}", src_path.display());
             return Err(StorageError::Error(format!(
                 "Source path does not exist: {}",
                 src_path.display()
@@ -213,16 +151,21 @@ impl StorageClient for LocalStorageClient {
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                error!("Unable to create directory: {}", e);
+                StorageError::Error(format!("Unable to create directory: {}", e))
+            })?;
         }
 
-        fs::copy(&src_path, dest_path)
-            .map_err(|e| StorageError::Error(format!("Unable to copy file: {}", e)))?;
+        fs::copy(&src_path, dest_path).map_err(|e| {
+            error!("Unable to copy file: {}", e);
+            StorageError::Error(format!("Unable to copy file: {}", e))
+        })?;
 
         Ok(())
     }
 
+    #[instrument(skip_all)]
     async fn generate_presigned_url(
         &self,
         path: &str,
@@ -232,6 +175,7 @@ impl StorageClient for LocalStorageClient {
         if full_path.exists() {
             Ok(full_path.to_str().unwrap().to_string())
         } else {
+            error!("Path does not exist: {}", full_path.display());
             Err(StorageError::Error(format!(
                 "Path does not exist: {}",
                 full_path.display()
@@ -239,6 +183,7 @@ impl StorageClient for LocalStorageClient {
         }
     }
 
+    #[instrument(skip_all)]
     async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let mut files = Vec::new();
         let full_path = self.bucket.join(path);
@@ -247,8 +192,10 @@ impl StorageClient for LocalStorageClient {
         }
 
         for entry in WalkDir::new(full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                error!("Unable to read directory: {}", e);
+                StorageError::Error(format!("Unable to read directory: {}", e))
+            })?;
             if entry.file_type().is_file() {
                 files.push(entry.path().to_str().unwrap().to_string());
             }
@@ -266,9 +213,11 @@ impl StorageClient for LocalStorageClient {
         Ok(files)
     }
 
+    #[instrument(skip_all)]
     async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let full_path = self.bucket.join(path);
         if !full_path.exists() {
+            error!("Path does not exist: {}", full_path.display());
             return Err(StorageError::Error(format!(
                 "Path does not exist: {}",
                 full_path.display()
@@ -277,12 +226,15 @@ impl StorageClient for LocalStorageClient {
 
         let mut files_info = Vec::new();
         for entry in WalkDir::new(full_path) {
-            let entry = entry
-                .map_err(|e| StorageError::Error(format!("Unable to read directory: {}", e)))?;
+            let entry = entry.map_err(|e| {
+                error!("Unable to read directory: {}", e);
+                StorageError::Error(format!("Unable to read directory: {}", e))
+            })?;
             if entry.file_type().is_file() {
-                let metadata = entry
-                    .metadata()
-                    .map_err(|e| StorageError::Error(format!("Unable to read metadata: {}", e)))?;
+                let metadata = entry.metadata().map_err(|e| {
+                    error!("Unable to read metadata: {}", e);
+                    StorageError::Error(format!("Unable to read metadata: {}", e))
+                })?;
                 let created = metadata
                     .created()
                     .unwrap_or(SystemTime::now())
@@ -291,16 +243,24 @@ impl StorageClient for LocalStorageClient {
                     .as_secs()
                     .to_string();
 
-                let path = entry.path().to_str().unwrap().to_string();
-                let path = path
+                let rpath = entry.path().to_str().unwrap().to_string();
+                let filepath = rpath
                     .strip_prefix(self.bucket.to_str().unwrap())
-                    .unwrap_or(&path)
+                    .unwrap_or(path)
                     .strip_prefix("/")
-                    .unwrap_or(&path)
+                    .unwrap_or(path)
+                    .to_string();
+
+                // strip path from rpath
+                let stripped_path = filepath
+                    .strip_prefix(path)
+                    .unwrap_or(&rpath)
+                    .strip_prefix("/")
+                    .unwrap_or(&rpath)
                     .to_string();
 
                 let file_info = FileInfo {
-                    name: path,
+                    name: filepath,
                     size: metadata.len() as i64,
                     object_type: "file".to_string(),
                     created,
@@ -311,6 +271,7 @@ impl StorageClient for LocalStorageClient {
                         .to_str()
                         .unwrap_or("")
                         .to_string(),
+                    stripped_path,
                 };
                 files_info.push(file_info);
             }
@@ -319,11 +280,13 @@ impl StorageClient for LocalStorageClient {
         Ok(files_info)
     }
 
+    #[instrument(skip_all)]
     async fn copy_object(&self, src: &str, dest: &str) -> Result<bool, StorageError> {
         let src_path = self.bucket.join(src);
         let dest_path = self.bucket.join(dest);
 
         if !src_path.exists() {
+            error!("Source path does not exist: {}", src_path.display());
             return Err(StorageError::Error(format!(
                 "Source path does not exist: {}",
                 src_path.display()
@@ -331,12 +294,16 @@ impl StorageClient for LocalStorageClient {
         }
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| StorageError::Error(format!("Unable to create directory: {}", e)))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                error!("Unable to create directory: {}", e);
+                StorageError::Error(format!("Unable to create directory: {}", e))
+            })?;
         }
 
-        fs::copy(&src_path, &dest_path)
-            .map_err(|e| StorageError::Error(format!("Unable to copy file: {}", e)))?;
+        fs::copy(&src_path, &dest_path).map_err(|e| {
+            error!("Unable to copy file: {}", e);
+            StorageError::Error(format!("Unable to copy file: {}", e))
+        })?;
 
         Ok(true)
     }
@@ -376,6 +343,7 @@ impl StorageClient for LocalStorageClient {
         Ok(true)
     }
 
+    #[instrument(skip_all)]
     async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let full_path = self.bucket.join(path);
 
@@ -383,8 +351,10 @@ impl StorageClient for LocalStorageClient {
             return Ok(true);
         }
 
-        fs::remove_file(&full_path)
-            .map_err(|e| StorageError::Error(format!("Unable to delete file: {}", e)))?;
+        fs::remove_file(&full_path).map_err(|e| {
+            error!("Unable to delete file: {}", e);
+            StorageError::Error(format!("Unable to delete file: {}", e))
+        })?;
 
         Ok(true)
     }
@@ -417,9 +387,7 @@ impl LocalStorageClient {
         client_mode: bool,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
-        // join bucket to rpath
-        let rpath = self.bucket.join(rpath);
-        LocalMultiPartUpload::new(lpath, rpath.to_str().unwrap(), client_mode, api_client).await
+        LocalMultiPartUpload::new(lpath, rpath, client_mode, api_client).await
     }
 }
 #[derive(Clone)]
@@ -432,6 +400,9 @@ pub struct LocalFSStorageClient {
 impl FileSystem for LocalFSStorageClient {
     fn name(&self) -> &str {
         "LocalFSStorageClient"
+    }
+    fn bucket(&self) -> &str {
+        self.client.bucket.to_str().unwrap()
     }
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = LocalStorageClient::new(settings).await.unwrap();
@@ -558,7 +529,6 @@ impl FileSystem for LocalFSStorageClient {
             }
 
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
-
             for file in files {
                 let stripped_lpath_clone = stripped_lpath.clone();
                 let stripped_rpath_clone = stripped_rpath.clone();
@@ -573,16 +543,15 @@ impl FileSystem for LocalFSStorageClient {
 
                 uploader.upload_file_in_chunks().await?;
             }
-
-            Ok(())
         } else {
             let uploader = self
                 .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None)
                 .await?;
 
             uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+        };
+
+        Ok(())
     }
 }
 
@@ -593,10 +562,22 @@ impl LocalFSStorageClient {
         rpath: &Path,
         api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
+        debug!(
+            "Creating multipart uploader for {} -> {}",
+            lpath.display(),
+            rpath.display()
+        );
+
+        let rpath_buf = if !self.client_mode {
+            self.client.bucket.join(rpath)
+        } else {
+            rpath.to_path_buf()
+        };
+
         self.client
             .create_multipart_uploader(
                 lpath.to_str().unwrap(),
-                rpath.to_str().unwrap(),
+                rpath_buf.to_str().unwrap(),
                 self.client_mode,
                 api_client,
             )
@@ -613,8 +594,8 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::fs::File;
     use std::io::Write;
@@ -625,7 +606,7 @@ mod tests {
         let mut file = File::create(name).expect("Could not create sample file.");
 
         while file.metadata().unwrap().len() <= chunk_size * 2 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
@@ -652,7 +633,7 @@ mod tests {
         create_file(lpath.to_str().unwrap(), &1024);
 
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = LocalFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = LocalFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let rpath_dir = Path::new("test_dir");
         let rpath = rpath_dir.join(&filename);
@@ -669,7 +650,6 @@ mod tests {
 
         let nested_path = format!("nested/really/deep/file-{}.txt", rand_name);
         let rpath_nested = rpath.parent().unwrap().join(nested_path);
-
         storage_client.put(&lpath, &rpath_nested, false).await?;
 
         let path = storage_client.generate_presigned_url(&rpath, 10).await?;
@@ -712,7 +692,7 @@ mod tests {
         assert!(!storage_client.exists(rpath_dir).await?);
 
         let current_dir = std::env::current_dir().unwrap();
-        let path = current_dir.join(settings.storage_settings().storage_uri);
+        let path = current_dir.join(settings.storage_settings().unwrap().storage_uri);
         std::fs::remove_dir_all(&path).unwrap();
 
         Ok(())
@@ -725,7 +705,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = LocalFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = LocalFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let child = tmp_path.join("child");
         let grand_child = child.join("grandchild");
@@ -767,7 +747,7 @@ mod tests {
 
         let current_dir = std::env::current_dir().unwrap();
 
-        let path = current_dir.join(settings.storage_settings().storage_uri);
+        let path = current_dir.join(settings.storage_settings().unwrap().storage_uri);
         std::fs::remove_dir_all(&path).unwrap();
 
         Ok(())

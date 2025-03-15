@@ -18,10 +18,11 @@ impl UserPermissions {
     }
 
     pub fn has_write_permission(&self, repository_id: &str) -> bool {
-        self.has_permission(&format!("write:{}", repository_id))
+        self.has_permission(&format!("write:{repository_id}"))
+            || self.permissions.contains(&"write:all".to_string())
     }
 
     pub fn has_delete_permission(&self, repository_id: &str) -> bool {
-        self.has_permission(&format!("delete:{}", repository_id))
+        self.has_permission(&format!("delete:{repository_id}"))
     }
 }

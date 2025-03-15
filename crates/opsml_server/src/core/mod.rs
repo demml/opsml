@@ -1,11 +1,14 @@
+pub mod app;
 pub mod auth;
 pub mod cards;
 pub mod debug;
 pub mod error;
+pub mod experiment;
 pub mod files;
 pub mod health;
 pub mod router;
-pub mod run;
 pub mod settings;
 pub mod setup;
 pub mod state;
+pub mod ui;
+pub mod user;

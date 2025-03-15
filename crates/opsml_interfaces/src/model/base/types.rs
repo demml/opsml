@@ -31,49 +31,16 @@ impl InterfaceDataType {
     }
 }
 
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub enum TaskType {
-    Classification,
-    Regression,
-    Clustering,
-    AnomalyDetection,
-    TimeSeries,
-    Forecasting,
-    Recommendation,
-    Ranking,
-    NLP,
-    Image,
-    Audio,
-    Video,
-    Graph,
-    Tabular,
-    TimeSeriesForecasting,
-    TimeSeriesAnomalyDetection,
-    TimeSeriesClassification,
-    TimeSeriesRegression,
-    TimeSeriesClustering,
-    TimeSeriesRecommendation,
-    TimeSeriesRanking,
-    TimeSeriesNLP,
-    TimeSeriesImage,
-    TimeSeriesAudio,
-    TimeSeriesVideo,
-    TimeSeriesGraph,
-    TimeSeriesTabular,
-    Other,
-}
-
 #[pyclass]
 #[derive(Debug, Default)]
-pub struct SaveKwargs {
+pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
     pub model: Option<Py<PyDict>>,
     pub preprocessor: Option<Py<PyDict>>,
 }
 
 #[pymethods]
-impl SaveKwargs {
+impl ModelSaveKwargs {
     #[new]
     #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
     pub fn new<'py>(
@@ -140,12 +107,12 @@ impl SaveKwargs {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> SaveKwargs {
+    pub fn model_validate_json(json_string: String) -> ModelSaveKwargs {
         serde_json::from_str(&json_string).unwrap()
     }
 }
 
-impl SaveKwargs {
+impl ModelSaveKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.onnx.as_ref().map(|onnx| onnx.bind(py))
@@ -164,13 +131,13 @@ impl SaveKwargs {
     }
 }
 
-impl Serialize for SaveKwargs {
+impl Serialize for ModelSaveKwargs {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         Python::with_gil(|py| {
-            let mut state = serializer.serialize_struct("SaveKwargs", 3)?;
+            let mut state = serializer.serialize_struct("ModelSaveKwargs", 3)?;
             let onnx = self
                 .onnx
                 .as_ref()
@@ -192,21 +159,21 @@ impl Serialize for SaveKwargs {
     }
 }
 
-impl<'de> Deserialize<'de> for SaveKwargs {
-    fn deserialize<D>(deserializer: D) -> Result<SaveKwargs, D::Error>
+impl<'de> Deserialize<'de> for ModelSaveKwargs {
+    fn deserialize<D>(deserializer: D) -> Result<ModelSaveKwargs, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        struct SaveKwargsVisitor;
+        struct ModelSaveKwargsVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for SaveKwargsVisitor {
-            type Value = SaveKwargs;
+        impl<'de> serde::de::Visitor<'de> for ModelSaveKwargsVisitor {
+            type Value = ModelSaveKwargs;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("struct SaveKwargs")
+                formatter.write_str("struct ModelSaveKwargs")
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<SaveKwargs, A::Error>
+            fn visit_map<A>(self, mut map: A) -> Result<ModelSaveKwargs, A::Error>
             where
                 A: serde::de::MapAccess<'de>,
             {
@@ -261,7 +228,7 @@ impl<'de> Deserialize<'de> for SaveKwargs {
                             }
                         }
                     }
-                    let kwargs = SaveKwargs {
+                    let kwargs = ModelSaveKwargs {
                         onnx,
                         model,
                         preprocessor,
@@ -271,11 +238,15 @@ impl<'de> Deserialize<'de> for SaveKwargs {
             }
         }
 
-        deserializer.deserialize_struct("SaveKwargs", &["onnx", "model"], SaveKwargsVisitor)
+        deserializer.deserialize_struct(
+            "ModelSaveKwargs",
+            &["onnx", "model", "preprocessor"],
+            ModelSaveKwargsVisitor,
+        )
     }
 }
 
-impl Clone for SaveKwargs {
+impl Clone for ModelSaveKwargs {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
             let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
@@ -285,7 +256,7 @@ impl Clone for SaveKwargs {
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
 
-            SaveKwargs {
+            ModelSaveKwargs {
                 onnx,
                 model,
                 preprocessor,
@@ -296,7 +267,7 @@ impl Clone for SaveKwargs {
 
 #[pyclass]
 #[derive(Debug, Default)]
-pub struct LoadKwargs {
+pub struct ModelLoadKwargs {
     #[pyo3(get, set)]
     onnx: Option<Py<PyDict>>,
 
@@ -308,7 +279,7 @@ pub struct LoadKwargs {
 }
 
 #[pymethods]
-impl LoadKwargs {
+impl ModelLoadKwargs {
     #[new]
     #[pyo3(signature = (onnx=None, model=None, preprocessor=None))]
     pub fn new<'py>(
@@ -347,7 +318,7 @@ impl LoadKwargs {
     }
 }
 
-impl LoadKwargs {
+impl ModelLoadKwargs {
     pub fn onnx_kwargs<'py>(&self, py: Python<'py>) -> Option<&Bound<'py, PyDict>> {
         // convert Option<PyObject> into Option<Bound<_, PyDict>>
         self.onnx.as_ref().map(|onnx| onnx.bind(py))
@@ -366,7 +337,7 @@ impl LoadKwargs {
     }
 }
 
-impl Clone for LoadKwargs {
+impl Clone for ModelLoadKwargs {
     fn clone(&self) -> Self {
         Python::with_gil(|py| {
             let onnx = self.onnx.as_ref().map(|onnx| onnx.clone_ref(py));
@@ -376,7 +347,7 @@ impl Clone for LoadKwargs {
                 .as_ref()
                 .map(|preprocessor| preprocessor.clone_ref(py));
 
-            LoadKwargs {
+            ModelLoadKwargs {
                 onnx,
                 model,
                 preprocessor,
@@ -411,7 +382,7 @@ impl ExtraMetadata {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> SaveKwargs {
+    pub fn model_validate_json(json_string: String) -> ModelSaveKwargs {
         serde_json::from_str(&json_string).unwrap()
     }
 }
@@ -481,7 +452,7 @@ impl<'de> Deserialize<'de> for ExtraMetadata {
             }
         }
 
-        deserializer.deserialize_struct("SaveKwargs", &["onnx", "model"], ExtraMetadataVisitor)
+        deserializer.deserialize_struct("ModelSaveKwargs", &["onnx", "model"], ExtraMetadataVisitor)
     }
 }
 

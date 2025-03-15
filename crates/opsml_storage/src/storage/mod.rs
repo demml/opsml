@@ -6,3 +6,4 @@ pub mod filesystem;
 pub mod gcs;
 pub mod http;
 pub mod local;
+pub mod utils;

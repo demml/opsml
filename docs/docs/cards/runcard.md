@@ -1,9 +1,9 @@
-# RunCard
+# experimentcard
 
-`RunCards` are used to store metrics and artifacts related to `DataCards` and `ModelCards`. While a RunCard can be used as a object itself, it's best when used as part of a `Project` run.
+`experimentcards` are used to store metrics and artifacts related to `DataCards` and `ModelCards`. While a experimentcard can be used as a object itself, it's best when used as part of a `Project` run.
 
 ### Creating A Run
-Runs are unique context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `RunCard`.
+Runs are unique context-managed executions associated with a `Project` that record all created cards and their associated metrics, params, and artifacts to a single card called a `experimentcard`.
 
 The following example shows how to create a simple run as well as use `CardInfo` to store helper info
 
@@ -90,7 +90,7 @@ You can now log into the `OpsML` server and see your recent run and associated m
 - If you want to change the hardware logging time interval, simply change the `hardware_interval` in the `run` method `with project.run(log_hardware=True, hardware_interval=10) as run:`. Note: the `hardware_interval` is in seconds and the lowest value is 10 seconds. Default is 30 seconds.
 
 
-::: opsml.RunCard
+::: opsml.experimentcard
     options:
         members:
             - add_tag

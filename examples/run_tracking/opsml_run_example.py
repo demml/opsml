@@ -32,8 +32,15 @@ def run_project() -> None:
         data_interface = PandasData(
             data=X,
             data_splits=[
-                DataSplit(label="train", column_name="col_1", column_value=0.5, inequality=">="),
-                DataSplit(label="test", column_name="col_1", column_value=0.5, inequality="<"),
+                DataSplit(
+                    label="train",
+                    column_name="col_1",
+                    column_value=0.5,
+                    inequality=">=",
+                ),
+                DataSplit(
+                    label="test", column_name="col_1", column_value=0.5, inequality="<"
+                ),
             ],
             dependent_vars=["target"],
         )
@@ -53,7 +60,9 @@ def run_project() -> None:
         interface = SklearnModel(model=reg, sample_data=data["train"].X.to_numpy())
 
         # create modelcard
-        modelcard = ModelCard(interface=interface, info=card_info, to_onnx=True, datacard_uid=datacard.uid)
+        modelcard = ModelCard(
+            interface=interface, info=card_info, to_onnx=True, datacard_uid=datacard.uid
+        )
 
         # you can log metrics view log_metric or log_metrics
         run.log_metric("test_metric", 10)

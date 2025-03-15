@@ -23,6 +23,9 @@ TorchData = data.TorchData
 SqlData = data.SqlData
 generate_feature_schema = data.generate_feature_schema
 DataType = data.DataType
+DataSaveKwargs = data.DataSaveKwargs
+DataLoadKwargs = data.DataLoadKwargs
+DataInterfaceType = data.DataInterfaceType
 
 
 __all__ = [
@@ -48,4 +51,7 @@ __all__ = [
     "SqlData",
     "generate_feature_schema",
     "DataType",
+    "DataSaveKwargs",
+    "DataLoadKwargs",
+    "DataInterfaceType",
 ]

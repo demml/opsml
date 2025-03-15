@@ -4,7 +4,10 @@ format:
 
 .PHONY: lints
 lints:
-	cargo clippy --workspace --all-targets -- -D warnings
+	cargo clippy --workspace --all-targets  -- -D warnings
+
+lints.pedantic:
+	cargo clippy --workspace --all-targets  -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc
 
 ####### SQL tests
 .PHONY: test.sql.sqlite
@@ -38,17 +41,31 @@ test.sql.mysql: build.mysql
 .PHONY: test.sql
 test.sql: test.sql.sqlite test.sql.enum test.sql.postgres test.sql.mysql
 
+######## Storage tests
+
+.PHONY: test.storage.local.server
+test.storage.local.server:
+	cargo test --release -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1
+
 ######## Server tests
 
-.PHONE: build.server
-build.server:
+.PHONY: start.server
+start.server: stop.server build.ui
 	cargo build -p opsml-server
 	./target/debug/opsml-server &
 
 
-.PHONE: stop.server
+.PHONY: stop.server
 stop.server:
 	lsof -ti:3000 | xargs kill -9
+#	rm -f opsml.db || true
+#	rm -rf opsml_registries || true
+	
+
+######## Experiment tests ########
+
+test.experiment:
+	cargo test -p opsml-experiment -- --nocapture
 
 ######## Storage tests
 .PHONY: test.storage.client
@@ -71,3 +88,25 @@ test.server:
 .PHONY: test.opsml.registry.client
 test.opsml.registry.client:
 	cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1
+
+
+###### UI ######
+UI_DIR = crates/opsml_server/opsml_ui
+PY_DIR = py-opsml
+
+ui.update.deps:
+	cd $(UI_DIR) && pnpm update
+
+.PHONY: ui.install
+install.ui.deps:
+	cd $(UI_DIR) && pnpm install
+
+.PHONY: ui.build
+build.ui:
+	cd $(UI_DIR) && pnpm build
+
+ui.dev:
+	cd $(UI_DIR) && pnpm run dev
+
+populate.db:
+	cd $(PY_DIR) && uv run python dev/populate_db.py

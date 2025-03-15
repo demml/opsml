@@ -4,7 +4,7 @@ test.storage.gcs.client:
 
 .PHONY: test.storage.aws.client
 test.storage.aws.client:
-	cargo test -p opsml-storage test_aws_storage_client -- --nocapture
+	cargo test -p opsml-storage test_aws_storage_client -- --nocapture --test-threads 1
 
 .PHONY: test.storage.azure.client
 test.storage.azure.client:

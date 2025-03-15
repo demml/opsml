@@ -1,12 +1,18 @@
-use crate::RegistryType;
+use crate::contracts::ArtifactKey;
+use crate::{
+    cards::CardTable,
+    interfaces::{types::DataInterfaceType, ModelType, TaskType},
+    DataType, ModelInterfaceType, RegistryType,
+};
 use chrono::NaiveDateTime;
 use opsml_colors::Colorize;
+use opsml_error::CardError;
 use opsml_semver::VersionType;
-use opsml_utils::PyHelperFuncs;
+use opsml_utils::{get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::LazyLock;
+use std::path::Path;
+use std::path::PathBuf;
 use tabled::settings::{
     format::Format,
     object::{Columns, Rows},
@@ -17,6 +23,13 @@ use tabled::{Table, Tabled};
 #[derive(Serialize, Deserialize)]
 pub struct UidRequest {
     pub uid: String,
+    pub registry_type: RegistryType,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DeleteCardRequest {
+    pub uid: String,
+    pub repository: String,
     pub registry_type: RegistryType,
 }
 
@@ -54,20 +67,14 @@ pub struct QueryPageRequest {
 
 // QueryPageResponse is sourced from sql schema
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CardVersionRequest {
-    pub registry_type: RegistryType,
     pub name: String,
     pub repository: String,
     pub version: Option<String>,
     pub version_type: VersionType,
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CardVersionResponse {
-    pub version: String,
 }
 
 /// Arguments for querying cards
@@ -91,74 +98,44 @@ pub struct CardQueryArgs {
     pub repository: Option<String>,
     pub version: Option<String>,
     pub max_date: Option<String>,
-    pub tags: Option<HashMap<String, String>>,
-    pub limit: Option<i32>,
-    pub sort_by_timestamp: Option<bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ListCardRequest {
-    pub uid: Option<String>,
-    pub name: Option<String>,
-    pub repository: Option<String>,
-    pub version: Option<String>,
-    pub max_date: Option<String>,
-    pub tags: Option<HashMap<String, String>>,
+    pub tags: Option<Vec<String>>,
     pub limit: Option<i32>,
     pub sort_by_timestamp: Option<bool>,
     pub registry_type: RegistryType,
 }
 
-impl Default for ListCardRequest {
-    fn default() -> Self {
-        Self {
-            uid: None,
-            name: None,
-            repository: None,
-            version: None,
-            max_date: None,
-            tags: None,
-            limit: None,
-            sort_by_timestamp: None,
-            registry_type: RegistryType::Data,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct DataCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub data_type: String,
-    pub runcard_uid: Option<String>,
-    pub pipelinecard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
-    pub interface_type: Option<String>,
+    pub interface_type: String,
+    pub username: String,
 }
 
 impl Default for DataCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
-            created_at: None,
-            app_env: None,
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
-            tags: HashMap::new(),
-            data_type: "".to_string(),
-            runcard_uid: None,
-            pipelinecard_uid: None,
+            tags: Vec::new(),
+            data_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
             auditcard_uid: None,
-            interface_type: None,
+            interface_type: DataInterfaceType::Base.to_string(),
+            username: "guest".to_string(),
         }
     }
 }
@@ -166,83 +143,78 @@ impl Default for DataCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct ModelCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub datacard_uid: Option<String>,
-    pub sample_data_type: String,
+    pub data_type: String,
     pub model_type: String,
-    pub runcard_uid: Option<String>,
-    pub pipelinecard_uid: Option<String>,
+    pub experimentcard_uid: Option<String>,
     pub auditcard_uid: Option<String>,
-    pub interface_type: Option<String>,
-    pub task_type: Option<String>,
+    pub interface_type: String,
+    pub task_type: String,
+    pub username: String,
 }
 
 impl Default for ModelCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
-            created_at: None,
-            app_env: None,
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
-            tags: HashMap::new(),
+
+            tags: Vec::new(),
             datacard_uid: None,
-            sample_data_type: "".to_string(),
-            model_type: "".to_string(),
-            runcard_uid: None,
-            pipelinecard_uid: None,
+            data_type: DataType::NotProvided.to_string(),
+            model_type: ModelType::Unknown.to_string(),
+            experimentcard_uid: None,
             auditcard_uid: None,
-            interface_type: None,
-            task_type: None,
+            interface_type: ModelInterfaceType::Base.to_string(),
+            task_type: TaskType::Other.to_string(),
+            username: "guest".to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
-pub struct RunCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+pub struct ExperimentCardClientRecord {
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
-    pub tags: HashMap<String, String>,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub pipelinecard_uid: Option<String>,
-    pub project: String,
-    pub artifact_uris: Option<HashMap<String, String>>,
-    pub compute_environment: Option<HashMap<String, String>>,
+    pub tags: Vec<String>,
+    pub datacard_uids: Vec<String>,
+    pub modelcard_uids: Vec<String>,
+    pub promptcard_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
+    pub username: String,
 }
 
-impl Default for RunCardClientRecord {
+impl Default for ExperimentCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
-            created_at: None,
-            app_env: None,
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
-            tags: HashMap::new(),
-            datacard_uids: None,
-            modelcard_uids: None,
-            pipelinecard_uid: None,
-            project: "".to_string(),
-            artifact_uris: None,
-            compute_environment: None,
+            tags: Vec::new(),
+            datacard_uids: Vec::new(),
+            modelcard_uids: Vec::new(),
+            promptcard_uids: Vec::new(),
+            experimentcard_uids: Vec::new(),
+            username: "guest".to_string(),
         }
     }
 }
@@ -250,95 +222,69 @@ impl Default for RunCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct AuditCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
-    pub tags: HashMap<String, String>,
+    pub tags: Vec<String>,
     pub approved: bool,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub runcard_uids: Option<Vec<String>>,
+    pub datacard_uids: Vec<String>,
+    pub modelcard_uids: Vec<String>,
+    pub experimentcard_uids: Vec<String>,
+    pub username: String,
 }
 
 impl Default for AuditCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
-            created_at: None,
-            app_env: None,
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
-            tags: HashMap::new(),
+            tags: Vec::new(),
             approved: false,
-            datacard_uids: None,
-            modelcard_uids: None,
-            runcard_uids: None,
+            datacard_uids: Vec::new(),
+            modelcard_uids: Vec::new(),
+            experimentcard_uids: Vec::new(),
+            username: "guest".to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
-pub struct PipelineCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub app_env: Option<String>,
+pub struct PromptCardClientRecord {
+    pub uid: String,
+    pub created_at: NaiveDateTime,
+    pub app_env: String,
     pub name: String,
     pub repository: String,
     pub version: String,
-    pub contact: String,
-    pub tags: HashMap<String, String>,
-    pub pipeline_code_uri: String,
-    pub datacard_uids: Option<Vec<String>>,
-    pub modelcard_uids: Option<Vec<String>>,
-    pub runcard_uids: Option<Vec<String>>,
+    pub tags: Vec<String>,
+    pub prompt_type: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
+    pub username: String,
 }
 
-impl Default for PipelineCardClientRecord {
+impl Default for PromptCardClientRecord {
     fn default() -> Self {
         Self {
-            uid: None,
-            created_at: None,
-            app_env: None,
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
             name: "".to_string(),
             repository: "".to_string(),
             version: "".to_string(),
-            contact: "".to_string(),
-            tags: HashMap::new(),
-            pipeline_code_uri: "".to_string(),
-            datacard_uids: None,
-            modelcard_uids: None,
-            runcard_uids: None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
-pub struct ProjectCardClientRecord {
-    pub uid: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub name: String,
-    pub repository: String,
-    pub version: String,
-    pub project_id: i32,
-}
-
-impl Default for ProjectCardClientRecord {
-    fn default() -> Self {
-        Self {
-            uid: None,
-            created_at: None,
-            name: "".to_string(),
-            repository: "".to_string(),
-            version: "".to_string(),
-            project_id: 0,
+            tags: Vec::new(),
+            prompt_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
+            username: "guest".to_string(),
         }
     }
 }
@@ -349,10 +295,9 @@ impl Default for ProjectCardClientRecord {
 pub enum Card {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
-    Run(RunCardClientRecord),
+    Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
-    Pipeline(PipelineCardClientRecord),
-    Project(ProjectCardClientRecord),
+    Prompt(PromptCardClientRecord),
 }
 
 #[pymethods]
@@ -362,38 +307,35 @@ impl Card {
     }
 
     #[getter]
-    pub fn uid(&self) -> Option<&str> {
+    pub fn uid(&self) -> &str {
         match self {
-            Self::Data(card) => card.uid.as_deref(),
-            Self::Model(card) => card.uid.as_deref(),
-            Self::Run(card) => card.uid.as_deref(),
-            Self::Audit(card) => card.uid.as_deref(),
-            Self::Pipeline(card) => card.uid.as_deref(),
-            Self::Project(card) => card.uid.as_deref(),
+            Self::Data(card) => &card.uid,
+            Self::Model(card) => &card.uid,
+            Self::Experiment(card) => &card.uid,
+            Self::Audit(card) => &card.uid,
+            Self::Prompt(card) => &card.uid,
         }
     }
 
     #[getter]
-    pub fn created_at(&self) -> Option<NaiveDateTime> {
+    pub fn created_at(&self) -> NaiveDateTime {
         match self {
             Self::Data(card) => card.created_at,
             Self::Model(card) => card.created_at,
-            Self::Run(card) => card.created_at,
+            Self::Experiment(card) => card.created_at,
             Self::Audit(card) => card.created_at,
-            Self::Pipeline(card) => card.created_at,
-            Self::Project(card) => card.created_at,
+            Self::Prompt(card) => card.created_at,
         }
     }
 
     #[getter]
-    pub fn app_env(&self) -> Option<&str> {
+    pub fn app_env(&self) -> &str {
         match self {
-            Self::Data(card) => card.app_env.as_deref(),
-            Self::Model(card) => card.app_env.as_deref(),
-            Self::Run(card) => card.app_env.as_deref(),
-            Self::Audit(card) => card.app_env.as_deref(),
-            Self::Pipeline(card) => card.app_env.as_deref(),
-            Self::Project(_) => None,
+            Self::Data(card) => card.app_env.as_ref(),
+            Self::Model(card) => card.app_env.as_ref(),
+            Self::Experiment(card) => card.app_env.as_ref(),
+            Self::Audit(card) => card.app_env.as_ref(),
+            Self::Prompt(card) => card.app_env.as_ref(),
         }
     }
 
@@ -402,10 +344,9 @@ impl Card {
         match self {
             Self::Data(card) => card.name.as_ref(),
             Self::Model(card) => card.name.as_ref(),
-            Self::Run(card) => card.name.as_ref(),
+            Self::Experiment(card) => card.name.as_ref(),
             Self::Audit(card) => card.name.as_ref(),
-            Self::Pipeline(card) => card.name.as_ref(),
-            Self::Project(card) => card.name.as_ref(),
+            Self::Prompt(card) => card.name.as_ref(),
         }
     }
 
@@ -414,10 +355,9 @@ impl Card {
         match self {
             Self::Data(card) => card.repository.as_ref(),
             Self::Model(card) => card.repository.as_ref(),
-            Self::Run(card) => card.repository.as_ref(),
+            Self::Experiment(card) => card.repository.as_ref(),
             Self::Audit(card) => card.repository.as_ref(),
-            Self::Pipeline(card) => card.repository.as_ref(),
-            Self::Project(card) => card.repository.as_ref(),
+            Self::Prompt(card) => card.repository.as_ref(),
         }
     }
 
@@ -426,58 +366,31 @@ impl Card {
         match self {
             Self::Data(card) => card.version.as_ref(),
             Self::Model(card) => card.version.as_ref(),
-            Self::Run(card) => card.version.as_ref(),
+            Self::Experiment(card) => card.version.as_ref(),
             Self::Audit(card) => card.version.as_ref(),
-            Self::Pipeline(card) => card.version.as_ref(),
-            Self::Project(card) => card.version.as_ref(),
+            Self::Prompt(card) => card.version.as_ref(),
         }
     }
 
     #[getter]
-    pub fn contact(&self) -> &str {
-        match self {
-            Self::Data(card) => card.contact.as_ref(),
-            Self::Model(card) => card.contact.as_ref(),
-            Self::Run(card) => card.contact.as_ref(),
-            Self::Audit(card) => card.contact.as_ref(),
-            Self::Pipeline(card) => card.contact.as_ref(),
-            Self::Project(_) => "",
-        }
-    }
-
-    #[getter]
-    pub fn tags(&self) -> &HashMap<String, String> {
+    pub fn tags(&self) -> &Vec<String> {
         match self {
             Self::Data(card) => &card.tags,
             Self::Model(card) => &card.tags,
-            Self::Run(card) => &card.tags,
+            Self::Experiment(card) => &card.tags,
             Self::Audit(card) => &card.tags,
-            Self::Pipeline(card) => &card.tags,
-            Self::Project(_) => {
-                static EMPTY_MAP: LazyLock<HashMap<String, String>> = LazyLock::new(HashMap::new);
-                &EMPTY_MAP
-            }
+            Self::Prompt(card) => &card.tags,
         }
     }
 
     #[getter]
     pub fn datacard_uids(&self) -> Option<Vec<&str>> {
         match self {
-            Self::Data(card) => card.uid.as_deref().map(|uid| vec![uid]),
+            Self::Data(card) => Some(vec![&card.uid]),
             Self::Model(card) => card.datacard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Audit(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .datacard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
+            Self::Experiment(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
+            Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
+            Self::Prompt(_) => None,
         }
     }
 
@@ -485,50 +398,28 @@ impl Card {
     pub fn modelcard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => card.uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Audit(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .modelcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
+            Self::Model(card) => Some(vec![&card.uid]),
+            Self::Experiment(card) => {
+                Some(card.modelcard_uids.iter().map(String::as_str).collect())
+            }
+            Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
+            Self::Prompt(_) => None,
         }
     }
 
     #[getter]
-    pub fn runcard_uids(&self) -> Option<Vec<&str>> {
+    pub fn experimentcard_uids(&self) -> Option<Vec<&str>> {
         match self {
-            Self::Data(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Model(card) => card.runcard_uid.as_deref().map(|uid| vec![uid]),
-            Self::Run(card) => card.uid.as_deref().map(|uid| vec![uid]),
-            Self::Audit(card) => card
-                .runcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Pipeline(card) => card
-                .runcard_uids
-                .as_ref()
-                .map(|uids| uids.iter().map(String::as_str).collect()),
-            Self::Project(_) => None,
-        }
-    }
-
-    #[getter]
-    pub fn pipelinecard_uid(&self) -> Option<&str> {
-        match self {
-            Self::Data(card) => card.pipelinecard_uid.as_deref(),
-            Self::Model(card) => card.pipelinecard_uid.as_deref(),
-            Self::Run(card) => card.pipelinecard_uid.as_deref(),
-            Self::Audit(_) => None,
-            Self::Pipeline(card) => card.uid.as_deref(),
-            Self::Project(_) => None,
+            Self::Data(card) => card.experimentcard_uid.as_deref().map(|uid| vec![uid]),
+            Self::Model(card) => card.experimentcard_uid.as_deref().map(|uid| vec![uid]),
+            Self::Experiment(card) => Some(vec![&card.uid]),
+            Self::Audit(card) => Some(
+                card.experimentcard_uids
+                    .iter()
+                    .map(String::as_str)
+                    .collect(),
+            ),
+            Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
         }
     }
 
@@ -537,58 +428,122 @@ impl Card {
         match self {
             Self::Data(card) => card.auditcard_uid.as_deref(),
             Self::Model(card) => card.auditcard_uid.as_deref(),
-            Self::Run(_) => None,
-            Self::Audit(card) => card.uid.as_deref(),
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
+            Self::Experiment(_) => None,
+            Self::Audit(card) => Some(&card.uid),
+            Self::Prompt(card) => card.auditcard_uid.as_deref(),
         }
     }
 
     #[getter]
-    pub fn interface_type(&self) -> Option<&str> {
+    pub fn interface_type(&self) -> Option<String> {
         match self {
-            Self::Data(card) => card.interface_type.as_deref(),
-            Self::Model(card) => card.interface_type.as_deref(),
-            Self::Run(_) => None,
+            Self::Data(card) => Some(card.interface_type.to_string()),
+            Self::Model(card) => Some(card.interface_type.to_string()),
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
     #[getter]
-    pub fn data_type(&self) -> Option<&str> {
+    pub fn data_type(&self) -> Option<String> {
         match self {
-            Self::Data(card) => Some(card.data_type.as_str()),
-            Self::Model(card) => Some(card.sample_data_type.as_str()),
-            Self::Run(_) => None,
+            Self::Data(card) => Some(card.data_type.to_string()),
+            Self::Model(card) => Some(card.data_type.to_string()),
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
     #[getter]
-    pub fn model_type(&self) -> Option<&str> {
+    pub fn model_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => Some(card.model_type.as_str()),
-            Self::Run(_) => None,
+            Self::Model(card) => Some(card.model_type.to_string()),
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
+            Self::Prompt(_) => None,
         }
     }
 
     #[getter]
-    pub fn task_type(&self) -> Option<&str> {
+    pub fn task_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
-            Self::Model(card) => card.task_type.as_deref(),
-            Self::Run(_) => None,
+            Self::Model(card) => Some(card.task_type.to_string()),
+            Self::Experiment(_) => None,
             Self::Audit(_) => None,
-            Self::Pipeline(_) => None,
-            Self::Project(_) => None,
+            Self::Prompt(_) => None,
+        }
+    }
+}
+
+impl Card {
+    pub fn uri(&self) -> Result<PathBuf, CardError> {
+        match self {
+            Self::Data(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Data,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Model(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Model,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+            Self::Experiment(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Experiment,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+
+            Self::Audit(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Audit,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+
+            Self::Prompt(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Prompt,
+                    card.repository,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
+        }
+    }
+
+    pub fn registry_type(&self) -> RegistryType {
+        match self {
+            Self::Data(_) => RegistryType::Data,
+            Self::Model(_) => RegistryType::Model,
+            Self::Experiment(_) => RegistryType::Experiment,
+            Self::Audit(_) => RegistryType::Audit,
+            Self::Prompt(_) => RegistryType::Prompt,
         }
     }
 }
@@ -598,9 +553,24 @@ struct CardTableEntry {
     created_at: String,
     name: String,
     repository: String,
-    contact: String,
     version: String,
     uid: String,
+}
+
+#[pyclass]
+struct CardListIter {
+    inner: std::vec::IntoIter<Card>,
+}
+
+#[pymethods]
+impl CardListIter {
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<Card> {
+        slf.inner.next()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -616,15 +586,29 @@ impl CardList {
         PyHelperFuncs::__str__(self)
     }
 
+    pub fn __getitem__(&self, index: usize) -> Option<Card> {
+        self.cards.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
+        let iter = CardListIter {
+            inner: slf.cards.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.cards.len()
+    }
+
     pub fn as_table(&self) {
         let entries: Vec<CardTableEntry> = self
             .cards
             .iter()
             .map(|card| {
-                let created_at = card.created_at().unwrap().to_string();
+                let created_at = card.created_at().to_string();
                 let name = card.name();
                 let repository = card.repository();
-                let contact = card.contact();
                 let version = card.version();
                 let uid = card.uid();
 
@@ -632,9 +616,8 @@ impl CardList {
                     created_at,
                     name: name.to_string(),
                     repository: repository.to_string(),
-                    contact: contact.to_string(),
                     version: version.to_string(),
-                    uid: Colorize::purple(uid.unwrap()),
+                    uid: Colorize::purple(uid),
                 }
             })
             .collect();
@@ -645,7 +628,6 @@ impl CardList {
         table.modify(Columns::single(0), Width::wrap(20).keep_words(true));
         table.modify(Columns::single(1), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(2), Width::wrap(15).keep_words(true));
-        table.modify(Columns::single(3), Width::wrap(15).keep_words(true));
         table.modify(Columns::single(4), Width::wrap(30).keep_words(true));
         table.modify(Columns::single(5), Width::wrap(50));
         table.modify(
@@ -665,19 +647,25 @@ impl CardList {
 pub struct CreateCardRequest {
     pub registry_type: RegistryType,
     pub card: Card,
+    pub version_request: CardVersionRequest,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateCardResponse {
     pub registered: bool,
-    pub uid: String,
+    pub version: String,
+    pub repository: String,
+    pub name: String,
+    pub app_env: String,
+    pub created_at: NaiveDateTime,
+    pub key: ArtifactKey,
 }
 
 /// Duplicating card request to be explicit with naming
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UpdateCardRequest {
-    pub registry_type: RegistryType,
     pub card: Card,
+    pub registry_type: RegistryType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

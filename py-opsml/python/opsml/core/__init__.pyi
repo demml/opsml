@@ -1,5 +1,14 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+class ExtraMetadata:
+    metadata: Dict[str, Any]
+
+class StorageType:
+    Google: "StorageType"
+    Aws: "StorageType"
+    Local: "StorageType"
+    Azure: "StorageType"
 
 class Description:
     summary: Optional[str]
@@ -208,6 +217,33 @@ class OpsmlConfig:
             String representation of the OpsmlConfig.
         """
 
+class ApiSettings:
+    base_url: str
+    use_auth: bool
+    opsml_dir: str
+    scouter_dir: str
+    username: str
+    password: str
+    auth_token: str
+    prod_token: Optional[str]
+
+class OpsmlStorageSettings:
+    storage_uri: str
+    client_mode: bool
+    storage_type: StorageType
+    api_settings: ApiSettings
+
+    def __init__(self, storage_uri="./opsml_registries", client_mode=False) -> None:
+        """Initialize the OpsmlStorageSettings.
+
+        Args:
+            storage_uri:
+                The URI for the storage. Default is "./opsml_registries".
+
+            client_mode:
+                Whether to use the client. Default is False.
+        """
+
 # shared
 class CommonKwargs:
     IsPipeline: "CommonKwargs"
@@ -258,7 +294,6 @@ class CommonKwargs:
 class SaveName:
     Card: "SaveName"
     Audit: "SaveName"
-    PipelineCard: "SaveName"
     ModelMetadata: "SaveName"
     Model: "SaveName"
     Preprocessor: "SaveName"
@@ -373,12 +408,12 @@ class InterfaceType:
     Model: "InterfaceType"
 
 class VersionType:
-    Major = "major"
-    Minor = "minor"
-    Patch = "patch"
-    Pre = "pre"
-    Build = "build"
-    PreBuild = "prebuild"
+    Major: "VersionType"
+    Minor: "VersionType"
+    Patch: "VersionType"
+    Pre: "VersionType"
+    Build: "VersionType"
+    PreBuild: "VersionType"
 
     def __init__(self, version_type: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...
@@ -498,36 +533,3 @@ class OnnxSchema:
     @property
     def feature_names(self) -> List[str]:
         """Return the feature names and order for onnx."""
-
-class DataSchema:
-    data_type: str
-    input_features: Optional[FeatureSchema]
-    output_features: Optional[FeatureSchema]
-    onnx_schema: Optional[OnnxSchema]
-
-    def __init__(
-        self,
-        data_type: str,
-        input_features: Optional[FeatureSchema] = None,
-        output_features: Optional[FeatureSchema] = None,
-        onnx_schema: Optional[OnnxSchema] = None,
-    ) -> None:
-        """Define a data schema
-
-        Args:
-            data_type:
-                The type of the data schema
-            input_features:
-                The input features of the data schema
-            output_features:
-                The output features of the data schema
-            onnx_schema:
-                The onnx schema of the data schema
-        """
-
-    def __str__(self) -> str:
-        """Return a string representation of the DataSchema.
-
-        Returns:
-            String representation of the DataSchema.
-        """

@@ -1,9 +1,8 @@
 use crate::base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension};
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{
@@ -252,13 +251,18 @@ impl HuggingFaceSampleData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let save_path = data.call_method("save_data", (path,), kwargs)?;
+        let metadata = data.call_method("save", (path,), kwargs)?;
+
         // convert pyany to pathbuf
-        let save_path = save_path.extract::<PathBuf>()?;
+        let save_path = metadata
+            .getattr("save_metadata")?
+            .getattr("data_uri")?
+            .extract::<PathBuf>()?;
+
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
