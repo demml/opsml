@@ -125,6 +125,9 @@ mod tests {
     pub struct TestHelper {
         app: Router,
         token: JwtToken,
+        name: String,
+        repository: String,
+        version: String,
     }
 
     impl TestHelper {
@@ -144,8 +147,17 @@ mod tests {
 
             // retrieve the token
             let token = TestHelper::login(&app).await;
+            let name = "name".to_string();
+            let repository = "space".to_string();
+            let version = "1.0.0".to_string();
 
-            Self { app, token }
+            Self {
+                app,
+                token,
+                name,
+                repository,
+                version,
+            }
         }
 
         pub async fn login(app: &Router) -> JwtToken {
@@ -189,6 +201,47 @@ mod tests {
 
         pub fn cleanup(&self) {
             cleanup();
+        }
+
+        pub async fn create_card(&self) {
+            // 1. First create a card so we have something to get
+            let card_version_request = CardVersionRequest {
+                name: self.name.clone(),
+                repository: self.repository.clone(),
+                version: Some(self.version.clone()),
+                version_type: VersionType::Minor,
+                pre_tag: None,
+                build_tag: None,
+            };
+
+            // Create a test card with some data
+            let card_request = CreateCardRequest {
+                card: Card::Data(DataCardClientRecord {
+                    name: self.name.clone(),
+                    repository: self.repository.clone(),
+                    version: self.version.clone(),
+                    tags: vec!["test".to_string()],
+                    ..DataCardClientRecord::default()
+                }),
+                registry_type: RegistryType::Data,
+                version_request: card_version_request,
+            };
+
+            let body = serde_json::to_string(&card_request).unwrap();
+
+            // Create the card first
+            let request = Request::builder()
+                .uri("/opsml/api/card/create")
+                .method("POST")
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(body))
+                .unwrap();
+
+            let response = self.send_oneshot(request).await;
+            assert_eq!(response.status(), StatusCode::OK);
+            //
+            let body = response.into_body().collect().await.unwrap().to_bytes();
+            let _create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
         }
     }
 
@@ -1430,7 +1483,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_opsml_server_get_readme() {
+    async fn test_opsml_server_render_files() {
         let helper = TestHelper::new().await;
 
         // 1. First create a card so we have something to get
@@ -1522,7 +1575,5 @@ mod tests {
         let card_readme: ReadeMe = serde_json::from_slice(&body).unwrap();
 
         assert_eq!(card_readme.readme, "This is a test README");
-
-        //
     }
 }

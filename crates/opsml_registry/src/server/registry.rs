@@ -452,10 +452,7 @@ pub mod server_logic {
         ) -> Result<(), RegistryError> {
             // get key
             let key = self
-                .load_card(CardQueryArgs {
-                    uid: Some(delete_request.uid.to_string()),
-                    ..Default::default()
-                })
+                .get_artifact_key(delete_request.uid.as_str(), &delete_request.registry_type)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to load card {}", e)))?;
 
@@ -487,10 +484,10 @@ pub mod server_logic {
 
         pub async fn load_card(
             &mut self,
-            args: CardQueryArgs,
+            args: ArtifactKeyRequest,
         ) -> Result<ArtifactKey, RegistryError> {
             self.sql_client
-                .get_card_key_for_loading(&self.table_name, &args)
+                .get_artifact_key(&args.uid, &args.registry_type.to_string())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))
         }

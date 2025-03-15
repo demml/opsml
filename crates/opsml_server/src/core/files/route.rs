@@ -610,7 +610,7 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/files/tree", prefix), get(file_tree))
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
-            .route(&format!("{}/files/decrypt", prefix), get(get_artifact_key))
+            .route(&format!("{}/files/key", prefix), get(get_artifact_key))
             .route(&format!("{}/files/render", prefix), post(get_file_for_ui))
     }));
 
