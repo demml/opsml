@@ -1,52 +1,92 @@
 <script lang="ts">
     // Define the file node structure
-    import { type FileNode } from "./types";
-    import FileTreeNode from "./FileTreeNode.svelte";
+    
+  import { type FileTreeNode } from "./types";
+  import { Folder, File } from 'lucide-svelte';
+  import { formatBytes, timeAgo } from "./utils";
+  import { goto } from "$app/navigation";
+  // Use runes for reactive state
+  let { files, 
+        path, 
+        previousPath, 
+        repository, 
+        name, 
+        version, 
+        isRoot 
+      } = $props<{ 
+        files: FileTreeNode[], 
+        path:string, 
+        previousPath: 
+        string, 
+        repository: 
+        string, 
+        name: 
+        string, 
+        version: string, 
+        isRoot: boolean 
+      }>();
 
-    // Use runes for reactive state
-    let { files } = $props<{ files: string[] }>();
-    let tree = $state<FileNode[]>([]);
-  
-    // Convert flat file list into a tree structure
-    function buildFileTree(paths: string[]): FileNode[] {
-      const root: FileNode[] = [];
-      
-      paths.forEach(path => {
-        const parts = path.split('/');
-        let currentLevel = root;
-        
-        parts.forEach((part, index) => {
-          const isLast = index === parts.length - 1;
-          const fullPath = parts.slice(0, index + 1).join('/');
-          const existing = currentLevel.find(n => n.name === part);
-  
-          if (!existing) {
-            const node: FileNode = {
-              name: part,
-              type: isLast ? 'file' : 'directory',
-              path: fullPath,
-              isOpen: false,
-              children: isLast ? undefined : []
-            };
-            currentLevel.push(node);
-            if (!isLast) currentLevel = node.children!;
-          } else if (!isLast) {
-            currentLevel = existing.children!;
-          }
-        });
-      });
-  
-      return root;
-    }
-  
-    // Update tree whenever files prop changes
-    $effect(() => {
-      tree = buildFileTree(files);
-    });
+
+  function navigateToPath(slug_name: string) {
+    let newPath = path + '/' + slug_name;
+
+    // add params to path
+    newPath = newPath + `?repository=${repository}&name=${name}&version=${version}`;
+    goto(newPath);
+  }
+   
   </script>
   
-  <div class="space-y-1">
-    {#each tree as node}
-      <FileTreeNode {node} />
-    {/each}
-  </div>
+
+<div class="rounded-lg border-2 border-black shadow overflow-x-auto bg-slate-100">
+  <table class="table-auto w-full text-black rounded-lg overflow-hidden text-sm md:text-base bg-slate-100">
+    <thead class="bg-primary-500">
+      <tr>
+        <th class="text-black pl-4 py-2 text-left">Name</th>
+        <th class="text-black p-2 text-left">Size</th>
+        <th class="text-black pr-4 py-2 text-right">Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#if !isRoot}
+        <tr class="border-t hover:bg-primary-300 py-2">
+          <td class="pl-4 py-2">
+            <button class="btn flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => goto(previousPath)}>
+              <Folder />
+              <div class="text-black">..</div>
+            </button>
+          </td>
+          <td class="p-2">
+            <span></span>
+          </td>
+          <td class="pr-4 py-2 text-black text-right"></td>
+        </tr>
+      {/if}
+      {#each files as file}
+      <tr class="border-t hover:bg-primary-300 py-2">
+        <td class="pl-4 py-2">
+          {#if file.object_type === 'directory'}
+            <button class="btn flex flex-row gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => navigateToPath(file.name)}>
+                <Folder />
+              <div class="text-black">{file.name}</div>
+            </button>
+          {:else}
+            <div class="flex flex-row gap-2">
+                <File />
+                <div class="text-black">{file.name}</div>
+            </div>
+          {/if}
+        </td>
+        <td class="p-2">
+          {#if file.object_type === 'directory'}
+            <span></span>
+          {:else}
+            <div class="text-black">{formatBytes(file.size)}</div>
+          {/if}
+        </td>
+        <td class="pr-4 py-2 text-black text-right">{timeAgo(file.created_at)}</td>
+      </tr>
+      {/each}
+    </tbody>
+  </table>
+</div>  

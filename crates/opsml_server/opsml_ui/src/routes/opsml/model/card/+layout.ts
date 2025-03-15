@@ -11,12 +11,11 @@ import { getCardReadMe } from "$lib/components/readme/util";
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
+  console.log("loading layout");
   await opsmlClient.validateAuth(true);
 
   let registry = RegistryType.Model;
   let uid = await getUID(url, registry);
-
-  console.log("uid", uid);
 
   let metadata = (await getCardMetadata(uid, registry)) as ModelCard;
 
@@ -27,5 +26,6 @@ export const load: LayoutServerLoad = async ({ url }) => {
   );
 
   let registryPath = getRegistryTypeLowerCase(registry);
+
   return { metadata, registry, readme, registryPath };
 };

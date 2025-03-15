@@ -3,28 +3,32 @@
   import type { LayoutProps } from './$types';
   import { getRegistryTypeLowerCase } from '$lib/utils';
   import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
-  import { go } from 'svelte-highlight/languages';
   import { goto } from '$app/navigation';
+  import { page } from '$app/state';
 
-  let { data, children }: LayoutProps = $props();
-
-  let activeTab = $state('home');
-
-  let repository = data.metadata.repository;
-  let name = data.metadata.name;
-  let version = data.metadata.version;
-  let registry = $state('');
+  function getLastPartOfPath(path: string): string {
+    const parts = path.split("/");
+    return parts[parts.length - 1];
+  }
 
   function navigateTab(tab: string) {
 
     if (activeTab === tab) {
       return;
     }
-
     activeTab = tab;
-    goto(`/opsml/${registry}/card/${activeTab}?name=${name}&repository=${repository}&version=${version}`);
+    goto(`/opsml/${registry}/card/${activeTab}?repository=${repository}&name=${name}&version=${version}`);
   };
 
+  let { data, children }: LayoutProps = $props();
+
+  let activeTab = $state(getLastPartOfPath(page.url.pathname));
+  let repository = data.metadata.repository;
+  let name = data.metadata.name;
+  let version = data.metadata.version;
+  let registry = $state('');
+
+  
 
   onMount(() => {
       registry = getRegistryTypeLowerCase(data.registry);

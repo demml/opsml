@@ -45,9 +45,7 @@ export class OpsmlClient {
 
   async validateAuth(test: boolean = false): Promise<void> {
     if (test) {
-      console.log(this.username);
       await this.login("guest", "guest");
-      console.log(this.username);
       return;
     }
 

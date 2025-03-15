@@ -26,7 +26,7 @@
     function navigateToCardPage() {
       // navigate to the card page
       let registry_name = getRegistryTypeLowerCase(registry);
-      goto(`/opsml/${registry_name}/card/home?name=${name}&repository=${repository}&version=${version}`);
+      goto(`/opsml/${registry_name}/card/home?repository=${repository}&name=${name}&version=${version}`);
     }
   
   

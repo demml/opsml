@@ -12,9 +12,8 @@
   let metadata: ModelCard = data.metadata;
 
   function navigateToReadMe() {
-    console.log('navigate to readme');
       // navigate to readme
-      goto(`/opsml/${data.registryPath}/card/readme?name=${metadata.name}&repository=${metadata.repository}&version=${metadata.version}`);
+      goto(`/opsml/${data.registryPath}/card/readme?repository=${metadata.repository}&name=${metadata.name}&version=${metadata.version}`);
     }
 
 </script>

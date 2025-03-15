@@ -1,23 +1,10 @@
-export interface FileNode {
+export interface FileTreeNode {
   name: string;
-  type: "file" | "directory";
-  path: string;
-  children?: FileNode[];
-  isOpen?: boolean;
-}
-
-export interface FileInfo {
-  name: string;
-  size: number;
+  created_at: string;
   object_type: string;
-  created: string;
-  suffix: string;
+  size: number;
+  path: string;
 }
-export interface ListFileInfoResponse {
-  files: FileInfo[];
-}
-
-export interface DirectoryInfo {
-  name: string;
-  created: string;
+export interface FileTreeResponse {
+  files: FileTreeNode[];
 }

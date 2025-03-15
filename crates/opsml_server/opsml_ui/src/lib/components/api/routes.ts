@@ -11,6 +11,7 @@ export enum RoutePaths {
   METADATA = "/opsml/api/card/metadata",
   README = "/opsml/api/card/readme",
   FILE_INFO = "/opsml/api/files/list/info",
+  FILE_TREE = "/opsml/api/files/tree",
 
   // everything below is old
 
