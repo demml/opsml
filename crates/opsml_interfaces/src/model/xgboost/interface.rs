@@ -422,7 +422,7 @@ impl XGBoostModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Model saved");
+        debug!("Model saved");
         Ok(save_path)
     }
 
@@ -446,7 +446,7 @@ impl XGBoostModel {
             OpsmlError::new_err(e.to_string())
         })?;
 
-        info!("Model loaded");
+        debug!("Model loaded");
 
         model.into_py_any(py)
     }
@@ -482,7 +482,7 @@ impl XGBoostModel {
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
 
         Ok(save_path)
     }

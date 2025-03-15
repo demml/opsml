@@ -727,7 +727,7 @@ impl HuggingFaceModel {
             debug!("Image Processor loaded");
         }
 
-        info!("Preprocessor loaded");
+        debug!("Preprocessor loaded");
         Ok(())
     }
 
@@ -761,7 +761,7 @@ impl HuggingFaceModel {
 
         self.onnx_session = Some(Py::new(py, session)?);
 
-        info!("Model converted to ONNX");
+        debug!("Model converted to ONNX");
 
         Ok(paths)
     }
@@ -787,7 +787,7 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Tokenizer saved");
+        debug!("Tokenizer saved");
 
         Ok(save_path)
     }
@@ -813,7 +813,7 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Feature Extractor saved");
+        debug!("Feature Extractor saved");
 
         Ok(save_path)
     }
@@ -839,7 +839,7 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Image Processor saved");
+        debug!("Image Processor saved");
 
         Ok(save_path)
     }
@@ -890,7 +890,7 @@ impl HuggingFaceModel {
             });
         }
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
         Ok(preprocessors)
     }
 
@@ -922,7 +922,7 @@ impl HuggingFaceModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
@@ -999,7 +999,7 @@ impl HuggingFaceModel {
         // load sample data
         self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
-        info!("Sample data loaded");
+        debug!("Sample data loaded");
 
         Ok(())
     }
@@ -1048,7 +1048,7 @@ impl HuggingFaceModel {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }

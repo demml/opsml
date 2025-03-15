@@ -378,7 +378,7 @@ impl CatBoostModel {
         // Save the data using joblib
         joblib.call_method("dump", (&self.preprocessor, full_save_path), kwargs)?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
 
         Ok(save_path)
     }
@@ -443,7 +443,7 @@ impl CatBoostModel {
             .unwrap()
             .call_method(py, "save_model", (full_save_path,), kwargs)?;
 
-        info!("Model saved");
+        debug!("Model saved");
         Ok(save_path)
     }
 
