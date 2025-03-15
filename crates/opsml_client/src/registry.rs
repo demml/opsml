@@ -276,7 +276,8 @@ impl ClientRegistry {
         uid: &str,
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
-        self.artifact_key(uid, registry_type, Routes::Decrypt).await
+        self.artifact_key(uid, registry_type, Routes::ArtifactKey)
+            .await
     }
 
     pub async fn insert_hardware_metrics(
