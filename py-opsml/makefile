@@ -25,11 +25,27 @@ setup.project:
 	uv sync --all-extras --group dev
 	uv run maturin develop --features server
 
+setup.project.numpy1:
+	uv sync --all-extras --group dev --group numpy1
+	uv run maturin develop --features server
+
 setup.docs:
 	uv sync --all-extras --group dev --group docs
 
+test.unit.numpy1: setup.project.numpy1
+	uv run pytest \
+		-m "numpy" \
+		--cov \
+		--cov-fail-under=0 \
+		--cov-report xml:./coverage.xml \
+		--cov-report term \
+
+test.unit.tensorflow:
+	uv run python tests/interfaces/model/test_tensorflow.py
+
 test.unit:
 	uv run pytest \
+		-m "not numpy" \
 		--cov \
 		--cov-fail-under=0 \
 		--cov-report xml:./coverage.xml \

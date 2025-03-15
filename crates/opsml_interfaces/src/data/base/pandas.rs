@@ -6,9 +6,10 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(extends=DataInterface, subclass)]
+#[derive(Debug, Clone)]
 pub struct PandasData {}
 
 #[pymethods]
@@ -16,7 +17,7 @@ impl PandasData {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
-    fn new<'py>(
+    pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
@@ -151,5 +152,26 @@ impl PandasData {
         self_.as_super().data = data.into();
 
         Ok(())
+    }
+}
+
+impl PandasData {
+    pub fn from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+
+        let pandas = PyModule::import(py, "pandas")?;
+
+        // Load the data using polars
+        let data = pandas.call_method("read_parquet", (load_path,), kwargs)?;
+
+        let interface = PandasData::new(py, Some(&data), None, None, None, None, None)?;
+
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
     }
 }

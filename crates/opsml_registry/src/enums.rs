@@ -1,7 +1,7 @@
-use opsml_contracts::{Card, CardQueryArgs};
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
+use opsml_types::contracts::{Card, CardQueryArgs};
 use opsml_types::*;
 
 #[derive(Debug)]

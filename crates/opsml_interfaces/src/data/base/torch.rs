@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use scouter_client::DataProfile;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[pyclass(extends=DataInterface, subclass)]
 pub struct TorchData {}
@@ -16,7 +16,7 @@ impl TorchData {
     #[new]
     #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (data=None, data_splits=None, dependent_vars=None, feature_map=None, sql_logic=None, data_profile=None))]
-    fn new<'py>(
+    pub fn new<'py>(
         py: Python,
         data: Option<&Bound<'py, PyAny>>, // data can be any pyobject
         data_splits: Option<&Bound<'py, PyAny>>, //
@@ -26,13 +26,14 @@ impl TorchData {
         data_profile: Option<DataProfile>,
     ) -> PyResult<(Self, DataInterface)> {
         // check if data is a numpy array
+
         let data = match data {
             Some(data) => {
                 // check if data is a numpy array
                 // get type name of data
-                let torch = py.import("torch")?.getattr("Tensor")?;
+                let tensor = py.import("torch")?.getattr("Tensor")?;
                 // check if data is a numpy array
-                if data.is_instance(&torch).unwrap() {
+                if data.is_instance(&tensor).unwrap() {
                     data.into_py_any(py)?
                 } else {
                     return Err(OpsmlError::new_err("Data must be a Torch tensor"));
@@ -75,10 +76,10 @@ impl TorchData {
         } else {
             // check if data is a numpy array
             // get type name of data
-            let numpy = py.import("torch")?.getattr("Tensor")?;
+            let tensor = py.import("torch")?.getattr("Tensor")?;
 
             // check if data is a numpy array
-            if data.is_instance(&numpy).unwrap() {
+            if data.is_instance(&tensor).unwrap() {
                 parent.data = data.into_py_any(py)?;
                 Ok(())
             } else {
@@ -107,10 +108,40 @@ impl TorchData {
         let torch = py.import("torch")?;
         let args = (&parent.data, full_save_path);
 
+        match parent.data_type {
+            DataType::TorchDataset => {
+                // get "torch_dataset from kwargs"
+                // return error with kwargs is none
+
+                let kwargs = kwargs.ok_or_else(|| {
+                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
+                })?;
+
+                let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
+
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
+                    return Err(OpsmlError::new_err(
+                        "Torch dataset requires kwargs with torch_dataset",
+                    ));
+                };
+
+                // pop torch_dataset from kwargs
+                kwargs.del_item("torch_dataset")?;
+
+                torch
+                    .call_method("save", args, Some(kwargs))
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            }
+            _ => {
+                torch
+                    .call_method("save", args, kwargs)
+                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+            }
+        }
+
         // Save the data using joblib
-        torch
-            .call_method("save", args, kwargs)
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(save_path)
     }
@@ -144,13 +175,58 @@ impl TorchData {
     ) -> PyResult<()> {
         let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
 
+        let torch = PyModule::import(py, "torch")?;
+
+        let data = match self_.as_super().data_type {
+            DataType::TorchDataset => {
+                // get "torch_dataset from kwargs"
+                // return error with kwargs is none
+
+                let kwargs = kwargs.ok_or_else(|| {
+                    OpsmlError::new_err("Torch dataset requires kwargs with torch_dataset")
+                })?;
+
+                let torch_dataset = kwargs.get_item("torch_dataset").unwrap();
+
+                if let Some(dataset) = torch_dataset {
+                    dataset
+                } else {
+                    return Err(OpsmlError::new_err(
+                        "Torch dataset requires kwargs with torch_dataset",
+                    ));
+                };
+
+                // pop torch_dataset from kwargs
+                kwargs.del_item("torch_dataset")?;
+
+                torch.call_method("load", (load_path,), Some(kwargs))?
+            }
+            _ => torch.call_method("load", (load_path,), kwargs)?,
+        };
+
+        self_.as_super().data = data.into();
+
+        Ok(())
+    }
+}
+
+impl TorchData {
+    pub fn from_path(
+        py: Python,
+        path: &Path,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> PyResult<PyObject> {
+        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
+
         let numpy = PyModule::import(py, "torch")?;
 
         // Load the data using numpy
         let data = numpy.call_method("load", (load_path,), kwargs)?;
 
-        self_.as_super().data = data.into();
+        let interface = TorchData::new(py, Some(&data), None, None, None, None, None)?;
 
-        Ok(())
+        let bound = Py::new(py, interface)?.as_any().clone_ref(py);
+
+        Ok(bound)
     }
 }

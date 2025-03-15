@@ -1,4 +1,4 @@
-from opsml.model import HuggingFaceORTModel, HuggingFaceOnnxArgs, TorchOnnxArgs
+from opsml.model import HuggingFaceORTModel, HuggingFaceOnnxArgs
 from opsml.core import (
     Feature,
     OnnxSchema,
@@ -84,32 +84,6 @@ def test_hugging_face_ort_model():
         quantize=True,
         config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
     )
-
-
-def test_torch_onnx_args():
-    args = TorchOnnxArgs(
-        input_names=["input"],
-        output_names=["output"],
-        dynamic_axes={"input": {0: "batch"}},
-        do_constant_folding=True,
-        export_params=True,
-        verbose=True,
-    )
-
-    assert args.do_constant_folding is True
-    assert args.export_params is True
-
-    # convert to dictionary
-    args_dict = args.model_dump()
-
-    assert args_dict == {
-        "input_names": ["input"],
-        "output_names": ["output"],
-        "dynamic_axes": {"input": {0: "batch"}},
-        "do_constant_folding": True,
-        "export_params": True,
-        "verbose": True,
-    }
 
 
 def test_feature_creation():

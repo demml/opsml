@@ -89,9 +89,8 @@ mod tests {
     use opsml_sql::base::SqlClient;
     use opsml_sql::enums::client::SqlClientEnum;
     use opsml_types::*;
+    use opsml_types::{cards::*, contracts::*};
 
-    use opsml_cards::*;
-    use opsml_contracts::*;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use std::{env, vec};
