@@ -1038,6 +1038,31 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.repository.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            registry_type: RegistryType::from_string(&key.1)?,
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
+    }
+
     async fn get_artifact_key_from_path(
         &self,
         storage_path: &str,
@@ -1761,8 +1786,14 @@ mod tests {
 
         client.insert_artifact_key(&key).await.unwrap();
 
+        let query_args = CardQueryArgs {
+            uid: Some(data_card.uid.clone()),
+            limit: Some(1),
+            ..Default::default()
+        };
+
         let key = client
-            .get_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
+            .get_card_key_for_loading(&CardTable::Data, &query_args)
             .await
             .unwrap();
 

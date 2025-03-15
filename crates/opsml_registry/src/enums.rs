@@ -3,7 +3,7 @@ use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::{
-    ArtifactKeyRequest, Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
+    Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
 use opsml_types::*;
 use opsml_types::{
@@ -192,10 +192,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn load_card(
-        &mut self,
-        args: ArtifactKeyRequest,
-    ) -> Result<ArtifactKey, RegistryError> {
+    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.load_card(args).await,
             #[cfg(feature = "server")]
