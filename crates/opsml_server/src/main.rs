@@ -223,7 +223,7 @@ mod tests {
             let png = format!("{}/file.png", base_path);
             std::fs::write(&png, "PNG").unwrap();
 
-            return base_path;
+            base_path
         }
 
         pub async fn create_card(&mut self) {
