@@ -16,7 +16,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
 use tracing::instrument;
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
