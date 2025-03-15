@@ -10,6 +10,7 @@ pub enum RequestType {
 
 #[derive(Debug, Clone)]
 pub enum Routes {
+    ArtifactKey,
     AuthLogin,
     AuthRefresh,
     AuthValidate,
@@ -18,7 +19,6 @@ pub enum Routes {
     CardCreate,
     CardDelete,
     CardList,
-    CardLoad,
     CardVersion,
     CardUpdate,
     DeleteFiles,
@@ -41,6 +41,7 @@ pub enum Routes {
 impl Routes {
     pub fn as_str(&self) -> &str {
         match self {
+            Routes::ArtifactKey => "files/key",
             Routes::Files => "files",
             Routes::Multipart => "files/multipart",
             Routes::CompleteMultipart => "files/multipart/complete",
@@ -60,7 +61,6 @@ impl Routes {
             Routes::CardCreate => "card/create",
             Routes::CardDelete => "card/delete",
             Routes::CardList => "card/list",
-            Routes::CardLoad => "card/load",
             Routes::CardVersion => "card/version",
             Routes::CardUpdate => "card/update",
             Routes::ExperimentMetrics => "experiment/metrics",

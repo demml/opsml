@@ -171,18 +171,10 @@ pub async fn cleanup_artifacts(
     sql_client: &Arc<SqlClientEnum>,
     uid: String,
     registry_type: RegistryType,
-    table: &CardTable,
 ) -> Result<(), ApiError> {
     // get artifact key
     let key = sql_client
-        .get_card_key_for_loading(
-            table,
-            &CardQueryArgs {
-                uid: Some(uid.clone()),
-                registry_type: registry_type.clone(),
-                ..Default::default()
-            },
-        )
+        .get_artifact_key(&uid, &registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);

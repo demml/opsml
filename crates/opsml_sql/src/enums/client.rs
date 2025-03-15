@@ -397,24 +397,6 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_card_key_for_loading(
-        &self,
-        table: &CardTable,
-        query_args: &CardQueryArgs,
-    ) -> Result<ArtifactKey, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_card_key_for_loading(table, query_args).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.get_card_key_for_loading(table, query_args).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.get_card_key_for_loading(table, query_args).await
-            }
-        }
-    }
-
     async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, registry_type).await,

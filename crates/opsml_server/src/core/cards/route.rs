@@ -466,7 +466,6 @@ pub async fn delete_card(
         &state.sql_client,
         params.uid.clone(),
         params.registry_type.clone(),
-        &table,
     )
     .await
     .map_err(|e| {
@@ -496,27 +495,6 @@ pub async fn delete_card(
 }
 
 #[instrument(skip_all)]
-pub async fn load_card(
-    State(state): State<Arc<AppState>>,
-    Query(params): Query<CardQueryArgs>,
-) -> Result<Json<ArtifactKey>, (StatusCode, Json<serde_json::Value>)> {
-    let table = CardTable::from_registry_type(&params.registry_type);
-    let key = state
-        .sql_client
-        .get_card_key_for_loading(&table, &params)
-        .await
-        .map_err(|e| {
-            error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
-        })?;
-
-    Ok(Json(key))
-}
-
-#[instrument(skip_all)]
 pub async fn get_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -529,11 +507,18 @@ pub async fn get_card(
         ));
     }
 
-    let table = CardTable::from_registry_type(&params.registry_type);
+    // get uid - should fail if not exists
+    let uid = params.uid.as_ref().ok_or_else(|| {
+        error!("UID is required");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "UID is required" })),
+        )
+    })?;
 
     let key = state
         .sql_client
-        .get_card_key_for_loading(&table, &params)
+        .get_artifact_key(uid, &params.registry_type.to_string())
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
@@ -753,7 +738,6 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
             .route(&format!("{}/card/list", prefix), get(list_cards))
             .route(&format!("{}/card/create", prefix), post(create_card))
-            .route(&format!("{}/card/load", prefix), get(load_card))
             .route(&format!("{}/card/update", prefix), post(update_card))
             .route(&format!("{}/card/delete", prefix), delete(delete_card))
     }));

@@ -277,17 +277,30 @@ impl CardRegistry {
         let card = self
             .runtime
             .block_on(async {
-                // 1. Load the card // download the card from storage
+                // 1.A Get UID if not provided
+
+                let uid = if uid.is_none() {
+                    Self::get_uid(
+                        &mut self.registry,
+                        name.clone(),
+                        repository.clone(),
+                        version.clone(),
+                        self.registry_type.clone(),
+                    )
+                    .await
+                } else {
+                    Ok(uid.clone().unwrap())
+                }
+                .map_err(|e| {
+                    error!("Failed to get uid: {}", e);
+                    e
+                })?;
 
                 let key = self
                     .registry
-                    .load_card(CardQueryArgs {
+                    .load_card(ArtifactKeyRequest {
                         uid,
-                        name,
-                        repository,
-                        version,
                         registry_type: self.registry_type.clone(),
-                        ..Default::default()
                     })
                     .await?;
 
@@ -609,6 +622,35 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
+    async fn get_uid(
+        registry: &mut OpsmlRegistry,
+        name: Option<String>,
+        repository: Option<String>,
+        version: Option<String>,
+        registry_type: RegistryType,
+    ) -> Result<String, RegistryError> {
+        let card = registry
+            .list_cards(CardQueryArgs {
+                uid: None,
+                name,
+                repository,
+                version,
+                registry_type,
+                limit: Some(1),
+                ..Default::default()
+            })
+            .await
+            .map_err(|e| {
+                error!("Failed to list cards: {}", e);
+                e
+            })?;
+
+        card.first()
+            .map(|c| c.uid().to_string())
+            .ok_or_else(|| RegistryError::Error("Card not found".to_string()))
+    }
+
+    #[instrument(skip_all)]
     async fn _update_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
@@ -635,10 +677,9 @@ impl CardRegistry {
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
         let key = registry
-            .load_card(CardQueryArgs {
-                uid: Some(uid),
+            .load_card(ArtifactKeyRequest {
+                uid: uid,
                 registry_type: registry_type.clone(),
-                ..Default::default()
             })
             .await
             .map_err(|e| {

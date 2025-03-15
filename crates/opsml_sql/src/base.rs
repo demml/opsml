@@ -289,23 +289,6 @@ pub trait SqlClient: Sized {
         access_location: &str,
     ) -> Result<(), SqlError>;
 
-    /// Queries the a card registry for a card version and returns
-    /// the artifact keys for loading the card on the client side
-    ///
-    /// # Arguments
-    ///
-    /// * `table` - The card table
-    /// * `query_args` - The query arguments
-    ///
-    /// # Returns
-    ///
-    /// * `ArtifactKey` - The artifact key
-    async fn get_card_key_for_loading(
-        &self,
-        table: &CardTable,
-        query_args: &CardQueryArgs,
-    ) -> Result<ArtifactKey, SqlError>;
-
     /// Delete artifact key
     ///
     /// # Arguments
