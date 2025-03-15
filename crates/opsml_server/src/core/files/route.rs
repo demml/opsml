@@ -27,6 +27,7 @@ use mime_guess::mime;
 use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
@@ -419,8 +420,52 @@ pub async fn get_file_for_ui(
         ));
     }
 
+    let file_path = PathBuf::from(&req.path);
+    let sql_client = state.sql_client.clone();
+    let mut headers = HeaderMap::new();
+    headers.insert("username", perms.username.parse().unwrap());
+
+    tokio::spawn(async move {
+        if let Err(e) = log_operation(
+            &headers,
+            &Operation::Read.to_string(),
+            &req.path.clone(),
+            sql_client,
+        )
+        .await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
+    let files = state
+        .storage_client
+        .find_info(&file_path)
+        .await
+        .map_err(|e| ServerError::ListFileError(e.to_string()));
+
+    let files = match files {
+        Ok(files) => files,
+        Err(e) => {
+            error!("Failed to list files: {}", e);
+            return Err(internal_server_error(e));
+        }
+    };
+
+    // check if empty, if not get first
+    let file = match files.first() {
+        Some(file) => file,
+        None => {
+            error!("File not found");
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(json!({ "error": "File not found" })),
+            ));
+        }
+    };
+
     // check if size is less than 50 mb
-    if req.file.size > 50_000_000 {
+    if file.size > 50_000_000 {
         error!("File size too large");
         return Err((
             StatusCode::BAD_REQUEST,
@@ -436,13 +481,13 @@ pub async fn get_file_for_ui(
         )
     })?;
 
-    let lpath = tmp_dir.path().join(req.file.name.clone());
+    let lpath = tmp_dir.path().join(&file_path.file_name().unwrap());
 
     download_artifact(
         state.storage_client.clone(),
         state.sql_client.clone(),
         &lpath,
-        &req.file.path,
+        &file.name,
         &req.registry_type.to_string(),
         Some(&req.uid),
     )
@@ -454,6 +499,8 @@ pub async fn get_file_for_ui(
             Json(serde_json::json!({})),
         )
     })?;
+
+    debug!("Downloaded file to: {}", lpath.display());
 
     let content = std::fs::read_to_string(&lpath).unwrap_or_default();
     let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
@@ -467,7 +514,7 @@ pub async fn get_file_for_ui(
 
     Ok(Json(RawFile {
         content,
-        suffix: req.file.suffix,
+        suffix: file.suffix.to_string(),
         mime_type: mime_type.to_string(),
     }))
 }
@@ -615,7 +662,7 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{}/files/list/info", prefix), get(list_file_info))
             .route(&format!("{}/files/delete", prefix), delete(delete_file))
             .route(&format!("{}/files/key", prefix), get(get_artifact_key))
-            .route(&format!("{}/files/render", prefix), post(get_file_for_ui))
+            .route(&format!("{}/files/content", prefix), post(get_file_for_ui))
     }));
 
     match result {

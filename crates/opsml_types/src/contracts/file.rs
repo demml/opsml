@@ -200,7 +200,7 @@ impl Display for Operation {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RawFileRequest {
     pub uid: String,
-    pub file: FileTreeNode,
+    pub path: String,
     pub registry_type: RegistryType,
 }
 
