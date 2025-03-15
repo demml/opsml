@@ -59,7 +59,7 @@ impl ClientRegistry {
         response
             .json::<Vec<Card>>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+            .map_err(|e| RegistryError::Error(format!("Failed to parse card response {}", e)))
     }
 
     #[instrument(skip_all)]
@@ -108,10 +108,9 @@ impl ClientRegistry {
                 RegistryError::Error(format!("Failed to create card {}", e))
             })?;
 
-        let created = response
-            .json::<CreateCardResponse>()
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
+        let created = response.json::<CreateCardResponse>().await.map_err(|e| {
+            RegistryError::Error(format!("Failed to parse create card response {e}"))
+        })?;
 
         if created.registered {
             Ok(created)
@@ -144,10 +143,9 @@ impl ClientRegistry {
             )
             .await?;
 
-        let updated = response
-            .json::<UpdateCardResponse>()
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
+        let updated = response.json::<UpdateCardResponse>().await.map_err(|e| {
+            RegistryError::Error(format!("Failed to parse update card response {e}"))
+        })?;
 
         if updated.updated {
             Ok(())
@@ -181,7 +179,7 @@ impl ClientRegistry {
         let deleted = response
             .json::<UidResponse>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {e}")))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to parse uid response {e}")))?;
 
         if !deleted.exists {
             Ok(())
@@ -207,10 +205,9 @@ impl ClientRegistry {
             .await
             .map_err(|e| RegistryError::Error(format!("Failed to load_card {}", e)))?;
 
-        response
-            .json::<ArtifactKey>()
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+        response.json::<ArtifactKey>().await.map_err(|e| {
+            RegistryError::Error(format!("Failed to parse artifact key response {}", e))
+        })
     }
 
     pub async fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {
@@ -236,7 +233,7 @@ impl ClientRegistry {
         let exists = response
             .json::<UidResponse>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))?;
+            .map_err(|e| RegistryError::Error(format!("Failed to parse uid response {}", e)))?;
 
         Ok(exists.exists)
     }
@@ -267,8 +264,8 @@ impl ClientRegistry {
             })?;
 
         let key = response.json::<ArtifactKey>().await.map_err(|e| {
-            error!("Failed to parse response {}", e);
-            RegistryError::Error(format!("Failed to parse response {}", e))
+            error!("Failed to parse artifact key {}", e);
+            RegistryError::Error(format!("Failed to parse artifact key {}", e))
         })?;
 
         Ok(key)
@@ -310,8 +307,8 @@ impl ClientRegistry {
             .json::<HardwareMetricResponse>()
             .await
             .map_err(|e| {
-                error!("Failed to parse response {}", e);
-                RegistryError::Error(format!("Failed to parse response {}", e))
+                error!("Failed to parse hardware metric response {}", e);
+                RegistryError::Error(format!("Failed to parse hardware metric response {}", e))
             })?;
 
         if inserted.success {
@@ -347,10 +344,9 @@ impl ClientRegistry {
                 RegistryError::Error(format!("Failed to get hardware metrics {}", e))
             })?;
 
-        response
-            .json::<Vec<HardwareMetrics>>()
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+        response.json::<Vec<HardwareMetrics>>().await.map_err(|e| {
+            RegistryError::Error(format!("Failed to parse hardware metric response {}", e))
+        })
     }
 
     pub async fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
@@ -375,8 +371,8 @@ impl ClientRegistry {
             })?;
 
         let inserted = response.json::<MetricResponse>().await.map_err(|e| {
-            error!("Failed to parse response {}", e);
-            RegistryError::Error(format!("Failed to parse response {}", e))
+            error!("Failed to parse metric response {}", e);
+            RegistryError::Error(format!("Failed to parse metric response {}", e))
         })?;
 
         if inserted.success {
@@ -413,7 +409,7 @@ impl ClientRegistry {
         response
             .json::<Vec<Metric>>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+            .map_err(|e| RegistryError::Error(format!("Failed to parse metric response {}", e)))
     }
 
     pub async fn insert_parameters(
@@ -441,8 +437,8 @@ impl ClientRegistry {
             })?;
 
         let inserted = response.json::<ParameterResponse>().await.map_err(|e| {
-            error!("Failed to parse response {}", e);
-            RegistryError::Error(format!("Failed to parse response {}", e))
+            error!("Failed to parse parameter response {}", e);
+            RegistryError::Error(format!("Failed to parse parameter response {}", e))
         })?;
 
         if inserted.success {
@@ -481,6 +477,6 @@ impl ClientRegistry {
         response
             .json::<Vec<Parameter>>()
             .await
-            .map_err(|e| RegistryError::Error(format!("Failed to parse response {}", e)))
+            .map_err(|e| RegistryError::Error(format!("Failed to parse parameter response {}", e)))
     }
 }

@@ -7,7 +7,6 @@ use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 
-use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
 use tracing::{error, instrument};
@@ -78,7 +77,7 @@ impl HttpStorageClient {
         let settings = response
             .json::<StorageSettings>()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+            .map_err(|e| StorageError::Error(format!("Failed to parse storage response: {}", e)))?;
 
         // convert Value to Vec<String>
         //let settings = serde_json::from_value::<StorageSettings>(val).map_err(|e| {
@@ -117,8 +116,8 @@ impl HttpStorageClient {
             })?;
 
         let response = response.json::<ListFileResponse>().await.map_err(|e| {
-            error!("Failed to parse response: {}", e);
-            StorageError::Error(format!("Failed to parse response: {}", e))
+            error!("Failed to parse list file response: {}", e);
+            StorageError::Error(format!("Failed to parse list file response: {}", e))
         })?;
 
         // convert Value to Vec<String>
@@ -157,8 +156,8 @@ impl HttpStorageClient {
             })?;
 
         let response = response.json::<ListFileInfoResponse>().await.map_err(|e| {
-            error!("Failed to parse response: {}", e);
-            StorageError::Error(format!("Failed to parse response: {}", e))
+            error!("Failed to parse file info response: {}", e);
+            StorageError::Error(format!("Failed to parse file info response: {}", e))
         })?;
 
         //let response = serde_json::from_value::<ListFileInfoResponse>(val).map_err(|e| {
@@ -287,8 +286,8 @@ impl HttpStorageClient {
             })?;
 
         let response = response.json::<DeleteFileResponse>().await.map_err(|e| {
-            error!("Failed to parse response: {}", e);
-            StorageError::Error(format!("Failed to parse response: {}", e))
+            error!("Failed to parse delete response: {}", e);
+            StorageError::Error(format!("Failed to parse delete response: {}", e))
         })?;
 
         // load DeleteFileResponse from response
@@ -324,7 +323,7 @@ impl HttpStorageClient {
         let response = response
             .json::<DeleteFileResponse>()
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+            .map_err(|e| StorageError::Error(format!("Failed to parse delete response: {}", e)))?;
 
         //let response = serde_json::from_value::<DeleteFileResponse>(val)
         //    .map_err(|e| StorageError::Error(format!("Failed to deserialize response: {}", e)))?;
@@ -373,7 +372,7 @@ impl HttpStorageClient {
 
         // deserialize response into MultiPartSession
         let session = response.json::<MultiPartSession>().await.map_err(|e| {
-            error!("Failed to parse response: {}", e);
+            error!("Failed to parse multipart response: {}", e);
             StorageError::Error(e.to_string())
         })?;
 
@@ -447,14 +446,9 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to generate presigned url: {}", e))
             })?;
 
-        let val = response.json::<Value>().await.map_err(|e| {
-            error!("Failed to parse response: {}", e);
-            StorageError::Error(format!("Failed to parse response: {}", e))
-        })?;
-
-        let response = serde_json::from_value::<PresignedUrl>(val).map_err(|e| {
-            error!("Failed to deserialize response: {}", e);
-            StorageError::Error(format!("Failed to deserialize response: {}", e))
+        let response = response.json::<PresignedUrl>().await.map_err(|e| {
+            error!("Failed to parse presigned response: {}", e);
+            StorageError::Error(format!("Failed to parse presigned response: {}", e))
         })?;
 
         Ok(response.url)

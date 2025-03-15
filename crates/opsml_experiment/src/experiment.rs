@@ -22,7 +22,7 @@ use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tokio::sync::Mutex as TokioMutex;
-use tracing::{debug, error, warn};
+use tracing::{debug, error, instrument, warn};
 
 type ExperimentRuntime = Arc<tokio::runtime::Runtime>;
 type ExperimentRegistries = Arc<Mutex<CardRegistries>>;
@@ -146,6 +146,7 @@ pub struct Experiment {
 
 impl Experiment {
     #[allow(clippy::too_many_arguments)]
+    #[instrument(skip_all)]
     pub fn new(
         py: Python,
         experiment: PyObject,
@@ -158,6 +159,7 @@ impl Experiment {
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
         let mut experiment_registry = registries.lock().unwrap().experiment.registry.clone();
+
         let artifact_key = rt.block_on(async {
             experiment_registry
                 .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
@@ -236,6 +238,7 @@ impl Experiment {
     /// # Errors
     ///
     /// * `ExperimentError` - Error creating the experiment
+    #[instrument(skip_all)]
     fn create_experiment<'py>(
         py: Python<'py>,
         repository: Option<&str>,
@@ -248,7 +251,10 @@ impl Experiment {
             generator.next().unwrap_or_else(|| "experiment".to_string())
         });
 
+        debug!("Initializing experiment");
         let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
+
+        debug!("Registering experiment");
         let uid = Self::register_experiment(&experiment, &mut registries)?;
 
         Ok((experiment, uid))
@@ -304,6 +310,7 @@ impl Experiment {
     /// # Errors
     ///
     /// * `OpsmlError` - Error registering the experiment
+    #[instrument(skip_all)]
     fn register_experiment(
         experiment: &Bound<'_, PyAny>,
         registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
@@ -358,6 +365,7 @@ impl Experiment {
     /// # Errors
     ///
     /// * `OpsmlError` - Error loading the experiment
+    #[instrument(skip_all)]
     fn load_experiment<'py>(
         py: Python<'py>,
         experiment_uid: &str,
@@ -408,6 +416,7 @@ impl Experiment {
     ///
     /// * `ExperimentError` - Error starting the experiment
     #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+    #[instrument(skip_all)]
     pub fn start_experiment<'py>(
         slf: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -454,6 +463,7 @@ impl Experiment {
         };
 
         // Add the new experiment's UID to the parent experiment's experimentcard_uids
+        debug!("Adding subexperiment to experiment");
         Self::add_subexperiment_experiment(&slf, py, &experiment)?;
 
         debug!("Starting experiment");
@@ -748,6 +758,7 @@ impl Experiment {
 /// * `ExperimentError` - Error starting the experiment
 #[pyfunction]
 #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
+#[instrument(skip_all)]
 pub fn start_experiment<'py>(
     py: Python<'py>,
     repository: Option<&str>,
@@ -759,7 +770,9 @@ pub fn start_experiment<'py>(
     debug!("Initializing experiment");
 
     // runtime should be shared across all registries and all child experiments to prevent deadlocks
+
     let (rt, registries, fs) = initialize_experiment_environment()?;
+    debug!("Experiment environment initialized");
 
     let active_experiment = match experiment_uid {
         Some(uid) => {
