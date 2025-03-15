@@ -46,3 +46,5 @@ export function formatBytes(bytes: number): string {
 
   return `${bytes.toFixed(1)} ${units[unitIndex]}`;
 }
+
+//export function getFile

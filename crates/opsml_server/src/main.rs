@@ -125,9 +125,10 @@ mod tests {
     pub struct TestHelper {
         app: Router,
         token: JwtToken,
-        name: String,
-        repository: String,
-        version: String,
+        pub name: String,
+        pub repository: String,
+        pub version: String,
+        key: ArtifactKey,
     }
 
     impl TestHelper {
@@ -157,6 +158,12 @@ mod tests {
                 name,
                 repository,
                 version,
+                key: ArtifactKey {
+                    uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+                    registry_type: RegistryType::Data,
+                    encrypted_key: vec![],
+                    storage_key: "".to_string(),
+                },
             }
         }
 
@@ -203,7 +210,23 @@ mod tests {
             cleanup();
         }
 
-        pub async fn create_card(&self) {
+        pub fn create_files(&self) -> String {
+            // create temp directory
+            let base_path = format!(
+                "opsml_registries/opsml_data_registry/{}/{}/v{}",
+                self.repository, self.name, self.version
+            );
+            let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
+            let path = format!("{}/file.json", base_path);
+            std::fs::write(&path, json).unwrap();
+
+            let png = format!("{}/file.png", base_path);
+            std::fs::write(&png, "PNG").unwrap();
+
+            return base_path;
+        }
+
+        pub async fn create_card(&mut self) {
             // 1. First create a card so we have something to get
             let card_version_request = CardVersionRequest {
                 name: self.name.clone(),
@@ -241,7 +264,8 @@ mod tests {
             assert_eq!(response.status(), StatusCode::OK);
             //
             let body = response.into_body().collect().await.unwrap().to_bytes();
-            let _create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+            let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+            self.key = create_response.key.clone();
         }
     }
 
@@ -1483,47 +1507,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_opsml_server_render_files() {
-        let helper = TestHelper::new().await;
+    async fn test_opsml_server_get_readme() {
+        let mut helper = TestHelper::new().await;
 
-        // 1. First create a card so we have something to get
-        let card_version_request = CardVersionRequest {
-            name: "name".to_string(),
-            repository: "space".to_string(),
-            version: Some("1.0.0".to_string()),
-            version_type: VersionType::Minor,
-            pre_tag: None,
-            build_tag: None,
-        };
-
-        // Create a test card with some data
-        let card_request = CreateCardRequest {
-            card: Card::Data(DataCardClientRecord {
-                name: "name".to_string(),
-                repository: "space".to_string(),
-                version: "1.0.0".to_string(),
-                tags: vec!["test".to_string()],
-                ..DataCardClientRecord::default()
-            }),
-            registry_type: RegistryType::Data,
-            version_request: card_version_request,
-        };
-
-        let body = serde_json::to_string(&card_request).unwrap();
-
-        // Create the card first
-        let request = Request::builder()
-            .uri("/opsml/api/card/create")
-            .method("POST")
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(body))
-            .unwrap();
-
-        let response = helper.send_oneshot(request).await;
-        assert_eq!(response.status(), StatusCode::OK);
-        //
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        helper.create_card().await;
 
         // Create and upload the readme
         let read_me = "This is a test README";
@@ -1550,9 +1537,9 @@ mod tests {
         //// 2. Now test getting the card
         let params = CardQueryArgs {
             uid: None,
-            name: Some("name".to_string()),
-            repository: Some("space".to_string()),
-            version: Some(create_response.version),
+            name: Some(helper.name.clone()),
+            repository: Some(helper.repository.clone()),
+            version: Some(helper.version.clone()),
             max_date: None,
             tags: None,
             limit: None,
@@ -1575,5 +1562,32 @@ mod tests {
         let card_readme: ReadeMe = serde_json::from_slice(&body).unwrap();
 
         assert_eq!(card_readme.readme, "This is a test README");
+    }
+
+    #[tokio::test]
+    async fn test_opsml_server_render_file() {
+        let mut helper = TestHelper::new().await;
+
+        helper.create_card().await;
+        let path = helper.create_files();
+
+        let list_query = ListFileQuery { path };
+
+        let query_string = serde_qs::to_string(&list_query).unwrap();
+
+        // check if a card UID exists (get request with UidRequest params)
+        let request = Request::builder()
+            .uri(format!("/opsml/files/tree?{}", query_string))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let file_tree: FileTreeResponse = serde_json::from_slice(&body).unwrap();
+
+        println!("{:?}", file_tree);
     }
 }
