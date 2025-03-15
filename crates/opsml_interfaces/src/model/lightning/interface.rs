@@ -18,7 +18,7 @@ use pyo3::PyVisit;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]

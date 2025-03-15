@@ -22,7 +22,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub type ProcessorNames = (String, String, String);
 

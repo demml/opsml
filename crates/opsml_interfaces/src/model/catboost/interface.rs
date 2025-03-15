@@ -13,7 +13,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]

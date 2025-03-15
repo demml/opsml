@@ -22,7 +22,6 @@ use anyhow::{Context, Result};
 use opsml_error::error::ServerError;
 
 use base64::prelude::*;
-use core::error;
 use mime_guess::mime;
 /// Route for debugging information
 use serde_json::json;

@@ -13,7 +13,7 @@ use pyo3::PyVisit;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, span, Level};
+use tracing::{debug, error, span, Level};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]

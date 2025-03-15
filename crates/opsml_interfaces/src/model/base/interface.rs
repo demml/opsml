@@ -29,7 +29,7 @@ use std::path::{Path, PathBuf};
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
 use serde_json::Value;
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
