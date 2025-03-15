@@ -191,17 +191,14 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub async fn load_card(
-        &mut self,
-        args: ArtifactKeyRequest,
-    ) -> Result<ArtifactKey, RegistryError> {
+    pub async fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
         let response = self
             .api_client
             .request(
-                Routes::ArtifactKey,
+                Routes::CardLoad,
                 RequestType::Get,
                 None,
                 Some(query_string),
