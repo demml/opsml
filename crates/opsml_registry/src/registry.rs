@@ -678,7 +678,7 @@ impl CardRegistry {
         let uid = registry_card.uid().to_string();
         let key = registry
             .load_card(ArtifactKeyRequest {
-                uid: uid,
+                uid,
                 registry_type: registry_type.clone(),
             })
             .await
