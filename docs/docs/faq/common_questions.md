@@ -5,7 +5,7 @@ Below are a list of commonly answered questions.
 
 ### Why do some examples use a context manager and some don't? What's recommended?
 
-By default, all cards can be registered, listed, loaded and updated outside of a context manager. In fact, this was done on purpose to not lock users into a particular style. The context manager comes into play when using `RunCards` as they provide a means to group artifacts (Cards, metrics, params) under a specific project run. Technically, this grouping can still be achieved by using `RunCards` directly but this comes at the expense of more lines of code. The context manager tends to be a more convenient way of logging and tracking artifacts. In addition, when using an `OpsmlProject`, all artifacts are automatically viewable in the Opsml UI.
+By default, all cards can be registered, listed, loaded and updated outside of a context manager. In fact, this was done on purpose to not lock users into a particular style. The context manager comes into play when using `experimentcards` as they provide a means to group artifacts (Cards, metrics, params) under a specific project run. Technically, this grouping can still be achieved by using `experimentcards` directly but this comes at the expense of more lines of code. The context manager tends to be a more convenient way of logging and tracking artifacts. In addition, when using an `OpsmlProject`, all artifacts are automatically viewable in the Opsml UI.
 
 Recommendation based on needs
 

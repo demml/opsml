@@ -1,4 +1,4 @@
-use crate::types::ModelType;
+use opsml_types::ModelType;
 use pyo3::ffi::c_str;
 use pyo3::types::{PyDict, PyList};
 use pyo3::{prelude::*, IntoPyObjectExt};

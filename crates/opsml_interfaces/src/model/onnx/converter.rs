@@ -7,9 +7,9 @@ use crate::model::onnx::sklearn::SklearnOnnxModelConverter;
 use crate::model::onnx::tensorflow::TensorFlowOnnxModelConverter;
 use crate::model::onnx::torch::TorchOnnxModelConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxModelConverter;
-use crate::types::{ModelInterfaceType, ModelType};
 use crate::OnnxSession;
 use opsml_error::OpsmlError;
+use opsml_types::{ModelInterfaceType, ModelType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
@@ -19,15 +19,12 @@ use tracing::{debug, error, instrument};
 pub struct OnnxModelConverter {}
 
 impl OnnxModelConverter {
-    #[instrument(
-        skip(py, model, sample_data, model_interface_type, model_type, path, kwargs),
-        name = "convert_model_to_onnx"
-    )]
+    #[instrument(skip_all, name = "convert_model_to_onnx")]
     pub fn convert_model<'py, T>(
         py: Python,
         model: &Bound<'py, PyAny>,
         sample_data: &T,
-        model_interface_type: &ModelInterfaceType,
+        interface_type: &ModelInterfaceType,
         model_type: &ModelType,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
@@ -43,7 +40,7 @@ impl OnnxModelConverter {
             ));
         }
 
-        match model_interface_type {
+        match interface_type {
             ModelInterfaceType::Sklearn => {
                 debug!("Converting Sklearn model to ONNX");
                 let converter = SklearnOnnxModelConverter::default();

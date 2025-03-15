@@ -3,15 +3,14 @@ use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::tensorflow::TensorFlowSampleData;
 use crate::model::ModelInterface;
-use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::ModelType;
+use crate::types::{FeatureSchema, ProcessorType};
+use crate::ModelInterfaceMetadata;
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
+use opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
@@ -20,7 +19,7 @@ use pyo3::PyVisit;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 #[pyclass(extends=ModelInterface, subclass)]
 #[derive(Debug)]
@@ -41,7 +40,7 @@ pub struct TensorFlowModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub sample_data: TensorFlowSampleData,
 }
@@ -50,13 +49,13 @@ pub struct TensorFlowModel {
 impl TensorFlowModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, preprocessor=None, sample_data=None, task_type=None, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         preprocessor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
@@ -78,7 +77,7 @@ impl TensorFlowModel {
         };
 
         let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
 
         // override ModelInterface SampleData with TensorFlowSampleData
         let sample_data = match sample_data {
@@ -110,7 +109,7 @@ impl TensorFlowModel {
                 preprocessor,
                 preprocessor_name,
                 sample_data,
-                model_interface_type: ModelInterfaceType::TensorFlow,
+                interface_type: ModelInterfaceType::TensorFlow,
                 model_type: ModelType::TensorFlow,
                 onnx_session: None,
             },
@@ -213,22 +212,19 @@ impl TensorFlowModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
-    #[instrument(
-        skip(self_, py, path, to_onnx, save_kwargs),
-        name = "save_tensorflow_interface"
-    )]
+    #[instrument(skip_all, name = "save_tensorflow_interface")]
     pub fn save(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceSaveMetadata> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
-            Some(self_.as_super().save_drift_profile(&path)?)
+            Some(self_.as_super().save_drift_profile(py, &path)?)
         };
 
         // parse the save args
@@ -242,6 +238,7 @@ impl TensorFlowModel {
             Some(DataProcessor {
                 name: self_.preprocessor_name.clone(),
                 uri,
+                r#type: ProcessorType::Preprocessor,
             })
         };
 
@@ -288,69 +285,43 @@ impl TensorFlowModel {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
-    /// * `preprocessor` - Whether to load the preprocessor (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
-    #[instrument(skip(
-        self_,
-        py,
-        path,
-        model,
-        onnx,
-        drift_profile,
-        sample_data,
-        preprocessor,
-        load_kwargs
-    ))]
+    #[instrument(skip_all)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        if model {
-            debug!("Loading model");
-            self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
+        debug!("Loading model");
+        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
             self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        if sample_data {
-            debug!("Loading sample data");
-            let data_type = self_.as_super().data_type.clone();
+        debug!("Loading sample data");
+        let data_type = self_.as_super().data_type.clone();
 
-            self_.load_data(py, &path, &data_type, None)?;
-        }
+        self_.load_data(py, &path, &data_type, None)?;
 
-        if preprocessor {
-            debug!("Loading preprocessor");
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-        }
+        debug!("Loading preprocessor");
+        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
 
-        if drift_profile {
-            debug!("Loading drift profile");
-            self_.as_super().load_drift_profile(&path)?;
-        }
+        debug!("Loading drift profile");
+        self_.as_super().load_drift_profile(py, &path)?;
 
         Ok(())
     }
@@ -378,6 +349,52 @@ impl TensorFlowModel {
 }
 
 impl TensorFlowModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+        let preprocessor_name = metadata
+            .save_metadata
+            .data_processor_map
+            .iter()
+            .filter(|(_, v)| v.r#type == ProcessorType::Preprocessor)
+            .map(|(k, _)| k)
+            .next()
+            .unwrap_or(&CommonKwargs::Undefined.to_string())
+            .to_string();
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let model_interface = TensorFlowModel {
+            preprocessor: None,
+            preprocessor_name,
+            onnx_session,
+            model: None,
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            sample_data: TensorFlowSampleData::default(),
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            Some(metadata.schema.clone()),
+            None,
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+
+        Py::new(py, (model_interface, interface))?.into_bound_py_any(py)
+    }
+
     /// Converts the model to onnx
     ///
     /// # Arguments
@@ -385,7 +402,7 @@ impl TensorFlowModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -396,7 +413,7 @@ impl TensorFlowModel {
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,
@@ -414,7 +431,7 @@ impl TensorFlowModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &self,
         py: Python,
@@ -438,7 +455,7 @@ impl TensorFlowModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
         Ok(save_path)
     }
     /// Load the preprocessor from a file
@@ -448,7 +465,7 @@ impl TensorFlowModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -469,7 +486,7 @@ impl TensorFlowModel {
 
         self.preprocessor = Some(preprocessor.unbind());
 
-        info!("Preprocessor loaded");
+        debug!("Preprocessor loaded");
         Ok(())
     }
     /// Save the model to a file
@@ -479,7 +496,7 @@ impl TensorFlowModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &self,
         py: Python,
@@ -504,12 +521,12 @@ impl TensorFlowModel {
             .bind(py)
             .call_method("save", (full_save_path,), kwargs)?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
 
-    #[instrument(skip(py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -549,7 +566,7 @@ impl TensorFlowModel {
     }
 
     /// Load the sample data
-    #[instrument(skip(self, py, path, data_type, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_data(
         &mut self,
         py: Python,
@@ -561,7 +578,7 @@ impl TensorFlowModel {
 
         self.sample_data = TensorFlowSampleData::load_data(py, path, data_type, kwargs)?;
 
-        info!("Sample data loaded");
+        debug!("Sample data loaded");
 
         Ok(())
     }
@@ -573,7 +590,7 @@ impl TensorFlowModel {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_onnx_model(
         &mut self,
         py: Python,
@@ -597,7 +614,7 @@ impl TensorFlowModel {
 
         fs::write(&full_save_path, bytes)?;
 
-        info!("ONNX model saved");
+        debug!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -609,7 +626,7 @@ impl TensorFlowModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
@@ -633,7 +650,7 @@ impl TensorFlowModel {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }

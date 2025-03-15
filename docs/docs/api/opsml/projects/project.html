@@ -60,7 +60,7 @@
                                 <a class="function" href="#OpsmlProject.list_runs">list_runs</a>
                         </li>
                         <li>
-                                <a class="variable" href="#OpsmlProject.runcard">runcard</a>
+                                <a class="variable" href="#OpsmlProject.experimentcard">experimentcard</a>
                         </li>
                         <li>
                                 <a class="variable" href="#OpsmlProject.metrics">metrics</a>
@@ -118,14 +118,14 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span> <span class="nn">opsml.cards.base</span> <span class="kn">import</span> <span class="n">ArtifactCard</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="kn">from</span> <span class="nn">opsml.cards.project</span> <span class="kn">import</span> <span class="n">ProjectCard</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="kn">from</span> <span class="nn">opsml.cards.run</span> <span class="kn">import</span> <span class="n">RunCard</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="kn">from</span> <span class="nn">opsml.cards.run</span> <span class="kn">import</span> <span class="n">experimentcard</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">opsml.helpers.logging</span> <span class="kn">import</span> <span class="n">ArtifactLogger</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="kn">from</span> <span class="nn">opsml.projects._run_manager</span> <span class="kn">import</span> <span class="n">ActiveRunException</span><span class="p">,</span> <span class="n">_RunManager</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="kn">from</span> <span class="nn">opsml.projects.active_run</span> <span class="kn">import</span> <span class="n">ActiveRun</span><span class="p">,</span> <span class="n">CardHandler</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="kn">from</span> <span class="nn">opsml.projects.types</span> <span class="kn">import</span> <span class="n">ProjectInfo</span>
 </span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="kn">from</span> <span class="nn">opsml.registry</span> <span class="kn">import</span> <span class="n">CardRegistries</span>
 </span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="kn">from</span> <span class="nn">opsml.registry.sql.base.client</span> <span class="kn">import</span> <span class="n">ClientProjectCardRegistry</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">CardInfo</span><span class="p">,</span> <span class="n">CardType</span><span class="p">,</span> <span class="n">Metric</span><span class="p">,</span> <span class="n">Metrics</span><span class="p">,</span> <span class="n">Param</span><span class="p">,</span> <span class="n">Params</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">CardInfo</span><span class="p">,</span> <span class="n">RegistryType</span><span class="p">,</span> <span class="n">Metric</span><span class="p">,</span> <span class="n">Metrics</span><span class="p">,</span> <span class="n">Param</span><span class="p">,</span> <span class="n">Params</span>
 </span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a>
 </span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="n">logger</span> <span class="o">=</span> <span class="n">ArtifactLogger</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>
 </span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a>
@@ -266,10 +266,10 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">        Returns</span>
 </span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="sd">            `ArtifactCard`</span>
 </span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="n">card_type</span> <span class="o">=</span> <span class="n">CardType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="n">registry_type</span> <span class="o">=</span> <span class="n">RegistryType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
 </span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>        <span class="k">return</span> <span class="n">CardHandler</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span>
 </span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a>            <span class="n">registries</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="p">,</span>
-</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">card_type</span><span class="p">,</span>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">registry_type</span><span class="p">,</span>
 </span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a>            <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span>
 </span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a>        <span class="p">)</span>
 </span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a>
@@ -278,7 +278,7 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a><span class="sd">        Lists all runs for the current project, sorted by timestamp</span>
 </span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>
 </span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a><span class="sd">        Returns:</span>
-</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a><span class="sd">            List of RunCard</span>
+</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a><span class="sd">            List of experimentcard</span>
 </span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Listing runs for project </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="p">)</span>
 </span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a>
@@ -290,14 +290,14 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a>        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">project_runs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a>
 </span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a>    <span class="nd">@property</span>
-</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a>    <span class="k">def</span> <span class="nf">runcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunCard</span><span class="p">:</span>
-</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">RunCard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a>    <span class="k">def</span> <span class="nf">experimentcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">experimentcard</span><span class="p">:</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">experimentcard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
 </span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a>
 </span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a>    <span class="nd">@property</span>
 </span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
-</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>        <span class="n">runcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span>
-</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>        <span class="n">runcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
-</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>        <span class="k">return</span> <span class="n">runcard</span><span class="o">.</span><span class="n">metrics</span>
+</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>        <span class="n">experimentcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span>
+</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>        <span class="n">experimentcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
+</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>        <span class="k">return</span> <span class="n">experimentcard</span><span class="o">.</span><span class="n">metrics</span>
 </span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>
 </span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>    <span class="k">def</span> <span class="nf">get_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Metric</span><span class="p">],</span> <span class="n">Metric</span><span class="p">]:</span>
 </span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -310,11 +310,11 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a><span class="sd">            List of Metric or Metric</span>
 </span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>
 </span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>
 </span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>    <span class="nd">@property</span>
 </span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Params</span><span class="p">:</span>
-</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">parameters</span>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">parameters</span>
 </span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>
 </span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>    <span class="k">def</span> <span class="nf">get_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Param</span><span class="p">],</span> <span class="n">Param</span><span class="p">]:</span>
 </span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -327,21 +327,21 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a><span class="sd">            List of Param or Param</span>
 </span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>
 </span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>
 </span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>    <span class="nd">@property</span>
 </span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>    <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">tags</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">tags</span>
 </span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>
 </span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>    <span class="nd">@property</span>
 </span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>    <span class="k">def</span> <span class="nf">datacard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;DataCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">datacard_uids</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">datacard_uids</span>
 </span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>
 </span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>    <span class="nd">@property</span>
 </span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>    <span class="k">def</span> <span class="nf">modelcard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;ModelCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
 </span></pre></div>
 
 
@@ -476,10 +476,10 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="OpsmlProject-158"><a href="#OpsmlProject-158"><span class="linenos">158</span></a><span class="sd">        Returns</span>
 </span><span id="OpsmlProject-159"><a href="#OpsmlProject-159"><span class="linenos">159</span></a><span class="sd">            `ArtifactCard`</span>
 </span><span id="OpsmlProject-160"><a href="#OpsmlProject-160"><span class="linenos">160</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject-161"><a href="#OpsmlProject-161"><span class="linenos">161</span></a>        <span class="n">card_type</span> <span class="o">=</span> <span class="n">CardType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
+</span><span id="OpsmlProject-161"><a href="#OpsmlProject-161"><span class="linenos">161</span></a>        <span class="n">registry_type</span> <span class="o">=</span> <span class="n">RegistryType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
 </span><span id="OpsmlProject-162"><a href="#OpsmlProject-162"><span class="linenos">162</span></a>        <span class="k">return</span> <span class="n">CardHandler</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span>
 </span><span id="OpsmlProject-163"><a href="#OpsmlProject-163"><span class="linenos">163</span></a>            <span class="n">registries</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="p">,</span>
-</span><span id="OpsmlProject-164"><a href="#OpsmlProject-164"><span class="linenos">164</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">card_type</span><span class="p">,</span>
+</span><span id="OpsmlProject-164"><a href="#OpsmlProject-164"><span class="linenos">164</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">registry_type</span><span class="p">,</span>
 </span><span id="OpsmlProject-165"><a href="#OpsmlProject-165"><span class="linenos">165</span></a>            <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span>
 </span><span id="OpsmlProject-166"><a href="#OpsmlProject-166"><span class="linenos">166</span></a>        <span class="p">)</span>
 </span><span id="OpsmlProject-167"><a href="#OpsmlProject-167"><span class="linenos">167</span></a>
@@ -488,7 +488,7 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="OpsmlProject-170"><a href="#OpsmlProject-170"><span class="linenos">170</span></a><span class="sd">        Lists all runs for the current project, sorted by timestamp</span>
 </span><span id="OpsmlProject-171"><a href="#OpsmlProject-171"><span class="linenos">171</span></a>
 </span><span id="OpsmlProject-172"><a href="#OpsmlProject-172"><span class="linenos">172</span></a><span class="sd">        Returns:</span>
-</span><span id="OpsmlProject-173"><a href="#OpsmlProject-173"><span class="linenos">173</span></a><span class="sd">            List of RunCard</span>
+</span><span id="OpsmlProject-173"><a href="#OpsmlProject-173"><span class="linenos">173</span></a><span class="sd">            List of experimentcard</span>
 </span><span id="OpsmlProject-174"><a href="#OpsmlProject-174"><span class="linenos">174</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="OpsmlProject-175"><a href="#OpsmlProject-175"><span class="linenos">175</span></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Listing runs for project </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="p">)</span>
 </span><span id="OpsmlProject-176"><a href="#OpsmlProject-176"><span class="linenos">176</span></a>
@@ -500,14 +500,14 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="OpsmlProject-182"><a href="#OpsmlProject-182"><span class="linenos">182</span></a>        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">project_runs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="OpsmlProject-183"><a href="#OpsmlProject-183"><span class="linenos">183</span></a>
 </span><span id="OpsmlProject-184"><a href="#OpsmlProject-184"><span class="linenos">184</span></a>    <span class="nd">@property</span>
-</span><span id="OpsmlProject-185"><a href="#OpsmlProject-185"><span class="linenos">185</span></a>    <span class="k">def</span> <span class="nf">runcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunCard</span><span class="p">:</span>
-</span><span id="OpsmlProject-186"><a href="#OpsmlProject-186"><span class="linenos">186</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">RunCard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
+</span><span id="OpsmlProject-185"><a href="#OpsmlProject-185"><span class="linenos">185</span></a>    <span class="k">def</span> <span class="nf">experimentcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">experimentcard</span><span class="p">:</span>
+</span><span id="OpsmlProject-186"><a href="#OpsmlProject-186"><span class="linenos">186</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">experimentcard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
 </span><span id="OpsmlProject-187"><a href="#OpsmlProject-187"><span class="linenos">187</span></a>
 </span><span id="OpsmlProject-188"><a href="#OpsmlProject-188"><span class="linenos">188</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject-189"><a href="#OpsmlProject-189"><span class="linenos">189</span></a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
-</span><span id="OpsmlProject-190"><a href="#OpsmlProject-190"><span class="linenos">190</span></a>        <span class="n">runcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span>
-</span><span id="OpsmlProject-191"><a href="#OpsmlProject-191"><span class="linenos">191</span></a>        <span class="n">runcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
-</span><span id="OpsmlProject-192"><a href="#OpsmlProject-192"><span class="linenos">192</span></a>        <span class="k">return</span> <span class="n">runcard</span><span class="o">.</span><span class="n">metrics</span>
+</span><span id="OpsmlProject-190"><a href="#OpsmlProject-190"><span class="linenos">190</span></a>        <span class="n">experimentcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span>
+</span><span id="OpsmlProject-191"><a href="#OpsmlProject-191"><span class="linenos">191</span></a>        <span class="n">experimentcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
+</span><span id="OpsmlProject-192"><a href="#OpsmlProject-192"><span class="linenos">192</span></a>        <span class="k">return</span> <span class="n">experimentcard</span><span class="o">.</span><span class="n">metrics</span>
 </span><span id="OpsmlProject-193"><a href="#OpsmlProject-193"><span class="linenos">193</span></a>
 </span><span id="OpsmlProject-194"><a href="#OpsmlProject-194"><span class="linenos">194</span></a>    <span class="k">def</span> <span class="nf">get_metric</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Metric</span><span class="p">],</span> <span class="n">Metric</span><span class="p">]:</span>
 </span><span id="OpsmlProject-195"><a href="#OpsmlProject-195"><span class="linenos">195</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -520,11 +520,11 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="OpsmlProject-202"><a href="#OpsmlProject-202"><span class="linenos">202</span></a><span class="sd">            List of Metric or Metric</span>
 </span><span id="OpsmlProject-203"><a href="#OpsmlProject-203"><span class="linenos">203</span></a>
 </span><span id="OpsmlProject-204"><a href="#OpsmlProject-204"><span class="linenos">204</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject-205"><a href="#OpsmlProject-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="OpsmlProject-205"><a href="#OpsmlProject-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span><span id="OpsmlProject-206"><a href="#OpsmlProject-206"><span class="linenos">206</span></a>
 </span><span id="OpsmlProject-207"><a href="#OpsmlProject-207"><span class="linenos">207</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject-208"><a href="#OpsmlProject-208"><span class="linenos">208</span></a>    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Params</span><span class="p">:</span>
-</span><span id="OpsmlProject-209"><a href="#OpsmlProject-209"><span class="linenos">209</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">parameters</span>
+</span><span id="OpsmlProject-209"><a href="#OpsmlProject-209"><span class="linenos">209</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">parameters</span>
 </span><span id="OpsmlProject-210"><a href="#OpsmlProject-210"><span class="linenos">210</span></a>
 </span><span id="OpsmlProject-211"><a href="#OpsmlProject-211"><span class="linenos">211</span></a>    <span class="k">def</span> <span class="nf">get_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Param</span><span class="p">],</span> <span class="n">Param</span><span class="p">]:</span>
 </span><span id="OpsmlProject-212"><a href="#OpsmlProject-212"><span class="linenos">212</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -537,21 +537,21 @@ opsml<wbr>.projects<wbr>.project    </h1>
 </span><span id="OpsmlProject-219"><a href="#OpsmlProject-219"><span class="linenos">219</span></a><span class="sd">            List of Param or Param</span>
 </span><span id="OpsmlProject-220"><a href="#OpsmlProject-220"><span class="linenos">220</span></a>
 </span><span id="OpsmlProject-221"><a href="#OpsmlProject-221"><span class="linenos">221</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject-222"><a href="#OpsmlProject-222"><span class="linenos">222</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="OpsmlProject-222"><a href="#OpsmlProject-222"><span class="linenos">222</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span><span id="OpsmlProject-223"><a href="#OpsmlProject-223"><span class="linenos">223</span></a>
 </span><span id="OpsmlProject-224"><a href="#OpsmlProject-224"><span class="linenos">224</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject-225"><a href="#OpsmlProject-225"><span class="linenos">225</span></a>    <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-</span><span id="OpsmlProject-226"><a href="#OpsmlProject-226"><span class="linenos">226</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">tags</span>
+</span><span id="OpsmlProject-226"><a href="#OpsmlProject-226"><span class="linenos">226</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">tags</span>
 </span><span id="OpsmlProject-227"><a href="#OpsmlProject-227"><span class="linenos">227</span></a>
 </span><span id="OpsmlProject-228"><a href="#OpsmlProject-228"><span class="linenos">228</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject-229"><a href="#OpsmlProject-229"><span class="linenos">229</span></a>    <span class="k">def</span> <span class="nf">datacard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="OpsmlProject-230"><a href="#OpsmlProject-230"><span class="linenos">230</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;DataCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="OpsmlProject-231"><a href="#OpsmlProject-231"><span class="linenos">231</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">datacard_uids</span>
+</span><span id="OpsmlProject-231"><a href="#OpsmlProject-231"><span class="linenos">231</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">datacard_uids</span>
 </span><span id="OpsmlProject-232"><a href="#OpsmlProject-232"><span class="linenos">232</span></a>
 </span><span id="OpsmlProject-233"><a href="#OpsmlProject-233"><span class="linenos">233</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject-234"><a href="#OpsmlProject-234"><span class="linenos">234</span></a>    <span class="k">def</span> <span class="nf">modelcard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="OpsmlProject-235"><a href="#OpsmlProject-235"><span class="linenos">235</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;ModelCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="OpsmlProject-236"><a href="#OpsmlProject-236"><span class="linenos">236</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
+</span><span id="OpsmlProject-236"><a href="#OpsmlProject-236"><span class="linenos">236</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
 </span></pre></div>
 
 
@@ -795,10 +795,10 @@ as the project's current run.</li>
 </span><span id="OpsmlProject.load_card-158"><a href="#OpsmlProject.load_card-158"><span class="linenos">158</span></a><span class="sd">        Returns</span>
 </span><span id="OpsmlProject.load_card-159"><a href="#OpsmlProject.load_card-159"><span class="linenos">159</span></a><span class="sd">            `ArtifactCard`</span>
 </span><span id="OpsmlProject.load_card-160"><a href="#OpsmlProject.load_card-160"><span class="linenos">160</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject.load_card-161"><a href="#OpsmlProject.load_card-161"><span class="linenos">161</span></a>        <span class="n">card_type</span> <span class="o">=</span> <span class="n">CardType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
+</span><span id="OpsmlProject.load_card-161"><a href="#OpsmlProject.load_card-161"><span class="linenos">161</span></a>        <span class="n">registry_type</span> <span class="o">=</span> <span class="n">RegistryType</span><span class="p">(</span><span class="n">registry_name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span><span class="o">.</span><span class="n">value</span>
 </span><span id="OpsmlProject.load_card-162"><a href="#OpsmlProject.load_card-162"><span class="linenos">162</span></a>        <span class="k">return</span> <span class="n">CardHandler</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span>
 </span><span id="OpsmlProject.load_card-163"><a href="#OpsmlProject.load_card-163"><span class="linenos">163</span></a>            <span class="n">registries</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="p">,</span>
-</span><span id="OpsmlProject.load_card-164"><a href="#OpsmlProject.load_card-164"><span class="linenos">164</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">card_type</span><span class="p">,</span>
+</span><span id="OpsmlProject.load_card-164"><a href="#OpsmlProject.load_card-164"><span class="linenos">164</span></a>            <span class="n">registry_name</span><span class="o">=</span><span class="n">registry_type</span><span class="p">,</span>
 </span><span id="OpsmlProject.load_card-165"><a href="#OpsmlProject.load_card-165"><span class="linenos">165</span></a>            <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span>
 </span><span id="OpsmlProject.load_card-166"><a href="#OpsmlProject.load_card-166"><span class="linenos">166</span></a>        <span class="p">)</span>
 </span></pre></div>
@@ -838,7 +838,7 @@ be loaded.</li>
 </span><span id="OpsmlProject.list_runs-170"><a href="#OpsmlProject.list_runs-170"><span class="linenos">170</span></a><span class="sd">        Lists all runs for the current project, sorted by timestamp</span>
 </span><span id="OpsmlProject.list_runs-171"><a href="#OpsmlProject.list_runs-171"><span class="linenos">171</span></a>
 </span><span id="OpsmlProject.list_runs-172"><a href="#OpsmlProject.list_runs-172"><span class="linenos">172</span></a><span class="sd">        Returns:</span>
-</span><span id="OpsmlProject.list_runs-173"><a href="#OpsmlProject.list_runs-173"><span class="linenos">173</span></a><span class="sd">            List of RunCard</span>
+</span><span id="OpsmlProject.list_runs-173"><a href="#OpsmlProject.list_runs-173"><span class="linenos">173</span></a><span class="sd">            List of experimentcard</span>
 </span><span id="OpsmlProject.list_runs-174"><a href="#OpsmlProject.list_runs-174"><span class="linenos">174</span></a><span class="sd">        &quot;&quot;&quot;</span>
 </span><span id="OpsmlProject.list_runs-175"><a href="#OpsmlProject.list_runs-175"><span class="linenos">175</span></a>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Listing runs for project </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_name</span><span class="p">)</span>
 </span><span id="OpsmlProject.list_runs-176"><a href="#OpsmlProject.list_runs-176"><span class="linenos">176</span></a>
@@ -856,24 +856,24 @@ be loaded.</li>
 <h6 id="returns">Returns:</h6>
 
 <blockquote>
-  <p>List of RunCard</p>
+  <p>List of experimentcard</p>
 </blockquote>
 </div>
 
 
                             </div>
-                            <div id="OpsmlProject.runcard" class="classattr">
-                                        <input id="OpsmlProject.runcard-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                            <div id="OpsmlProject.experimentcard" class="classattr">
+                                        <input id="OpsmlProject.experimentcard-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">runcard</span><span class="annotation">: <a href="../cards/run.html#RunCard">opsml.cards.run.RunCard</a></span>
+            <span class="name">experimentcard</span><span class="annotation">: <a href="../cards/run.html#experimentcard">opsml.cards.run.experimentcard</a></span>
 
-                <label class="view-source-button" for="OpsmlProject.runcard-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="OpsmlProject.experimentcard-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#OpsmlProject.runcard"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.runcard-184"><a href="#OpsmlProject.runcard-184"><span class="linenos">184</span></a>    <span class="nd">@property</span>
-</span><span id="OpsmlProject.runcard-185"><a href="#OpsmlProject.runcard-185"><span class="linenos">185</span></a>    <span class="k">def</span> <span class="nf">runcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RunCard</span><span class="p">:</span>
-</span><span id="OpsmlProject.runcard-186"><a href="#OpsmlProject.runcard-186"><span class="linenos">186</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">RunCard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
+    <a class="headerlink" href="#OpsmlProject.experimentcard"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.experimentcard-184"><a href="#OpsmlProject.experimentcard-184"><span class="linenos">184</span></a>    <span class="nd">@property</span>
+</span><span id="OpsmlProject.experimentcard-185"><a href="#OpsmlProject.experimentcard-185"><span class="linenos">185</span></a>    <span class="k">def</span> <span class="nf">experimentcard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">experimentcard</span><span class="p">:</span>
+</span><span id="OpsmlProject.experimentcard-186"><a href="#OpsmlProject.experimentcard-186"><span class="linenos">186</span></a>        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">experimentcard</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_mgr</span><span class="o">.</span><span class="n">registries</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">load_card</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">))</span>
 </span></pre></div>
 
 
@@ -891,9 +891,9 @@ be loaded.</li>
     <a class="headerlink" href="#OpsmlProject.metrics"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.metrics-188"><a href="#OpsmlProject.metrics-188"><span class="linenos">188</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject.metrics-189"><a href="#OpsmlProject.metrics-189"><span class="linenos">189</span></a>    <span class="k">def</span> <span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
-</span><span id="OpsmlProject.metrics-190"><a href="#OpsmlProject.metrics-190"><span class="linenos">190</span></a>        <span class="n">runcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span>
-</span><span id="OpsmlProject.metrics-191"><a href="#OpsmlProject.metrics-191"><span class="linenos">191</span></a>        <span class="n">runcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
-</span><span id="OpsmlProject.metrics-192"><a href="#OpsmlProject.metrics-192"><span class="linenos">192</span></a>        <span class="k">return</span> <span class="n">runcard</span><span class="o">.</span><span class="n">metrics</span>
+</span><span id="OpsmlProject.metrics-190"><a href="#OpsmlProject.metrics-190"><span class="linenos">190</span></a>        <span class="n">experimentcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span>
+</span><span id="OpsmlProject.metrics-191"><a href="#OpsmlProject.metrics-191"><span class="linenos">191</span></a>        <span class="n">experimentcard</span><span class="o">.</span><span class="n">load_metrics</span><span class="p">()</span>
+</span><span id="OpsmlProject.metrics-192"><a href="#OpsmlProject.metrics-192"><span class="linenos">192</span></a>        <span class="k">return</span> <span class="n">experimentcard</span><span class="o">.</span><span class="n">metrics</span>
 </span></pre></div>
 
 
@@ -922,7 +922,7 @@ be loaded.</li>
 </span><span id="OpsmlProject.get_metric-202"><a href="#OpsmlProject.get_metric-202"><span class="linenos">202</span></a><span class="sd">            List of Metric or Metric</span>
 </span><span id="OpsmlProject.get_metric-203"><a href="#OpsmlProject.get_metric-203"><span class="linenos">203</span></a>
 </span><span id="OpsmlProject.get_metric-204"><a href="#OpsmlProject.get_metric-204"><span class="linenos">204</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject.get_metric-205"><a href="#OpsmlProject.get_metric-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="OpsmlProject.get_metric-205"><a href="#OpsmlProject.get_metric-205"><span class="linenos">205</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -954,7 +954,7 @@ be loaded.</li>
     <a class="headerlink" href="#OpsmlProject.parameters"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.parameters-207"><a href="#OpsmlProject.parameters-207"><span class="linenos">207</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject.parameters-208"><a href="#OpsmlProject.parameters-208"><span class="linenos">208</span></a>    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Params</span><span class="p">:</span>
-</span><span id="OpsmlProject.parameters-209"><a href="#OpsmlProject.parameters-209"><span class="linenos">209</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">parameters</span>
+</span><span id="OpsmlProject.parameters-209"><a href="#OpsmlProject.parameters-209"><span class="linenos">209</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">parameters</span>
 </span></pre></div>
 
 
@@ -983,7 +983,7 @@ be loaded.</li>
 </span><span id="OpsmlProject.get_parameter-219"><a href="#OpsmlProject.get_parameter-219"><span class="linenos">219</span></a><span class="sd">            List of Param or Param</span>
 </span><span id="OpsmlProject.get_parameter-220"><a href="#OpsmlProject.get_parameter-220"><span class="linenos">220</span></a>
 </span><span id="OpsmlProject.get_parameter-221"><a href="#OpsmlProject.get_parameter-221"><span class="linenos">221</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="OpsmlProject.get_parameter-222"><a href="#OpsmlProject.get_parameter-222"><span class="linenos">222</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+</span><span id="OpsmlProject.get_parameter-222"><a href="#OpsmlProject.get_parameter-222"><span class="linenos">222</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -1015,7 +1015,7 @@ be loaded.</li>
     <a class="headerlink" href="#OpsmlProject.tags"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.tags-224"><a href="#OpsmlProject.tags-224"><span class="linenos">224</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject.tags-225"><a href="#OpsmlProject.tags-225"><span class="linenos">225</span></a>    <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-</span><span id="OpsmlProject.tags-226"><a href="#OpsmlProject.tags-226"><span class="linenos">226</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">tags</span>
+</span><span id="OpsmlProject.tags-226"><a href="#OpsmlProject.tags-226"><span class="linenos">226</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">tags</span>
 </span></pre></div>
 
 
@@ -1034,7 +1034,7 @@ be loaded.</li>
             <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.datacard_uids-228"><a href="#OpsmlProject.datacard_uids-228"><span class="linenos">228</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject.datacard_uids-229"><a href="#OpsmlProject.datacard_uids-229"><span class="linenos">229</span></a>    <span class="k">def</span> <span class="nf">datacard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="OpsmlProject.datacard_uids-230"><a href="#OpsmlProject.datacard_uids-230"><span class="linenos">230</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;DataCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="OpsmlProject.datacard_uids-231"><a href="#OpsmlProject.datacard_uids-231"><span class="linenos">231</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">datacard_uids</span>
+</span><span id="OpsmlProject.datacard_uids-231"><a href="#OpsmlProject.datacard_uids-231"><span class="linenos">231</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">datacard_uids</span>
 </span></pre></div>
 
 
@@ -1055,7 +1055,7 @@ be loaded.</li>
             <div class="pdoc-code codehilite"><pre><span></span><span id="OpsmlProject.modelcard_uids-233"><a href="#OpsmlProject.modelcard_uids-233"><span class="linenos">233</span></a>    <span class="nd">@property</span>
 </span><span id="OpsmlProject.modelcard_uids-234"><a href="#OpsmlProject.modelcard_uids-234"><span class="linenos">234</span></a>    <span class="k">def</span> <span class="nf">modelcard_uids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span><span id="OpsmlProject.modelcard_uids-235"><a href="#OpsmlProject.modelcard_uids-235"><span class="linenos">235</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;ModelCards associated with the current run&quot;&quot;&quot;</span>
-</span><span id="OpsmlProject.modelcard_uids-236"><a href="#OpsmlProject.modelcard_uids-236"><span class="linenos">236</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
+</span><span id="OpsmlProject.modelcard_uids-236"><a href="#OpsmlProject.modelcard_uids-236"><span class="linenos">236</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">experimentcard</span><span class="o">.</span><span class="n">modelcard_uids</span>
 </span></pre></div>
 
 

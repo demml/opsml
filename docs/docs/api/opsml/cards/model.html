@@ -87,7 +87,7 @@
                                 <a class="variable" href="#ModelCard.model_metadata">model_metadata</a>
                         </li>
                         <li>
-                                <a class="variable" href="#ModelCard.card_type">card_type</a>
+                                <a class="variable" href="#ModelCard.registry_type">registry_type</a>
                         </li>
                         <li>
                                 <a class="variable" href="#ModelCard.model_fields">model_fields</a>
@@ -131,7 +131,7 @@ opsml<wbr>.cards<wbr>.model    </h1>
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span> <span class="nn">opsml.cards.base</span> <span class="kn">import</span> <span class="n">ArtifactCard</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="kn">from</span> <span class="nn">opsml.helpers.logging</span> <span class="kn">import</span> <span class="n">ArtifactLogger</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="kn">from</span> <span class="nn">opsml.model.interfaces.base</span> <span class="kn">import</span> <span class="n">ModelInterface</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">CardType</span><span class="p">,</span> <span class="n">ModelCardMetadata</span><span class="p">,</span> <span class="n">ModelMetadata</span><span class="p">,</span> <span class="n">OnnxModel</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">RegistryType</span><span class="p">,</span> <span class="n">ModelCardMetadata</span><span class="p">,</span> <span class="n">ModelMetadata</span><span class="p">,</span> <span class="n">OnnxModel</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="n">logger</span> <span class="o">=</span> <span class="n">ArtifactLogger</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a>
@@ -288,8 +288,8 @@ opsml<wbr>.cards<wbr>.model    </h1>
 </span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a>        <span class="k">return</span> <span class="n">ModelCardLoader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">load_model_metadata</span><span class="p">()</span>
 </span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>
 </span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a>    <span class="nd">@property</span>
-</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
+</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 
@@ -469,8 +469,8 @@ opsml<wbr>.cards<wbr>.model    </h1>
 </span><span id="ModelCard-168"><a href="#ModelCard-168"><span class="linenos">168</span></a>        <span class="k">return</span> <span class="n">ModelCardLoader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">load_model_metadata</span><span class="p">()</span>
 </span><span id="ModelCard-169"><a href="#ModelCard-169"><span class="linenos">169</span></a>
 </span><span id="ModelCard-170"><a href="#ModelCard-170"><span class="linenos">170</span></a>    <span class="nd">@property</span>
-</span><span id="ModelCard-171"><a href="#ModelCard-171"><span class="linenos">171</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="ModelCard-172"><a href="#ModelCard-172"><span class="linenos">172</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
+</span><span id="ModelCard-171"><a href="#ModelCard-171"><span class="linenos">171</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ModelCard-172"><a href="#ModelCard-172"><span class="linenos">172</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 
@@ -863,18 +863,18 @@ quantize:
 
 
                             </div>
-                            <div id="ModelCard.card_type" class="classattr">
-                                        <input id="ModelCard.card_type-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                            <div id="ModelCard.registry_type" class="classattr">
+                                        <input id="ModelCard.registry_type-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">card_type</span><span class="annotation">: str</span>
+            <span class="name">registry_type</span><span class="annotation">: str</span>
 
-                <label class="view-source-button" for="ModelCard.card_type-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="ModelCard.registry_type-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#ModelCard.card_type"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="ModelCard.card_type-170"><a href="#ModelCard.card_type-170"><span class="linenos">170</span></a>    <span class="nd">@property</span>
-</span><span id="ModelCard.card_type-171"><a href="#ModelCard.card_type-171"><span class="linenos">171</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="ModelCard.card_type-172"><a href="#ModelCard.card_type-172"><span class="linenos">172</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
+    <a class="headerlink" href="#ModelCard.registry_type"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ModelCard.registry_type-170"><a href="#ModelCard.registry_type-170"><span class="linenos">170</span></a>    <span class="nd">@property</span>
+</span><span id="ModelCard.registry_type-171"><a href="#ModelCard.registry_type-171"><span class="linenos">171</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ModelCard.registry_type-172"><a href="#ModelCard.registry_type-172"><span class="linenos">172</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">MODELCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 
@@ -885,7 +885,7 @@ quantize:
                                 <div class="attr variable">
             <span class="name">model_fields</span>        =
 <input id="ModelCard.model_fields-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-            <label class="view-value-button pdoc-button" for="ModelCard.model_fields-view-value"></label><span class="default_value">{&#39;name&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;repository&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;contact&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;version&#39;: FieldInfo(annotation=str, required=False, default=&#39;0.0.0&#39;), &#39;uid&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;info&#39;: FieldInfo(annotation=Union[CardInfo, NoneType], required=False), &#39;tags&#39;: FieldInfo(annotation=Dict[str, str], required=False, default={}), &#39;interface&#39;: FieldInfo(annotation=ModelInterface, required=True, metadata=[SerializeAsAny()]), &#39;datacard_uid&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;to_onnx&#39;: FieldInfo(annotation=bool, required=False, default=False), &#39;metadata&#39;: FieldInfo(annotation=ModelCardMetadata, required=False, default=ModelCardMetadata(interface_type=&#39;&#39;, description=Description(summary=None, sample_code=None, Notes=None), data_schema=DataSchema(data_type=None, input_features=None, output_features=None, onnx_input_features=None, onnx_output_features=None, onnx_data_type=None, onnx_version=None), runcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))}</span>
+            <label class="view-value-button pdoc-button" for="ModelCard.model_fields-view-value"></label><span class="default_value">{&#39;name&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;repository&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;contact&#39;: FieldInfo(annotation=str, required=False, default=&#39;undefined&#39;), &#39;version&#39;: FieldInfo(annotation=str, required=False, default=&#39;0.0.0&#39;), &#39;uid&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;info&#39;: FieldInfo(annotation=Union[CardInfo, NoneType], required=False), &#39;tags&#39;: FieldInfo(annotation=Dict[str, str], required=False, default={}), &#39;interface&#39;: FieldInfo(annotation=ModelInterface, required=True, metadata=[SerializeAsAny()]), &#39;datacard_uid&#39;: FieldInfo(annotation=Union[str, NoneType], required=False), &#39;to_onnx&#39;: FieldInfo(annotation=bool, required=False, default=False), &#39;metadata&#39;: FieldInfo(annotation=ModelCardMetadata, required=False, default=ModelCardMetadata(interface_type=&#39;&#39;, description=Description(summary=None, sample_code=None, Notes=None), data_schema=DataSchema(data_type=None, input_features=None, output_features=None, onnx_input_features=None, onnx_output_features=None, onnx_data_type=None, onnx_version=None), experimentcard_uid=None, pipelinecard_uid=None, auditcard_uid=None))}</span>
 
         
     </div>

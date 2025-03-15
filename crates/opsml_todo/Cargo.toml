@@ -9,7 +9,6 @@ description = "Opsml settings rust and python bindings"
 [dependencies]
 clap = { workspace = true }
 opsml-colors = { workspace = true }
-opsml-types = { workspace = true }
 rayon = { workspace = true }
 tabled = { workspace = true }
 walkdir = { workspace = true }

@@ -1,4 +1,4 @@
-from opsml.model import TorchModel, LoadKwargs
+from opsml.model import TorchModel, ModelLoadKwargs
 from opsml.data import DataType
 from typing import Tuple
 import torch
@@ -29,10 +29,8 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     interface.model = None
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
 
     assert interface.onnx_session.session is not None
@@ -60,10 +58,8 @@ def test_pytorch_simple_tuple(
     interface.model = None
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
 
     assert interface.onnx_session.session is not None

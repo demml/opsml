@@ -1,7 +1,7 @@
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
-use crate::types::ModelType;
 use opsml_error::OpsmlError;
+use opsml_types::ModelType;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;

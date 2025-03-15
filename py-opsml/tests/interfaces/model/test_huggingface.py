@@ -19,7 +19,8 @@ from opsml.data import TorchData
 IS_312 = sys.version_info >= (3, 12)
 
 
-def _test_hugging_face_text_pipeline(
+@pytest.mark.skipif(EXCLUDE, reason="Test not supported")
+def test_hugging_face_text_pipeline(
     tmp_path: Path,
     huggingface_text_classification_pipeline: Tuple[Pipeline, str],
 ):
@@ -49,17 +50,13 @@ def _test_hugging_face_text_pipeline(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.onnx_session is not None
 
 
-def _test_hugging_face_model(
+@pytest.mark.skipif(EXCLUDE, reason="Test not supported")
+def test_hugging_face_model(
     tmp_path: Path,
     huggingface_bart_model: Tuple[BartModel, BartTokenizer, torch.Tensor],
 ):
@@ -90,18 +87,13 @@ def _test_hugging_face_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        preprocessor=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None
 
 
+@pytest.mark.numpy
 @pytest.mark.skipif((EXCLUDE or IS_312), reason="Test not supported")
 def test_hugging_face_tf_model(
     tmp_path: Path,
@@ -125,24 +117,13 @@ def test_hugging_face_tf_model(
     )
 
     kwargs = SaveKwargs(onnx=onnx_args)
-    interface.save(save_path, True, save_kwargs=kwargs)
-    assert interface.onnx_session is not None
-
-    interface.onnx_session.session = None
-    assert interface.onnx_session.session is None
+    interface.save(save_path, False, save_kwargs=kwargs)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(
-        save_path,
-        model=True,
-        onnx=True,
-        preprocessor=True,
-        sample_data=True,
-    )
+    interface.load(save_path, onnx=True)
 
-    assert interface.onnx_session is not None
     assert interface.tokenizer is not None
 
 

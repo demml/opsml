@@ -1,29 +1,29 @@
 use crate::base::SqlClient;
 
-use crate::schemas::schema::ProjectCardRecord;
 use crate::schemas::schema::{
-    AuditCardRecord, CardResults, CardSummary, DataCardRecord, HardwareMetricsRecord, MetricRecord,
-    ModelCardRecord, ParameterRecord, PipelineCardRecord, QueryStats, RunCardRecord, ServerCard,
-    User, VersionResult,
+    AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
+    HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
+    QueryStats, ServerCard, User, VersionResult,
 };
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::contracts::ArtifactKey;
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
     types::chrono::NaiveDateTime,
     FromRow, Pool, Row, Sqlite,
 };
-use tracing::info;
+use tracing::{debug, error, info, instrument};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: Option<NaiveDateTime> = row.try_get("created_at")?;
+        let created_at: NaiveDateTime = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
@@ -35,6 +35,7 @@ impl FromRow<'_, SqliteRow> for User {
         let group_permissions: String = row.try_get("group_permissions")?;
         let group_permissions: Vec<String> =
             serde_json::from_str(&group_permissions).unwrap_or_default();
+        let role = row.try_get("role")?;
 
         let refresh_token: Option<String> = row.try_get("refresh_token")?;
 
@@ -46,6 +47,7 @@ impl FromRow<'_, SqliteRow> for User {
             password_hash,
             permissions,
             group_permissions,
+            role,
             refresh_token,
         })
     }
@@ -67,6 +69,7 @@ impl SqlClient for SqliteClient {
 
             // check if the file exists
             if !path.exists() {
+                debug!("SQLite file does not exist, creating file");
                 // Ensure the parent directory exists
                 if let Some(parent) = path.parent() {
                     if !parent.exists() {
@@ -112,7 +115,6 @@ impl SqlClient for SqliteClient {
             .run(&self.pool)
             .await
             .map_err(|e| SqlError::MigrationError(format!("{}", e)))?;
-
         Ok(())
     }
 
@@ -149,33 +151,42 @@ impl SqlClient for SqliteClient {
     /// # Returns
     ///
     /// * `Vec<String>` - A vector of strings representing the sorted (desc) versions of the card
+    #[instrument(skip_all)]
     async fn get_versions(
         &self,
         table: &CardTable,
-        name: &str,
         repository: &str,
-        version: Option<&str>,
+        name: &str,
+        version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
         // if version is None, get the latest version
         let query = SqliteQueryHelper::get_versions_query(table, version)?;
+
         let cards: Vec<VersionResult> = sqlx::query_as(&query)
             .bind(name)
             .bind(repository)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+            .map_err(|e| {
+                error!("{}", e);
+                SqlError::QueryError(format!("{}", e))
+            })?;
 
         let versions = cards
             .iter()
             .map(|c| {
-                c.to_version()
-                    .map_err(|e| SqlError::VersionError(format!("{}", e)))
+                c.to_version().map_err(|e| {
+                    error!("{}", e);
+                    SqlError::VersionError(format!("{}", e))
+                })
             })
             .collect::<Result<Vec<Version>, SqlError>>()?;
 
         // sort semvers
-        VersionValidator::sort_semver_versions(versions, true)
-            .map_err(|e| SqlError::VersionError(format!("{}", e)))
+        VersionValidator::sort_semver_versions(versions, true).map_err(|e| {
+            error!("{}", e);
+            SqlError::VersionError(format!("{}", e))
+        })
     }
 
     /// Query cards based on the query arguments
@@ -222,8 +233,8 @@ impl SqlClient for SqliteClient {
 
                 return Ok(CardResults::Model(card));
             }
-            CardTable::Run => {
-                let card: Vec<RunCardRecord> = sqlx::query_as(&query)
+            CardTable::Experiment => {
+                let card: Vec<ExperimentCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.repository.as_ref())
@@ -233,7 +244,7 @@ impl SqlClient for SqliteClient {
                     .await
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Run(card));
+                return Ok(CardResults::Experiment(card));
             }
 
             CardTable::Audit => {
@@ -249,8 +260,9 @@ impl SqlClient for SqliteClient {
 
                 return Ok(CardResults::Audit(card));
             }
-            CardTable::Pipeline => {
-                let card: Vec<PipelineCardRecord> = sqlx::query_as(&query)
+
+            CardTable::Prompt => {
+                let card: Vec<PromptCardRecord> = sqlx::query_as(&query)
                     .bind(query_args.uid.as_ref())
                     .bind(query_args.name.as_ref())
                     .bind(query_args.repository.as_ref())
@@ -260,21 +272,9 @@ impl SqlClient for SqliteClient {
                     .await
                     .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Pipeline(card));
+                return Ok(CardResults::Prompt(card));
             }
-            CardTable::Project => {
-                let card: Vec<ProjectCardRecord> = sqlx::query_as(&query)
-                    .bind(query_args.uid.as_ref())
-                    .bind(query_args.name.as_ref())
-                    .bind(query_args.repository.as_ref())
-                    .bind(query_args.max_date.as_ref())
-                    .bind(query_args.limit.unwrap_or(50))
-                    .fetch_all(&self.pool)
-                    .await
-                    .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
-                return Ok(CardResults::Project(card));
-            }
             _ => {
                 return Err(SqlError::QueryError(
                     "Invalid table name for query".to_string(),
@@ -297,15 +297,14 @@ impl SqlClient for SqliteClient {
                         .bind(data.minor)
                         .bind(data.patch)
                         .bind(&data.version)
-                        .bind(&data.contact)
                         .bind(&data.data_type)
                         .bind(&data.interface_type)
                         .bind(&data.tags)
-                        .bind(&data.runcard_uid)
-                        .bind(&data.pipelinecard_uid)
+                        .bind(&data.experimentcard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
+                        .bind(&data.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -329,18 +328,17 @@ impl SqlClient for SqliteClient {
                         .bind(model.minor)
                         .bind(model.patch)
                         .bind(&model.version)
-                        .bind(&model.contact)
                         .bind(&model.datacard_uid)
-                        .bind(&model.sample_data_type)
+                        .bind(&model.data_type)
                         .bind(&model.model_type)
                         .bind(&model.interface_type)
                         .bind(&model.task_type)
                         .bind(&model.tags)
-                        .bind(&model.runcard_uid)
-                        .bind(&model.pipelinecard_uid)
+                        .bind(&model.experimentcard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
+                        .bind(&model.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -352,9 +350,9 @@ impl SqlClient for SqliteClient {
                     ));
                 }
             },
-            CardTable::Run => match card {
-                ServerCard::Run(run) => {
-                    let query = SqliteQueryHelper::get_runcard_insert_query();
+            CardTable::Experiment => match card {
+                ServerCard::Experiment(run) => {
+                    let query = SqliteQueryHelper::get_experimentcard_insert_query();
                     sqlx::query(&query)
                         .bind(&run.uid)
                         .bind(&run.app_env)
@@ -364,16 +362,14 @@ impl SqlClient for SqliteClient {
                         .bind(run.minor)
                         .bind(run.patch)
                         .bind(&run.version)
-                        .bind(&run.contact)
-                        .bind(&run.project)
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.pipelinecard_uid)
-                        .bind(&run.artifact_uris)
-                        .bind(&run.compute_environment)
+                        .bind(&run.experimentcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
+                        .bind(&run.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -397,14 +393,14 @@ impl SqlClient for SqliteClient {
                         .bind(audit.minor)
                         .bind(audit.patch)
                         .bind(&audit.version)
-                        .bind(&audit.contact)
                         .bind(&audit.tags)
                         .bind(audit.approved)
                         .bind(&audit.datacard_uids)
                         .bind(&audit.modelcard_uids)
-                        .bind(&audit.runcard_uids)
+                        .bind(&audit.experimentcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -416,56 +412,32 @@ impl SqlClient for SqliteClient {
                     ));
                 }
             },
-            CardTable::Pipeline => match card {
-                ServerCard::Pipeline(pipeline) => {
-                    let query = SqliteQueryHelper::get_pipelinecard_insert_query();
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = SqliteQueryHelper::get_promptcard_insert_query();
                     sqlx::query(&query)
-                        .bind(&pipeline.uid)
-                        .bind(&pipeline.app_env)
-                        .bind(&pipeline.name)
-                        .bind(&pipeline.repository)
-                        .bind(pipeline.major)
-                        .bind(pipeline.minor)
-                        .bind(pipeline.patch)
-                        .bind(&pipeline.version)
-                        .bind(&pipeline.contact)
-                        .bind(&pipeline.tags)
-                        .bind(&pipeline.pipeline_code_uri)
-                        .bind(&pipeline.datacard_uids)
-                        .bind(&pipeline.modelcard_uids)
-                        .bind(&pipeline.runcard_uids)
-                        .bind(&pipeline.pre_tag)
-                        .bind(&pipeline.build_tag)
+                        .bind(&card.uid)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
-                _ => {
-                    return Err(SqlError::QueryError(
-                        "Invalid card type for insert".to_string(),
-                    ));
-                }
-            },
-            CardTable::Project => match card {
-                ServerCard::Project(project) => {
-                    let query = SqliteQueryHelper::get_projectcard_insert_query();
-                    sqlx::query(&query)
-                        .bind(&project.uid)
-                        .bind(&project.name)
-                        .bind(&project.repository)
-                        .bind(project.project_id)
-                        .bind(project.major)
-                        .bind(project.minor)
-                        .bind(project.patch)
-                        .bind(&project.version)
-                        .bind(&project.pre_tag)
-                        .bind(&project.build_tag)
-                        .execute(&self.pool)
-                        .await
-                        .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-                    Ok(())
-                }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -494,15 +466,14 @@ impl SqlClient for SqliteClient {
                         .bind(data.minor)
                         .bind(data.patch)
                         .bind(&data.version)
-                        .bind(&data.contact)
                         .bind(&data.data_type)
                         .bind(&data.interface_type)
                         .bind(&data.tags)
-                        .bind(&data.runcard_uid)
-                        .bind(&data.pipelinecard_uid)
+                        .bind(&data.experimentcard_uid)
                         .bind(&data.auditcard_uid)
                         .bind(&data.pre_tag)
                         .bind(&data.build_tag)
+                        .bind(&data.username)
                         .bind(&data.uid)
                         .execute(&self.pool)
                         .await
@@ -526,18 +497,17 @@ impl SqlClient for SqliteClient {
                         .bind(model.minor)
                         .bind(model.patch)
                         .bind(&model.version)
-                        .bind(&model.contact)
                         .bind(&model.datacard_uid)
-                        .bind(&model.sample_data_type)
+                        .bind(&model.data_type)
                         .bind(&model.model_type)
                         .bind(&model.interface_type)
                         .bind(&model.task_type)
                         .bind(&model.tags)
-                        .bind(&model.runcard_uid)
-                        .bind(&model.pipelinecard_uid)
+                        .bind(&model.experimentcard_uid)
                         .bind(&model.auditcard_uid)
                         .bind(&model.pre_tag)
                         .bind(&model.build_tag)
+                        .bind(&model.username)
                         .bind(&model.uid)
                         .execute(&self.pool)
                         .await
@@ -550,9 +520,9 @@ impl SqlClient for SqliteClient {
                     ));
                 }
             },
-            CardTable::Run => match card {
-                ServerCard::Run(run) => {
-                    let query = SqliteQueryHelper::get_runcard_update_query();
+            CardTable::Experiment => match card {
+                ServerCard::Experiment(run) => {
+                    let query = SqliteQueryHelper::get_experimentcard_update_query();
                     sqlx::query(&query)
                         .bind(&run.app_env)
                         .bind(&run.name)
@@ -561,16 +531,14 @@ impl SqlClient for SqliteClient {
                         .bind(run.minor)
                         .bind(run.patch)
                         .bind(&run.version)
-                        .bind(&run.contact)
-                        .bind(&run.project)
                         .bind(&run.tags)
                         .bind(&run.datacard_uids)
                         .bind(&run.modelcard_uids)
-                        .bind(&run.pipelinecard_uid)
-                        .bind(&run.artifact_uris)
-                        .bind(&run.compute_environment)
+                        .bind(&run.experimentcard_uids)
+                        .bind(&run.promptcard_uids)
                         .bind(&run.pre_tag)
                         .bind(&run.build_tag)
+                        .bind(&run.username)
                         .bind(&run.uid)
                         .execute(&self.pool)
                         .await
@@ -594,14 +562,14 @@ impl SqlClient for SqliteClient {
                         .bind(audit.minor)
                         .bind(audit.patch)
                         .bind(&audit.version)
-                        .bind(&audit.contact)
                         .bind(&audit.tags)
                         .bind(audit.approved)
                         .bind(&audit.datacard_uids)
                         .bind(&audit.modelcard_uids)
-                        .bind(&audit.runcard_uids)
+                        .bind(&audit.experimentcard_uids)
                         .bind(&audit.pre_tag)
                         .bind(&audit.build_tag)
+                        .bind(&audit.username)
                         .bind(&audit.uid)
                         .execute(&self.pool)
                         .await
@@ -614,31 +582,32 @@ impl SqlClient for SqliteClient {
                     ));
                 }
             },
-            CardTable::Pipeline => match card {
-                ServerCard::Pipeline(pipeline) => {
-                    let query = SqliteQueryHelper::get_pipelinecard_update_query();
+
+            CardTable::Prompt => match card {
+                ServerCard::Prompt(card) => {
+                    let query = SqliteQueryHelper::get_promptcard_update_query();
                     sqlx::query(&query)
-                        .bind(&pipeline.app_env)
-                        .bind(&pipeline.name)
-                        .bind(&pipeline.repository)
-                        .bind(pipeline.major)
-                        .bind(pipeline.minor)
-                        .bind(pipeline.patch)
-                        .bind(&pipeline.version)
-                        .bind(&pipeline.contact)
-                        .bind(&pipeline.tags)
-                        .bind(&pipeline.pipeline_code_uri)
-                        .bind(&pipeline.datacard_uids)
-                        .bind(&pipeline.modelcard_uids)
-                        .bind(&pipeline.runcard_uids)
-                        .bind(&pipeline.pre_tag)
-                        .bind(&pipeline.build_tag)
-                        .bind(&pipeline.uid)
+                        .bind(&card.app_env)
+                        .bind(&card.name)
+                        .bind(&card.repository)
+                        .bind(card.major)
+                        .bind(card.minor)
+                        .bind(card.patch)
+                        .bind(&card.version)
+                        .bind(&card.prompt_type)
+                        .bind(&card.tags)
+                        .bind(&card.experimentcard_uid)
+                        .bind(&card.auditcard_uid)
+                        .bind(&card.pre_tag)
+                        .bind(&card.build_tag)
+                        .bind(&card.username)
+                        .bind(&card.uid)
                         .execute(&self.pool)
                         .await
                         .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
                     Ok(())
                 }
+
                 _ => {
                     return Err(SqlError::QueryError(
                         "Invalid card type for insert".to_string(),
@@ -754,24 +723,11 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError> {
-        let query = SqliteQueryHelper::get_project_id_query();
-
-        let project_id: i32 = sqlx::query_scalar(&query)
-            .bind(project_name)
-            .bind(repository)
-            .fetch_one(&self.pool)
-            .await
-            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
-
-        Ok(project_id)
-    }
-
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_run_metric_insert_query();
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_experiment_metric_insert_query();
 
         sqlx::query(&query)
-            .bind(&record.run_uid)
+            .bind(&record.experiment_uid)
             .bind(&record.name)
             .bind(record.value)
             .bind(record.step)
@@ -783,17 +739,17 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         records: &'life1 [MetricRecord],
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_run_metrics_insert_query(records.len());
+        let query = SqliteQueryHelper::get_experiment_metrics_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
         for r in records {
             query_builder = query_builder
-                .bind(&r.run_uid)
+                .bind(&r.experiment_uid)
                 .bind(&r.name)
                 .bind(r.value)
                 .bind(r.step)
@@ -808,12 +764,12 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<MetricRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_run_metric_query(names);
+        let (query, bindings) = SqliteQueryHelper::get_experiment_metric_query(names);
         let mut query_builder = sqlx::query_as::<sqlx::Sqlite, MetricRecord>(&query).bind(uid);
 
         for binding in bindings {
@@ -828,9 +784,9 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         let query = format!(
-            "SELECT DISTINCT name FROM {} WHERE run_uid = ?1",
+            "SELECT DISTINCT name FROM {} WHERE experiment_uid = ?1",
             CardTable::Metrics
         );
 
@@ -843,38 +799,23 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        record: &'life1 [HardwareMetricsRecord],
+        record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_hardware_metrics_insert_query(record.len());
-
-        let mut query_builder = sqlx::query(&query);
-
-        for r in record {
-            query_builder = query_builder
-                .bind(&r.run_uid)
-                .bind(r.created_at)
-                .bind(r.cpu_percent_utilization)
-                .bind(&r.cpu_percent_per_core)
-                .bind(r.compute_overall)
-                .bind(r.compute_utilized)
-                .bind(r.load_avg)
-                .bind(r.sys_ram_total)
-                .bind(r.sys_ram_used)
-                .bind(r.sys_ram_available)
-                .bind(r.sys_ram_percent_used)
-                .bind(r.sys_swap_total)
-                .bind(r.sys_swap_used)
-                .bind(r.sys_swap_free)
-                .bind(r.sys_swap_percent)
-                .bind(r.bytes_recv)
-                .bind(r.bytes_sent)
-                .bind(r.gpu_percent_utilization)
-                .bind(&r.gpu_percent_per_core);
-        }
-
-        query_builder
+        let query = SqliteQueryHelper::get_hardware_metrics_insert_query();
+        sqlx::query(&query)
+            .bind(&record.experiment_uid)
+            .bind(record.created_at)
+            .bind(record.cpu_percent_utilization)
+            .bind(&record.cpu_percent_per_core)
+            .bind(record.free_memory)
+            .bind(record.total_memory)
+            .bind(record.used_memory)
+            .bind(record.available_memory)
+            .bind(record.used_percent_memory)
+            .bind(record.bytes_recv)
+            .bind(record.bytes_sent)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -894,17 +835,17 @@ impl SqlClient for SqliteClient {
         Ok(records)
     }
 
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         records: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError> {
-        let query = SqliteQueryHelper::get_run_parameters_insert_query(records.len());
+        let query = SqliteQueryHelper::get_experiment_parameters_insert_query(records.len());
 
         let mut query_builder = sqlx::query(&query);
 
         for record in records {
             query_builder = query_builder
-                .bind(&record.run_uid)
+                .bind(&record.experiment_uid)
                 .bind(&record.name)
                 .bind(&record.value);
         }
@@ -917,12 +858,12 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError> {
-        let (query, bindings) = SqliteQueryHelper::get_run_parameter_query(names);
+        let (query, bindings) = SqliteQueryHelper::get_experiment_parameter_query(names);
         let mut query_builder = sqlx::query_as::<_, ParameterRecord>(&query).bind(uid);
 
         for binding in bindings {
@@ -951,6 +892,8 @@ impl SqlClient for SqliteClient {
             .bind(&user.password_hash)
             .bind(&permissions)
             .bind(&group_permissions)
+            .bind(&user.role)
+            .bind(user.active)
             .execute(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -958,17 +901,54 @@ impl SqlClient for SqliteClient {
         Ok(())
     }
 
-    async fn get_user(&self, username: &str) -> Result<User, SqlError> {
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
         let query = SqliteQueryHelper::get_user_query();
 
-        let user: User = sqlx::query_as(&query)
+        let user: Option<User> = sqlx::query_as(&query)
             .bind(username)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
 
         Ok(user)
     }
+
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        let query = SqliteQueryHelper::get_users_query();
+
+        let users = sqlx::query_as::<_, User>(&query)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(users)
+    }
+
+    async fn is_last_admin(&self) -> Result<bool, SqlError> {
+        // Count admins in the system
+        let query = SqliteQueryHelper::get_last_admin_query();
+
+        let count: i64 = sqlx::query_scalar(&query)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        // If there are no other admins, this is the last one
+        Ok(count == 0)
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_user_delete_query();
+
+        sqlx::query(&query)
+            .bind(username)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
     async fn update_user(&self, user: &User) -> Result<(), SqlError> {
         let query = SqliteQueryHelper::get_user_update_query();
         let group_permissions = serde_json::to_string(&user.group_permissions)
@@ -990,6 +970,135 @@ impl SqlClient for SqliteClient {
 
         Ok(())
     }
+
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_insert_query();
+        sqlx::query(&query)
+            .bind(&key.uid)
+            .bind(key.registry_type.to_string())
+            .bind(key.encrypted_key.clone())
+            .bind(&key.storage_key)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_select_query();
+
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(uid)
+            .bind(registry_type)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            registry_type: RegistryType::from_string(&key.1)?,
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
+    }
+
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_update_query();
+        sqlx::query(&query)
+            .bind(key.encrypted_key.clone())
+            .bind(&key.uid)
+            .bind(key.registry_type.to_string())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_operation_insert_query();
+        sqlx::query(&query)
+            .bind(username)
+            .bind(access_type)
+            .bind(access_location)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        let query = SqliteQueryHelper::get_load_card_query(table, query_args)?;
+
+        let key: (String, String, Vec<u8>, String) = sqlx::query_as(&query)
+            .bind(query_args.uid.as_ref())
+            .bind(query_args.name.as_ref())
+            .bind(query_args.repository.as_ref())
+            .bind(query_args.max_date.as_ref())
+            .bind(query_args.limit.unwrap_or(1))
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(ArtifactKey {
+            uid: key.0,
+            registry_type: RegistryType::from_string(&key.1)?,
+            encrypted_key: key.2,
+            storage_key: key.3,
+        })
+    }
+
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<Option<ArtifactKey>, SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_from_storage_path_query();
+
+        let key: Option<(String, String, Vec<u8>, String)> = sqlx::query_as(&query)
+            .bind(storage_path)
+            .bind(registry_type)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        return match key {
+            Some(k) => Ok(Some(ArtifactKey {
+                uid: k.0,
+                registry_type: RegistryType::from_string(&k.1)?,
+                encrypted_key: k.2,
+                storage_key: k.3,
+            })),
+            None => Ok(None),
+        };
+    }
+
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
+        let query = SqliteQueryHelper::get_artifact_key_delete_query();
+        sqlx::query(&query)
+            .bind(uid)
+            .bind(registry_type)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -997,9 +1106,116 @@ mod tests {
 
     use super::*;
 
-    use opsml_types::SqlType;
+    use opsml_types::{contracts::Operation, RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
+
+    async fn test_card_crud(
+        client: &SqliteClient,
+        table: &CardTable,
+        updated_name: &str,
+    ) -> Result<(), SqlError> {
+        // Create initial card
+        let card = match table {
+            CardTable::Data => ServerCard::Data(DataCardRecord::default()),
+            CardTable::Model => ServerCard::Model(ModelCardRecord::default()),
+            CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
+            CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
+            CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
+            _ => panic!("Invalid card type"),
+        };
+
+        // Get UID for queries
+        let uid = match &card {
+            ServerCard::Data(c) => c.uid.clone(),
+            ServerCard::Model(c) => c.uid.clone(),
+            ServerCard::Experiment(c) => c.uid.clone(),
+            ServerCard::Audit(c) => c.uid.clone(),
+            ServerCard::Prompt(c) => c.uid.clone(),
+        };
+
+        // Test Insert
+        client.insert_card(table, &card).await?;
+
+        // Verify Insert
+        let card_args = CardQueryArgs {
+            uid: Some(uid.clone()),
+            ..Default::default()
+        };
+        let results = client.query_cards(table, &card_args).await?;
+        assert_eq!(results.len(), 1);
+
+        // Create updated card with new name
+        let updated_card = match table {
+            CardTable::Data => {
+                let c = DataCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Data(c)
+            }
+            CardTable::Model => {
+                let c = ModelCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+
+                ServerCard::Model(c)
+            }
+            CardTable::Experiment => {
+                let c = ExperimentCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Experiment(c)
+            }
+            CardTable::Audit => {
+                let c = AuditCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Audit(c)
+            }
+            CardTable::Prompt => {
+                let c = PromptCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Prompt(c)
+            }
+            _ => panic!("Invalid card type"),
+        };
+
+        // Test Update
+        client.update_card(table, &updated_card).await?;
+
+        // Verify Update
+        let updated_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(updated_results.len(), 1);
+
+        // Verify updated name
+        match updated_results {
+            CardResults::Data(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Model(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Experiment(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
+        }
+
+        // delete card
+        client.delete_card(table, &uid).await?;
+
+        // Verify Delete
+        let deleted_results = client.query_cards(table, &card_args).await?;
+        assert_eq!(deleted_results.len(), 0);
+
+        Ok(())
+    }
 
     fn get_connection_uri() -> String {
         let mut current_dir = env::current_dir().expect("Failed to get current directory");
@@ -1051,65 +1267,85 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", None)
+            .get_versions(&CardTable::Data, "repo1", "Data1", None)
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         // check star pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("1.*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.1.*"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("1.1.*".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1.1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1.1"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("~1.1.1".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 1);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("^2.0.0"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("^2.0.0".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("2.0.0"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("2.0.0".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 1);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("2"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("2".to_string()))
             .await
             .unwrap();
 
@@ -1119,7 +1355,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_sqlite_query_cards() {
+    async fn test_sqlite_crud_cards() {
         cleanup();
 
         let config = DatabaseSettings {
@@ -1130,429 +1366,21 @@ mod tests {
 
         let client = SqliteClient::new(&config).await.unwrap();
 
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
-        sqlx::query(&script).execute(&client.pool).await.unwrap();
-
-        // check if uid exists
-        let exists = client
-            .check_uid_exists("fake", &CardTable::Data)
+        test_card_crud(&client, &CardTable::Data, "UpdatedDataName")
             .await
             .unwrap();
-
-        assert!(!exists);
-
-        // try name and repository
-        let card_args = CardQueryArgs {
-            name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
-            ..Default::default()
-        };
-
-        // query all versions
-        // get versions (should return 1)
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
+        test_card_crud(&client, &CardTable::Model, "UpdatedModelName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 10);
-
-        // try name and repository
-        let card_args = CardQueryArgs {
-            name: Some("Model1".to_string()),
-            repository: Some("repo1".to_string()),
-            version: Some("~1.0.0".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
+        test_card_crud(&client, &CardTable::Experiment, "UpdatedRunName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // max_date
-        let card_args = CardQueryArgs {
-            max_date: Some("2023-11-28".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Run, &card_args)
+        test_card_crud(&client, &CardTable::Audit, "UpdatedAuditName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 2);
-
-        // try tags
-        let tags = [("key1".to_string(), "value1".to_string())]
-            .iter()
-            .cloned()
-            .collect();
-        let card_args = CardQueryArgs {
-            tags: Some(tags),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
+        test_card_crud(&client, &CardTable::Prompt, "UpdatedPromptName")
             .await
             .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        let card_args = CardQueryArgs {
-            sort_by_timestamp: Some(true),
-            limit: Some(5),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 5);
-
-        // test uid
-        let card_args = CardQueryArgs {
-            uid: Some("550e8400-e29b-41d4-a716-446655440000".to_string()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // check if uid exists
-        let exists = client
-            .check_uid_exists("550e8400-e29b-41d4-a716-446655440000", &CardTable::Data)
-            .await
-            .unwrap();
-
-        assert!(exists);
-
-        cleanup();
-    }
-
-    #[tokio::test]
-    async fn test_sqlite_insert_cards() {
-        cleanup();
-
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        let client = SqliteClient::new(&config).await.unwrap();
-        let data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert modelcard
-        let model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert runcard
-        let run_card = RunCardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
-
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Run, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // insert auditcard
-
-        let audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // check pipeline card
-        let pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        cleanup();
-    }
-
-    #[tokio::test]
-    async fn test_sqlite_update_cards() {
-        cleanup();
-
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        let client = SqliteClient::new(&config).await.unwrap();
-
-        // Test DataCardRecord
-        let mut data_card = DataCardRecord::default();
-        let card = ServerCard::Data(data_card.clone());
-
-        client.insert_card(&CardTable::Data, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(data_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        data_card.name = "UpdatedDataName".to_string();
-        let updated_card = ServerCard::Data(data_card.clone());
-
-        client
-            .update_card(&CardTable::Data, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Data, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Data(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedDataName");
-        }
-
-        // Test ModelCardRecord
-        let mut model_card = ModelCardRecord::default();
-        let card = ServerCard::Model(model_card.clone());
-
-        client.insert_card(&CardTable::Model, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(model_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        model_card.name = "UpdatedModelName".to_string();
-        let updated_card = ServerCard::Model(model_card.clone());
-
-        client
-            .update_card(&CardTable::Model, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Model, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Model(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedModelName");
-        }
-
-        // Test RunCardRecord
-        let mut run_card = RunCardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
-
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(run_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Run, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        run_card.name = "UpdatedRunName".to_string();
-        let updated_card = ServerCard::Run(run_card.clone());
-
-        client
-            .update_card(&CardTable::Run, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Run, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Run(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedRunName");
-        }
-
-        // Test AuditCardRecord
-        let mut audit_card = AuditCardRecord::default();
-        let card = ServerCard::Audit(audit_card.clone());
-
-        client.insert_card(&CardTable::Audit, &card).await.unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(audit_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        audit_card.name = "UpdatedAuditName".to_string();
-        let updated_card = ServerCard::Audit(audit_card.clone());
-
-        client
-            .update_card(&CardTable::Audit, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Audit(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedAuditName");
-        }
-
-        // Test PipelineCardRecord
-        let mut pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        pipeline_card.name = "UpdatedPipelineName".to_string();
-        let updated_card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .update_card(&CardTable::Pipeline, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Pipeline(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedPipelineName");
-        }
 
         cleanup();
     }
@@ -1661,95 +1489,6 @@ mod tests {
         cleanup();
     }
 
-    #[tokio::test]
-    async fn test_sqlite_delete_card() {
-        cleanup();
-
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        let client = SqliteClient::new(&config).await.unwrap();
-
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
-        sqlx::query(&script).execute(&client.pool).await.unwrap();
-
-        // delete card
-
-        let args = CardQueryArgs {
-            uid: None,
-            name: Some("Data1".to_string()),
-            repository: Some("repo1".to_string()),
-            ..Default::default()
-        };
-
-        let cards = client.query_cards(&CardTable::Data, &args).await.unwrap();
-
-        let uid = match cards {
-            CardResults::Data(cards) => cards[0].uid.clone(),
-            _ => "".to_string(),
-        };
-
-        assert!(!uid.is_empty());
-
-        // delete the card
-        client.delete_card(&CardTable::Data, &uid).await.unwrap();
-
-        // check if the card was deleted
-        let args = CardQueryArgs {
-            uid: Some(uid),
-            ..Default::default()
-        };
-
-        let results = client.query_cards(&CardTable::Data, &args).await.unwrap();
-
-        assert_eq!(results.len(), 0);
-    }
-
-    #[tokio::test]
-    async fn test_sqlite_project_id() {
-        cleanup();
-
-        let config = DatabaseSettings {
-            connection_uri: get_connection_uri(),
-            max_connections: 1,
-            sql_type: SqlType::Sqlite,
-        };
-
-        let client = SqliteClient::new(&config).await.unwrap();
-
-        // Run the SQL script to populate the database
-        let script = std::fs::read_to_string("tests/populate_sqlite_test.sql").unwrap();
-        sqlx::query(&script).execute(&client.pool).await.unwrap();
-
-        // get project id
-
-        let project_id = client.get_project_id("test", "repo").await.unwrap();
-        assert_eq!(project_id, 1);
-
-        // get next project id
-        let project_id = client.get_project_id("test1", "repo").await.unwrap();
-
-        assert_eq!(project_id, 2);
-
-        let args = CardQueryArgs {
-            uid: None,
-            name: Some("test".to_string()),
-            repository: Some("repo".to_string()),
-            ..Default::default()
-        };
-        let cards = client
-            .query_cards(&CardTable::Project, &args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 1);
-        cleanup();
-    }
-
     // test run metric
     #[tokio::test]
     async fn test_sqlite_run_metric() {
@@ -1773,17 +1512,20 @@ mod tests {
 
         for name in metric_names {
             let metric = MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: name.to_string(),
                 value: 1.0,
                 ..Default::default()
             };
 
-            client.insert_run_metric(&metric).await.unwrap();
+            client.insert_experiment_metric(&metric).await.unwrap();
         }
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
-        let names = client.get_run_metric_names(&uid).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
+        let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -1793,22 +1535,25 @@ mod tests {
         // insert vec
         let records = vec![
             MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: "vec1".to_string(),
                 value: 1.0,
                 ..Default::default()
             },
             MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: "vec2".to_string(),
                 value: 1.0,
                 ..Default::default()
             },
         ];
 
-        client.insert_run_metrics(&records).await.unwrap();
+        client.insert_experiment_metrics(&records).await.unwrap();
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 5);
 
@@ -1833,22 +1578,19 @@ mod tests {
         sqlx::query(&script).execute(&client.pool).await.unwrap();
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
-        let mut metrics = vec![];
 
         // create a loop of 10
-        for _ in 0..10 {
-            let metric = HardwareMetricsRecord {
-                run_uid: uid.clone(),
-                created_at: get_utc_datetime(),
-                ..Default::default()
-            };
-            metrics.push(metric.clone());
-        }
 
-        client.insert_hardware_metrics(&metrics).await.unwrap();
+        let metric = HardwareMetricsRecord {
+            experiment_uid: uid.clone(),
+            created_at: get_utc_datetime(),
+            ..Default::default()
+        };
+
+        client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
-        assert_eq!(records.len(), 10);
+        assert_eq!(records.len(), 1);
 
         cleanup();
     }
@@ -1876,7 +1618,7 @@ mod tests {
         // create a loop of 10
         for i in 0..10 {
             let parameter = ParameterRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: format!("param{}", i),
                 ..Default::default()
             };
@@ -1884,13 +1626,16 @@ mod tests {
             params.push(parameter.clone());
         }
 
-        client.insert_run_parameters(&params).await.unwrap();
-        let records = client.get_run_parameter(&uid, &Vec::new()).await.unwrap();
+        client.insert_experiment_parameters(&params).await.unwrap();
+        let records = client
+            .get_experiment_parameter(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 10);
 
         let param_records = client
-            .get_run_parameter(&uid, &["param1".to_string()])
+            .get_experiment_parameter(&uid, &["param1".to_string()])
             .await
             .unwrap();
 
@@ -1911,10 +1656,10 @@ mod tests {
 
         let client = SqliteClient::new(&config).await.unwrap();
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None);
+        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
-        let mut user = client.get_user("user").await.unwrap();
+        let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
 
         // update user
@@ -1922,10 +1667,149 @@ mod tests {
         user.refresh_token = Some("token".to_string());
 
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap();
+        let user = client.get_user("user").await.unwrap().unwrap();
         assert!(!user.active);
         assert_eq!(user.refresh_token.unwrap(), "token");
 
+        // get users
+        let users = client.get_users().await.unwrap();
+        assert_eq!(users.len(), 1);
+
+        // get last admin
+        let is_last_admin = client.is_last_admin().await.unwrap();
+        assert!(is_last_admin);
+
+        // delete
+        client.delete_user("user").await.unwrap();
+
         cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_artifact_keys() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        let encrypted_key: Vec<u8> = (0..32).collect();
+
+        let key = ArtifactKey {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            registry_type: RegistryType::Data,
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let key = client
+            .get_artifact_key(&key.uid, &key.registry_type.to_string())
+            .await
+            .unwrap();
+
+        assert_eq!(key.uid, "550e8400-e29b-41d4-a716-446655440000");
+
+        // update key
+        let encrypted_key: Vec<u8> = (32..64).collect();
+        let key = ArtifactKey {
+            uid: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            registry_type: RegistryType::Data,
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.update_artifact_key(&key).await.unwrap();
+
+        let key = client
+            .get_artifact_key(&key.uid, &key.registry_type.to_string())
+            .await
+            .unwrap();
+
+        assert_eq!(key.encrypted_key, encrypted_key);
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_insert_operation() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        client
+            .insert_operation("guest", &Operation::Read.to_string(), "model/registry")
+            .await
+            .unwrap();
+
+        // check if the operation was inserted
+        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let result: String = sqlx::query_scalar(query)
+            .fetch_one(&client.pool)
+            .await
+            .unwrap();
+
+        assert_eq!(result, "guest");
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_get_load_card_key() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+        let data_card = DataCardRecord::default();
+        let card = ServerCard::Data(data_card.clone());
+
+        client.insert_card(&CardTable::Data, &card).await.unwrap();
+        let encrypted_key: Vec<u8> = (0..32).collect();
+        let key = ArtifactKey {
+            uid: data_card.uid.clone(),
+            registry_type: RegistryType::Data,
+            encrypted_key: encrypted_key.clone(),
+            storage_key: "opsml_registry".to_string(),
+        };
+
+        client.insert_artifact_key(&key).await.unwrap();
+
+        let query_args = CardQueryArgs {
+            uid: Some(data_card.uid.clone()),
+            limit: Some(1),
+            ..Default::default()
+        };
+
+        let key = client
+            .get_card_key_for_loading(&CardTable::Data, &query_args)
+            .await
+            .unwrap();
+
+        assert_eq!(key.uid, data_card.uid);
+        assert_eq!(key.encrypted_key, encrypted_key);
+
+        let _ = client
+            .get_artifact_key_from_path(&key.storage_key, &RegistryType::Data.to_string())
+            .await
+            .unwrap()
+            .unwrap();
+
+        // delete
+        client
+            .delete_artifact_key(&data_card.uid, &RegistryType::Data.to_string())
+            .await
+            .unwrap();
     }
 }

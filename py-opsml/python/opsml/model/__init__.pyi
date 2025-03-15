@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, overload
 
-from ..core import FeatureSchema, OnnxSchema
+from ..core import ExtraMetadata, FeatureSchema, OnnxSchema
 from ..data import DataType
 from ..scouter.drift import (
     CustomDriftProfile,
@@ -14,6 +14,51 @@ from ..scouter.drift import (
     SpcDriftConfig,
     SpcDriftProfile,
 )
+
+class ModelSaveKwargs:
+    def __init__(
+        self,
+        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to save_model
+
+        Args:
+            onnx (Dict or HuggingFaceOnnxArgs):
+                Optional onnx arguments to use when saving model to onnx format
+            model (Dict):
+                Optional model arguments to use when saving
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when saving
+        """
+
+    def __str__(self): ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ModelSaveKwargs": ...
+
+class ModelLoadKwargs:
+    onnx: Optional[Dict]
+    model: Optional[Dict]
+    preprocessor: Optional[Dict]
+
+    def __init__(
+        self,
+        onnx: Optional[Dict] = None,
+        model: Optional[Dict] = None,
+        preprocessor: Optional[Dict] = None,
+    ) -> None:
+        """Optional arguments to pass to load_model
+
+        Args:
+            onnx (Dict):
+                Optional onnx arguments to use when loading
+            model (Dict):
+                Optional model arguments to use when loading
+            preprocessor (Dict):
+                Optional preprocessor arguments to use when loading
+        """
 
 class ModelType:
     Transformers: "ModelType"
@@ -65,6 +110,7 @@ class HuggingFaceORTModel:
     OrtStableDiffusionInpaintPipeline: "HuggingFaceORTModel"
     OrtStableDiffusionXlPipeline: "HuggingFaceORTModel"
     OrtStableDiffusionXlImg2ImgPipeline: "HuggingFaceORTModel"
+    OrtStableDiffusionImg2ImgPipeline: "HuggingFaceORTModel"
 
 class HuggingFaceTask:
     AudioClassification: "HuggingFaceTask"
@@ -130,51 +176,6 @@ class HuggingFaceOnnxArgs:
 
         """
 
-class SaveKwargs:
-    def __init__(
-        self,
-        onnx: Optional[Dict | HuggingFaceOnnxArgs] = None,
-        model: Optional[Dict] = None,
-        preprocessor: Optional[Dict] = None,
-    ) -> None:
-        """Optional arguments to pass to save_model
-
-        Args:
-            onnx (Dict or HuggingFaceOnnxArgs):
-                Optional onnx arguments to use when saving model to onnx format
-            model (Dict):
-                Optional model arguments to use when saving
-            preprocessor (Dict):
-                Optional preprocessor arguments to use when saving
-        """
-
-    def __str__(self): ...
-    def model_dump_json(self) -> str: ...
-    @staticmethod
-    def model_validate_json(json_string: str) -> "SaveKwargs": ...
-
-class LoadKwargs:
-    onnx: Optional[Dict]
-    model: Optional[Dict]
-    preprocessor: Optional[Dict]
-
-    def __init__(
-        self,
-        onnx: Optional[Dict] = None,
-        model: Optional[Dict] = None,
-        preprocessor: Optional[Dict] = None,
-    ) -> None:
-        """Optional arguments to pass to load_model
-
-        Args:
-            onnx (Dict):
-                Optional onnx arguments to use when loading
-            model (Dict):
-                Optional model arguments to use when loading
-            preprocessor (Dict):
-                Optional preprocessor arguments to use when loading
-        """
-
 class DataProcessor:
     name: str
     uri: Path
@@ -188,8 +189,8 @@ class ModelInterfaceSaveMetadata:
     sample_data_uri: Path
     onnx_model_uri: Optional[Path]
     drift_profile_uri: Optional[Path]
-    extra_metadata: Dict[str, str]
-    save_kwargs: Optional[SaveKwargs]
+    extra: Optional[ExtraMetadata]
+    save_kwargs: Optional[ModelSaveKwargs]
 
     def __init__(
         self,
@@ -198,8 +199,8 @@ class ModelInterfaceSaveMetadata:
         sample_data_uri: Optional[Path] = None,
         onnx_model_uri: Optional[Path] = None,
         drift_profile_uri: Optional[Path] = None,
-        extra_metadata: Optional[Dict[str, str]] = {},  # type: ignore
-        save_kwargs: Optional[SaveKwargs] = None,
+        extra: Optional[ExtraMetadata] = None,
+        save_kwargs: Optional[ModelSaveKwargs] = None,
     ) -> None:
         """Define model interface save arguments
 
@@ -222,33 +223,6 @@ class ModelInterfaceSaveMetadata:
 
     def __str__(self): ...
     def model_dump_json(self) -> str: ...
-
-class ModelInterfaceMetadata:
-    task_type: str
-    model_type: str
-    data_type: str
-    modelcard_uid: str
-    feature_map: FeatureSchema
-    sample_data_interface_type: str
-    save_metadata: ModelInterfaceSaveMetadata
-    extra_metadata: dict[str, str]
-
-    def __init__(
-        self,
-        interface: Any,
-        save_metadata: ModelInterfaceSaveMetadata,
-        extra_metadata: Optional[dict[str, str]] = None,
-    ) -> None:
-        """Define a model interface
-
-        Args:
-            interface:
-                The interface to use
-            save_metadata:
-                The save metadata
-            metadata:
-                Any additional metadata
-        """
 
 class ModelInterfaceType:
     Base: "ModelInterfaceType"
@@ -330,6 +304,63 @@ class OnnxSession:
             Output data
         """
 
+    def model_dump_json(self) -> str:
+        """Dump the onnx model to json"""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "OnnxSession":
+        """Validate the onnx model json"""
+
+class ModelInterfaceMetadata:
+    task_type: TaskType
+    model_type: ModelType
+    data_type: DataType
+    onnx_session: Optional[OnnxSession]
+    schema: FeatureSchema
+    save_metadata: ModelInterfaceSaveMetadata
+    extra_metadata: dict[str, str]
+
+    def __init__(
+        self,
+        save_metadata: ModelInterfaceSaveMetadata,
+        task_type: TaskType = TaskType.Other,
+        model_type: ModelType = ModelType.Unknown,
+        data_type: DataType = DataType.NotProvided,
+        schema: FeatureSchema = FeatureSchema(),
+        onnx_session: Optional[OnnxSession] = None,
+        extra_metadata: dict[str, str] = {},  # type: ignore
+    ) -> None:
+        """Define a model interface
+
+        Args:
+            task_type:
+                Task type
+            model_type:
+                Model type
+            data_type:
+                Data type
+            onnx_session:
+                Onnx session
+            schema:
+                Feature schema
+            data_type:
+                Sample data type
+            save_metadata:
+                Save metadata
+            extra_metadata:
+                Extra metadata. Must be a dictionary of strings
+        """
+
+    def __str__(self) -> str:
+        """Return the string representation of the model interface metadata"""
+
+    def model_dump_json(self) -> str:
+        """Dump the model interface metadata to json"""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ModelInterfaceMetadata":
+        """Validate the model interface metadata json"""
+
 class ModelInterface:
     def __init__(
         self,
@@ -392,7 +423,7 @@ class ModelInterface:
         """Returns the model type"""
 
     @property
-    def model_interface_type(self) -> ModelInterfaceType:
+    def interface_type(self) -> ModelInterfaceType:
         """Returns the model type"""
 
     @property
@@ -474,8 +505,8 @@ class ModelInterface:
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+        save_kwargs: None | ModelSaveKwargs = None,
+    ) -> ModelInterfaceMetadata:
         """Save the model interface
 
         Args:
@@ -483,7 +514,7 @@ class ModelInterface:
                 Path to save the model
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -496,27 +527,30 @@ class ModelInterface:
     def load(
         self,
         path: Path,
-        model: bool = True,
         onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        load_kwargs: None | LoadKwargs = None,
+        load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
         """Load ModelInterface components
 
         Args:
             path (Path):
                 Path to load the model
-            model (bool):
-                Whether to load the model
             onnx (bool):
                 Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            load_kwargs (LoadKwargs):
+            load_kwargs (ModelLoadKwargs):
                 Optional load kwargs to pass to the different load methods
+        """
+
+    @staticmethod
+    def from_metadata(metadata: ModelInterfaceMetadata) -> "ModelInterface":
+        """Create a ModelInterface from metadata
+
+        Args:
+            metadata:
+                Model interface metadata
+
+        Returns:
+            Model interface
         """
 
 class SklearnModel(ModelInterface):
@@ -570,35 +604,6 @@ class SklearnModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load SklearnModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class LightGBMModel(ModelInterface):
     def __init__(
         self,
@@ -648,35 +653,6 @@ class LightGBMModel(ModelInterface):
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load LightGBMModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class XGBoostModel(ModelInterface):
     def __init__(
         self,
@@ -725,35 +701,6 @@ class XGBoostModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load XGBoostModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
 
 class TorchModel(ModelInterface):
     def __init__(
@@ -810,8 +757,8 @@ class TorchModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+        save_kwargs: None | ModelSaveKwargs = None,
+    ) -> ModelInterfaceMetadata:
         """Save the TorchModel interface. Torch models are saved
         as state_dicts as is the standard for PyTorch.
 
@@ -820,7 +767,7 @@ class TorchModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -828,35 +775,6 @@ class TorchModel(ModelInterface):
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
-        """
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load TorchModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
         """
 
 class LightningModel(ModelInterface):
@@ -922,8 +840,8 @@ class LightningModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+        save_kwargs: None | ModelSaveKwargs = None,
+    ) -> ModelInterfaceMetadata:
         """Save the LightningModel interface. Lightning models are saved via checkpoints.
 
         Args:
@@ -931,7 +849,7 @@ class LightningModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -939,35 +857,6 @@ class LightningModel(ModelInterface):
                 - model: Kwargs that will be passed to save_model. See save_model for more details.
                 - preprocessor: Kwargs that will be passed to save_preprocessor
                 - onnx: Kwargs that will be passed to save_onnx_model. See convert_onnx_model for more details.
-        """
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load LightningModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
         """
 
 class HuggingFaceModel(ModelInterface):
@@ -1053,8 +942,8 @@ class HuggingFaceModel(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: None | SaveKwargs = None,
-    ) -> ModelInterfaceSaveMetadata:
+        save_kwargs: None | ModelSaveKwargs = None,
+    ) -> ModelInterfaceMetadata:
         """Save the HuggingFaceModel interface
 
         Args:
@@ -1062,7 +951,7 @@ class HuggingFaceModel(ModelInterface):
                 Base path to save artifacts
             to_onnx (bool):
                 Whether to save the model/pipeline to onnx
-            save_kwargs (SaveKwargs):
+            save_kwargs (ModelSaveKwargs):
                 Optional kwargs to pass to the various underlying methods. This is a passthrough object meaning
                 that the kwargs will be passed to the underlying methods as is and are expected to be supported by
                 the underlying library.
@@ -1139,35 +1028,6 @@ class HuggingFaceModel(ModelInterface):
                 this can be None.
         """
 
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load HuggingFaceModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
-
 class CatBoostModel(ModelInterface):
     def __init__(
         self,
@@ -1186,7 +1046,7 @@ class CatBoostModel(ModelInterface):
 
         Args:
             model:
-                Model to associate with interface. This model must be a CatBoost model.
+                Model to associate with the interface. This model must be a CatBoost model.
             preprocessor:
                 Preprocessor to associate with the model.
             sample_data:
@@ -1216,35 +1076,6 @@ class CatBoostModel(ModelInterface):
     @property
     def preprocessor_name(self) -> Optional[str]:
         """Returns the preprocessor name"""
-
-    def load(  # type: ignore
-        self,
-        path: Path,
-        model: bool = True,
-        onnx: bool = False,
-        drift_profile: bool = False,
-        sample_data: bool = False,
-        preprocessor: bool = False,
-        load_kwargs: None | LoadKwargs = None,
-    ) -> None:
-        """Load HuggingFaceModel components
-
-        Args:
-            path (Path):
-                Path to load the model
-            model (bool):
-                Whether to load the model
-            onnx (bool):
-                Whether to load the onnx model
-            drift_profile (bool):
-                Whether to load the drift profile
-            sample_data (bool):
-                Whether to load the sample data
-            preprocessor (bool):
-                Whether to load the preprocessor
-            load_kwargs (LoadKwargs):
-                Optional load kwargs to pass to the different load methods
-        """
 
 class TensorFlowModel(ModelInterface):
     def __init__(

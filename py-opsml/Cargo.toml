@@ -13,19 +13,26 @@ opsml-cards = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
+opsml-experiment = { workspace = true }
 opsml-semver = { workspace = true }
+opsml-server = { workspace = true, optional = true }
 opsml-settings = { workspace = true }
-opsml-storage = { workspace = true}
-opsml-todo = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+potato-lib = { workspace = true }
 pyo3 = { workspace = true }
+reqwest = { workspace = true, optional = true }
 rusty-logging = { workspace = true }
 scouter-client = { workspace = true }
+tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server"]
+server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest"]
 
-[optional-dependencies]
-opsml-registry = { workspace = true, features = ["server"], optional = true }
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+debug = false

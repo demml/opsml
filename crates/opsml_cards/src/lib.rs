@@ -1,11 +1,9 @@
 pub mod data;
-pub mod enums;
+pub mod experiment;
 pub mod model;
-pub mod run;
-pub mod types;
+pub mod prompt;
 
 pub use data::*;
-pub use enums::*;
+pub use experiment::*;
 pub use model::*;
-pub use run::*;
-pub use types::*;
+pub use prompt::*;

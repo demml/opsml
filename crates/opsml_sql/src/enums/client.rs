@@ -10,11 +10,15 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
-use opsml_settings::config::{DatabaseSettings, OpsmlConfig};
+use opsml_settings::config::DatabaseSettings;
 use opsml_types::{
     SqlType,
-    {cards::CardTable, contracts::CardQueryArgs},
+    {
+        cards::CardTable,
+        contracts::{ArtifactKey, CardQueryArgs},
+    },
 };
+use tracing::debug;
 
 #[derive(Debug, Clone)]
 pub enum SqlClientEnum {
@@ -136,16 +140,6 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError> {
-        match self {
-            SqlClientEnum::Postgres(client) => {
-                client.get_project_id(project_name, repository).await
-            }
-            SqlClientEnum::Sqlite(client) => client.get_project_id(project_name, repository).await,
-            SqlClientEnum::MySql(client) => client.get_project_id(project_name, repository).await,
-        }
-    }
-
     async fn query_cards(
         &self,
         table: &CardTable,
@@ -179,65 +173,65 @@ impl SqlClient for SqlClientEnum {
     async fn get_versions(
         &self,
         table: &CardTable,
-        name: &str,
         repository: &str,
-        version: Option<&str>,
+        name: &str,
+        version: Option<String>,
     ) -> Result<Vec<String>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => {
-                client.get_versions(table, name, repository, version).await
+                client.get_versions(table, repository, name, version).await
             }
             SqlClientEnum::Sqlite(client) => {
-                client.get_versions(table, name, repository, version).await
+                client.get_versions(table, repository, name, version).await
             }
             SqlClientEnum::MySql(client) => {
-                client.get_versions(table, name, repository, version).await
+                client.get_versions(table, repository, name, version).await
             }
         }
     }
 
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_metric(record).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_metric(record).await,
-            SqlClientEnum::MySql(client) => client.insert_run_metric(record).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_metric(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_metric(record).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_metric(record).await,
         }
     }
 
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         records: &'life1 [MetricRecord],
     ) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_metrics(records).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_metrics(records).await,
-            SqlClientEnum::MySql(client) => client.insert_run_metrics(records).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_metrics(records).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_metrics(records).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_metrics(records).await,
         }
     }
 
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<MetricRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_metric(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_metric(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_run_metric(uid, names).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_metric(uid, names).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_metric(uid, names).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_metric(uid, names).await,
         }
     }
 
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_metric_names(uid).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_metric_names(uid).await,
-            SqlClientEnum::MySql(client) => client.get_run_metric_names(uid).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_metric_names(uid).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_metric_names(uid).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_metric_names(uid).await,
         }
     }
 
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        record: &'life1 [HardwareMetricsRecord],
+        record: &HardwareMetricsRecord,
     ) -> Result<(), SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.insert_hardware_metrics(record).await,
@@ -254,26 +248,26 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         record: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.insert_run_parameters(record).await,
-            SqlClientEnum::Sqlite(client) => client.insert_run_parameters(record).await,
-            SqlClientEnum::MySql(client) => client.insert_run_parameters(record).await,
+            SqlClientEnum::Postgres(client) => client.insert_experiment_parameters(record).await,
+            SqlClientEnum::Sqlite(client) => client.insert_experiment_parameters(record).await,
+            SqlClientEnum::MySql(client) => client.insert_experiment_parameters(record).await,
         }
     }
 
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
     ) -> Result<Vec<ParameterRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.get_run_parameter(uid, names).await,
-            SqlClientEnum::Sqlite(client) => client.get_run_parameter(uid, names).await,
-            SqlClientEnum::MySql(client) => client.get_run_parameter(uid, names).await,
+            SqlClientEnum::Postgres(client) => client.get_experiment_parameter(uid, names).await,
+            SqlClientEnum::Sqlite(client) => client.get_experiment_parameter(uid, names).await,
+            SqlClientEnum::MySql(client) => client.get_experiment_parameter(uid, names).await,
         }
     }
 
@@ -285,7 +279,7 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn get_user(&self, username: &str) -> Result<User, SqlError> {
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.get_user(username).await,
             SqlClientEnum::Sqlite(client) => client.get_user(username).await,
@@ -300,18 +294,143 @@ impl SqlClient for SqlClientEnum {
             SqlClientEnum::MySql(client) => client.update_user(user).await,
         }
     }
+
+    async fn get_users(&self) -> Result<Vec<User>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_users().await,
+            SqlClientEnum::Sqlite(client) => client.get_users().await,
+            SqlClientEnum::MySql(client) => client.get_users().await,
+        }
+    }
+
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_user(username).await,
+            SqlClientEnum::Sqlite(client) => client.delete_user(username).await,
+            SqlClientEnum::MySql(client) => client.delete_user(username).await,
+        }
+    }
+
+    async fn is_last_admin(&self) -> Result<bool, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.is_last_admin().await,
+            SqlClientEnum::Sqlite(client) => client.is_last_admin().await,
+            SqlClientEnum::MySql(client) => client.is_last_admin().await,
+        }
+    }
+
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        debug!("Inserting artifact key");
+        match self {
+            SqlClientEnum::Postgres(client) => client.insert_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.insert_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.insert_artifact_key(key).await,
+        }
+    }
+
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.get_artifact_key(uid, registry_type).await,
+            SqlClientEnum::Sqlite(client) => client.get_artifact_key(uid, registry_type).await,
+            SqlClientEnum::MySql(client) => client.get_artifact_key(uid, registry_type).await,
+        }
+    }
+
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<Option<ArtifactKey>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .get_artifact_key_from_path(storage_path, registry_type)
+                    .await
+            }
+        }
+    }
+
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.update_artifact_key(key).await,
+            SqlClientEnum::Sqlite(client) => client.update_artifact_key(key).await,
+            SqlClientEnum::MySql(client) => client.update_artifact_key(key).await,
+        }
+    }
+
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .insert_operation(username, access_type, access_location)
+                    .await
+            }
+        }
+    }
+
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.get_card_key_for_loading(table, query_args).await
+            }
+        }
+    }
+
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.delete_artifact_key(uid, registry_type).await,
+            SqlClientEnum::Sqlite(client) => client.delete_artifact_key(uid, registry_type).await,
+            SqlClientEnum::MySql(client) => client.delete_artifact_key(uid, registry_type).await,
+        }
+    }
 }
 
-pub async fn get_sql_client(config: &OpsmlConfig) -> AnyhowResult<SqlClientEnum> {
-    let settings = &config.database_settings;
-    SqlClientEnum::new(&config.database_settings)
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to create sql client for sql type: {:?}",
-                settings.sql_type
-            )
-        })
+pub async fn get_sql_client(db_settings: &DatabaseSettings) -> AnyhowResult<SqlClientEnum> {
+    SqlClientEnum::new(db_settings).await.with_context(|| {
+        format!(
+            "Failed to create sql client for sql type: {:?}",
+            db_settings.sql_type
+        )
+    })
 }
 
 #[cfg(test)]
@@ -319,7 +438,7 @@ mod tests {
 
     use super::*;
     use crate::schemas::schema::{
-        AuditCardRecord, DataCardRecord, ModelCardRecord, PipelineCardRecord, RunCardRecord,
+        AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord,
     };
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
@@ -372,53 +491,68 @@ mod tests {
         // query all versions
         // get versions (should return 1)
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", None)
+            .get_versions(&CardTable::Data, "repo1", "Data1", None)
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         // check star pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 10);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.*"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("1.*".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("1.1.*"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("1.1.*".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 4);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1"))
+            .get_versions(&CardTable::Data, "repo1", "Data1", Some("~1.1".to_string()))
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
 
         // check tilde pattern
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("~1.1.1"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("~1.1.1".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 1);
 
         let versions = client
-            .get_versions(&CardTable::Data, "Data1", "repo1", Some("^2.0.0"))
+            .get_versions(
+                &CardTable::Data,
+                "repo1",
+                "Data1",
+                Some("^2.0.0".to_string()),
+            )
             .await
             .unwrap();
         assert_eq!(versions.len(), 2);
@@ -474,17 +608,14 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
         assert_eq!(results.len(), 2);
 
         // try tags
-        let tags = [("key1".to_string(), "value1".to_string())]
-            .iter()
-            .cloned()
-            .collect();
+        let tags = ["key1".to_string()].to_vec();
         let card_args = CardQueryArgs {
             tags: Some(tags),
             ..Default::default()
@@ -571,11 +702,14 @@ mod tests {
 
         assert_eq!(results.len(), 1);
 
-        // insert runcard
-        let run_card = RunCardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
+        // insert experimentcard
+        let run_card = ExperimentCardRecord::default();
+        let card = ServerCard::Experiment(run_card.clone());
 
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
+        client
+            .insert_card(&CardTable::Experiment, &card)
+            .await
+            .unwrap();
 
         // check if the card was inserted
 
@@ -585,7 +719,7 @@ mod tests {
         };
 
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
@@ -607,29 +741,6 @@ mod tests {
 
         let results = client
             .query_cards(&CardTable::Audit, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // check pipeline card
-        let pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid),
-            ..Default::default()
-        };
-
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
             .await
             .unwrap();
 
@@ -718,11 +829,14 @@ mod tests {
             assert_eq!(cards[0].name, "UpdatedModelName");
         }
 
-        // Test RunCardRecord
-        let mut run_card = RunCardRecord::default();
-        let card = ServerCard::Run(run_card.clone());
+        // Test experimentcardRecord
+        let mut run_card = ExperimentCardRecord::default();
+        let card = ServerCard::Experiment(run_card.clone());
 
-        client.insert_card(&CardTable::Run, &card).await.unwrap();
+        client
+            .insert_card(&CardTable::Experiment, &card)
+            .await
+            .unwrap();
 
         // check if the card was inserted
         let card_args = CardQueryArgs {
@@ -730,7 +844,7 @@ mod tests {
             ..Default::default()
         };
         let results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
@@ -738,21 +852,21 @@ mod tests {
 
         // update the card
         run_card.name = "UpdatedRunName".to_string();
-        let updated_card = ServerCard::Run(run_card.clone());
+        let updated_card = ServerCard::Experiment(run_card.clone());
 
         client
-            .update_card(&CardTable::Run, &updated_card)
+            .update_card(&CardTable::Experiment, &updated_card)
             .await
             .unwrap();
 
         // check if the card was updated
         let updated_results = client
-            .query_cards(&CardTable::Run, &card_args)
+            .query_cards(&CardTable::Experiment, &card_args)
             .await
             .unwrap();
 
         assert_eq!(updated_results.len(), 1);
-        if let CardResults::Run(cards) = updated_results {
+        if let CardResults::Experiment(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedRunName");
         }
 
@@ -792,47 +906,6 @@ mod tests {
         assert_eq!(updated_results.len(), 1);
         if let CardResults::Audit(cards) = updated_results {
             assert_eq!(cards[0].name, "UpdatedAuditName");
-        }
-
-        // Test PipelineCardRecord
-        let mut pipeline_card = PipelineCardRecord::default();
-        let card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .insert_card(&CardTable::Pipeline, &card)
-            .await
-            .unwrap();
-
-        // check if the card was inserted
-        let card_args = CardQueryArgs {
-            uid: Some(pipeline_card.uid.clone()),
-            ..Default::default()
-        };
-        let results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(results.len(), 1);
-
-        // update the card
-        pipeline_card.name = "UpdatedPipelineName".to_string();
-        let updated_card = ServerCard::Pipeline(pipeline_card.clone());
-
-        client
-            .update_card(&CardTable::Pipeline, &updated_card)
-            .await
-            .unwrap();
-
-        // check if the card was updated
-        let updated_results = client
-            .query_cards(&CardTable::Pipeline, &card_args)
-            .await
-            .unwrap();
-
-        assert_eq!(updated_results.len(), 1);
-        if let CardResults::Pipeline(cards) = updated_results {
-            assert_eq!(cards[0].name, "UpdatedPipelineName");
         }
 
         cleanup();
@@ -941,35 +1014,6 @@ mod tests {
         assert_eq!(results.len(), 0);
     }
 
-    #[tokio::test]
-    async fn test_enum_project_id() {
-        let client = get_client().await;
-
-        // get project id
-
-        let project_id = client.get_project_id("test", "repo").await.unwrap();
-        assert_eq!(project_id, 1);
-
-        // get next project id
-        let project_id = client.get_project_id("test1", "repo").await.unwrap();
-
-        assert_eq!(project_id, 2);
-
-        let args = CardQueryArgs {
-            uid: None,
-            name: Some("test".to_string()),
-            repository: Some("repo".to_string()),
-            ..Default::default()
-        };
-        let cards = client
-            .query_cards(&CardTable::Project, &args)
-            .await
-            .unwrap();
-
-        assert_eq!(cards.len(), 1);
-        cleanup();
-    }
-
     // test run metric
     #[tokio::test]
     async fn test_enum_run_metric() {
@@ -980,7 +1024,7 @@ mod tests {
 
         for name in metric_names {
             let metric = MetricRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: name.to_string(),
                 value: 1.0,
                 step: None,
@@ -989,12 +1033,15 @@ mod tests {
                 idx: None,
             };
 
-            client.insert_run_metric(&metric).await.unwrap();
+            client.insert_experiment_metric(&metric).await.unwrap();
         }
 
-        let records = client.get_run_metric(&uid, &Vec::new()).await.unwrap();
+        let records = client
+            .get_experiment_metric(&uid, &Vec::new())
+            .await
+            .unwrap();
 
-        let names = client.get_run_metric_names(&uid).await.unwrap();
+        let names = client.get_experiment_metric_names(&uid).await.unwrap();
 
         assert_eq!(records.len(), 3);
 
@@ -1009,20 +1056,16 @@ mod tests {
         let client = get_client().await;
 
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
-        let mut metrics = vec![];
 
         // create a loop of 10
-        for _ in 0..10 {
-            let metric = HardwareMetricsRecord {
-                run_uid: uid.clone(),
-                created_at: get_utc_datetime(),
-                ..Default::default()
-            };
 
-            metrics.push(metric);
-        }
+        let metric = HardwareMetricsRecord {
+            experiment_uid: uid.clone(),
+            created_at: get_utc_datetime(),
+            ..Default::default()
+        };
 
-        client.insert_hardware_metrics(&metrics).await.unwrap();
+        client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);
@@ -1040,7 +1083,7 @@ mod tests {
         // create a loop of 10
         for i in 0..10 {
             let parameter = ParameterRecord {
-                run_uid: uid.clone(),
+                experiment_uid: uid.clone(),
                 name: format!("param{}", i),
                 ..Default::default()
             };
@@ -1048,13 +1091,16 @@ mod tests {
             params.push(parameter);
         }
 
-        client.insert_run_parameters(&params).await.unwrap();
-        let records = client.get_run_parameter(&uid, &Vec::new()).await.unwrap();
+        client.insert_experiment_parameters(&params).await.unwrap();
+        let records = client
+            .get_experiment_parameter(&uid, &Vec::new())
+            .await
+            .unwrap();
 
         assert_eq!(records.len(), 10);
 
         let param_records = client
-            .get_run_parameter(&uid, &["param1".to_string()])
+            .get_experiment_parameter(&uid, &["param1".to_string()])
             .await
             .unwrap();
 
@@ -1067,18 +1113,25 @@ mod tests {
     async fn test_enum_user() {
         let client = get_client().await;
 
-        let user = User::new("user".to_string(), "pass".to_string(), None, None);
+        let user = User::new("user".to_string(), "pass".to_string(), None, None, None);
         client.insert_user(&user).await.unwrap();
 
-        let mut user = client.get_user("user").await.unwrap();
+        let mut user = client.get_user("user").await.unwrap().unwrap();
         assert_eq!(user.username, "user");
 
         // update user
         user.active = false;
 
         client.update_user(&user).await.unwrap();
-        let user = client.get_user("user").await.unwrap();
+        let user = client.get_user("user").await.unwrap().unwrap();
         assert!(!user.active);
+
+        // get all users
+        let users = client.get_users().await.unwrap();
+        assert_eq!(users.len(), 1);
+
+        // delete user
+        client.delete_user("user").await.unwrap();
 
         cleanup();
     }

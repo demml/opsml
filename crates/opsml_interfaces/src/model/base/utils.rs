@@ -1,17 +1,14 @@
+use crate::base::ModelSaveKwargs;
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
 use crate::model::InterfaceDataType;
-use crate::{ModelType, SaveKwargs};
 use opsml_error::OpsmlError;
-use opsml_types::{DataType, SaveName, Suffix};
+use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
-use scouter_client::{
-    CustomDriftProfile, DriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
-};
 use std::path::Path;
 use std::path::PathBuf;
-use tracing::{error, span};
+use tracing::{debug, error, instrument};
 
 type PyDictKwargs<'py> = (
     Option<Bound<'py, PyDict>>,
@@ -256,20 +253,25 @@ impl SampleData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let save_path = data.call_method("save_data", (path,), kwargs)?;
+        debug!("Saving data to path: {:?} with kwargs: {:?}", path, kwargs);
+        let metadata = data.call_method("save", (path,), kwargs)?;
+
         // convert pyany to pathbuf
-        let save_path = save_path.extract::<PathBuf>()?;
+        let save_path = metadata
+            .getattr("save_metadata")?
+            .getattr("data_uri")?
+            .extract::<PathBuf>()?;
+
         Ok(save_path)
     }
 
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
-        let span = span!(tracing::Level::DEBUG, "Save Sample Data");
-        let _enter = span.enter();
         match self {
             SampleData::Pandas(data) => Ok(Some(
                 self.save_interface_data(data.bind(py), path, kwargs)
@@ -392,27 +394,22 @@ impl SampleData {
     }
 }
 
-pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<DriftProfile>> {
+pub fn extract_drift_profile(py_profiles: &Bound<'_, PyAny>) -> PyResult<Vec<PyObject>> {
+    let py = py_profiles.py();
+
     if py_profiles.is_instance_of::<PyList>() {
         let py_profiles = py_profiles.downcast::<PyList>()?;
-        py_profiles
-            .iter()
-            .map(|profile| extract_drift_profile(&profile))
-            .collect::<PyResult<Vec<Vec<DriftProfile>>>>()
-            .map(|nested_profiles| nested_profiles.into_iter().flatten().collect())
+        let mut profiles = Vec::new();
+
+        for profile in py_profiles.iter() {
+            // For each profile in the list, get its profile attribute
+            let profile_obj = profile.getattr("profile")?;
+            profiles.push(profile_obj.into_py_any(py)?);
+        }
+
+        Ok(profiles)
     } else {
-        let drift_type = py_profiles
-            .getattr("config")?
-            .getattr("drift_type")?
-            .extract::<DriftType>()?;
-
-        let profile = match drift_type {
-            DriftType::Spc => DriftProfile::Spc(py_profiles.extract::<SpcDriftProfile>()?),
-            DriftType::Psi => DriftProfile::Psi(py_profiles.extract::<PsiDriftProfile>()?),
-            DriftType::Custom => DriftProfile::Custom(py_profiles.extract::<CustomDriftProfile>()?),
-        };
-
-        Ok(vec![profile])
+        Ok(vec![py_profiles.into_py_any(py)?])
     }
 }
 
@@ -532,7 +529,7 @@ impl OnnxExtension for SampleData {
 
 pub fn parse_save_kwargs<'py>(
     py: Python<'py>,
-    save_kwargs: &Option<SaveKwargs>,
+    save_kwargs: &Option<ModelSaveKwargs>,
 ) -> PyDictKwargs<'py> {
     let onnx_kwargs = save_kwargs
         .as_ref()

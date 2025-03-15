@@ -3,9 +3,8 @@ use crate::model::{
     base::{get_class_full_name, load_from_joblib, save_to_joblib, OnnxExtension},
     InterfaceDataType,
 };
-use crate::ModelType;
 use opsml_error::OpsmlError;
-use opsml_types::DataType;
+use opsml_types::{DataType, ModelType};
 use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
 use pyo3::{prelude::*, types::PySlice};
@@ -217,7 +216,7 @@ impl TorchSampleData {
         match self {
             TorchSampleData::Torch(data) => {
                 let bound = data.bind(py);
-                let save_path = bound.call_method("save_data", (path,), kwargs)?;
+                let save_path = bound.call_method("save", (path,), kwargs)?;
                 // convert pyany to pathbuf
                 let save_path = save_path.extract::<PathBuf>()?;
                 Ok(Some(save_path))

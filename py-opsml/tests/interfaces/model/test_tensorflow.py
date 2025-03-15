@@ -197,12 +197,7 @@ def test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Nump
             interface.onnx_session.session = None
             assert interface.onnx_session.session is None
 
-        interface.load(
-            temp_path,
-            model=True,
-            onnx=onnx,
-            sample_data=True,
-        )
+        interface.load(temp_path, onnx=onnx)
 
         assert interface.model is not None
 

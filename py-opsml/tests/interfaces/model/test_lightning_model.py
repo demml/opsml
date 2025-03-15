@@ -1,4 +1,4 @@
-from opsml.model import LightningModel, LoadKwargs
+from opsml.model import LightningModel, ModelLoadKwargs
 from opsml.data import DataType
 import lightning as L
 import torch
@@ -14,7 +14,7 @@ DARWIN_EXCLUDE = sys.platform == "darwin" and platform.machine() == "arm64"
 EXCLUDE = bool(DARWIN_EXCLUDE or WINDOWS_EXCLUDE)
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_model(
     tmp_path: Path, pytorch_lightning_model: Tuple[L.Trainer, torch.Tensor]
 ):
@@ -25,7 +25,7 @@ def test_lightning_model(
     assert interface.data_type == DataType.TorchTensor
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_regression(
     tmp_path: Path, lightning_regression: Tuple[LightningModel, Any]
 ):
@@ -44,15 +44,12 @@ def test_lightning_regression(
 
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        preprocessor=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+@pytest.mark.skipif(EXCLUDE, reason="skipping")
 def test_lightning_classification(
     tmp_path: Path, lightning_classification: Tuple[LightningModel, Any]
 ):
@@ -71,8 +68,6 @@ def test_lightning_classification(
 
     interface.load(
         save_path,
-        model=True,
         onnx=True,
-        sample_data=True,
-        load_kwargs=LoadKwargs(model={"model": model}),
+        load_kwargs=ModelLoadKwargs(model={"model": model}),
     )

@@ -1,5 +1,7 @@
+use crate::core::auth::middleware::header::HeaderValue;
 use crate::core::auth::schema::AuthError;
 use crate::core::state::AppState;
+use crate::core::user::utils::get_user;
 use axum::http::{header, StatusCode};
 use axum::response::IntoResponse;
 use axum::{
@@ -9,8 +11,10 @@ use axum::{
 };
 use axum_extra::extract::cookie::CookieJar;
 use opsml_auth::permission::UserPermissions;
+use opsml_sql::base::SqlClient;
 use serde::Serialize;
 use std::sync::Arc;
+use tracing::info;
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -24,17 +28,6 @@ pub async fn auth_api_middleware(
     mut req: Request,
     next: Next,
 ) -> Result<impl IntoResponse, (StatusCode, Json<AuthError>)> {
-    // if auth is disabled, just return
-    if !state.config.auth_settings.enabled {
-        req.extensions_mut().insert(UserPermissions {
-            username: "".to_string(),
-            permissions: vec![],
-            group_permissions: vec![],
-        });
-
-        return Ok(next.run(req).await);
-    }
-
     // get the access token from the cookie or the authorization header
     let access_token = cookie_jar
         .get("access_token")
@@ -72,6 +65,82 @@ pub async fn auth_api_middleware(
             }
         }
         Err(_) => {
+            info!("Access token expired, attempting refresh");
+
+            let expired_claims = state
+                .auth_manager
+                .decode_jwt_without_validation(&access_token)
+                .map_err(|_| {
+                    (
+                        StatusCode::UNAUTHORIZED,
+                        Json(AuthError {
+                            error: "Unauthorized".to_string(),
+                            message: "Invalid token format".to_string(),
+                        }),
+                    )
+                })?;
+
+            let mut user = get_user(&state, &expired_claims.sub).await.map_err(|_| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    Json(AuthError {
+                        error: "Unauthorized".to_string(),
+                        message: "User not found".to_string(),
+                    }),
+                )
+            })?;
+
+            // Validate stored refresh token
+            if let Some(stored_refresh) = user.refresh_token.as_ref() {
+                if state
+                    .auth_manager
+                    .validate_refresh_token(stored_refresh)
+                    .is_ok()
+                {
+                    // Generate new tokens
+                    let new_access_token = state.auth_manager.generate_jwt(&user);
+                    let new_refresh_token = state.auth_manager.generate_refresh_token(&user);
+
+                    // Update refresh token in database
+                    user.refresh_token = Some(new_refresh_token.clone());
+
+                    if (state.sql_client.update_user(&user).await).is_err() {
+                        return Err((
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            Json(AuthError {
+                                error: "Server Error".to_string(),
+                                message: "Failed to update refresh token".to_string(),
+                            }),
+                        ));
+                    }
+
+                    let auth_middleware = UserPermissions {
+                        username: user.username,
+                        permissions: user.permissions,
+                        group_permissions: user.group_permissions,
+                    };
+                    req.extensions_mut().insert(auth_middleware);
+
+                    // Add new token to request headers for downstream handlers
+                    req.headers_mut().insert(
+                        header::AUTHORIZATION,
+                        HeaderValue::from_str(&format!("Bearer {}", new_access_token)).unwrap(),
+                    );
+
+                    // Run the request and modify the response
+                    let response = next.run(req).await;
+                    let mut response = response.into_response();
+
+                    // Add new token to response headers
+                    response.headers_mut().insert(
+                        header::AUTHORIZATION,
+                        HeaderValue::from_str(&format!("Bearer {}", new_access_token)).unwrap(),
+                    );
+
+                    return Ok(response);
+                }
+            }
+
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(AuthError {

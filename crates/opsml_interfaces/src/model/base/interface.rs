@@ -1,22 +1,26 @@
-use crate::base::{parse_save_kwargs, ExtraMetadata, LoadKwargs, SaveKwargs};
+use crate::base::{parse_save_kwargs, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::onnx::OnnxModelConverter;
-use crate::model::{SampleData, TaskType};
-use crate::types::{Feature, FeatureSchema, ModelInterfaceType, ModelType};
+use crate::model::SampleData;
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
+use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::model::base::utils;
 use opsml_error::error::OpsmlError;
 use opsml_types::DataType;
-use opsml_types::{SaveName, Suffix};
+use opsml_types::{
+    interfaces::{ModelInterfaceType, ModelType, TaskType},
+    SaveName, Suffix,
+};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use rand::Rng;
-use scouter_client::{drifter::PyDrifter, DataType as DriftDataType, DriftProfile};
+use scouter_client::{drifter::PyDrifter, DataType as DriftDataType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -24,7 +28,8 @@ use std::path::{Path, PathBuf};
 
 use pyo3::gc::PyVisit;
 use pyo3::PyTraverseError;
-use tracing::{debug, error, info, instrument, warn};
+use serde_json::Value;
+use tracing::{debug, error, instrument, warn};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -33,13 +38,15 @@ pub struct DataProcessor {
     pub name: String,
     #[pyo3(get)]
     pub uri: PathBuf,
+    #[pyo3(get)]
+    pub r#type: ProcessorType,
 }
 
 #[pymethods]
 impl DataProcessor {
     #[new]
-    pub fn new(name: String, uri: PathBuf) -> Self {
-        DataProcessor { name, uri }
+    pub fn new(name: String, uri: PathBuf, r#type: ProcessorType) -> Self {
+        DataProcessor { name, uri, r#type }
     }
 
     pub fn __str__(&self) -> String {
@@ -49,7 +56,7 @@ impl DataProcessor {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceSaveMetadata {
     #[pyo3(get)]
     pub model_uri: PathBuf,
@@ -58,19 +65,24 @@ pub struct ModelInterfaceSaveMetadata {
     pub data_processor_map: HashMap<String, DataProcessor>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sample_data_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub onnx_model_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub drift_profile_uri: Option<PathBuf>,
 
     #[pyo3(get)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub extra: Option<ExtraMetadata>,
 
     #[pyo3(get)]
-    pub save_kwargs: Option<SaveKwargs>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub save_kwargs: Option<ModelSaveKwargs>,
 }
 
 #[pymethods]
@@ -84,7 +96,7 @@ impl ModelInterfaceSaveMetadata {
         onnx_model_uri: Option<PathBuf>,
         drift_profile_uri: Option<PathBuf>,
         extra: Option<ExtraMetadata>,
-        save_kwargs: Option<SaveKwargs>,
+        save_kwargs: Option<ModelSaveKwargs>,
     ) -> Self {
         ModelInterfaceSaveMetadata {
             model_uri,
@@ -109,82 +121,78 @@ impl ModelInterfaceSaveMetadata {
 }
 
 #[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
-    pub task_type: String,
+    pub task_type: TaskType,
+
     #[pyo3(get)]
-    pub model_type: String,
+    pub model_type: ModelType,
+
     #[pyo3(get)]
-    pub data_type: String,
+    pub data_type: DataType,
+
     #[pyo3(get)]
-    pub modelcard_uid: String,
+    pub onnx_session: Option<OnnxSession>,
+
     #[pyo3(get)]
-    pub feature_map: HashMap<String, Feature>,
-    #[pyo3(get)]
-    pub sample_data_interface_type: String,
+    pub schema: FeatureSchema,
+
     #[pyo3(get)]
     pub save_metadata: ModelInterfaceSaveMetadata,
+
     #[pyo3(get)]
     pub extra_metadata: HashMap<String, String>,
+
+    #[pyo3(get)]
+    pub interface_type: ModelInterfaceType,
+
+    pub model_specific_metadata: Value,
+
+    #[pyo3(get)]
+    pub opsml_version: String,
 }
 
 #[pymethods]
 impl ModelInterfaceMetadata {
     #[new]
-    #[pyo3(signature = (interface, save_metadata, extra_metadata=None))]
-    fn new(
-        interface: &Bound<'_, PyAny>,
+    #[pyo3(signature = (save_metadata, task_type=TaskType::Other, model_type=ModelType::Unknown, data_type=DataType::NotProvided, schema=FeatureSchema::default(),interface_type=ModelInterfaceType::Base, onnx_session=None, extra_metadata=HashMap::new()))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
         save_metadata: ModelInterfaceSaveMetadata,
-        extra_metadata: Option<HashMap<String, String>>,
-    ) -> PyResult<Self> {
-        let task_type: String = interface
-            .getattr("task_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let model_type: String = interface
-            .getattr("model_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let data_type: String = interface
-            .getattr("data_type")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let modelcard_uid: String = interface
-            .getattr("modelcard_uid")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get task_type: {}", e)))?
-            .to_string();
-
-        let feature_map: HashMap<String, Feature> = interface
-            .getattr("feature_map")
-            .map_err(|e| OpsmlError::new_err(format!("Failed to get feature_map: {}", e)))?
-            .extract()?;
-
-        let sample_data_interface_type: String = interface
-            .getattr("sample_data_interface_type")
-            .map_err(|e| {
-                OpsmlError::new_err(format!("Failed to get sample_data_interface_type: {}", e))
-            })?
-            .to_string();
-
-        Ok(ModelInterfaceMetadata {
+        task_type: TaskType,
+        model_type: ModelType,
+        data_type: DataType,
+        schema: FeatureSchema,
+        interface_type: ModelInterfaceType,
+        onnx_session: Option<OnnxSession>,
+        extra_metadata: HashMap<String, String>,
+    ) -> Self {
+        ModelInterfaceMetadata {
             task_type,
             model_type,
             data_type,
-            modelcard_uid,
-            feature_map,
-            sample_data_interface_type,
+            onnx_session,
+            schema,
+            interface_type,
             save_metadata,
-            extra_metadata: extra_metadata.unwrap_or_default(),
-        })
+            extra_metadata,
+            model_specific_metadata: Value::Null,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
+        }
     }
-
     pub fn __str__(&self) -> String {
         // serialize the struct to a string
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> ModelInterfaceMetadata {
+        serde_json::from_str(&json_string).unwrap()
     }
 }
 
@@ -207,12 +215,12 @@ pub struct ModelInterface {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     pub onnx_session: Option<Py<OnnxSession>>,
 
     #[pyo3(get)]
-    pub drift_profile: Vec<DriftProfile>,
+    pub drift_profile: Vec<PyObject>,
 
     pub sample_data: SampleData,
 }
@@ -221,14 +229,15 @@ pub struct ModelInterface {
 impl ModelInterface {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=TaskType::Other, schema=None,drift_profile=None))]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, schema=None,drift_profile=None, **_kwargs))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         // Extract the sample data
         let sample_data = match sample_data {
@@ -264,11 +273,11 @@ impl ModelInterface {
         Ok(ModelInterface {
             model,
             data_type: sample_data.get_data_type(),
-            task_type,
+            task_type: task_type.unwrap_or(TaskType::Other),
             schema,
             sample_data,
             model_type,
-            model_interface_type: ModelInterfaceType::Base,
+            interface_type: ModelInterfaceType::Base,
             onnx_session: None,
             drift_profile: profiles,
         })
@@ -361,33 +370,53 @@ impl ModelInterface {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+        save_kwargs: Option<ModelSaveKwargs>,
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving model interface");
 
         // get onnx and model kwargs
         let (onnx_kwargs, model_kwargs, _) = parse_save_kwargs(py, &save_kwargs);
 
         // save model
-        let model_uri = self.save_model(py, &path, model_kwargs.as_ref())?;
+        let model_uri = self
+            .save_model(py, &path, model_kwargs.as_ref())
+            .map_err(|e| {
+                error!("Failed to save model. Error: {}", e);
+                e
+            })?;
 
         // if to_onnx is true, convert the model to onnx
         let mut onnx_model_uri = None;
         if to_onnx {
-            onnx_model_uri = Some(self.save_onnx_model(py, &path, onnx_kwargs.as_ref())?);
+            onnx_model_uri = Some(
+                self.save_onnx_model(py, &path, onnx_kwargs.as_ref())
+                    .map_err(|e| {
+                        error!("Failed to save ONNX model. Error: {}", e);
+                        e
+                    })?,
+            );
         }
 
-        let sample_data_uri = self.save_data(py, &path, None)?;
+        let sample_data_uri = self.save_data(py, &path, None).map_err(|e| {
+            error!("Failed to save sample data. Error: {}", e);
+            e
+        })?;
 
         let drift_profile_uri = if self.drift_profile.is_empty() {
             None
         } else {
-            Some(self.save_drift_profile(&path)?)
+            Some(self.save_drift_profile(py, &path).map_err(|e| {
+                error!("Failed to save drift profile. Error: {}", e);
+                e
+            })?)
         };
 
-        self.schema = self.create_feature_schema(py)?;
+        self.schema = self.create_feature_schema(py).map_err(|e| {
+            error!("Failed to create feature schema. Error: {}", e);
+            e
+        })?;
 
-        Ok(ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map: HashMap::new(),
             sample_data_uri,
@@ -395,7 +424,27 @@ impl ModelInterface {
             drift_profile_uri,
             extra: None,
             save_kwargs,
-        })
+        };
+
+        // if onnx session is not None, get the session and extract it from py
+        let onnx_session = self.onnx_session.as_ref().map(|sess| {
+            let sess = sess.bind(py);
+            // extract OnnxSession from py object
+            sess.extract::<OnnxSession>().unwrap()
+        });
+
+        let metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self.task_type.clone(),
+            self.model_type.clone(),
+            self.data_type.clone(),
+            self.schema.clone(),
+            self.interface_type.clone(),
+            onnx_session,
+            HashMap::new(),
+        );
+
+        Ok(metadata)
     }
 
     /// Create drift profile
@@ -425,11 +474,10 @@ impl ModelInterface {
             _ => None,
         });
 
-        let profile = drifter.internal_create_drift_profile(py, data, config, data_type)?;
-        let py_profile = profile.profile(py)?;
-        self.drift_profile.push(profile);
+        let profile = drifter.create_drift_profile(py, data, config, data_type)?;
+        self.drift_profile.push(profile.clone().into_py_any(py)?);
 
-        Ok(py_profile)
+        Ok(profile)
     }
 
     /// Dynamically load the model interface components
@@ -438,47 +486,67 @@ impl ModelInterface {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, load_kwargs=None))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None, ))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        if model {
-            self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
+        self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        self.load_drift_profile(py, &path)?;
+        self.load_data(py, &path, None)?;
 
         if onnx {
             self.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        if drift_profile {
-            self.load_drift_profile(&path)?;
-        }
-
-        if sample_data {
-            self.load_data(py, &path, None)?;
-        }
-
         Ok(())
+    }
+
+    #[staticmethod]
+    pub fn from_metadata(
+        py: Python,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<ModelInterface> {
+        let interface = ModelInterface {
+            model: None,
+            data_type: metadata.data_type.clone(),
+            task_type: metadata.task_type.clone(),
+            schema: metadata.schema.clone(),
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            onnx_session: metadata
+                .onnx_session
+                .as_ref()
+                .map(|session| Py::new(py, session.clone()).unwrap()),
+            drift_profile: vec![],
+            sample_data: SampleData::default(),
+        };
+
+        Ok(interface)
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.model = None;
     }
 }
 
@@ -490,7 +558,7 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -498,7 +566,7 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
         if self.onnx_session.is_some() {
-            info!("Model has already been converted to ONNX. Skipping conversion.");
+            debug!("Model has already been converted to ONNX. Skipping conversion.");
             return Ok(());
         }
 
@@ -506,7 +574,7 @@ impl ModelInterface {
             py,
             self.model.as_ref().unwrap().bind(py),
             &self.sample_data,
-            &self.model_interface_type,
+            &self.interface_type,
             &self.model_type,
             path,
             kwargs,
@@ -514,7 +582,7 @@ impl ModelInterface {
 
         self.onnx_session = Some(Py::new(py, session)?);
 
-        info!("Model converted to ONNX");
+        debug!("Model converted to ONNX");
 
         Ok(())
     }
@@ -528,37 +596,33 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip(self, path) name = "save_driftprofile")]
-    pub fn save_drift_profile(&mut self, path: &Path) -> PyResult<PathBuf> {
+    #[instrument(skip_all, name = "save_drift_profile")]
+    pub fn save_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<PathBuf> {
         let save_dir = PathBuf::from(SaveName::Drift);
-        if !save_dir.exists() {
-            fs::create_dir_all(&save_dir).unwrap();
-        }
-
         let save_path = path.join(save_dir.clone());
+
         for profile in self.drift_profile.iter() {
-            let drift_type = profile.drift_type();
+            let drift_type = profile
+                .bind(py)
+                .getattr("config")?
+                .getattr("drift_type")?
+                .extract::<DriftType>()?;
 
             // add small hex to filename to avoid overwriting
             // this would only have if someone creates multiple drift profiles of the same type
             // probably won't happen, but lets be a little safe
-            let random_hex: String = rand::thread_rng()
-                .sample_iter(&rand::distributions::Alphanumeric)
+            let random_hex: String = rand::rng()
+                .sample_iter(&rand::distr::Alphanumeric)
                 .take(3)
                 .map(char::from)
                 .collect();
 
-            let filename = format!(
-                "{}_{}_{}",
-                drift_type.to_string(),
-                SaveName::DriftProfile,
-                random_hex
-            );
+            let filename = format!("{}-{}-{}", drift_type, SaveName::DriftProfile, random_hex);
             let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
 
-            profile.save_to_json(Some(profile_save_path))?
+            profile.call_method1(py, "save_to_json", (Some(profile_save_path),))?;
         }
-        info!("Drift profile saved");
+        debug!("Drift profile saved");
 
         Ok(save_dir)
     }
@@ -572,7 +636,7 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, path: &Path) -> PyResult<()> {
+    pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<()> {
         let load_dir = path.join(SaveName::Drift);
 
         if !load_dir.exists() {
@@ -583,10 +647,38 @@ impl ModelInterface {
         let files = FileUtils::list_files(load_dir)?;
 
         for filepath in files {
-            let drift_profile = DriftProfile::load_from_json(filepath).map_err(|e| {
-                OpsmlError::new_err(format!("Failed to load drift profile. Error: {}", e))
+            // get file name
+            let filename = filepath.file_name().unwrap().to_str().unwrap();
+            let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
+            let drift_type = DriftType::from_value(&drift_type_str);
+
+            // fail if drift type is not found
+            if drift_type.is_none() {
+                return Err(OpsmlError::new_err(format!(
+                    "Drift type not found in drift profile filename: {}",
+                    filename
+                )));
+            }
+
+            // load file to json string
+            let file = std::fs::read_to_string(path).map_err(|_| {
+                OpsmlError::new_err(format!("Failed to read drift profile file: {}", filename))
             })?;
-            self.drift_profile.push(drift_profile);
+
+            match drift_type.unwrap() {
+                DriftType::Spc => {
+                    let profile = SpcDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+                DriftType::Psi => {
+                    let profile = PsiDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+                DriftType::Custom => {
+                    let profile = CustomDriftProfile::model_validate_json(file);
+                    self.drift_profile.push(profile.into_py_any(py)?);
+                }
+            }
         }
 
         Ok(())
@@ -599,7 +691,7 @@ impl ModelInterface {
     /// * `py` - Link to python interpreter and lifetime
     /// * `kwargs` - Additional kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_onnx_model(
         &mut self,
         py: Python,
@@ -623,7 +715,7 @@ impl ModelInterface {
 
         fs::write(&full_save_path, bytes)?;
 
-        info!("ONNX model saved");
+        debug!("ONNX model saved");
 
         Ok(save_path)
     }
@@ -635,7 +727,7 @@ impl ModelInterface {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &mut self,
         py: Python,
@@ -661,7 +753,7 @@ impl ModelInterface {
             kwargs,
         )?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
@@ -674,7 +766,7 @@ impl ModelInterface {
     /// * `path` - Path to save the data
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
@@ -682,6 +774,7 @@ impl ModelInterface {
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Option<PathBuf>> {
         // if sample_data is not None, save the sample data
+
         let sample_data_uri = self
             .sample_data
             .save_data(py, path, kwargs)
@@ -713,7 +806,7 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
@@ -737,7 +830,7 @@ impl ModelInterface {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }
@@ -749,7 +842,7 @@ impl ModelInterface {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -765,24 +858,13 @@ impl ModelInterface {
                 .call_method("load", (load_path,), kwargs)
                 .map_err(|e| {
                     error!("Failed to load model. Error: {}", e);
-                    OpsmlError::new_err(format!("Failed to load model. Error: {}", e))
+                    OpsmlError::new_err(format!("Failed to load model. Error: {e}"))
                 })?
                 .unbind(),
         );
 
-        info!("Model loaded");
+        debug!("Model loaded");
 
         Ok(())
-    }
-
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        if let Some(ref model) = self.model {
-            visit.call(model)?;
-        }
-        Ok(())
-    }
-
-    fn __clear__(&mut self) {
-        self.model = None;
     }
 }

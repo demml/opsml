@@ -1,25 +1,28 @@
 use crate::model::huggingface::{HuggingFaceSampleData, HuggingFaceTask};
-use opsml_types::{CommonKwargs, DataType, SaveName, Suffix};
+use opsml_types::{
+    CommonKwargs, DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType,
+};
 use pyo3::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::base::{parse_save_kwargs, ExtraMetadata, ModelInterfaceSaveMetadata};
+use crate::base::{
+    parse_save_kwargs, ExtraMetadata, ModelInterfaceMetadata, ModelInterfaceSaveMetadata,
+};
 use crate::data::generate_feature_schema;
 use crate::data::DataInterface;
 use crate::model::ModelInterface;
-use crate::model::TaskType;
-use crate::types::{FeatureSchema, ModelInterfaceType};
-use crate::ModelType;
+use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxModelConverter;
 use crate::OnnxSession;
-use crate::{DataProcessor, LoadKwargs, SaveKwargs};
+use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::{InterfaceError, OnnxError, OpsmlError};
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, instrument, warn};
 
 pub type ProcessorNames = (String, String, String);
 
@@ -132,7 +135,7 @@ fn is_hf_pipeline(py: Python, pipeline: &Bound<'_, PyAny>) -> PyResult<bool> {
         .unwrap())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HFBaseArgs {
     pub hf_task: HuggingFaceTask,
     pub model_backend: ModelType,
@@ -169,6 +172,26 @@ impl HFBaseArgs {
     pub fn has_processors(&self) -> bool {
         self.has_tokenizer || self.has_feature_extractor || self.has_image_processor
     }
+
+    pub fn model_dump_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "hf_task": self.hf_task,
+            "model_backend": self.model_backend,
+            "is_pipeline": self.is_pipeline,
+            "has_tokenizer": self.has_tokenizer,
+            "has_feature_extractor": self.has_feature_extractor,
+            "has_image_processor": self.has_image_processor,
+            "tokenizer_name": self.tokenizer_name,
+            "feature_extractor_name": self.feature_extractor_name,
+            "image_processor_name": self.image_processor_name,
+            "hf_model_type": self.hf_model_type,
+            "ort_type": self.ort_type,
+        })
+    }
+
+    pub fn model_validate_json(record: String) -> HFBaseArgs {
+        serde_json::from_str(&record).unwrap_or_default()
+    }
 }
 
 #[pyclass(extends=ModelInterface, subclass)]
@@ -192,7 +215,7 @@ pub struct HuggingFaceModel {
     pub model_type: ModelType,
 
     #[pyo3(get)]
-    pub model_interface_type: ModelInterfaceType,
+    pub interface_type: ModelInterfaceType,
 
     #[pyo3(get)]
     pub huggingface_task: HuggingFaceTask,
@@ -206,7 +229,7 @@ pub struct HuggingFaceModel {
 impl HuggingFaceModel {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=TaskType::Other, schema=None, drift_profile=None))]
+    #[pyo3(signature = (model=None, tokenizer=None, feature_extractor=None, image_processor=None, sample_data=None, hf_task=None, task_type=None, schema=None, drift_profile=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -215,7 +238,7 @@ impl HuggingFaceModel {
         image_processor: Option<&Bound<'py, PyAny>>,
         sample_data: Option<&Bound<'py, PyAny>>,
         hf_task: Option<HuggingFaceTask>,
-        task_type: TaskType,
+        task_type: Option<TaskType>,
         schema: Option<FeatureSchema>,
         drift_profile: Option<&Bound<'py, PyAny>>,
     ) -> PyResult<(Self, ModelInterface)> {
@@ -289,7 +312,7 @@ impl HuggingFaceModel {
         // process preprocessor
 
         let mut model_interface =
-            ModelInterface::new(py, None, None, task_type, schema, drift_profile)?;
+            ModelInterface::new(py, None, None, task_type, schema, drift_profile, None)?;
 
         // override ModelInterface SampleData with TorchSampleData
         let sample_data = match sample_data {
@@ -312,8 +335,8 @@ impl HuggingFaceModel {
                 tokenizer,
                 feature_extractor,
                 image_processor,
-                model_interface_type: ModelInterfaceType::Torch,
-                model_type: ModelType::Pytorch,
+                interface_type: ModelInterfaceType::HuggingFace,
+                model_type: base_args.model_backend.clone(),
                 onnx_session: None,
                 huggingface_task: base_args.hf_task.clone(),
                 sample_data,
@@ -443,15 +466,15 @@ impl HuggingFaceModel {
         py: Python,
         path: PathBuf,
         to_onnx: bool,
-        save_kwargs: Option<SaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+        save_kwargs: Option<ModelSaveKwargs>,
+    ) -> PyResult<ModelInterfaceMetadata> {
         let mut extra = None;
         let cloned_kwargs = save_kwargs.clone();
 
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
         } else {
-            Some(self_.as_super().save_drift_profile(&path)?)
+            Some(self_.as_super().save_drift_profile(py, &path)?)
         };
 
         // parse the save args
@@ -488,7 +511,7 @@ impl HuggingFaceModel {
             }
         }
 
-        let metadata = ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
             sample_data_uri,
@@ -497,6 +520,27 @@ impl HuggingFaceModel {
             extra,
             save_kwargs: cloned_kwargs,
         };
+
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                sess.extract::<OnnxSession>().unwrap()
+            })
+        };
+
+        let mut metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.model_type.clone(),
+            self_.sample_data.get_data_type(),
+            self_.as_super().schema.clone(),
+            self_.interface_type.clone(),
+            onnx_session,
+            HashMap::new(),
+        );
+
+        metadata.model_specific_metadata = self_.base_args.model_dump_json();
 
         Ok(metadata)
     }
@@ -507,77 +551,128 @@ impl HuggingFaceModel {
     ///
     /// * `py` - Python interpreter
     /// * `path` - Path to load from
-    /// * `model` - Whether to load the model (default: true)
     /// * `onnx` - Whether to load the onnx model (default: false)
-    /// * `drift_profile` - Whether to load the drift profile (default: false)
-    /// * `sample_data` - Whether to load the sample data (default: false)
-    /// * `preprocessor` - Whether to load the preprocessor (default: false)
     /// * `load_kwargs` - Additional load kwargs to pass to the individual load methods
     ///
     /// # Returns
     ///
-    /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, model=true, onnx=false, drift_profile=false, sample_data=false, preprocessor=false, load_kwargs=None))]
+    /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
+    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(
-        skip(
-            self_,
-            py,
-            path,
-            model,
-            onnx,
-            drift_profile,
-            sample_data,
-            preprocessor,
-            load_kwargs
-        ),
+        skip_all
         name = "load_huggingface_interface"
     )]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
-        model: bool,
         onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
-        load_kwargs: Option<LoadKwargs>,
+        load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        if model {
-            debug!("Loading model");
-            self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        }
+        debug!("Loading model");
+        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
             self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        if sample_data {
-            debug!("Loading sample data");
-            let data_type = self_.as_super().data_type.clone();
-            self_.load_data(py, &path, &data_type, None)?;
-        }
+        debug!("Loading sample data");
+        let data_type = self_.as_super().data_type.clone();
+        self_.load_data(py, &path, &data_type, None)?;
 
-        if preprocessor {
-            debug!("Loading preprocessor");
-            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-        }
+        debug!("Loading preprocessor");
+        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
 
-        if drift_profile {
-            debug!("Loading drift profile");
-            self_.as_super().load_drift_profile(&path)?;
-        }
+        debug!("Loading drift profile");
+        self_.as_super().load_drift_profile(py, &path)?;
 
         Ok(())
+    }
+
+    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
+        if let Some(ref tokenizer) = self.tokenizer {
+            visit.call(tokenizer)?;
+        }
+
+        if let Some(ref image_processor) = self.image_processor {
+            visit.call(image_processor)?;
+        }
+
+        if let Some(ref feature_extractor) = self.feature_extractor {
+            visit.call(feature_extractor)?;
+        }
+
+        if let Some(ref model) = self.model {
+            visit.call(model)?;
+        }
+
+        if let Some(ref onnx_session) = self.onnx_session {
+            visit.call(onnx_session)?;
+        }
+        Ok(())
+    }
+
+    fn __clear__(&mut self) {
+        self.tokenizer = None;
+        self.feature_extractor = None;
+        self.image_processor = None;
+        self.model = None;
+        self.onnx_session = None;
     }
 }
 
 impl HuggingFaceModel {
+    pub fn from_metadata<'py>(
+        py: Python<'py>,
+        metadata: &ModelInterfaceMetadata,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let base_args: HFBaseArgs =
+            serde_json::from_value(metadata.model_specific_metadata.clone()).map_err(|e| {
+                error!("Failed to deserialize model specific metadata: {}", e);
+                OpsmlError::new_err("Failed to deserialize model specific metadata")
+            })?;
+
+        // convert onnx session to to Py<OnnxSession>
+        let onnx_session = metadata
+            .onnx_session
+            .as_ref()
+            .map(|session| Py::new(py, session.clone()).unwrap());
+
+        let huggingface_interface = HuggingFaceModel {
+            model: None,
+            tokenizer: None,
+            feature_extractor: None,
+            image_processor: None,
+            onnx_session,
+            model_type: metadata.model_type.clone(),
+            interface_type: metadata.interface_type.clone(),
+            huggingface_task: base_args.hf_task.clone(),
+            sample_data: HuggingFaceSampleData::default(),
+            base_args,
+        };
+
+        let mut interface = ModelInterface::new(
+            py,
+            None,
+            None,
+            Some(metadata.task_type.clone()),
+            Some(metadata.schema.clone()),
+            None,
+            None,
+        )?;
+
+        interface.data_type = metadata.data_type.clone();
+        interface.model_type = metadata.model_type.clone();
+        interface.interface_type = metadata.interface_type.clone();
+
+        Py::new(py, (huggingface_interface, interface))?.into_bound_py_any(py)
+    }
+
     /// Load the preprocessor from a file
     ///
     /// # Arguments
@@ -585,7 +680,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_preprocessor(
         &mut self,
         py: Python,
@@ -632,11 +727,11 @@ impl HuggingFaceModel {
             debug!("Image Processor loaded");
         }
 
-        info!("Preprocessor loaded");
+        debug!("Preprocessor loaded");
         Ok(())
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn convert_to_onnx(
         &mut self,
         py: Python,
@@ -666,12 +761,12 @@ impl HuggingFaceModel {
 
         self.onnx_session = Some(Py::new(py, session)?);
 
-        info!("Model converted to ONNX");
+        debug!("Model converted to ONNX");
 
         Ok(paths)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_tokenizer(
         &self,
         py: Python,
@@ -692,12 +787,12 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Tokenizer saved");
+        debug!("Tokenizer saved");
 
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_feature_extractor(
         &self,
         py: Python,
@@ -718,12 +813,12 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Feature Extractor saved");
+        debug!("Feature Extractor saved");
 
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     fn save_image_processor(
         &self,
         py: Python,
@@ -744,7 +839,7 @@ impl HuggingFaceModel {
                 InterfaceError::Error(e.to_string())
             })?;
 
-        info!("Image Processor saved");
+        debug!("Image Processor saved");
 
         Ok(save_path)
     }
@@ -756,7 +851,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_processors(
         &self,
         py: Python,
@@ -771,6 +866,7 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.tokenizer_name.clone(),
                 uri: tokenizer_path,
+                r#type: ProcessorType::Tokenizer,
             });
         }
 
@@ -780,6 +876,7 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.feature_extractor_name.clone(),
                 uri: feature_extractor_path,
+                r#type: ProcessorType::FeatureExtractor,
             });
         }
 
@@ -789,10 +886,11 @@ impl HuggingFaceModel {
             preprocessors.push(DataProcessor {
                 name: self.base_args.image_processor_name.clone(),
                 uri: image_processor_path,
+                r#type: ProcessorType::ImageProcessor,
             });
         }
 
-        info!("Preprocessor saved");
+        debug!("Preprocessor saved");
         Ok(preprocessors)
     }
 
@@ -803,7 +901,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_model(
         &self,
         py: Python,
@@ -824,12 +922,12 @@ impl HuggingFaceModel {
                 OpsmlError::new_err(e.to_string())
             })?;
 
-        info!("Model saved");
+        debug!("Model saved");
 
         Ok(save_path)
     }
 
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_model(
         &mut self,
         py: Python,
@@ -870,7 +968,7 @@ impl HuggingFaceModel {
     /// * `path` - Path to save the data
     /// * `kwargs` - Additional save kwargs
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn save_data(
         &self,
         py: Python,
@@ -901,7 +999,7 @@ impl HuggingFaceModel {
         // load sample data
         self.sample_data = HuggingFaceSampleData::load_data(py, path, data_type, kwargs)?;
 
-        info!("Sample data loaded");
+        debug!("Sample data loaded");
 
         Ok(())
     }
@@ -913,7 +1011,7 @@ impl HuggingFaceModel {
     /// * `path` - The path to load the model from
     /// * `kwargs` - Additional keyword arguments to pass to the load
     ///
-    #[instrument(skip(self, py, path, kwargs))]
+    #[instrument(skip_all)]
     pub fn load_onnx_model(
         &mut self,
         py: Python,
@@ -950,7 +1048,7 @@ impl HuggingFaceModel {
             .unwrap()
             .setattr(py, "session", Some(sess))?;
 
-        info!("ONNX model loaded");
+        debug!("ONNX model loaded");
 
         Ok(())
     }
@@ -975,36 +1073,5 @@ impl HuggingFaceModel {
         }
 
         generate_feature_schema(&data, &self.sample_data.get_data_type())
-    }
-
-    fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        if let Some(ref tokenizer) = self.tokenizer {
-            visit.call(tokenizer)?;
-        }
-
-        if let Some(ref image_processor) = self.image_processor {
-            visit.call(image_processor)?;
-        }
-
-        if let Some(ref feature_extractor) = self.feature_extractor {
-            visit.call(feature_extractor)?;
-        }
-
-        if let Some(ref model) = self.model {
-            visit.call(model)?;
-        }
-
-        if let Some(ref onnx_session) = self.onnx_session {
-            visit.call(onnx_session)?;
-        }
-        Ok(())
-    }
-
-    fn __clear__(&mut self) {
-        self.tokenizer = None;
-        self.feature_extractor = None;
-        self.image_processor = None;
-        self.model = None;
-        self.onnx_session = None;
     }
 }

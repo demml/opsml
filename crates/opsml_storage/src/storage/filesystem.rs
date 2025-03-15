@@ -1,15 +1,18 @@
 use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
+use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
+use tracing::{debug, instrument};
 
 #[async_trait]
 pub trait FileSystem {
     fn name(&self) -> &str;
+    fn bucket(&self) -> &str;
     fn storage_type(&self) -> StorageType;
     async fn new(settings: &OpsmlStorageSettings) -> Self;
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError>;
@@ -33,17 +36,23 @@ pub struct FileSystemStorage {
 }
 
 impl FileSystemStorage {
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
+    #[instrument(skip_all)]
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        api_client: Option<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
         if !settings.client_mode {
+            debug!("Creating FileSystemStorage with StorageClientEnum");
             Ok(FileSystemStorage {
                 fs: Some(StorageClientEnum::new(settings).await?),
                 http: None,
                 client_mode: settings.client_mode,
             })
         } else {
+            debug!("Creating FileSystemStorage with HttpFSStorageClient");
             Ok(FileSystemStorage {
                 fs: None,
-                http: Some(HttpFSStorageClient::new(&mut *settings).await?),
+                http: Some(HttpFSStorageClient::new(&mut *settings, api_client).await?),
                 client_mode: settings.client_mode,
             })
         }
@@ -152,186 +161,13 @@ impl FileSystemStorage {
     }
 }
 
-//#[pyclass]
-//pub struct PyFileSystemStorage {
-//    fs: Option<StorageClientEnum>,
-//    http: Option<HttpFSStorageClient>,
-//    client_mode: bool,
-//    runtime: tokio::runtime::Runtime,
-//}
-//
-//#[pymethods]
-//impl PyFileSystemStorage {
-//    #[new]
-//    pub fn new(settings: &mut OpsmlStorageSettings) -> PyResult<Self> {
-//        let rt = tokio::runtime::Runtime::new().unwrap();
-//
-//        let (fs, http) = rt
-//            .block_on(async {
-//                let fs = if !settings.client_mode {
-//                    Some(StorageClientEnum::new(settings).await?)
-//                } else {
-//                    None
-//                };
-//
-//                let http = if settings.client_mode {
-//                    Some(HttpFSStorageClient::new(&mut *settings).await?)
-//                } else {
-//                    None
-//                };
-//
-//                Ok::<(Option<StorageClientEnum>, Option<HttpFSStorageClient>), StorageError>((
-//                    fs, http,
-//                ))
-//            })
-//            .unwrap();
-//
-//        Ok(PyFileSystemStorage {
-//            fs,
-//            http,
-//            client_mode: settings.client_mode,
-//            runtime: rt,
-//        })
-//    }
-//
-//    pub fn name(&self) -> &str {
-//        if self.client_mode {
-//            self.http.as_ref().unwrap().name()
-//        } else {
-//            self.fs.as_ref().unwrap().name()
-//        }
-//    }
-//
-//    pub fn storage_type(&self) -> StorageType {
-//        if self.client_mode {
-//            self.http.as_ref().unwrap().storage_type()
-//        } else {
-//            self.fs.as_ref().unwrap().storage_type()
-//        }
-//    }
-//
-//    #[pyo3(signature = (path=PathBuf::new()))]
-//    pub fn find(&mut self, path: PathBuf) -> PyResult<Vec<String>> {
-//        Ok(self
-//            .runtime
-//            .block_on(async {
-//                if self.client_mode {
-//                    self.http.as_mut().unwrap().find(&path).await
-//                } else {
-//                    self.fs.as_ref().unwrap().find(&path).await
-//                }
-//            })
-//            .unwrap())
-//    }
-//
-//    #[pyo3(signature = (path=PathBuf::new()))]
-//    pub fn find_info(&mut self, path: PathBuf) -> PyResult<Vec<FileInfo>> {
-//        Ok(self
-//            .runtime
-//            .block_on(async {
-//                if self.client_mode {
-//                    self.http.as_mut().unwrap().find_info(&path).await
-//                } else {
-//                    self.fs.as_ref().unwrap().find_info(&path).await
-//                }
-//            })
-//            .unwrap())
-//    }
-//
-//    #[pyo3(signature = (lpath, rpath, recursive = false))]
-//    pub fn get(&mut self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime.block_on(async {
-//            if self.client_mode {
-//                self.http
-//                    .as_mut()
-//                    .unwrap()
-//                    .get(&lpath, &rpath, recursive)
-//                    .await
-//            } else {
-//                self.fs
-//                    .as_ref()
-//                    .unwrap()
-//                    .get(&lpath, &rpath, recursive)
-//                    .await
-//            }
-//        })?;
-//        Ok(())
-//    }
-//
-//    #[pyo3(signature = (lpath, rpath, recursive = false))]
-//    pub fn put(&mut self, lpath: PathBuf, rpath: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime.block_on(async {
-//            if self.client_mode {
-//                self.http
-//                    .as_mut()
-//                    .unwrap()
-//                    .put(&lpath, &rpath, recursive)
-//                    .await
-//            } else {
-//                self.fs
-//                    .as_ref()
-//                    .unwrap()
-//                    .put(&lpath, &rpath, recursive)
-//                    .await
-//            }
-//        })?;
-//        Ok(())
-//    }
-//
-//    #[pyo3(signature = (path, recursive = false))]
-//    pub fn rm(&mut self, path: PathBuf, recursive: bool) -> PyResult<()> {
-//        self.runtime.block_on(async {
-//            if self.client_mode {
-//                self.http.as_mut().unwrap().rm(&path, recursive).await
-//            } else {
-//                self.fs.as_ref().unwrap().rm(&path, recursive).await
-//            }
-//        })?;
-//        Ok(())
-//    }
-//
-//    pub fn exists(&mut self, path: PathBuf) -> PyResult<bool> {
-//        Ok(self
-//            .runtime
-//            .block_on(async {
-//                if self.client_mode {
-//                    self.http.as_mut().unwrap().exists(&path).await
-//                } else {
-//                    self.fs.as_ref().unwrap().exists(&path).await
-//                }
-//            })
-//            .unwrap())
-//    }
-//
-//    pub fn generate_presigned_url(&mut self, path: PathBuf, expiration: u64) -> PyResult<String> {
-//        Ok(self
-//            .runtime
-//            .block_on(async {
-//                if self.client_mode {
-//                    self.http
-//                        .as_mut()
-//                        .unwrap()
-//                        .generate_presigned_url(&path)
-//                        .await
-//                } else {
-//                    self.fs
-//                        .as_ref()
-//                        .unwrap()
-//                        .generate_presigned_url(&path, expiration)
-//                        .await
-//                }
-//            })
-//            .unwrap())
-//    }
-//}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::fs::File;
     use std::io::Write;
@@ -340,7 +176,7 @@ mod tests {
         let mut file = File::create(name).expect("Could not create sample file.");
 
         while file.metadata().unwrap().len() <= chunk_size * 2 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
@@ -376,7 +212,6 @@ mod tests {
         if !nested_dir.exists() {
             std::fs::create_dir_all(nested_dir.clone()).unwrap();
         }
-
         // random file name with uuid
         let key = format!("{}/temp_test_file_{}.txt", &nested_dir_path, &rand_name);
         create_file(&key, &chunk_size);
@@ -414,7 +249,7 @@ mod tests {
     async fn test_gcs_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
@@ -452,18 +287,20 @@ mod tests {
         std::fs::remove_dir_all(new_path).unwrap();
 
         client.rm(rpath, true).await.unwrap();
+        unset_env_vars();
     }
 
     #[tokio::test]
     async fn test_aws_storage_client() {
+        set_env_vars();
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
-        assert_eq!(client.storage_type(), StorageType::AWS);
+        assert_eq!(client.storage_type(), StorageType::Aws);
 
         let dirname = create_nested_data();
 
@@ -502,7 +339,7 @@ mod tests {
     async fn test_azure_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 
@@ -556,7 +393,7 @@ mod tests {
 
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings())
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
             .await
             .unwrap();
 

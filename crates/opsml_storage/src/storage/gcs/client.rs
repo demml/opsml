@@ -18,12 +18,11 @@ use google_cloud_storage::http::resumable_upload_client::ResumableUploadClient;
 use google_cloud_storage::http::resumable_upload_client::UploadStatus;
 use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
-use indicatif::{ProgressBar, ProgressStyle};
-use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
+use opsml_utils::FileUtils;
 use serde_json::Value;
 use std::env;
 use std::fs::File;
@@ -102,7 +101,6 @@ pub struct GoogleMultipartUpload {
     pub upload_status: UploadStatus,
     file_reader: BufReader<File>,
     file_size: u64,
-    filename: String,
 }
 
 impl GoogleMultipartUpload {
@@ -118,11 +116,6 @@ impl GoogleMultipartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
 
         let file_size = metadata.len();
-        let filename = Path::new(path)
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
 
         let file_reader = BufReader::new(file);
 
@@ -131,7 +124,6 @@ impl GoogleMultipartUpload {
             upload_status: UploadStatus::NotStarted,
             file_reader,
             file_size,
-            filename,
         })
     }
 
@@ -168,35 +160,12 @@ impl GoogleMultipartUpload {
         Ok(())
     }
 
-    pub async fn upload_file_in_chunks(&mut self) -> Result<(), StorageError> {
-        let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
-
-        // calculate the number of parts
-        let mut chunk_count = (self.file_size / chunk_size) + 1;
-        let mut size_of_last_chunk = self.file_size % chunk_size;
-
-        // if the last chunk is empty, reduce the number of parts
-        if size_of_last_chunk == 0 {
-            size_of_last_chunk = chunk_size;
-            chunk_count -= 1;
-        }
-
-        let bar = ProgressBar::new(chunk_count);
-
-        let msg1 = Colorize::green("Uploading file:");
-        let msg2 = Colorize::purple(&self.filename);
-        let msg = format!("{} {}", msg1, msg2);
-
-        let template = format!(
-            "{} [{{bar:40.green/magenta}}] {{pos}}/{{len}} ({{eta}})",
-            msg
-        );
-
-        let style = ProgressStyle::with_template(&template)
-            .unwrap()
-            .progress_chars("#--");
-        bar.set_style(style);
-
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+        chunk_size: u64,
+    ) -> Result<(), StorageError> {
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -212,12 +181,9 @@ impl GoogleMultipartUpload {
             };
 
             self.upload_next_chunk(&upload_args).await?;
-
-            bar.inc(1);
         } // extract the range from the result and update the first_byte and last_byte
 
         self.complete_upload().await?;
-        bar.finish_with_message("Upload complete");
 
         Ok(())
 
@@ -255,7 +221,7 @@ impl StorageClient for GoogleStorageClient {
         let creds = GcpCreds::new().await?;
         // If no credentials, attempt to create a default client pulling from the environment
 
-        let config = if creds.creds.is_none() {
+        let config: Result<ClientConfig, StorageError> = if creds.creds.is_none() {
             // if using in client_mode, default to anonymous
             let config = if settings.client_mode {
                 ClientConfig::default().anonymous()
@@ -418,15 +384,33 @@ impl StorageClient for GoogleStorageClient {
             .items
             .unwrap_or_else(Vec::new)
             .iter()
-            .map(|o| FileInfo {
-                name: o.name.clone(),
-                size: o.size,
-                object_type: o.content_type.clone().unwrap_or_default(),
-                created: match o.time_created {
-                    Some(last_modified) => last_modified.to_string(),
-                    None => "".to_string(),
-                },
-                suffix: o.name.clone().split('.').last().unwrap_or("").to_string(),
+            .map(|o| {
+                let name = o.name.clone();
+                // strip bucket name from object name
+                let name = name
+                    .strip_prefix(&format!("{}/", self.bucket))
+                    .unwrap_or(&name);
+
+                // create stripped path
+                // remove path from name
+                let stripped_path = name
+                    .strip_prefix(path)
+                    .unwrap_or(name)
+                    .strip_prefix("/")
+                    .unwrap_or(name)
+                    .to_string();
+
+                FileInfo {
+                    name: name.to_string(),
+                    size: o.size,
+                    object_type: o.content_type.clone().unwrap_or_default(),
+                    created: match o.time_created {
+                        Some(last_modified) => last_modified.to_string(),
+                        None => "".to_string(),
+                    },
+                    suffix: name.split('.').last().unwrap_or("").to_string(),
+                    stripped_path,
+                }
             })
             .collect())
     }
@@ -615,6 +599,10 @@ pub struct GCSFSStorageClient {
 
 #[async_trait]
 impl FileSystem for GCSFSStorageClient {
+    fn bucket(&self) -> &str {
+        &self.client.bucket
+    }
+
     fn name(&self) -> &str {
         "GCSFSStorageClient"
     }
@@ -743,8 +731,10 @@ impl FileSystem for GCSFSStorageClient {
             let files: Vec<PathBuf> = get_files(&stripped_lpath)?;
 
             for file in files {
-                let stripped_file_path = file.strip_path(self.client.bucket().await);
+                let (chunk_count, size_of_last_chunk, chunk_size) =
+                    FileUtils::get_chunk_count(&file, UPLOAD_CHUNK_SIZE as u64)?;
 
+                let stripped_file_path = file.strip_path(self.client.bucket().await);
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
@@ -757,11 +747,14 @@ impl FileSystem for GCSFSStorageClient {
                     )
                     .await?;
 
-                uploader.upload_file_in_chunks().await?;
+                uploader
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                    .await?;
             }
-
-            Ok(())
         } else {
+            let (chunk_count, size_of_last_chunk, chunk_size) =
+                FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
+
             let mut uploader = self
                 .client
                 .create_multipart_uploader(
@@ -771,9 +764,12 @@ impl FileSystem for GCSFSStorageClient {
                 )
                 .await?;
 
-            uploader.upload_file_in_chunks().await?;
-            Ok(())
-        }
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                .await?;
+        };
+
+        Ok(())
     }
 }
 
@@ -810,8 +806,8 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
-    use rand::distributions::Alphanumeric;
-    use rand::thread_rng;
+    use rand::distr::Alphanumeric;
+    use rand::rng;
     use rand::Rng;
     use std::path::Path;
     use tempfile::TempDir;
@@ -820,7 +816,7 @@ mod tests {
         let mut file = File::create(name).expect("Could not create sample file.");
 
         while file.metadata().unwrap().len() <= chunk_size * 2 {
-            let rand_string: String = thread_rng()
+            let rand_string: String = rng()
                 .sample_iter(&Alphanumeric)
                 .take(256)
                 .map(char::from)
@@ -846,7 +842,7 @@ mod tests {
         create_file(lpath.to_str().unwrap(), &1024);
 
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = GCSFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = GCSFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let rpath_dir = Path::new("test_dir");
         let rpath = rpath_dir.join(&filename);
@@ -913,7 +909,7 @@ mod tests {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
         let settings = OpsmlConfig::default(); // Adjust settings as needed
-        let storage_client = GCSFSStorageClient::new(&settings.storage_settings()).await;
+        let storage_client = GCSFSStorageClient::new(&settings.storage_settings().unwrap()).await;
 
         let child = tmp_path.join("child");
         let grand_child = child.join("grandchild");

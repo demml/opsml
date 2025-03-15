@@ -12,3 +12,4 @@ doctest = false
 thiserror = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }

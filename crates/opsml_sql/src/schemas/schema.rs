@@ -1,17 +1,17 @@
 use chrono::NaiveDateTime;
 use opsml_error::error::VersionError;
-use opsml_types::CommonKwargs;
+use opsml_types::cards::{CardTable, ParameterValue};
+use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
-use std::collections::HashMap;
 use std::env;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MetricRecord {
-    pub run_uid: String,
+    pub experiment_uid: String,
     pub name: String,
     pub value: f64,
     pub step: Option<i32>,
@@ -22,14 +22,14 @@ pub struct MetricRecord {
 
 impl MetricRecord {
     pub fn new(
-        run_uid: String,
+        experiment_uid: String,
         name: String,
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
     ) -> Self {
         MetricRecord {
-            run_uid,
+            experiment_uid,
             name,
             value,
             step,
@@ -43,7 +43,7 @@ impl MetricRecord {
 impl Default for MetricRecord {
     fn default() -> Self {
         MetricRecord {
-            run_uid: Uuid::new_v4().to_string(),
+            experiment_uid: Uuid::new_v4().to_string(),
             name: CommonKwargs::Undefined.to_string(),
             value: 0.0,
             step: None,
@@ -56,21 +56,17 @@ impl Default for MetricRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ParameterRecord {
-    pub run_uid: String,
+    pub experiment_uid: String,
     pub name: String,
-    pub value: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub idx: Option<i32>,
+    pub value: Json<ParameterValue>,
 }
 
 impl ParameterRecord {
-    pub fn new(run_uid: String, name: String, value: String) -> Self {
+    pub fn new(experiment_uid: String, name: String, value: ParameterValue) -> Self {
         ParameterRecord {
-            run_uid,
+            experiment_uid,
             name,
-            value,
-            created_at: None,
-            idx: None,
+            value: Json(value),
         }
     }
 }
@@ -78,18 +74,16 @@ impl ParameterRecord {
 impl Default for ParameterRecord {
     fn default() -> Self {
         ParameterRecord {
-            run_uid: Uuid::new_v4().to_string(),
+            experiment_uid: Uuid::new_v4().to_string(),
             name: CommonKwargs::Undefined.to_string(),
-            value: CommonKwargs::Undefined.to_string(),
-            created_at: None,
-            idx: None,
+            value: Json(ParameterValue::Int(0)),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct VersionResult {
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub name: String,
     pub repository: String,
     pub major: i32,
@@ -143,7 +137,7 @@ pub struct CardSummary {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DataCardRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -153,13 +147,12 @@ pub struct DataCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
-    pub contact: String,
-    pub tags: Json<HashMap<String, String>>,
+    pub tags: Json<Vec<String>>,
     pub data_type: String,
-    pub runcard_uid: String,
-    pub pipelinecard_uid: String,
-    pub auditcard_uid: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
     pub interface_type: String,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -168,15 +161,14 @@ impl DataCardRecord {
         name: String,
         repository: String,
         version: Version,
-        contact: String,
-        tags: HashMap<String, String>,
+        tags: Vec<String>,
         data_type: String,
-        runcard_uid: Option<String>,
-        pipelinecard_uid: Option<String>,
+        experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
-        interface_type: Option<String>,
+        interface_type: String,
+        username: String,
     ) -> Self {
-        let created_at = Some(get_utc_datetime());
+        let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
@@ -192,15 +184,23 @@ impl DataCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            contact,
             tags: Json(tags),
             data_type,
-            runcard_uid: runcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            pipelinecard_uid: pipelinecard_uid
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            experimentcard_uid,
+            auditcard_uid,
+            interface_type,
+            username,
         }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Data,
+            self.repository,
+            self.name,
+            self.version
+        )
     }
 }
 
@@ -208,7 +208,7 @@ impl Default for DataCardRecord {
     fn default() -> Self {
         DataCardRecord {
             uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
+            created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
@@ -218,13 +218,12 @@ impl Default for DataCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
-            contact: CommonKwargs::Undefined.to_string(),
-            tags: Json(HashMap::new()),
-            data_type: CommonKwargs::Undefined.to_string(),
-            runcard_uid: CommonKwargs::Undefined.to_string(),
-            pipelinecard_uid: CommonKwargs::Undefined.to_string(),
-            auditcard_uid: CommonKwargs::Undefined.to_string(),
+            tags: Json(Vec::new()),
+            data_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -232,7 +231,7 @@ impl Default for DataCardRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ModelCardRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -242,16 +241,15 @@ pub struct ModelCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
-    pub contact: String,
-    pub tags: Json<HashMap<String, String>>,
-    pub datacard_uid: String,
-    pub sample_data_type: String,
+    pub tags: Json<Vec<String>>,
+    pub datacard_uid: Option<String>,
+    pub data_type: String,
     pub model_type: String,
-    pub runcard_uid: String,
-    pub pipelinecard_uid: String,
-    pub auditcard_uid: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
     pub interface_type: String,
     pub task_type: String,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -260,18 +258,17 @@ impl ModelCardRecord {
         name: String,
         repository: String,
         version: Version,
-        contact: String,
-        tags: HashMap<String, String>,
+        tags: Vec<String>,
         datacard_uid: Option<String>,
-        sample_data_type: String,
+        data_type: String,
         model_type: String,
-        runcard_uid: Option<String>,
-        pipelinecard_uid: Option<String>,
+        experimentcard_uid: Option<String>,
         auditcard_uid: Option<String>,
-        interface_type: Option<String>,
-        task_type: Option<String>,
+        interface_type: String,
+        task_type: String,
+        username: String,
     ) -> Self {
-        let created_at = Some(get_utc_datetime());
+        let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
@@ -287,18 +284,26 @@ impl ModelCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            contact,
             tags: Json(tags),
-            datacard_uid: datacard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            sample_data_type,
+            datacard_uid,
+            data_type,
             model_type,
-            runcard_uid: runcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            pipelinecard_uid: pipelinecard_uid
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            auditcard_uid: auditcard_uid.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            interface_type: interface_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            task_type: task_type.unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
+            experimentcard_uid,
+            auditcard_uid,
+            interface_type,
+            task_type,
+            username,
         }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Model,
+            self.repository,
+            self.name,
+            self.version
+        )
     }
 }
 
@@ -306,7 +311,7 @@ impl Default for ModelCardRecord {
     fn default() -> Self {
         ModelCardRecord {
             uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
+            created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
@@ -316,24 +321,23 @@ impl Default for ModelCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
-            contact: CommonKwargs::Undefined.to_string(),
-            tags: Json(HashMap::new()),
-            datacard_uid: CommonKwargs::Undefined.to_string(),
-            sample_data_type: CommonKwargs::Undefined.to_string(),
-            model_type: CommonKwargs::Undefined.to_string(),
-            runcard_uid: CommonKwargs::Undefined.to_string(),
-            pipelinecard_uid: CommonKwargs::Undefined.to_string(),
-            auditcard_uid: CommonKwargs::Undefined.to_string(),
+            tags: Json(Vec::new()),
+            datacard_uid: None,
+            data_type: DataType::NotProvided.to_string(),
+            model_type: ModelType::Unknown.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
             interface_type: CommonKwargs::Undefined.to_string(),
             task_type: CommonKwargs::Undefined.to_string(),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct RunCardRecord {
+pub struct ExperimentCardRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -343,21 +347,19 @@ pub struct RunCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
-    pub contact: String,
-    pub tags: Json<HashMap<String, String>>,
+    pub tags: Json<Vec<String>>,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
-    pub pipelinecard_uid: String,
-    pub project: String,
-    pub artifact_uris: Json<HashMap<String, String>>,
-    pub compute_environment: Json<HashMap<String, String>>,
+    pub promptcard_uids: Json<Vec<String>>,
+    pub experimentcard_uids: Json<Vec<String>>,
+    pub username: String,
 }
 
-impl Default for RunCardRecord {
+impl Default for ExperimentCardRecord {
     fn default() -> Self {
-        RunCardRecord {
+        ExperimentCardRecord {
             uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
+            created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
@@ -367,38 +369,34 @@ impl Default for RunCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
-            contact: CommonKwargs::Undefined.to_string(),
-            tags: Json(HashMap::new()),
+            tags: Json(Vec::new()),
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
-            pipelinecard_uid: CommonKwargs::Undefined.to_string(),
-            project: CommonKwargs::Undefined.to_string(),
-            artifact_uris: Json(HashMap::new()),
-            compute_environment: Json(HashMap::new()),
+            promptcard_uids: Json(Vec::new()),
+            experimentcard_uids: Json(Vec::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
 
 #[allow(clippy::too_many_arguments)]
-impl RunCardRecord {
+impl ExperimentCardRecord {
     pub fn new(
         name: String,
         repository: String,
         version: Version,
-        contact: String,
-        tags: HashMap<String, String>,
-        datacard_uids: Option<Vec<String>>,
-        modelcard_uids: Option<Vec<String>>,
-        pipelinecard_uid: Option<String>,
-        project: String,
-        artifact_uris: Option<HashMap<String, String>>,
-        compute_environment: Option<HashMap<String, String>>,
+        tags: Vec<String>,
+        datacard_uids: Vec<String>,
+        modelcard_uids: Vec<String>,
+        promptcard_uids: Vec<String>,
+        experimentcard_uids: Vec<String>,
+        username: String,
     ) -> Self {
-        let created_at = Some(get_utc_datetime());
+        let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
-        RunCardRecord {
+        ExperimentCardRecord {
             uid,
             created_at,
             app_env,
@@ -410,23 +408,30 @@ impl RunCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            contact,
             tags: Json(tags),
-            datacard_uids: Json(datacard_uids.unwrap_or_default()),
-            modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            pipelinecard_uid: pipelinecard_uid
-                .unwrap_or_else(|| CommonKwargs::Undefined.to_string()),
-            project,
-            artifact_uris: Json(artifact_uris.unwrap_or_default()),
-            compute_environment: Json(compute_environment.unwrap_or_default()),
+            datacard_uids: Json(datacard_uids),
+            modelcard_uids: Json(modelcard_uids),
+            promptcard_uids: Json(promptcard_uids),
+            experimentcard_uids: Json(experimentcard_uids),
+            username,
         }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Experiment,
+            self.repository,
+            self.name,
+            self.version
+        )
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AuditCardRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -436,12 +441,12 @@ pub struct AuditCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
-    pub contact: String,
-    pub tags: Json<HashMap<String, String>>,
+    pub tags: Json<Vec<String>>,
     pub approved: bool,
     pub datacard_uids: Json<Vec<String>>,
     pub modelcard_uids: Json<Vec<String>>,
-    pub runcard_uids: Json<Vec<String>>,
+    pub experimentcard_uids: Json<Vec<String>>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -450,14 +455,14 @@ impl AuditCardRecord {
         name: String,
         repository: String,
         version: Version,
-        contact: String,
-        tags: HashMap<String, String>,
+        tags: Vec<String>,
         approved: bool,
-        datacard_uids: Option<Vec<String>>,
-        modelcard_uids: Option<Vec<String>>,
-        runcard_uids: Option<Vec<String>>,
+        datacard_uids: Vec<String>,
+        modelcard_uids: Vec<String>,
+        experimentcard_uids: Vec<String>,
+        username: String,
     ) -> Self {
-        let created_at = Some(get_utc_datetime());
+        let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
@@ -473,13 +478,23 @@ impl AuditCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            contact,
             tags: Json(tags),
             approved,
-            datacard_uids: Json(datacard_uids.unwrap_or_default()),
-            modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            runcard_uids: Json(runcard_uids.unwrap_or_default()),
+            datacard_uids: Json(datacard_uids),
+            modelcard_uids: Json(modelcard_uids),
+            experimentcard_uids: Json(experimentcard_uids),
+            username,
         }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Audit,
+            self.repository,
+            self.name,
+            self.version
+        )
     }
 }
 
@@ -487,7 +502,7 @@ impl Default for AuditCardRecord {
     fn default() -> Self {
         AuditCardRecord {
             uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
+            created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
@@ -497,20 +512,20 @@ impl Default for AuditCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
-            contact: CommonKwargs::Undefined.to_string(),
-            tags: Json(HashMap::new()),
+            tags: Json(Vec::new()),
             approved: false,
             datacard_uids: Json(Vec::new()),
             modelcard_uids: Json(Vec::new()),
-            runcard_uids: Json(Vec::new()),
+            experimentcard_uids: Json(Vec::new()),
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct PipelineCardRecord {
+pub struct PromptCardRecord {
     pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -520,32 +535,30 @@ pub struct PipelineCardRecord {
     pub pre_tag: Option<String>,
     pub build_tag: Option<String>,
     pub version: String,
-    pub contact: String,
-    pub tags: Json<HashMap<String, String>>,
-    pub pipeline_code_uri: String,
-    pub datacard_uids: Json<Vec<String>>,
-    pub modelcard_uids: Json<Vec<String>>,
-    pub runcard_uids: Json<Vec<String>>,
+    pub tags: Json<Vec<String>>,
+    pub prompt_type: String,
+    pub experimentcard_uid: Option<String>,
+    pub auditcard_uid: Option<String>,
+    pub username: String,
 }
 
 #[allow(clippy::too_many_arguments)]
-impl PipelineCardRecord {
+impl PromptCardRecord {
     pub fn new(
         name: String,
         repository: String,
         version: Version,
-        contact: String,
-        tags: HashMap<String, String>,
-        pipeline_code_uri: String,
-        datacard_uids: Option<Vec<String>>,
-        modelcard_uids: Option<Vec<String>>,
-        runcard_uids: Option<Vec<String>>,
+        tags: Vec<String>,
+        prompt_type: String,
+        experimentcard_uid: Option<String>,
+        auditcard_uid: Option<String>,
+        username: String,
     ) -> Self {
-        let created_at = Some(get_utc_datetime());
+        let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
         let uid = Uuid::new_v4().to_string();
 
-        PipelineCardRecord {
+        PromptCardRecord {
             uid,
             created_at,
             app_env,
@@ -557,21 +570,30 @@ impl PipelineCardRecord {
             pre_tag: version.pre.to_string().parse().ok(),
             build_tag: version.build.to_string().parse().ok(),
             version: version.to_string(),
-            contact,
             tags: Json(tags),
-            pipeline_code_uri,
-            datacard_uids: Json(datacard_uids.unwrap_or_default()),
-            modelcard_uids: Json(modelcard_uids.unwrap_or_default()),
-            runcard_uids: Json(runcard_uids.unwrap_or_default()),
+            prompt_type,
+            experimentcard_uid,
+            auditcard_uid,
+            username,
         }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Prompt,
+            self.repository,
+            self.name,
+            self.version
+        )
     }
 }
 
-impl Default for PipelineCardRecord {
+impl Default for PromptCardRecord {
     fn default() -> Self {
-        PipelineCardRecord {
+        PromptCardRecord {
             uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
+            created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
             repository: CommonKwargs::Undefined.to_string(),
@@ -581,63 +603,11 @@ impl Default for PipelineCardRecord {
             pre_tag: None,
             build_tag: None,
             version: Version::new(1, 0, 0).to_string(),
-            contact: CommonKwargs::Undefined.to_string(),
-            tags: Json(HashMap::new()),
-            pipeline_code_uri: CommonKwargs::Undefined.to_string(),
-            datacard_uids: Json(Vec::new()),
-            modelcard_uids: Json(Vec::new()),
-            runcard_uids: Json(Vec::new()),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct ProjectCardRecord {
-    pub uid: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub name: String,
-    pub repository: String,
-    pub project_id: i32,
-    pub major: i32,
-    pub minor: i32,
-    pub patch: i32,
-    pub pre_tag: Option<String>,
-    pub build_tag: Option<String>,
-    pub version: String,
-}
-
-impl Default for ProjectCardRecord {
-    fn default() -> Self {
-        ProjectCardRecord {
-            uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
-            name: CommonKwargs::Undefined.to_string(),
-            repository: CommonKwargs::Undefined.to_string(),
-            project_id: 1,
-            major: 1,
-            minor: 0,
-            patch: 0,
-            pre_tag: None,
-            build_tag: None,
-            version: Version::new(1, 0, 0).to_string(),
-        }
-    }
-}
-
-impl ProjectCardRecord {
-    pub fn new(name: String, repository: String, version: Version, project_id: i32) -> Self {
-        ProjectCardRecord {
-            uid: Uuid::new_v4().to_string(),
-            created_at: Some(get_utc_datetime()),
-            name,
-            repository,
-            project_id,
-            major: version.major as i32,
-            minor: version.minor as i32,
-            patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
-            version: version.to_string(),
+            tags: Json(Vec::new()),
+            prompt_type: DataType::NotProvided.to_string(),
+            experimentcard_uid: None,
+            auditcard_uid: None,
+            username: CommonKwargs::Undefined.to_string(),
         }
     }
 }
@@ -648,10 +618,9 @@ impl ProjectCardRecord {
 pub enum CardResults {
     Data(Vec<DataCardRecord>),
     Model(Vec<ModelCardRecord>),
-    Run(Vec<RunCardRecord>),
+    Experiment(Vec<ExperimentCardRecord>),
     Audit(Vec<AuditCardRecord>),
-    Pipeline(Vec<PipelineCardRecord>),
-    Project(Vec<ProjectCardRecord>),
+    Prompt(Vec<PromptCardRecord>),
 }
 
 impl CardResults {
@@ -659,20 +628,18 @@ impl CardResults {
         match self {
             CardResults::Data(cards) => cards.len(),
             CardResults::Model(cards) => cards.len(),
-            CardResults::Run(cards) => cards.len(),
+            CardResults::Experiment(cards) => cards.len(),
             CardResults::Audit(cards) => cards.len(),
-            CardResults::Pipeline(cards) => cards.len(),
-            CardResults::Project(cards) => cards.len(),
+            CardResults::Prompt(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
         match self {
             CardResults::Data(cards) => cards.is_empty(),
             CardResults::Model(cards) => cards.is_empty(),
-            CardResults::Run(cards) => cards.is_empty(),
+            CardResults::Experiment(cards) => cards.is_empty(),
             CardResults::Audit(cards) => cards.is_empty(),
-            CardResults::Pipeline(cards) => cards.is_empty(),
-            CardResults::Project(cards) => cards.is_empty(),
+            CardResults::Prompt(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -685,7 +652,7 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
-            CardResults::Run(cards) => cards
+            CardResults::Experiment(cards) => cards
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
@@ -693,11 +660,7 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
-            CardResults::Pipeline(cards) => cards
-                .iter()
-                .map(|card| serde_json::to_string_pretty(card).unwrap())
-                .collect(),
-            CardResults::Project(cards) => cards
+            CardResults::Prompt(cards) => cards
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
@@ -709,10 +672,9 @@ impl CardResults {
 pub enum ServerCard {
     Data(DataCardRecord),
     Model(ModelCardRecord),
-    Run(RunCardRecord),
+    Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
-    Pipeline(PipelineCardRecord),
-    Project(ProjectCardRecord),
+    Prompt(PromptCardRecord),
 }
 
 impl ServerCard {
@@ -720,59 +682,112 @@ impl ServerCard {
         match self {
             ServerCard::Data(card) => card.uid.as_str(),
             ServerCard::Model(card) => card.uid.as_str(),
-            ServerCard::Run(card) => card.uid.as_str(),
+            ServerCard::Experiment(card) => card.uid.as_str(),
             ServerCard::Audit(card) => card.uid.as_str(),
-            ServerCard::Pipeline(card) => card.uid.as_str(),
-            ServerCard::Project(card) => card.uid.as_str(),
+            ServerCard::Prompt(card) => card.uid.as_str(),
+        }
+    }
+
+    pub fn registry_type(&self) -> String {
+        match self {
+            ServerCard::Data(_) => RegistryType::Data.to_string(),
+            ServerCard::Model(_) => RegistryType::Model.to_string(),
+            ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
+            ServerCard::Audit(_) => RegistryType::Audit.to_string(),
+            ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
+        }
+    }
+
+    pub fn version(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.version.clone(),
+            ServerCard::Model(card) => card.version.clone(),
+            ServerCard::Experiment(card) => card.version.clone(),
+            ServerCard::Audit(card) => card.version.clone(),
+            ServerCard::Prompt(card) => card.version.clone(),
+        }
+    }
+
+    pub fn repository(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.repository.clone(),
+            ServerCard::Model(card) => card.repository.clone(),
+            ServerCard::Experiment(card) => card.repository.clone(),
+            ServerCard::Audit(card) => card.repository.clone(),
+            ServerCard::Prompt(card) => card.repository.clone(),
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.name.clone(),
+            ServerCard::Model(card) => card.name.clone(),
+            ServerCard::Experiment(card) => card.name.clone(),
+            ServerCard::Audit(card) => card.name.clone(),
+            ServerCard::Prompt(card) => card.name.clone(),
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.uri(),
+            ServerCard::Model(card) => card.uri(),
+            ServerCard::Experiment(card) => card.uri(),
+            ServerCard::Audit(card) => card.uri(),
+            ServerCard::Prompt(card) => card.uri(),
+        }
+    }
+
+    pub fn app_env(&self) -> String {
+        match self {
+            ServerCard::Data(card) => card.app_env.clone(),
+            ServerCard::Model(card) => card.app_env.clone(),
+            ServerCard::Experiment(card) => card.app_env.clone(),
+            ServerCard::Audit(card) => card.app_env.clone(),
+            ServerCard::Prompt(card) => card.app_env.clone(),
+        }
+    }
+
+    pub fn created_at(&self) -> NaiveDateTime {
+        match self {
+            ServerCard::Data(card) => card.created_at,
+            ServerCard::Model(card) => card.created_at,
+            ServerCard::Experiment(card) => card.created_at,
+            ServerCard::Audit(card) => card.created_at,
+            ServerCard::Prompt(card) => card.created_at,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct HardwareMetricsRecord {
-    pub run_uid: String,
+    pub experiment_uid: String,
     pub created_at: NaiveDateTime,
-    pub cpu_percent_utilization: f64,
-    pub cpu_percent_per_core: Option<Json<Vec<f64>>>,
-    pub compute_overall: Option<f64>,
-    pub compute_utilized: Option<f64>,
-    pub load_avg: f64,
-    pub sys_ram_total: i32,
-    pub sys_ram_used: i32,
-    pub sys_ram_available: i32,
-    pub sys_ram_percent_used: f64,
-    pub sys_swap_total: Option<i32>,
-    pub sys_swap_used: Option<i32>,
-    pub sys_swap_free: Option<i32>,
-    pub sys_swap_percent: Option<f64>,
-    pub bytes_recv: i32,
-    pub bytes_sent: i32,
-    pub gpu_percent_utilization: Option<f64>,
-    pub gpu_percent_per_core: Option<Json<Vec<f64>>>,
+    pub cpu_percent_utilization: f32,
+    pub cpu_percent_per_core: Json<Vec<f32>>,
+    pub free_memory: i64,
+    pub total_memory: i64,
+    pub used_memory: i64,
+    pub available_memory: i64,
+    pub used_percent_memory: f64,
+    pub bytes_recv: i64,
+    pub bytes_sent: i64,
 }
 
 impl Default for HardwareMetricsRecord {
     fn default() -> Self {
         HardwareMetricsRecord {
-            run_uid: Uuid::new_v4().to_string(),
+            experiment_uid: Uuid::new_v4().to_string(),
             created_at: get_utc_datetime(),
             cpu_percent_utilization: 0.0,
-            cpu_percent_per_core: None,
-            compute_overall: None,
-            compute_utilized: None,
-            load_avg: 0.0,
-            sys_ram_total: 0,
-            sys_ram_used: 0,
-            sys_ram_available: 0,
-            sys_ram_percent_used: 0.0,
-            sys_swap_total: None,
-            sys_swap_used: None,
-            sys_swap_free: None,
-            sys_swap_percent: None,
+            cpu_percent_per_core: Json(Vec::new()),
+            free_memory: 0,
+            total_memory: 0,
+            used_memory: 0,
+            available_memory: 0,
+            used_percent_memory: 0.0,
             bytes_recv: 0,
             bytes_sent: 0,
-            gpu_percent_utilization: None,
-            gpu_percent_per_core: None,
         }
     }
 }
@@ -780,12 +795,13 @@ impl Default for HardwareMetricsRecord {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
     pub id: Option<i32>,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub active: bool,
     pub username: String,
     pub password_hash: String,
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
+    pub role: String,
     pub refresh_token: Option<String>,
 }
 
@@ -795,15 +811,19 @@ impl User {
         password_hash: String,
         permissions: Option<Vec<String>>,
         group_permissions: Option<Vec<String>>,
+        role: Option<String>,
     ) -> Self {
+        let created_at = get_utc_datetime();
+
         User {
             id: None,
-            created_at: None,
+            created_at,
             active: true,
             username,
             password_hash,
-            permissions: permissions.unwrap_or(vec!["read".to_string()]),
+            permissions: permissions.unwrap_or(vec!["read".to_string(), "write".to_string()]),
             group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
+            role: role.unwrap_or("user".to_string()),
             refresh_token: None,
         }
     }

@@ -42,7 +42,7 @@
                                 <a class="function" href="#ProjectCard.create_registry_record">create_registry_record</a>
                         </li>
                         <li>
-                                <a class="variable" href="#ProjectCard.card_type">card_type</a>
+                                <a class="variable" href="#ProjectCard.registry_type">registry_type</a>
                         </li>
                         <li>
                                 <a class="variable" href="#ProjectCard.model_config">model_config</a>
@@ -88,7 +88,7 @@ opsml<wbr>.cards<wbr>.project    </h1>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>  <span class="c1"># noqa # pylint: disable=unused-import</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="kn">from</span> <span class="nn">opsml.cards.base</span> <span class="kn">import</span> <span class="n">ArtifactCard</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">CardType</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="kn">from</span> <span class="nn">opsml.types</span> <span class="kn">import</span> <span class="n">RegistryType</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="k">class</span> <span class="nc">ProjectCard</span><span class="p">(</span><span class="n">ArtifactCard</span><span class="p">):</span>
@@ -104,8 +104,8 @@ opsml<wbr>.cards<wbr>.project    </h1>
 </span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 </span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>    <span class="nd">@property</span>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 
@@ -134,8 +134,8 @@ opsml<wbr>.cards<wbr>.project    </h1>
 </span><span id="ProjectCard-26"><a href="#ProjectCard-26"><span class="linenos">26</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 </span><span id="ProjectCard-27"><a href="#ProjectCard-27"><span class="linenos">27</span></a>
 </span><span id="ProjectCard-28"><a href="#ProjectCard-28"><span class="linenos">28</span></a>    <span class="nd">@property</span>
-</span><span id="ProjectCard-29"><a href="#ProjectCard-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="ProjectCard-30"><a href="#ProjectCard-30"><span class="linenos">30</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
+</span><span id="ProjectCard-29"><a href="#ProjectCard-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ProjectCard-30"><a href="#ProjectCard-30"><span class="linenos">30</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 
@@ -177,18 +177,18 @@ opsml<wbr>.cards<wbr>.project    </h1>
 
 
                             </div>
-                            <div id="ProjectCard.card_type" class="classattr">
-                                        <input id="ProjectCard.card_type-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                            <div id="ProjectCard.registry_type" class="classattr">
+                                        <input id="ProjectCard.registry_type-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr variable">
-            <span class="name">card_type</span><span class="annotation">: str</span>
+            <span class="name">registry_type</span><span class="annotation">: str</span>
 
-                <label class="view-source-button" for="ProjectCard.card_type-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="ProjectCard.registry_type-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#ProjectCard.card_type"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="ProjectCard.card_type-28"><a href="#ProjectCard.card_type-28"><span class="linenos">28</span></a>    <span class="nd">@property</span>
-</span><span id="ProjectCard.card_type-29"><a href="#ProjectCard.card_type-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">card_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="ProjectCard.card_type-30"><a href="#ProjectCard.card_type-30"><span class="linenos">30</span></a>        <span class="k">return</span> <span class="n">CardType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
+    <a class="headerlink" href="#ProjectCard.registry_type"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ProjectCard.registry_type-28"><a href="#ProjectCard.registry_type-28"><span class="linenos">28</span></a>    <span class="nd">@property</span>
+</span><span id="ProjectCard.registry_type-29"><a href="#ProjectCard.registry_type-29"><span class="linenos">29</span></a>    <span class="k">def</span> <span class="nf">registry_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="ProjectCard.registry_type-30"><a href="#ProjectCard.registry_type-30"><span class="linenos">30</span></a>        <span class="k">return</span> <span class="n">RegistryType</span><span class="o">.</span><span class="n">PROJECTCARD</span><span class="o">.</span><span class="n">value</span>
 </span></pre></div>
 
 

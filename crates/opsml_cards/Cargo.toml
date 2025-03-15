@@ -9,13 +9,18 @@ doctest = false
 
 [dependencies]
 chrono = { workspace = true }
+opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
-opsml-semver = { workspace = true }
+opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+potato-lib = { workspace = true }
 pyo3 = { workspace = true }
 serde = { workspace = true }
-walkdir = { workspace = true }
+serde_json = { workspace = true }
+sysinfo = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
 
 

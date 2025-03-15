@@ -12,7 +12,7 @@ impl SqliteQueryHelper {
     }
     pub fn get_user_insert_query() -> String {
         format!(
-            "INSERT INTO {} (username, password_hash, permissions, group_permissions) VALUES (?, ?, ?, ?)",
+            "INSERT INTO {} (username, password_hash, permissions, group_permissions, role, active) VALUES (?, ?, ?, ?, ?, ?)",
             CardTable::Users
         )
         .to_string()
@@ -20,7 +20,27 @@ impl SqliteQueryHelper {
 
     pub fn get_user_query() -> String {
         format!(
-            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, refresh_token FROM {} WHERE username = ?",
+            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {} WHERE username = ?",
+            CardTable::Users
+        )
+        .to_string()
+    }
+
+    pub fn get_user_delete_query() -> String {
+        format!("DELETE FROM {} WHERE username = ?", CardTable::Users).to_string()
+    }
+
+    pub fn get_users_query() -> String {
+        format!(
+            "SELECT id, created_at, active, username, password_hash, permissions, group_permissions, role, refresh_token FROM {}",
+            CardTable::Users
+        )
+        .to_string()
+    }
+
+    pub fn get_last_admin_query() -> String {
+        format!(
+            "SELECT count(1) FROM {} WHERE role = 'admin'",
             CardTable::Users
         )
         .to_string()
@@ -42,35 +62,27 @@ impl SqliteQueryHelper {
     pub fn get_hardware_metric_query() -> String {
         let query = format!(
             "SELECT
-            run_uid,
+            experiment_uid,
             created_at,
             cpu_percent_utilization,
             cpu_percent_per_core,
-            compute_overall,
-            compute_utilized,
-            load_avg,
-            sys_ram_total,
-            sys_ram_used,
-            sys_ram_available,
-            sys_ram_percent_used,
-            sys_swap_total,
-            sys_swap_used,
-            sys_swap_free,
-            sys_swap_percent,
+            free_memory,
+            total_memory,
+            used_memory,
+            available_memory,
+            used_percent_memory,
             bytes_recv,
-            bytes_sent,
-            gpu_percent_utilization,
-            gpu_percent_per_core
-            FROM {} WHERE run_uid = ?",
+            bytes_sent
+            FROM {} WHERE experiment_uid = ?",
             CardTable::HardwareMetrics
         );
 
         query
     }
-    pub fn get_run_metric_insert_query() -> String {
+    pub fn get_experiment_metric_insert_query() -> String {
         format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -81,11 +93,11 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_run_metrics_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_metrics_insert_query(nbr_records: usize) -> String {
         // values will be a vec of tuples
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value,
                 step,
@@ -110,11 +122,11 @@ impl SqliteQueryHelper {
 
         // remove last co
     }
-    pub fn get_run_metric_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_metric_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Metrics
         );
 
@@ -136,20 +148,6 @@ impl SqliteQueryHelper {
         (query, bindings)
     }
 
-    pub fn get_project_id_query() -> String {
-        format!(
-            "WITH max_project AS (
-                SELECT MAX(project_id) AS max_id FROM {}
-            )
-            SELECT COALESCE(
-                (SELECT project_id FROM {} WHERE name = ? AND repository = ?),
-                (SELECT COALESCE(max_id, 0) + 1 FROM max_project)
-            ) AS project_id",
-            CardTable::Project,
-            CardTable::Project
-        )
-        .to_string()
-    }
     pub fn get_query_page_query(table: &CardTable, sort_by: &str) -> String {
         let versions_cte = format!(
             "WITH versions AS (
@@ -243,7 +241,7 @@ impl SqliteQueryHelper {
     }
     pub fn get_versions_query(
         table: &CardTable,
-        version: Option<&str>,
+        version: Option<String>,
     ) -> Result<String, SqlError> {
         let mut query = format!(
             "
@@ -255,7 +253,6 @@ impl SqliteQueryHelper {
              patch, 
              pre_tag, 
              build_tag, 
-             contact, 
              uid
              FROM {}
              WHERE 1=1
@@ -266,7 +263,7 @@ impl SqliteQueryHelper {
         );
 
         if let Some(version) = version {
-            add_version_bounds(&mut query, version)?;
+            add_version_bounds(&mut query, &version)?;
         }
 
         query.push_str(" ORDER BY created_at DESC LIMIT 20;");
@@ -304,9 +301,13 @@ impl SqliteQueryHelper {
 
             if query_args.tags.is_some() {
                 let tags = query_args.tags.as_ref().unwrap();
-                for (key, value) in tags.iter() {
+                for tag in tags.iter() {
                     query.push_str(
-                        format!(" AND json_extract(tags, '$.{}') == '{}'", key, value).as_str(),
+                        format!(
+                            " AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = '{}')",
+                            tag
+                        )
+                        .as_str(),
                     );
                 }
             }
@@ -323,10 +324,10 @@ impl SqliteQueryHelper {
 
         Ok(query)
     }
-    pub fn get_run_parameters_insert_query(nbr_records: usize) -> String {
+    pub fn get_experiment_parameters_insert_query(nbr_records: usize) -> String {
         let mut query = format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid, 
                 name, 
                 value
             ) VALUES ",
@@ -347,11 +348,11 @@ impl SqliteQueryHelper {
 
         query
     }
-    pub fn get_run_parameter_query(names: &[String]) -> (String, Vec<String>) {
+    pub fn get_experiment_parameter_query(names: &[String]) -> (String, Vec<String>) {
         let mut query = format!(
             "SELECT *
             FROM {}
-            WHERE run_uid = ?",
+            WHERE experiment_uid = ?",
             CardTable::Parameters
         );
 
@@ -373,54 +374,33 @@ impl SqliteQueryHelper {
 
         (query, bindings)
     }
-    pub fn get_hardware_metrics_insert_query(nbr_records: usize) -> String {
-        let mut query = format!(
+    pub fn get_hardware_metrics_insert_query() -> String {
+        format!(
             "INSERT INTO {} (
-                run_uid, 
+                experiment_uid,
                 created_at,
-                cpu_percent_utilization, 
-                cpu_percent_per_core, 
-                compute_overall, 
-                compute_utilized, 
-                load_avg, 
-                sys_ram_total, 
-                sys_ram_used, 
-                sys_ram_available, 
-                sys_ram_percent_used, 
-                sys_swap_total, 
-                sys_swap_used, 
-                sys_swap_free, 
-                sys_swap_percent, 
-                bytes_recv, 
-                bytes_sent, 
-                gpu_percent_utilization, 
-                gpu_percent_per_core
-            ) VALUES ",
+                cpu_percent_utilization,
+                cpu_percent_per_core,
+                free_memory,
+                total_memory,
+                used_memory,
+                available_memory,
+                used_percent_memory,
+                bytes_recv,
+                bytes_sent
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
             CardTable::HardwareMetrics
         )
-        .to_string();
-
-        for i in 0..nbr_records {
-            query.push_str("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-            // add comma if not last record
-            if i < nbr_records - 1 {
-                query.push_str(", ");
-            } else {
-                query.push(';');
-            }
-        }
-
-        query
+        .to_string()
     }
 
-    pub fn get_projectcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, name, repository, project_id, major, minor, patch, version, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Project)
+    pub fn get_promptcard_insert_query() -> String {
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, prompt_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
     pub fn get_datacard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, contact, data_type, interface_type, tags, runcard_uid, pipelinecard_uid, auditcard_uid, pre_tag, build_tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, data_type, interface_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Data)
             .to_string()
     }
 
@@ -435,26 +415,25 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         datacard_uid, 
-        sample_data_type, 
+        data_type, 
         model_type, 
         interface_type, 
         task_type, 
         tags, 
-        runcard_uid, 
-        pipelinecard_uid, 
+        experimentcard_uid, 
         auditcard_uid, 
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Model
         )
         .to_string()
     }
 
-    pub fn get_runcard_insert_query() -> String {
+    pub fn get_experimentcard_insert_query() -> String {
         format!(
             "INSERT INTO {} (
         uid, 
@@ -465,19 +444,17 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
-        project, 
         tags, 
         datacard_uids,
         modelcard_uids, 
-        pipelinecard_uid, 
-        artifact_uris, 
-        compute_environment, 
+        experimentcard_uids,
+        promptcard_uids,
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Run
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            CardTable::Experiment
         )
         .to_string()
     }
@@ -493,14 +470,14 @@ impl SqliteQueryHelper {
         minor, 
         patch, 
         version, 
-        contact, 
         tags, 
         approved, 
         datacard_uids, 
         modelcard_uids, 
-        runcard_uids, 
+        experimentcard_uids, 
         pre_tag, 
-        build_tag
+        build_tag,
+        username
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             CardTable::Audit
@@ -508,28 +485,25 @@ impl SqliteQueryHelper {
         .to_string()
     }
 
-    pub fn get_pipelinecard_insert_query() -> String {
+    pub fn get_promptcard_update_query() -> String {
         format!(
-            "INSERT INTO {} (
-        uid, 
-        app_env, 
-        name, 
-        repository, 
-        major, 
-        minor, 
-        patch, 
-        version, 
-        contact, 
-        tags, 
-        pipeline_code_uri, 
-        datacard_uids, 
-        modelcard_uids, 
-        runcard_uids, 
-        pre_tag, 
-        build_tag
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            CardTable::Pipeline
+            "UPDATE {} SET 
+        app_env = ?, 
+        name = ?, 
+        repository = ?, 
+        major = ?, 
+        minor = ?, 
+        patch = ?, 
+        version = ?, 
+        prompt_type = ?,
+        tags = ?, 
+        experimentcard_uid = ?, 
+        auditcard_uid = ?, 
+        pre_tag = ?, 
+        build_tag = ?,
+        username = ?
+        WHERE uid = ?",
+            CardTable::Prompt
         )
         .to_string()
     }
@@ -544,15 +518,14 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         data_type = ?, 
         interface_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
-        pipelinecard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
             CardTable::Data
         )
@@ -569,25 +542,24 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         datacard_uid = ?, 
-        sample_data_type = ?, 
+        data_type = ?, 
         model_type = ?, 
         interface_type = ?, 
         task_type = ?, 
         tags = ?, 
-        runcard_uid = ?, 
-        pipelinecard_uid = ?, 
+        experimentcard_uid = ?, 
         auditcard_uid = ?, 
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
             CardTable::Model
         )
         .to_string()
     }
 
-    pub fn get_runcard_update_query() -> String {
+    pub fn get_experimentcard_update_query() -> String {
         format!(
             "UPDATE {} SET 
         app_env = ?, 
@@ -597,18 +569,16 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
-        project = ?, 
         tags = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        pipelinecard_uid = ?, 
-        artifact_uris = ?, 
-        compute_environment = ?, 
+        experimentcard_uids = ?,  
+        promptcard_uids = ?,
         pre_tag = ?, 
-        build_tag = ? 
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
-            CardTable::Run
+            CardTable::Experiment
         )
         .to_string()
     }
@@ -623,40 +593,86 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        contact = ?, 
         tags = ?, 
         approved = ?, 
         datacard_uids = ?, 
         modelcard_uids = ?, 
-        runcard_uids = ?, 
+        experimentcard_uids = ?, 
         pre_tag = ?, 
-        build_tag = ?
+        build_tag = ?,
+        username = ?
         WHERE uid = ?",
             CardTable::Audit
         )
         .to_string()
     }
 
-    pub fn get_pipelinecard_update_query() -> String {
+    pub fn get_artifact_key_insert_query() -> String {
         format!(
-            "UPDATE {} SET  
-        app_env = ?, 
-        name = ?, 
-        repository = ?, 
-        major = ?, 
-        minor = ?, 
-        patch = ?, 
-        version = ?, 
-        contact = ?, 
-        tags = ?, 
-        pipeline_code_uri = ?, 
-        datacard_uids = ?, 
-        modelcard_uids = ?, 
-        runcard_uids = ?, 
-        pre_tag = ?, 
-        build_tag = ? 
-        WHERE uid = ?",
-            CardTable::Pipeline
+            "INSERT INTO {} (uid, registry_type, encrypted_key, storage_key) VALUES (?, ?, ?, ?)",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_select_query() -> String {
+        format!(
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE uid = ? AND registry_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_update_query() -> String {
+        format!(
+            "UPDATE {} SET encrypted_key = ?, created_at = CURRENT_TIMESTAMP WHERE uid = ? AND registry_type = ?",
+            CardTable::ArtifactKey
+        )
+        .to_string()
+    }
+
+    pub fn get_artifact_key_from_storage_path_query() -> String {
+        format!(
+            "SELECT uid, registry_type, encrypted_key, storage_key FROM {} WHERE storage_key = ? AND registry_type = ?",
+            CardTable::ArtifactKey
+        )
+    }
+
+    pub fn get_operation_insert_query() -> String {
+        format!(
+            "INSERT INTO {} (username, access_type, access_location) VALUES (?, ?, ?)",
+            CardTable::Operations
+        )
+        .to_string()
+    }
+
+    pub fn get_load_card_query(
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<String, SqlError> {
+        // subquery 1 - query_cards_query
+
+        let query_cards_query = SqliteQueryHelper::get_query_cards_query(table, query_args)?;
+
+        let query = format!(
+            "WITH query_cards AS (
+                {}
+            )
+            SELECT a.uid, a.registry_type, a.encrypted_key, a.storage_key
+            FROM {} as a
+            INNER JOIN query_cards as b 
+                ON a.uid = b.uid;",
+            query_cards_query,
+            CardTable::ArtifactKey
+        );
+
+        Ok(query)
+    }
+
+    pub fn get_artifact_key_delete_query() -> String {
+        format!(
+            "DELETE FROM {} WHERE uid = ? AND registry_type = ?",
+            CardTable::ArtifactKey
         )
         .to_string()
     }

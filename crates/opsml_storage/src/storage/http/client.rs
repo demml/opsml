@@ -1,12 +1,14 @@
 use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
-use crate::storage::http::base::{build_http_client, HttpStorageClient};
+use crate::storage::http::base::HttpStorageClient;
+use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
+use opsml_utils::FileUtils;
 use std::path::{Path, PathBuf};
-
+use tracing::debug;
 pub struct HttpFSStorageClient {
     pub client: HttpStorageClient,
 }
@@ -19,12 +21,16 @@ impl HttpFSStorageClient {
         "HttpFSStorageClient"
     }
 
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
-        let client = build_http_client(&settings.api_settings)
-            .map_err(|e| StorageError::Error(format!("Failed to create http client {}", e)))?;
-
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        api_client: Option<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(settings, &client).await.unwrap(),
+            client: HttpStorageClient::new(settings, api_client)
+                .await
+                .map_err(|e| {
+                    StorageError::Error(format!("Failed to create http storage client {}", e))
+                })?,
         })
     }
 
@@ -120,10 +126,12 @@ impl HttpFSStorageClient {
             }
 
             let files: Vec<PathBuf> = get_files(lpath)?;
-
             let mut tasks = Vec::new();
 
             for file in files {
+                let (chunk_count, size_of_last_chunk, chunk_size) =
+                    FileUtils::get_chunk_count(&file, 5 * 1024 * 1024)?;
+
                 let stripped_lpath_clone = lpath_clone.clone();
                 let stripped_rpath_clone = rpath_clone.clone();
 
@@ -134,13 +142,24 @@ impl HttpFSStorageClient {
                     let relative_path = file.relative_path(&stripped_lpath_clone)?;
                     let remote_path = stripped_rpath_clone.join(relative_path);
 
+                    debug!(
+                        "remote_path: {:?}, stripped_path: {:?}",
+                        remote_path, stripped_file_path
+                    );
+
+                    // setup multipart upload based on storage provider
                     let mut uploader = cloned_client
                         .create_multipart_uploader(&remote_path, &stripped_file_path)
                         .await?;
 
-                    uploader.upload_file_in_chunks().await?;
+                    debug!("Uploading file: {:?}", stripped_file_path);
+                    uploader
+                        .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                        .await?;
+
                     Ok::<(), StorageError>(())
                 });
+
                 tasks.push(task);
             }
 
@@ -149,14 +168,17 @@ impl HttpFSStorageClient {
             for result in results {
                 result.map_err(|e| StorageError::Error(e.to_string()))??;
             }
-
-            Ok(())
         } else {
-            let mut uploader = self.client.create_multipart_uploader(rpath, lpath).await?;
-            uploader.upload_file_in_chunks().await?;
+            let (chunk_count, size_of_last_chunk, chunk_size) =
+                FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
 
-            Ok(())
-        }
+            let mut uploader = self.client.create_multipart_uploader(rpath, lpath).await?;
+            uploader
+                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                .await?;
+        };
+
+        Ok(())
     }
 
     pub async fn generate_presigned_url(&mut self, path: &Path) -> Result<String, StorageError> {

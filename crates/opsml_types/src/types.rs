@@ -1,3 +1,4 @@
+use opsml_error::TypeError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
@@ -10,25 +11,76 @@ pub const DOWNLOAD_CHUNK_SIZE: usize = 1024 * 1024 * 5;
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum RegistryType {
+    #[default]
     Data,
     Model,
-    Run,
-    Project,
+    Experiment,
     Audit,
-    Pipeline,
     Metrics,
     HardwareMetrics,
     Parameters,
     Users,
+    ArtifactKey,
+    Prompt,
+}
+
+impl Display for RegistryType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RegistryType::Data => write!(f, "data"),
+            RegistryType::Model => write!(f, "model"),
+            RegistryType::Experiment => write!(f, "experiment"),
+            RegistryType::Audit => write!(f, "audit"),
+            RegistryType::Metrics => write!(f, "metrics"),
+            RegistryType::HardwareMetrics => write!(f, "hardware_metrics"),
+            RegistryType::Parameters => write!(f, "parameters"),
+            RegistryType::Users => write!(f, "users"),
+            RegistryType::ArtifactKey => write!(f, "artifact_key"),
+            RegistryType::Prompt => write!(f, "prompt"),
+        }
+    }
+}
+impl RegistryType {
+    pub fn from_string(s: &str) -> Result<Self, TypeError> {
+        match s {
+            "data" => Ok(RegistryType::Data),
+            "model" => Ok(RegistryType::Model),
+            "experiment" => Ok(RegistryType::Experiment),
+            "audit" => Ok(RegistryType::Audit),
+            "metrics" => Ok(RegistryType::Metrics),
+            "hardware_metrics" => Ok(RegistryType::HardwareMetrics),
+            "parameters" => Ok(RegistryType::Parameters),
+            "users" => Ok(RegistryType::Users),
+            "artifact_key" => Ok(RegistryType::ArtifactKey),
+            "prompt" => Ok(RegistryType::Prompt),
+
+            _ => Err(TypeError::Error("Invalid RegistryType".to_string())),
+        }
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            RegistryType::Data => b"data",
+            RegistryType::Model => b"model",
+            RegistryType::Experiment => b"experiment",
+            RegistryType::Audit => b"audit",
+            RegistryType::Metrics => b"metrics",
+            RegistryType::HardwareMetrics => b"hardware_metrics",
+            RegistryType::Parameters => b"parameters",
+            RegistryType::Users => b"users",
+            RegistryType::ArtifactKey => b"artifact_key",
+            RegistryType::Prompt => b"prompt",
+        }
+    }
 }
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum StorageType {
     Google,
-    AWS,
+    Aws,
     Local,
     Azure,
 }
@@ -72,7 +124,7 @@ pub enum UriNames {
     ProfileUri,
     ProfileHtmlUri,
     DriftProfileUri,
-    RuncardUri,
+    ExperimentCardUri,
     ArtifactUris,
     QuantizedModelUri,
     TokenizerUri,
@@ -96,7 +148,7 @@ impl UriNames {
             "profile_uri" => Some(UriNames::ProfileUri),
             "profile_html_uri" => Some(UriNames::ProfileHtmlUri),
             "drift_profile_uri" => Some(UriNames::DriftProfileUri),
-            "runcard_uri" => Some(UriNames::RuncardUri),
+            "experimentcard_uri" => Some(UriNames::ExperimentCardUri),
             "artifact_uris" => Some(UriNames::ArtifactUris),
             "quantized_model_uri" => Some(UriNames::QuantizedModelUri),
             "tokenizer_uri" => Some(UriNames::TokenizerUri),
@@ -119,7 +171,7 @@ impl UriNames {
             UriNames::ProfileUri => "profile_uri",
             UriNames::ProfileHtmlUri => "profile_html_uri",
             UriNames::DriftProfileUri => "drift_profile_uri",
-            UriNames::RuncardUri => "runcard_uri",
+            UriNames::ExperimentCardUri => "experimentcard_uri",
             UriNames::ArtifactUris => "artifact_uris",
             UriNames::QuantizedModelUri => "quantized_model_uri",
             UriNames::TokenizerUri => "tokenizer_uri",
@@ -235,7 +287,6 @@ impl Display for CommonKwargs {
 pub enum SaveName {
     Card,
     Audit,
-    PipelineCard,
     ModelMetadata,
     Model,
     Preprocessor,
@@ -256,6 +307,9 @@ pub enum SaveName {
     DriftProfile,
     Drift,
     Sql,
+    Code,
+    Prompt,
+    ReadMe,
 }
 
 #[pymethods]
@@ -265,7 +319,6 @@ impl SaveName {
         match s {
             "card" => Some(SaveName::Card),
             "audit" => Some(SaveName::Audit),
-            "pipelinecard" => Some(SaveName::PipelineCard),
             "model-metadata" => Some(SaveName::ModelMetadata),
             "model" => Some(SaveName::Model),
             "preprocessor" => Some(SaveName::Preprocessor),
@@ -286,6 +339,9 @@ impl SaveName {
             "drift-profile" => Some(SaveName::DriftProfile),
             "sql" => Some(SaveName::Sql),
             "drift" => Some(SaveName::Drift),
+            "code" => Some(SaveName::Code),
+            "prompt" => Some(SaveName::Prompt),
+            "README" => Some(SaveName::ReadMe),
             _ => None,
         }
     }
@@ -294,7 +350,6 @@ impl SaveName {
         match self {
             SaveName::Card => "card",
             SaveName::Audit => "audit",
-            SaveName::PipelineCard => "pipelinecard",
             SaveName::ModelMetadata => "model-metadata",
             SaveName::Model => "model",
             SaveName::Preprocessor => "preprocessor",
@@ -315,6 +370,9 @@ impl SaveName {
             SaveName::DriftProfile => "drift-profile",
             SaveName::Sql => "sql",
             SaveName::Drift => "drift",
+            SaveName::Code => "code",
+            SaveName::Prompt => "prompt",
+            SaveName::ReadMe => "README",
         }
     }
 
@@ -334,7 +392,6 @@ impl AsRef<Path> for SaveName {
         match self {
             SaveName::Card => Path::new("card"),
             SaveName::Audit => Path::new("audit"),
-            SaveName::PipelineCard => Path::new("pipelinecard"),
             SaveName::ModelMetadata => Path::new("model-metadata"),
             SaveName::Model => Path::new("model"),
             SaveName::Preprocessor => Path::new("preprocessor"),
@@ -355,6 +412,9 @@ impl AsRef<Path> for SaveName {
             SaveName::DriftProfile => Path::new("drift-profile"),
             SaveName::Sql => Path::new("sql"),
             SaveName::Drift => Path::new("drift"),
+            SaveName::Code => Path::new("code"),
+            SaveName::Prompt => Path::new("prompt"),
+            SaveName::ReadMe => Path::new("README"),
         }
     }
 }
@@ -387,6 +447,7 @@ pub enum Suffix {
     Sql,
     Bin,
     Keras,
+    Md,
 }
 
 #[pymethods]
@@ -412,6 +473,7 @@ impl Suffix {
             "sql" => Some(Suffix::Sql),
             "bin" => Some(Suffix::Bin),
             "keras" => Some(Suffix::Keras),
+            "md" => Some(Suffix::Md),
             _ => None,
         }
     }
@@ -436,6 +498,7 @@ impl Suffix {
             Suffix::Sql => "sql",
             Suffix::Bin => "bin",
             Suffix::Keras => "keras",
+            Suffix::Md => "md",
         }
     }
 
@@ -544,8 +607,8 @@ impl PresignableTypes {
     }
 }
 
-#[pyclass(eq)]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataType {
     Pandas,
     Arrow,
@@ -560,7 +623,7 @@ pub enum DataType {
     String,
     TorchTensor,
     TorchDataset,
-    TensorflowTensor,
+    TensorFlowTensor,
     DMatrix,
     Tuple,
     List,
@@ -569,7 +632,39 @@ pub enum DataType {
     Joblib,
     Base,
     Dataset,
+
+    #[default]
     NotProvided,
+}
+
+impl Display for DataType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DataType::Pandas => write!(f, "Pandas"),
+            DataType::Arrow => write!(f, "Arrow"),
+            DataType::Polars => write!(f, "Polars"),
+            DataType::Numpy => write!(f, "Numpy"),
+            DataType::Image => write!(f, "Image"),
+            DataType::Text => write!(f, "Text"),
+            DataType::Dict => write!(f, "Dict"),
+            DataType::Sql => write!(f, "Sql"),
+            DataType::Profile => write!(f, "Profile"),
+            DataType::TransformerBatch => write!(f, "TransformerBatch"),
+            DataType::String => write!(f, "string"),
+            DataType::TorchTensor => write!(f, "TorchTensor"),
+            DataType::TorchDataset => write!(f, "TorchDataset"),
+            DataType::TensorFlowTensor => write!(f, "TensorFlowTensor"),
+            DataType::DMatrix => write!(f, "DMatrix"),
+            DataType::Tuple => write!(f, "Tuple"),
+            DataType::List => write!(f, "List"),
+            DataType::Str => write!(f, "str"),
+            DataType::OrderedDict => write!(f, "OrderedDict"),
+            DataType::Joblib => write!(f, "Joblib"),
+            DataType::Base => write!(f, "Base"),
+            DataType::Dataset => write!(f, "Dataset"),
+            DataType::NotProvided => write!(f, "NotProvided"),
+        }
+    }
 }
 
 #[pyclass(eq)]

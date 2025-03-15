@@ -6,7 +6,10 @@ use async_trait::async_trait;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionParser;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
+use opsml_types::{
+    cards::CardTable,
+    contracts::{ArtifactKey, CardQueryArgs},
+};
 
 pub fn add_version_bounds(builder: &mut String, version: &str) -> Result<(), SqlError> {
     let version_bounds = VersionParser::get_version_to_search(version)
@@ -63,7 +66,7 @@ pub trait SqlClient: Sized {
         table: &CardTable,
         name: &str,
         repository: &str,
-        version: Option<&str>,
+        version: Option<String>,
     ) -> Result<Vec<String>, SqlError>;
 
     async fn query_cards(
@@ -93,10 +96,6 @@ pub trait SqlClient: Sized {
 
     async fn delete_card(&self, table: &CardTable, uid: &str) -> Result<(), SqlError>;
 
-    // db specific functions
-    // get project_id
-    async fn get_project_id(&self, project_name: &str, repository: &str) -> Result<i32, SqlError>;
-
     /// Insert run metric
     ///
     /// # Arguments
@@ -105,10 +104,10 @@ pub trait SqlClient: Sized {
     ///
     /// # Returns
     ///
-    async fn insert_run_metric(&self, record: &MetricRecord) -> Result<(), SqlError>;
+    async fn insert_experiment_metric(&self, record: &MetricRecord) -> Result<(), SqlError>;
 
     /// Insert run metrics
-    async fn insert_run_metrics<'life1>(
+    async fn insert_experiment_metrics<'life1>(
         &self,
         record: &'life1 [MetricRecord],
     ) -> Result<(), SqlError>;
@@ -121,7 +120,7 @@ pub trait SqlClient: Sized {
     ///
     /// # Returns
     ///
-    async fn insert_run_parameters<'life1>(
+    async fn insert_experiment_parameters<'life1>(
         &self,
         records: &'life1 [ParameterRecord],
     ) -> Result<(), SqlError>;
@@ -137,7 +136,7 @@ pub trait SqlClient: Sized {
     ///
     /// * `Vec<MetricRecord>` - The metrics
     ///
-    async fn get_run_metric<'life2>(
+    async fn get_experiment_metric<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
@@ -153,7 +152,7 @@ pub trait SqlClient: Sized {
     ///
     /// * `Vec<String>` - The names of the metrics
     ///
-    async fn get_run_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError>;
+    async fn get_experiment_metric_names(&self, uid: &str) -> Result<Vec<String>, SqlError>;
 
     /// Get run parameter
     ///
@@ -165,7 +164,7 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `Vec<ParameterRecord>` - The parameters
-    async fn get_run_parameter<'life2>(
+    async fn get_experiment_parameter<'life2>(
         &self,
         uid: &str,
         names: &'life2 [String],
@@ -177,9 +176,9 @@ pub trait SqlClient: Sized {
     ///
     /// * `metric_record` - The hardware metrics
     ///
-    async fn insert_hardware_metrics<'life1>(
+    async fn insert_hardware_metrics(
         &self,
-        records: &'life1 [HardwareMetricsRecord],
+        records: &HardwareMetricsRecord,
     ) -> Result<(), SqlError>;
 
     /// Get hardware metrics
@@ -210,7 +209,7 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `User` - The user
-    async fn get_user(&self, username: &str) -> Result<User, SqlError>;
+    async fn get_user(&self, username: &str) -> Result<Option<User>, SqlError>;
 
     /// update user
     ///
@@ -234,4 +233,125 @@ pub trait SqlClient: Sized {
     ///
     /// * `bool` - True if the uid exists
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
+
+    /// Insert artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The artifact key
+    ///
+    /// # Returns
+    async fn insert_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+
+    /// Get artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `uid` - The unique identifier of the card
+    ///
+    /// # Returns
+    ///
+    /// * `ArtifactKey` - The artifact key
+    async fn get_artifact_key(
+        &self,
+        uid: &str,
+        registry_type: &str,
+    ) -> Result<ArtifactKey, SqlError>;
+
+    /// Update artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The artifact key
+    ///
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn update_artifact_key(&self, key: &ArtifactKey) -> Result<(), SqlError>;
+
+    /// Insert operation
+    ///  Records a given file operation
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username
+    /// * `access_type` - The type of access
+    /// * `access_location` - The location of the access
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn insert_operation(
+        &self,
+        username: &str,
+        access_type: &str,
+        access_location: &str,
+    ) -> Result<(), SqlError>;
+
+    /// Queries the a card registry for a card version and returns
+    /// the artifact keys for loading the card on the client side
+    ///
+    /// # Arguments
+    ///
+    /// * `table` - The card table
+    /// * `query_args` - The query arguments
+    ///
+    /// # Returns
+    ///
+    /// * `ArtifactKey` - The artifact key
+    async fn get_card_key_for_loading(
+        &self,
+        table: &CardTable,
+        query_args: &CardQueryArgs,
+    ) -> Result<ArtifactKey, SqlError>;
+
+    /// Delete artifact key
+    ///
+    /// # Arguments
+    ///
+    /// * `uid` - The unique identifier of the card
+    /// * `registry_type` - The card type
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn delete_artifact_key(&self, uid: &str, registry_type: &str) -> Result<(), SqlError>;
+
+    // Add to the SqlClient trait:
+
+    /// Get all users
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<User>` - The list of users
+    async fn get_users(&self) -> Result<Vec<User>, SqlError>;
+
+    /// Delete a user
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username of the user to delete
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), SqlError>` - The result of the operation
+    async fn delete_user(&self, username: &str) -> Result<(), SqlError>;
+
+    /// Check if a user is the last admin
+    ///
+    /// # Arguments
+    ///
+    /// * `username` - The username to check
+    ///
+    /// # Returns
+    ///
+    /// * `Result<bool, SqlError>` - True if the user is the last admin
+    async fn is_last_admin(&self) -> Result<bool, SqlError>;
+
+    async fn get_artifact_key_from_path(
+        &self,
+        storage_path: &str,
+        registry_type: &str,
+    ) -> Result<Option<ArtifactKey>, SqlError>;
 }
