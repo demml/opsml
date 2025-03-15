@@ -92,13 +92,9 @@ impl LocalMultiPartUpload {
                 .await
                 .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
-            let value = response
-                .json::<serde_json::Value>()
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
-
-            let response = serde_json::from_value::<UploadResponse>(value)
-                .map_err(|e| StorageError::Error(format!("Failed to parse response: {}", e)))?;
+            let response = response.json::<UploadResponse>().await.map_err(|e| {
+                StorageError::Error(format!("Failed to parse upload response: {}", e))
+            })?;
 
             if !response.uploaded {
                 return Err(StorageError::Error("Failed to upload file".to_string()));

@@ -92,7 +92,7 @@ impl OpsmlApiClient {
         let response = response
             .json::<JwtToken>()
             .await
-            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
+            .map_err(|e| ApiError::Error(format!("Failed to parse jwt token with error: {}", e)))?;
 
         self.settings.api_settings.auth_token = response.token;
 
@@ -251,13 +251,9 @@ impl OpsmlApiClient {
             .map_err(|e| ApiError::Error(format!("Failed to generate presigned url: {}", e)))?;
 
         // move response into PresignedUrl
-        let response = response
-            .json::<Value>()
-            .await
-            .map_err(|e| ApiError::Error(format!("Failed to parse response with error: {}", e)))?;
-
-        let response = serde_json::from_value::<PresignedUrl>(response)
-            .map_err(|e| ApiError::Error(format!("Failed to deserialize response: {}", e)))?;
+        let response = response.json::<PresignedUrl>().await.map_err(|e| {
+            ApiError::Error(format!("Failed to parse presigned url with error: {}", e))
+        })?;
 
         Ok(response.url)
     }
