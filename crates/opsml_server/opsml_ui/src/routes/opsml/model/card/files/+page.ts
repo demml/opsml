@@ -2,19 +2,18 @@ export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { PageLoad } from "./$types";
-import { getFileInfo, separateFiles } from "$lib/components/files/utils";
+import { getFileTree } from "$lib/components/files/utils";
 import { getRegistryTableName } from "$lib/utils";
 
-export const load: PageLoad = async ({ parent, url }) => {
+export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
 
-  const { metadata, registry, readme, registryPath } = await parent();
+  const { metadata, registry } = await parent();
+
   let tableName = getRegistryTableName(registry);
-  let rPath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
+  let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
 
-  let fileInfo = await getFileInfo(rPath);
+  let fileTree = await getFileTree(basePath);
 
-  const { currentPathFiles, directories } = separateFiles(fileInfo.files);
-
-  return { currentPathFiles, directories };
+  return { fileTree, previousPath: basePath, isRoot: true };
 };

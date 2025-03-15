@@ -3,14 +3,14 @@
   import type { PageProps } from './$types';
   import { page } from '$app/state';
 
-  let { data }: PageProps = $props();
+    let { data }: PageProps = $props();
 
  
   </script>
   
   <div class="mx-auto w-9/12 pb-10 flex justify-center min-h-screen">
     <div class="w-full pt-4">
-       <FileTree 
+      <FileTree 
         files={data.fileTree.files} 
         path={page.url.pathname} 
         previousPath={data.previousPath} 

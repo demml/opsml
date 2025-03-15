@@ -25,7 +25,7 @@
   // function to navigate to the card page
   function navigateToCardPage() {
     // navigate to the card page
-    goto(`/opsml/${registry}/card/home?uid=${uid}`);
+    goto(`/opsml/${registry}/card/home?repository=${repository}&name=${name}&version=${version}`);
   }
 
 

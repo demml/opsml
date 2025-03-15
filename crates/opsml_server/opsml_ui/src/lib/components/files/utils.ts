@@ -1,52 +1,48 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import { RegistryType } from "$lib/utils";
-import type { CardQueryArgs } from "../api/schema";
-import type { ListFileInfoResponse } from "./types";
-import { type FileInfo, type DirectoryInfo } from "./types";
+import type { FileTreeResponse } from "./types";
 
-export function separateFiles(files: FileInfo[]): {
-  currentPathFiles: FileInfo[];
-  directories: DirectoryInfo[];
-} {
-  const currentPathFiles: FileInfo[] = [];
-  const directoriesMap: Map<string, string> = new Map();
-
-  files.forEach((file) => {
-    const filePath = file.name;
-    const firstSlashIndex = filePath.indexOf("/");
-    if (firstSlashIndex === -1) {
-      // File is in the current path
-      currentPathFiles.push(file);
-    } else {
-      // File is in a nested directory
-      const directoryName = filePath.slice(0, firstSlashIndex);
-      const existingTimestamp = directoriesMap.get(directoryName);
-      if (
-        !existingTimestamp ||
-        new Date(file.created) > new Date(existingTimestamp)
-      ) {
-        directoriesMap.set(directoryName, file.created);
-      }
-    }
-  });
-
-  // Convert Map to Array and sort directories alphabetically
-  const directories: DirectoryInfo[] = Array.from(directoriesMap.entries())
-    .map(([name, created]) => ({ name, created }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Sort currentPathFiles alphabetically by name
-  currentPathFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-  return { currentPathFiles, directories };
-}
-
-export async function getFileInfo(path: string): Promise<ListFileInfoResponse> {
+export async function getFileTree(path: string): Promise<FileTreeResponse> {
   const params = {
     path: path,
   };
 
-  const response = await opsmlClient.get(RoutePaths.FILE_INFO, params);
-  return (await response.json()) as ListFileInfoResponse;
+  const response = await opsmlClient.get(RoutePaths.FILE_TREE, params);
+  return (await response.json()) as FileTreeResponse;
+}
+
+export function timeAgo(timestamp: string): string {
+  const date = new Date(parseInt(timestamp) * 1000); // Convert to milliseconds
+  const now = new Date();
+  const secondsAgo = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  const intervals = [
+    { label: "year", seconds: 31536000 },
+    { label: "month", seconds: 2592000 },
+    { label: "day", seconds: 86400 },
+    { label: "hour", seconds: 3600 },
+    { label: "minute", seconds: 60 },
+    { label: "second", seconds: 1 },
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(secondsAgo / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`;
+    }
+  }
+
+  return "just now";
+}
+
+export function formatBytes(bytes: number): string {
+  const units = ["bytes", "kb", "Mb", "Gb", "Tb"];
+  let unitIndex = 0;
+
+  while (bytes >= 1000 && unitIndex < units.length - 1) {
+    bytes /= 1000;
+    unitIndex++;
+  }
+
+  return `${bytes.toFixed(1)} ${units[unitIndex]}`;
 }

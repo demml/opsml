@@ -35,7 +35,6 @@
 
     if (selectedSpace) {
       activeSpace = selectedSpace;
-      console.log("selectedSpace", selectedSpace);
     }
 
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);

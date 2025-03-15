@@ -29,7 +29,7 @@
 
   
   function navigateToReadMe() {
-      goto(`/opsml/${registryPath}/card/readme?name=${name}&repository=${repository}&version=${version}`);
+      goto(`/opsml/${registryPath}/card/readme?repository=${repository}&name=${name}&version=${version}`);
     }
 
 

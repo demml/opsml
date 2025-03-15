@@ -14,7 +14,7 @@
       <ReadMe
         name={data.metadata.name}
         repository={data.metadata.repository}
-        uid={data.metadata.uid}
+        version={data.metadata.version}
         registry={data.registry}
         registryPath={data.registryPath}
         readme_content={data.content}

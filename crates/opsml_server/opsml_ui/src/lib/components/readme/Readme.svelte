@@ -35,14 +35,14 @@
   let {
       name,
       repository,
-      uid,
+      version,
       registry,
       registryPath,
       readme_content,
     } = $props<{
       name: string;
       repository: string;
-      uid: string;
+      version: string;
       registry: RegistryType;
       registryPath: string;
       readme_content: string;
@@ -71,7 +71,7 @@
       triggerSuccess();
     }
 
-    goto(`/opsml/${registryPath}/card/home?uid=${uid}`);
+    goto(`/opsml/${registryPath}/card/home?repository=${repository}&name=${name}&version=${version}`);
   }
 
 async function toggle(toggle: string) {
