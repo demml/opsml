@@ -190,14 +190,7 @@ impl Display for Operation {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CompletedPart {
-    pub e_tag: String,
-    pub part_number: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CompleteMultipartRequest {
-    pub parts: Vec<CompletedPart>,
-    pub upload_id: String,
-    pub path: String,
+pub struct RenderedFile {
+    pub content: String,
+    pub suffix: String,
 }
