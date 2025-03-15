@@ -115,14 +115,27 @@ pub async fn download_artifact(
     lpath: &Path,
     rpath: &str,
     registry_type: &str,
+    uid: Option<&str>,
 ) -> Result<DownloadResponse, ApiError> {
-    let key = sql_client
-        .get_artifact_key_from_path(rpath, registry_type)
-        .await
-        .map_err(|e| {
-            error!("Failed to get artifact key: {}", e);
-            ApiError::Error("Failed to get artifact key".to_string())
-        })?;
+    let key = if uid.is_none() {
+        sql_client
+            .get_artifact_key_from_path(rpath, registry_type)
+            .await
+            .map_err(|e| {
+                error!("Failed to get artifact key: {}", e);
+                ApiError::Error("Failed to get artifact key".to_string())
+            })?
+    } else {
+        Some(
+            sql_client
+                .get_artifact_key(uid.unwrap(), registry_type)
+                .await
+                .map_err(|e| {
+                    error!("Failed to get artifact key: {}", e);
+                    ApiError::Error("Failed to get artifact key".to_string())
+                })?,
+        )
+    };
 
     if key.is_none() {
         return Err(ApiError::Error("Artifact key not found".to_string()));
