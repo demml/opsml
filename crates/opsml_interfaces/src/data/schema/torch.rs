@@ -7,7 +7,7 @@ impl TorchTensorSchemaValidator {
     //pub fn get_polars_feature(value: &Bound<'_, PyAny>) -> PyResult<Feature> {}
 
     pub fn generate_feature_map(data: &Bound<'_, PyAny>) -> PyResult<FeatureSchema> {
-        let shape = data.getattr("shape")?.extract::<Vec<usize>>()?;
+        let shape = data.getattr("shape")?.extract::<Vec<i64>>()?;
         let data_type = data.getattr("dtype")?.str()?.to_string();
         let mut feature_map = FeatureSchema::new(None);
 

@@ -2,8 +2,6 @@
 pub mod server_logic {
     // We implement 2 versions of the registry, one for rust compatibility and one for python compatibility
 
-    use opsml_cards::CardTable;
-    use opsml_contracts::*;
     use opsml_error::error::RegistryError;
     use opsml_semver::{VersionArgs, VersionType, VersionValidator};
     use opsml_settings::config::DatabaseSettings;
@@ -13,7 +11,7 @@ pub mod server_logic {
         enums::client::{get_sql_client, SqlClientEnum},
         schemas::*,
     };
-    use opsml_types::*;
+    use opsml_types::{cards::CardTable, contracts::*, *};
     use pyo3::prelude::*;
     use semver::Version;
     use sqlx::types::Json as SqlxJson;

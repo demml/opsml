@@ -1,10 +1,8 @@
 use opsml_interfaces::{
-    CatBoostModelInterfaceMetadata, HuggingFaceModelInterfaceMetadata, HuggingFaceORTModel,
-    HuggingFaceOnnxArgs, HuggingFaceOnnxSaveArgs, LightGBMModelInterfaceMetadata,
-    LightningInterfaceMetadata, ModelDataInterfaceSaveMetadata, ModelInterfaceMetadata,
-    ModelInterfaceType, ModelSaveMetadata, SklearnModelInterfaceMetadata,
-    TensorFlowInterfaceMetadata, TorchInterfaceMetadata, TorchOnnxArgs, TorchSaveArgs,
-    VowpalWabbitInterfaceMetadata, XGBoostModelInterfaceMetadata,
+    CatBoostModel, DataProcessor, HuggingFaceModel, HuggingFaceORTModel, HuggingFaceOnnxArgs,
+    HuggingFaceTask, LightGBMModel, LightningModel, LoadKwargs, ModelInterface,
+    ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, OnnxSession,
+    SaveKwargs, SklearnModel, TaskType, TensorFlowModel, TorchModel, XGBoostModel,
 };
 
 use pyo3::prelude::*;
@@ -14,27 +12,31 @@ pub fn model(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_interfaces
     m.add_class::<HuggingFaceOnnxArgs>()?;
     m.add_class::<HuggingFaceORTModel>()?;
-    m.add_class::<HuggingFaceOnnxSaveArgs>()?;
-    m.add_class::<TorchOnnxArgs>()?;
-    m.add_class::<TorchSaveArgs>()?;
+    m.add_class::<TaskType>()?;
+
+    // helper types
+    m.add_class::<DataProcessor>()?;
+    m.add_class::<OnnxSession>()?;
+    m.add_class::<SaveKwargs>()?;
+    m.add_class::<LoadKwargs>()?;
+    m.add_class::<ModelInterfaceType>()?;
+    m.add_class::<ModelType>()?;
+    m.add_class::<HuggingFaceTask>()?;
 
     // Model Interface
-    m.add_class::<ModelDataInterfaceSaveMetadata>()?;
     m.add_class::<ModelInterfaceMetadata>()?;
+    m.add_class::<ModelInterfaceSaveMetadata>()?;
+    m.add_class::<ModelInterface>()?;
+    m.add_class::<SklearnModel>()?;
+    m.add_class::<LightGBMModel>()?;
+    m.add_class::<XGBoostModel>()?;
+    m.add_class::<TorchModel>()?;
+    m.add_class::<LightningModel>()?;
+    m.add_class::<HuggingFaceModel>()?;
+    m.add_class::<CatBoostModel>()?;
+    m.add_class::<TensorFlowModel>()?;
 
     // Model Interface args
-    m.add_class::<CatBoostModelInterfaceMetadata>()?;
-    m.add_class::<HuggingFaceModelInterfaceMetadata>()?;
-    m.add_class::<LightGBMModelInterfaceMetadata>()?;
-    m.add_class::<LightningInterfaceMetadata>()?;
-    m.add_class::<SklearnModelInterfaceMetadata>()?;
-    m.add_class::<TensorFlowInterfaceMetadata>()?;
-    m.add_class::<TorchInterfaceMetadata>()?;
-    m.add_class::<VowpalWabbitInterfaceMetadata>()?;
-    m.add_class::<XGBoostModelInterfaceMetadata>()?;
-    m.add_class::<ModelSaveMetadata>()?;
-    m.add_class::<ModelDataInterfaceSaveMetadata>()?;
-    m.add_class::<ModelInterfaceType>()?;
 
     Ok(())
 }

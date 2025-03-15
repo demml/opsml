@@ -626,7 +626,7 @@ impl Array {
         let size = data_type.getattr("size")?.extract::<usize>().unwrap_or(0);
         let shape = data_type
             .getattr("shape")?
-            .extract::<Vec<usize>>()
+            .extract::<Vec<i64>>()
             .unwrap_or(vec![]);
         // insert categories as a string
         extra_args.insert("inner".to_string(), inner_class_name);

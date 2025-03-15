@@ -1,8 +1,4 @@
 from opsml.card import CardRegistry, RegistryType
-from opsml.core import OpsmlLogger
-
-# setup logging
-OpsmlLogger.setup_logging()
 
 
 def test_registry(mock_db):

@@ -8,9 +8,15 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
+opsml-colors = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
+ort = { workspace = true }
 pyo3 = { workspace = true }
+rand = { workspace = true }
 scouter-client = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+tracing = { workspace = true }

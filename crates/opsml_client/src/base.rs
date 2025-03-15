@@ -1,7 +1,7 @@
 use crate::types::{JwtToken, RequestType, Routes};
-use opsml_contracts::{PresignedQuery, PresignedUrl};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
+use opsml_types::contracts::{PresignedQuery, PresignedUrl};
 
 use reqwest::multipart::Form;
 use reqwest::Response;

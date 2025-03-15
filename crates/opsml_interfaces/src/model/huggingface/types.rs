@@ -1,5 +1,6 @@
 use opsml_error::error::OpsmlError;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use pyo3::types::PyType;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,6 @@ use std::fmt::Display;
 
 #[pyclass]
 #[derive(Debug)]
-#[allow(dead_code)]
 pub struct HuggingFaceOnnxArgs {
     #[pyo3(get)]
     pub ort_type: HuggingFaceORTModel,
@@ -21,29 +21,46 @@ pub struct HuggingFaceOnnxArgs {
 
     #[pyo3(get)]
     pub config: Option<PyObject>,
+
+    #[pyo3(get)]
+    pub extra_kwargs: Py<PyDict>,
 }
 
 #[pymethods]
 impl HuggingFaceOnnxArgs {
     #[new]
-    #[pyo3(signature = (ort_type, provider=None, quantize=false, config=None))]
+    #[pyo3(signature = (ort_type, provider=None, quantize=false, config=None, extra_kwargs=None))]
     pub fn new(
         py: Python,
         ort_type: HuggingFaceORTModel,
         provider: Option<String>,
         quantize: Option<bool>,
         config: Option<&Bound<'_, PyAny>>,
+        extra_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         // check if ort_type is valid (does it match any of the HuggingFaceORTModel enum variants?)
 
         let config = HuggingFaceOnnxArgs::check_optimum_config(py, config)?;
+        let extra_kwargs = extra_kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
 
         Ok(HuggingFaceOnnxArgs {
             ort_type,
             provider: provider.unwrap_or_else(|| "CPUExecutionProvider".to_string()),
             quantize: quantize.unwrap_or(false),
             config,
+            extra_kwargs: extra_kwargs.unbind(),
         })
+    }
+
+    pub fn to_dict<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let dict = PyDict::new(py);
+        dict.set_item("ort_type", self.ort_type.to_string().clone())?;
+        dict.set_item("provider", self.provider.clone())?;
+        dict.set_item("quantize", self.quantize)?;
+        dict.set_item("config", self.config.as_ref())?;
+        dict.set_item("extra_kwargs", self.extra_kwargs.bind(py).clone())?;
+
+        Ok(dict)
     }
 }
 
@@ -126,6 +143,7 @@ pub enum HuggingFaceTask {
     ZeroShotImageClassification,
     ZeroShotAudioClassification,
     ZeroShotObjectDetection,
+    Undefined,
 }
 
 #[pymethods]
@@ -167,6 +185,43 @@ impl HuggingFaceTask {
                 "zero-shot-audio-classification".to_string()
             }
             HuggingFaceTask::ZeroShotObjectDetection => "zero-shot-object-detection".to_string(),
+            HuggingFaceTask::Undefined => "undefined".to_string(),
+        }
+    }
+
+    #[staticmethod]
+    pub fn from_string(task: &str) -> HuggingFaceTask {
+        match task {
+            "audio-classification" => HuggingFaceTask::AudioClassification,
+            "automatic-speech-recognition" => HuggingFaceTask::AutomaticSpeechRecognition,
+            "conversational" => HuggingFaceTask::Conversational,
+            "depth-estimation" => HuggingFaceTask::DepthEstimation,
+            "document-question-answering" => HuggingFaceTask::DocumentQuestionAnswering,
+            "feature-extraction" => HuggingFaceTask::FeatureExtraction,
+            "fill-mask" => HuggingFaceTask::FillMask,
+            "image-classification" => HuggingFaceTask::ImageClassification,
+            "image-segmentation" => HuggingFaceTask::ImageSegmentation,
+            "image-to-image" => HuggingFaceTask::ImageToImage,
+            "image-to-text" => HuggingFaceTask::ImageToText,
+            "mask-generation" => HuggingFaceTask::MaskGeneration,
+            "object-detection" => HuggingFaceTask::ObjectDetection,
+            "question-answering" => HuggingFaceTask::QuestionAnswering,
+            "summarization" => HuggingFaceTask::Summarization,
+            "table-question-answering" => HuggingFaceTask::TableQuestionAnswering,
+            "text2text-generation" => HuggingFaceTask::Text2TextGeneration,
+            "text-classification" => HuggingFaceTask::TextClassification,
+            "text-generation" => HuggingFaceTask::TextGeneration,
+            "text-to-audio" => HuggingFaceTask::TextToAudio,
+            "token-classification" => HuggingFaceTask::TokenClassification,
+            "translation" => HuggingFaceTask::Translation,
+            "translation_xx_to_yy" => HuggingFaceTask::TranslationXxToYy,
+            "video-classification" => HuggingFaceTask::VideoClassification,
+            "visual-question-answering" => HuggingFaceTask::VisualQuestionAnswering,
+            "zero-shot-classification" => HuggingFaceTask::ZeroShotClassification,
+            "zero-shot-image-classification" => HuggingFaceTask::ZeroShotImageClassification,
+            "zero-shot-audio-classification" => HuggingFaceTask::ZeroShotAudioClassification,
+            "zero-shot-object-detection" => HuggingFaceTask::ZeroShotObjectDetection,
+            _ => HuggingFaceTask::Undefined,
         }
     }
 }
@@ -208,6 +263,7 @@ impl Display for HuggingFaceTask {
                 write!(f, "zero-shot-audio-classification")
             }
             HuggingFaceTask::ZeroShotObjectDetection => write!(f, "zero-shot-object-detection"),
+            HuggingFaceTask::Undefined => write!(f, "undefined"),
         }
     }
 }

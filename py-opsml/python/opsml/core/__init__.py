@@ -4,7 +4,8 @@ from .. import core
 
 Description = core.Description
 LogLevel = core.LogLevel
-OpsmlLogger = core.OpsmlLogger
+RustyLogger = core.RustyLogger
+LoggingConfig = core.LoggingConfig
 OpsmlError = core.OpsmlError
 OpsmlConfig = core.OpsmlConfig
 CommonKwargs = core.CommonKwargs
@@ -20,7 +21,8 @@ DataSchema = core.DataSchema
 
 __all__ = [
     "LogLevel",
-    "OpsmlLogger",
+    "RustyLogger",
+    "LoggingConfig",
     "OpsmlError",
     "OpsmlConfig",
     "CommonKwargs",

@@ -237,7 +237,7 @@ pub enum SaveName {
     Audit,
     PipelineCard,
     ModelMetadata,
-    TrainedModel,
+    Model,
     Preprocessor,
     OnnxModel,
     SampleModelData,
@@ -248,11 +248,13 @@ pub enum SaveName {
     QuantizedModel,
     Tokenizer,
     FeatureExtractor,
+    ImageProcessor,
     Metadata,
     Graphs,
     OnnxConfig,
     Dataset,
     DriftProfile,
+    Drift,
     Sql,
 }
 
@@ -265,7 +267,7 @@ impl SaveName {
             "audit" => Some(SaveName::Audit),
             "pipelinecard" => Some(SaveName::PipelineCard),
             "model-metadata" => Some(SaveName::ModelMetadata),
-            "trained-model" => Some(SaveName::TrainedModel),
+            "model" => Some(SaveName::Model),
             "preprocessor" => Some(SaveName::Preprocessor),
             "onnx-model" => Some(SaveName::OnnxModel),
             "sample-model-data" => Some(SaveName::SampleModelData),
@@ -275,13 +277,15 @@ impl SaveName {
             "artifacts" => Some(SaveName::Artifacts),
             "quantized-model" => Some(SaveName::QuantizedModel),
             "tokenizer" => Some(SaveName::Tokenizer),
-            "feature_extractor" => Some(SaveName::FeatureExtractor),
+            "feature-extractor" => Some(SaveName::FeatureExtractor),
+            "image-processor" => Some(SaveName::ImageProcessor),
             "metadata" => Some(SaveName::Metadata),
             "graphs" => Some(SaveName::Graphs),
             "onnx-config" => Some(SaveName::OnnxConfig),
             "dataset" => Some(SaveName::Dataset),
             "drift-profile" => Some(SaveName::DriftProfile),
             "sql" => Some(SaveName::Sql),
+            "drift" => Some(SaveName::Drift),
             _ => None,
         }
     }
@@ -292,7 +296,7 @@ impl SaveName {
             SaveName::Audit => "audit",
             SaveName::PipelineCard => "pipelinecard",
             SaveName::ModelMetadata => "model-metadata",
-            SaveName::TrainedModel => "trained-model",
+            SaveName::Model => "model",
             SaveName::Preprocessor => "preprocessor",
             SaveName::OnnxModel => "onnx-model",
             SaveName::SampleModelData => "sample-model-data",
@@ -302,13 +306,15 @@ impl SaveName {
             SaveName::Artifacts => "artifacts",
             SaveName::QuantizedModel => "quantized-model",
             SaveName::Tokenizer => "tokenizer",
-            SaveName::FeatureExtractor => "feature_extractor",
+            SaveName::FeatureExtractor => "feature-extractor",
+            SaveName::ImageProcessor => "image-processor",
             SaveName::Metadata => "metadata",
             SaveName::Graphs => "graphs",
             SaveName::OnnxConfig => "onnx-config",
             SaveName::Dataset => "dataset",
             SaveName::DriftProfile => "drift-profile",
             SaveName::Sql => "sql",
+            SaveName::Drift => "drift",
         }
     }
 
@@ -330,7 +336,7 @@ impl AsRef<Path> for SaveName {
             SaveName::Audit => Path::new("audit"),
             SaveName::PipelineCard => Path::new("pipelinecard"),
             SaveName::ModelMetadata => Path::new("model-metadata"),
-            SaveName::TrainedModel => Path::new("trained-model"),
+            SaveName::Model => Path::new("model"),
             SaveName::Preprocessor => Path::new("preprocessor"),
             SaveName::OnnxModel => Path::new("onnx-model"),
             SaveName::SampleModelData => Path::new("sample-model-data"),
@@ -341,13 +347,22 @@ impl AsRef<Path> for SaveName {
             SaveName::QuantizedModel => Path::new("quantized-model"),
             SaveName::Tokenizer => Path::new("tokenizer"),
             SaveName::FeatureExtractor => Path::new("feature_extractor"),
+            SaveName::ImageProcessor => Path::new("image_processor"),
             SaveName::Metadata => Path::new("metadata"),
             SaveName::Graphs => Path::new("graphs"),
             SaveName::OnnxConfig => Path::new("onnx-config"),
             SaveName::Dataset => Path::new("dataset"),
             SaveName::DriftProfile => Path::new("drift-profile"),
             SaveName::Sql => Path::new("sql"),
+            SaveName::Drift => Path::new("drift"),
         }
+    }
+}
+
+// impl PathBuf: From<SaveName>
+impl From<SaveName> for PathBuf {
+    fn from(save_name: SaveName) -> Self {
+        PathBuf::from(save_name.as_ref())
     }
 }
 
@@ -370,6 +385,8 @@ pub enum Suffix {
     Model,
     Numpy,
     Sql,
+    Bin,
+    Keras,
 }
 
 #[pymethods]
@@ -393,6 +410,8 @@ impl Suffix {
             "model" => Some(Suffix::Model),
             "npy" => Some(Suffix::Numpy),
             "sql" => Some(Suffix::Sql),
+            "bin" => Some(Suffix::Bin),
+            "keras" => Some(Suffix::Keras),
             _ => None,
         }
     }
@@ -415,6 +434,8 @@ impl Suffix {
             Suffix::Model => "model",
             Suffix::Numpy => "npy",
             Suffix::Sql => "sql",
+            Suffix::Bin => "bin",
+            Suffix::Keras => "keras",
         }
     }
 
@@ -540,6 +561,7 @@ pub enum DataType {
     TorchTensor,
     TorchDataset,
     TensorflowTensor,
+    DMatrix,
     Tuple,
     List,
     Str,
@@ -547,6 +569,7 @@ pub enum DataType {
     Joblib,
     Base,
     Dataset,
+    NotProvided,
 }
 
 #[pyclass(eq)]

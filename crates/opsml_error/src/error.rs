@@ -75,7 +75,7 @@ impl From<UtilError> for PyErr {
 
 #[derive(Error, Debug)]
 pub enum TypeError {
-    #[error("Type Error: {0}")]
+    #[error("{0}")]
     Error(String),
 
     #[error("Error serializing data")]
@@ -253,6 +253,42 @@ pub enum RunError {
 impl From<RunError> for PyErr {
     fn from(err: RunError) -> PyErr {
         PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum OnnxError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<OnnxError> for PyErr {
+    fn from(err: OnnxError) -> PyErr {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+    }
+}
+
+impl From<PyErr> for OnnxError {
+    fn from(err: PyErr) -> Self {
+        OnnxError::Error(err.to_string())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum InterfaceError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<InterfaceError> for PyErr {
+    fn from(err: InterfaceError) -> PyErr {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(err.to_string())
+    }
+}
+
+impl From<PyErr> for InterfaceError {
+    fn from(err: PyErr) -> Self {
+        InterfaceError::Error(err.to_string())
     }
 }
 

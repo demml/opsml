@@ -1,8 +1,8 @@
 use opsml_cards::{CardInfo, DataCard, DataCardMetadata};
-use opsml_contracts::{Card, CardList};
 use opsml_registry::PyCardRegistry;
 #[cfg(feature = "server")]
 use opsml_registry::RegistryTestHelper;
+use opsml_types::contracts::{Card, CardList};
 use opsml_types::RegistryType;
 
 use pyo3::prelude::*;

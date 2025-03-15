@@ -12,10 +12,13 @@ authors = [{name = "Thorrester", email = "<support@demmlai.com>"}]
 readme = "README.md"
 dependencies = [
     "joblib~=1.3",
-    "numpy~=2.0",
+    "numpy>=1.26.4",
 ]
 
 [project.optional-dependencies]
+fastapi = [
+    "fastapi >= 0.113.0, < 1.0.0",
+    ]
 onnx = [
     "onnx~=1.16.0; platform_system == 'Linux' and python_version <= '3.11'",
     "onnx==1.16.1; platform_system == 'Windows'",
@@ -23,15 +26,18 @@ onnx = [
     "onnx>=1.17.0; (platform_system == 'Linux' or platform_system == 'Darwin') and python_version >= '3.12'",
 ]
 onnxruntime = [
-    "onnxruntime~=1.16.0; python_version <= '3.11'",
-    "onnxruntime>=1.18.0; python_version >= '3.12'",
+    "onnxruntime>=1.18.0",
 ]
 sklearn_onnx = [
-    "skl2onnx==1.16.0",
+    "skl2onnx>=1.16.0",
     "onnxmltools~=1.12",
     "opsml[onnx,onnxruntime]",
 ]
-
+tf_onnx = [
+    "tf2onnx~=1.16.1; platform_system=='Linux' and python_version <= '3.11'",
+    "tf2onnx~=1.16.1; platform_system=='Darwin' and python_version <= '3.11'",
+    "opsml[onnx,onnxruntime]",
+]
 
 [dependency-groups]
 dev = [
@@ -53,6 +59,20 @@ dev = [
     "polars>=1.10.0",
     "pyarrow>=15.0.0",
     "pydantic>=2.10.5",
+    "lightgbm>=4.0.0",
+    "xgboost>=2.1.3",
+    "scikit-learn>=1.0.0, <1.6.0",
+    "catboost>=1.2.5",
+    "lightning>=2.4.0; python_version > '3.11'",
+    "lightning~=2.1.2; python_version <= '3.11'",
+    "tensorflow>=2.16.0; platform_system=='Linux' and python_version <= '3.11'",
+    "tensorflow>=2.16.0; platform_system=='Darwin' and python_version <= '3.11'",
+    "tensorflow-metal==1.2.0; platform_system=='Darwin' and python_version <= '3.11'",
+    "tf-keras>=2.16.0; python_version <= '3.11'",
+]
+
+numpy1 = [
+    "numpy>=1.26.4, <2.0.0",
 ]
 
 
@@ -82,6 +102,7 @@ disable = [
     "import-outside-toplevel",
     "import-self",
     "too-many-lines",
+    "cyclic-import",
 ]
 
 [tool.flake8]

@@ -1,16 +1,15 @@
 use chrono::{NaiveDateTime, Timelike};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
 use opsml_error::error::UtilError;
-use pyo3::exceptions::{PyTypeError, PyValueError};
+use pyo3::exceptions::PyValueError;
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 
-use pyo3::types::{PyBool, PyDict, PyDictMethods, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyBool, PyDict, PyDictMethods, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::IntoPyObjectExt;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::PathBuf;
-
 use uuid::Uuid;
 
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
@@ -148,7 +147,11 @@ impl PyHelperFuncs {
     }
 }
 
-pub fn json_to_pyobject(py: Python, value: &Value, dict: &Bound<'_, PyDict>) -> PyResult<()> {
+pub fn json_to_pyobject<'py>(
+    py: Python,
+    value: &Value,
+    dict: &Bound<'py, PyDict>,
+) -> PyResult<Bound<'py, PyDict>> {
     match value {
         Value::Object(map) => {
             for (k, v) in map {
@@ -184,7 +187,8 @@ pub fn json_to_pyobject(py: Python, value: &Value, dict: &Bound<'_, PyDict>) -> 
         }
         _ => return Err(PyValueError::new_err("Root must be an object")),
     }
-    Ok(())
+
+    Ok(dict.clone())
 }
 
 pub fn json_to_pyobject_value(py: Python, value: &Value) -> PyResult<PyObject> {
@@ -234,6 +238,13 @@ pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
             vec.push(pyobject_to_json(&item)?);
         }
         Ok(Value::Array(vec))
+    } else if obj.is_instance_of::<PyTuple>() {
+        let tuple = obj.downcast::<PyTuple>()?;
+        let mut vec = Vec::new();
+        for item in tuple.iter() {
+            vec.push(pyobject_to_json(&item)?);
+        }
+        Ok(Value::Array(vec))
     } else if obj.is_instance_of::<PyString>() {
         let s = obj.extract::<String>()?;
         Ok(Value::String(s))
@@ -249,10 +260,17 @@ pub fn pyobject_to_json(obj: &Bound<'_, PyAny>) -> PyResult<Value> {
     } else if obj.is_none() {
         Ok(Value::Null)
     } else {
-        Err(PyTypeError::new_err(format!(
-            "Unsupported type: {}",
-            obj.get_type().name()?
-        )))
+        // display "cant show" for unsupported types
+        // call obj.str to get the string representation
+        // if error, default to "unsupported type"
+        let obj_str = match obj.str() {
+            Ok(s) => s
+                .extract::<String>()
+                .unwrap_or_else(|_| "unsupported type".to_string()),
+            Err(_) => "unsupported type".to_string(),
+        };
+
+        Ok(Value::String(obj_str))
     }
 }
 

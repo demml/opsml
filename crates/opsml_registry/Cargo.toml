@@ -12,10 +12,8 @@ anyhow = { workspace = true }
 opsml-cards = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
-opsml-contracts = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
-opsml-logging = { workspace = true }
 opsml-types = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
@@ -23,6 +21,7 @@ opsml-sql = { workspace = true, optional = true }
 opsml-storage = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }
+rusty-logging = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_qs = { workspace = true }

@@ -8,11 +8,10 @@ use crate::schemas::schema::{
 };
 use crate::sqlite::helper::SqliteQueryHelper;
 use async_trait::async_trait;
-use opsml_cards::CardTable;
-use opsml_contracts::CardQueryArgs;
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
+use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
 use semver::Version;
 use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},

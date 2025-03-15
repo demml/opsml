@@ -1,9 +1,8 @@
 // create pyo3 async iterator
 use async_trait::async_trait;
-use opsml_contracts::FileInfo;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::StorageType;
+use opsml_types::{contracts::FileInfo, StorageType};
 use std::path::Path;
 use std::path::PathBuf;
 // take a stream of bytes

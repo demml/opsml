@@ -21,10 +21,8 @@ opsml-auth = { path = "crates/opsml_auth" }
 opsml-cards = { path = "crates/opsml_cards" }
 opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
-opsml-contracts = { path = "crates/opsml_contracts" }
 opsml-error = { path = "crates/opsml_error" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
-opsml-logging = { path = "crates/opsml_logging" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
@@ -60,6 +58,7 @@ google-cloud-auth = "0.*"
 google-cloud-token = "0.*"
 indicatif = "0.*"
 jsonwebtoken = "9.*"
+ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
@@ -68,7 +67,8 @@ rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots" ], default-features = false }
 reqwest-middleware = "0.*"
-scouter-client = { git = "https://github.com/demml/scouter.git", version = "0.4.0", branch = "update-data-profiler" }
+rusty-logging = { git = "https://github.com/demml/rusty-logger.git", version = "0.4.0", branch = "add-serialization" }
+scouter-client = { git = "https://github.com/demml/scouter.git", version = "0.4.0", branch = "feature/refactor-drift-profiles" }
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
 serde_json = "1.*"

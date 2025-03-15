@@ -4,11 +4,10 @@ use bytes::BytesMut;
 use indicatif::{ProgressBar, ProgressStyle};
 use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
-use opsml_contracts::*;
 use opsml_error::error::ApiError;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE};
+use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 
 use reqwest::{
     header::{HeaderMap, HeaderValue},
