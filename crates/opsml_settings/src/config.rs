@@ -94,6 +94,9 @@ pub struct AuthSettings {
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
     pub server_uri: String,
+
+    // token used to send initialization requests to the scouter server
+    pub bootstrap_token: String,
 }
 
 /// OpsmlConfig for use with both server and client implementations
@@ -137,6 +140,11 @@ impl Default for OpsmlConfig {
         // set scouter settings
         let scouter_settings = ScouterSettings {
             server_uri: env::var("SCOUTER_SERVER_URI").unwrap_or("".to_string()),
+            bootstrap_token: env::var(
+                "SCOUTER_BOOTSTRAP_TOKEN
+            ",
+            )
+            .unwrap_or(generate_default_secret()),
         };
 
         // set auth settings
@@ -208,7 +216,7 @@ impl Default for OpsmlConfig {
 }
 
 fn generate_default_secret() -> String {
-    // Creates a deterministic key for development purposes
+    // Creates a deterministic key for development/initialization purposes
     // Should be replaced with a proper secret in production
     let mut key = [0u8; 32];
     for (i, item) in key.iter_mut().enumerate() {

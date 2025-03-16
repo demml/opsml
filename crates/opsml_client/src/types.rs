@@ -35,6 +35,13 @@ pub enum Routes {
     ExperimentMetricNames,
     ExperimentHardwareMetrics,
     ExperimentParameters,
+    ScouterAuthLogin,
+    ScouterDriftCustom,
+    ScouterDriftPsi,
+    ScouterDriftSpc,
+    ScouterProfile,
+    ScouterProfileStatus,
+    ScouterUsers,
 }
 
 impl Routes {
@@ -65,6 +72,21 @@ impl Routes {
             Routes::ExperimentMetricNames => "experiment/metrics/names",
             Routes::ExperimentHardwareMetrics => "experiment/hardware/metrics",
             Routes::ExperimentParameters => "experiment/parameters",
+
+            // Scouter Auth Routes
+            Routes::ScouterAuthLogin => "scouter/auth/login",
+
+            // Scouter Drift Routes
+            Routes::ScouterDriftCustom => "scouter/drift/custom",
+            Routes::ScouterDriftPsi => "scouter/drift/psi",
+            Routes::ScouterDriftSpc => "scouter/drift/spc",
+
+            // Scouter Profile Routes
+            Routes::ScouterProfile => "scouter/profile",
+            Routes::ScouterProfileStatus => "scouter/profile/status",
+
+            // Scouter User Routes
+            Routes::ScouterUsers => "scouter/users",
         }
     }
 }

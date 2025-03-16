@@ -1,5 +1,7 @@
 use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
+use opsml_client::RequestType;
+use opsml_client::Routes;
 use opsml_colors::Colorize;
 use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
@@ -10,7 +12,10 @@ use rusty_logging::setup_logging;
 use tracing::{debug, info};
 
 /// Initialize a default admin user if no users exist in the database
-pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult<()> {
+pub async fn initialize_default_user(
+    sql_client: &SqlClientEnum,
+    scouter_client: &mut ScouterApiClient,
+) -> AnyhowResult<()> {
     // Check if any users exist
     let users = sql_client
         .get_users()
@@ -59,6 +64,30 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
         .context(Colorize::purple("❌ Failed to create default guest user"))?;
 
     info!("✅ Created default admin and guest user (change password on first login)",);
+
+    if scouter_client.enabled {
+        // send admin user to scouter
+        scouter_client
+            .create_initial_user(&admin_user)
+            .await
+            .context(Colorize::purple(
+                "❌ Failed to create default admin in scouter",
+            ))?;
+
+        // send guest user to scouter
+        scouter_client
+            .create_initial_user(&guest_user)
+            .await
+            .context(Colorize::purple(
+                "❌ Failed to create default guest in scouter",
+            ))?;
+
+        info!(
+            "✅ Created default admin and guest user in Scouter (change password on first login)",
+        );
+    }
+
+    // if scouter_client is enabled, pass the default user and admin to scouter
 
     Ok(())
 }
