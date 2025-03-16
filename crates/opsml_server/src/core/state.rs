@@ -10,4 +10,5 @@ pub struct AppState {
     pub auth_manager: Arc<AuthManager>,
     pub config: Arc<OpsmlConfig>,
     pub storage_settings: Arc<OpsmlStorageSettings>,
+    pub api_client: Arc<ApiClient>,
 }

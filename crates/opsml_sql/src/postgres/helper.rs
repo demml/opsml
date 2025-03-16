@@ -85,7 +85,7 @@ impl PostgresQueryHelper {
 
     pub fn get_last_admin_query() -> String {
         format!(
-            "SELECT count(1) FROM {} WHERE role = 'admin'",
+            "SELECT username FROM {} WHERE role = 'admin'",
             CardTable::Users
         )
         .to_string()

@@ -94,9 +94,6 @@ pub struct AuthSettings {
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
     pub server_uri: Option<String>,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub auth: bool,
 }
 
 /// OpsmlConfig for use with both server and client implementations
@@ -140,12 +137,6 @@ impl Default for OpsmlConfig {
         // set scouter settings
         let scouter_settings = ScouterSettings {
             server_uri: env::var("SCOUTER_SERVER_URI").ok(),
-            username: env::var("SCOUTER_USERNAME").ok(),
-            password: env::var("SCOUTER_PASSWORD").ok(),
-            auth: env::var("SCOUTER_AUTH")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
         };
 
         // set auth settings
@@ -481,9 +472,6 @@ mod tests {
         assert_eq!(opsml_config.auth_settings.username, "guest");
         assert_eq!(opsml_config.auth_settings.password, "guest");
         assert_eq!(opsml_config.scouter_settings.server_uri, None);
-        assert_eq!(opsml_config.scouter_settings.username, None);
-        assert_eq!(opsml_config.scouter_settings.password, None);
-        assert!(!opsml_config.scouter_settings.auth);
 
         cleanup();
     }
