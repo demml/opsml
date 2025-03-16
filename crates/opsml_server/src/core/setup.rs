@@ -1,6 +1,7 @@
+use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_colors::Colorize;
-use opsml_settings::config::OpsmlConfig;
+use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_sql::schemas::User;
@@ -62,7 +63,12 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
     Ok(())
 }
 
-pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum, SqlClientEnum)> {
+pub async fn setup_components() -> AnyhowResult<(
+    OpsmlConfig,
+    StorageClientEnum,
+    SqlClientEnum,
+    ScouterApiClient,
+)> {
     // setup config
     let config = OpsmlConfig::default();
 
@@ -89,5 +95,24 @@ pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum,
 
     info!("✅ Sql client: {}", sql.name());
 
-    Ok((config, storage, sql))
+    let scouter = setup_scouter_components(&config.scouter_settings)
+        .await
+        .context(Colorize::purple("❌ Failed to setup scouter client"))?;
+
+    if !scouter.base_path.is_empty() {
+        info!("✅ Scouter client: {}", scouter.base_path);
+    }
+
+    Ok((config, storage, sql, scouter))
+}
+
+pub async fn setup_scouter_components(
+    settings: &ScouterSettings,
+) -> AnyhowResult<ScouterApiClient> {
+    // setup config
+    let client = build_scouter_http_client(settings)
+        .await
+        .context(Colorize::purple("❌ Failed to setup scouter client"))?;
+
+    Ok(client)
 }

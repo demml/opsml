@@ -16,15 +16,22 @@ pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<Sco
         .build()
         .map_err(|e| ServerError::Error(format!("Failed to create client with error: {}", e)))?;
 
-    let base_path = settings.server_uri.clone().unwrap();
+    let base_path = settings.server_uri.clone();
 
-    Ok(ScouterApiClient { client, base_path })
+    let enabled = !base_path.is_empty();
+
+    Ok(ScouterApiClient {
+        client,
+        base_path,
+        enabled,
+    })
 }
 
 #[derive(Debug, Clone)]
 pub struct ScouterApiClient {
     pub client: Client,
     pub base_path: String,
+    pub enabled: bool,
 }
 
 impl ScouterApiClient {
