@@ -93,7 +93,7 @@ pub struct AuthSettings {
 #[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
-    pub server_uri: Option<String>,
+    pub server_uri: String,
 }
 
 /// OpsmlConfig for use with both server and client implementations
@@ -136,7 +136,7 @@ impl Default for OpsmlConfig {
 
         // set scouter settings
         let scouter_settings = ScouterSettings {
-            server_uri: env::var("SCOUTER_SERVER_URI").ok(),
+            server_uri: env::var("SCOUTER_SERVER_URI").unwrap_or("".to_string()),
         };
 
         // set auth settings
@@ -471,7 +471,7 @@ mod tests {
         assert_eq!(opsml_config.auth_settings.jwt_secret.len(), 32);
         assert_eq!(opsml_config.auth_settings.username, "guest");
         assert_eq!(opsml_config.auth_settings.password, "guest");
-        assert_eq!(opsml_config.scouter_settings.server_uri, None);
+        assert_eq!(opsml_config.scouter_settings.server_uri, "");
 
         cleanup();
     }

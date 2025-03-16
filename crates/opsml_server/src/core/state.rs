@@ -1,3 +1,4 @@
+use crate::core::scouter::client::ScouterApiClient;
 use opsml_auth::auth::AuthManager;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_sql::enums::client::SqlClientEnum;
@@ -10,5 +11,5 @@ pub struct AppState {
     pub auth_manager: Arc<AuthManager>,
     pub config: Arc<OpsmlConfig>,
     pub storage_settings: Arc<OpsmlStorageSettings>,
-    pub api_client: Arc<ApiClient>,
+    pub scouter_client: Arc<ScouterApiClient>,
 }

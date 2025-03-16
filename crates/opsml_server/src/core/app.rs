@@ -1,4 +1,5 @@
 use crate::core::router::create_router;
+use crate::core::scouter;
 use crate::core::setup::{initialize_default_user, setup_components};
 use crate::core::state::AppState;
 use anyhow::Ok;
@@ -10,7 +11,7 @@ use tracing::{info, warn};
 
 pub async fn create_app() -> Result<Router> {
     // setup components (config, logging, storage client)
-    let (config, storage_client, sql_client) = setup_components().await?;
+    let (config, storage_client, sql_client, scouter) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
 
     // Initialize default user if none exists
@@ -29,6 +30,7 @@ pub async fn create_app() -> Result<Router> {
         )),
         config: Arc::new(config),
         storage_settings: Arc::new(storage_settings),
+        api_client: Arc::new(scouter),
     });
 
     info!("✅ Application state created");
