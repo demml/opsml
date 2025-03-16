@@ -14,12 +14,6 @@ pub async fn create_app() -> Result<Router> {
     let (config, storage_client, sql_client, scouter) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
 
-    // Initialize default user if none exists
-    if let Err(e) = initialize_default_user(&sql_client).await {
-        // Log error but don't fail startup
-        warn!("Failed to initialize default user: {}", e);
-    }
-
     // Create shared state for the application (storage client, auth manager, config)
     let app_state = Arc::new(AppState {
         storage_client: Arc::new(storage_client),
@@ -30,8 +24,15 @@ pub async fn create_app() -> Result<Router> {
         )),
         config: Arc::new(config),
         storage_settings: Arc::new(storage_settings),
-        api_client: Arc::new(scouter),
+        scouter_client: Arc::new(scouter),
     });
+
+    // Initialize default user if none exists
+    if let Err(e) = initialize_default_user(&app_state.sql_client, &app_state.scouter_client).await
+    {
+        // Log error but don't fail startup
+        warn!("Failed to initialize default user: {}", e);
+    }
 
     info!("✅ Application state created");
 

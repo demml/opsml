@@ -1,9 +1,11 @@
 use anyhow::Result;
+use axum::Json;
 use opsml_client::{RequestType, Routes};
 
 use opsml_error::{ApiError, ServerError};
 use opsml_settings::config::ScouterSettings;
 
+use opsml_sql::schemas::User;
 /// Route for debugging information
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
@@ -24,6 +26,7 @@ pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<Sco
         client,
         base_path,
         enabled,
+        bootstrap_token: settings.bootstrap_token.clone(),
     })
 }
 
@@ -32,6 +35,7 @@ pub struct ScouterApiClient {
     pub client: Client,
     pub base_path: String,
     pub enabled: bool,
+    pub bootstrap_token: String,
 }
 
 impl ScouterApiClient {
@@ -129,5 +133,32 @@ impl ScouterApiClient {
             .await?;
 
         Ok(response)
+    }
+
+    /// Create the initial user in scouter
+    /// This is used to create the first users shared between scouter and opsml and is only used once
+    /// during the initial setup of the system if no users exist
+    pub async fn create_initial_user(&mut self, user: &User) -> Result<Response, ApiError> {
+        let user_val = serde_json::to_value(user).map_err(|e| {
+            ApiError::Error(format!("Failed to convert user to json with error: {}", e))
+        })?;
+
+        // create header to X-Bootstrap-Token
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "X-Bootstrap-Token",
+            self.bootstrap_token.parse().map_err(|e| {
+                ApiError::Error(format!("Failed to parse bootstrap token with error: {}", e))
+            })?,
+        );
+        self.request(
+            Routes::ScouterUsers,
+            RequestType::Post,
+            Some(user_val),
+            None,
+            Some(headers),
+            self.bootstrap_token.clone(),
+        )
+        .await
     }
 }
