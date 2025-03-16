@@ -26,6 +26,7 @@ base64 = { workspace = true }
 chrono = { workspace = true }
 mime_guess = { workspace = true }
 password-auth = { workspace = true }
+reqwest = { workspace = true }
 rust-embed = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
