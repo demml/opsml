@@ -1,3 +1,4 @@
+use crate::core::error::internal_server_error;
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
@@ -65,10 +66,7 @@ async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&user).await {
         error!("Failed to create user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to create user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to create user"));
     }
 
     info!("User {} created successfully", user.username);
@@ -77,10 +75,7 @@ async fn create_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-            )
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
         state
@@ -96,10 +91,7 @@ async fn create_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to create user in scouter"})),
-                )
+                internal_server_error(e, "Failed to create user in scouter")
             })?;
     }
     Ok(Json(UserResponse::from(user)))
@@ -148,10 +140,7 @@ async fn list_users(
         Ok(users) => users,
         Err(e) => {
             error!("Failed to list users: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to list users"})),
-            ));
+            return Err(internal_server_error(e, "Failed to list users"));
         }
     };
 
@@ -206,10 +195,7 @@ async fn update_user(
     // Save updated user to database
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to update user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to update user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to update user"));
     }
 
     info!("User {} updated successfully", user.username);
@@ -218,10 +204,7 @@ async fn update_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-            );
+            return internal_server_error(e, "Failed to exchange token for scouter");
         })?;
         state
             .scouter_client
@@ -236,10 +219,7 @@ async fn update_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to create user in scouter"})),
-                );
+                return internal_server_error(e, "Failed to create user in scouter");
             })?;
         info!("User {} updated in scouter", user.username);
     }
@@ -268,9 +248,9 @@ async fn delete_user(
         Ok(is_last) => is_last,
         Err(e) => {
             error!("Failed to check if user is last admin: {}", e);
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to check admin status"})),
+            return Err(internal_server_error(
+                e,
+                "Failed to check if user is last admin",
             ));
         }
     };
@@ -299,10 +279,7 @@ async fn delete_user(
             .await
             .map_err(|e| {
                 error!("Failed to delete user in scouter: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to delete user in scouter"})),
-                );
+                return internal_server_error(e, "Failed to delete user in scouter");
             })?;
 
         info!("User {} deleted in scouter", username);
@@ -311,10 +288,7 @@ async fn delete_user(
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
         error!("Failed to delete user: {}", e);
-        return Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to delete user"})),
-        ));
+        return Err(internal_server_error(e, "Failed to delete user"));
     }
 
     info!("User {} deleted successfully", username);

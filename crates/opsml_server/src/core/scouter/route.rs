@@ -1,5 +1,5 @@
+use crate::core::error::internal_server_error;
 use crate::core::scouter;
-use crate::core::scouter::types::UpdateProfileRequest;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
@@ -7,6 +7,7 @@ use axum::{
     extract::State, http::StatusCode, response::IntoResponse, routing::post, Extension, Json,
     Router,
 };
+use opsml_types::contracts::UpdateProfileRequest;
 
 use opsml_auth::permission::UserPermissions;
 use opsml_client::RequestType;
@@ -17,7 +18,7 @@ use reqwest::Response;
 use scouter_client::ProfileRequest;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::error;
+use tracing::{debug, error};
 
 async fn return_response(
     response: Response,
@@ -28,10 +29,7 @@ async fn return_response(
     // Get JSON body from Scouter response
     let body = response.json::<serde_json::Value>().await.map_err(|e| {
         error!("Failed to parse scouter response: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to parse scouter response"})),
-        )
+        internal_server_error(e, "Failed to parse scouter response")
     })?;
 
     // Pass through the status code and body from Scouter
@@ -49,18 +47,12 @@ pub async fn insert_drift_profile(
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-        )
+        internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let profile = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize profile request: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to serialize profile request"})),
-        )
+        internal_server_error(e, "Failed to serialize profile request")
     })?;
 
     let response = state
@@ -76,10 +68,7 @@ pub async fn insert_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to insert drift profile: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to insert drift profile"})),
-            )
+            internal_server_error(e, "Failed to insert drift profile")
         })?;
 
     // return
@@ -96,7 +85,7 @@ pub async fn update_drift_profile(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    if !perms.has_write_permission(&req.repository) {
+    if !perms.has_write_permission(&req.request.repository) {
         return Err((
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({"error": "User does not have write permission"})),
@@ -111,10 +100,7 @@ pub async fn update_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to get artifact key"})),
-            )
+            internal_server_error(e, "Failed to get artifact key")
         })?;
 
     let drift_path = artifact_key.storage_path().join(SaveName::Drift);
@@ -122,10 +108,7 @@ pub async fn update_drift_profile(
     // list files in the directory
     let files = state.storage_client.find(&drift_path).await.map_err(|e| {
         error!("Failed to list files in directory: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to list files in directory"})),
-        )
+        internal_server_error(e, "Failed to list files in directory")
     })?;
 
     // assert files is not empty
@@ -139,10 +122,7 @@ pub async fn update_drift_profile(
     let filename = find_drift_profile(&files, &drift_type)?;
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
         error!("Failed to get encryption key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to get encryption key"})),
-        )
+        return internal_server_error(e, "Failed to get encryption key");
     })?;
 
     save_encrypted_profile(
@@ -157,10 +137,7 @@ pub async fn update_drift_profile(
     // 2. Scouter task
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-        )
+        return internal_server_error(e, "Failed to exchange token for scouter");
     })?;
 
     let response = state
@@ -170,10 +147,7 @@ pub async fn update_drift_profile(
             RequestType::Put,
             Some(serde_json::to_value(&req.request).map_err(|e| {
                 error!("Failed to serialize profile request: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to serialize profile request"})),
-                )
+                internal_server_error(e, "Failed to serialize profile request")
             })?),
             None,
             None,
@@ -182,10 +156,7 @@ pub async fn update_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to update drift profile: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to update drift profile"})),
-            )
+            internal_server_error(e, "Failed to update drift profile")
         })?;
 
     return_response(response).await

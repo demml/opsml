@@ -1,9 +1,8 @@
 use scouter_client::ProfileRequest;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdateProfileRequest {
     pub uid: String,
-    pub repository: String,
     pub request: ProfileRequest,
 }

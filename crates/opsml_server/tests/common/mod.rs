@@ -15,7 +15,6 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
-use tokio::time::Duration;
 
 use std::{env, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
@@ -224,7 +223,7 @@ impl TestHelper {
         let current_dir = std::env::current_dir().unwrap();
 
         let base_path = format!(
-            "opsml_registries/opsml_data_registry/{}/{}/v{}",
+            "opsml_registries/opsml_model_registry/{}/{}/v{}",
             self.repository, self.name, self.version
         );
 
@@ -246,7 +245,7 @@ impl TestHelper {
         joined_path.to_str().unwrap().to_string()
     }
 
-    pub async fn create_card(&mut self) {
+    pub async fn create_modelcard(&mut self) {
         // 1. First create a card so we have something to get
         let card_version_request = CardVersionRequest {
             name: self.name.clone(),
@@ -259,14 +258,14 @@ impl TestHelper {
 
         // Create a test card with some data
         let card_request = CreateCardRequest {
-            card: Card::Data(DataCardClientRecord {
+            card: Card::Model(ModelCardClientRecord {
                 name: self.name.clone(),
                 repository: self.repository.clone(),
                 version: self.version.clone(),
                 tags: vec!["test".to_string()],
-                ..DataCardClientRecord::default()
+                ..ModelCardClientRecord::default()
             }),
-            registry_type: RegistryType::Data,
+            registry_type: RegistryType::Model,
             version_request: card_version_request,
         };
 
