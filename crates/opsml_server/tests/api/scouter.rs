@@ -5,19 +5,24 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
+use http_body_util::BodyExt;
 use opsml_crypt::encrypt_file;
 use opsml_types::contracts::{ArtifactKey, UpdateProfileRequest};
 use opsml_types::SaveName;
 use opsml_types::Suffix;
 use rand::Rng;
+use reqwest::header;
 use scouter_client::{DriftType, ProfileRequest, SpcDriftProfile};
 use std::path::PathBuf;
 
 fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
     let profile = SpcDriftProfile::default();
     let save_path = PathBuf::from(format!(
-        "opsml_registries/opsml_model_registry/{}/{}/v{}",
-        "space", "name", "1.0.0"
+        "opsml_registries/opsml_model_registry/{}/{}/v{}/{}",
+        "space",
+        "name",
+        "1.0.0",
+        SaveName::Drift
     ));
 
     let random_hex: String = rand::rng()
@@ -60,10 +65,12 @@ async fn test_scouter_routes_insert_profile() {
     let request = Request::builder()
         .uri("/opsml/api/scouter/profile")
         .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(body))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;
+
     assert_eq!(response.status(), StatusCode::OK);
 }
 

@@ -18,7 +18,7 @@ use reqwest::Response;
 use scouter_client::ProfileRequest;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
-use tracing::{debug, error};
+use tracing::{error, instrument};
 
 async fn return_response(
     response: Response,
@@ -71,8 +71,6 @@ pub async fn insert_drift_profile(
             internal_server_error(e, "Failed to insert drift profile")
         })?;
 
-    // return
-
     // Get status code from Scouter response
     return_response(response).await
 }
@@ -80,6 +78,7 @@ pub async fn insert_drift_profile(
 /// Update a drift profile. Two tasks are performed:
 /// 1. Dump updated profile to storage to ensure profiles are syncd (opsml)
 /// 2. Send the profile to scouter (scouter)
+#[instrument(skip_all)]
 pub async fn update_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -113,6 +112,7 @@ pub async fn update_drift_profile(
 
     // assert files is not empty
     if files.is_empty() {
+        error!("No files found in directory");
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"error": "No files found in directory"})),

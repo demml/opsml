@@ -120,7 +120,6 @@ pub async fn download_artifact(
     registry_type: &str,
     uid: Option<&str>,
 ) -> Result<DownloadResponse, ApiError> {
-    println!("{:?}", rpath);
     let key = if uid.is_none() {
         sql_client
             .get_artifact_key_from_path(rpath, registry_type)
