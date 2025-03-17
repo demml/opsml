@@ -7,22 +7,21 @@ use axum::{
     extract::State, http::StatusCode, response::IntoResponse, routing::post, Extension, Json,
     Router,
 };
-use opsml_crypt::encrypt_file;
 
 use opsml_auth::permission::UserPermissions;
 use opsml_client::RequestType;
 use opsml_sql::base::SqlClient;
-use opsml_types::contracts::UpdatedProfile;
+use opsml_types::RegistryType;
 use opsml_types::SaveName;
-use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
-use scouter_client::DriftProfile;
+use reqwest::Response;
 use scouter_client::ProfileRequest;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::path::PathBuf;
 use std::sync::Arc;
 use tracing::error;
 
-async fn return_response(response: Response) -> Result<(StatusCode, Json<serde_json::Value>)> {
+async fn return_response(
+    response: Response,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     // Get status code from Scouter response
     let status = response.status();
 
@@ -96,7 +95,7 @@ pub async fn update_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<UpdateProfileRequest>,
-) -> Result<impl IntoResponse, , (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_write_permission(&req.repository) {
         return Err((
             StatusCode::FORBIDDEN,
@@ -147,7 +146,7 @@ pub async fn update_drift_profile(
     })?;
 
     save_encrypted_profile(
-        req.request.profile,
+        &req.request.profile,
         &filename,
         &encryption_key,
         &state.storage_client,
@@ -189,16 +188,14 @@ pub async fn update_drift_profile(
             )
         })?;
 
-        return_response(response).await
+    return_response(response).await
 }
 
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new().route(
             &format!("{}/scouter/profile", prefix),
-            post(insert_drift_profile).
-            put(update_drift_profile),
-
+            post(insert_drift_profile).put(update_drift_profile),
         )
     }));
 
