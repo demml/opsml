@@ -27,7 +27,7 @@ pub fn find_drift_profile(
 }
 
 pub async fn save_encrypted_profile(
-    profile: String,
+    profile: &str,
     filename: &str,
     encryption_key: &[u8],
     storage_client: &StorageClientEnum,
