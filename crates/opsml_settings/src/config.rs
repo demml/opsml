@@ -88,6 +88,7 @@ pub struct AuthSettings {
     pub username: String,
     pub password: String,
     pub prod_token: Option<String>,
+    pub scouter_secret: String,
 }
 
 #[pyclass]
@@ -162,6 +163,15 @@ impl Default for OpsmlConfig {
                 if !using_client {
                     warn!(
                         "Using default secret for refreshing. 
+                        This is not recommended for production use."
+                    );
+                }
+                generate_default_secret()
+            }),
+            scouter_secret: env::var("OPSML_SCOUTER_SECRET").unwrap_or_else(|_| {
+                if !using_client {
+                    warn!(
+                        "Using default secret for scouter. 
                         This is not recommended for production use."
                     );
                 }
