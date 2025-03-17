@@ -21,6 +21,7 @@ pub async fn create_app() -> Result<Router> {
         auth_manager: Arc::new(AuthManager::new(
             &config.auth_settings.jwt_secret,
             &config.auth_settings.refresh_secret,
+            &config.auth_settings.scouter_secret,
         )),
         config: Arc::new(config),
         storage_settings: Arc::new(storage_settings),

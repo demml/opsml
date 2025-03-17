@@ -98,8 +98,28 @@ pub async fn auth_api_middleware(
                     .is_ok()
                 {
                     // Generate new tokens
-                    let new_access_token = state.auth_manager.generate_jwt(&user);
-                    let new_refresh_token = state.auth_manager.generate_refresh_token(&user);
+                    let new_access_token =
+                        state.auth_manager.generate_jwt(&user).map_err(|_| {
+                            (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                Json(AuthError {
+                                    error: "Server Error".to_string(),
+                                    message: "Failed to generate access token".to_string(),
+                                }),
+                            )
+                        })?;
+                    let new_refresh_token = state
+                        .auth_manager
+                        .generate_refresh_token(&user)
+                        .map_err(|_| {
+                            (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                Json(AuthError {
+                                    error: "Server Error".to_string(),
+                                    message: "Failed to generate refresh token".to_string(),
+                                }),
+                            )
+                        })?;
 
                     // Update refresh token in database
                     user.refresh_token = Some(new_refresh_token.clone());
