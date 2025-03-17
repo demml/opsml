@@ -14,9 +14,7 @@ use axum::{
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_client::RequestType;
-use opsml_error::error::ApiError;
 use opsml_sql::base::SqlClient;
-use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::schema::User;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -220,10 +218,10 @@ async fn update_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            (
+            return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-            )
+            );
         })?;
         state
             .scouter_client
@@ -238,11 +236,12 @@ async fn update_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                (
+                return (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(serde_json::json!({"error": "Failed to create user in scouter"})),
-                )
+                );
             })?;
+        info!("User {} updated in scouter", user.username);
     }
 
     Ok(Json(UserResponse::from(user)))
@@ -283,6 +282,32 @@ async fn delete_user(
         ));
     }
 
+    // Delete in scouter first
+    // (if we delete in opsml before scouter, we won't be able to get user and token)
+    if state.scouter_client.enabled {
+        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+            error!("Failed to exchange token for scouter: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+            );
+        })?;
+
+        state
+            .scouter_client
+            .delete_user(&username, exchange_token)
+            .await
+            .map_err(|e| {
+                error!("Failed to delete user in scouter: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to delete user in scouter"})),
+                );
+            })?;
+
+        info!("User {} deleted in scouter", username);
+    }
+
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
         error!("Failed to delete user: {}", e);
@@ -293,29 +318,6 @@ async fn delete_user(
     }
 
     info!("User {} deleted successfully", username);
-
-    // pass to scouter if enabled
-    if state.scouter_client.enabled {
-        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-            )
-        })?;
-
-        state
-            .scouter_client
-            .delete_user(&username, exchange_token)
-            .await
-            .map_err(|e| {
-                error!("Failed to delete user in scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to delete user in scouter"})),
-                )
-            })?;
-    }
 
     Ok(Json(serde_json::json!({"success": true})))
 }
