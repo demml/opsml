@@ -12,7 +12,7 @@ use tracing::{debug, info};
 /// Initialize a default admin user if no users exist in the database
 pub async fn initialize_default_user(
     sql_client: &SqlClientEnum,
-    scouter_client: &mut ScouterApiClient,
+    scouter_client: &ScouterApiClient,
 ) -> AnyhowResult<()> {
     // Check if any users exist
     let users = sql_client

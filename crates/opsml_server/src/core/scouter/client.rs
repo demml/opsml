@@ -165,7 +165,7 @@ impl ScouterApiClient {
     /// Create the initial user in scouter
     /// This is used to create the first users shared between scouter and opsml and is only used once
     /// during the initial setup of the system if no users exist
-    pub async fn create_initial_user(&mut self, user: &User) -> Result<Response, ApiError> {
+    pub async fn create_initial_user(&self, user: &User) -> Result<Response, ApiError> {
         let user_val = serde_json::to_value(user).map_err(|e| {
             ApiError::Error(format!("Failed to convert user to json with error: {}", e))
         })?;
