@@ -1,7 +1,5 @@
 use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
-use opsml_client::RequestType;
-use opsml_client::Routes;
 use opsml_colors::Colorize;
 use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
