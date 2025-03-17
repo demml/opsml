@@ -216,7 +216,7 @@ async fn test_opsml_server_card_stats_and_query() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_list_cards() {
+async fn test_opsml_server_card_list_cards() {
     let helper = TestHelper::new().await;
 
     let args = CardQueryArgs {
@@ -279,7 +279,7 @@ async fn test_opsml_server_list_cards() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_datacard_crud() {
+async fn test_opsml_server_card_datacard_crud() {
     let helper = TestHelper::new().await;
 
     let card_version_request = CardVersionRequest {
@@ -411,7 +411,7 @@ async fn test_opsml_server_datacard_crud() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_modelcard_crud() {
+async fn test_opsml_server_card_modelcard_crud() {
     let helper = TestHelper::new().await;
 
     let card_version_request = CardVersionRequest {
@@ -573,7 +573,7 @@ async fn test_opsml_server_modelcard_crud() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_experimentcard_crud() {
+async fn test_opsml_server_card_experimentcard_crud() {
     let helper = TestHelper::new().await;
 
     let card_version_request = CardVersionRequest {
@@ -704,7 +704,7 @@ async fn test_opsml_server_experimentcard_crud() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_auditcard_crud() {
+async fn test_opsml_server_card_auditcard_crud() {
     let helper = TestHelper::new().await;
 
     let card_version_request = CardVersionRequest {
@@ -836,7 +836,7 @@ async fn test_opsml_server_auditcard_crud() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_get_card() {
+async fn test_opsml_server_card_get_card() {
     let helper = TestHelper::new().await;
 
     // 1. First create a card so we have something to get
@@ -919,7 +919,7 @@ async fn test_opsml_server_get_card() {
 }
 
 #[tokio::test]
-async fn test_opsml_server_get_readme() {
+async fn test_opsml_server_card_get_readme() {
     let mut helper = TestHelper::new().await;
 
     helper.create_card().await;
