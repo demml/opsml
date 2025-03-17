@@ -23,6 +23,7 @@ use opsml_error::error::ServerError;
 
 use base64::prelude::*;
 use mime_guess::mime;
+use opsml_sql::schemas::User;
 /// Route for debugging information
 use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -33,19 +34,6 @@ use tempfile::tempdir;
 use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
-
-pub async fn insert_drift_profile(
-    State(data): State<Arc<AppState>>,
-    Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<ProfileRequest>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    if !perms.has_write_permission(&body.repository) {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(json!({ "error": "Permission denied" })),
-        ));
-    }
-}
 
 pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {

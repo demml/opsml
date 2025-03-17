@@ -1,3 +1,4 @@
+use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
     CreateUserRequest, UpdateUserRequest, UserListResponse, UserResponse,
@@ -12,12 +13,31 @@ use axum::{
     Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_client::RequestType;
+use opsml_error::error::ApiError;
 use opsml_sql::base::SqlClient;
+use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::schema::User;
 use password_auth::generate_hash;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{error, info};
+
+async fn query_user(sql_client: &SqlClientEnum, username: &str) -> Result<User, ApiError> {
+    // Get user from database
+    let user = match sql_client.get_user(username).await {
+        Ok(Some(user)) => user,
+        Ok(None) => {
+            return Err(ApiError::Error("User not found".to_string()));
+        }
+        Err(e) => {
+            error!("Failed to get user: {}", e);
+            return Err(ApiError::Error("Failed to get user".to_string()));
+        }
+    };
+
+    Ok(user)
+}
 
 /// Create a new user via SDK
 ///
@@ -70,6 +90,39 @@ async fn create_user(
     }
 
     info!("User {} created successfully", user.username);
+
+    // pass to scouter if enabled
+    if state.scouter_client.enabled {
+        let exchange_token = state
+            .auth_manager
+            .exchange_token_for_scouter(&user)
+            .await
+            .map_err(|e| {
+                error!("Failed to exchange token for scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+                )
+            })?;
+        state
+            .scouter_client
+            .request(
+                scouter::Routes::Users,
+                RequestType::Post,
+                Some(serde_json::json!(&user)),
+                None,
+                None,
+                exchange_token,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to create user in scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to create user in scouter"})),
+                )
+            })?;
+    }
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -91,22 +144,15 @@ async fn get_user(
     }
 
     // Get user from database
-    let user = match state.sql_client.get_user(&username).await {
-        Ok(Some(user)) => user,
-        Ok(None) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({"error": "User not found"})),
-            ));
-        }
-        Err(e) => {
+    let user = query_user(&state.sql_client, &username)
+        .await
+        .map_err(|e| {
             error!("Failed to get user: {}", e);
-            return Err((
+            (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(serde_json::json!({"error": "Failed to get user"})),
-            ));
-        }
-    };
+            )
+        })?;
 
     Ok(Json(UserResponse::from(user)))
 }
@@ -196,6 +242,40 @@ async fn update_user(
     }
 
     info!("User {} updated successfully", user.username);
+
+    // pass to scouter if enabled
+    if state.scouter_client.enabled {
+        let exchange_token = state
+            .auth_manager
+            .exchange_token_for_scouter(&user)
+            .await
+            .map_err(|e| {
+                error!("Failed to exchange token for scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+                )
+            })?;
+        state
+            .scouter_client
+            .request(
+                scouter::Routes::Users,
+                RequestType::Put,
+                Some(serde_json::json!(&user)),
+                None,
+                None,
+                exchange_token,
+            )
+            .await
+            .map_err(|e| {
+                error!("Failed to create user in scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to create user in scouter"})),
+                )
+            })?;
+    }
+
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -244,6 +324,45 @@ async fn delete_user(
     }
 
     info!("User {} deleted successfully", username);
+
+    // pass to scouter if enabled
+    if state.scouter_client.enabled {
+        // Get user from database
+        let user = query_user(&state.sql_client, &username)
+            .await
+            .map_err(|e| {
+                error!("Failed to get user: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to get user"})),
+                )
+            })?;
+
+        let exchange_token = state
+            .auth_manager
+            .exchange_token_for_scouter(&user)
+            .await
+            .map_err(|e| {
+                error!("Failed to exchange token for scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+                )
+            })?;
+
+        state
+            .scouter_client
+            .delete_user(&username, exchange_token)
+            .await
+            .map_err(|e| {
+                error!("Failed to delete user in scouter: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({"error": "Failed to delete user in scouter"})),
+                )
+            })?;
+    }
+
     Ok(Json(serde_json::json!({"success": true})))
 }
 

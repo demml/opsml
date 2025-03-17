@@ -1,5 +1,5 @@
 use anyhow::Result;
-use opsml_client::{RequestType, Routes};
+use opsml_client::RequestType;
 
 use opsml_error::{ApiError, ServerError};
 use opsml_settings::config::ScouterSettings;
@@ -9,6 +9,34 @@ use opsml_sql::schemas::User;
 use reqwest::Response;
 use reqwest::{header::HeaderMap, Client};
 use serde_json::Value;
+
+#[derive(Debug, Clone)]
+pub enum Routes {
+    DriftCustom,
+    DriftPsi,
+    DriftSpc,
+    Profile,
+    ProfileStatus,
+    Users,
+}
+
+impl Routes {
+    pub fn as_str(&self) -> &str {
+        match self {
+            // Scouter Drift Routes
+            Routes::DriftCustom => "scouter/drift/custom",
+            Routes::DriftPsi => "scouter/drift/psi",
+            Routes::DriftSpc => "scouter/drift/spc",
+
+            // Scouter Profile Routes
+            Routes::Profile => "scouter/profile",
+            Routes::ProfileStatus => "scouter/profile/status",
+
+            // Scouter User Routes
+            Routes::Users => "scouter/users",
+        }
+    }
+}
 
 const TIMEOUT_SECS: u64 = 30;
 pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<ScouterApiClient> {
@@ -112,7 +140,7 @@ impl ScouterApiClient {
     }
 
     pub async fn request(
-        &mut self,
+        &self,
         route: Routes,
         request_type: RequestType,
         body_params: Option<Value>,
@@ -151,7 +179,7 @@ impl ScouterApiClient {
             })?,
         );
         self.request(
-            Routes::ScouterUsers,
+            Routes::Users,
             RequestType::Post,
             Some(user_val),
             None,
@@ -159,5 +187,20 @@ impl ScouterApiClient {
             self.bootstrap_token.clone(),
         )
         .await
+    }
+
+    pub async fn delete_user(
+        &self,
+        username: &str,
+        bearer_token: String,
+    ) -> Result<Response, ApiError> {
+        let url = format!("{}/{}/{}", self.base_path, Routes::Users.as_str(), username);
+
+        self.client
+            .delete(url)
+            .bearer_auth(&bearer_token)
+            .send()
+            .await
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))
     }
 }
