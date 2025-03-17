@@ -131,6 +131,15 @@ mod tests {
         pub fn new() -> Self {
             let mut server = mockito::Server::new();
 
+            // insert user mock
+            server
+                .mock("POST", "/scouter/users")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(r#"{"status": "success", "message": "created_user"}"#)
+                .create();
+
+            // insert profile mock
             server
                 .mock("POST", "/scouter/profile")
                 .with_status(200)
@@ -138,6 +147,7 @@ mod tests {
                 .with_body(r#"{"status": "success", "message": "Profile created"}"#)
                 .create();
 
+            // update profile mock
             server
                 .mock("PUT", "/scouter/profile")
                 .with_status(200)
