@@ -86,7 +86,13 @@ pub async fn api_login_handler(
     // need to check if current refresh and jwt tokens are valid and return them if they are
 
     // generate JWT token
-    let jwt_token = state.auth_manager.generate_jwt(&user);
+    let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
+        error!("Failed to generate JWT token: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
 
     // check if refresh token is already set.
     // if it is, check if its valid and return it
@@ -101,7 +107,17 @@ pub async fn api_login_handler(
         }
     }
 
-    let refresh_token = state.auth_manager.generate_refresh_token(&user);
+    let refresh_token = state
+        .auth_manager
+        .generate_refresh_token(&user)
+        .map_err(|e| {
+            error!("Failed to generate refresh token: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
+
     user.refresh_token = Some(refresh_token);
 
     // set refresh token in db
@@ -112,6 +128,8 @@ pub async fn api_login_handler(
             Json(serde_json::json!({})),
         )
     })?;
+
+    // update scouter with new refresh token
 
     Ok(Json(JwtToken { token: jwt_token }))
 }
@@ -145,8 +163,23 @@ async fn ui_login_handler(
         })?;
 
     // generate JWT token
-    let jwt_token = state.auth_manager.generate_jwt(&user);
-    let refresh_token = state.auth_manager.generate_refresh_token(&user);
+    let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
+        error!("Failed to generate JWT token: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({})),
+        )
+    })?;
+    let refresh_token = state
+        .auth_manager
+        .generate_refresh_token(&user)
+        .map_err(|e| {
+            error!("Failed to generate refresh token: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
 
     user.refresh_token = Some(refresh_token);
 
@@ -202,10 +235,25 @@ pub async fn api_refresh_token_handler(
         let mut user = get_user(&state, &claims.sub).await?;
 
         // generate JWT token
-        let jwt_token = state.auth_manager.generate_jwt(&user);
+        let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
+            error!("Failed to generate JWT token: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({})),
+            )
+        })?;
 
         // generate refresh token
-        let refresh_token = state.auth_manager.generate_refresh_token(&user);
+        let refresh_token = state
+            .auth_manager
+            .generate_refresh_token(&user)
+            .map_err(|e| {
+                error!("Failed to generate refresh token: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(serde_json::json!({})),
+                )
+            })?;
 
         user.refresh_token = Some(refresh_token);
 
