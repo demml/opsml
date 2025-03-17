@@ -80,15 +80,17 @@ pub async fn auth_api_middleware(
                     )
                 })?;
 
-            let mut user = get_user(&state, &expired_claims.sub).await.map_err(|_| {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    Json(AuthError {
-                        error: "Unauthorized".to_string(),
-                        message: "User not found".to_string(),
-                    }),
-                )
-            })?;
+            let mut user = get_user(&state.sql_client, &expired_claims.sub)
+                .await
+                .map_err(|_| {
+                    (
+                        StatusCode::UNAUTHORIZED,
+                        Json(AuthError {
+                            error: "Unauthorized".to_string(),
+                            message: "User not found".to_string(),
+                        }),
+                    )
+                })?;
 
             // Validate stored refresh token
             if let Some(stored_refresh) = user.refresh_token.as_ref() {

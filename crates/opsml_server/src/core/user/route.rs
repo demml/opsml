@@ -23,22 +23,6 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tracing::{error, info};
 
-async fn query_user(sql_client: &SqlClientEnum, username: &str) -> Result<User, ApiError> {
-    // Get user from database
-    let user = match sql_client.get_user(username).await {
-        Ok(Some(user)) => user,
-        Ok(None) => {
-            return Err(ApiError::Error("User not found".to_string()));
-        }
-        Err(e) => {
-            error!("Failed to get user: {}", e);
-            return Err(ApiError::Error("Failed to get user".to_string()));
-        }
-    };
-
-    Ok(user)
-}
-
 /// Create a new user via SDK
 ///
 /// Requires admin permissions
@@ -141,15 +125,7 @@ async fn get_user(
     }
 
     // Get user from database
-    let user = query_user(&state.sql_client, &username)
-        .await
-        .map_err(|e| {
-            error!("Failed to get user: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({"error": "Failed to get user"})),
-            )
-        })?;
+    let user = get_user_from_db(&state.sql_client, &username).await?;
 
     Ok(Json(UserResponse::from(user)))
 }
@@ -207,7 +183,7 @@ async fn update_user(
     }
 
     // Get the current user state
-    let mut user = get_user_from_db(&state, &username).await?;
+    let mut user = get_user_from_db(&state.sql_client, &username).await?;
 
     // Update fields based on request
     if let Some(password) = update_req.password {
