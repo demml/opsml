@@ -93,17 +93,14 @@ async fn create_user(
 
     // pass to scouter if enabled
     if state.scouter_client.enabled {
-        let exchange_token = state
-            .auth_manager
-            .exchange_token_for_scouter(&user)
-            .await
-            .map_err(|e| {
-                error!("Failed to exchange token for scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-                )
-            })?;
+        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+            error!("Failed to exchange token for scouter: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+            )
+        })?;
+
         state
             .scouter_client
             .request(
@@ -245,17 +242,13 @@ async fn update_user(
 
     // pass to scouter if enabled
     if state.scouter_client.enabled {
-        let exchange_token = state
-            .auth_manager
-            .exchange_token_for_scouter(&user)
-            .await
-            .map_err(|e| {
-                error!("Failed to exchange token for scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-                )
-            })?;
+        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+            error!("Failed to exchange token for scouter: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+            )
+        })?;
         state
             .scouter_client
             .request(
@@ -327,28 +320,13 @@ async fn delete_user(
 
     // pass to scouter if enabled
     if state.scouter_client.enabled {
-        // Get user from database
-        let user = query_user(&state.sql_client, &username)
-            .await
-            .map_err(|e| {
-                error!("Failed to get user: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to get user"})),
-                )
-            })?;
-
-        let exchange_token = state
-            .auth_manager
-            .exchange_token_for_scouter(&user)
-            .await
-            .map_err(|e| {
-                error!("Failed to exchange token for scouter: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
-                )
-            })?;
+        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+            error!("Failed to exchange token for scouter: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({"error": "Failed to exchange token for scouter"})),
+            )
+        })?;
 
         state
             .scouter_client

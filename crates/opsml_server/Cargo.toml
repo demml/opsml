@@ -21,6 +21,7 @@ opsml-sql = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
+scouter-client = { workspace = true }
 
 base64 = { workspace = true }
 chrono = { workspace = true }
