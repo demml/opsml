@@ -1,6 +1,7 @@
+use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_colors::Colorize;
-use opsml_settings::config::OpsmlConfig;
+use opsml_settings::config::{OpsmlConfig, ScouterSettings};
 use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
 use opsml_sql::schemas::User;
@@ -9,7 +10,10 @@ use rusty_logging::setup_logging;
 use tracing::{debug, info};
 
 /// Initialize a default admin user if no users exist in the database
-pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult<()> {
+pub async fn initialize_default_user(
+    sql_client: &SqlClientEnum,
+    scouter_client: &ScouterApiClient,
+) -> AnyhowResult<()> {
     // Check if any users exist
     let users = sql_client
         .get_users()
@@ -59,10 +63,39 @@ pub async fn initialize_default_user(sql_client: &SqlClientEnum) -> AnyhowResult
 
     info!("✅ Created default admin and guest user (change password on first login)",);
 
+    if scouter_client.enabled {
+        // send admin user to scouter
+        scouter_client
+            .create_initial_user(&admin_user)
+            .await
+            .context(Colorize::purple(
+                "❌ Failed to create default admin in scouter",
+            ))?;
+
+        // send guest user to scouter
+        scouter_client
+            .create_initial_user(&guest_user)
+            .await
+            .context(Colorize::purple(
+                "❌ Failed to create default guest in scouter",
+            ))?;
+
+        info!(
+            "✅ Created default admin and guest user in Scouter (change password on first login)",
+        );
+    }
+
+    // if scouter_client is enabled, pass the default user and admin to scouter
+
     Ok(())
 }
 
-pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum, SqlClientEnum)> {
+pub async fn setup_components() -> AnyhowResult<(
+    OpsmlConfig,
+    StorageClientEnum,
+    SqlClientEnum,
+    ScouterApiClient,
+)> {
     // setup config
     let config = OpsmlConfig::default();
 
@@ -89,5 +122,24 @@ pub async fn setup_components() -> AnyhowResult<(OpsmlConfig, StorageClientEnum,
 
     info!("✅ Sql client: {}", sql.name());
 
-    Ok((config, storage, sql))
+    let scouter = setup_scouter_components(&config.scouter_settings)
+        .await
+        .context(Colorize::purple("❌ Failed to setup scouter client"))?;
+
+    if !scouter.base_path.is_empty() {
+        info!("✅ Scouter client: {}", scouter.base_path);
+    }
+
+    Ok((config, storage, sql, scouter))
+}
+
+pub async fn setup_scouter_components(
+    settings: &ScouterSettings,
+) -> AnyhowResult<ScouterApiClient> {
+    // setup config
+    let client = build_scouter_http_client(settings)
+        .await
+        .context(Colorize::purple("❌ Failed to setup scouter client"))?;
+
+    Ok(client)
 }

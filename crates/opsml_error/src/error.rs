@@ -237,6 +237,9 @@ pub enum AuthError {
 
     #[error("Refresh token is invalid")]
     InvalidRefreshToken,
+
+    #[error("Error creating JWT token")]
+    JWTError,
 }
 
 #[derive(Error, Debug)]

@@ -311,11 +311,11 @@ impl SqlClient for SqlClientEnum {
         }
     }
 
-    async fn is_last_admin(&self) -> Result<bool, SqlError> {
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.is_last_admin().await,
-            SqlClientEnum::Sqlite(client) => client.is_last_admin().await,
-            SqlClientEnum::MySql(client) => client.is_last_admin().await,
+            SqlClientEnum::Postgres(client) => client.is_last_admin(username).await,
+            SqlClientEnum::Sqlite(client) => client.is_last_admin(username).await,
+            SqlClientEnum::MySql(client) => client.is_last_admin(username).await,
         }
     }
 

@@ -17,7 +17,6 @@ use tracing::warn;
 pub struct ApiSettings {
     pub base_url: String,
     pub opsml_dir: String,
-    pub scouter_dir: String,
     pub username: String,
     pub password: String,
     pub auth_token: String,
@@ -60,7 +59,6 @@ impl OpsmlStorageSettings {
             api_settings: ApiSettings {
                 base_url: "".to_string(),
                 opsml_dir: "".to_string(),
-                scouter_dir: "".to_string(),
                 username: "guest".to_string(),
                 password: "guest".to_string(),
                 auth_token: "".to_string(),
@@ -88,15 +86,16 @@ pub struct AuthSettings {
     pub username: String,
     pub password: String,
     pub prod_token: Option<String>,
+    pub scouter_secret: String,
 }
 
 #[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
-    pub server_uri: Option<String>,
-    pub username: Option<String>,
-    pub password: Option<String>,
-    pub auth: bool,
+    pub server_uri: String,
+
+    // token used to send initialization requests to the scouter server
+    pub bootstrap_token: String,
 }
 
 /// OpsmlConfig for use with both server and client implementations
@@ -139,13 +138,12 @@ impl Default for OpsmlConfig {
 
         // set scouter settings
         let scouter_settings = ScouterSettings {
-            server_uri: env::var("SCOUTER_SERVER_URI").ok(),
-            username: env::var("SCOUTER_USERNAME").ok(),
-            password: env::var("SCOUTER_PASSWORD").ok(),
-            auth: env::var("SCOUTER_AUTH")
-                .unwrap_or_else(|_| "false".to_string())
-                .parse()
-                .unwrap_or(false),
+            server_uri: env::var("SCOUTER_SERVER_URI").unwrap_or("".to_string()),
+            bootstrap_token: env::var(
+                "SCOUTER_BOOTSTRAP_TOKEN
+            ",
+            )
+            .unwrap_or(generate_default_secret()),
         };
 
         // set auth settings
@@ -163,6 +161,15 @@ impl Default for OpsmlConfig {
                 if !using_client {
                     warn!(
                         "Using default secret for refreshing. 
+                        This is not recommended for production use."
+                    );
+                }
+                generate_default_secret()
+            }),
+            scouter_secret: env::var("OPSML_SCOUTER_SECRET").unwrap_or_else(|_| {
+                if !using_client {
+                    warn!(
+                        "Using default secret for scouter. 
                         This is not recommended for production use."
                     );
                 }
@@ -217,7 +224,7 @@ impl Default for OpsmlConfig {
 }
 
 fn generate_default_secret() -> String {
-    // Creates a deterministic key for development purposes
+    // Creates a deterministic key for development/initialization purposes
     // Should be replaced with a proper secret in production
     let mut key = [0u8; 32];
     for (i, item) in key.iter_mut().enumerate() {
@@ -308,7 +315,6 @@ impl OpsmlConfig {
             api_settings: ApiSettings {
                 base_url: self.opsml_tracking_uri.clone(),
                 opsml_dir: "opsml/api".to_string(),
-                scouter_dir: "scouter".to_string(),
                 username: self.auth_settings.username.clone(),
                 password: self.auth_settings.password.clone(),
                 auth_token: "".to_string(),
@@ -480,10 +486,7 @@ mod tests {
         assert_eq!(opsml_config.auth_settings.jwt_secret.len(), 32);
         assert_eq!(opsml_config.auth_settings.username, "guest");
         assert_eq!(opsml_config.auth_settings.password, "guest");
-        assert_eq!(opsml_config.scouter_settings.server_uri, None);
-        assert_eq!(opsml_config.scouter_settings.username, None);
-        assert_eq!(opsml_config.scouter_settings.password, None);
-        assert!(!opsml_config.scouter_settings.auth);
+        assert_eq!(opsml_config.scouter_settings.server_uri, "");
 
         cleanup();
     }

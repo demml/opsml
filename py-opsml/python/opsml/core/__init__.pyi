@@ -221,7 +221,6 @@ class ApiSettings:
     base_url: str
     use_auth: bool
     opsml_dir: str
-    scouter_dir: str
     username: str
     password: str
     auth_token: str

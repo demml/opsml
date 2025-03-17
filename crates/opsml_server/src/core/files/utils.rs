@@ -22,13 +22,16 @@ use uuid::Uuid;
 
 #[instrument(skip_all)]
 pub async fn create_artifact_key(
-    sql_client: Arc<SqlClientEnum>,
-    encryption_key: Vec<u8>,
+    sql_client: &SqlClientEnum,
+    encryption_key: &[u8],
     uid: &str,
     registry_type: &str,
     storage_key: &str,
 ) -> Result<ArtifactKey, ApiError> {
-    debug!("Creating artifact key for: {:?}", uid);
+    debug!(
+        "Creating artifact key for: {:?} and path {:?}",
+        uid, storage_key
+    );
     let salt = generate_salt()?;
 
     // create derived key
@@ -47,14 +50,14 @@ pub async fn create_artifact_key(
         storage_key: storage_key.to_string(),
     };
 
-    // clone the artifact_key before moving it into the async block
-    let artifact_key_clone = artifact_key.clone();
     // Spawn task and add to managed set
-    tokio::spawn(async move {
-        if let Err(e) = sql_client.insert_artifact_key(&artifact_key_clone).await {
+    sql_client
+        .insert_artifact_key(&artifact_key)
+        .await
+        .map_err(|e| {
             error!("Failed to insert artifact key: {}", e);
-        }
-    });
+            ApiError::Error("Failed to insert artifact key".to_string())
+        })?;
 
     Ok(artifact_key)
 }
@@ -117,6 +120,7 @@ pub async fn download_artifact(
     registry_type: &str,
     uid: Option<&str>,
 ) -> Result<DownloadResponse, ApiError> {
+    println!("{:?}", rpath);
     let key = if uid.is_none() {
         sql_client
             .get_artifact_key_from_path(rpath, registry_type)
@@ -183,8 +187,8 @@ pub async fn download_artifact(
 }
 
 pub async fn get_artifact_key(
-    sql_client: Arc<SqlClientEnum>,
-    encryption_key: Vec<u8>,
+    sql_client: &SqlClientEnum,
+    encryption_key: &[u8],
     registry_type: &str,
     storage_key: &str,
 ) -> Result<ArtifactKey, ApiError> {
@@ -198,14 +202,7 @@ pub async fn get_artifact_key(
         Some(key) => Ok(key),
         None => {
             let uid = Uuid::new_v4().to_string();
-            create_artifact_key(
-                sql_client.clone(),
-                encryption_key,
-                &uid,
-                registry_type,
-                storage_key,
-            )
-            .await
+            create_artifact_key(sql_client, encryption_key, &uid, registry_type, storage_key).await
         }
     }
 }
