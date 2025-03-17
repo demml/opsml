@@ -72,7 +72,7 @@ pub async fn api_login_handler(
         .to_string();
 
     // get user from database
-    let mut user = get_user(&state, &username).await?;
+    let mut user = get_user(&state.sql_client, &username).await?;
     // check if password is correct
     state
         .auth_manager
@@ -151,7 +151,7 @@ async fn ui_login_handler(
     // get Username and Password from headers
 
     // get user from database
-    let mut user = get_user(&state, &req.username).await?;
+    let mut user = get_user(&state.sql_client, &req.username).await?;
 
     // check if password is correct
     state
@@ -232,7 +232,7 @@ pub async fn api_refresh_token_handler(
             })?;
 
         // get user from database
-        let mut user = get_user(&state, &claims.sub).await?;
+        let mut user = get_user(&state.sql_client, &claims.sub).await?;
 
         // generate JWT token
         let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
