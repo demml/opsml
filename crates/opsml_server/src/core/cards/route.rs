@@ -223,8 +223,8 @@ pub async fn create_card(
 
     // (3) ------- Create the artifact key for card artifact encryption
     let key = create_artifact_key(
-        state.sql_client.clone(),
-        state.storage_settings.encryption_key.clone(),
+        &state.sql_client,
+        &state.storage_settings.encryption_key,
         &uid,
         &registry_type,
         &card_uri,
@@ -659,7 +659,7 @@ pub async fn get_readme(
         Suffix::Md
     );
 
-    let download_result = download_artifact(
+    match download_artifact(
         state.storage_client.clone(),
         state.sql_client.clone(),
         &lpath,
@@ -667,14 +667,23 @@ pub async fn get_readme(
         &params.registry_type.to_string(),
         None,
     )
-    .await;
-
-    let content = std::fs::read_to_string(&lpath).unwrap_or_default();
-
-    Ok(Json(ReadeMe {
-        readme: content,
-        exists: download_result.is_ok(),
-    }))
+    .await
+    {
+        Ok(_) => {
+            let content = std::fs::read_to_string(&lpath).unwrap_or_default();
+            Ok(Json(ReadeMe {
+                readme: content,
+                exists: true,
+            }))
+        }
+        Err(e) => {
+            error!("Failed to download artifact: {}", e);
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("Failed to download artifact: {}", e) })),
+            ))
+        }
+    }
 }
 
 #[instrument(skip_all)]
@@ -703,8 +712,8 @@ pub async fn create_readme(
 
     // check if artifact key exists before creating a new key
     let key = get_artifact_key(
-        state.sql_client.clone(),
-        state.storage_settings.encryption_key.clone(),
+        &state.sql_client,
+        &state.storage_settings.encryption_key,
         &req.registry_type.to_string(),
         &readme_path,
     )

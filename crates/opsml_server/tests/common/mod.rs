@@ -17,7 +17,6 @@ use opsml_types::contracts::*;
 use opsml_types::*;
 use tokio::time::Duration;
 
-use std::path::PathBuf;
 use std::{env, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
@@ -46,22 +45,6 @@ fn get_connection_uri() -> String {
             .to_str()
             .expect("Failed to convert path to string")
     )
-}
-
-// create json
-fn create_card_metadata(key: ArtifactKey) {
-    let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
-    let path = format!(
-        "opsml_registries/opsml_data_registry/{}/{}/v{}",
-        "space", "name", "1.0.0"
-    );
-    std::fs::create_dir_all(path.clone()).unwrap();
-    let lpath = PathBuf::from(path).join("Card.json");
-    std::fs::write(&lpath, json).unwrap();
-
-    let encryption_key = key.get_decrypt_key().unwrap();
-
-    encrypt_file(&lpath, &encryption_key).unwrap();
 }
 
 async fn setup() {
@@ -99,6 +82,24 @@ impl ScouterServer {
             .create_async()
             .await;
 
+        // update user mock
+        server
+            .mock("PUT", "/scouter/users")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "updated_user"}"#)
+            .create_async()
+            .await;
+
+        // delete user mock
+        server
+            .mock("DELETE", "/scouter/users")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "deleted_user"}"#)
+            .create_async()
+            .await;
+
         // insert profile mock
         server
             .mock("POST", "/scouter/profile")
@@ -117,6 +118,8 @@ impl ScouterServer {
             .create_async()
             .await;
 
+        // delete user mock
+
         Self {
             url: server.url(),
             server,
@@ -130,7 +133,7 @@ pub struct TestHelper {
     pub name: String,
     pub repository: String,
     pub version: String,
-    key: ArtifactKey,
+    pub key: ArtifactKey,
 }
 
 impl TestHelper {
@@ -283,8 +286,5 @@ impl TestHelper {
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
         self.key = create_response.key.clone();
-
-        // sleep for 1 sec
-        tokio::time::sleep(Duration::from_millis(100)).await;
     }
 }
