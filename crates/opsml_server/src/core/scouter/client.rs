@@ -1,5 +1,4 @@
 use anyhow::Result;
-use axum::Json;
 use opsml_client::{RequestType, Routes};
 
 use opsml_error::{ApiError, ServerError};
