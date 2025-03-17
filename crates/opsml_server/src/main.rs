@@ -50,6 +50,7 @@ mod tests {
         http::{header, Request, StatusCode},
     };
     use http_body_util::BodyExt; // for `collect`
+    use mockito;
     use opsml_client::*;
     use opsml_crypt::encrypt_file;
     use opsml_semver::VersionType;
@@ -122,6 +123,32 @@ mod tests {
         client.query(&script).await;
     }
 
+    pub struct ScouterServer {
+        pub server: mockito::ServerGuard,
+    }
+
+    impl ScouterServer {
+        pub fn new() -> Self {
+            let mut server = mockito::Server::new();
+
+            server
+                .mock("POST", "/scouter/profile")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(r#"{"status": "success", "message": "Profile created"}"#)
+                .create();
+
+            server
+                .mock("PUT", "/scouter/profile")
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+                .create();
+
+            Self { server }
+        }
+    }
+
     pub struct TestHelper {
         app: Router,
         token: JwtToken,
@@ -133,10 +160,14 @@ mod tests {
 
     impl TestHelper {
         pub async fn new() -> Self {
+            let scouter_server = ScouterServer::new();
+
             // set OPSML_AUTH to true
             env::set_var("RUST_LOG", "debug");
             env::set_var("LOG_LEVEL", "debug");
             env::set_var("LOG_JSON", "false");
+            env::set_var("OPSML_AUTH", "true");
+            env::set_var("SCOUTER_SERVER_URI", scouter_server.server.url());
 
             cleanup();
 
