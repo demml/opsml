@@ -5,6 +5,7 @@ use crate::core::debug::route::get_debug_router;
 use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
 use crate::core::health::route::get_health_router;
+use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
 use crate::core::ui::get_ui_router;
@@ -40,6 +41,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let run_routes = get_experiment_router(ROUTE_PREFIX).await?;
     let auth_routes = get_auth_router(ROUTE_PREFIX).await?;
     let user_routes = get_user_router(ROUTE_PREFIX).await?;
+    let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
     let ui_routes = get_ui_router().await?;
 
     // merge all the routes except the auth routes
@@ -51,6 +53,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(card_routes)
         .merge(run_routes)
         .merge(user_routes)
+        .merge(scouter_routes)
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_api_middleware,

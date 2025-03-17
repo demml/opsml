@@ -21,11 +21,13 @@ opsml-sql = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-error = { workspace = true }
 opsml-types = { workspace = true }
+scouter-client = { workspace = true }
 
 base64 = { workspace = true }
 chrono = { workspace = true }
 mime_guess = { workspace = true }
 password-auth = { workspace = true }
+reqwest = { workspace = true }
 rust-embed = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
@@ -46,3 +48,8 @@ mockito = "1.*"
 rand = "0.*"
 serde_qs = "0.*"
 tower = { version = "0.*", features = ["util"] }
+
+
+[[test]]
+name = "integration"
+path = "tests/lib.rs"

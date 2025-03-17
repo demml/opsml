@@ -347,7 +347,7 @@ pub trait SqlClient: Sized {
     /// # Returns
     ///
     /// * `Result<bool, SqlError>` - True if the user is the last admin
-    async fn is_last_admin(&self) -> Result<bool, SqlError>;
+    async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError>;
 
     async fn get_artifact_key_from_path(
         &self,

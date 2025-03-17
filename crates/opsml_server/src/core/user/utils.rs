@@ -3,6 +3,7 @@ use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
 use opsml_sql::base::SqlClient;
+use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::User;
 use std::sync::Arc;
 use tracing::error;
@@ -26,11 +27,10 @@ use tracing::error;
 ///
 /// Panics if the user cannot be retrieved from the database
 pub async fn get_user(
-    state: &Arc<AppState>,
+    sql_client: &SqlClientEnum,
     username: &str,
 ) -> Result<User, (StatusCode, Json<serde_json::Value>)> {
-    state
-        .sql_client
+    sql_client
         .get_user(username)
         .await
         .map_err(|e| {

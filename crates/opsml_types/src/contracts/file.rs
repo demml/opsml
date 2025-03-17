@@ -218,3 +218,8 @@ pub struct RawFile {
     pub suffix: String,
     pub mime_type: String,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdatedProfile {
+    pub updated: bool,
+}
