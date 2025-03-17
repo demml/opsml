@@ -17,7 +17,6 @@ use tracing::warn;
 pub struct ApiSettings {
     pub base_url: String,
     pub opsml_dir: String,
-    pub scouter_dir: String,
     pub username: String,
     pub password: String,
     pub auth_token: String,
@@ -60,7 +59,6 @@ impl OpsmlStorageSettings {
             api_settings: ApiSettings {
                 base_url: "".to_string(),
                 opsml_dir: "".to_string(),
-                scouter_dir: "".to_string(),
                 username: "guest".to_string(),
                 password: "guest".to_string(),
                 auth_token: "".to_string(),
@@ -317,7 +315,6 @@ impl OpsmlConfig {
             api_settings: ApiSettings {
                 base_url: self.opsml_tracking_uri.clone(),
                 opsml_dir: "opsml/api".to_string(),
-                scouter_dir: "scouter".to_string(),
                 username: self.auth_settings.username.clone(),
                 password: self.auth_settings.password.clone(),
                 auth_token: "".to_string(),
