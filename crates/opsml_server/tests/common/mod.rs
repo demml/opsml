@@ -55,8 +55,6 @@ async fn setup() {
 
     let client = SqlClientEnum::new(&config).await.unwrap();
 
-    println!("{:?}", std::env::current_dir().unwrap());
-
     // Run the SQL script to populate the database
     let script = std::fs::read_to_string("tests/fixtures/populate_db.sql").unwrap();
 
@@ -102,15 +100,20 @@ impl ScouterServer {
         // insert profile mock
         server
             .mock("POST", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "Profile created"}"#)
             .create_async()
             .await;
 
-        // update profile mock
         server
             .mock("PUT", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
@@ -133,6 +136,7 @@ pub struct TestHelper {
     pub repository: String,
     pub version: String,
     pub key: ArtifactKey,
+    pub server: ScouterServer,
 }
 
 impl TestHelper {
@@ -140,11 +144,11 @@ impl TestHelper {
         let scouter_server = ScouterServer::new().await;
 
         // set OPSML_AUTH to true
+        env::set_var("SCOUTER_SERVER_URI", scouter_server.url.clone());
         env::set_var("RUST_LOG", "debug");
         env::set_var("LOG_LEVEL", "debug");
         env::set_var("LOG_JSON", "false");
         env::set_var("OPSML_AUTH", "true");
-        env::set_var("SCOUTER_SERVER_URI", scouter_server.url);
 
         cleanup();
 
@@ -172,6 +176,7 @@ impl TestHelper {
                 encrypted_key: vec![],
                 storage_key: "".to_string(),
             },
+            server: scouter_server,
         }
     }
 
