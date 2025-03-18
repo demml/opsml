@@ -1145,4 +1145,47 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_pii_detection() {
+        let mut config = SanitizationConfig::standard();
+        config.check_pii = true;
+        let sanitizer = PromptSanitizer::new(config);
+
+        let test_cases = vec![
+            ("Normal text", RiskLevel::Safe),
+            ("Email: test@example.com", RiskLevel::High),
+            ("Phone: 123-456-7890", RiskLevel::High),
+            ("SSN: 123-45-6789", RiskLevel::High),
+            ("CC: 4111-1111-1111-1111", RiskLevel::High),
+            ("IP: 192.168.1.1", RiskLevel::High),
+            ("Name: John Smith", RiskLevel::High),
+            ("DOB: 01/01/1990", RiskLevel::High),
+        ];
+
+        for (input, expected_risk) in test_cases {
+            let result = sanitizer.assess_risk(input).unwrap();
+            assert_eq!(
+                result.risk_level, expected_risk,
+                "Failed for input: {}",
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn test_pii_sanitization() {
+        let mut config = SanitizationConfig::standard();
+        config.check_pii = true;
+        config.error_on_high_risk = false;
+        let sanitizer = PromptSanitizer::new(config);
+
+        let input = "Email: test@example.com, Phone: 123-456-7890";
+        let result = sanitizer.sanitize(input).unwrap();
+
+        assert!(!result.sanitized_text.contains("test@example.com"));
+        assert!(!result.sanitized_text.contains("123-456-7890"));
+        assert!(result.sanitized_text.contains("[PII REDACTED]"));
+        assert_eq!(result.risk_level, RiskLevel::High);
+    }
 }
