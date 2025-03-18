@@ -9,9 +9,12 @@ resolution-markers = [
     "python_full_version == '3.11.*' and platform_system == 'Darwin'",
     "python_full_version < '3.11' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
     "python_full_version == '3.11.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
-    "python_full_version >= '3.12' and platform_system == 'Windows'",
-    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
-    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version == '3.12.*' and platform_system == 'Windows'",
+    "python_full_version >= '3.13' and platform_system == 'Windows'",
+    "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version == '3.12.*' and platform_system == 'Linux')",
+    "(python_full_version >= '3.13' and platform_system == 'Darwin') or (python_full_version >= '3.13' and platform_system == 'Linux')",
+    "python_full_version == '3.12.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.13' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
 ]
 
 [[package]]
@@ -261,9 +264,12 @@ name = "black"
 version = "24.10.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12' and platform_system == 'Windows'",
-    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
-    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version == '3.12.*' and platform_system == 'Windows'",
+    "python_full_version >= '3.13' and platform_system == 'Windows'",
+    "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version == '3.12.*' and platform_system == 'Linux')",
+    "(python_full_version >= '3.13' and platform_system == 'Darwin') or (python_full_version >= '3.13' and platform_system == 'Linux')",
+    "python_full_version == '3.12.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.13' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
 ]
 dependencies = [
     { name = "click", marker = "python_full_version >= '3.12'" },
@@ -1425,9 +1431,12 @@ name = "lightning"
 version = "2.5.0.post0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12' and platform_system == 'Windows'",
-    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
-    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version == '3.12.*' and platform_system == 'Windows'",
+    "python_full_version >= '3.13' and platform_system == 'Windows'",
+    "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version == '3.12.*' and platform_system == 'Linux')",
+    "(python_full_version >= '3.13' and platform_system == 'Darwin') or (python_full_version >= '3.13' and platform_system == 'Linux')",
+    "python_full_version == '3.12.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.13' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
 ]
 dependencies = [
     { name = "fsspec", extra = ["http"], marker = "python_full_version >= '3.12'" },
@@ -1988,7 +1997,8 @@ source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version < '3.11' and platform_system == 'Windows'",
     "python_full_version == '3.11.*' and platform_system == 'Windows'",
-    "python_full_version >= '3.12' and platform_system == 'Windows'",
+    "python_full_version == '3.12.*' and platform_system == 'Windows'",
+    "python_full_version >= '3.13' and platform_system == 'Windows'",
 ]
 dependencies = [
     { name = "numpy", marker = "platform_system == 'Windows'" },
@@ -2038,8 +2048,10 @@ source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version < '3.11' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
     "python_full_version == '3.11.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
-    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
-    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version == '3.12.*' and platform_system == 'Linux')",
+    "(python_full_version >= '3.13' and platform_system == 'Darwin') or (python_full_version >= '3.13' and platform_system == 'Linux')",
+    "python_full_version == '3.12.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.13' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
 ]
 dependencies = [
     { name = "numpy", marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux') or (platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows')" },
@@ -2689,9 +2701,12 @@ resolution-markers = [
     "python_full_version == '3.11.*' and platform_system == 'Windows'",
     "python_full_version < '3.11' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
     "python_full_version == '3.11.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
-    "python_full_version >= '3.12' and platform_system == 'Windows'",
-    "(python_full_version >= '3.12' and platform_system == 'Darwin') or (python_full_version >= '3.12' and platform_system == 'Linux')",
-    "python_full_version >= '3.12' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version == '3.12.*' and platform_system == 'Windows'",
+    "python_full_version >= '3.13' and platform_system == 'Windows'",
+    "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version == '3.12.*' and platform_system == 'Linux')",
+    "(python_full_version >= '3.13' and platform_system == 'Darwin') or (python_full_version >= '3.13' and platform_system == 'Linux')",
+    "python_full_version == '3.12.*' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
+    "python_full_version >= '3.13' and platform_system != 'Darwin' and platform_system != 'Linux' and platform_system != 'Windows'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a5/73/4e6295c1420a9d20c9c351db3a36109b4c9aa601916cb7c6871e3196a1ca/protobuf-5.29.2.tar.gz", hash = "sha256:b2cc8e8bb7c9326996f0e160137b0861f1a82162502658df2951209d0cb0309e", size = 424901 }
 wheels = [
@@ -3772,7 +3787,7 @@ name = "triton"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "filelock", marker = "(python_full_version >= '3.12' and platform_system == 'Darwin') or platform_system == 'Linux'" },
+    { name = "filelock", marker = "(python_full_version == '3.12.*' and platform_system == 'Darwin') or (python_full_version < '3.13' and platform_system == 'Linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/45/27/14cc3101409b9b4b9241d2ba7deaa93535a217a211c86c4cc7151fb12181/triton-3.0.0-1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e1efef76935b2febc365bfadf74bcb65a6f959a9872e5bddf44cc9e0adce1e1a", size = 209376304 },
