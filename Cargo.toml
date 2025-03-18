@@ -34,6 +34,7 @@ opsml-storage = { path = "crates/opsml_storage" }
 opsml-todo = { path = "crates/opsml_todo" }
 opsml-types = { path = "crates/opsml_types" }
 opsml-utils = { path = "crates/opsml_utils" }
+potato-head = { path = "crates/potato_head" }
 
 aes-gcm = "0.*"
 anyhow = "1.0.93"
