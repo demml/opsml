@@ -1,6 +1,6 @@
 use crate::error::PotatoHeadError;
 use mime_guess;
-use pyo3::prelude::*;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::OnceLock;
@@ -280,6 +280,47 @@ impl BinaryContent {
                 "Unknown media type: {}",
                 self.media_type
             )))
+        }
+    }
+}
+
+#[pyclass]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum UserContent {
+    Str(String),
+    Audio(AudioUrl),
+    Image(ImageUrl),
+    Document(DocumentUrl),
+    Binary(BinaryContent),
+}
+
+impl UserContent {
+    pub fn new(prompt: &Bound<'_, PyAny>) -> PyResult<Self> {
+        if prompt.is_instance_of::<AudioUrl>() {
+            let audio_url = prompt.extract::<AudioUrl>()?;
+            Ok(UserContent::Audio(audio_url))
+        } else if prompt.is_instance_of::<ImageUrl>() {
+            let image_url = prompt.extract::<ImageUrl>()?;
+            Ok(UserContent::Image(image_url))
+        } else if prompt.is_instance_of::<DocumentUrl>() {
+            let document_url = prompt.extract::<DocumentUrl>()?;
+            Ok(UserContent::Document(document_url))
+        } else if prompt.is_instance_of::<BinaryContent>() {
+            let binary_content = prompt.extract::<BinaryContent>()?;
+            Ok(UserContent::Binary(binary_content))
+        } else {
+            let user_content = prompt.extract::<String>()?;
+            Ok(UserContent::Str(user_content))
+        }
+    }
+
+    pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            UserContent::Str(s) => s.into_bound_py_any(py),
+            UserContent::Audio(audio_url) => audio_url.clone().into_bound_py_any(py),
+            UserContent::Image(image_url) => image_url.clone().into_bound_py_any(py),
+            UserContent::Document(document_url) => document_url.clone().into_bound_py_any(py),
+            UserContent::Binary(binary_content) => binary_content.clone().into_bound_py_any(py),
         }
     }
 }

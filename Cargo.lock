@@ -4669,6 +4669,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
+ "potato-head 0.1.0",
  "potato-lib",
  "pyo3",
  "reqwest",
