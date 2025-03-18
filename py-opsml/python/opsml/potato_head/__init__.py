@@ -3,6 +3,7 @@
 
 from .. import potato_head  # noqa: F401
 
+Prompt = potato_head.Prompt
 ChatPartImage = potato_head.prompts.ChatPartImage
 ChatPrompt = potato_head.prompts.ChatPrompt
 ChatPartText = potato_head.prompts.ChatPartText
@@ -26,4 +27,5 @@ __all__ = [
     "SanitizationConfig",
     "SanitizationResult",
     "RiskLevel",
+    "Prompt",
 ]

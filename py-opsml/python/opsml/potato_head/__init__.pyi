@@ -4,6 +4,40 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+class Prompt:
+    def __init__(
+        self,
+        model: str,
+        prompt: Any,
+        system_prompt: Optional[str | List[str]] = None,
+        santization_config: Optional[SanitizationConfig] = None,
+    ) -> None:
+        """Prompt for interacting with an LLM API.
+
+        Args:
+            model (str):
+                The model to use for the prompt.
+            prompt (Any):
+                The prompt to use in the prompt.
+            system_prompt (Optional[str, Sequence[str]]):
+                The system prompt to use in the prompt.
+            santization_config (None):
+                The santization configuration to use for the prompt.
+                Defaults to None which means no santization will be performed.
+        """
+
+    @property
+    def model(self) -> str:
+        """The model to use for the prompt."""
+
+    @property
+    def prompt(self) -> Any:
+        """The user prompt to use in the prompt."""
+
+    @property
+    def system_prompt(self) -> List[str]:
+        """The system prompt to use in the prompt."""
+
 class PromptType:
     Image: "PromptType"
     Chat: "PromptType"

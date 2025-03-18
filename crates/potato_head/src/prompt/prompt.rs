@@ -1,5 +1,6 @@
 use crate::error::PotatoError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig, SanitizationResult};
+use crate::prompt::types::UserContent;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde::ser::SerializeSeq;
@@ -10,7 +11,8 @@ use serde::{Deserialize, Serialize};
 pub struct Prompt {
     #[pyo3(get, set)]
     pub model: String,
-    pub prompt: Vec<String>,
+
+    pub prompt: Vec<UserContent>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -27,6 +29,7 @@ pub struct Prompt {
 
     pub version: String,
 
+    #[pyo3(get)]
     pub system_prompt: Vec<String>,
 }
 
@@ -51,6 +54,28 @@ fn parse_messages_from_pyobject(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Strin
         .extract::<Vec<String>>()
         .map_err(|_| PotatoError::Error("Prompt must be a list of strings".to_string()))?;
     Ok(prompt)
+}
+
+fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<UserContent>> {
+    let mut prompt_vec = Vec::new();
+
+    // Try to iterate - if it succeeds, it's a sequence
+    match prompt.try_iter() {
+        Ok(iterator) => {
+            // Handle sequence case (list, tuple, etc)
+            for element in iterator {
+                let user_content = UserContent::new(&element?)?;
+                prompt_vec.push(user_content);
+            }
+        }
+        Err(_) => {
+            // Handle single item case
+            let user_content = UserContent::new(prompt)?;
+            prompt_vec.push(user_content);
+        }
+    }
+
+    Ok(prompt_vec)
 }
 
 #[pymethods]
@@ -79,7 +104,7 @@ impl Prompt {
 
         Ok(Self {
             model: model.to_string(),
-            prompt: parse_messages_from_pyobject(prompt)?,
+            prompt: parse_prompt(prompt)?,
             sanitization_config,
             sanitizer,
             sanitized_results: Vec::new(),
@@ -87,5 +112,14 @@ impl Prompt {
             version,
             system_prompt,
         })
+    }
+
+    #[getter]
+    fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
+        // iterate over prompt and convert to pyobjects
+        self.prompt
+            .iter()
+            .map(|content| content.to_pyobject(py))
+            .collect()
     }
 }
