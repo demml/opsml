@@ -254,8 +254,6 @@ pub async fn get_spc_drift(
             internal_server_error(e, "Failed to get drift features")
         })?;
 
-    // extract body into SpcDriftFeatures
-
     let body = response.json::<SpcDriftFeatures>().await.map_err(|e| {
         error!("Failed to parse drift features: {}", e);
         internal_server_error(e, "Failed to parse drift features")
@@ -264,7 +262,7 @@ pub async fn get_spc_drift(
     Ok(Json(body))
 }
 
-#[instrument(skip(data, params))]
+#[instrument(skip_all)]
 pub async fn get_psi_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
