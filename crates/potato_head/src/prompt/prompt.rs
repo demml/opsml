@@ -1,7 +1,6 @@
 use crate::error::PotatoError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig, SanitizationResult};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use pyo3::types::PyList;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
@@ -12,6 +11,7 @@ pub struct Prompt {
     #[pyo3(get, set)]
     pub model: String,
     pub prompt: Vec<String>,
+
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
 
@@ -26,6 +26,8 @@ pub struct Prompt {
     pub has_sanitize_error: bool,
 
     pub version: String,
+
+    pub system_prompt: Vec<String>,
 }
 
 fn serialize_as_empty_vec<S>(_: &Vec<SanitizationResult>, serializer: S) -> Result<S::Ok, S::Error>
@@ -54,14 +56,20 @@ fn parse_messages_from_pyobject(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Strin
 #[pymethods]
 impl Prompt {
     #[new]
-    #[pyo3(signature = (model, prompt, sanitization_config=None))]
+    #[pyo3(signature = (model, prompt, system_prompt=None, sanitization_config=None))]
     pub fn new(
         model: &str,
         prompt: &Bound<'_, PyAny>,
+        system_prompt: Option<&Bound<'_, PyAny>>,
         sanitization_config: Option<SanitizationConfig>,
     ) -> PyResult<Self> {
         // extract messages
-        let prompt = parse_messages_from_pyobject(prompt)?;
+
+        let system_prompt = if let Some(system_prompt) = system_prompt {
+            parse_messages_from_pyobject(system_prompt)?
+        } else {
+            Vec::new()
+        };
 
         // get version from crate
         let version = env!("CARGO_PKG_VERSION").to_string();
@@ -71,12 +79,13 @@ impl Prompt {
 
         Ok(Self {
             model: model.to_string(),
-            prompt,
+            prompt: parse_messages_from_pyobject(prompt)?,
             sanitization_config,
             sanitizer,
             sanitized_results: Vec::new(),
             has_sanitize_error: false,
             version,
+            system_prompt,
         })
     }
 }

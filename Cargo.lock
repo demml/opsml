@@ -4421,6 +4421,7 @@ dependencies = [
 name = "potato-head"
 version = "0.1.0"
 dependencies = [
+ "mime_guess",
  "opsml-utils",
  "pyo3",
  "regex",

@@ -55,6 +55,88 @@ impl SanitizationResult {
     }
 }
 
+#[pyclass(eq, eq_int)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub enum PIIType {
+    Email,
+    PhoneNumber,
+    CreditCard,
+    SSN,
+    IPAddress,
+    Password,
+    Address,
+    Name,
+    DOB,
+    Custom,
+}
+
+#[pyclass]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PIIConfig {
+    #[pyo3(get)]
+    pub check_email: bool,
+    #[pyo3(get)]
+    pub check_phone: bool,
+    #[pyo3(get)]
+    pub check_credit_card: bool,
+    #[pyo3(get)]
+    pub check_ssn: bool,
+    #[pyo3(get)]
+    pub check_ip: bool,
+    #[pyo3(get)]
+    pub check_password: bool,
+    #[pyo3(get)]
+    pub check_address: bool,
+    #[pyo3(get)]
+    pub check_name: bool,
+    #[pyo3(get)]
+    pub check_dob: bool,
+    #[pyo3(get)]
+    pub custom_pii_patterns: Vec<String>,
+}
+
+#[pymethods]
+impl PIIConfig {
+    #[new]
+    #[pyo3(signature = (
+        check_email = true,
+        check_phone = true,
+        check_credit_card = true,
+        check_ssn = true,
+        check_ip = true,
+        check_password = true,
+        check_address = true,
+        check_name = true,
+        check_dob = true,
+        custom_pii_patterns = vec![]
+    ))]
+    pub fn new(
+        check_email: bool,
+        check_phone: bool,
+        check_credit_card: bool,
+        check_ssn: bool,
+        check_ip: bool,
+        check_password: bool,
+        check_address: bool,
+        check_name: bool,
+        check_dob: bool,
+        custom_pii_patterns: Vec<String>,
+    ) -> Self {
+        Self {
+            check_email,
+            check_phone,
+            check_credit_card,
+            check_ssn,
+            check_ip,
+            check_password,
+            check_address,
+            check_name,
+            check_dob,
+            custom_pii_patterns,
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SanitizationConfig {
@@ -78,6 +160,10 @@ pub struct SanitizationConfig {
     #[pyo3(get)]
     pub custom_patterns: Vec<String>,
 
+    // PII detection configuration
+    #[pyo3(get)]
+    pub check_pii: bool,
+
     /// Whether to sanitize or just detect issues
     #[pyo3(get)]
     pub sanitize: bool,
@@ -85,6 +171,10 @@ pub struct SanitizationConfig {
     /// Whether to throw error on high risk or just sanitize
     #[pyo3(get, set)]
     pub error_on_high_risk: bool,
+
+    /// PII detection configuration
+    /// #[pyo3(get)]
+    pub pii_config: PIIConfig,
 }
 
 #[pymethods]
@@ -96,8 +186,10 @@ impl SanitizationConfig {
         check_delimiters = true,
         check_keywords = true,
         check_control_chars = true,
+        check_pii = true,
         custom_patterns = vec![],
-        error_on_high_risk = true
+        error_on_high_risk = true,
+        pii_config = None
     ))]
     pub fn new(
         risk_threshold: RiskLevel,
@@ -105,8 +197,10 @@ impl SanitizationConfig {
         check_delimiters: bool,
         check_keywords: bool,
         check_control_chars: bool,
+        check_pii: bool,
         custom_patterns: Vec<String>,
         error_on_high_risk: bool,
+        pii_config: Option<PIIConfig>,
     ) -> Self {
         Self {
             risk_threshold,
@@ -114,8 +208,10 @@ impl SanitizationConfig {
             check_delimiters,
             check_keywords,
             check_control_chars,
+            check_pii,
             custom_patterns,
             error_on_high_risk,
+            pii_config: pii_config.unwrap_or_default(),
         }
     }
 
@@ -128,8 +224,10 @@ impl SanitizationConfig {
             check_delimiters: true,
             check_keywords: true,
             check_control_chars: true,
+            check_pii: true,
             custom_patterns: vec![],
             error_on_high_risk: true,
+            pii_config: PIIConfig::default(),
         }
     }
 
@@ -142,8 +240,10 @@ impl SanitizationConfig {
             check_delimiters: true,
             check_keywords: true,
             check_control_chars: true,
+            check_pii: true,
             custom_patterns: vec![],
             error_on_high_risk: true,
+            pii_config: PIIConfig::default(),
         }
     }
 
@@ -156,8 +256,10 @@ impl SanitizationConfig {
             check_delimiters: false,
             check_keywords: true,
             check_control_chars: true,
+            check_pii: true,
             custom_patterns: vec![],
             error_on_high_risk: false,
+            pii_config: PIIConfig::default(),
         }
     }
 }
@@ -165,6 +267,7 @@ impl SanitizationConfig {
 // First rename the static patterns to be more generic
 static DELIMITER_REGEXES: OnceLock<Vec<(Regex, RiskLevel)>> = OnceLock::new();
 static INJECTION_REGEXES: OnceLock<Vec<(Regex, RiskLevel)>> = OnceLock::new();
+static PII_REGEXES: OnceLock<HashMap<PIIType, Vec<Regex>>> = OnceLock::new();
 
 fn get_delimiter_regexes() -> &'static Vec<(Regex, RiskLevel)> {
     DELIMITER_REGEXES.get_or_init(|| {
@@ -443,6 +546,61 @@ fn get_injection_regexes() -> &'static Vec<(Regex, RiskLevel)> {
     })
 }
 
+fn get_pii_regexes() -> &'static HashMap<PIIType, Vec<Regex>> {
+    PII_REGEXES.get_or_init(|| {
+        let mut map = HashMap::new();
+
+        // Email patterns
+        map.insert(
+            PIIType::Email,
+            vec![Regex::new(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}").unwrap()],
+        );
+
+        // Phone number patterns
+        map.insert(
+            PIIType::PhoneNumber,
+            vec![
+                Regex::new(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b").unwrap(),
+                Regex::new(r"\b\(\d{3}\)\s*\d{3}[-.]?\d{4}\b").unwrap(),
+            ],
+        );
+
+        // Credit card patterns
+        map.insert(
+            PIIType::CreditCard,
+            vec![Regex::new(r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b").unwrap()],
+        );
+
+        // SSN patterns
+        map.insert(
+            PIIType::SSN,
+            vec![Regex::new(r"\b\d{3}[-]?\d{2}[-]?\d{4}\b").unwrap()],
+        );
+
+        // IP address patterns
+        map.insert(
+            PIIType::IPAddress,
+            vec![Regex::new(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b").unwrap()],
+        );
+
+        // Name patterns (basic)
+        map.insert(
+            PIIType::Name,
+            vec![Regex::new(r"\b[A-Z][a-z]+\s+[A-Z][a-z]+\b").unwrap()],
+        );
+
+        // Date of birth patterns
+        map.insert(
+            PIIType::DOB,
+            vec![
+                Regex::new(r"\b\d{2}[-/]\d{2}[-/]\d{4}\b").unwrap(),
+                Regex::new(r"\b\d{4}[-/]\d{2}[-/]\d{2}\b").unwrap(),
+            ],
+        );
+
+        map
+    })
+}
 static CONTROL_CHARS: OnceLock<HashMap<char, RiskLevel>> = OnceLock::new();
 
 fn get_control_chars() -> &'static HashMap<char, RiskLevel> {
@@ -523,6 +681,13 @@ impl PromptSanitizer {
             highest_risk = std::cmp::max(highest_risk, risk);
         }
 
+        if self.config.check_pii {
+            let (text_result, issues, risk) = self.sanitize_pii(&sanitized);
+            sanitized = text_result;
+            detected_issues.extend(issues);
+            highest_risk = std::cmp::max(highest_risk, risk);
+        }
+
         // Check custom patterns
         let (text_result, issues, risk) = self.sanitize_custom_patterns(&sanitized);
         sanitized = text_result;
@@ -552,6 +717,12 @@ impl PromptSanitizer {
         // Check for delimiters
         if self.config.check_delimiters {
             let (issues, risk) = self.detect_delimiters(text);
+            detected_issues.extend(issues);
+            highest_risk = std::cmp::max(highest_risk, risk);
+        }
+
+        if self.config.check_pii {
+            let (issues, risk) = self.detect_pii(text);
             detected_issues.extend(issues);
             highest_risk = std::cmp::max(highest_risk, risk);
         }
@@ -727,6 +898,42 @@ impl PromptSanitizer {
                     issues.push(format!("Sanitized custom pattern: {}", regex.as_str()));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                     result = regex.replace_all(&result, "[CUSTOM_REMOVED]").to_string();
+                }
+            }
+        }
+
+        (result, issues, highest_risk)
+    }
+}
+
+impl PromptSanitizer {
+    fn detect_pii(&self, text: &str) -> (Vec<String>, RiskLevel) {
+        let mut issues = Vec::new();
+        let mut highest_risk = RiskLevel::Safe;
+
+        for (pii_type, patterns) in get_pii_regexes().iter() {
+            for regex in patterns {
+                if regex.is_match(text) {
+                    issues.push(format!("Found potential {} PII", format!("{:?}", pii_type)));
+                    highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
+                }
+            }
+        }
+
+        (issues, highest_risk)
+    }
+
+    fn sanitize_pii(&self, text: &str) -> (String, Vec<String>, RiskLevel) {
+        let mut result = text.to_string();
+        let mut issues = Vec::new();
+        let mut highest_risk = RiskLevel::Safe;
+
+        for (pii_type, patterns) in get_pii_regexes().iter() {
+            for regex in patterns {
+                if regex.is_match(&result) {
+                    issues.push(format!("Sanitized {} PII", format!("{:?}", pii_type)));
+                    highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
+                    result = regex.replace_all(&result, "[PII REDACTED]").to_string();
                 }
             }
         }
