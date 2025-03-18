@@ -137,9 +137,7 @@ impl ScouterServer {
         let spc_features_json = serde_json::to_string(&spc_features).unwrap();
         server
             .mock("GET", "/scouter/drift/spc")
-            .match_header("content-type", mockito::Matcher::Any)
-            .match_header("authorization", mockito::Matcher::Any)
-            .match_body(mockito::Matcher::Any)
+            .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(spc_features_json)
             .create_async()
@@ -150,9 +148,7 @@ impl ScouterServer {
         let binned_psi_features_json = serde_json::to_string(&binned_psi_features).unwrap();
         server
             .mock("GET", "/scouter/drift/psi")
-            .match_header("content-type", mockito::Matcher::Any)
-            .match_header("authorization", mockito::Matcher::Any)
-            .match_body(mockito::Matcher::Any)
+            .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_psi_features_json)
             .create_async()
@@ -163,9 +159,7 @@ impl ScouterServer {
         let binned_custom_metrics_json = serde_json::to_string(&binned_custom_metrics).unwrap();
         server
             .mock("GET", "/scouter/drift/custom")
-            .match_header("content-type", mockito::Matcher::Any)
-            .match_header("authorization", mockito::Matcher::Any)
-            .match_body(mockito::Matcher::Any)
+            .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_custom_metrics_json)
             .create_async()

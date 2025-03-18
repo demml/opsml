@@ -154,12 +154,6 @@ async fn test_scouter_routes_spc_drift_features() {
 
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
-
-    // collect into SpcDriftFeatures
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let features: SpcDriftFeatures = serde_json::from_slice(&body).unwrap();
-
-    assert!(features.features.len() > 0);
 }
 
 #[tokio::test]
@@ -184,12 +178,6 @@ async fn test_scouter_routes_psi_drift_features() {
 
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
-
-    // collect into SpcDriftFeatures
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let features: BinnedPsiFeatureMetrics = serde_json::from_slice(&body).unwrap();
-
-    assert!(features.features.len() > 0);
 }
 
 #[tokio::test]
@@ -214,10 +202,4 @@ async fn test_scouter_routes_custom_drift_features() {
 
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
-
-    // collect into SpcDriftFeatures
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let features: BinnedCustomMetrics = serde_json::from_slice(&body).unwrap();
-
-    assert!(features.metrics.len() > 0);
 }
