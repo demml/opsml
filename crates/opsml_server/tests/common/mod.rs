@@ -15,6 +15,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
+use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 
 use std::{env, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
@@ -120,7 +121,55 @@ impl ScouterServer {
             .create_async()
             .await;
 
-        // delete user mock
+        server
+            .mock("PUT", "/scouter/profile/status")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .create_async()
+            .await;
+
+        // get spc drift features mock
+        let spc_features = SpcDriftFeatures::default();
+        let spc_features_json = serde_json::to_string(&spc_features).unwrap();
+        server
+            .mock("GET", "/scouter/drift/spc")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(spc_features_json)
+            .create_async()
+            .await;
+
+        // get binned psi feature metrics mock
+        let binned_psi_features = BinnedPsiFeatureMetrics::default();
+        let binned_psi_features_json = serde_json::to_string(&binned_psi_features).unwrap();
+        server
+            .mock("GET", "/scouter/drift/psi")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_psi_features_json)
+            .create_async()
+            .await;
+
+        // get binned custom metrics mock
+        let binned_custom_metrics = BinnedCustomMetrics::default();
+        let binned_custom_metrics_json = serde_json::to_string(&binned_custom_metrics).unwrap();
+        server
+            .mock("GET", "/scouter/drift/custom")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_custom_metrics_json)
+            .create_async()
+            .await;
 
         Self {
             url: server.url(),

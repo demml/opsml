@@ -12,7 +12,11 @@ use opsml_types::SaveName;
 use opsml_types::Suffix;
 use rand::Rng;
 use reqwest::header;
-use scouter_client::{DriftType, ProfileRequest, SpcDriftProfile};
+use scouter_client::{
+    BinnedCustomMetricStats, BinnedPsiFeatureMetrics, DriftRequest, DriftType, ProfileRequest,
+    ProfileStatusRequest, SpcDriftFeatures, SpcDriftProfile,
+};
+use scouter_client::{BinnedCustomMetrics, TimeInterval};
 use std::path::PathBuf;
 
 fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
@@ -106,4 +110,114 @@ async fn test_scouter_routes_update_profile() {
 
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
+
+    // update status code
+    let request = ProfileStatusRequest {
+        repository: helper.repository.clone(),
+        name: "updated_name".to_string(),
+        version: profile.config.version.clone(),
+        active: true,
+        drift_type: Some(DriftType::Spc),
+    };
+
+    let body = serde_json::to_string(&request).unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/scouter/profile/status")
+        .method("PUT")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_spc_drift_features() {
+    let helper = TestHelper::new().await;
+
+    let drift_request = DriftRequest {
+        name: helper.name.clone(),
+        repository: helper.repository.clone(),
+        version: helper.version.clone(),
+        time_interval: TimeInterval::OneHour,
+        max_data_points: 100,
+        drift_type: DriftType::Spc,
+    };
+
+    let query_string = serde_qs::to_string(&drift_request).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/scouter/drift/spc?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // collect into SpcDriftFeatures
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let features: SpcDriftFeatures = serde_json::from_slice(&body).unwrap();
+
+    assert!(features.features.len() > 0);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_psi_drift_features() {
+    let helper = TestHelper::new().await;
+
+    let drift_request = DriftRequest {
+        name: helper.name.clone(),
+        repository: helper.repository.clone(),
+        version: helper.version.clone(),
+        time_interval: TimeInterval::OneHour,
+        max_data_points: 100,
+        drift_type: DriftType::Psi,
+    };
+
+    let query_string = serde_qs::to_string(&drift_request).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/scouter/drift/psi?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // collect into SpcDriftFeatures
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let features: BinnedPsiFeatureMetrics = serde_json::from_slice(&body).unwrap();
+
+    assert!(features.features.len() > 0);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_custom_drift_features() {
+    let helper = TestHelper::new().await;
+
+    let drift_request = DriftRequest {
+        name: helper.name.clone(),
+        repository: helper.repository.clone(),
+        version: helper.version.clone(),
+        time_interval: TimeInterval::OneHour,
+        max_data_points: 100,
+        drift_type: DriftType::Psi,
+    };
+
+    let query_string = serde_qs::to_string(&drift_request).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/scouter/drift/custom?{}", query_string))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // collect into SpcDriftFeatures
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let features: BinnedCustomMetrics = serde_json::from_slice(&body).unwrap();
+
+    assert!(features.metrics.len() > 0);
 }
