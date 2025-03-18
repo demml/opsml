@@ -68,6 +68,7 @@ dev = [
     "tensorflow>=2.16.0; platform_system=='Darwin' and python_version <= '3.11'",
     "tensorflow-metal==1.2.0; platform_system=='Darwin' and python_version <= '3.11'",
     "tf-keras>=2.16.0; python_version <= '3.11'",
+    "pydantic-ai>=0.0.41",
 ]
 
 numpy1 = [

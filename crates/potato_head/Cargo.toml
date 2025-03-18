@@ -1,0 +1,14 @@
+[package]
+name = "potato-head"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+description = "Making prompts simple"
+
+[lib]
+doctest = false
+
+
+[dependencies]
+pyo3 = { workspace = true }
+thiserror = { workspace = true }
