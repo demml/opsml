@@ -32,6 +32,7 @@ rust-embed = { workspace = true }
 rusty-logging = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_qs = { workspace = true }
 semver = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
@@ -46,7 +47,6 @@ http-body-util = "0.*"
 mockall = "0.*"
 mockito = "1.*"
 rand = "0.*"
-serde_qs = "0.*"
 tower = { version = "0.*", features = ["util"] }
 
 
