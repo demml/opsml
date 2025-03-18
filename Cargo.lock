@@ -4420,6 +4420,18 @@ dependencies = [
 [[package]]
 name = "potato-head"
 version = "0.1.0"
+dependencies = [
+ "opsml-utils",
+ "pyo3",
+ "regex",
+ "serde",
+ "thiserror 2.0.12",
+ "tracing",
+]
+
+[[package]]
+name = "potato-head"
+version = "0.1.0"
 source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "chrono",
@@ -4444,7 +4456,7 @@ version = "0.1.0"
 source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
  "potato-error",
- "potato-head",
+ "potato-head 0.1.0 (git+https://github.com/demml/potatohead.git?branch=add-rust-release)",
  "potato-prompts",
  "potato-providers",
  "potato-tools",
