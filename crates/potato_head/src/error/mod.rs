@@ -12,9 +12,6 @@ pub enum PotatoError {
     #[error("Missing API Key")]
     MissingAPIKey,
 
-    #[error(transparent)]
-    HttpError(#[from] HttpError),
-
     #[error("Failed to serialize string")]
     SerializeError,
 

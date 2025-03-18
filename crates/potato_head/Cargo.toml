@@ -10,5 +10,10 @@ doctest = false
 
 
 [dependencies]
+opsml-utils = { workspace = true }
+
 pyo3 = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
 thiserror = { workspace = true }
+tracing = { workspace = true }
