@@ -12,11 +12,11 @@ use opsml_types::SaveName;
 use opsml_types::Suffix;
 use rand::Rng;
 use reqwest::header;
-use scouter_client::{
-    BinnedCustomMetricStats, BinnedPsiFeatureMetrics, DriftRequest, DriftType, ProfileRequest,
-    ProfileStatusRequest, SpcDriftFeatures, SpcDriftProfile,
-};
 use scouter_client::{BinnedCustomMetrics, TimeInterval};
+use scouter_client::{
+    BinnedPsiFeatureMetrics, DriftRequest, DriftType, ProfileRequest, ProfileStatusRequest,
+    SpcDriftFeatures, SpcDriftProfile,
+};
 use std::path::PathBuf;
 
 fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
