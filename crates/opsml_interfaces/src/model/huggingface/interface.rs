@@ -1024,10 +1024,8 @@ impl HuggingFaceModel {
             ));
         }
 
-        let load_path = path.join(SaveName::OnnxModel.to_string());
-
         // get file path to onnx model
-        let file_path = std::fs::read_dir(&load_path)?
+        let file_path = std::fs::read_dir(&path)?
             .filter_map(|entry| {
                 entry.ok().and_then(|e| {
                     let path = e.path();
@@ -1041,7 +1039,7 @@ impl HuggingFaceModel {
             .next()
             .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
 
-        let sess = OnnxSession::load_onnx_session(py, file_path, kwargs)?;
+        let sess = OnnxSession::load_onnx_session(py, &file_path, kwargs)?;
 
         self.onnx_session
             .as_ref()

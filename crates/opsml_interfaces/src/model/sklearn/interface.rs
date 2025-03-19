@@ -11,7 +11,6 @@ use opsml_types::{ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{SaveName, Suffix};
 use opsml_utils::pyobject_to_json;
 use opsml_utils::PyHelperFuncs;
-use ort::metadata;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::IntoPyObjectExt;
