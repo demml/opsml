@@ -312,13 +312,14 @@ impl LightningModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
@@ -326,23 +327,53 @@ impl LightningModel {
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         debug!("Loading model");
-        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        let model_path = path.join(&metadata.model_uri);
+        self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
-            self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            let onnx_path = path.join(
+                &metadata
+                    .onnx_model_uri
+                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+            );
+            self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
 
         debug!("Loading sample data");
         let data_type = self_.as_super().data_type.clone();
 
-        self_.load_data(py, &path, &data_type, None)?;
+        if metadata.sample_data_uri.is_some() {
+            let sample_data_path = path.join(
+                &metadata
+                    .sample_data_uri
+                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+            );
+            self_.load_data(py, &sample_data_path, &data_type, None)?;
+        }
 
         debug!("Loading preprocessor");
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        if !metadata.data_processor_map.is_empty() {
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            let processor = metadata
+                .data_processor_map
+                .values()
+                .next()
+                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+
+            let preprocessor_uri = path.join(&processor.uri);
+
+            self_.load_preprocessor(py, &preprocessor_uri, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
         debug!("Loading drift profile");
-        self_.as_super().load_drift_profile(py, &path)?;
+        if metadata.drift_profile_uri.is_some() {
+            let drift_path =
+                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+            self_.as_super().load_drift_profile(py, &drift_path)?;
+        }
 
         Ok(())
     }
@@ -511,22 +542,12 @@ impl LightningModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
-
-        if !load_path.exists() {
-            return Ok(());
-        }
-
         let joblib = py.import("joblib")?;
         // Load the data using joblib
-        let preprocessor = joblib
-            .call_method("load", (load_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to load preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let preprocessor = joblib.call_method("load", (path,), kwargs).map_err(|e| {
+            error!("Failed to load preprocessor: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         self.preprocessor = Some(preprocessor.into_py_any(py)?);
 
@@ -580,7 +601,6 @@ impl LightningModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Ckpt);
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
 
         // check if model is None. Return error
@@ -596,7 +616,7 @@ impl LightningModel {
         };
 
         // load state dict
-        model.call_method("load_from_checkpoint", (load_path,), Some(&kwargs))?;
+        model.call_method("load_from_checkpoint", (path,), Some(&kwargs))?;
         self.model = Some(model.clone().unbind());
 
         Ok(())
