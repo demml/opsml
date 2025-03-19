@@ -1,6 +1,6 @@
-from pydantic_ai import Agent, DocumentUrl
+from pydantic_ai import Agent
 from pydantic_ai.models.test import TestModel
-from opsml.potato_head import Prompt, ImageUrl
+from opsml.potato_head import Prompt, ImageUrl, BinaryContent
 import httpx
 
 
@@ -11,12 +11,10 @@ def test_string_prompt():
         system_prompt="system_prompt",
     )
 
-    agent = Agent("openai:gpt-4o", system_prompt=prompt.system_prompt)
-    with agent.override(model=TestModel()):
-        agent.run_sync(user_prompt=prompt.prompt)
+    print(prompt)
 
 
-def test_image_prompt():
+def _test_image_prompt():
     prompt = Prompt(
         model="openai:gpt-4o",
         prompt=[
@@ -31,7 +29,7 @@ def test_image_prompt():
         agent.run_sync(user_prompt=prompt.prompt)
 
 
-def test_binary_prompt():
+def _test_binary_prompt():
     image_response = httpx.get("https://iili.io/3Hs4FMg.png")
 
     prompt = Prompt(

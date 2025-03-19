@@ -1,72 +1,8 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 
 from enum import IntEnum
-from typing import List, Optional, Literal, Sequence
-
-class PromptSanitizer:
-    def __init__(self, config: SanitizationConfig) -> None:
-        """Create a PromptSanitizer object.
-
-        Args:
-            config (SanitizationConfig):
-                The sanitization configuration to use.
-        """
-
-    def sanitize(self, text: str) -> SanitizedResult:
-        """Sanitize the text.
-
-        Args:
-            text (str):
-                The text to sanitize.
-
-        Returns:
-            SanitizedResult:
-                The sanitized result.
-        """
-
-class Message:
-    @property
-    def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
-        """The content of the message"""
-
-    @property
-    def sanitized_output(self) -> Optional[SanitizedResult]:
-        """The sanitized content of the message"""
-
-    def bind(self, context: str) -> "Message":
-        """Bind a context in the prompt. This is an immutable operation meaning that it
-        will return a new Message object with the context bound.
-
-            Example with ChatPrompt that contains two messages
-
-            ```python
-                chat_prompt = Prompt("gpt-3.5-turbo", [
-                    Message("system", "Hello, $1"),
-                    Message("user", "World")
-                ])
-                chat_prompt[0].bind("world") # we bind "world" to the first message
-            ```
-
-        Args:
-            context (str):
-                The context to bind.
-
-        Returns:
-            Message:
-                The message with the context bound.
-        """
-
-    def sanitize(self, sanitizer: PromptSanitizer) -> "Message":
-        """Sanitize the message content.
-
-        Args:
-            config (SanitizationConfig):
-                The sanitization configuration to use.
-
-        Returns:
-            Message:
-                The sanitized message.
-        """
+from typing import List, Optional, Literal, Sequence, Any
+from pathlib import Path
 
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
@@ -147,11 +83,75 @@ class DocumentUrl:
     def format(self) -> str:
         """The format of the document URL."""
 
+class Message:
+    def __init__(
+        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
+    ) -> None:
+        """Create a Message object.
+
+        Args:
+            content (str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl):
+                The content of the message.
+        """
+    @property
+    def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
+        """The content of the message"""
+
+    @property
+    def sanitized_output(self) -> Optional[SanitizedResult]:
+        """The sanitized content of the message"""
+
+    def bind(self, context: str) -> "Message":
+        """Bind a context in the prompt. This is an immutable operation meaning that it
+        will return a new Message object with the context bound.
+
+            Example with ChatPrompt that contains two messages
+
+            ```python
+                chat_prompt = Prompt("gpt-3.5-turbo", [
+                    Message("system", "Hello, $1"),
+                    Message("user", "World")
+                ])
+                chat_prompt[0].bind("world") # we bind "world" to the first message
+            ```
+
+        Args:
+            context (str):
+                The context to bind.
+
+        Returns:
+            Message:
+                The message with the context bound.
+        """
+
+    def sanitize(self, sanitizer: PromptSanitizer) -> "Message":
+        """Sanitize the message content.
+
+        Args:
+            config (SanitizationConfig):
+                The sanitization configuration to use.
+
+        Returns:
+            Message:
+                The sanitized message.
+        """
+
+    def unwrap(self) -> Any:
+        """Unwrap the message content to python compatible content.
+
+        Returns:
+            str:
+                The unwrapped message content.
+        """
+
 class Prompt:
     def __init__(
         self,
         model: str,
-        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl],
+        prompt: str
+        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message],
         system_prompt: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
     ) -> None:
@@ -160,7 +160,7 @@ class Prompt:
         Args:
             model (str):
                 The model to use for the prompt.
-            prompt (Any):
+            prompt (str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message]):
                 The prompt to use in the prompt.
             system_prompt (Optional[str, Sequence[str]]):
                 The system prompt to use in the prompt.
@@ -176,12 +176,61 @@ class Prompt:
     @property
     def prompt(
         self,
-    ) -> str | List[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]:
+    ) -> (
+        str
+        | List[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
+        | Message
+        | List[Message]
+    ):
         """The user prompt to use in the prompt."""
 
     @property
-    def system_prompt(self) -> List[str]:
+    def system_prompt(self) -> List[Message]:
         """The system prompt to use in the prompt."""
+
+    def save_prompt(self, path: Optional[Path] = None) -> None:
+        """Save the prompt to a file.
+
+        Args:
+            path (Optional[Path]):
+                The path to save the prompt to. If None, the prompt will be saved to
+                the current working directory.
+        """
+
+    @staticmethod
+    def load_from_path(path: Path) -> "Prompt":
+        """Load a prompt from a file.
+
+        Args:
+            path (Path):
+                The path to the prompt file.
+
+        Returns:
+            Prompt:
+                The loaded prompt.
+        """
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "Prompt":
+        """Validate the model JSON.
+
+        Args:
+            json_string (str):
+                The JSON string to validate.
+        Returns:
+            Prompt:
+                The prompt object.
+        """
+
+    def model_dump_json(self) -> str:
+        """Dump the model to a JSON string.
+
+        Returns:
+            str:
+                The JSON string.
+        """
+
+    def __str__(self): ...
 
 class RiskLevel(IntEnum):
     """Risk level of a potential prompt injection attempt"""
@@ -334,3 +383,24 @@ class SanitizedResult:
         """The detected issues in the sanitization attempt"""
 
     def __str__(self): ...
+
+class PromptSanitizer:
+    def __init__(self, config: SanitizationConfig) -> None:
+        """Create a PromptSanitizer object.
+
+        Args:
+            config (SanitizationConfig):
+                The sanitization configuration to use.
+        """
+
+    def sanitize(self, text: str) -> SanitizedResult:
+        """Sanitize the text.
+
+        Args:
+            text (str):
+                The text to sanitize.
+
+        Returns:
+            SanitizedResult:
+                The sanitized result.
+        """

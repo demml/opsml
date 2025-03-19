@@ -1,13 +1,14 @@
 use crate::error::PotatoHeadError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
-use crate::prompt::types::{Message, Messages};
+use crate::prompt::types::Message;
 use opsml_types::SaveName;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use pyo3::types::PySequence;
+use pyo3::PyTypeCheck;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
-
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
@@ -15,10 +16,10 @@ pub struct Prompt {
     pub model: String,
 
     #[pyo3(get)]
-    pub prompt: Messages,
+    pub prompt: Vec<Message>,
 
     #[pyo3(get)]
-    pub system_prompt: Messages,
+    pub system_prompt: Vec<Message>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -29,27 +30,37 @@ pub struct Prompt {
     pub version: String,
 }
 
-fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Messages> {
-    let mut prompt_vec = Vec::new();
-
-    // Try to iterate - if it succeeds, it's a sequence
-    match prompt.try_iter() {
-        Ok(iterator) => {
-            // Handle sequence case (list, tuple, etc)
-            for element in iterator {
-                let element = element?;
-                let message = Message::new(&element)?;
-                prompt_vec.push(message);
-            }
-        }
-        Err(_) => {
-            // Handle single item case
-            let message = Message::new(prompt)?;
-            prompt_vec.push(message);
-        }
+fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
+    if prompt.is_instance_of::<Message>() {
+        return Ok(vec![prompt.extract::<Message>()?]);
     }
 
-    Ok(Messages::new(prompt_vec))
+    // Try to get sequence length for capacity allocation
+    let initial_capacity = prompt.len().unwrap_or(1);
+    let mut messages = Vec::with_capacity(initial_capacity);
+
+    match prompt.try_iter() {
+        Ok(iterator) => {
+            for item in iterator {
+                let item = item?;
+                messages.push(if item.is_instance_of::<Message>() {
+                    item.extract::<Message>()?
+                } else if PySequence::type_check(item.as_ref()) {
+                    // Recursively handle nested sequences
+                    return Err(PotatoHeadError::new_err(
+                        "Nested sequences are not supported in prompts",
+                    ));
+                } else {
+                    Message::new(&item)?
+                });
+            }
+            Ok(messages)
+        }
+        Err(_) => {
+            // Not iterable, try to convert directly to Message
+            Ok(vec![Message::new(prompt)?])
+        }
+    }
 }
 
 #[pymethods]
@@ -67,7 +78,7 @@ impl Prompt {
         let system_prompt = if let Some(system_prompt) = system_prompt {
             parse_prompt(system_prompt)?
         } else {
-            Messages::new(Vec::new())
+            vec![]
         };
 
         // get version from crate
@@ -122,5 +133,9 @@ impl Prompt {
 
     pub fn model_dump_json(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(&self)
     }
 }
