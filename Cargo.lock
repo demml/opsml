@@ -4001,6 +4001,7 @@ dependencies = [
  "opsml-utils",
  "pyo3",
  "serde",
+ "serde_json",
  "sysinfo",
  "tabled",
  "tracing",

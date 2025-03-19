@@ -3,7 +3,7 @@ from opsml.model import (
     HuggingFaceModel,
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
-    SaveKwargs,
+    ModelSaveKwargs,
 )
 from pathlib import Path
 from typing import Tuple
@@ -41,7 +41,7 @@ def test_hugging_face_text_pipeline(
         config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
 
     interface.save(save_path, True, save_kwargs=kwargs)
 
@@ -77,7 +77,7 @@ def test_hugging_face_model(
         provider="CPUExecutionProvider",
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
     interface.save(save_path, True, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 
@@ -116,7 +116,7 @@ def test_hugging_face_tf_model(
         provider="CPUExecutionProvider",
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
     interface.save(save_path, False, save_kwargs=kwargs)
 
     interface.tokenizer = None
@@ -149,7 +149,7 @@ def test_huggingface_vit(
         provider="CPUExecutionProvider",
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
     interface.save(save_path, True, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 

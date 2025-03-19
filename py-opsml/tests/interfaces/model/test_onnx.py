@@ -1,5 +1,5 @@
 from typing import Tuple
-from opsml.model import SklearnModel, SaveKwargs
+from opsml.model import SklearnModel, ModelSaveKwargs
 from opsml.data import NumpyData, PandasData
 import pytest
 from pytest_lazyfixture import lazy_fixture  # type: ignore
@@ -35,7 +35,7 @@ def test_sklearn_pipeline(
     tmp_path: Path, sklearn_pipeline: Tuple[SklearnModel, PandasData]
 ):
     model, _ = sklearn_pipeline
-    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
     model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
@@ -44,7 +44,7 @@ def test_lgb_classifier_calibrated(
     tmp_path: Path, lgb_classifier_calibrated: SklearnModel
 ):
     model = lgb_classifier_calibrated
-    save_kwargs = SaveKwargs(
+    save_kwargs = ModelSaveKwargs(
         onnx={
             "target_opset": {"ai.onnx.ml": 3, "": 9},
             "options": {
@@ -60,14 +60,14 @@ def test_sklearn_pipeline_advanced(
     tmp_path: Path, sklearn_pipeline_advanced: SklearnModel
 ):
     model = sklearn_pipeline_advanced
-    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
     model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
 
 def test_stacking_regressor(tmp_path: Path, stacking_regressor: SklearnModel):
     model = stacking_regressor
-    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
     model.save(tmp_path, True, save_kwargs=save_kwargs)
     assert model.onnx_session is not None
 
@@ -77,7 +77,7 @@ def test_sklearn_pipeline_xgb_classifier(
     sklearn_pipeline_xgb_classifier: SklearnModel,
 ):
     model = sklearn_pipeline_xgb_classifier
-    save_kwargs = SaveKwargs(
+    save_kwargs = ModelSaveKwargs(
         onnx={
             "options": {"zipmap": False},
             "target_opset": {"ai.onnx.ml": 3, "": 9},
@@ -88,7 +88,7 @@ def test_sklearn_pipeline_xgb_classifier(
 
 def test_stacking_classifier(tmp_path: Path, stacking_classifier: SklearnModel):
     model = stacking_classifier
-    save_kwargs = SaveKwargs(
+    save_kwargs = ModelSaveKwargs(
         onnx={
             "options": {"zipmap": False},
         }
@@ -101,7 +101,7 @@ def test_lgb_classifier_calibrated_pipeline(
     lgb_classifier_calibrated_pipeline: SklearnModel,
 ):
     model = lgb_classifier_calibrated_pipeline
-    save_kwargs = SaveKwargs(
+    save_kwargs = ModelSaveKwargs(
         onnx={
             "options": {"zipmap": False},
             "target_opset": {"ai.onnx.ml": 3, "": 9},

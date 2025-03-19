@@ -3,8 +3,8 @@ from opsml.model import (
     TaskType,
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
+    ModelSaveKwargs,
 )
-from opsml.core import SaveKwargs
 from sklearn import linear_model  # type: ignore
 from pathlib import Path
 
@@ -24,7 +24,7 @@ class CustomInterface(ModelInterface):
         self,
         path: Path,
         to_onnx: bool = False,
-        save_kwargs: SaveKwargs | None = None,
+        save_kwargs: ModelSaveKwargs | None = None,
     ) -> ModelInterfaceMetadata:
         save_metadata = ModelInterfaceSaveMetadata(model_uri=path)
 

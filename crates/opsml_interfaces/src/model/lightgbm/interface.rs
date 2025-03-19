@@ -379,6 +379,11 @@ impl LightGBMModel {
         let load_path = path
             .join(SaveName::Preprocessor)
             .with_extension(Suffix::Joblib);
+
+        if !load_path.exists() {
+            return Ok(());
+        }
+
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib

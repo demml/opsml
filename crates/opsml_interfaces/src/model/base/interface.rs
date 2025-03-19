@@ -7,6 +7,7 @@ use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
+use ort::metadata;
 use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::model::base::utils;
@@ -492,24 +493,46 @@ impl ModelInterface {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None, ))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None, ))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        self.load_model(py, &path, load_kwargs.model_kwargs(py))?;
-        self.load_drift_profile(py, &path)?;
-        self.load_data(py, &path, None)?;
+        let model_path = path.join(&metadata.model_uri);
+        self.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
+
+        if metadata.drift_profile_uri.is_some() {
+            let drift_path =
+                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+            self.load_drift_profile(py, &drift_path)?;
+        }
+
+        if metadata.sample_data_uri.is_some() {
+            let sample_data_path = path.join(
+                &metadata
+                    .sample_data_uri
+                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+            );
+            self.load_data(py, &sample_data_path, None)?;
+        }
 
         if onnx {
-            self.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            let onnx_path = path.join(
+                &metadata
+                    .onnx_model_uri
+                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+            );
+            self.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
 
         Ok(())
@@ -637,14 +660,8 @@ impl ModelInterface {
     ///
     /// * `PyResult<()>` - Result of loading drift profile
     pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<()> {
-        let load_dir = path.join(SaveName::Drift);
-
-        if !load_dir.exists() {
-            return Ok(());
-        }
-
         // list all files in dir
-        let files = FileUtils::list_files(load_dir)?;
+        let files = FileUtils::list_files(path)?;
 
         for filepath in files {
             // get file name
@@ -849,13 +866,12 @@ impl ModelInterface {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
         self.model = Some(
             joblib
-                .call_method("load", (load_path,), kwargs)
+                .call_method("load", (path,), kwargs)
                 .map_err(|e| {
                     error!("Failed to load model. Error: {}", e);
                     OpsmlError::new_err(format!("Failed to load model. Error: {e}"))

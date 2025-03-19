@@ -1,4 +1,4 @@
-from opsml.model import LightGBMModel, ModelType, SaveKwargs, SklearnModel
+from opsml.model import LightGBMModel, ModelType, ModelSaveKwargs, SklearnModel
 import lightgbm as lgb
 import pandas as pd
 from typing import Tuple
@@ -34,7 +34,7 @@ def test_lightgbm_regression_metadata(
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    save_kwargs = SaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
+    save_kwargs = ModelSaveKwargs(onnx={"target_opset": {"ai.onnx.ml": 3, "": 9}})
 
     assert lightgbm_regression.model_type == ModelType.LgbmRegressor
 

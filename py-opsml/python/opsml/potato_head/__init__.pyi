@@ -1,8 +1,8 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 
 from enum import IntEnum
-from typing import List, Optional, Literal, Sequence, Any
 from pathlib import Path
+from typing import Any, List, Literal, Optional, Sequence
 
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
@@ -84,15 +84,14 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(
-        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
-    ) -> None:
+    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
         """Create a Message object.
 
         Args:
             content (str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl):
                 The content of the message.
         """
+
     @property
     def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
         """The content of the message"""
@@ -169,10 +168,7 @@ class Prompt:
     def __init__(
         self,
         model: str,
-        prompt: str
-        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
-        | Message
-        | List[Message],
+        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
         system_prompt: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
     ) -> None:
