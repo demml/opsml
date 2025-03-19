@@ -7,7 +7,7 @@ import pytest
 
 
 @pytest.mark.numpy
-def _test_catboost_regressor(
+def test_catboost_regressor(
     tmp_path: Path,
     catboost_regressor: Tuple[CatBoostRegressor, pd.DataFrame],
 ):
@@ -36,7 +36,7 @@ def _test_catboost_regressor(
 
 
 @pytest.mark.numpy
-def _test_catboost_classifier(
+def test_catboost_classifier(
     tmp_path: Path,
     catboost_classifier: Tuple[CatBoostClassifier, pd.DataFrame],
 ):
