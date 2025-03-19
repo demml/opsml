@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::OnceLock;
 static DOCUMENT_MEDIA_TYPES: OnceLock<HashSet<&'static str>> = OnceLock::new();
+use crate::prompt::sanitize::PromptSanitizer;
+
+use super::sanitize::SanitizedResult;
 
 fn get_document_media_types() -> &'static HashSet<&'static str> {
     DOCUMENT_MEDIA_TYPES.get_or_init(|| {
@@ -370,6 +373,7 @@ pub fn get_pydantic_module<'py>(py: Python<'py>, module_name: &str) -> PyResult<
 pub struct Message {
     content: PromptContent,
     next_param: usize,
+    sanitized_output: Option<SanitizedResult>,
 }
 
 #[pymethods]
@@ -381,26 +385,58 @@ impl Message {
         Ok(Self {
             content,
             next_param: 1,
+            sanitized_output: None,
         })
     }
 
-    pub fn bind(&mut self, value: &str) -> PyResult<()> {
+    pub fn bind(&self, value: &str) -> PyResult<Message> {
         let placeholder = format!("${}", self.next_param);
 
-        match &mut self.content {
+        let content = match &self.content {
             PromptContent::Str(content) => {
-                *content = content.replace(&placeholder, value);
+                let new_content = content.replace(&placeholder, value);
+                PromptContent::Str(new_content)
             }
-            _ => {
-                return Err(PotatoHeadError::new_err(
-                    "Cannot bind value to non-string content",
-                ))
-            }
-        }
+            _ => self.content.clone(),
+        };
 
-        self.next_param += 1;
-        Ok(())
+        Ok(Message {
+            content,
+            next_param: self.next_param + 1,
+            sanitized_output: None,
+        })
     }
+
+    pub fn sanitize(&self, sanitizer: &PromptSanitizer) -> PyResult<Message> {
+        let (content, sanitized) = match &self.content {
+            PromptContent::Str(content) => {
+                let sanitized_result = sanitizer.sanitize(content).map_err(|e| {
+                    PotatoHeadError::new_err(format!("Failed to sanitize content: {}", e))
+                })?;
+                (
+                    PromptContent::Str(sanitized_result.sanitized_text.clone()),
+                    Some(sanitized_result),
+                )
+            }
+            _ => (self.content.clone(), None),
+        };
+
+        Ok(Message {
+            content,
+            next_param: self.next_param,
+            sanitized_output: sanitized,
+        })
+    }
+
+    pub fn result(&self) -> PyResult<&str> {
+        match &self.content {
+            PromptContent::Str(content) => Ok(content),
+            _ => Err(PotatoHeadError::new_err(
+                "Can only get result of text content",
+            )),
+        }
+    }
+
     pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.content.to_pyobject(py)
     }

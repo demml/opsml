@@ -45,7 +45,7 @@ export interface SanitizationConfig {
   risk_threshold: number;
 }
 
-export interface SanitizationResult {
+export interface SanitizedResult {
   original_text: string;
   sanitized_text: string;
   risk_level: number;
@@ -59,7 +59,7 @@ export interface ChatPrompt {
   additional_data?: Record<string, any>;
   version: string;
   sanitization_config?: SanitizationConfig;
-  sanitized_results: SanitizationResult[];
+  sanitized_results: SanitizedResult[];
   has_sanitize_error: boolean;
 }
 

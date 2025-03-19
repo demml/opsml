@@ -1,5 +1,5 @@
 use crate::error::{PotatoError, PotatoHeadError};
-use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig, SanitizationResult};
+use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig, SanitizedResult};
 use crate::prompt::types::Message;
 use opsml_types::SaveName;
 use opsml_utils::PyHelperFuncs;
@@ -26,7 +26,7 @@ pub struct Prompt {
 
     #[serde(serialize_with = "serialize_as_empty_vec", default = "Vec::new")]
     #[pyo3(get)]
-    pub sanitized_results: Vec<SanitizationResult>,
+    pub sanitized_results: Vec<SanitizedResult>,
 
     #[pyo3(get)]
     pub has_sanitize_error: bool,
@@ -38,7 +38,7 @@ pub struct Prompt {
     original_prompt: Vec<Message>,
 }
 
-fn serialize_as_empty_vec<S>(_: &Vec<SanitizationResult>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_as_empty_vec<S>(_: &Vec<SanitizedResult>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
@@ -171,22 +171,6 @@ impl Prompt {
 
     pub fn model_dump_json(&self) -> String {
         serde_json::to_string(self).unwrap()
-    }
-
-    #[pyo3(signature = (context, index=0,))]
-    pub fn bind_context(&mut self, context: String, index: usize) -> PyResult<()> {
-        let new_context = self.sanitize_message(&context)?;
-
-        if let Some(message) = self.prompt.get_mut(index) {
-            message.bind(&new_context)?;
-
-            Ok(())
-        } else {
-            Err(PotatoHeadError::new_err(format!(
-                "Message index {} out of bounds",
-                index
-            )))
-        }
     }
 }
 

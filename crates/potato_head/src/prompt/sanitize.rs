@@ -37,7 +37,7 @@ impl std::fmt::Display for RiskLevel {
 
 #[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SanitizationResult {
+pub struct SanitizedResult {
     #[pyo3(get)]
     pub sanitized_text: String,
 
@@ -49,7 +49,7 @@ pub struct SanitizationResult {
 }
 
 #[pymethods]
-impl SanitizationResult {
+impl SanitizedResult {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -652,7 +652,7 @@ impl PromptSanitizer {
     }
 
     /// Sanitize input text according to the configuration
-    pub fn sanitize(&self, text: &str) -> Result<SanitizationResult, PotatoError> {
+    pub fn sanitize(&self, text: &str) -> Result<SanitizedResult, PotatoError> {
         let mut sanitized = text.to_string();
         let mut detected_issues = Vec::new();
         let mut highest_risk = RiskLevel::Safe;
@@ -702,7 +702,7 @@ impl PromptSanitizer {
             )));
         }
 
-        Ok(SanitizationResult {
+        Ok(SanitizedResult {
             sanitized_text: sanitized,
             risk_level: highest_risk,
             detected_issues,
@@ -710,7 +710,7 @@ impl PromptSanitizer {
     }
 
     /// Assess risk without modifying text
-    pub fn assess_risk(&self, text: &str) -> Result<SanitizationResult, PotatoError> {
+    pub fn assess_risk(&self, text: &str) -> Result<SanitizedResult, PotatoError> {
         let mut detected_issues = Vec::new();
         let mut highest_risk = RiskLevel::Safe;
 
@@ -746,7 +746,7 @@ impl PromptSanitizer {
         detected_issues.extend(issues);
         highest_risk = std::cmp::max(highest_risk, risk);
 
-        Ok(SanitizationResult {
+        Ok(SanitizedResult {
             sanitized_text: text.to_string(),
             risk_level: highest_risk,
             detected_issues,

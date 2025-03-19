@@ -1,4 +1,4 @@
-from pydantic_ai import Agent
+from pydantic_ai import Agent, DocumentUrl
 from pydantic_ai.models.test import TestModel
 from opsml.potato_head import Prompt, ImageUrl
 import httpx
@@ -7,7 +7,7 @@ import httpx
 def test_string_prompt():
     prompt = Prompt(
         model="openai:gpt-4o",
-        prompt="prompt",
+        prompt="My prompt $1 is $2",
         system_prompt="system_prompt",
     )
 
