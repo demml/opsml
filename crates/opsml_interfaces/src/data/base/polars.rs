@@ -344,12 +344,10 @@ impl PolarsData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
         let polars = PyModule::import(py, "polars")?;
 
         // Load the data using polars
-        let data = polars.call_method("read_parquet", (load_path,), kwargs)?;
+        let data = polars.call_method("read_parquet", (path,), kwargs)?;
 
         let interface = PolarsData::new(py, Some(&data), None, None, None, None, None)?;
 
