@@ -43,14 +43,14 @@ def test_hugging_face_text_pipeline(
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
 
-    interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
 
     assert interface.onnx_session is not None
 
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.onnx_session is not None
 
@@ -78,7 +78,7 @@ def test_hugging_face_model(
     )
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
-    interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 
     interface.onnx_session.session = None
@@ -87,7 +87,7 @@ def test_hugging_face_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None
@@ -117,12 +117,12 @@ def test_hugging_face_tf_model(
     )
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
-    interface.save(save_path, False, save_kwargs=kwargs)
+    metadata = interface.save(save_path, False, save_kwargs=kwargs)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.tokenizer is not None
 
