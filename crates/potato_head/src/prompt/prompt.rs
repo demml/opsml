@@ -6,8 +6,8 @@ use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::borrow::Cow;
-
 use std::path::PathBuf;
 
 #[pyclass]
@@ -152,6 +152,41 @@ impl Prompt {
         // Parse the JSON file into a ChatPrompt
         serde_json::from_str(&file)
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON: {}", e)))
+    }
+
+    #[staticmethod]
+    pub fn model_validate_json(json_string: String) -> PyResult<Self> {
+        let json_value: Value = serde_json::from_str(&json_string)
+            .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON string: {}", e)))?;
+        let mut model: Self = serde_json::from_value(json_value)
+            .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON value: {}", e)))?;
+
+        // if model has sanitization_config, create a sanitizer
+        if let Some(config) = &model.sanitization_config {
+            model.sanitizer = Some(PromptSanitizer::new(config.clone()));
+        }
+
+        Ok(model)
+    }
+
+    pub fn model_dump_json(&self) -> String {
+        serde_json::to_string(self).unwrap()
+    }
+
+    #[pyo3(signature = (context, index=0,))]
+    pub fn bind_context(&mut self, context: String, index: usize) -> PyResult<()> {
+        let new_context = self.sanitize_message(&context)?;
+
+        if let Some(message) = self.prompt.get_mut(index) {
+            message.bind(&new_context)?;
+
+            Ok(())
+        } else {
+            Err(PotatoHeadError::new_err(format!(
+                "Message index {} out of bounds",
+                index
+            )))
+        }
     }
 }
 
