@@ -183,7 +183,7 @@ def test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Nump
 
         interface = TensorFlowModel(model=model, sample_data=data)
 
-        interface.save(temp_path, onnx, save_kwargs)
+        metadata = interface.save(temp_path, onnx, save_kwargs)
 
         assert interface.model_type == ModelType.TensorFlow
         assert interface.data_type == data_type
@@ -197,7 +197,7 @@ def test_model(tf_model, onnx: bool = False, data_type: DataType = DataType.Nump
             interface.onnx_session.session = None
             assert interface.onnx_session.session is None
 
-        interface.load(temp_path, onnx=onnx)
+        interface.load(temp_path, metadata.save_metadata, onnx=onnx)
 
         assert interface.model is not None
 

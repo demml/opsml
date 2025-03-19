@@ -1,5 +1,4 @@
 use crate::core::router::create_router;
-use crate::core::scouter;
 use crate::core::setup::{initialize_default_user, setup_components};
 use crate::core::state::AppState;
 use anyhow::Ok;
