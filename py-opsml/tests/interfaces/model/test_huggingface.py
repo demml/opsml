@@ -11,7 +11,7 @@ import torch
 from transformers import Pipeline, BartModel, BartTokenizer, TFBartModel  # type: ignore
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
-from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
+from tests.conftest import EXCLUDE
 import sys
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
@@ -127,7 +127,7 @@ def test_hugging_face_tf_model(
     assert interface.tokenizer is not None
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Test not supported")
+@pytest.mark.skipif(EXCLUDE, reason="Test not supported")
 def test_huggingface_vit(
     tmp_path: Path,
     huggingface_vit: Tuple[ViTForImageClassification, ViTFeatureExtractor, TorchData],

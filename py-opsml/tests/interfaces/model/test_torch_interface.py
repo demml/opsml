@@ -20,7 +20,7 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     assert isinstance(interface.sample_data, dict)
     assert interface.data_type == DataType.Dict
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     assert interface.onnx_session is not None
     interface.onnx_session.session = None
@@ -29,6 +29,7 @@ def test_pytorch_simple(tmp_path: Path, pytorch_simple: Tuple[torch.nn.Module, d
     interface.model = None
     interface.load(
         save_path,
+        metadata.save_metadata,
         onnx=True,
         load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
@@ -50,7 +51,7 @@ def test_pytorch_simple_tuple(
     assert isinstance(interface.sample_data, tuple)
     assert interface.data_type == DataType.Tuple
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     assert interface.onnx_session is not None
     assert interface.onnx_session.session is not None
@@ -58,6 +59,7 @@ def test_pytorch_simple_tuple(
     interface.model = None
     interface.load(
         save_path,
+        metadata.save_metadata,
         onnx=True,
         load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
