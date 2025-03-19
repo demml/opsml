@@ -1,6 +1,6 @@
 use crate::error::PotatoError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
-use crate::prompt::types::UserContent;
+use crate::prompt::types::PromptContent;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ pub struct Prompt {
     #[pyo3(get, set)]
     pub model: String,
 
-    pub prompt: Vec<UserContent>,
+    pub prompt: Vec<PromptContent>,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -24,26 +24,10 @@ pub struct Prompt {
 
     pub version: String,
 
-    #[pyo3(get)]
-    pub system_prompt: Vec<String>,
+    pub system_prompt: Vec<PromptContent>,
 }
 
-fn parse_messages_from_pyobject(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<String>> {
-    if !prompt.is_instance_of::<PyList>() {
-        // assert string and then convert to vec
-        let prompt = prompt
-            .extract::<String>()
-            .map_err(|_| PotatoError::Error("Prompt must be a list of strings".to_string()))?;
-        return Ok(vec![prompt]);
-    }
-
-    let prompt = prompt
-        .extract::<Vec<String>>()
-        .map_err(|_| PotatoError::Error("Prompt must be a list of strings".to_string()))?;
-    Ok(prompt)
-}
-
-fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<UserContent>> {
+fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<PromptContent>> {
     let mut prompt_vec = Vec::new();
 
     // Try to iterate - if it succeeds, it's a sequence
@@ -51,13 +35,13 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<UserContent>> {
         Ok(iterator) => {
             // Handle sequence case (list, tuple, etc)
             for element in iterator {
-                let user_content = UserContent::new(&element?)?;
+                let user_content = PromptContent::new(&element?)?;
                 prompt_vec.push(user_content);
             }
         }
         Err(_) => {
             // Handle single item case
-            let user_content = UserContent::new(prompt)?;
+            let user_content = PromptContent::new(prompt)?;
             prompt_vec.push(user_content);
         }
     }
@@ -78,7 +62,7 @@ impl Prompt {
         // extract messages
 
         let system_prompt = if let Some(system_prompt) = system_prompt {
-            parse_messages_from_pyobject(system_prompt)?
+            parse_prompt(system_prompt)?
         } else {
             Vec::new()
         };
@@ -104,6 +88,15 @@ impl Prompt {
     fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
         // iterate over prompt and convert to pyobjects
         self.prompt
+            .iter()
+            .map(|content| content.to_pyobject(py))
+            .collect()
+    }
+
+    #[getter]
+    fn system_prompt<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
+        // iterate over prompt and convert to pyobjects
+        self.system_prompt
             .iter()
             .map(|content| content.to_pyobject(py))
             .collect()

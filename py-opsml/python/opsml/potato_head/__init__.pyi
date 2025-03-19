@@ -95,9 +95,9 @@ class Prompt:
         Args:
             model (str):
                 The model to use for the prompt.
-            prompt (Any):
+            prompt (str, Sequence[str]):
                 The prompt to use in the prompt.
-            system_prompt (Optional[str, Sequence[str]]):
+            system_prompt (Optional[str, SSequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]]):
                 The system prompt to use in the prompt.
             santization_config (None):
                 The santization configuration to use for the prompt.

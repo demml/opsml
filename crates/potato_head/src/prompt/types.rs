@@ -287,7 +287,7 @@ impl BinaryContent {
 
 #[pyclass]
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum UserContent {
+pub enum PromptContent {
     Str(String),
     Audio(AudioUrl),
     Image(ImageUrl),
@@ -295,30 +295,30 @@ pub enum UserContent {
     Binary(BinaryContent),
 }
 
-impl UserContent {
+impl PromptContent {
     pub fn new(prompt: &Bound<'_, PyAny>) -> PyResult<Self> {
         if prompt.is_instance_of::<AudioUrl>() {
             let audio_url = prompt.extract::<AudioUrl>()?;
-            Ok(UserContent::Audio(audio_url))
+            Ok(PromptContent::Audio(audio_url))
         } else if prompt.is_instance_of::<ImageUrl>() {
             let image_url = prompt.extract::<ImageUrl>()?;
-            Ok(UserContent::Image(image_url))
+            Ok(PromptContent::Image(image_url))
         } else if prompt.is_instance_of::<DocumentUrl>() {
             let document_url = prompt.extract::<DocumentUrl>()?;
-            Ok(UserContent::Document(document_url))
+            Ok(PromptContent::Document(document_url))
         } else if prompt.is_instance_of::<BinaryContent>() {
             let binary_content = prompt.extract::<BinaryContent>()?;
-            Ok(UserContent::Binary(binary_content))
+            Ok(PromptContent::Binary(binary_content))
         } else {
             let user_content = prompt.extract::<String>()?;
-            Ok(UserContent::Str(user_content))
+            Ok(PromptContent::Str(user_content))
         }
     }
 
     pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         match self {
-            UserContent::Str(s) => s.into_bound_py_any(py),
-            UserContent::Audio(audio_url) => {
+            PromptContent::Str(s) => s.into_bound_py_any(py),
+            PromptContent::Audio(audio_url) => {
                 // test pydantic module
                 match get_pydantic_module(py, "AudioUrl") {
                     Ok(model_class) => {
@@ -327,7 +327,7 @@ impl UserContent {
                     Err(_) => audio_url.clone().into_bound_py_any(py),
                 }
             }
-            UserContent::Image(image_url) => {
+            PromptContent::Image(image_url) => {
                 // test pydantic module
                 match get_pydantic_module(py, "ImageUrl") {
                     Ok(model_class) => {
@@ -336,7 +336,7 @@ impl UserContent {
                     Err(_) => image_url.clone().into_bound_py_any(py),
                 }
             }
-            UserContent::Document(document_url) => {
+            PromptContent::Document(document_url) => {
                 // test pydantic module
                 match get_pydantic_module(py, "DocumentUrl") {
                     Ok(model_class) => {
@@ -345,7 +345,7 @@ impl UserContent {
                     Err(_) => document_url.clone().into_bound_py_any(py),
                 }
             }
-            UserContent::Binary(binary_content) => {
+            PromptContent::Binary(binary_content) => {
                 // test pydantic module
                 match get_pydantic_module(py, "BinaryContent") {
                     Ok(model_class) => model_class.call1((
