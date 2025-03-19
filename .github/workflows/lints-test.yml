@@ -24,7 +24,7 @@ jobs:
 
       # print versions (rustup, cargo, clippy)
       - name: Print versions
-        run: rustc --version && cargo --version && cargo clippy --version
+        run: rustc --version && cargo --version && cargo clippy --version && rustup --version
 
       - name: Run format
         run: make format
