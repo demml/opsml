@@ -4422,10 +4422,12 @@ name = "potato-head"
 version = "0.1.0"
 dependencies = [
  "mime_guess",
+ "opsml-types",
  "opsml-utils",
  "pyo3",
  "regex",
  "serde",
+ "serde_json",
  "thiserror 2.0.12",
  "tracing",
 ]
