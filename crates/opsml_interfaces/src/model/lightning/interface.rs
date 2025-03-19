@@ -694,11 +694,7 @@ impl LightningModel {
             ));
         }
 
-        let load_path = path
-            .join(SaveName::OnnxModel.to_string())
-            .with_extension(Suffix::Onnx);
-
-        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
+        let sess = OnnxSession::load_onnx_session(py, &path, kwargs)?;
 
         self.onnx_session
             .as_ref()

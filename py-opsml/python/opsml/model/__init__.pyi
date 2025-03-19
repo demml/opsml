@@ -527,6 +527,7 @@ class ModelInterface:
     def load(
         self,
         path: Path,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool = False,
         load_kwargs: None | ModelLoadKwargs = None,
     ) -> None:
@@ -535,6 +536,8 @@ class ModelInterface:
         Args:
             path (Path):
                 Path to load the model
+            metadata (ModelInterfaceSaveMetadata):
+                Metadata to use to load the model
             onnx (bool):
                 Whether to load the onnx model
             load_kwargs (ModelLoadKwargs):
