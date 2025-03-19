@@ -437,7 +437,9 @@ class DataInterface:
                 The optional filepath to open the query from
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves all data interface component to the given path. This used as part of saving a
         DataCard
 
@@ -454,12 +456,19 @@ class DataInterface:
 
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the data from a file
 
         Args:
             path (Path):
                 Base path to load the data from
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
             load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
         """
@@ -591,12 +600,19 @@ class NumpyData(DataInterface):
 
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the data via numpy.load
 
         Args:
             path (Path):
                 Base path to load the data from.
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
             load_kwargs (DataLoadKwargs):
                 Additional kwargs to use when loading
 
@@ -644,7 +660,9 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -684,12 +702,19 @@ class PolarsData(DataInterface):
 
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the data from a file
 
         Args:
             path (Path):
                 Base path to load the data from.
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
             load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
@@ -768,13 +793,15 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
-            path:
+            path (Path):
                 Base path to save the data to.
-            save_kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
 
         Acceptable save kwargs:
@@ -806,13 +833,20 @@ class PandasData(DataInterface):
             https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the pandas dataframe from a parquet dataset via read_parquet
 
         Args:
-            path:
+            path (Path):
                 Base path to load the data from.
-            load_kwargs:
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
+            load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
         Acceptable load kwargs:
@@ -885,13 +919,15 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
-            path:
+            path (Path):
                 Base path to save the data to.
-            save_kwargs:
+            save_kwargs (DataSaveKwargs):
                 Additional kwargs to pass in.
 
         Acceptable save kwargs:
@@ -953,12 +989,19 @@ class ArrowData(DataInterface):
             https://arrow.apache.org/docs/python/generated/pyarrow.parquet.write_table.html
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the data from a file
 
         Args:
             path (Path):
                 Base path to load the data from.
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
             load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 
@@ -1038,7 +1081,9 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -1058,12 +1103,19 @@ class TorchData(DataInterface):
            https://pytorch.org/docs/main/generated/torch.save.html
         """
 
-    def load(self, path: Path, load_kwargs: Optional[DataLoadKwargs] = None) -> None:
+    def load(
+        self,
+        path: Path,
+        metadata: DataInterfaceSaveMetadata,
+        load_kwargs: Optional[DataLoadKwargs] = None,
+    ) -> None:
         """Load the torch tensor from file
 
         Args:
             path (Path):
                 Base path to load the data from.
+            metadata (DataInterfaceSaveMetadata):
+                Metadata associated with the data
             load_kwargs (DataLoadKwargs):
                 Additional kwargs to pass in.
 

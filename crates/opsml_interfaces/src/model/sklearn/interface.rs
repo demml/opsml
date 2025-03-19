@@ -386,13 +386,10 @@ impl SklearnModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = Some(joblib.call_method("load", (load_path,), kwargs)?.unbind());
+        self.preprocessor = Some(joblib.call_method("load", (path,), kwargs)?.unbind());
 
         Ok(())
     }
