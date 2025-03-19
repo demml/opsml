@@ -19,7 +19,7 @@ def _test_catboost_regressor(
     interface = CatBoostModel(model=model, sample_data=data)
 
     assert interface.model_type == ModelType.Catboost
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.model = None
     assert interface.model is None
@@ -28,7 +28,7 @@ def _test_catboost_regressor(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.model is not None
     assert interface.onnx_session is not None
@@ -48,7 +48,7 @@ def _test_catboost_classifier(
     interface = CatBoostModel(model=model, sample_data=data.to_numpy())
 
     assert interface.model_type == ModelType.Catboost
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.model = None
     assert interface.model is None
@@ -57,7 +57,7 @@ def _test_catboost_classifier(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.model is not None
     assert interface.onnx_session is not None
@@ -86,7 +86,7 @@ def test_catboost_ranker(
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.model is not None
     assert interface.onnx_session is not None
