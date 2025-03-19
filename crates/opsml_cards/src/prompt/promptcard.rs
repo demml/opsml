@@ -3,49 +3,13 @@ use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::contracts::{Card, PromptCardClientRecord};
 use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
 use opsml_utils::{get_utc_datetime, PyHelperFuncs};
-use potato_lib::ChatPrompt;
-use potato_lib::PromptType;
+use potato_head::Prompt;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use pyo3::IntoPyObjectExt;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tracing::error;
-
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Prompt {
-    Chat(ChatPrompt),
-}
-
-impl Prompt {
-    pub fn save_prompt(&self, path: PathBuf) -> Result<(), CardError> {
-        // each enum variant has a save_prompt method
-        match self {
-            Prompt::Chat(chat_prompt) => {
-                let card_save_path = path.join(SaveName::Prompt).with_extension(Suffix::Json);
-                PyHelperFuncs::save_to_json(chat_prompt, &card_save_path)?;
-
-                Ok(())
-            }
-        }
-    }
-
-    pub fn prompt_type(&self) -> PromptType {
-        match self {
-            Prompt::Chat(prompt) => prompt.prompt_type.clone(),
-        }
-    }
-
-    pub fn to_bound_py_any<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        match self {
-            Prompt::Chat(prompt) => {
-                let chat_prompt = prompt.clone().into_bound_py_any(py)?;
-                Ok(chat_prompt)
-            }
-        }
-    }
-}
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -121,25 +85,10 @@ impl PromptCard {
             OpsmlError::new_err(e.to_string())
         })?;
 
-        let prompt_type = prompt
-            .getattr("prompt_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<PromptType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        let prompt = match &prompt_type {
-            PromptType::Chat => {
-                // extract prompt into ChatPrompt
-                let chat_prompt = prompt
-                    .extract::<ChatPrompt>()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-                Prompt::Chat(chat_prompt)
-            }
-            _ => {
-                return Err(OpsmlError::new_err("Invalid prompt type"));
-            }
-        };
+        let prompt = prompt.extract::<Prompt>().map_err(|e| {
+            error!("Failed to extract prompt: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         Ok(Self {
             prompt,
@@ -159,29 +108,15 @@ impl PromptCard {
 
     #[getter]
     pub fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        self.prompt.to_bound_py_any(py)
+        self.prompt.clone().into_bound_py_any(py)
     }
 
     #[setter]
     pub fn set_prompt(&mut self, prompt: &Bound<'_, PyAny>) -> PyResult<()> {
-        let prompt_type = prompt
-            .getattr("prompt_type")
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?
-            .extract::<PromptType>()
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-        self.prompt = match &prompt_type {
-            PromptType::Chat => {
-                let chat_prompt = prompt
-                    .extract::<ChatPrompt>()
-                    .map_err(|e| OpsmlError::new_err(e.to_string()))?;
-
-                Prompt::Chat(chat_prompt)
-            }
-            _ => {
-                return Err(OpsmlError::new_err("Invalid prompt type"));
-            }
-        };
+        self.prompt = prompt.extract::<Prompt>().map_err(|e| {
+            error!("Failed to extract prompt: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         Ok(())
     }
@@ -204,7 +139,7 @@ impl PromptCard {
     pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         // save model interface
         // if option raise error
-        self.prompt.save_prompt(path.clone())?;
+        self.prompt.save_prompt(Some(path.clone()))?;
 
         // save modelcard
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
@@ -231,7 +166,6 @@ impl PromptCard {
             version: self.version.clone(),
             uid: self.uid.clone(),
             tags: self.tags.clone(),
-            prompt_type: self.prompt.prompt_type().to_string(),
             experimentcard_uid: self.metadata.experimentcard_uid.clone(),
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),

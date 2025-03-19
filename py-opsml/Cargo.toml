@@ -19,7 +19,6 @@ opsml-server = { workspace = true, optional = true }
 opsml-settings = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
-potato-lib = { workspace = true }
 potato-head = { workspace = true }
 pyo3 = { workspace = true }
 reqwest = { workspace = true, optional = true }

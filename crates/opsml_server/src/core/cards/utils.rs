@@ -143,7 +143,6 @@ pub async fn insert_card_into_db(
                 client_card.repository,
                 version,
                 client_card.tags,
-                client_card.prompt_type,
                 client_card.experimentcard_uid,
                 client_card.auditcard_uid,
                 client_card.username,
