@@ -55,7 +55,6 @@ export interface SanitizedResult {
 export interface ChatPrompt {
   model: string;
   messages: Message[];
-  prompt_type: "Chat";
   additional_data?: Record<string, any>;
   version: string;
   sanitization_config?: SanitizationConfig;

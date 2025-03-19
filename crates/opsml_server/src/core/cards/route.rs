@@ -417,7 +417,6 @@ pub async fn update_card(
                 build_tag: Some(version.build.to_string()),
                 version: client_card.version,
                 tags: SqlxJson(client_card.tags),
-                prompt_type: client_card.prompt_type,
                 experimentcard_uid: client_card.experimentcard_uid,
                 auditcard_uid: client_card.auditcard_uid,
                 username: client_card.username,

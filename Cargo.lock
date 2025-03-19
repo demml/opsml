@@ -3725,7 +3725,7 @@ dependencies = [
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
- "potato-lib",
+ "potato-head",
  "pyo3",
  "serde",
  "serde_json",
@@ -4392,32 +4392,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "potato-client"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "async-trait",
- "chrono",
- "colored_json",
- "potato-error",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
-name = "potato-error"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "pyo3",
- "serde",
- "thiserror 2.0.12",
-]
-
-[[package]]
 name = "potato-head"
 version = "0.1.0"
 dependencies = [
@@ -4429,116 +4403,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.12",
- "tracing",
-]
-
-[[package]]
-name = "potato-head"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "chrono",
- "colored_json",
- "potato-error",
- "potato-prompts",
- "potato-providers",
- "potato-tools",
- "potato-traits",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-lib"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "potato-error",
- "potato-head 0.1.0 (git+https://github.com/demml/potatohead.git?branch=add-rust-release)",
- "potato-prompts",
- "potato-providers",
- "potato-tools",
-]
-
-[[package]]
-name = "potato-prompts"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "potato-tools",
- "pyo3",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-providers"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "async-trait",
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "potato-prompts",
- "potato-tools",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-tools"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-traits"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "futures-core",
- "futures-util",
- "potato-client",
- "potato-error",
- "potato-prompts",
- "potato-providers",
- "pyo3",
- "serde",
- "serde_json",
- "tokio",
  "tracing",
 ]
 
@@ -4671,8 +4535,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "potato-head 0.1.0",
- "potato-lib",
+ "potato-head",
  "pyo3",
  "reqwest",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
