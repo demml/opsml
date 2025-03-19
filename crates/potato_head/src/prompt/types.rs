@@ -1,5 +1,6 @@
 use crate::error::PotatoHeadError;
 use mime_guess;
+use opsml_utils::PyHelperFuncs;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -362,4 +363,53 @@ impl PromptContent {
 
 pub fn get_pydantic_module<'py>(py: Python<'py>, module_name: &str) -> PyResult<Bound<'py, PyAny>> {
     py.import("pydantic_ai")?.getattr(module_name)
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Message {
+    content: PromptContent,
+    next_param: usize,
+}
+
+#[pymethods]
+impl Message {
+    #[new]
+    #[pyo3(signature = (content))]
+    pub fn new(content: &Bound<'_, PyAny>) -> PyResult<Self> {
+        let content = PromptContent::new(content)?;
+        Ok(Self {
+            content,
+            next_param: 1,
+        })
+    }
+
+    pub fn bind(&mut self, value: &str) -> PyResult<()> {
+        let placeholder = format!("${}", self.next_param);
+
+        match &mut self.content {
+            PromptContent::Str(content) => {
+                *content = content.replace(&placeholder, value);
+            }
+            _ => {
+                return Err(PotatoHeadError::new_err(
+                    "Cannot bind value to non-string content",
+                ))
+            }
+        }
+
+        self.next_param += 1;
+        Ok(())
+    }
+    pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        self.content.to_pyobject(py)
+    }
+
+    pub fn reset_binding(&mut self) {
+        self.next_param = 1;
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
 }

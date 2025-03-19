@@ -1,7 +1,7 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 
 from enum import IntEnum
-from typing import Any, List, Optional, Literal, Sequence
+from typing import List, Optional, Literal, Sequence
 
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
