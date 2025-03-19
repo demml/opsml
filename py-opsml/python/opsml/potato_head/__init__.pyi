@@ -88,18 +88,18 @@ class Prompt:
         model: str,
         prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl],
         system_prompt: Optional[str | List[str]] = None,
-        santization_config: Optional[SanitizationConfig] = None,
+        sanitization_config: Optional[SanitizationConfig] = None,
     ) -> None:
         """Prompt for interacting with an LLM API.
 
         Args:
             model (str):
                 The model to use for the prompt.
-            prompt (str, Sequence[str]):
+            prompt (Any):
                 The prompt to use in the prompt.
-            system_prompt (Optional[str, SSequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]]):
+            system_prompt (Optional[str, Sequence[str]]):
                 The system prompt to use in the prompt.
-            santization_config (None):
+            sanitization_config (None):
                 The santization configuration to use for the prompt.
                 Defaults to None which means no santization will be performed.
         """
@@ -109,7 +109,9 @@ class Prompt:
         """The model to use for the prompt."""
 
     @property
-    def prompt(self) -> Any:
+    def prompt(
+        self,
+    ) -> str | List[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]:
         """The user prompt to use in the prompt."""
 
     @property
@@ -125,6 +127,46 @@ class RiskLevel(IntEnum):
     High = 3  # High risk, likely prompt injection attempt
     Critical = 4  # Critical risk, almost certainly a prompt injection attempt
 
+class PIIConfig:
+    def __init__(
+        self,
+        check_email: bool = True,
+        check_phone: bool = True,
+        check_credit_card: bool = True,
+        check_ssn: bool = True,
+        check_ip: bool = True,
+        check_password: bool = True,
+        check_address: bool = True,
+        check_name: bool = True,
+        check_dob: bool = True,
+        custom_pii_patterns: List[str] = [],
+    ) -> None:
+        """PIIConfig for configuring the sanitization of a chat prompt.
+
+        Args:
+            check_email (bool):
+                Whether to check for email addresses in the chat prompt.
+            check_phone (bool):
+                Whether to check for phone numbers in the chat prompt.
+            check_credit_card (bool):
+                Whether to check for credit card numbers in the chat prompt.
+            check_ssn (bool):
+                Whether to check for social security numbers in the chat prompt.
+            check_ip (bool):
+                Whether to check for IP addresses in the chat prompt.
+            check_password (bool):
+                Whether to check for passwords in the chat prompt.
+            check_address (bool):
+                Whether to check for addresses in the chat prompt.
+            check_name (bool):
+                Whether to check for names in the chat prompt.
+            check_dob (bool):
+                Whether to check for dates of birth in the chat prompt.
+            custom_pii_patterns (List[str]):
+                Custom patterns to use for the PII checks. These will be read as
+                regular expressions.
+        """
+
 class SanitizationConfig:
     def __init__(
         self,
@@ -133,8 +175,10 @@ class SanitizationConfig:
         check_delimiters: bool = True,
         check_keywords: bool = True,
         check_control_chars: bool = True,
+        check_pii: bool = True,
         custom_patterns: Optional[List[str]] = [],
         error_on_high_risk: bool = True,
+        pii_config: Optional[PIIConfig] = None,
     ) -> None:
         """SanitizationConfig for configuring the sanitization of a chat prompt.
 
@@ -151,11 +195,15 @@ class SanitizationConfig:
                 Whether to check for keywords in the chat prompt.
             check_control_chars (bool):
                 Whether to check for control characters in the chat prompt.
+            check_pii (bool):
+                Whether to check for PII in the chat prompt
             custom_patterns (List[str]):
                 Custom patterns to use for the sanitization. These will be read as
                 regular expressions.
             error_on_high_risk (bool):
                 Whether to raise an error on high risk.
+            pii_config (Optional[PIIConfig]):
+                The PII configuration to use for the sanitization.
         """
 
     @property
