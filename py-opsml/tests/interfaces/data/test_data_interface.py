@@ -54,7 +54,7 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     save_path = tmp_path / "test"
     save_path.mkdir()
 
-    data_interface.save(save_path)
+    metadata = data_interface.save(save_path)
     data_interface.data = None
 
     assert data_interface.data is None
@@ -64,7 +64,7 @@ def test_data_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
         data_interface.save(save_path)
     assert str(error.value) == "No data detected in interface for saving"
 
-    data_interface.load(save_path)
+    data_interface.load(save_path, metadata.save_metadata)
 
     assert data_interface.data is not None
 
@@ -129,7 +129,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
     interface.data = None
     assert interface.data is None
 
-    interface.load(save_path)
+    interface.load(save_path, metadata.save_metadata)
 
     assert interface.data is not None
 
@@ -179,7 +179,7 @@ def test_polars_interface(multi_type_polars_dataframe2: pl.DataFrame, tmp_path: 
 
     assert interface.data is None
 
-    interface.load(path=save_path)
+    interface.load(path=save_path, metadata=metadata.save_metadata)
 
     assert interface.data is not None
 
@@ -223,7 +223,7 @@ def test_pandas_interface(pandas_mixed_type_dataframe: pd.DataFrame, tmp_path: P
 
     assert interface.data is None
 
-    interface.load(path=save_path)
+    interface.load(path=save_path, metadata=metadata.save_metadata)
 
     assert interface.data is not None
 
@@ -262,7 +262,7 @@ def test_arrow_interface(arrow_dataframe: pa.Table, tmp_path: Path):
 
     assert interface.data is None
 
-    interface.load(path=save_path)
+    interface.load(path=save_path, metadata=metadata.save_metadata)
 
     assert interface.data is not None
 
@@ -291,7 +291,7 @@ def test_torch_data(torch_tensor: torch.Tensor, tmp_path: Path):
 
     assert interface.data is None
 
-    interface.load(path=save_path)
+    interface.load(path=save_path, metadata=metadata.save_metadata)
 
     assert interface.data is not None
 
