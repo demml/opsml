@@ -61,6 +61,12 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          run_install: false
+
       - name: Setup Server
         run: make start.server
 
