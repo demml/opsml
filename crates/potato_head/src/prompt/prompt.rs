@@ -1,8 +1,6 @@
-use crate::error::PotatoError;
 use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
 use crate::prompt::types::PromptContent;
 use pyo3::prelude::*;
-use pyo3::types::PyList;
 use serde::{Deserialize, Serialize};
 
 #[pyclass]
