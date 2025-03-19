@@ -1058,14 +1058,16 @@ mod tests {
         let uid = "550e8400-e29b-41d4-a716-446655440000".to_string();
 
         // create a loop of 10
+        for _ in 0..10 {
+            let metric = HardwareMetricsRecord {
+                experiment_uid: uid.clone(),
+                created_at: get_utc_datetime(),
+                ..Default::default()
+            };
 
-        let metric = HardwareMetricsRecord {
-            experiment_uid: uid.clone(),
-            created_at: get_utc_datetime(),
-            ..Default::default()
-        };
+            client.insert_hardware_metrics(&metric).await.unwrap();
+        }
 
-        client.insert_hardware_metrics(&metric).await.unwrap();
         let records = client.get_hardware_metric(&uid).await.unwrap();
 
         assert_eq!(records.len(), 10);
