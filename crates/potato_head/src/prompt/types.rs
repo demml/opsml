@@ -1,6 +1,7 @@
 use crate::error::PotatoHeadError;
 use mime_guess;
 use opsml_utils::PyHelperFuncs;
+use pyo3::types::PyString;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -312,9 +313,11 @@ impl PromptContent {
         } else if prompt.is_instance_of::<BinaryContent>() {
             let binary_content = prompt.extract::<BinaryContent>()?;
             Ok(PromptContent::Binary(binary_content))
-        } else {
+        } else if prompt.is_instance_of::<PyString>() {
             let user_content = prompt.extract::<String>()?;
             Ok(PromptContent::Str(user_content))
+        } else {
+            Err(PotatoHeadError::new_err("Unsupported prompt content type"))
         }
     }
 

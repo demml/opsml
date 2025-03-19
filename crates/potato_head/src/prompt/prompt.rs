@@ -4,11 +4,11 @@ use crate::prompt::types::Message;
 use opsml_types::SaveName;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use pyo3::types::PySequence;
-use pyo3::PyTypeCheck;
+use pyo3::types::{PyList, PyString, PyTuple};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::PathBuf;
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Prompt {
@@ -35,31 +35,33 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
         return Ok(vec![prompt.extract::<Message>()?]);
     }
 
-    // Try to get sequence length for capacity allocation
+    if prompt.is_instance_of::<PyString>() {
+        return Ok(vec![Message::new(prompt)?]);
+    }
+
     let initial_capacity = prompt.len().unwrap_or(1);
     let mut messages = Vec::with_capacity(initial_capacity);
 
-    match prompt.try_iter() {
-        Ok(iterator) => {
-            for item in iterator {
-                let item = item?;
-                messages.push(if item.is_instance_of::<Message>() {
-                    item.extract::<Message>()?
-                } else if PySequence::type_check(item.as_ref()) {
-                    // Recursively handle nested sequences
-                    return Err(PotatoHeadError::new_err(
-                        "Nested sequences are not supported in prompts",
-                    ));
-                } else {
-                    Message::new(&item)?
-                });
+    // Explicitly check for list or tuple
+    if prompt.is_instance_of::<PyList>() || prompt.is_instance_of::<PyTuple>() {
+        for item in prompt.try_iter()? {
+            match item {
+                Ok(item) => {
+                    messages.push(if item.is_instance_of::<Message>() {
+                        item.extract::<Message>()?
+                    } else {
+                        Message::new(&item)?
+                    });
+                }
+                Err(e) => {
+                    return Err(e);
+                }
             }
-            Ok(messages)
         }
-        Err(_) => {
-            // Not iterable, try to convert directly to Message
-            Ok(vec![Message::new(prompt)?])
-        }
+        Ok(messages)
+    } else {
+        // Not a list or tuple, try to convert directly to Message
+        Ok(vec![Message::new(prompt)?])
     }
 }
 
@@ -81,13 +83,14 @@ impl Prompt {
             vec![]
         };
 
+        let prompt = parse_prompt(prompt)?;
+
         // get version from crate
         let version = env!("CARGO_PKG_VERSION").to_string();
 
         // Create a sanitizer if sanitization_config is provided
         let sanitizer = sanitization_config.clone().map(PromptSanitizer::new);
 
-        let prompt = parse_prompt(prompt)?;
         Ok(Self {
             model: model.to_string(),
             prompt: prompt.clone(),

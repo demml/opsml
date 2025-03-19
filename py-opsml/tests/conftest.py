@@ -11,7 +11,6 @@ import platform
 from typing import cast
 import pandas as pd
 from opsml.model import SklearnModel, TaskType
-from opsml.potato_head.prompts import ChatPrompt
 from opsml.data import PandasData
 from opsml.helpers.data import create_fake_data  # type: ignore
 from sklearn.preprocessing import StandardScaler  # type: ignore
@@ -102,15 +101,15 @@ def random_forest_classifier(example_dataframe):
     )
 
 
-@pytest.fixture
-def chat_prompt() -> ChatPrompt:
-    prompt = ChatPrompt(
-        model="gpt-4o",
-        messages=[
-            {"role": "developer", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Hello!"},
-        ],
-        logprobs=True,
-        top_logprobs=2,
-    )
-    return prompt
+# @pytest.fixture
+# def chat_prompt() -> ChatPrompt:
+#    prompt = ChatPrompt(
+#        model="gpt-4o",
+#        messages=[
+#            {"role": "developer", "content": "You are a helpful assistant."},
+#            {"role": "user", "content": "Hello!"},
+#        ],
+#        logprobs=True,
+#        top_logprobs=2,
+#    )
+#    return prompt
