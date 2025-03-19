@@ -1,7 +1,7 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
 
 from enum import IntEnum
-from typing import Any, List, Optional, Literal
+from typing import Any, List, Optional, Literal, Sequence
 
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
@@ -22,11 +22,71 @@ class ImageUrl:
     def format(self) -> str:
         """The format of the image URL."""
 
+class AudioUrl:
+    def __init__(self, url: str, kind: Literal["audio-url"] = "audio-url") -> None:
+        """Create an AudioUrl object.
+
+        Args:
+            url (str):
+                The URL of the audio.
+            kind (Literal["audio-url"]):
+                The kind of the content.
+        """
+
+    @property
+    def media_type(self) -> str:
+        """The media type of the audio URL."""
+
+    @property
+    def format(self) -> str:
+        """The format of the audio URL."""
+
+class BinaryContent:
+    def __init__(
+        self,
+        data: bytes,
+        media_type: str,
+        kind: str = "binary",
+    ) -> None:
+        """Create a BinaryContent object.
+
+        Args:
+            data (bytes):
+                The binary data.
+            media_type (str):
+                The media type of the binary data.
+            kind (str):
+                The kind of the content
+        """
+
+class DocumentUrl:
+    def __init__(
+        self,
+        url: str,
+        kind: Literal["document-url"] = "document-url",
+    ) -> None:
+        """Create a DocumentUrl object.
+
+        Args:
+            url (str):
+                The URL of the document.
+            kind (Literal["document-url"]):
+                The kind of the content.
+        """
+
+    @property
+    def media_type(self) -> str:
+        """The media type of the document URL."""
+
+    @property
+    def format(self) -> str:
+        """The format of the document URL."""
+
 class Prompt:
     def __init__(
         self,
         model: str,
-        prompt: Any,
+        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl],
         system_prompt: Optional[str | List[str]] = None,
         santization_config: Optional[SanitizationConfig] = None,
     ) -> None:
