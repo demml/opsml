@@ -22,6 +22,10 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
+      # print versions (rustup, cargo, clippy)
+      - name: Print versions
+        run: rustc --version && cargo --version && cargo clippy --version
+
       - name: Run format
         run: make format
 
