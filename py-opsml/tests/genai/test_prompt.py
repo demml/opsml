@@ -1,10 +1,8 @@
 from pydantic_ai import (
-    Agent,
     ImageUrl as PydanticImageUrl,
     BinaryContent as PydanticBinaryContent,
     DocumentUrl as PydanticDocumentUrl,
 )
-from pydantic_ai.models.test import TestModel
 from opsml.potato_head import Prompt, ImageUrl, BinaryContent, Message, DocumentUrl
 import httpx
 
