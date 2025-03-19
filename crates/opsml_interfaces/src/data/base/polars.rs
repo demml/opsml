@@ -213,14 +213,15 @@ impl PolarsData {
         ))
     }
 
-    #[pyo3(signature = (path, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+        let load_path = path.join(metadata.data_uri);
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         let polars = PyModule::import(py, "polars")?;

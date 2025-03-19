@@ -8,6 +8,7 @@ use opsml_error::error::OpsmlError;
 use opsml_error::InterfaceError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
+use ort::metadata;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
@@ -327,14 +328,15 @@ impl DataInterface {
             self.data_type.clone(),
         ))
     }
-    #[pyo3(signature = (path, load_kwargs = None))]
+    #[pyo3(signature = (path, metadata, load_kwargs = None))]
     pub fn load(
         &mut self,
         py: Python,
         path: PathBuf,
+        metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
+        let load_path = path.join(metadata.data_uri);
         let joblib = py.import("joblib")?;
         let load_kwargs = load_kwargs.unwrap_or_default();
 
