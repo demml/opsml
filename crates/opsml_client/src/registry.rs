@@ -8,8 +8,15 @@ use opsml_types::{
     contracts::*,
     RegistryMode, RegistryType,
 };
+use serde::Deserialize;
 use tracing::error;
 use tracing::instrument;
+
+// Define the error response struct that matches the JSON structure
+#[derive(Debug, Deserialize)]
+pub struct ErrorResponse {
+    error: String,
+}
 
 // TODO: Add trait for client and server registry
 #[derive(Debug, Clone)]
@@ -108,6 +115,16 @@ impl ClientRegistry {
                 RegistryError::Error(format!("Failed to create card {}", e))
             })?;
 
+        // check if 403 forbidden and get error message
+        if response.status().as_u16() == 403 {
+            let error = response
+                .json::<ErrorResponse>()
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+
+            return Err(RegistryError::Forbidden(error.error));
+        }
+
         let created = response.json::<CreateCardResponse>().await.map_err(|e| {
             RegistryError::Error(format!("Failed to parse create card response {e}"))
         })?;
@@ -143,6 +160,16 @@ impl ClientRegistry {
             )
             .await?;
 
+        // check if 403 forbidden and get error message
+        if response.status().as_u16() == 403 {
+            let error = response
+                .json::<ErrorResponse>()
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+
+            return Err(RegistryError::Forbidden(error.error));
+        }
+
         let updated = response.json::<UpdateCardResponse>().await.map_err(|e| {
             RegistryError::Error(format!("Failed to parse update card response {e}"))
         })?;
@@ -175,6 +202,16 @@ impl ClientRegistry {
                 error!("Request failed {}", e);
                 e
             })?;
+
+        // check if 403 forbidden and get error message
+        if response.status().as_u16() == 403 {
+            let error = response
+                .json::<ErrorResponse>()
+                .await
+                .map_err(|e| RegistryError::Error(format!("Failed to parse error response {e}")))?;
+
+            return Err(RegistryError::Forbidden(error.error));
+        }
 
         let deleted = response
             .json::<UidResponse>()

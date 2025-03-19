@@ -248,6 +248,9 @@ pub enum RegistryError {
     NewError(String),
 
     #[error("{0}")]
+    Forbidden(String),
+
+    #[error("{0}")]
     Error(String),
 
     #[error("Failed to list cards - {0}")]

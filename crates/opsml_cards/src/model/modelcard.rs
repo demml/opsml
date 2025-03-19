@@ -344,7 +344,7 @@ impl ModelCard {
         // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (path, onnx, load_kwargs, save_metadata),
+            (path, save_metadata, onnx, load_kwargs),
             None,
         )?;
 

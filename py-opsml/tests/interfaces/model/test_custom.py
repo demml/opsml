@@ -44,4 +44,4 @@ def test_custom_interface(tmp_path: Path, regression_data):
     kwargs = {"model": reg, "task_type": TaskType.Regression, "sample_data": X}
     interface = CustomInterface(foo=2, **kwargs)
 
-    metadata = interface.save(tmp_path, False)
+    interface.save(tmp_path, False)

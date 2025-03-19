@@ -518,13 +518,10 @@ impl XGBoostModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        let preprocessor = joblib.call_method("load", (load_path,), kwargs)?;
+        let preprocessor = joblib.call_method("load", (path,), kwargs)?;
 
         self.preprocessor = Some(preprocessor.unbind());
 
