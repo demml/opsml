@@ -3,6 +3,27 @@
 from enum import IntEnum
 from typing import List, Optional, Literal, Sequence
 
+class PromptSanitizer:
+    def __init__(self, config: SanitizationConfig) -> None:
+        """Create a PromptSanitizer object.
+
+        Args:
+            config (SanitizationConfig):
+                The sanitization configuration to use.
+        """
+
+    def sanitize(self, text: str) -> SanitizedResult:
+        """Sanitize the text.
+
+        Args:
+            text (str):
+                The text to sanitize.
+
+        Returns:
+            SanitizedResult:
+                The sanitized result.
+        """
+
 class Message:
     @property
     def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
@@ -11,6 +32,41 @@ class Message:
     @property
     def sanitized_output(self) -> Optional[SanitizedResult]:
         """The sanitized content of the message"""
+
+    def bind(self, context: str) -> "Message":
+        """Bind a context in the prompt. This is an immutable operation meaning that it
+        will return a new Message object with the context bound.
+
+            Example with ChatPrompt that contains two messages
+
+            ```python
+                chat_prompt = Prompt("gpt-3.5-turbo", [
+                    Message("system", "Hello, $1"),
+                    Message("user", "World")
+                ])
+                chat_prompt[0].bind("world") # we bind "world" to the first message
+            ```
+
+        Args:
+            context (str):
+                The context to bind.
+
+        Returns:
+            Message:
+                The message with the context bound.
+        """
+
+    def sanitize(self, sanitizer: PromptSanitizer) -> "Message":
+        """Sanitize the message content.
+
+        Args:
+            config (SanitizationConfig):
+                The sanitization configuration to use.
+
+        Returns:
+            Message:
+                The sanitized message.
+        """
 
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:

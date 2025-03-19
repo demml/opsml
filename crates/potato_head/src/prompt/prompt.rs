@@ -1,13 +1,11 @@
-use crate::error::{PotatoError, PotatoHeadError};
-use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig, SanitizedResult};
-use crate::prompt::types::Message;
+use crate::error::PotatoHeadError;
+use crate::prompt::sanitize::{PromptSanitizer, SanitizationConfig};
+use crate::prompt::types::{Message, Messages};
 use opsml_types::SaveName;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
-use serde::ser::SerializeSeq;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::borrow::Cow;
 use std::path::PathBuf;
 
 #[pyclass]
@@ -16,7 +14,11 @@ pub struct Prompt {
     #[pyo3(get, set)]
     pub model: String,
 
-    pub prompt: Vec<Message>,
+    #[pyo3(get)]
+    pub prompt: Messages,
+
+    #[pyo3(get)]
+    pub system_prompt: Messages,
 
     #[pyo3(get)]
     pub sanitization_config: Option<SanitizationConfig>,
@@ -24,29 +26,10 @@ pub struct Prompt {
     #[serde(skip)] // skip serialization and deserialization (added when loading from json)
     pub sanitizer: Option<PromptSanitizer>,
 
-    #[serde(serialize_with = "serialize_as_empty_vec", default = "Vec::new")]
-    #[pyo3(get)]
-    pub sanitized_results: Vec<SanitizedResult>,
-
-    #[pyo3(get)]
-    pub has_sanitize_error: bool,
-
     pub version: String,
-
-    pub system_prompt: Vec<Message>,
-
-    original_prompt: Vec<Message>,
 }
 
-fn serialize_as_empty_vec<S>(_: &Vec<SanitizedResult>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    // Always serialize as an empty vector
-    serializer.serialize_seq(Some(0))?.end()
-}
-
-fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
+fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Messages> {
     let mut prompt_vec = Vec::new();
 
     // Try to iterate - if it succeeds, it's a sequence
@@ -66,7 +49,7 @@ fn parse_prompt(prompt: &Bound<'_, PyAny>) -> PyResult<Vec<Message>> {
         }
     }
 
-    Ok(prompt_vec)
+    Ok(Messages::new(prompt_vec))
 }
 
 #[pymethods]
@@ -84,7 +67,7 @@ impl Prompt {
         let system_prompt = if let Some(system_prompt) = system_prompt {
             parse_prompt(system_prompt)?
         } else {
-            Vec::new()
+            Messages::new(Vec::new())
         };
 
         // get version from crate
@@ -99,41 +82,9 @@ impl Prompt {
             prompt: prompt.clone(),
             sanitization_config,
             sanitizer,
-            has_sanitize_error: false,
             version,
-            sanitized_results: Vec::new(),
             system_prompt,
-            original_prompt: prompt,
         })
-    }
-
-    #[getter]
-    fn prompt<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
-        // iterate over prompt and convert to pyobjects
-        self.prompt
-            .iter()
-            .map(|message| message.to_pyobject(py))
-            .collect()
-    }
-
-    #[getter]
-    fn system_prompt<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
-        // iterate over prompt and convert to pyobjects
-        self.system_prompt
-            .iter()
-            .map(|message| message.to_pyobject(py))
-            .collect()
-    }
-
-    pub fn reset(&mut self) -> PyResult<()> {
-        self.prompt = self.original_prompt.clone();
-        for message in &mut self.prompt {
-            message.reset_binding();
-        }
-        self.has_sanitize_error = false;
-        self.sanitized_results.clear();
-
-        Ok(())
     }
 
     #[pyo3(signature = (path = None))]
@@ -171,34 +122,5 @@ impl Prompt {
 
     pub fn model_dump_json(&self) -> String {
         serde_json::to_string(self).unwrap()
-    }
-}
-
-impl Prompt {
-    /// Sanitize the message using the provided sanitizer
-    /// If no sanitizer is provided, return the original message
-    ///
-    /// Returns the sanitized message
-    ///
-    fn sanitize_message<'a>(&mut self, message: &'a str) -> Result<Cow<'a, str>, PotatoError> {
-        if let Some(sanitizer) = &self.sanitizer {
-            let result = if sanitizer.config.sanitize {
-                sanitizer.sanitize(message)?
-            } else {
-                sanitizer.assess_risk(message)?
-            };
-
-            if result.risk_level >= sanitizer.config.risk_threshold {
-                self.has_sanitize_error = true;
-            }
-
-            let sanitized = result.sanitized_text.clone();
-            self.sanitized_results.push(result);
-
-            return Ok(Cow::Owned(sanitized));
-        }
-
-        // No need to clone the original message
-        Ok(Cow::Borrowed(message))
     }
 }
