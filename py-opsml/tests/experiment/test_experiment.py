@@ -12,7 +12,7 @@ from opsml import (  # type: ignore
     ModelCardMetadata,
     PandasData,
     SklearnModel,
-    ChatPrompt,
+    Prompt,
     PromptCard,
 )
 from opsml.card import CardRegistries
@@ -143,7 +143,7 @@ def test_experimentcard():
 def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
-    chat_prompt: ChatPrompt,
+    chat_prompt: Prompt,
 ):
     with OpsmlTestServer(True):
         with start_experiment(repository="test", log_hardware=True) as exp:
