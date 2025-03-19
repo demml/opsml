@@ -5,7 +5,7 @@ from opsml import (
     ModelCard,
     DataCard,
     PromptCard,
-    ChatPrompt,
+    Prompt,
 )
 from opsml.card import RegistryMode
 from opsml.card import CardList
@@ -92,7 +92,7 @@ def crud_datacard(pandas_data: PandasData):
     return updated_card, reg
 
 
-def crud_promptcard(prompt: ChatPrompt):
+def crud_promptcard(prompt: Prompt):
     reg = CardRegistry(registry_type="prompt")
 
     assert reg.registry_type == RegistryType.Prompt
@@ -123,7 +123,7 @@ def crud_promptcard(prompt: ChatPrompt):
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
 
-    assert isinstance(loaded_card.prompt, ChatPrompt)
+    assert isinstance(loaded_card.prompt, Prompt)
 
     # update the card
     loaded_card.name = "test2"
@@ -235,7 +235,7 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
 def test_crud_artifactcard(
     random_forest_classifier: SklearnModel,
     pandas_data: PandasData,
-    chat_prompt: ChatPrompt,
+    chat_prompt: Prompt,
 ):
     # start server
     with OpsmlTestServer(True):

@@ -2,7 +2,7 @@ import pytest
 
 from opsml.core import Feature, RustyLogger, LoggingConfig, LogLevel
 from opsml.card import RegistryTestHelper
-
+from opsml.potato_head import Prompt
 from typing import Tuple, Dict
 from pydantic import BaseModel
 import sys
@@ -101,15 +101,11 @@ def random_forest_classifier(example_dataframe):
     )
 
 
-# @pytest.fixture
-# def chat_prompt() -> ChatPrompt:
-#    prompt = ChatPrompt(
-#        model="gpt-4o",
-#        messages=[
-#            {"role": "developer", "content": "You are a helpful assistant."},
-#            {"role": "user", "content": "Hello!"},
-#        ],
-#        logprobs=True,
-#        top_logprobs=2,
-#    )
-#    return prompt
+@pytest.fixture
+def chat_prompt() -> Prompt:
+    prompt = Prompt(
+        model="gpt-4o",
+        prompt="what is 2 + 2?",
+        system_prompt="You are a helpful assistant.",
+    )
+    return prompt
