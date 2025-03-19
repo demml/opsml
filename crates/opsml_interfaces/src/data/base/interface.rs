@@ -8,7 +8,6 @@ use opsml_error::error::OpsmlError;
 use opsml_error::InterfaceError;
 use opsml_types::{DataInterfaceType, DataType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
-use ort::metadata;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::{PyAny, PyAnyMethods, PyList};
