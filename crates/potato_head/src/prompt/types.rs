@@ -136,7 +136,8 @@ pub struct ImageUrl {
 #[pymethods]
 impl ImageUrl {
     #[new]
-    fn new(url: String) -> PyResult<Self> {
+    #[pyo3(signature = (url, kind="image-url"))]
+    fn new(url: &str, kind: &str) -> PyResult<Self> {
         if !url.ends_with(".jpg")
             && !url.ends_with(".jpeg")
             && !url.ends_with(".png")
@@ -149,8 +150,8 @@ impl ImageUrl {
             )));
         }
         Ok(Self {
-            url,
-            kind: "image-url".to_string(),
+            url: url.to_string(),
+            kind: kind.to_string(),
         })
     }
 
@@ -191,11 +192,11 @@ pub struct DocumentUrl {
 #[pymethods]
 impl DocumentUrl {
     #[new]
-    #[pyo3(signature = (url, kind=None))]
-    fn new(url: &str, kind: Option<&str>) -> PyResult<Self> {
+    #[pyo3(signature = (url, kind="document-url"))]
+    fn new(url: &str, kind: &str) -> PyResult<Self> {
         Ok(Self {
             url: url.to_string(),
-            kind: kind.unwrap_or("document-url").to_string(),
+            kind: kind.to_string(),
         })
     }
 
@@ -225,20 +226,21 @@ pub struct BinaryContent {
 #[pymethods]
 impl BinaryContent {
     #[new]
-    fn new(data: Vec<u8>, media_type: String) -> PyResult<Self> {
+    #[pyo3(signature = (data, media_type, kind="binary"))]
+    fn new(data: Vec<u8>, media_type: &str, kind: &str) -> PyResult<Self> {
         // assert that media type is valid, must be audio, image, or document
 
-        if get_audio_media_types().contains(media_type.as_str())
-            || get_image_media_types().contains(media_type.as_str())
-            || get_document_media_types().contains(media_type.as_str())
+        if get_audio_media_types().contains(media_type)
+            || get_image_media_types().contains(media_type)
+            || get_document_media_types().contains(media_type)
         {
             PotatoHeadError::new_err(format!("Unknown media type: {}", media_type));
         }
 
         Ok(Self {
             data,
-            media_type,
-            kind: "binary".to_string(),
+            media_type: media_type.to_string(),
+            kind: kind.to_string(),
         })
     }
 

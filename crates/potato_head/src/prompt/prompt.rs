@@ -97,7 +97,6 @@ impl Prompt {
             has_sanitize_error: false,
             version,
             system_prompt,
-            pydanitc: false,
         })
     }
 

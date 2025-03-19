@@ -12,6 +12,7 @@ DocumentUrl = potato_head.DocumentUrl
 SanitizationConfig = potato_head.SanitizationConfig
 SanitizationResult = potato_head.SanitizationResult
 RiskLevel = potato_head.RiskLevel
+PIIConfig = potato_head.PIIConfig
 
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "SanitizationConfig",
     "SanitizationResult",
     "RiskLevel",
+    "PIIConfig",
 ]
