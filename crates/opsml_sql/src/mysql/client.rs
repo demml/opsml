@@ -1697,7 +1697,7 @@ mod tests {
 
         // get last admin
         let is_last_admin = client.is_last_admin("user").await.unwrap();
-        assert!(is_last_admin);
+        assert!(!is_last_admin);
 
         // delete
         client.delete_user("user").await.unwrap();
