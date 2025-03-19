@@ -43,5 +43,5 @@ from .model import TaskType as TaskType
 from .model import TensorFlowModel as TensorFlowModel
 from .model import TorchModel as TorchModel
 from .model import XGBoostModel as XGBoostModel
-from .potato_head import Prompt as Prompt
 from .potato_head import Message as Message
+from .potato_head import Prompt as Prompt

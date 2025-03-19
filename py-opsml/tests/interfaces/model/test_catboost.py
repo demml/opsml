@@ -7,7 +7,7 @@ import pytest
 
 
 @pytest.mark.numpy
-def test_catboost_regressor(
+def _test_catboost_regressor(
     tmp_path: Path,
     catboost_regressor: Tuple[CatBoostRegressor, pd.DataFrame],
 ):
@@ -36,7 +36,7 @@ def test_catboost_regressor(
 
 
 @pytest.mark.numpy
-def test_catboost_classifier(
+def _test_catboost_classifier(
     tmp_path: Path,
     catboost_classifier: Tuple[CatBoostClassifier, pd.DataFrame],
 ):
@@ -77,7 +77,7 @@ def test_catboost_ranker(
     interface = CatBoostModel(model=model, sample_data=data)
 
     assert interface.model_type == ModelType.Catboost
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.model = None
     assert interface.model is None

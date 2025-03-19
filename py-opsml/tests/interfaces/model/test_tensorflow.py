@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 import numpy as np
-from opsml.model import TensorFlowModel, SaveKwargs, ModelType
+from opsml.model import TensorFlowModel, ModelSaveKwargs, ModelType
 from opsml.data import DataType
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -54,7 +54,7 @@ def functional_model():
     model.fit(X, y, epochs=1, batch_size=32, validation_split=0.2, verbose=1)
 
     input_signature = [tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="x")]
-    save_kwargs = SaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
 
     return model, X, save_kwargs
 
@@ -110,7 +110,7 @@ def multi_input_model():
         tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
         tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
     ]
-    save_kwargs = SaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
 
     return model, [numeric_data, categorical_data], save_kwargs
 
@@ -167,7 +167,7 @@ def multi_input_dict_model():
         tf.TensorSpec(shape=(None, 5), dtype=tf.float32, name="categorical_input"),
         tf.TensorSpec(shape=(None, 10), dtype=tf.float32, name="numeric_input"),
     ]
-    save_kwargs = SaveKwargs(onnx={"input_signature": input_signature})
+    save_kwargs = ModelSaveKwargs(onnx={"input_signature": input_signature})
 
     return model, train_data, save_kwargs
 
