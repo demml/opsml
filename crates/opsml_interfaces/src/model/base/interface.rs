@@ -7,7 +7,6 @@ use crate::types::{FeatureSchema, ProcessorType};
 use crate::OnnxSession;
 use opsml_utils::FileUtils;
 use opsml_utils::PyHelperFuncs;
-use ort::metadata;
 use scouter_client::{CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile};
 
 use crate::model::base::utils;
