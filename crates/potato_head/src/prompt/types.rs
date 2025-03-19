@@ -289,7 +289,6 @@ impl BinaryContent {
     }
 }
 
-#[pyclass]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PromptContent {
     Str(String),
@@ -432,47 +431,7 @@ impl Message {
         self.content.to_pyobject(py)
     }
 
-    pub fn reset_binding(&mut self) {
-        self.next_param = 1;
-    }
-
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
-    }
-}
-
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Messages {
-    messages: Vec<Message>,
-}
-
-impl Messages {
-    pub fn new(messages: Vec<Message>) -> Self {
-        Self { messages }
-    }
-    pub fn __getitem__(&self, index: usize) -> PyResult<&Message> {
-        self.messages
-            .get(index)
-            .ok_or_else(|| PotatoHeadError::new_err(format!("Index out of range: {}", index)))
-    }
-
-    pub fn unwrap<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
-        self.messages
-            .iter()
-            .map(|message| message.unwrap(py))
-            .collect()
-    }
-
-    pub fn __len__(&self) -> usize {
-        self.messages.len()
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.messages.is_empty()
     }
 }
