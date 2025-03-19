@@ -349,12 +349,10 @@ impl PandasData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
         let pandas = PyModule::import(py, "pandas")?;
 
         // Load the data using polars
-        let data = pandas.call_method("read_parquet", (load_path,), kwargs)?;
+        let data = pandas.call_method("read_parquet", (path,), kwargs)?;
 
         let interface = PandasData::new(py, Some(&data), None, None, None, None, None)?;
 
