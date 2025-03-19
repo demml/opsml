@@ -389,12 +389,12 @@ impl Message {
         })
     }
 
-    pub fn bind(&self, value: &str) -> PyResult<Message> {
+    pub fn bind(&self, context: &str) -> PyResult<Message> {
         let placeholder = format!("${}", self.next_param);
 
         let content = match &self.content {
             PromptContent::Str(content) => {
-                let new_content = content.replace(&placeholder, value);
+                let new_content = content.replace(&placeholder, context);
                 PromptContent::Str(new_content)
             }
             _ => self.content.clone(),
@@ -428,16 +428,7 @@ impl Message {
         })
     }
 
-    pub fn result(&self) -> PyResult<&str> {
-        match &self.content {
-            PromptContent::Str(content) => Ok(content),
-            _ => Err(PotatoHeadError::new_err(
-                "Can only get result of text content",
-            )),
-        }
-    }
-
-    pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+    pub fn unwrap<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         self.content.to_pyobject(py)
     }
 
@@ -447,5 +438,41 @@ impl Message {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+}
+
+#[pyclass]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Messages {
+    messages: Vec<Message>,
+}
+
+impl Messages {
+    pub fn new(messages: Vec<Message>) -> Self {
+        Self { messages }
+    }
+    pub fn __getitem__(&self, index: usize) -> PyResult<&Message> {
+        self.messages
+            .get(index)
+            .ok_or_else(|| PotatoHeadError::new_err(format!("Index out of range: {}", index)))
+    }
+
+    pub fn unwrap<'py>(&self, py: Python<'py>) -> PyResult<Vec<Bound<'py, PyAny>>> {
+        self.messages
+            .iter()
+            .map(|message| message.unwrap(py))
+            .collect()
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.messages.len()
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.messages.is_empty()
     }
 }
