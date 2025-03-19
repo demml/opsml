@@ -34,6 +34,7 @@ setup.docs:
 
 test.unit.numpy1: setup.project.numpy1
 	uv run pytest \
+	    --ignore="tests/genai/integration/*" \
 		-m "numpy" \
 		--cov \
 		--cov-fail-under=0 \
