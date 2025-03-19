@@ -88,8 +88,10 @@ impl Prompt {
         // get version from crate
         let version = env!("CARGO_PKG_VERSION").to_string();
 
-        // Create a sanitizer if sanitization_config is provided
-        let sanitizer = sanitization_config.clone().map(PromptSanitizer::new);
+        // Create a sanitizer if sanitization_config is provided, else create default sanitizer (will be skipped)
+        let sanitizer = sanitization_config
+            .as_ref()
+            .map(|config| PromptSanitizer::new(config.clone()));
 
         Ok(Self {
             model: model.to_string(),
@@ -114,7 +116,7 @@ impl Prompt {
         let file = std::fs::read_to_string(&path)
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to read file: {}", e)))?;
 
-        // Parse the JSON file into a ChatPrompt
+        // Parse the JSON file into a Prompt
         serde_json::from_str(&file)
             .map_err(|e| PotatoHeadError::new_err(format!("Failed to parse JSON: {}", e)))
     }
@@ -140,5 +142,14 @@ impl Prompt {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(&self)
+    }
+
+    #[getter]
+    pub fn sanitizer(&self) -> PyResult<PromptSanitizer> {
+        // error if sanitizer is None
+        self.sanitizer
+            .as_ref()
+            .cloned()
+            .ok_or_else(|| PotatoHeadError::new_err("Sanitizer is not available".to_string()))
     }
 }

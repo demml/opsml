@@ -52,7 +52,7 @@ export interface SanitizedResult {
   issues: string[];
 }
 
-export interface ChatPrompt {
+export interface Prompt {
   model: string;
   messages: Message[];
   additional_data?: Record<string, any>;
@@ -61,11 +61,6 @@ export interface ChatPrompt {
   sanitized_results: SanitizedResult[];
   has_sanitize_error: boolean;
 }
-
-// Prompt card types
-export type Prompt = {
-  Chat: ChatPrompt;
-};
 
 export interface PromptCardMetadata {
   experimentcard_uid?: string;
