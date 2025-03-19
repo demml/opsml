@@ -176,12 +176,7 @@ class Prompt:
     @property
     def prompt(
         self,
-    ) -> (
-        str
-        | List[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
-        | Message
-        | List[Message]
-    ):
+    ) -> List[Message]:
         """The user prompt to use in the prompt."""
 
     @property
