@@ -110,6 +110,7 @@ impl PIIConfig {
         check_dob = true,
         custom_pii_patterns = vec![]
     ))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         check_email: bool,
         check_phone: bool,
@@ -191,6 +192,7 @@ impl SanitizationConfig {
         error_on_high_risk = true,
         pii_config = None
     ))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         risk_threshold: RiskLevel,
         sanitize: bool,
@@ -914,7 +916,7 @@ impl PromptSanitizer {
         for (pii_type, patterns) in get_pii_regexes().iter() {
             for regex in patterns {
                 if regex.is_match(text) {
-                    issues.push(format!("Found potential {} PII", format!("{:?}", pii_type)));
+                    issues.push(format!("Found potential {:?} PII", pii_type));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                 }
             }
@@ -931,7 +933,7 @@ impl PromptSanitizer {
         for (pii_type, patterns) in get_pii_regexes().iter() {
             for regex in patterns {
                 if regex.is_match(&result) {
-                    issues.push(format!("Sanitized {} PII", format!("{:?}", pii_type)));
+                    issues.push(format!("Sanitized {:?} PII ", pii_type));
                     highest_risk = std::cmp::max(highest_risk, RiskLevel::High);
                     result = regex.replace_all(&result, "[PII REDACTED]").to_string();
                 }

@@ -660,7 +660,7 @@ impl ModelInterface {
     /// * `PyResult<()>` - Result of loading drift profile
     pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<()> {
         // list all files in dir
-        let files = FileUtils::list_files(&path)?;
+        let files = FileUtils::list_files(path)?;
 
         for filepath in files {
             // get file name

@@ -654,7 +654,7 @@ impl TensorFlowModel {
             ));
         }
 
-        let sess = OnnxSession::load_onnx_session(py, &path, kwargs)?;
+        let sess = OnnxSession::load_onnx_session(py, path, kwargs)?;
 
         self.onnx_session
             .as_ref()
