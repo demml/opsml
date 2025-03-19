@@ -1045,7 +1045,7 @@ impl HuggingFaceModel {
         }
 
         // get file path to onnx model
-        let file_path = std::fs::read_dir(&path)?
+        let file_path = std::fs::read_dir(path)?
             .filter_map(|entry| {
                 entry.ok().and_then(|e| {
                     let path = e.path();

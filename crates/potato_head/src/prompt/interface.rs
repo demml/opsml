@@ -141,7 +141,7 @@ impl Prompt {
     }
 
     pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(&self)
+        PyHelperFuncs::__str__(self)
     }
 
     #[getter]
