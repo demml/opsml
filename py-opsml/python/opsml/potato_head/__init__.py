@@ -10,7 +10,7 @@ BinaryContent = potato_head.BinaryContent
 DocumentUrl = potato_head.DocumentUrl
 
 SanitizationConfig = potato_head.SanitizationConfig
-SanitizationResult = potato_head.SanitizationResult
+SanitizedResult = potato_head.SanitizedResult
 RiskLevel = potato_head.RiskLevel
 PIIConfig = potato_head.PIIConfig
 
@@ -19,7 +19,7 @@ __all__ = [
     "Prompt",
     "ImageUrl",
     "SanitizationConfig",
-    "SanitizationResult",
+    "SanitizedResult",
     "RiskLevel",
     "PIIConfig",
 ]

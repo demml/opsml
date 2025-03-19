@@ -3,6 +3,15 @@
 from enum import IntEnum
 from typing import List, Optional, Literal, Sequence
 
+class Message:
+    @property
+    def content(self) -> str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl:
+        """The content of the message"""
+
+    @property
+    def sanitized_output(self) -> Optional[SanitizedResult]:
+        """The sanitized content of the message"""
+
 class ImageUrl:
     def __init__(self, url: str, kind: Literal["image-url"] = "image-url") -> None:
         """Create an ImageUrl object.
@@ -253,7 +262,7 @@ class SanitizationConfig:
         """A permissive sanitization (sanitize=True) configuration with keyword and
         control_chars enabled and a Critical risk threshold set"""
 
-class SanitizationResult:
+class SanitizedResult:
     """Class to represent the result of a sanitization attempt"""
 
     @property
