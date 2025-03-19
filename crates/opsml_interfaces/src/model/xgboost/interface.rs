@@ -13,7 +13,7 @@ use pyo3::PyVisit;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, span, Level};
+use tracing::{debug, error, instrument};
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -186,6 +186,7 @@ impl XGBoostModel {
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
     #[pyo3(signature = (path, to_onnx=false, save_kwargs=None))]
+    #[instrument(skip_all)]
     pub fn save<'py>(
         mut self_: PyRefMut<'py, Self>,
         py: Python<'py>,
@@ -193,10 +194,6 @@ impl XGBoostModel {
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> PyResult<ModelInterfaceMetadata> {
-        // color text
-        let span = span!(Level::INFO, "XGBoost Save").entered();
-        let _ = span.enter();
-
         debug!("Saving XGBoost model");
 
         // parse the save args
@@ -296,34 +293,63 @@ impl XGBoostModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        let model_path = path.join(&metadata.model_uri);
+        let model = self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
         self_.as_super().model = Some(model);
 
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        if !metadata.data_processor_map.is_empty() {
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            let processor = metadata
+                .data_processor_map
+                .values()
+                .next()
+                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+
+            let preprocessor_uri = path.join(&processor.uri);
+
+            self_.load_preprocessor(py, &preprocessor_uri, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
         // parent scope - can only borrow mutable one at a time
         {
             let parent = self_.as_super();
 
             if onnx {
-                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+                let onnx_path =
+                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
+                        OpsmlError::new_err("ONNX model URI not found in metadata")
+                    })?);
+                parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            parent.load_drift_profile(py, &path)?;
+            if metadata.drift_profile_uri.is_some() {
+                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
 
-            parent.load_data(py, &path, None)?;
+                parent.load_drift_profile(py, &drift_path)?;
+            }
+
+            if metadata.sample_data_uri.is_some() {
+                let sample_data_path =
+                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
+                        OpsmlError::new_err("Sample data URI not found in metadata")
+                    })?);
+                parent.load_data(py, &sample_data_path, None)?;
+            }
         }
 
         Ok(())
@@ -392,14 +418,12 @@ impl XGBoostModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip_all)]
     pub fn save_model<'py>(
         self_: PyRefMut<'py, Self>,
         py: Python<'py>,
         path: &Path,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::DEBUG, "Save Model").entered();
-        let _ = span.enter();
-
         let super_ = self_.as_ref();
         if super_.model.is_none() {
             error!("No model detected in interface for saving");
@@ -426,20 +450,16 @@ impl XGBoostModel {
         Ok(save_path)
     }
 
+    #[instrument(skip_all)]
     pub fn load_model<'py>(
         &self,
         py: Python<'py>,
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PyObject> {
-        let span = span!(Level::INFO, "Loading Model").entered();
-        let _ = span.enter();
-
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Json);
-
         let booster = py.import("xgboost")?.getattr("Booster")?;
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
-        kwargs.set_item("model_file", load_path)?;
+        kwargs.set_item("model_file", path)?;
 
         let model = booster.call((), Some(&kwargs)).map_err(|e| {
             error!("Failed to load model: {}", e);
@@ -458,15 +478,13 @@ impl XGBoostModel {
     /// * `path` - The path to save the model to
     /// * `kwargs` - Additional keyword arguments to pass to the save
     ///
+    #[instrument(skip_all)]
     pub fn save_preprocessor(
         &mut self,
         py: Python,
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PathBuf> {
-        let span = span!(Level::INFO, "Saving preprocessor").entered();
-        let _ = span.enter();
-
         // check if data is None
         if self.preprocessor.is_none() {
             error!("No preprocessor detected in interface for saving");

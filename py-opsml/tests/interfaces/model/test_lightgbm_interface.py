@@ -17,12 +17,12 @@ def test_lightgbm_model_interface(
 
     assert interface.model_type == ModelType.LgbmBooster
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.model = None
     assert interface.model is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.model is not None
     assert interface.onnx_session is not None
