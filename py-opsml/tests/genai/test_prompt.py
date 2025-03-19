@@ -86,8 +86,6 @@ def test_binary_prompt():
     assert prompt.prompt[0].unwrap() == "What company is this logo from?"
     assert isinstance(prompt.prompt[1].unwrap(), PydanticBinaryContent)
 
-    # agent = Agent("openai:gpt-4o", system_prompt=prompt.system_prompt)
-
 
 def test_document_prompt():
     prompt = Prompt(
@@ -103,9 +101,3 @@ def test_document_prompt():
 
     assert prompt.prompt[0].unwrap() == "What is the main content of this document?"
     assert isinstance(prompt.prompt[1].unwrap(), PydanticDocumentUrl)
-
-    # agent = Agent("openai:gpt-4o", system_prompt=prompt.system_prompt)
-
-
-# with agent.override():
-# agent.run_sync(user_prompt=prompt.prompt)
