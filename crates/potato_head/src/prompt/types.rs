@@ -4,7 +4,6 @@ use pyo3::{prelude::*, IntoPyObjectExt};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::OnceLock;
-
 static DOCUMENT_MEDIA_TYPES: OnceLock<HashSet<&'static str>> = OnceLock::new();
 
 fn get_document_media_types() -> &'static HashSet<&'static str> {
@@ -317,10 +316,48 @@ impl UserContent {
     pub fn to_pyobject<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         match self {
             UserContent::Str(s) => s.into_bound_py_any(py),
-            UserContent::Audio(audio_url) => audio_url.clone().into_bound_py_any(py),
-            UserContent::Image(image_url) => image_url.clone().into_bound_py_any(py),
-            UserContent::Document(document_url) => document_url.clone().into_bound_py_any(py),
-            UserContent::Binary(binary_content) => binary_content.clone().into_bound_py_any(py),
+            UserContent::Audio(audio_url) => {
+                // test pydantic module
+                match get_pydantic_module(py, "AudioUrl") {
+                    Ok(model_class) => {
+                        model_class.call1((audio_url.url.clone(), audio_url.kind.clone()))
+                    }
+                    Err(_) => audio_url.clone().into_bound_py_any(py),
+                }
+            }
+            UserContent::Image(image_url) => {
+                // test pydantic module
+                match get_pydantic_module(py, "ImageUrl") {
+                    Ok(model_class) => {
+                        model_class.call1((image_url.url.clone(), image_url.kind.clone()))
+                    }
+                    Err(_) => image_url.clone().into_bound_py_any(py),
+                }
+            }
+            UserContent::Document(document_url) => {
+                // test pydantic module
+                match get_pydantic_module(py, "DocumentUrl") {
+                    Ok(model_class) => {
+                        model_class.call1((document_url.url.clone(), document_url.kind.clone()))
+                    }
+                    Err(_) => document_url.clone().into_bound_py_any(py),
+                }
+            }
+            UserContent::Binary(binary_content) => {
+                // test pydantic module
+                match get_pydantic_module(py, "BinaryContent") {
+                    Ok(model_class) => model_class.call1((
+                        binary_content.data.clone(),
+                        binary_content.media_type.clone(),
+                        binary_content.kind.clone(),
+                    )),
+                    Err(_) => binary_content.clone().into_bound_py_any(py),
+                }
+            }
         }
     }
+}
+
+pub fn get_pydantic_module<'py>(py: Python<'py>, module_name: &str) -> PyResult<Bound<'py, PyAny>> {
+    py.import("pydantic_ai")?.getattr(module_name)
 }
