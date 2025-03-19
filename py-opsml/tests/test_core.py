@@ -3,7 +3,6 @@ from opsml.core import (
     Feature,
     OnnxSchema,
     OpsmlError,
-    Description,
     FeatureSchema,
 )
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
@@ -132,32 +131,3 @@ def test_data_schema_creation():
         {"output1": Feature("type2", [4, 5, 6], {"arg2": "value2"})}
     )
     OnnxSchema(input_features, output_features, "1.0")
-
-
-def test_description_creation():
-    summary = "This is a summary."
-    sample_code = "print('Hello, world!')"
-    notes = "These are some notes."
-
-    description = Description(summary, sample_code, notes)
-
-    assert description.summary == summary
-    assert description.sample_code == sample_code
-    assert description.notes == notes
-
-
-def test_description_creation_markdown():
-    summary = "assets/readme.md"
-    sample_code = "print('Hello, world!')"
-    notes = "These are some notes."
-
-    description = Description(summary, sample_code, notes)
-
-    assert description.summary != summary
-    assert description.sample_code == sample_code
-    assert description.notes == notes
-
-    summary = "assets/no_readme.md"
-
-    with pytest.raises(OpsmlError):
-        description = Description(summary)

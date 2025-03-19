@@ -35,6 +35,7 @@ setup.docs:
 test.unit.numpy1: setup.project.numpy1
 	uv run pytest \
 	    --ignore="tests/genai/integration/*" \
+		--ignore="tests/interfaces/model/test_tensorflow.py" \
 		-m "numpy" \
 		--cov \
 		--cov-fail-under=0 \
@@ -46,6 +47,8 @@ test.unit.tensorflow:
 
 test.unit:
 	uv run pytest \
+		--ignore="tests/genai/integration/*" \
+		--ignore="tests/interfaces/model/test_tensorflow.py" \
 		-m "not numpy" \
 		--cov \
 		--cov-fail-under=0 \

@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     modelcard_uids JSONB,
     promptcard_uids JSONB,
     experimentcard_uids JSONB,
-    artifact_uris JSONB,
     compute_environment JSONB,
     username VARCHAR(255) NOT NULL DEFAULT 'guest'
 );

@@ -660,11 +660,14 @@ impl ModelInterface {
     /// * `PyResult<()>` - Result of loading drift profile
     pub fn load_drift_profile(&mut self, py: Python, path: &Path) -> PyResult<()> {
         // list all files in dir
-        let files = FileUtils::list_files(path)?;
+        let files = FileUtils::list_files(&path)?;
 
         for filepath in files {
             // get file name
             let filename = filepath.file_name().unwrap().to_str().unwrap();
+
+            println!("Loading drift profile: {:?}", &filepath);
+
             let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
             let drift_type = DriftType::from_value(&drift_type_str);
 
@@ -677,7 +680,7 @@ impl ModelInterface {
             }
 
             // load file to json string
-            let file = std::fs::read_to_string(path).map_err(|_| {
+            let file = std::fs::read_to_string(&filepath).map_err(|_| {
                 OpsmlError::new_err(format!("Failed to read drift profile file: {}", filename))
             })?;
 

@@ -51,6 +51,7 @@ def crud_datacard(pandas_data: PandasData):
     assert loaded_card.version == card.version
 
     assert isinstance(loaded_card.interface, PandasData)
+    assert loaded_card.interface.data is not None
 
     # attempt to download all artifacts
     loaded_card.download_artifacts()
@@ -85,6 +86,7 @@ def crud_datacard(pandas_data: PandasData):
 
     # load the updated card
     updated_card: DataCard = reg.load_card(uid=loaded_card.uid)
+    updated_card.load()
 
     # assert that the card was updated
     assert updated_card.name == "test2"
@@ -202,7 +204,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     created_path = Path("card_artifacts")
     assert created_path.exists()
 
-    assert len(list(created_path.iterdir())) == 5
+    assert len(list(created_path.iterdir())) == 6
 
     # attempt to delete folder
     shutil.rmtree("card_artifacts")
