@@ -12,7 +12,6 @@ docs/site/
 expressions.txt
 test.png
 blob/
-opsml/crates/opsml_server/opsml_ui/site/
 mlruns/
 
 # Byte-compiled / optimized / DLL files
@@ -97,9 +96,6 @@ env.bak/
 venv.bak/
 
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -136,4 +132,8 @@ target/
 local_test_db.db
 .git.bfg-report*
 /py-opsml/catboost_info
-/crates/opsml_server/opsml_ui/site/*
+
+
+
+crates/opsml_server/opsml_ui/site/*
+!crates/opsml_server/opsml_ui/site/.gitkeep
