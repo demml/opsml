@@ -7,7 +7,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union, 
 from ..core import FeatureSchema, VersionType
 from ..data import DataInterface, DataLoadKwargs, DataSaveKwargs, DataType
 from ..model import ModelInterface, ModelLoadKwargs, ModelSaveKwargs
-from ..potato_head import ChatPrompt
+from ..potato_head import Prompt
 
 class RegistryType:
     Data: "RegistryType"
@@ -750,7 +750,7 @@ class ExperimentCard:
 class PromptCard:
     def __init__(
         self,
-        prompt: ChatPrompt,
+        prompt: Prompt,
         repository: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
@@ -764,7 +764,7 @@ class PromptCard:
 
 
         Args:
-            prompt (ChatPrompt):
+            prompt (Prompt):
                 Prompt to associate with `PromptCard`
             repository (str | None):
                 Repository to associate with `PromptCard`
@@ -781,17 +781,16 @@ class PromptCard:
 
         Example:
         ```python
-        from opsml import ChatPrompt, PromptCard, CardRegistry, RegistryType
+        from opsml import Prompt, PromptCard, CardRegistry, RegistryType
 
         # create prompt
-        prompt = ChatPrompt(
-            model="gpt-4o",
-            messages=[
-                {"role": "developer", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello!"},
+        prompt = Prompt(
+            model="openai:gpt-4o",
+            prompt=[
+                "My prompt $1 is $2",
+                "My prompt $3 is $4",
             ],
-            logprobs=True,
-            top_logprobs=2,
+            system_prompt="system_prompt",
         )
 
         # create card
@@ -810,15 +809,15 @@ class PromptCard:
         """
 
     @property
-    def prompt(self) -> ChatPrompt:
+    def prompt(self) -> Prompt:
         """Returns the prompt"""
 
     @prompt.setter
-    def prompt(self, prompt: ChatPrompt) -> None:
+    def prompt(self, prompt: Prompt) -> None:
         """Set the prompt
 
         Args:
-            prompt (ChatPrompt):
+            prompt (Prompt):
                 The prompt to set
         """
 

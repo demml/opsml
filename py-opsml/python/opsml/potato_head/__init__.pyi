@@ -105,14 +105,18 @@ class Message:
         """Bind a context in the prompt. This is an immutable operation meaning that it
         will return a new Message object with the context bound.
 
-            Example with ChatPrompt that contains two messages
+            Example with Prompt that contains two messages
 
             ```python
-                chat_prompt = Prompt("gpt-3.5-turbo", [
-                    Message("system", "Hello, $1"),
-                    Message("user", "World")
-                ])
-                chat_prompt[0].bind("world") # we bind "world" to the first message
+                prompt = Prompt(
+                    model="openai:gpt-4o",
+                    prompt=[
+                        "My prompt $1 is $2",
+                        "My prompt $3 is $4",
+                    ],
+                    system_prompt="system_prompt",
+                )
+                bounded_prompt = prompt.prompt[0].bind("world").unwrap() # we bind "world" to the first message
             ```
 
         Args:
@@ -126,6 +130,23 @@ class Message:
 
     def sanitize(self, sanitizer: PromptSanitizer) -> "Message":
         """Sanitize the message content.
+
+        Example with Prompt that contains two messages
+
+            ```python
+                prompt = Prompt(
+                    model="openai:gpt-4o",
+                    prompt=[
+                        "My prompt $1 is $2",
+                        "My prompt $3 is $4",
+                    ],
+                    system_prompt="system_prompt",
+                )
+
+                # sanitize the first message
+                # Note: sanitization will fail if no sanitizer is provided (either through prompt.sanitizer or standalone)
+                bounded_prompt = prompt.prompt[0].bind("world").sanitize(prompt.sanitizer).unwrap() # we bind "world" to the first message
+            ```
 
         Args:
             config (SanitizationConfig):
@@ -166,12 +187,16 @@ class Prompt:
                 The system prompt to use in the prompt.
             sanitization_config (None):
                 The santization configuration to use for the prompt.
-                Defaults to None which means no santization will be performed.
+                Defaults to None which means no sanitization will be done
         """
 
     @property
     def model(self) -> str:
         """The model to use for the prompt."""
+
+    @property
+    def sanitizer(self) -> PromptSanitizer:
+        """The prompt sanitizer to use for the prompt."""
 
     @property
     def prompt(
