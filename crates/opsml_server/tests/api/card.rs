@@ -13,7 +13,6 @@ use opsml_server::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
 };
 use std::path::PathBuf;
-use tokio::time::Duration;
 
 // create json
 fn create_card_metadata(key: ArtifactKey) {
@@ -958,7 +957,7 @@ async fn test_opsml_server_card_get_readme() {
     //
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let card_readme: ReadeMe = serde_json::from_slice(&body).unwrap();
-    assert_eq!(card_readme.exists, true);
+    assert!(card_readme.exists);
     assert_eq!(card_readme.readme, "This is a test README");
 
     //
