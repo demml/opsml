@@ -6,6 +6,7 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
+from opsml.test import OpsmlTestServer
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore

@@ -55,8 +55,7 @@ impl OpsmlTestServer {
     fn start_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            Self::cleanup()?;
-            self.remove_env_vars_for_client()?;
+            self.cleanup()?;
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
@@ -126,10 +125,7 @@ impl OpsmlTestServer {
             });
 
             if self.cleanup {
-                Self::cleanup()?;
-
-                // unset env vars
-                self.remove_env_vars_for_client()?;
+                self.cleanup()?;
             }
 
             Ok(())
@@ -148,11 +144,13 @@ impl OpsmlTestServer {
         Ok(())
     }
 
-    #[staticmethod]
-    fn cleanup() -> PyResult<()> {
+    fn cleanup(&self) -> PyResult<()> {
         let current_dir = std::env::current_dir().unwrap();
         let db_file = current_dir.join("opsml.db");
         let storage_dir = current_dir.join("opsml_registries");
+
+        // unset env vars
+        self.remove_env_vars_for_client()?;
 
         if db_file.exists() {
             std::fs::remove_file(db_file).unwrap();
@@ -180,8 +178,53 @@ impl OpsmlTestServer {
     }
 }
 
+// create context manage that can be use in server test to cleanup resources
+
+#[pyclass]
+pub struct TestServerContext {}
+
+#[pymethods]
+impl TestServerContext {
+    #[new]
+    fn new() -> Self {
+        TestServerContext {}
+    }
+
+    fn __enter__(&self) -> PyResult<()> {
+        self.cleanup()?;
+        Ok(())
+    }
+
+    fn __exit__(
+        &self,
+        _exc_type: PyObject,
+        _exc_value: PyObject,
+        _traceback: PyObject,
+    ) -> PyResult<()> {
+        self.cleanup()?;
+        Ok(())
+    }
+
+    fn cleanup(&self) -> PyResult<()> {
+        let current_dir = std::env::current_dir().unwrap();
+        let db_file = current_dir.join("opsml.db");
+        let storage_dir = current_dir.join("opsml_registries");
+
+        if db_file.exists() {
+            std::fs::remove_file(db_file).unwrap();
+        }
+
+        if storage_dir.exists() {
+            std::fs::remove_dir_all(storage_dir).unwrap();
+        }
+
+        Ok(())
+    }
+}
+
 #[pymodule]
 pub fn test(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<OpsmlTestServer>()?;
+    m.add_class::<TestServerContext>()?;
     Ok(())
 }
