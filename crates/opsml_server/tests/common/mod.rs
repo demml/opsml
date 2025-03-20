@@ -15,7 +15,6 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
-use tokio::time::Duration;
 
 use std::{env, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
@@ -234,14 +233,14 @@ impl TestHelper {
 
         let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
         let path = &joined_path.join("file.json");
-        std::fs::write(&path, json).unwrap();
+        std::fs::write(path, json).unwrap();
 
         let png = &joined_path.join("file.png");
-        std::fs::write(&png, "PNG").unwrap();
+        std::fs::write(png, "PNG").unwrap();
 
         let key_bytes = self.key.get_decrypt_key().unwrap();
-        let _ = encrypt_file(&path, &key_bytes);
-        let _ = encrypt_file(&png, &key_bytes);
+        let _ = encrypt_file(path, &key_bytes);
+        let _ = encrypt_file(png, &key_bytes);
 
         joined_path.to_str().unwrap().to_string()
     }

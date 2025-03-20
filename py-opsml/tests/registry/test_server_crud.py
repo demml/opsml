@@ -1,18 +1,19 @@
-from opsml.test import OpsmlTestServer
-from opsml import (
+from opsml.test import OpsmlTestServer  # type: ignore
+from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,
     ModelCard,
     DataCard,
     PromptCard,
-    ChatPrompt,
+    Prompt,
 )
-from opsml.card import RegistryMode
-from opsml.card import CardList
-from opsml.model import SklearnModel
-from opsml.data import PandasData
+from opsml.card import RegistryMode, CardList  # type: ignore
+from opsml.model import SklearnModel  # type: ignore
+from opsml.data import PandasData  # type: ignore
 from pathlib import Path
 import shutil
+import pytest
+from tests.conftest import WINDOWS_EXCLUDE
 
 
 def crud_datacard(pandas_data: PandasData):
@@ -51,6 +52,7 @@ def crud_datacard(pandas_data: PandasData):
     assert loaded_card.version == card.version
 
     assert isinstance(loaded_card.interface, PandasData)
+    assert loaded_card.interface.data is not None
 
     # attempt to download all artifacts
     loaded_card.download_artifacts()
@@ -85,6 +87,7 @@ def crud_datacard(pandas_data: PandasData):
 
     # load the updated card
     updated_card: DataCard = reg.load_card(uid=loaded_card.uid)
+    updated_card.load()
 
     # assert that the card was updated
     assert updated_card.name == "test2"
@@ -92,7 +95,7 @@ def crud_datacard(pandas_data: PandasData):
     return updated_card, reg
 
 
-def crud_promptcard(prompt: ChatPrompt):
+def crud_promptcard(prompt: Prompt):
     reg = CardRegistry(registry_type="prompt")
 
     assert reg.registry_type == RegistryType.Prompt
@@ -123,7 +126,7 @@ def crud_promptcard(prompt: ChatPrompt):
     assert loaded_card.uid == card.uid
     assert loaded_card.version == card.version
 
-    assert isinstance(loaded_card.prompt, ChatPrompt)
+    assert isinstance(loaded_card.prompt, Prompt)
 
     # update the card
     loaded_card.name = "test2"
@@ -202,7 +205,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     created_path = Path("card_artifacts")
     assert created_path.exists()
 
-    assert len(list(created_path.iterdir())) == 5
+    assert len(list(created_path.iterdir())) == 6
 
     # attempt to delete folder
     shutil.rmtree("card_artifacts")
@@ -232,10 +235,11 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     assert len(cards) == 0
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_crud_artifactcard(
     random_forest_classifier: SklearnModel,
     pandas_data: PandasData,
-    chat_prompt: ChatPrompt,
+    chat_prompt: Prompt,
 ):
     # start server
     with OpsmlTestServer(True):

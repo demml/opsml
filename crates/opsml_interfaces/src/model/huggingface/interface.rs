@@ -557,7 +557,7 @@ impl HuggingFaceModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(
         skip_all
@@ -567,6 +567,7 @@ impl HuggingFaceModel {
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
@@ -574,22 +575,43 @@ impl HuggingFaceModel {
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         debug!("Loading model");
-        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        let model_path = path.join(&metadata.model_uri);
+        self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
-            self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            let onnx_path = path.join(
+                &metadata
+                    .onnx_model_uri
+                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+            );
+            self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        debug!("Loading sample data");
         let data_type = self_.as_super().data_type.clone();
-        self_.load_data(py, &path, &data_type, None)?;
+        if metadata.sample_data_uri.is_some() {
+            debug!("Loading sample data");
+            let sample_data_path = path.join(
+                &metadata
+                    .sample_data_uri
+                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+            );
+            self_.load_data(py, &sample_data_path, &data_type, None)?;
+        }
 
-        debug!("Loading preprocessor");
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        if !metadata.data_processor_map.is_empty() {
+            debug!("Loading preprocessor");
+            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
-        debug!("Loading drift profile");
-        self_.as_super().load_drift_profile(py, &path)?;
+        if metadata.drift_profile_uri.is_some() {
+            debug!("Loading drift profile");
+            let drift_path =
+                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+            self_.as_super().load_drift_profile(py, &drift_path)?;
+        }
 
         Ok(())
     }
@@ -934,12 +956,10 @@ impl HuggingFaceModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model);
-
         if self.base_args.is_pipeline {
             let pipeline = py.import("transformers")?.getattr("pipeline")?;
 
-            let model = pipeline.call((&self.huggingface_task.to_string(), load_path), kwargs)?;
+            let model = pipeline.call((&self.huggingface_task.to_string(), path), kwargs)?;
             self.model = Some(model.unbind());
 
             debug!("Model loaded");
@@ -950,7 +970,7 @@ impl HuggingFaceModel {
 
             self.model = Some(
                 model
-                    .call_method("from_pretrained", (load_path,), kwargs)?
+                    .call_method("from_pretrained", (path,), kwargs)?
                     .unbind(),
             );
 
@@ -1024,10 +1044,8 @@ impl HuggingFaceModel {
             ));
         }
 
-        let load_path = path.join(SaveName::OnnxModel.to_string());
-
         // get file path to onnx model
-        let file_path = std::fs::read_dir(&load_path)?
+        let file_path = std::fs::read_dir(path)?
             .filter_map(|entry| {
                 entry.ok().and_then(|e| {
                     let path = e.path();
@@ -1041,7 +1059,7 @@ impl HuggingFaceModel {
             .next()
             .ok_or_else(|| OpsmlError::new_err("No ONNX file found"))?;
 
-        let sess = OnnxSession::load_onnx_session(py, file_path, kwargs)?;
+        let sess = OnnxSession::load_onnx_session(py, &file_path, kwargs)?;
 
         self.onnx_session
             .as_ref()

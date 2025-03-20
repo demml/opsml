@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use opsml_error::error::{OpsmlError, UtilError};
 use pyo3::prelude::*;
+use std::path::Path;
 use walkdir::WalkDir;
 
 #[pyclass]
@@ -41,7 +42,7 @@ impl FileUtils {
 }
 
 impl FileUtils {
-    pub fn list_files(path: PathBuf) -> Result<Vec<PathBuf>, UtilError> {
+    pub fn list_files(path: &Path) -> Result<Vec<PathBuf>, UtilError> {
         let mut files = Vec::new();
         for entry in WalkDir::new(path) {
             let entry =

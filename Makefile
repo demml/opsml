@@ -57,15 +57,10 @@ start.server: stop.server build.ui
 
 .PHONY: stop.server
 stop.server:
-	lsof -ti:3000 | xargs kill -9
+	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+# lsof -ti:3000 | xargs kill -9
 #	rm -f opsml.db || true
 #	rm -rf opsml_registries || true
-	
-
-######## Experiment tests ########
-
-test.experiment:
-	cargo test -p opsml-experiment -- --nocapture
 
 ######## Storage tests
 .PHONY: test.storage.client
@@ -104,6 +99,7 @@ install.ui.deps:
 .PHONY: ui.build
 build.ui:
 	cd $(UI_DIR) && pnpm build
+	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev

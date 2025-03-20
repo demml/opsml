@@ -3,6 +3,8 @@ use pyo3::prelude::*;
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
 #[cfg(feature = "server")]
+use std::net::TcpListener as StdTcpListener;
+#[cfg(feature = "server")]
 use std::sync::Arc;
 #[cfg(feature = "server")]
 use std::thread::sleep;
@@ -57,8 +59,23 @@ impl OpsmlTestServer {
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
+
             let handle = self.handle.clone();
             let runtime = self.runtime.clone();
+
+            let port = match (3000..3010)
+                .find(|port| StdTcpListener::bind(("127.0.0.1", *port)).is_ok())
+            {
+                Some(p) => p,
+                None => {
+                    return Err(opsml_error::OpsmlError::new_err(
+                        "Failed to find available port",
+                    ))
+                }
+            };
+
+            std::env::set_var("OPSML_SERVER_PORT", port.to_string());
+
             runtime.spawn(async move {
                 let server_handle = start_server_in_background();
                 *handle.lock().await = server_handle.lock().await.take();

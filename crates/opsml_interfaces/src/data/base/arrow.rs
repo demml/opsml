@@ -211,14 +211,15 @@ impl ArrowData {
         ))
     }
 
-    #[pyo3(signature = (path, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
+        let load_path = path.join(metadata.data_uri);
         let parquet = py.import("pyarrow")?.getattr("parquet")?;
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -304,12 +305,10 @@ impl ArrowData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Parquet);
-
         let parquet = py.import("pyarrow")?.getattr("parquet")?;
 
         // Load the data using numpy
-        let data = parquet.call_method("read_table", (load_path,), kwargs)?;
+        let data = parquet.call_method("read_table", (path,), kwargs)?;
 
         let interface = ArrowData::new(py, Some(&data), None, None, None, None, None)?;
 
