@@ -192,13 +192,13 @@ impl Default for OpsmlConfig {
         };
 
         let log_level =
-            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "debug".to_string()))
+            LogLevel::from_str(&env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string()))
                 .unwrap_or(LogLevel::Info);
 
         let log_json = env::var("LOG_JSON")
-            .unwrap_or_else(|_| "true".to_string())
+            .unwrap_or_else(|_| "false".to_string())
             .parse()
-            .unwrap_or(true);
+            .unwrap_or(false);
 
         let logging_config =
             LoggingConfig::rust_new(false, log_level, WriteLevel::Stdout, log_json);
