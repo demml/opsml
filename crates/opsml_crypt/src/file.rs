@@ -101,7 +101,7 @@ pub fn decrypt_file(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptErro
 /// A Result containing either an empty tuple or a CryptError
 #[instrument(skip_all)]
 pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
-    let files = FileUtils::list_files(input_path.to_path_buf())?;
+    let files = FileUtils::list_files(input_path)?;
 
     let encrypted_files = files
         .into_par_iter()
@@ -134,7 +134,7 @@ pub fn encrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 /// A Result containing either an empty tuple or a CryptError
 pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), CryptError> {
     // get all files (including subdirectories)
-    let files = FileUtils::list_files(input_path.to_path_buf())?;
+    let files = FileUtils::list_files(input_path)?;
 
     let decrypted_files = files
         .into_par_iter()

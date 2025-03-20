@@ -27,7 +27,7 @@ use sqlx::types::Json as SqlxJson;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, instrument};
 
 /// Route for checking if a card UID exists
 pub async fn check_card_uid(
@@ -185,9 +185,6 @@ pub async fn create_card(
         error!("Failed to get next version: {}", e);
         internal_server_error(e, "Failed to get next version")
     })?;
-
-    info!("Next version: {}", version);
-
     // (2) ------- Insert the card into the database
     let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
         state.sql_client.clone(),
@@ -379,7 +376,6 @@ pub async fn update_card(
                 build_tag: Some(version.build.to_string()),
                 version: client_card.version,
                 tags: SqlxJson(client_card.tags),
-                prompt_type: client_card.prompt_type,
                 experimentcard_uid: client_card.experimentcard_uid,
                 auditcard_uid: client_card.auditcard_uid,
                 username: client_card.username,

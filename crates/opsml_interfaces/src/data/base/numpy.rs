@@ -189,16 +189,16 @@ impl NumpyData {
         ))
     }
 
-    #[pyo3(signature = (path, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
+        let load_path = path.join(metadata.data_uri);
         let load_kwargs = load_kwargs.unwrap_or_default();
-
         let numpy = PyModule::import(py, "numpy")?;
 
         // Load the data using numpy
@@ -341,12 +341,10 @@ impl NumpyData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Numpy);
-
         let numpy = PyModule::import(py, "numpy")?;
 
         // Load the data using numpy
-        let data = numpy.call_method("load", (load_path,), kwargs)?;
+        let data = numpy.call_method("load", (path,), kwargs)?;
 
         let interface = NumpyData::new(py, Some(&data), None, None, None, None, None)?;
 

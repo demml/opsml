@@ -3,7 +3,7 @@ from opsml.model import (
     HuggingFaceModel,
     HuggingFaceOnnxArgs,
     HuggingFaceORTModel,
-    SaveKwargs,
+    ModelSaveKwargs,
 )
 from pathlib import Path
 from typing import Tuple
@@ -11,7 +11,7 @@ import torch
 from transformers import Pipeline, BartModel, BartTokenizer, TFBartModel  # type: ignore
 from optimum.onnxruntime.configuration import AutoQuantizationConfig  # type: ignore
 import pytest
-from tests.conftest import EXCLUDE, WINDOWS_EXCLUDE
+from tests.conftest import EXCLUDE
 import sys
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 from opsml.data import TorchData
@@ -41,16 +41,16 @@ def test_hugging_face_text_pipeline(
         config=AutoQuantizationConfig.avx512_vnni(is_static=False, per_channel=False),
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
 
-    interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
 
     assert interface.onnx_session is not None
 
     interface.onnx_session.session = None
     assert interface.onnx_session.session is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.onnx_session is not None
 
@@ -77,8 +77,8 @@ def test_hugging_face_model(
         provider="CPUExecutionProvider",
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
-    interface.save(save_path, True, save_kwargs=kwargs)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 
     interface.onnx_session.session = None
@@ -87,7 +87,7 @@ def test_hugging_face_model(
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata, onnx=True)
 
     assert interface.onnx_session is not None
     assert interface.tokenizer is not None
@@ -111,23 +111,17 @@ def test_hugging_face_tf_model(
         sample_data=data,
     )
 
-    onnx_args = HuggingFaceOnnxArgs(
-        ort_type=HuggingFaceORTModel.OrtFeatureExtraction,
-        provider="CPUExecutionProvider",
-    )
-
-    kwargs = SaveKwargs(onnx=onnx_args)
-    interface.save(save_path, False, save_kwargs=kwargs)
+    metadata = interface.save(save_path)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, onnx=True)
+    interface.load(save_path, metadata.save_metadata)
 
     assert interface.tokenizer is not None
 
 
-@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="Test not supported")
+@pytest.mark.skipif(EXCLUDE, reason="Test not supported")
 def test_huggingface_vit(
     tmp_path: Path,
     huggingface_vit: Tuple[ViTForImageClassification, ViTFeatureExtractor, TorchData],
@@ -149,7 +143,7 @@ def test_huggingface_vit(
         provider="CPUExecutionProvider",
     )
 
-    kwargs = SaveKwargs(onnx=onnx_args)
+    kwargs = ModelSaveKwargs(onnx=onnx_args)
     interface.save(save_path, True, save_kwargs=kwargs)
     assert interface.onnx_session is not None
 

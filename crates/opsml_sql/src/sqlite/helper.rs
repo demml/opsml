@@ -395,7 +395,7 @@ impl SqliteQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, prompt_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
             .to_string()
     }
 
@@ -495,7 +495,6 @@ impl SqliteQueryHelper {
         minor = ?, 
         patch = ?, 
         version = ?, 
-        prompt_type = ?,
         tags = ?, 
         experimentcard_uid = ?, 
         auditcard_uid = ?, 

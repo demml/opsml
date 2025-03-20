@@ -17,6 +17,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::fmt;
+use std::path::Path;
 use tracing::debug;
 
 #[pyclass]
@@ -235,7 +236,7 @@ impl OnnxSession {
 impl OnnxSession {
     pub fn load_onnx_session(
         py: Python,
-        path: PathBuf,
+        path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
         let rt = py

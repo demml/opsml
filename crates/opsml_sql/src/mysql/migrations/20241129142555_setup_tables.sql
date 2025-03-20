@@ -168,7 +168,6 @@ CREATE TABLE IF NOT EXISTS opsml_prompt_registry (
     build_tag VARCHAR(16),
     version VARCHAR(64),
     tags JSON,
-    prompt_type VARCHAR(64),
     experimentcard_uid VARCHAR(64),
     auditcard_uid VARCHAR(64),
     username VARCHAR(255) NOT NULL DEFAULT 'guest'

@@ -380,7 +380,7 @@ impl MySQLQueryHelper {
     }
 
     pub fn get_promptcard_insert_query() -> String {
-        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, prompt_type, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
+        format!("INSERT INTO {} (uid, app_env, name, repository, major, minor, patch, version, tags, experimentcard_uid, auditcard_uid, pre_tag, build_tag, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", CardTable::Prompt)
     }
 
     pub fn get_modelcard_insert_query() -> String {
@@ -470,8 +470,7 @@ impl MySQLQueryHelper {
             major = ?, 
             minor = ?, 
             patch = ?, 
-            version = ?, 
-            prompt_type = ?, 
+            version = ?,  
             tags = ?, 
             experimentcard_uid = ?, 
             auditcard_uid = ?, 

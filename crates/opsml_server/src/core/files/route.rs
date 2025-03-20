@@ -481,7 +481,7 @@ pub async fn get_file_for_ui(
         internal_server_error(e, "Failed to create temp dir")
     })?;
 
-    let lpath = tmp_dir.path().join(&file_path.file_name().unwrap());
+    let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
 
     download_artifact(
         state.storage_client.clone(),

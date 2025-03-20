@@ -265,12 +265,19 @@ impl DataCard {
             tmp_path
         };
 
+        let save_metadata = self
+            .metadata
+            .interface_metadata
+            .save_metadata
+            .clone()
+            .into_bound_py_any(py)?;
+
         // load data interface
-        self.interface
-            .as_ref()
-            .unwrap()
-            .bind(py)
-            .call_method("load", (path, load_kwargs), None)?;
+        self.interface.as_ref().unwrap().bind(py).call_method(
+            "load",
+            (path, save_metadata, load_kwargs),
+            None,
+        )?;
 
         Ok(())
     }

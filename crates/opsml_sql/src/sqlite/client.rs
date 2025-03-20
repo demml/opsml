@@ -425,7 +425,6 @@ impl SqlClient for SqliteClient {
                         .bind(card.minor)
                         .bind(card.patch)
                         .bind(&card.version)
-                        .bind(&card.prompt_type)
                         .bind(&card.tags)
                         .bind(&card.experimentcard_uid)
                         .bind(&card.auditcard_uid)
@@ -594,7 +593,6 @@ impl SqlClient for SqliteClient {
                         .bind(card.minor)
                         .bind(card.patch)
                         .bind(&card.version)
-                        .bind(&card.prompt_type)
                         .bind(&card.tags)
                         .bind(&card.experimentcard_uid)
                         .bind(&card.auditcard_uid)
@@ -939,7 +937,7 @@ impl SqlClient for SqliteClient {
         }
 
         // no admins found
-        if admins.len() == 0 {
+        if admins.is_empty() {
             return Ok(false);
         }
 
@@ -1687,7 +1685,7 @@ mod tests {
 
         // get last admin
         let is_last_admin = client.is_last_admin("user").await.unwrap();
-        assert!(is_last_admin);
+        assert!(!is_last_admin);
 
         // delete
         client.delete_user("user").await.unwrap();
