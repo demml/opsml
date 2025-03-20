@@ -204,7 +204,7 @@ async fn update_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            internal_server_error("Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
         state
             .scouter_client
@@ -219,7 +219,7 @@ async fn update_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {}", e);
-                internal_server_error("Failed to create user in scouter")
+                internal_server_error(e, "Failed to create user in scouter")
             })?;
         info!("User {} updated in scouter", user.username);
     }
@@ -267,7 +267,7 @@ async fn delete_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {}", e);
-            internal_server_error("Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter")
         })?;
 
         state
@@ -276,7 +276,7 @@ async fn delete_user(
             .await
             .map_err(|e| {
                 error!("Failed to delete user in scouter: {}", e);
-                internal_server_error("Failed to delete user in scouter")
+                internal_server_error(e, "Failed to delete user in scouter")
             })?;
 
         info!("User {} deleted in scouter", username);
