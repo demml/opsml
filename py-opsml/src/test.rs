@@ -55,7 +55,8 @@ impl OpsmlTestServer {
     fn start_server(&mut self) -> PyResult<()> {
         #[cfg(feature = "server")]
         {
-            self.cleanup()?;
+            Self::cleanup()?;
+            self.remove_env_vars_for_client()?;
 
             // set server env vars
             std::env::set_var("APP_ENV", "dev_server");
@@ -125,7 +126,10 @@ impl OpsmlTestServer {
             });
 
             if self.cleanup {
-                self.cleanup()?;
+                Self::cleanup()?;
+
+                // unset env vars
+                self.remove_env_vars_for_client()?;
             }
 
             Ok(())
@@ -144,13 +148,11 @@ impl OpsmlTestServer {
         Ok(())
     }
 
-    fn cleanup(&self) -> PyResult<()> {
+    #[staticmethod]
+    fn cleanup() -> PyResult<()> {
         let current_dir = std::env::current_dir().unwrap();
         let db_file = current_dir.join("opsml.db");
         let storage_dir = current_dir.join("opsml_registries");
-
-        // unset env vars
-        self.remove_env_vars_for_client()?;
 
         if db_file.exists() {
             std::fs::remove_file(db_file).unwrap();

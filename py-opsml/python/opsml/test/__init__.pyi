@@ -29,3 +29,7 @@ class OpsmlTestServer:
 
     def remove_env_vars_for_client(self) -> None:
         """Removes the env vars for the client to connect to the server."""
+
+    @staticmethod
+    def cleanup() -> None:
+        """Cleans up the test server."""

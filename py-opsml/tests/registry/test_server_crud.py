@@ -244,6 +244,6 @@ def test_crud_artifactcard(
     # modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
     # promptcard, prompt_registry = crud_promptcard(chat_prompt)
 
-    # delete_card(datacard, data_registry)
+    delete_card(datacard, data_registry)
     # delete_card(modelcard, model_registry)
     # delete_card(promptcard, prompt_registry)
