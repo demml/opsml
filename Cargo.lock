@@ -5360,7 +5360,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5386,7 +5386,7 @@ dependencies = [
 [[package]]
 name = "scouter-contracts"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5398,7 +5398,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "futures",
  "pyo3",
@@ -5413,7 +5413,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "cron",
@@ -5439,7 +5439,7 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "pyo3",
  "serde",
@@ -5449,7 +5449,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "futures",
@@ -5474,7 +5474,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5491,7 +5491,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5513,7 +5513,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "base64 0.22.1",
  "scouter-error",
@@ -5524,7 +5524,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#ae3fe22343a85dbf6d504e55d4dccfe397bbdb1b"
 dependencies = [
  "chrono",
  "colored_json",
