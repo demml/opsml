@@ -117,7 +117,7 @@ def test_hugging_face_tf_model(
     )
 
     kwargs = ModelSaveKwargs(onnx=onnx_args)
-    metadata = interface.save(save_path, False, save_kwargs=kwargs)
+    metadata = interface.save(save_path, True, save_kwargs=kwargs)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
