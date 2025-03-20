@@ -1,4 +1,6 @@
 use crate::core::error::internal_server_error;
+use crate::core::files::route::log_operation;
+use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 use crate::core::scouter::utils::{find_drift_profile, save_encrypted_profile};
 use crate::core::state::AppState;
@@ -10,22 +12,28 @@ use axum::{
     routing::{get, post, put},
     Extension, Json, Router,
 };
-use scouter_client::{
-    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftRequest, SpcDriftFeatures,
-};
-
 use opsml_auth::permission::UserPermissions;
 use opsml_client::RequestType;
 use opsml_sql::base::SqlClient;
-use opsml_types::contracts::UpdateProfileRequest;
+use opsml_types::contracts::Operation;
+use opsml_types::contracts::{RawFileRequest, UpdateProfileRequest};
 use opsml_types::RegistryType;
 use opsml_types::SaveName;
+use reqwest::header::HeaderMap;
 use reqwest::Response;
 use scouter_client::ProfileRequest;
 use scouter_client::ProfileStatusRequest;
+use scouter_client::{
+    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftProfile, DriftRequest, SpcDriftFeatures,
+};
+use serde_json::json;
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::path::PathBuf;
 use std::sync::Arc;
+use tempfile::tempdir;
 use tracing::{debug, error, instrument};
+
+use crate::core::scouter::utils::load_drift_profile;
 
 async fn return_response(
     response: Response,
@@ -352,6 +360,73 @@ pub async fn get_custom_drift(
 
     Ok(Json(body))
 }
+
+/// Get profiles for UI
+/// UI will make a request to return all profiles for a given card
+/// The card is identified by parent drift path.
+/// All profiles will be downloaded, decrypted and returned to the UI in the DriftProfile enum
+#[instrument(skip_all)]
+pub async fn get_profiles_for_ui(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<RawFileRequest>,
+) -> Result<Json<Vec<DriftProfile>>, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        error!("Permission denied");
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let mut headers = HeaderMap::new();
+    headers.insert("username", perms.username.parse().unwrap());
+    let sql_client = state.sql_client.clone();
+
+    let requested_path = req.path.clone();
+    tokio::spawn(async move {
+        if let Err(e) = log_operation(
+            &headers,
+            &Operation::Read.to_string(),
+            &requested_path,
+            sql_client,
+        )
+        .await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
+    // create temp dir
+    let tmp_dir = tempdir().map_err(|e| {
+        error!("Failed to create temp dir: {}", e);
+        internal_server_error(e, "Failed to create temp dir")
+    })?;
+    let lpath = tmp_dir.path();
+    let rpath = PathBuf::from(&req.path);
+
+    download_artifacts(
+        state.storage_client.clone(),
+        state.sql_client.clone(),
+        &lpath,
+        &rpath,
+        &req.registry_type.to_string(),
+        Some(&req.uid),
+    )
+    .await
+    .map_err(|e| {
+        error!("Failed to download artifact: {}", e);
+        internal_server_error(e, "Failed to download artifact")
+    })?;
+
+    let profiles = load_drift_profile(lpath).map_err(|e| {
+        error!("Failed to load drift profile: {}", e);
+        internal_server_error(e, "Failed to load drift profile")
+    })?;
+
+    Ok(Json(profiles))
+}
+
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
