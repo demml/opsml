@@ -6,7 +6,7 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
-from opsml.test import OpsmlTestServer
+from opsml.test import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
@@ -99,7 +99,7 @@ def crud_promptcard(prompt: Prompt):
     reg = CardRegistry(registry_type="prompt")
 
     assert reg.registry_type == RegistryType.Prompt
-    assert reg.mode == RegistryMode.Client
+    assert reg.mode == RegistryMode.Server
 
     cards = reg.list_cards()
 
@@ -146,7 +146,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     reg = CardRegistry(registry_type=RegistryType.Model)
 
     assert reg.registry_type == RegistryType.Model
-    assert reg.mode == RegistryMode.Client
+    assert reg.mode == RegistryMode.Server
 
     cards = reg.list_cards()
 
@@ -241,10 +241,11 @@ def test_crud_artifactcard(
     pandas_data: PandasData,
     chat_prompt: Prompt,
 ):
-    datacard, data_registry = crud_datacard(pandas_data)
-    # modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
-    # promptcard, prompt_registry = crud_promptcard(chat_prompt)
+    with OpsmlServerContext():
+        datacard, data_registry = crud_datacard(pandas_data)
+        modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
+        promptcard, prompt_registry = crud_promptcard(chat_prompt)
 
-    delete_card(datacard, data_registry)
-    # delete_card(modelcard, model_registry)
-    # delete_card(promptcard, prompt_registry)
+        delete_card(datacard, data_registry)
+        delete_card(modelcard, model_registry)
+        delete_card(promptcard, prompt_registry)

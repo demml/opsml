@@ -181,13 +181,13 @@ impl OpsmlTestServer {
 // create context manage that can be use in server test to cleanup resources
 
 #[pyclass]
-pub struct TestServerContext {}
+pub struct OpsmlServerContext {}
 
 #[pymethods]
-impl TestServerContext {
+impl OpsmlServerContext {
     #[new]
     fn new() -> Self {
-        TestServerContext {}
+        OpsmlServerContext {}
     }
 
     fn __enter__(&self) -> PyResult<()> {
@@ -225,6 +225,6 @@ impl TestServerContext {
 #[pymodule]
 pub fn test(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<OpsmlTestServer>()?;
-    m.add_class::<TestServerContext>()?;
+    m.add_class::<OpsmlServerContext>()?;
     Ok(())
 }
