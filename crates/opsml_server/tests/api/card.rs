@@ -22,7 +22,7 @@ fn create_card_metadata(key: ArtifactKey) {
         "space", "name", "1.0.0"
     );
     std::fs::create_dir_all(path.clone()).unwrap();
-    let lpath = PathBuf::from(path).join("Card.json");
+    let lpath = PathBuf::from(path).join("card.json");
     std::fs::write(&lpath, json).unwrap();
 
     let encryption_key = key.get_decrypt_key().unwrap();

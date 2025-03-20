@@ -60,12 +60,6 @@ stop.server:
 	lsof -ti:3000 | xargs kill -9
 #	rm -f opsml.db || true
 #	rm -rf opsml_registries || true
-	
-
-######## Experiment tests ########
-
-test.experiment:
-	cargo test -p opsml-experiment -- --nocapture
 
 ######## Storage tests
 .PHONY: test.storage.client
