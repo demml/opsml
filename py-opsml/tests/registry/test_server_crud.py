@@ -1,5 +1,5 @@
-from opsml.test import OpsmlTestServer
-from opsml import (
+from opsml.test import OpsmlTestServer  # type: ignore
+from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,
     ModelCard,
@@ -7,10 +7,9 @@ from opsml import (
     PromptCard,
     Prompt,
 )
-from opsml.card import RegistryMode
-from opsml.card import CardList
-from opsml.model import SklearnModel
-from opsml.data import PandasData
+from opsml.card import RegistryMode, CardList  # type: ignore
+from opsml.model import SklearnModel  # type: ignore
+from opsml.data import PandasData  # type: ignore
 from pathlib import Path
 import shutil
 
