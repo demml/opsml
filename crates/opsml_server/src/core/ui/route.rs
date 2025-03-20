@@ -118,9 +118,13 @@ async fn opsml_card_entity_page(
     get_static_file(&html_path).await
 }
 
+async fn root_redirect() -> Response {
+    axum::response::Redirect::permanent("/opsml/home").into_response()
+}
+
 pub async fn get_ui_router() -> Result<Router<Arc<AppState>>> {
     Ok(Router::new()
-        .route("/", get(opsml_home))
+        .route("/", get(root_redirect))
         .route("/opsml", get(opsml_home))
         .route("/opsml/home", get(opsml_home))
         .route("/opsml/{path}", get(opsml_card_page))
