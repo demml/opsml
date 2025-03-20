@@ -160,14 +160,14 @@ pub struct ModelInterfaceMetadata {
 impl ModelInterfaceMetadata {
     #[new]
     #[pyo3(signature = (
-        save_metadata, 
-        task_type=TaskType::Other, 
-        model_type=ModelType::Unknown, 
-        data_type=DataType::NotProvided, 
+        save_metadata,
+        task_type=TaskType::Other,
+        model_type=ModelType::Unknown,
+        data_type=DataType::NotProvided,
         schema=FeatureSchema::default(),
-        interface_type=ModelInterfaceType::Base, 
-        onnx_session=None, 
-        extra_metadata=HashMap::new(), 
+        interface_type=ModelInterfaceType::Base,
+        onnx_session=None,
+        extra_metadata=HashMap::new(),
         drift_type=HashSet::new())
     )]
     #[allow(clippy::too_many_arguments)]
