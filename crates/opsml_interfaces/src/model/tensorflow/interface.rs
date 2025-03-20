@@ -219,7 +219,7 @@ impl TensorFlowModel {
         path: PathBuf,
         to_onnx: bool,
         save_kwargs: Option<ModelSaveKwargs>,
-    ) -> PyResult<ModelInterfaceSaveMetadata> {
+    ) -> PyResult<ModelInterfaceMetadata> {
         debug!("Saving drift profile");
         let drift_profile_uri = if self_.as_super().drift_profile.is_empty() {
             None
@@ -266,7 +266,7 @@ impl TensorFlowModel {
             })
             .unwrap_or_default();
 
-        let metadata = ModelInterfaceSaveMetadata {
+        let save_metadata = ModelInterfaceSaveMetadata {
             model_uri,
             data_processor_map,
             sample_data_uri,
@@ -275,6 +275,25 @@ impl TensorFlowModel {
             extra: None,
             save_kwargs,
         };
+
+        let onnx_session = {
+            self_.as_super().onnx_session.as_ref().map(|sess| {
+                let sess = sess.bind(py);
+                // extract OnnxSession from py object
+                sess.extract::<OnnxSession>().unwrap()
+            })
+        };
+
+        let metadata = ModelInterfaceMetadata::new(
+            save_metadata,
+            self_.as_super().task_type.clone(),
+            self_.model_type.clone(),
+            self_.sample_data.get_data_type(),
+            self_.as_super().schema.clone(),
+            self_.interface_type.clone(),
+            onnx_session,
+            HashMap::new(),
+        );
 
         Ok(metadata)
     }
@@ -291,13 +310,14 @@ impl TensorFlowModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
@@ -305,23 +325,43 @@ impl TensorFlowModel {
         let load_kwargs = load_kwargs.unwrap_or_default();
 
         debug!("Loading model");
-        self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        let model_path = path.join(&metadata.model_uri);
+        self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
         if onnx {
             debug!("Loading ONNX model");
-            self_.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+            let onnx_path = path.join(
+                &metadata
+                    .onnx_model_uri
+                    .ok_or_else(|| OpsmlError::new_err("ONNX model URI not found in metadata"))?,
+            );
+            self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
 
-        debug!("Loading sample data");
         let data_type = self_.as_super().data_type.clone();
+        if metadata.sample_data_uri.is_some() {
+            debug!("Loading sample data");
+            let sample_data_path = path.join(
+                &metadata
+                    .sample_data_uri
+                    .ok_or_else(|| OpsmlError::new_err("Sample data URI not found in metadata"))?,
+            );
+            self_.load_data(py, &sample_data_path, &data_type, None)?;
+        }
 
-        self_.load_data(py, &path, &data_type, None)?;
+        if !metadata.data_processor_map.is_empty() {
+            debug!("Loading preprocessor");
+            self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
-        debug!("Loading preprocessor");
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
-
-        debug!("Loading drift profile");
-        self_.as_super().load_drift_profile(py, &path)?;
+        if metadata.drift_profile_uri.is_some() {
+            debug!("Loading drift profile");
+            let drift_path =
+                path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+            self_.as_super().load_drift_profile(py, &drift_path)?;
+        }
 
         Ok(())
     }
@@ -472,17 +512,12 @@ impl TensorFlowModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
         // Load the data using joblib
-        let preprocessor = joblib
-            .call_method("load", (load_path,), kwargs)
-            .map_err(|e| {
-                error!("Failed to load preprocessor: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let preprocessor = joblib.call_method("load", (path,), kwargs).map_err(|e| {
+            error!("Failed to load preprocessor: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         self.preprocessor = Some(preprocessor.unbind());
 
@@ -533,13 +568,12 @@ impl TensorFlowModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Keras);
         let tf_models = py
             .import("tensorflow")?
             .getattr("keras")?
             .getattr("models")?;
 
-        let model = tf_models.call_method("load_model", (load_path,), kwargs)?;
+        let model = tf_models.call_method("load_model", (path,), kwargs)?;
 
         self.model = Some(model.clone().unbind());
 
@@ -639,11 +673,7 @@ impl TensorFlowModel {
             ));
         }
 
-        let load_path = path
-            .join(SaveName::OnnxModel.to_string())
-            .with_extension(Suffix::Onnx);
-
-        let sess = OnnxSession::load_onnx_session(py, load_path, kwargs)?;
+        let sess = OnnxSession::load_onnx_session(py, path, kwargs)?;
 
         self.onnx_session
             .as_ref()

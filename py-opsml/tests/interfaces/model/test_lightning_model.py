@@ -40,10 +40,11 @@ def test_lightning_regression(
     assert interface.model is None
     assert interface.trainer is not None
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.load(
         save_path,
+        metadata.save_metadata,
         onnx=True,
         load_kwargs=ModelLoadKwargs(model={"model": model}),
     )
@@ -64,10 +65,11 @@ def test_lightning_classification(
     assert interface.model is None
     assert interface.trainer is not None
 
-    interface.save(save_path, True)
+    metadata = interface.save(save_path, True)
 
     interface.load(
         save_path,
+        metadata.save_metadata,
         onnx=True,
         load_kwargs=ModelLoadKwargs(model={"model": model}),
     )

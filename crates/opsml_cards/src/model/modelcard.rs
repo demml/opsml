@@ -334,10 +334,17 @@ impl ModelCard {
         // download assets
         self.download_all_artifacts(&path)?;
 
+        let save_metadata = self
+            .metadata
+            .interface_metadata
+            .save_metadata
+            .clone()
+            .into_bound_py_any(py)?;
+
         // load model interface
         self.interface.as_ref().unwrap().bind(py).call_method(
             "load",
-            (path, onnx, load_kwargs),
+            (path, save_metadata, onnx, load_kwargs),
             None,
         )?;
 

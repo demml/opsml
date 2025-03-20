@@ -242,33 +242,63 @@ impl LightGBMModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceSaveMetadata>` - DataInterfaceSaveMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
         // if kwargs is not None, unwrap, else default to None
         let load_kwargs = load_kwargs.unwrap_or_default();
 
-        let model = self_.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+        let model_path = path.join(&metadata.model_uri);
+        let model = self_.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
         self_.as_super().model = Some(model);
 
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        if !metadata.data_processor_map.is_empty() {
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            let processor = metadata
+                .data_processor_map
+                .values()
+                .next()
+                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+
+            let preprocessor_uri = path.join(&processor.uri);
+
+            self_.load_preprocessor(py, &preprocessor_uri, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
         // parent scope - can only borrow mutable one at a time
         {
             let parent = self_.as_super();
 
             if onnx {
-                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+                let onnx_path =
+                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
+                        OpsmlError::new_err("ONNX model URI not found in metadata")
+                    })?);
+                parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            parent.load_drift_profile(py, &path)?;
-            parent.load_data(py, &path, None)?;
+            if metadata.drift_profile_uri.is_some() {
+                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
+
+                parent.load_drift_profile(py, &drift_path)?;
+            }
+
+            if metadata.sample_data_uri.is_some() {
+                let sample_data_path =
+                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
+                        OpsmlError::new_err("Sample data URI not found in metadata")
+                    })?);
+                parent.load_data(py, &sample_data_path, None)?;
+            }
         }
 
         Ok(())
@@ -376,13 +406,10 @@ impl LightGBMModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        let preprocessor = joblib.call_method("load", (load_path,), kwargs)?;
+        let preprocessor = joblib.call_method("load", (path,), kwargs)?;
 
         self.preprocessor = Some(preprocessor.unbind());
 
@@ -443,12 +470,10 @@ impl LightGBMModel {
         path: &Path,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Model).with_extension(Suffix::Text);
-
         let booster = py.import("lightgbm")?.getattr("Booster")?;
 
         let kwargs = kwargs.map_or(PyDict::new(py), |kwargs| kwargs.clone());
-        kwargs.set_item("model_file", load_path)?;
+        kwargs.set_item("model_file", path)?;
 
         let model = booster.call((), Some(&kwargs)).map_err(|e| {
             error!("Failed to load model from file: {}", e);

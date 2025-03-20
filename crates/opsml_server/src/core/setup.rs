@@ -50,7 +50,11 @@ pub async fn initialize_default_user(
     let guest_user = User::new(
         "guest".to_string(),
         password_auth::generate_hash("guest"),
-        Some(vec!["read".to_string(), "write:all".to_string()]),
+        Some(vec![
+            "read".to_string(),
+            "write:all".to_string(),
+            "delete:all".to_string(),
+        ]),
         Some(vec!["user".to_string()]),
         Some("guest".to_string()),
     );

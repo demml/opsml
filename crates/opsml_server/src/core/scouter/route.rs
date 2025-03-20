@@ -136,7 +136,7 @@ pub async fn update_drift_profile(
         ));
     }
 
-    let filename = find_drift_profile(&files, &drift_type)?;
+    let filename = find_drift_profile(&files, drift_type)?;
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
         error!("Failed to get encryption key: {}", e);
         (

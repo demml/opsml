@@ -441,7 +441,6 @@ impl PostgresQueryHelper {
             minor, 
             patch, 
             version, 
-            prompt_type, 
             tags, 
             experimentcard_uid, 
             auditcard_uid, 
@@ -449,7 +448,7 @@ impl PostgresQueryHelper {
             build_tag,
             username
             ) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)",
             CardTable::Prompt
         )
     }
@@ -562,14 +561,13 @@ impl PostgresQueryHelper {
         minor = $5, 
         patch = $6, 
         version = $7, 
-        prompt_type = $8, 
-        tags = $9, 
-        experimentcard_uid = $10, 
-        auditcard_uid = $11, 
-        pre_tag = $12, 
-        build_tag = $13,
-        username = $14
-        WHERE uid = $15",
+        tags = $8, 
+        experimentcard_uid = $9, 
+        auditcard_uid = $10, 
+        pre_tag = $11, 
+        build_tag = $12,
+        username = $13
+        WHERE uid = $14",
             CardTable::Prompt
         )
     }

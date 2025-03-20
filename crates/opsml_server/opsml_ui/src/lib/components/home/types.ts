@@ -55,7 +55,6 @@ interface AuditCard extends BaseCard {
 interface PromptCard extends BaseCard {
   type: "Prompt";
   data: {
-    prompt_type: string;
     experimentcard_uid?: string;
     auditcard_uid?: string;
   };

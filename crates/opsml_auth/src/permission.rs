@@ -24,5 +24,6 @@ impl UserPermissions {
 
     pub fn has_delete_permission(&self, repository_id: &str) -> bool {
         self.has_permission(&format!("delete:{repository_id}"))
+            || self.permissions.contains(&"delete:all".to_string())
     }
 }

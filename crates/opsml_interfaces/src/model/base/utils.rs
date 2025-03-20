@@ -560,19 +560,15 @@ pub fn save_to_joblib(data: &Bound<'_, PyAny>, path: &Path) -> PyResult<PathBuf>
 }
 
 pub fn load_from_joblib<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
-    let load_path = path.join(SaveName::Data).with_extension(Suffix::Joblib);
     let joblib = py.import("joblib")?;
-    let data = joblib.call_method1("load", (load_path,))?;
+    let data = joblib.call_method1("load", (path,))?;
 
     Ok(data)
 }
 
 fn load_dmatrix<'py>(py: Python<'py>, path: &Path) -> PyResult<Bound<'py, PyAny>> {
-    let save_path = PathBuf::from(SaveName::Data.to_string()).with_extension(Suffix::Bin);
-    let full_save_path = path.join(&save_path);
-
     let xgb = py.import("xgboost")?;
-    let data = xgb.call_method1("DMatrix", (full_save_path,))?;
+    let data = xgb.call_method1("DMatrix", (path,))?;
     Ok(data)
 }
 
