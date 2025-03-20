@@ -21,19 +21,20 @@ use opsml_types::RegistryType;
 use opsml_types::SaveName;
 use reqwest::header::HeaderMap;
 use reqwest::Response;
-use scouter_client::ProfileRequest;
-use scouter_client::ProfileStatusRequest;
+
 use scouter_client::{
-    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftProfile, DriftRequest, SpcDriftFeatures,
+    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftProfile, DriftRequest, DriftType,
+    ProfileRequest, ProfileStatusRequest, SpcDriftFeatures,
 };
 use serde_json::json;
+use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, instrument};
 
-use crate::core::scouter::utils::load_drift_profile;
+use crate::core::scouter::utils::load_drift_profiles;
 
 async fn return_response(
     response: Response,
@@ -370,7 +371,7 @@ pub async fn get_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
-) -> Result<Json<Vec<DriftProfile>>, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Json<HashMap<DriftType, DriftProfile>>, (StatusCode, Json<serde_json::Value>)> {
     if !perms.has_read_permission() {
         error!("Permission denied");
         return Err((
@@ -419,7 +420,7 @@ pub async fn get_profiles_for_ui(
         internal_server_error(e, "Failed to download artifact")
     })?;
 
-    let profiles = load_drift_profile(lpath).map_err(|e| {
+    let profiles = load_drift_profiles(lpath).map_err(|e| {
         error!("Failed to load drift profile: {}", e);
         internal_server_error(e, "Failed to load drift profile")
     })?;
