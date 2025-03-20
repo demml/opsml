@@ -5,17 +5,14 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
-use http_body_util::BodyExt;
 use opsml_crypt::encrypt_file;
 use opsml_types::contracts::{ArtifactKey, UpdateProfileRequest};
 use opsml_types::SaveName;
 use opsml_types::Suffix;
 use rand::Rng;
 use reqwest::header;
-use scouter_client::{BinnedCustomMetrics, TimeInterval};
 use scouter_client::{
-    BinnedPsiFeatureMetrics, DriftRequest, DriftType, ProfileRequest, ProfileStatusRequest,
-    SpcDriftFeatures, SpcDriftProfile,
+    DriftRequest, DriftType, ProfileRequest, ProfileStatusRequest, SpcDriftProfile, TimeInterval,
 };
 use std::path::PathBuf;
 

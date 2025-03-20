@@ -137,7 +137,7 @@ pub async fn update_drift_profile(
     let filename = find_drift_profile(&files, drift_type)?;
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
         error!("Failed to get encryption key: {}", e);
-        return internal_server_error(e, "Failed to get encryption key");
+        internal_server_error(e, "Failed to get encryption key")
     })?;
 
     save_encrypted_profile(
@@ -152,7 +152,7 @@ pub async fn update_drift_profile(
     // 2. Scouter task
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {}", e);
-        return internal_server_error(e, "Failed to exchange token for scouter");
+        internal_server_error(e, "Failed to exchange token for scouter")
     })?;
 
     let response = state
@@ -408,7 +408,7 @@ pub async fn get_profiles_for_ui(
     download_artifacts(
         state.storage_client.clone(),
         state.sql_client.clone(),
-        &lpath,
+        lpath,
         &rpath,
         &req.registry_type.to_string(),
         Some(&req.uid),
