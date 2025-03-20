@@ -1,3 +1,9 @@
+###################################################################################################
+# This file contains tests for the client-side CRUD operations for the CardRegistry class.
+# OpsmlTestServer will spin up a server in a background task that the client will connect to
+###################################################################################################
+
+from opsml.test import OpsmlTestServer  # type: ignore
 from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,
@@ -6,7 +12,6 @@ from opsml import (  # type: ignore
     PromptCard,
     Prompt,
 )
-from opsml.test import OpsmlServerContext
 from opsml.card import RegistryMode, CardList  # type: ignore
 from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
@@ -20,7 +25,7 @@ def crud_datacard(pandas_data: PandasData):
     reg = CardRegistry(registry_type="data")
 
     assert reg.registry_type == RegistryType.Data
-    assert reg.mode == RegistryMode.Server
+    assert reg.mode == RegistryMode.Client
 
     cards = reg.list_cards()
 
@@ -99,7 +104,7 @@ def crud_promptcard(prompt: Prompt):
     reg = CardRegistry(registry_type="prompt")
 
     assert reg.registry_type == RegistryType.Prompt
-    assert reg.mode == RegistryMode.Server
+    assert reg.mode == RegistryMode.Client
 
     cards = reg.list_cards()
 
@@ -146,7 +151,7 @@ def crud_modelcard(random_forest_classifier: SklearnModel, datacard: DataCard):
     reg = CardRegistry(registry_type=RegistryType.Model)
 
     assert reg.registry_type == RegistryType.Model
-    assert reg.mode == RegistryMode.Server
+    assert reg.mode == RegistryMode.Client
 
     cards = reg.list_cards()
 
@@ -241,7 +246,11 @@ def test_crud_artifactcard(
     pandas_data: PandasData,
     chat_prompt: Prompt,
 ):
-    with OpsmlServerContext():
+    # start server
+    with OpsmlTestServer(True):
+        # datacard is required for modelcard, so we cant delete it before using it,
+        # which is why there is a separate delete_card function
+
         datacard, data_registry = crud_datacard(pandas_data)
         modelcard, model_registry = crud_modelcard(random_forest_classifier, datacard)
         promptcard, prompt_registry = crud_promptcard(chat_prompt)
