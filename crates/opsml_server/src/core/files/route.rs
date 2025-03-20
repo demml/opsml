@@ -34,7 +34,7 @@ use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
 
-async fn log_operation(
+pub async fn log_operation(
     headers: &HeaderMap,
     access_type: &str,
     access_location: &str,
