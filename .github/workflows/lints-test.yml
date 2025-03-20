@@ -44,13 +44,13 @@ jobs:
       - name: Cache Rust
         uses: Swatinem/rust-cache@v2
 
-      - name: Run Sql tests
+      - name: Run sql tests
         run: make test.sql
 
-      - name: Run Storage tests
+      - name: Run storage tests
         run: make test.storage.server
 
-      - name: Run Util tests
+      - name: Run util tests
         run: make test.utils
 
   # this will run local client and server storage tests.
@@ -72,6 +72,9 @@ jobs:
         with:
           version: 10
           run_install: false
+
+      - name: Install UI dependencies
+        run: make install.ui.deps
 
       - name: Setup Server
         run: make start.server
@@ -98,6 +101,10 @@ jobs:
     needs: [format-and-lint]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install libomp on macOS
+        if: matrix.os == 'macos'
+        run: brew install libomp
 
       - name: install rust stable
         uses: dtolnay/rust-toolchain@stable
