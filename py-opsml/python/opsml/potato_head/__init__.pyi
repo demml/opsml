@@ -257,9 +257,7 @@ class DocumentUrl:
         """The format of the document URL."""
 
 class Message:
-    def __init__(
-        self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl
-    ) -> None:
+    def __init__(self, content: str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl) -> None:
         """Create a Message object.
 
         Args:
@@ -345,10 +343,7 @@ class Prompt:
     def __init__(
         self,
         model: str,
-        prompt: str
-        | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl]
-        | Message
-        | List[Message],
+        prompt: str | Sequence[str | ImageUrl | AudioUrl | BinaryContent | DocumentUrl] | Message | List[Message],
         system_prompt: Optional[str | List[str]] = None,
         sanitization_config: Optional[SanitizationConfig] = None,
     ) -> None:
