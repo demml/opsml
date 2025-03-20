@@ -111,18 +111,12 @@ def test_hugging_face_tf_model(
         sample_data=data,
     )
 
-    onnx_args = HuggingFaceOnnxArgs(
-        ort_type=HuggingFaceORTModel.OrtFeatureExtraction,
-        provider="CPUExecutionProvider",
-    )
-
-    kwargs = ModelSaveKwargs(onnx=onnx_args)
-    metadata = interface.save(save_path, True, save_kwargs=kwargs)
+    metadata = interface.save(save_path)
 
     interface.tokenizer = None
     assert interface.tokenizer is None
 
-    interface.load(save_path, metadata.save_metadata, onnx=True)
+    interface.load(save_path, metadata.save_metadata)
 
     assert interface.tokenizer is not None
 
