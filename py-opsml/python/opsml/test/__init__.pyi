@@ -29,3 +29,20 @@ class OpsmlTestServer:
 
     def remove_env_vars_for_client(self) -> None:
         """Removes the env vars for the client to connect to the server."""
+
+    @staticmethod
+    def cleanup() -> None:
+        """Cleans up the test server."""
+
+class OpsmlServerContext:
+    def __init__(self) -> None:
+        """Instantiates the server context.
+        This is helpful when you are running tests in server mode to
+        aid in background cleanup of resources
+        """
+
+    def __enter__(self) -> "OpsmlServerContext":
+        """Starts the server context."""
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        """Stops the server context."""

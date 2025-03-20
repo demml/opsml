@@ -113,28 +113,35 @@ pub mod server_logic {
         ) -> Result<Version, RegistryError> {
             let versions = self
                 .sql_client
-                .get_versions(&self.table_name, name, repository, version)
+                .get_versions(&self.table_name, name, repository, version.clone())
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to get versions {}", e)))?;
 
-            let version = versions.first().ok_or_else(|| {
-                error!("Failed to get first version");
-                RegistryError::Error("Failed to get first version".to_string())
-            })?;
+            if versions.is_empty() {
+                return match &version {
+                    Some(version_str) => Version::parse(version_str).map_err(|e| {
+                        error!("Invalid version format: {}", e);
+                        RegistryError::Error(
+                            "Invalid version format. Version must be a full semver".to_string(),
+                        )
+                    }),
+                    None => Ok(Version::new(0, 1, 0)),
+                };
+            }
+
+            let base_version = versions.first().unwrap().to_string();
 
             let args = VersionArgs {
-                version: version.to_string(),
+                version: base_version,
                 version_type,
-                pre: pre_tag.map(|s| s.to_string()),
-                build: build_tag.map(|s| s.to_string()),
+                pre: pre_tag,
+                build: build_tag,
             };
 
-            let bumped_version = VersionValidator::bump_version(&args).map_err(|e| {
+            VersionValidator::bump_version(&args).map_err(|e| {
                 error!("Failed to bump version: {}", e);
                 RegistryError::Error("Failed to bump version".to_string())
-            })?;
-
-            Ok(bumped_version)
+            })
         }
 
         async fn create_artifact_key(
@@ -254,7 +261,6 @@ pub mod server_logic {
                         client_card.repository,
                         version,
                         client_card.tags,
-                        client_card.prompt_type,
                         client_card.experimentcard_uid,
                         client_card.auditcard_uid,
                         client_card.username,
@@ -429,7 +435,6 @@ pub mod server_logic {
                         build_tag: Some(version.build.to_string()),
                         version: client_card.version,
                         tags: SqlxJson(client_card.tags),
-                        prompt_type: client_card.prompt_type,
                         experimentcard_uid: client_card.experimentcard_uid,
                         auditcard_uid: client_card.auditcard_uid,
                         username: client_card.username,

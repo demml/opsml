@@ -1,24 +1,23 @@
 from opsml import (  # type: ignore
     CardRegistry,
     RegistryType,
-    ChatPrompt,
+    Prompt,
     PromptCard,
 )
 from opsml.test import OpsmlTestServer
+import pytest
+from tests.conftest import WINDOWS_EXCLUDE
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_promptcard_crud() -> None:
     with OpsmlTestServer():
         reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
 
-        prompt = ChatPrompt(
+        prompt = Prompt(
             model="gpt-4o",
-            messages=[
-                {"role": "developer", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello!"},
-            ],
-            logprobs=True,
-            top_logprobs=2,
+            prompt="Hello!",
+            system_prompt="You are a helpful assistant.",
         )
 
         card = PromptCard(prompt=prompt, repository="test", name="test")

@@ -3,27 +3,27 @@
 
 from .. import potato_head  # noqa: F401
 
-ChatPartImage = potato_head.prompts.ChatPartImage
-ChatPrompt = potato_head.prompts.ChatPrompt
-ChatPartText = potato_head.prompts.ChatPartText
-ChatPartAudio = potato_head.prompts.ChatPartAudio
-ImageUrl = potato_head.prompts.ImageUrl
-Message = potato_head.prompts.Message
-PromptType = potato_head.prompts.PromptType
-SanitizationConfig = potato_head.prompts.SanitizationConfig
-SanitizationResult = potato_head.prompts.SanitizationResult
-RiskLevel = potato_head.prompts.RiskLevel
+Prompt = potato_head.Prompt
+Message = potato_head.Message
+ImageUrl = potato_head.ImageUrl
+AudioUrl = potato_head.AudioUrl
+BinaryContent = potato_head.BinaryContent
+DocumentUrl = potato_head.DocumentUrl
+
+SanitizationConfig = potato_head.SanitizationConfig
+SanitizedResult = potato_head.SanitizedResult
+PromptSanitizer = potato_head.PromptSanitizer
+RiskLevel = potato_head.RiskLevel
+PIIConfig = potato_head.PIIConfig
 
 
 __all__ = [
-    "ChatPartImage",
-    "ChatPartText",
-    "ChatPrompt",
-    "ChatPartAudio",
-    "ImageUrl",
+    "Prompt",
     "Message",
-    "PromptType",
+    "ImageUrl",
     "SanitizationConfig",
-    "SanitizationResult",
+    "SanitizedResult",
     "RiskLevel",
+    "PIIConfig",
+    "PromptSanitizer",
 ]

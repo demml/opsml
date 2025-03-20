@@ -1807,9 +1807,9 @@ dependencies = [
 
 [[package]]
 name = "deranged"
-version = "0.3.11"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
+checksum = "9c9e6a11ca8224451684bc0d7d5a7adbf8f2fd6887261a1cfc3c0432f9d4068e"
 dependencies = [
  "powerfmt",
  "serde",
@@ -2300,9 +2300,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73fea8450eea4bac3940448fb7ae50d91f034f941199fcd9d909a5a07aa455f0"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi",
  "wasi 0.14.2+wasi-0.2.4",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -3725,7 +3727,7 @@ dependencies = [
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
- "potato-lib",
+ "potato-head",
  "pyo3",
  "serde",
  "serde_json",
@@ -4000,8 +4002,8 @@ dependencies = [
  "opsml-semver",
  "opsml-utils",
  "pyo3",
- "scouter-client",
  "serde",
+ "serde_json",
  "sysinfo",
  "tabled",
  "tracing",
@@ -4393,138 +4395,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "potato-client"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "async-trait",
- "chrono",
- "colored_json",
- "potato-error",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
-name = "potato-error"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "pyo3",
- "serde",
- "thiserror 2.0.12",
-]
-
-[[package]]
 name = "potato-head"
 version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
 dependencies = [
- "chrono",
- "colored_json",
- "potato-error",
- "potato-prompts",
- "potato-providers",
- "potato-tools",
- "potato-traits",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-lib"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "potato-error",
- "potato-head",
- "potato-prompts",
- "potato-providers",
- "potato-tools",
-]
-
-[[package]]
-name = "potato-prompts"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "potato-tools",
+ "mime_guess",
+ "opsml-types",
+ "opsml-utils",
  "pyo3",
  "regex",
- "reqwest",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-providers"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "async-trait",
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "potato-prompts",
- "potato-tools",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-tools"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "chrono",
- "colored_json",
- "potato-client",
- "potato-error",
- "pyo3",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-traits"
-version = "0.1.0"
-source = "git+https://github.com/demml/potatohead.git?branch=add-rust-release#01d4dae875d34ab8fd0fff27dc7a7a4fa9fd1342"
-dependencies = [
- "futures-core",
- "futures-util",
- "potato-client",
- "potato-error",
- "potato-prompts",
- "potato-providers",
- "pyo3",
- "serde",
- "serde_json",
- "tokio",
  "tracing",
 ]
 
@@ -4657,7 +4538,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "potato-lib",
+ "potato-head",
  "pyo3",
  "reqwest",
  "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
@@ -4743,11 +4624,12 @@ dependencies = [
 
 [[package]]
 name = "quinn"
-version = "0.11.6"
+version = "0.11.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62e96808277ec6f97351a2380e6c25114bc9e67037775464979f3037c92d05ef"
+checksum = "c3bd15a6f2967aef83887dcb9fec0014580467e33720d073560cf015a5683012"
 dependencies = [
  "bytes",
+ "cfg_aliases",
  "pin-project-lite",
  "quinn-proto",
  "quinn-udp",
@@ -4757,17 +4639,18 @@ dependencies = [
  "thiserror 2.0.12",
  "tokio",
  "tracing",
+ "web-time",
 ]
 
 [[package]]
 name = "quinn-proto"
-version = "0.11.9"
+version = "0.11.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2fe5ef3495d7d2e377ff17b1a8ce2ee2ec2a18cde8b6ad6619d65d0701c135d"
+checksum = "b820744eb4dc9b57a3398183639c511b5a26d2ed702cedd3febaa1393caa22cc"
 dependencies = [
  "bytes",
- "getrandom 0.2.15",
- "rand 0.8.5",
+ "getrandom 0.3.2",
+ "rand 0.9.0",
  "ring",
  "rustc-hash 2.1.1",
  "rustls 0.23.25",
@@ -5033,9 +4916,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "reqwest"
-version = "0.12.14"
+version = "0.12.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "989e327e510263980e231de548a33e63d34962d29ae61b467389a1a09627a254"
+checksum = "d19c46a6fdd48bc4dab94b6103fccc55d34c67cc0ad04653aad4ea2a07cd7bbb"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -5242,9 +5125,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.0.2"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7178faa4b75a30e269c71e61c353ce2748cf3d76f0c44c393f4e60abf49b825"
+checksum = "e56a18552996ac8d29ecc3b190b4fdbb2d91ca4ec396de7bbffaf43f3d637e96"
 dependencies = [
  "bitflags 2.9.0",
  "errno",
@@ -6307,14 +6190,14 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.19.0"
+version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "488960f40a3fd53d72c2a29a58722561dee8afdd175bd88e3db4677d7b2ba600"
+checksum = "7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf"
 dependencies = [
  "fastrand 2.3.0",
  "getrandom 0.3.2",
  "once_cell",
- "rustix 1.0.2",
+ "rustix 1.0.3",
  "windows-sys 0.59.0",
 ]
 
@@ -6391,9 +6274,9 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.39"
+version = "0.3.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dad298b01a40a23aac4580b67e3dbedb7cc8402f3592d7f49469de2ea4aecdd8"
+checksum = "9d9c75b47bdff86fa3334a3db91356b8d7d86a9b839dab7d0bdc5c3d3a077618"
 dependencies = [
  "deranged",
  "itoa",
@@ -6409,15 +6292,15 @@ dependencies = [
 
 [[package]]
 name = "time-core"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "765c97a5b985b7c11d7bc27fa927dc4fe6af3a6dfb021d28deb60d3bf51e76ef"
+checksum = "c9e9a38711f559d9e3ce1cdb06dd7c5b8ea546bc90052da6d06bb76da74bb07c"
 
 [[package]]
 name = "time-macros"
-version = "0.2.20"
+version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8093bc3e81c3bc5f7879de09619d06c9a5a5e45ca44dfeeb7225bae38005c5c"
+checksum = "29aa485584182073ed57fd5004aa09c371f021325014694e432313345865fd04"
 dependencies = [
  "num-conv",
  "time-core",
@@ -7136,9 +7019,9 @@ dependencies = [
 
 [[package]]
 name = "windows-link"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dccfd733ce2b1753b03b6d3c65edf020262ea35e20ccdf3e288043e6dd620e3"
+checksum = "76840935b766e1b0a05c0066835fb9ec80071d4c09a16f6bd5f7e655e3c14c38"
 
 [[package]]
 name = "windows-registry"
@@ -7146,7 +7029,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4286ad90ddb45071efd1a66dfa43eb02dd0dfbae1545ad6cc3c51cf34d7e8ba3"
 dependencies = [
- "windows-result 0.3.1",
+ "windows-result 0.3.2",
  "windows-strings",
  "windows-targets 0.53.0",
 ]
@@ -7162,9 +7045,9 @@ dependencies = [
 
 [[package]]
 name = "windows-result"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06374efe858fab7e4f881500e6e86ec8bc28f9462c47e5a9941a0142ad86b189"
+checksum = "c64fd11a4fd95df68efcfee5f44a294fe71b8bc6a91993e2791938abcc712252"
 dependencies = [
  "windows-link",
 ]
@@ -7464,7 +7347,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d65cbf2f12c15564212d48f4e3dfb87923d25d611f2aed18f4cb23f0413d89e"
 dependencies = [
  "libc",
- "rustix 1.0.2",
+ "rustix 1.0.3",
 ]
 
 [[package]]

@@ -2,6 +2,7 @@ use crate::base::DataProcessor;
 use crate::base::ModelInterfaceMetadata;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
+use crate::ModelInterfaceSaveMetadata;
 use crate::OnnxSession;
 use crate::{ModelLoadKwargs, ModelSaveKwargs};
 use opsml_error::OpsmlError;
@@ -201,12 +202,13 @@ impl SklearnModel {
     /// # Returns
     ///
     /// * `PyResult<DataInterfaceMetadata>` - DataInterfaceMetadata
-    #[pyo3(signature = (path, onnx=false, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, onnx=false, load_kwargs=None))]
     #[allow(clippy::too_many_arguments)]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: ModelInterfaceSaveMetadata,
         onnx: bool,
         load_kwargs: Option<ModelLoadKwargs>,
     ) -> PyResult<()> {
@@ -216,19 +218,46 @@ impl SklearnModel {
         // parent scope - can only borrow mutable one at a time
         {
             let parent = self_.as_super();
-
-            parent.load_model(py, &path, load_kwargs.model_kwargs(py))?;
+            let model_path = path.join(&metadata.model_uri);
+            parent.load_model(py, &model_path, load_kwargs.model_kwargs(py))?;
 
             if onnx {
-                parent.load_onnx_model(py, &path, load_kwargs.onnx_kwargs(py))?;
+                let onnx_path =
+                    path.join(&metadata.onnx_model_uri.ok_or_else(|| {
+                        OpsmlError::new_err("ONNX model URI not found in metadata")
+                    })?);
+                parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 
-            parent.load_drift_profile(py, &path)?;
+            if metadata.drift_profile_uri.is_some() {
+                let drift_path = path.join(&metadata.drift_profile_uri.ok_or_else(|| {
+                    OpsmlError::new_err("Drift profile URI not found in metadata")
+                })?);
 
-            parent.load_data(py, &path, None)?;
+                parent.load_drift_profile(py, &drift_path)?;
+            }
+
+            if metadata.sample_data_uri.is_some() {
+                let sample_data_path =
+                    path.join(&metadata.sample_data_uri.ok_or_else(|| {
+                        OpsmlError::new_err("Sample data URI not found in metadata")
+                    })?);
+                parent.load_data(py, &sample_data_path, None)?;
+            }
         }
 
-        self_.load_preprocessor(py, &path, load_kwargs.preprocessor_kwargs(py))?;
+        if !metadata.data_processor_map.is_empty() {
+            // get first key from metadata.save_metadata.data_processor_map.keys() or default to unknow
+            let processor = metadata
+                .data_processor_map
+                .values()
+                .next()
+                .ok_or_else(|| OpsmlError::new_err("No preprocessor URI found in metadata"))?;
+
+            let preprocessor_uri = path.join(&processor.uri);
+
+            self_.load_preprocessor(py, &preprocessor_uri, load_kwargs.preprocessor_kwargs(py))?;
+        }
 
         Ok(())
     }
@@ -357,13 +386,10 @@ impl SklearnModel {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<()> {
-        let load_path = path
-            .join(SaveName::Preprocessor)
-            .with_extension(Suffix::Joblib);
         let joblib = py.import("joblib")?;
 
         // Load the data using joblib
-        self.preprocessor = Some(joblib.call_method("load", (load_path,), kwargs)?.unbind());
+        self.preprocessor = Some(joblib.call_method("load", (path,), kwargs)?.unbind());
 
         Ok(())
     }

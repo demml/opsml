@@ -11,6 +11,7 @@ use reqwest::{header::HeaderMap, Client};
 use serde_json::Value;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum Routes {
     DriftCustom,
     DriftPsi,

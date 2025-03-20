@@ -133,14 +133,15 @@ impl TorchData {
         ))
     }
 
-    #[pyo3(signature = (path, load_kwargs=None))]
+    #[pyo3(signature = (path, metadata, load_kwargs=None))]
     pub fn load(
         mut self_: PyRefMut<'_, Self>,
         py: Python,
         path: PathBuf,
+        metadata: DataInterfaceSaveMetadata,
         load_kwargs: Option<DataLoadKwargs>,
     ) -> PyResult<()> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
+        let load_path = path.join(metadata.data_uri);
         let torch = PyModule::import(py, "torch")?;
         let load_kwargs = load_kwargs.unwrap_or_default();
 
@@ -294,12 +295,10 @@ impl TorchData {
         path: &Path,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> PyResult<PyObject> {
-        let load_path = path.join(SaveName::Data).with_extension(Suffix::Pt);
-
         let numpy = PyModule::import(py, "torch")?;
 
         // Load the data using numpy
-        let data = numpy.call_method("load", (load_path,), kwargs)?;
+        let data = numpy.call_method("load", (path,), kwargs)?;
 
         let interface = TorchData::new(py, Some(&data), None, None, None, None, None)?;
 
