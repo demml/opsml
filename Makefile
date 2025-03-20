@@ -99,6 +99,7 @@ install.ui.deps:
 .PHONY: ui.build
 build.ui:
 	cd $(UI_DIR) && pnpm build
+	touch $(UI_DIR)/site/.gitkeep # to make sure the site folder is not ignored by git
 
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
