@@ -5,8 +5,11 @@ from opsml import (  # type: ignore
     PromptCard,
 )
 from opsml.test import OpsmlTestServer
+import pytest
+from tests.conftest import WINDOWS_EXCLUDE
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_promptcard_crud() -> None:
     with OpsmlTestServer():
         reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)

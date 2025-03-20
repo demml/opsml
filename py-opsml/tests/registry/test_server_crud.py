@@ -12,6 +12,8 @@ from opsml.model import SklearnModel  # type: ignore
 from opsml.data import PandasData  # type: ignore
 from pathlib import Path
 import shutil
+import pytest
+from tests.conftest import WINDOWS_EXCLUDE
 
 
 def crud_datacard(pandas_data: PandasData):
@@ -233,6 +235,7 @@ def delete_card(card: DataCard | ModelCard, registry: CardRegistry):
     assert len(cards) == 0
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_crud_artifactcard(
     random_forest_classifier: SklearnModel,
     pandas_data: PandasData,

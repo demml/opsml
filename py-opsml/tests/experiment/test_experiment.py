@@ -20,7 +20,8 @@ import joblib  # type: ignore
 from pathlib import Path
 import uuid
 import shutil
-
+from tests.conftest import WINDOWS_EXCLUDE
+import pytest
 # Sets up logging for tests
 
 
@@ -63,6 +64,7 @@ def cleanup_fake_directory(save_path: Path):
     shutil.rmtree(save_path)
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard():
     with OpsmlTestServer():
         cleanup_manually_created_directories()
@@ -140,6 +142,7 @@ def test_experimentcard():
     cleanup_manually_created_directories()
 
 
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_experimentcard_register(
     pandas_data: PandasData,
     random_forest_classifier: SklearnModel,
