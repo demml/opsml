@@ -58,7 +58,6 @@ start.server: stop.server build.ui
 .PHONY: stop.server
 stop.server:
 	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-# lsof -ti:3000 | xargs kill -9
 #	rm -f opsml.db || true
 #	rm -rf opsml_registries || true
 
@@ -104,5 +103,5 @@ build.ui:
 ui.dev:
 	cd $(UI_DIR) && pnpm run dev
 
-populate.db:
-	cd $(PY_DIR) && uv run python dev/populate_db.py
+populate.cards:
+	cd $(PY_DIR) && uv run python -m dev.populate_cards
