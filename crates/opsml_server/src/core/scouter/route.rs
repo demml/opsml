@@ -435,6 +435,10 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 post(insert_drift_profile).put(update_drift_profile),
             )
             .route(
+                &format!("{}/scouter/profile/ui", prefix),
+                post(get_profiles_for_ui),
+            )
+            .route(
                 &format!("{}/scouter/profile/status", prefix),
                 put(update_drift_profile_status),
             )
