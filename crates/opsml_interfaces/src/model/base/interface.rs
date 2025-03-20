@@ -239,7 +239,7 @@ pub struct ModelInterface {
 
     pub sample_data: SampleData,
 
-    drift_type: HashSet<DriftType>,
+    pub drift_type: HashSet<DriftType>,
 }
 
 #[pymethods]
