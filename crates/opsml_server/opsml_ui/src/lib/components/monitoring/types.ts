@@ -26,3 +26,16 @@ export enum TimeInterval {
   TwoDays = "2day",
   FiveDays = "5day",
 }
+
+export interface SlackDispatchConfig {
+  channel: string;
+}
+
+export interface OpsGenieDispatchConfig {
+  team: string;
+}
+
+export type AlertDispatchConfig =
+  | { type: "Slack"; config: SlackDispatchConfig }
+  | { type: "OpsGenie"; config: OpsGenieDispatchConfig }
+  | { type: "Console" };

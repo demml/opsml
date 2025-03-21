@@ -1,4 +1,9 @@
-import { DriftType, AlertDispatchType, type FeatureMap } from "./types";
+import {
+  DriftType,
+  AlertDispatchType,
+  type FeatureMap,
+  type AlertDispatchConfig,
+} from "./types";
 
 export enum AlertThreshold {
   Below = "Below",
@@ -23,9 +28,8 @@ export interface CustomMetricDriftConfig {
 }
 
 export interface CustomMetricAlertConfig {
-  dispatch_type: AlertDispatchType;
+  dispatch_config: AlertDispatchConfig;
   schedule: string;
-  dispatch_kwargs: Record<string, string>;
   alert_conditions?: Record<string, CustomMetricAlertCondition>;
 }
 
