@@ -62,13 +62,6 @@
           bind:currentNames={currentNames}
          />
         
-   
-      <div class="bg-white p-4 rounded-lg shadow">
-        <!-- Second column content -->
-        <h2 class="text-lg font-semibold mb-2 text-black">{currentName}</h2>
-        <h2 class="text-lg font-semibold mb-2">Column 2</h2>
-        <div class="h-full">Content for column 2</div>
-      </div>
     </div>
 
     <!-- Row 2: 1 column -->
