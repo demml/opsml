@@ -1,4 +1,9 @@
-import { DriftType, AlertDispatchType, type FeatureMap } from "./types";
+import {
+  DriftType,
+  AlertDispatchType,
+  type FeatureMap,
+  type AlertDispatchConfig,
+} from "./types";
 
 export interface PsiDriftProfile {
   features: Record<string, PsiFeatureDriftProfile>;
@@ -37,9 +42,8 @@ export interface PsiDriftConfig {
 }
 
 export interface PsiAlertConfig {
-  dispatch_type: AlertDispatchType;
+  dispatch_config: AlertDispatchConfig;
   schedule: string;
   features_to_monitor: string[];
-  dispatch_kwargs: Record<string, string>;
   psi_threshold: number;
 }

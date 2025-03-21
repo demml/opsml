@@ -1,4 +1,9 @@
-import { DriftType, AlertDispatchType, type FeatureMap } from "./types";
+import {
+  DriftType,
+  AlertDispatchType,
+  type FeatureMap,
+  type AlertDispatchConfig,
+} from "./types";
 
 export enum AlertZone {
   Zone1 = "Zone 1",
@@ -10,7 +15,7 @@ export enum AlertZone {
 
 export interface SpcAlertRule {
   rule: String;
-  Zones_to_monitor: AlertZone[];
+  zones_to_monitor: AlertZone[];
 }
 
 export interface SpcDriftProfile {
@@ -45,8 +50,7 @@ export interface SpcDriftConfig {
 
 export interface SpcAlertConfig {
   rule: SpcAlertRule; // You'll need to define SpcAlertRule type
-  dispatch_type: AlertDispatchType;
+  dispatch_config: AlertDispatchConfig;
   schedule: string;
   features_to_monitor: string[];
-  dispatch_kwargs: Record<string, string>;
 }

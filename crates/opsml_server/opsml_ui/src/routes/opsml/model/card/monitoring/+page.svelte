@@ -60,6 +60,7 @@
           isFeatureDropdownOpen={isFeatureDropdownOpen}
           bind:currentName={currentName}
           bind:currentNames={currentNames}
+          currentConfig={data.currentConfig}
          />
         
     </div>

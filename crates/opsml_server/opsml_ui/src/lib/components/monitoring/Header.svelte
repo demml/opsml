@@ -1,10 +1,16 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { getProfileConfig, getProfileFeatures, type DriftProfile, type DriftProfileResponse } from "./util";
+  import { getProfileConfig, getProfileFeatures, type DriftConfigType, type DriftProfile, type DriftProfileResponse } from "./util";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
+  import CustomConfig from "./CustomConfig.svelte";
+  import PsiConfig from "./PsiConfig.svelte";
+  import SpcConfig from "./SpcConfig.svelte";
+  import type { CustomMetricDriftConfig } from "./custom";
+  import type { PsiDriftConfig } from "./psi";
+  import type { SpcDriftConfig } from "./spc";
 
   // props
   let { 
@@ -17,6 +23,7 @@
     isFeatureDropdownOpen,
     currentName = $bindable(),
     currentNames = $bindable(),
+    currentConfig,
   } = $props<{
     availableDriftTypes: DriftType[];
     currentDriftType: DriftType;
@@ -27,16 +34,18 @@
     isFeatureDropdownOpen: boolean;
     currentName: string;
     currentNames: string[];
+    currentConfig: DriftConfigType;
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
-  let currentConfig = $state(getProfileConfig(currentDriftType, currentProfile));
+  let driftConfig = $state(currentConfig);
 
   async function changeProfile(drift_type: DriftType) {
     currentProfile = profiles[drift_type];
     currentDriftType = drift_type;
-    currentNames = await getProfileFeatures(currentDriftType, currentProfile);
+    currentNames = getProfileFeatures(currentDriftType, currentProfile);
     currentName = currentNames[0];
+    driftConfig = getProfileConfig(currentDriftType, currentProfile);
   }
 
 </script>
@@ -86,8 +95,11 @@
 
 
 <div class="bg-white p-4 rounded-lg shadow">
-  <!-- Second column content -->
-  <h2 class="text-lg font-semibold mb-2 text-black">{currentName}</h2>
-  <h2 class="text-lg font-semibold mb-2">Column 2</h2>
-  <div class="h-full">Content for column 2</div>
+  {#if currentDriftType === DriftType.Custom}
+    <CustomConfig 
+      config={driftConfig} 
+      alertConfig={driftConfig.alert_config}
+    />
+  {/if}
 </div>
+

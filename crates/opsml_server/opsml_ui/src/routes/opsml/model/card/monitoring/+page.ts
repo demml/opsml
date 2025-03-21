@@ -4,6 +4,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
+  getProfileConfig,
   getProfileFeatures,
 } from "$lib/components/monitoring/util";
 import { DriftType } from "$lib/components/monitoring/types";
@@ -29,6 +30,7 @@ export const load: PageLoad = async ({ parent }) => {
     currentProfile
   );
   let currentName: string = currentNames[0];
+  let currentConfig = getProfileConfig(currentDriftType, currentProfile);
 
   return {
     profiles,
@@ -37,5 +39,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentNames,
     currentDriftType,
     currentProfile,
+    currentConfig,
   };
 };
