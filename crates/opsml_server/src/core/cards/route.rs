@@ -600,10 +600,10 @@ pub async fn get_readme(
         }
         Err(e) => {
             error!("Failed to download artifact: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Failed to download artifact: {}", e) })),
-            ))
+            Ok(Json(ReadeMe {
+                readme: "".to_string(),
+                exists: false,
+            }))
         }
     }
 }
