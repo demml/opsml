@@ -169,8 +169,6 @@ pub async fn download_artifact(
             ApiError::Error("Failed to download artifact".to_string())
         })?;
 
-    info!("Downloaded artifact");
-
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
@@ -202,7 +200,7 @@ pub async fn download_artifacts(
             ApiError::Error("Failed to get artifact key".to_string())
         })?;
 
-    let rpath = PathBuf::from(rpath);
+    let rpath = key.storage_path().join(rpath);
 
     // Check if file exists in storage
     let files = storage_client.find(&rpath).await.map_err(|e| {
@@ -219,8 +217,6 @@ pub async fn download_artifacts(
         error!("Failed to download artifact: {}", e);
         ApiError::Error("Failed to download artifact".to_string())
     })?;
-
-    debug!("Downloaded artifacts");
 
     // Get decryption key and decrypt
     let decryption_key = key.get_decrypt_key().map_err(|e| {

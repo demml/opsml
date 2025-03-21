@@ -13,3 +13,16 @@ export enum DriftType {
 export interface FeatureMap {
   features: Record<string, Record<string, number>>;
 }
+
+export enum TimeInterval {
+  FiveMinutes = "5minute",
+  FifteenMinutes = "15minute",
+  ThirtyMinutes = "30minute",
+  OneHour = "1hour",
+  ThreeHours = "3hour",
+  SixHours = "6hour",
+  TwelveHours = "12hour",
+  TwentyFourHours = "24hour",
+  TwoDays = "2day",
+  FiveDays = "5day",
+}

@@ -2,7 +2,10 @@ export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import type { PageLoad } from "./$types";
-import { getDriftProfiles } from "$lib/components/monitoring/util";
+import {
+  getDriftProfiles,
+  getProfileFeatures,
+} from "$lib/components/monitoring/util";
 import { DriftType } from "$lib/components/monitoring/types";
 
 export const load: PageLoad = async ({ parent }) => {
@@ -12,13 +15,27 @@ export const load: PageLoad = async ({ parent }) => {
 
   let profiles = await getDriftProfiles(metadata);
 
-  const psiProfile = profiles[DriftType.Psi];
-  const customProfile = profiles[DriftType.Custom];
-  const spcProfile = profiles[DriftType.Spc];
+  // get all keys which should be of DriftType
+  const keys: DriftType[] = Object.keys(profiles)
+    .filter((key): key is DriftType => {
+      return Object.values(DriftType).includes(key as DriftType);
+    })
+    .sort();
 
-  console.log(psiProfile);
-  console.log(customProfile);
-  console.log(spcProfile);
+  let currentDriftType = keys[0];
+  let currentProfile = profiles[currentDriftType];
+  let currentNames: string[] = await getProfileFeatures(
+    currentDriftType,
+    currentProfile
+  );
+  let currentName: string = currentNames[0];
 
-  return { profiles };
+  return {
+    profiles,
+    keys,
+    currentName,
+    currentNames,
+    currentDriftType,
+    currentProfile,
+  };
 };
