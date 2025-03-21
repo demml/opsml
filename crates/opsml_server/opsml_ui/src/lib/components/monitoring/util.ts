@@ -38,10 +38,10 @@ export async function getDriftProfiles(
   return (await response.json()) as DriftProfileResponse;
 }
 
-export async function getProfileFeatures(
+export function getProfileFeatures(
   drift_type: DriftType,
   profile: DriftProfile
-): Promise<string[]> {
+): string[] {
   const variables =
     drift_type === DriftType.Custom
       ? profile.Custom.metrics
@@ -52,10 +52,10 @@ export async function getProfileFeatures(
   return Object.keys(variables).sort();
 }
 
-export async function getProfileConfig(
+export function getProfileConfig(
   drift_type: DriftType,
   profile: DriftProfile
-): Promise<DriftConfigType> {
+): DriftConfigType {
   const variables =
     drift_type === DriftType.Custom
       ? profile.Custom.config

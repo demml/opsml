@@ -24,7 +24,7 @@ export const load: PageLoad = async ({ parent }) => {
 
   let currentDriftType = keys[0];
   let currentProfile = profiles[currentDriftType];
-  let currentNames: string[] = await getProfileFeatures(
+  let currentNames: string[] = getProfileFeatures(
     currentDriftType,
     currentProfile
   );

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { getProfileFeatures, type DriftProfile, type DriftProfileResponse } from "./util";
+  import { getProfileConfig, getProfileFeatures, type DriftProfile, type DriftProfileResponse } from "./util";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
@@ -30,6 +30,7 @@
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
+  let currentConfig = $state(getProfileConfig(currentDriftType, currentProfile));
 
   async function changeProfile(drift_type: DriftType) {
     currentProfile = profiles[drift_type];
