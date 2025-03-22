@@ -48,6 +48,14 @@
     <!--Create 3 row grid. First row contains 2 columns, 2nd row contains 1 column, 3rd row contains 1 col-->
 
     <div class="grid grid-cols-2 gap-4">
+
+      <select class="select">
+              <option value="1">Option 1</option>
+              <option value="2">Option 2</option>
+              <option value="3">Option 3</option>
+              <option value="4">Option 4</option>
+              <option value="5">Option 5</option>
+            </select>
       
         <!-- First column content -->
          <Header

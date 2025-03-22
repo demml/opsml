@@ -27,15 +27,20 @@ export enum TimeInterval {
   FiveDays = "5day",
 }
 
+export interface ConsoleDispatchConfig {
+  enabled: boolean;
+}
+
 export interface SlackDispatchConfig {
   channel: string;
 }
 
 export interface OpsGenieDispatchConfig {
   team: string;
+  priority: string;
 }
 
 export type AlertDispatchConfig =
   | { type: "Slack"; config: SlackDispatchConfig }
   | { type: "OpsGenie"; config: OpsGenieDispatchConfig }
-  | { type: "Console" };
+  | { type: "Console"; config: ConsoleDispatchConfig };
