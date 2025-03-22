@@ -202,7 +202,7 @@ impl DataCard {
     }
 
     #[setter]
-    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<String>) {
         self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 

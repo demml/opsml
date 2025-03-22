@@ -227,7 +227,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_datacard_uid(&mut self, datacard_uid: Option<&str>) {
+    pub fn set_datacard_uid(&mut self, datacard_uid: Option<String>) {
         self.metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
     }
 
@@ -237,7 +237,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<String>) {
         self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 
@@ -247,7 +247,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_auditcard_uid(&mut self, auditcard_uid: Option<&str>) {
+    pub fn set_auditcard_uid(&mut self, auditcard_uid: Option<String>) {
         self.metadata.auditcard_uid = auditcard_uid.map(|s| s.to_string());
     }
 
