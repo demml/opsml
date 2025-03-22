@@ -20,7 +20,7 @@
 
   </script>
 
-<div class="grid grid-cols-1 gap-4 w-full h-auto">
+<div class="grid grid-cols-1 gap-2 w-full h-auto">
   <div class="flex flex-row gap-2">
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} />
