@@ -478,7 +478,7 @@ impl Experiment {
 
     #[pyo3(signature = (exc_type=None, exc_value=None, traceback=None))]
     fn __exit__(
-        &mut self,
+        mut slf: PyRefMut<'_, Self>,
         py: Python<'_>,
         exc_type: Option<PyObject>,
         exc_value: Option<PyObject>,
@@ -493,12 +493,12 @@ impl Experiment {
         } else {
             debug!("Exiting experiment");
             // update card
-            self.unlock_registries()?
+            slf.unlock_registries()?
                 .experiment
-                .update_card(self.experiment.bind(py))?;
+                .update_card(slf.experiment.bind(py))?;
 
             debug!("Stopping hardware queue");
-            self.stop_queue()?;
+            slf.stop_queue()?;
 
             debug!("Experiment updated");
         }
