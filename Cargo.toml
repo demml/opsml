@@ -66,14 +66,14 @@ ort = { version = "2.0.0-rc.9" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-pyo3 = { version = "0.23", features = ["extension-module", "anyhow", "serde", "chrono"] }
+pyo3 = { version = "0.*", features = ["extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.*"}
 rayon = "1.*"
 regex = "1.*"
 reqwest = { version = "0.12.*", features = ["json", "stream", "multipart", "rustls-tls", "rustls-tls-native-roots", "blocking" ], default-features = false }
 rust-embed = "8.*"
 reqwest-middleware = "0.*"
-rusty-logging = { git = "https://github.com/demml/rusty-logger.git", version = "0.4.0", branch = "add-serialization" }
+rusty-logging = "0.*"
 scouter-client = { git = "https://github.com/demml/scouter.git", branch = "opsmlUi" }
 sha2 = "0.*"
 semver = "1.*"
