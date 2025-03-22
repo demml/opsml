@@ -40,7 +40,21 @@ export interface OpsGenieDispatchConfig {
   priority: string;
 }
 
-export type AlertDispatchConfig =
-  | { type: "Slack"; config: SlackDispatchConfig }
-  | { type: "OpsGenie"; config: OpsGenieDispatchConfig }
-  | { type: "Console"; config: ConsoleDispatchConfig };
+export interface AlertDispatchConfig {
+  Console?: ConsoleDispatchConfig;
+  Slack?: SlackDispatchConfig;
+  OpsGenie?: OpsGenieDispatchConfig;
+}
+
+// Add these type guard functions
+export function hasConsoleConfig(config: AlertDispatchConfig): boolean {
+  return config.Console !== undefined;
+}
+
+export function hasSlackConfig(config: AlertDispatchConfig): boolean {
+  return config.Slack !== undefined;
+}
+
+export function hasOpsGenieConfig(config: AlertDispatchConfig): boolean {
+  return config.OpsGenie !== undefined;
+}

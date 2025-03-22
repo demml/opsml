@@ -42,47 +42,35 @@
 
  </script>
  
- <div class="mx-auto w-11/12 pb-10 flex justify-center min-h-screen">
+ <div class="mx-auto w-11/12 pb-10 flex justify-center">
   <div class="grid grid-cols-1 gap-4 w-full pt-4">
 
     <!--Create 3 row grid. First row contains 2 columns, 2nd row contains 1 column, 3rd row contains 1 col-->
-
-    <div class="grid grid-cols-2 gap-4">
-
-      <select class="select">
-              <option value="1">Option 1</option>
-              <option value="2">Option 2</option>
-              <option value="3">Option 3</option>
-              <option value="4">Option 4</option>
-              <option value="5">Option 5</option>
-            </select>
-      
-        <!-- First column content -->
-         <Header
-          availableDriftTypes={drift_types}
-          bind:currentDriftType={currentDriftType}
-          profiles={profiles}
-          bind:currentProfile={currentProfile}
-          isTimeDropdownOpen={isTimeDropdownOpen}
-          bind:currentInterval={currentInterval}
-          isFeatureDropdownOpen={isFeatureDropdownOpen}
-          bind:currentName={currentName}
-          bind:currentNames={currentNames}
-          currentConfig={data.currentConfig}
-         />
-        
+    <div class="h-fit">
+      <Header
+            availableDriftTypes={drift_types}
+            bind:currentDriftType={currentDriftType}
+            profiles={profiles}
+            bind:currentProfile={currentProfile}
+            isTimeDropdownOpen={isTimeDropdownOpen}
+            bind:currentInterval={currentInterval}
+            isFeatureDropdownOpen={isFeatureDropdownOpen}
+            bind:currentName={currentName}
+            bind:currentNames={currentNames}
+            currentConfig={data.currentConfig}
+      /> 
     </div>
 
     <!-- Row 2: 1 column -->
-    <div class="bg-white p-4 rounded-lg shadow">
+    <div class="bg-white p-4 rounded-lg shadow h-[400px]">
       <h2 class="text-lg font-semibold mb-2">Row 2</h2>
-      <div class="h-full">Content for row 2</div>
+      <div class="text-black">Content for row 2</div>
     </div>
 
     <!-- Row 3: 1 column -->
-    <div class="bg-white p-4 rounded-lg shadow">
+    <div class="bg-white p-4 rounded-lg shadow h-[400px]">
       <h2 class="text-lg font-semibold mb-2">Row 3</h2>
-      <div class="h-full">Content for row 3</div>
+      <div class="text-black">Content for row 3</div>
     </div>
 
 
