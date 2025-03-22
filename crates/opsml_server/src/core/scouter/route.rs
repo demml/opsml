@@ -22,12 +22,14 @@ use opsml_types::SaveName;
 use reqwest::header::HeaderMap;
 use reqwest::Response;
 
+use crate::core::scouter::types::{
+    BinnedCustomResult, BinnedPsiResult, ProfileResult, SpcDriftResult,
+};
 use scouter_client::{
-    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftProfile, DriftRequest, DriftType,
-    ProfileRequest, ProfileStatusRequest, SpcDriftFeatures,
+    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftRequest, ProfileRequest,
+    ProfileStatusRequest, SpcDriftFeatures,
 };
 use serde_json::json;
-use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -234,7 +236,7 @@ pub async fn get_spc_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> Result<Json<SpcDriftFeatures>, (StatusCode, Json<serde_json::Value>)> {
+) -> SpcDriftResult {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -276,7 +278,7 @@ pub async fn get_psi_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> Result<Json<BinnedPsiFeatureMetrics>, (StatusCode, Json<serde_json::Value>)> {
+) -> BinnedPsiResult {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -323,7 +325,7 @@ pub async fn get_custom_drift(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
-) -> Result<Json<BinnedCustomMetrics>, (StatusCode, Json<serde_json::Value>)> {
+) -> BinnedCustomResult {
     // validate time window
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -371,7 +373,7 @@ pub async fn get_profiles_for_ui(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<RawFileRequest>,
-) -> Result<Json<HashMap<DriftType, DriftProfile>>, (StatusCode, Json<serde_json::Value>)> {
+) -> ProfileResult {
     if !perms.has_read_permission() {
         error!("Permission denied");
         return Err((

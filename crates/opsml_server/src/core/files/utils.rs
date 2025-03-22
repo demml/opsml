@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 /// Route for debugging information
 use std::sync::Arc;
 use tempfile::TempDir;
-use tracing::{debug, info};
+use tracing::debug;
 use tracing::{error, instrument};
 use uuid::Uuid;
 
