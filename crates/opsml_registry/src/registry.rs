@@ -1,21 +1,21 @@
 use crate::enums::OpsmlRegistry;
 use crate::enums::RegistryArgs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
-use opsml_client::OpsmlApiClient;
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_settings::config::OpsmlStorageSettings;
-use opsml_storage::FileSystemStorage;
+use opsml_storage::{get_storage, FileSystemStorage};
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
+pub use opsml_utils::get_runtime;
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
+use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
 
@@ -48,44 +48,10 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryT
     }
 }
 
-pub struct RegistryContext {
-    pub registry: OpsmlRegistry,
-    pub storage: Arc<Mutex<FileSystemStorage>>,
-}
-
-// Helper function to create FileSystemStorage
-async fn create_storage(
-    settings: &mut OpsmlStorageSettings,
-    api_client: Option<OpsmlApiClient>,
-) -> Result<FileSystemStorage, RegistryError> {
-    FileSystemStorage::new(settings, api_client)
-        .await
-        .map_err(|e| {
-            error!("Failed to create file system storage: {}", e);
-            RegistryError::Error(e.to_string())
-        })
-}
-
-impl RegistryContext {
-    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let config = OpsmlConfig::default();
-        let mut storage_settings = config.storage_settings()?;
-        let registry_args = RegistryArgs::from_config(&config).await?;
-
-        // Initialize registry and storage concurrently
-        let (registry, storage) = tokio::try_join!(
-            OpsmlRegistry::new(registry_type, registry_args.clone()),
-            create_storage(&mut storage_settings, registry_args.api_client().cloned())
-        )?;
-
-        Ok(Self {
-            registry,
-            storage: Arc::new(Mutex::new(storage)),
-        })
-    }
-}
-
-/// Initialize registry and file system storage
+/// Initialize registry, file system and tokio runtime
+/// Registry is instantiated on each call
+/// File system is shared across all registries
+/// Tokio runtime is shared across all registries
 ///
 ///
 /// # Arguments
@@ -99,11 +65,24 @@ impl RegistryContext {
 /// # Errors
 ///
 /// * `RegistryError` - Error
-pub async fn initialize_registry_and_fs(
+pub fn initialize_registry_components(
     registry_type: RegistryType,
-) -> Result<(OpsmlRegistry, Arc<Mutex<FileSystemStorage>>), RegistryError> {
-    let context = RegistryContext::new(registry_type).await?;
-    Ok((context.registry, context.storage))
+) -> Result<(OpsmlRegistry, Arc<Mutex<FileSystemStorage>>, Arc<Runtime>), RegistryError> {
+    // get config and storage settings
+    let config = OpsmlConfig::default();
+    let mut storage_settings = config.storage_settings()?;
+
+    let runtime = get_runtime();
+    let runtime_clone = runtime.clone();
+
+    runtime.block_on(async {
+        let registry_args = RegistryArgs::from_config(&config).await?;
+
+        let registry = OpsmlRegistry::new(registry_type, registry_args.clone()).await?;
+        let storage = get_storage(&mut storage_settings, registry_args.api_client().cloned()).await;
+
+        Ok((registry, storage.clone(), runtime_clone))
+    })
 }
 
 pub struct CardArgs {
@@ -142,17 +121,14 @@ impl CardRegistry {
         let registry_type = extract_registry_type(registry_type)?;
 
         // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
-
-        let (registry, fs) = rt
-            .block_on(async { initialize_registry_and_fs(registry_type.clone()).await })
+        let (registry, fs, runtime) = initialize_registry_components(registry_type.clone())
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(&registry_type).to_string(),
             registry,
-            runtime: rt,
+            runtime,
             fs,
         })
     }
@@ -661,21 +637,13 @@ impl CardRegistry {
 }
 
 impl CardRegistry {
-    pub fn rust_new(
-        registry_type: &RegistryType,
-        rt: Arc<tokio::runtime::Runtime>,
-    ) -> Result<Self, RegistryError> {
-        let (registry, fs) = rt.block_on(async {
-            initialize_registry_and_fs(registry_type.clone())
-                .await
-                .map_err(|e| RegistryError::Error(e.to_string()))
-        })?;
-
+    pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
+        let (registry, fs, runtime) = initialize_registry_components(registry_type.clone())?;
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
-            runtime: rt,
+            runtime,
             fs,
         })
     }
@@ -715,9 +683,7 @@ impl CardRegistries {
     #[new]
     #[instrument(skip_all)]
     pub fn new() -> PyResult<Self> {
-        let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
-
-        let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
+        let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
 
         // clone experiment to create other registries
         let mut model = experiment.clone();
@@ -734,34 +700,12 @@ impl CardRegistries {
             model,
             data,
             prompt,
-            rt,
+            rt: Arc::clone(&get_runtime()),
         })
     }
 }
 
 impl CardRegistries {
-    pub fn new_with_rt(rt: Arc<tokio::runtime::Runtime>) -> PyResult<Self> {
-        let experiment = CardRegistry::rust_new(&RegistryType::Experiment, rt.clone())?;
-
-        // clone experiment to create other registries
-        let mut model = experiment.clone();
-        model.update_type(RegistryType::Model);
-
-        let mut data = experiment.clone();
-        data.update_type(RegistryType::Data);
-
-        let mut prompt = experiment.clone();
-        prompt.update_type(RegistryType::Prompt);
-
-        Ok(Self {
-            experiment,
-            model,
-            data,
-            prompt,
-            rt,
-        })
-    }
-
     // helper for accessing the file system storage
     pub fn get_fs(&self) -> Arc<Mutex<FileSystemStorage>> {
         self.experiment.fs.clone()

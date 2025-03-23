@@ -18,6 +18,7 @@ use opsml_types::{
     cards::experiment::{Metric, Parameter},
     SaveName,
 };
+use opsml_utils::get_runtime;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -42,7 +43,7 @@ type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, Experimen
 ///
 /// * `ExperimentError` - Error initializing the experiment environment
 fn initialize_experiment_environment() -> Result<ExperimentEnvironment, ExperimentError> {
-    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
+    let rt = get_runtime();
     let registries = Arc::new(Mutex::new(CardRegistries::new_with_rt(rt.clone())?));
 
     // experiment needs its own file system for storing objects independently of registries
