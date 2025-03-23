@@ -47,6 +47,17 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     Ok(client)
 }
 
+/// Main client for interacting with the OpsML API
+/// This client acquires a JWT token on creation, which is stored in a RwLock
+/// and used for all subsequent requests. All token refreshes are handled on the server side.
+/// That is, if a request fails auth during a request, the server will complete the request
+/// and return a new token if the server refresh token is still valid
+///
+///  Arguments:
+///
+/// - `client`: reqwest client to use for requests
+/// - `url`: base url for the API
+///
 #[derive(Debug, Clone)]
 pub struct OpsmlApiClient {
     pub client: Client,
@@ -57,7 +68,6 @@ pub struct OpsmlApiClient {
 impl OpsmlApiClient {
     pub async fn new(url: String, client: &Client) -> Result<Self, ApiError> {
         // setup headers
-
         let api_client = Self {
             client: client.clone(),
             base_path: url,
