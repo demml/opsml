@@ -3944,6 +3944,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-state"
+version = "0.1.0"
+dependencies = [
+ "opsml-client",
+ "opsml-error",
+ "opsml-settings",
+ "opsml-storage",
+ "opsml-types",
+ "opsml-utils",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-storage"
 version = "0.1.0"
 dependencies = [

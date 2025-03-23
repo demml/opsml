@@ -30,6 +30,7 @@ opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }
 opsml-settings = { path = "crates/opsml_settings" }
 opsml-sql = { path = "crates/opsml_sql" }
+opsml-state = { path = "crates/opsml_state" }
 opsml-storage = { path = "crates/opsml_storage" }
 opsml-todo = { path = "crates/opsml_todo" }
 opsml-types = { path = "crates/opsml_types" }
