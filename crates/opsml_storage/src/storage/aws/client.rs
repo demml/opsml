@@ -11,7 +11,7 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use opsml_client::OpsmlApiClient;
+use opsml_client::{get_api_client, OpsmlApiClient};
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
@@ -887,7 +887,6 @@ impl S3FStorageClient {
         lpath: &Path,
         session_url: Option<String>,
         bucket: Option<String>,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<AWSMulitPartUpload, StorageError> {
         let upload_id = match session_url {
             Some(session_url) => session_url,
@@ -898,11 +897,7 @@ impl S3FStorageClient {
             }
         };
 
-        let http_client = if let Some(client) = &api_client {
-            client.client.clone()
-        } else {
-            HttpClient::new()
-        };
+        let http_client = get_api_client().lock().await.client.clone();
 
         let bucket = match bucket {
             Some(bucket) => bucket,

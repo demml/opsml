@@ -3741,6 +3741,7 @@ dependencies = [
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "mockito",
  "opsml-crypt",
  "opsml-error",

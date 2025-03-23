@@ -263,7 +263,6 @@ impl StorageClientEnum {
         lpath: &Path,
         rpath: &Path,
         multipart_session: MultiPartSession,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
@@ -280,15 +279,12 @@ impl StorageClientEnum {
                         lpath,
                         Some(multipart_session.session_url),
                         multipart_session.bucket,
-                        api_client,
                     )
                     .await?;
                 Ok(MultiPartUploader::AWS(uploader))
             }
             StorageClientEnum::Local(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, api_client)
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
 
                 Ok(MultiPartUploader::Local(uploader))
             }

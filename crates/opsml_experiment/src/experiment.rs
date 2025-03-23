@@ -8,7 +8,7 @@ use opsml_registry::enums::{OpsmlRegistry, RegistryArgs};
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_storage::FileSystemStorage;
+use opsml_storage::{get_storage, FileSystemStorage};
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
@@ -97,7 +97,7 @@ fn extract_code(
     rt: Arc<tokio::runtime::Runtime>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    rt.block_on(async {
+    get_runtime().block_on(async {
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
             Some(path) => (path.to_path_buf(), true),
@@ -124,6 +124,7 @@ fn extract_code(
         encrypt_directory(&lpath, &encryption_key)?;
 
         // 4. Save the code to the storage
+        let fs = get_storage().await
         fs.lock().await.put(&lpath, rpath, recursive).await?;
 
         // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)

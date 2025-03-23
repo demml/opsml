@@ -2,8 +2,9 @@ use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
 use futures::FutureExt;
-use opsml_client::OpsmlApiClient;
+use opsml_client::{get_api_client, OpsmlApiClient};
 use opsml_error::error::StorageError;
+use opsml_settings::config::OpsmlConfig;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -42,10 +43,7 @@ pub enum FileSystemStorage {
 
 impl FileSystemStorage {
     #[instrument(skip_all)]
-    pub async fn new(
-        settings: &mut OpsmlStorageSettings,
-        api_client: Option<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
+    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
         if !settings.client_mode {
             debug!("Creating FileSystemStorage with StorageClientEnum");
             Ok(FileSystemStorage::Server(
@@ -54,7 +52,7 @@ impl FileSystemStorage {
         } else {
             debug!("Creating FileSystemStorage with HttpFSStorageClient");
             Ok(FileSystemStorage::Client(
-                HttpFSStorageClient::new(settings, api_client).await?,
+                HttpFSStorageClient::new(settings).await?,
             ))
         }
     }
@@ -140,13 +138,13 @@ impl FileSystemStorage {
 }
 
 /// Get the storage client instance
-pub async fn get_storage(
-    settings: &mut OpsmlStorageSettings,
-    api_client: Option<OpsmlApiClient>,
-) -> &'static Arc<Mutex<FileSystemStorage>> {
+pub async fn get_storage() -> &'static Arc<Mutex<FileSystemStorage>> {
     STORAGE.get_or_init(|| {
         async move {
-            let storage = FileSystemStorage::new(settings, api_client)
+            let config = OpsmlConfig::default();
+            let mut settings = config.storage_settings().unwrap();
+            let api_client = get_api_client();
+            let storage = FileSystemStorage::new(&mut settings, api_client)
                 .await
                 .expect("Failed to create file system storage");
 

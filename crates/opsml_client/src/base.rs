@@ -1,8 +1,9 @@
 use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
-use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
+use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::contracts::{PresignedQuery, PresignedUrl};
 
+use futures::FutureExt;
 use reqwest::header;
 use reqwest::multipart::Form;
 use reqwest::Response;
@@ -11,7 +12,12 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
+use std::sync::Arc;
+use std::sync::OnceLock;
+use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
+
+static API_CLIENT: OnceLock<Arc<Mutex<OpsmlApiClient>>> = OnceLock::new();
 
 const TIMEOUT_SECS: u64 = 30;
 
@@ -262,6 +268,26 @@ impl OpsmlApiClient {
 pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
     let client = build_http_client(&settings.api_settings)?;
     OpsmlApiClient::new(settings, &client).await
+}
+
+pub fn get_api_client() -> &'static Arc<Mutex<OpsmlApiClient>> {
+    API_CLIENT.get_or_init(|| {
+        async move {
+            let config = OpsmlConfig::new(None);
+            let settings = config.storage_settings().unwrap();
+            let client = build_api_client(&settings)
+                .await
+                .map_err(|e| {
+                    error!("Failed to create api client: {}", e);
+                    ApiError::Error(format!("Failed to create api client with error: {}", e))
+                })
+                .unwrap();
+
+            Arc::new(Mutex::new(client))
+        }
+        .now_or_never()
+        .expect("Failed to initialize api client")
+    })
 }
 
 #[cfg(test)]
