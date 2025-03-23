@@ -357,18 +357,6 @@ impl OpsmlConfig {
     }
 }
 
-pub fn get_opsml_mode() -> &'static OpsmlMode {
-    OPSML_MODE.get_or_init(|| {
-        OpsmlConfig::default();
-
-        if OpsmlConfig::is_using_client(&env::var("OPSML_TRACKING_URI").unwrap_or_default()) {
-            OpsmlMode::Client
-        } else {
-            OpsmlMode::Server
-        }
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::Path;

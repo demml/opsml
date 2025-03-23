@@ -113,7 +113,7 @@ impl OpsmlApiClient {
         Ok(())
     }
 
-    async fn update_token_from_response(&mut self, response: &Response) {
+    async fn update_token_from_response(&self, response: &Response) {
         if let Some(new_token) = response
             .headers()
             .get(header::AUTHORIZATION)
@@ -214,7 +214,7 @@ impl OpsmlApiClient {
     }
 
     pub async fn request(
-        &mut self,
+        &self,
         route: Routes,
         request_type: RequestType,
         body_params: Option<Value>,
