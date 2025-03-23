@@ -1,23 +1,19 @@
 <script lang="ts">
-    import { AlertDispatchType, DriftType, hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "./types";
-    import { getProfileConfig, getProfileFeatures, type DriftProfile, type DriftProfileResponse } from "./util";
-    import { Clock } from 'lucide-svelte';
-    import { TimeInterval } from '$lib/components/monitoring/types';
-    import Dropdown from '$lib/components/utils/Dropdown.svelte';
-    import { KeySquare } from 'lucide-svelte';
-    import type { CustomMetricAlertConfig, CustomMetricDriftConfig } from "./custom";
-    import Pill from "../utils/Pill.svelte";
-    import UpdateConfigModal from "./UpdatecConfigModal.svelte";
-  
-    // props
-    let { 
-      config,
-      alertConfig,
-    } = $props<{
-      config: CustomMetricDriftConfig;
-      alertConfig: CustomMetricAlertConfig;
-    }>();
+  import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "./types";
+  import type { CustomMetricAlertConfig, CustomMetricDriftConfig } from "./custom";
+  import Pill from "../utils/Pill.svelte";
+  import UpdateCustomConfigModal from "./UpdatecCustomConfigModal.svelte";
 
+  // props
+  let { 
+    config,
+    alertConfig,
+  } = $props<{
+    config: CustomMetricDriftConfig;
+    alertConfig: CustomMetricAlertConfig;
+  }>();
+
+  
   </script>
 
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
@@ -25,7 +21,7 @@
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} />
     {#if config.sample}
-      <Pill key="Sample" value={config.sample_size} />
+      <Pill key="Sample size" value={config.sample_size} />
     {/if}
    
   </div>
@@ -49,7 +45,7 @@
   </div>
   <div class="flex flex-row justify-end gap-2">
 
-    <UpdateConfigModal/>
+    <UpdateCustomConfigModal config={config} alertConfig={alertConfig} />
 
   </div>
 </div>
