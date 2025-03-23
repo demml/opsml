@@ -4,8 +4,8 @@ use async_trait::async_trait;
 use futures::FutureExt;
 use opsml_client::{get_api_client, OpsmlApiClient};
 use opsml_error::error::StorageError;
-use opsml_settings::config::OpsmlConfig;
-use opsml_settings::config::OpsmlStorageSettings;
+
+use opsml_settings::config::{get_opsml_mode, OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
@@ -44,16 +44,19 @@ pub enum FileSystemStorage {
 impl FileSystemStorage {
     #[instrument(skip_all)]
     pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
-        if !settings.client_mode {
-            debug!("Creating FileSystemStorage with StorageClientEnum");
-            Ok(FileSystemStorage::Server(
-                StorageClientEnum::new(settings).await?,
-            ))
-        } else {
-            debug!("Creating FileSystemStorage with HttpFSStorageClient");
-            Ok(FileSystemStorage::Client(
-                HttpFSStorageClient::new(settings).await?,
-            ))
+        match get_opsml_mode() {
+            OpsmlMode::Server => {
+                debug!("Creating FileSystemStorage with StorageClientEnum");
+                Ok(FileSystemStorage::Server(
+                    StorageClientEnum::new(settings).await?,
+                ))
+            }
+            _ => {
+                debug!("Creating FileSystemStorage with HttpFSStorageClient");
+                Ok(FileSystemStorage::Client(
+                    HttpFSStorageClient::new(settings).await?,
+                ))
+            }
         }
     }
 

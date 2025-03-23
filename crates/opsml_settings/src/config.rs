@@ -10,7 +10,16 @@ use std::default::Default;
 use std::env;
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::sync::OnceLock;
 use tracing::warn;
+
+pub enum OpsmlMode {
+    Client,
+    Server,
+}
+
+static OPSML_MODE: OnceLock<OpsmlMode> = OnceLock::new();
+
 /// ApiSettings for use with ApiClient
 #[pyclass]
 #[derive(Debug, Clone)]
@@ -346,6 +355,18 @@ impl OpsmlConfig {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
+}
+
+pub fn get_opsml_mode() -> &'static OpsmlMode {
+    OPSML_MODE.get_or_init(|| {
+        OpsmlConfig::default();
+
+        if OpsmlConfig::is_using_client(&env::var("OPSML_TRACKING_URI").unwrap_or_default()) {
+            OpsmlMode::Client
+        } else {
+            OpsmlMode::Server
+        }
+    })
 }
 
 #[cfg(test)]
