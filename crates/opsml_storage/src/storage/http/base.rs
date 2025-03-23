@@ -14,31 +14,28 @@ use tracing::{error, instrument};
 
 #[derive(Clone)]
 pub struct HttpStorageClient {
-    pub api_client: Arc<Mutex<OpsmlApiClient>>,
-    storage_client: StorageClientEnum,
+    pub api_client: Arc<OpsmlApiClient>,
+    //storage_client: StorageClientEnum,
     pub storage_type: StorageType,
 }
 
 impl HttpStorageClient {
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> AnyhowResult<Self> {
+    pub async fn new(api_client: Arc<OpsmlApiClient>) -> AnyhowResult<Self> {
         let storage_type = Self::get_storage_setting().await.context(Colorize::purple(
             "Error occurred while getting storage type",
         ))?;
 
-        // update settings type
-        settings.storage_type = storage_type.clone();
-
         // get storage client (options are gcs, aws, azure and local)
-        let storage_client = StorageClientEnum::new(settings)
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to create storage client: {}", e)))
-            .context(Colorize::green(
-                "Error occurred while creating storage client",
-            ))?;
+        //let storage_client = StorageClientEnum::new(settings)
+        //    .await
+        //    .map_err(|e| StorageError::Error(format!("Failed to create storage client: {}", e)))
+        //    .context(Colorize::green(
+        //        "Error occurred while creating storage client",
+        //    ))?;
 
         Ok(Self {
-            api_client: get_api_client().clone(),
-            storage_client,
+            api_client: api_client,
+            //storage_client,
             storage_type,
         })
     }
@@ -93,8 +90,6 @@ impl HttpStorageClient {
         // need to clone because self is borrowed
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::List,
                 RequestType::Get,
@@ -135,8 +130,6 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::ListInfo,
                 RequestType::Get,

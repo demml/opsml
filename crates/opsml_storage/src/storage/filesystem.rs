@@ -140,24 +140,6 @@ impl FileSystemStorage {
     }
 }
 
-/// Get the storage client instance
-pub async fn get_storage() -> &'static Arc<Mutex<FileSystemStorage>> {
-    STORAGE.get_or_init(|| {
-        async move {
-            let config = OpsmlConfig::default();
-            let mut settings = config.storage_settings().unwrap();
-            let api_client = get_api_client();
-            let storage = FileSystemStorage::new(&mut settings, api_client)
-                .await
-                .expect("Failed to create file system storage");
-
-            Arc::new(Mutex::new(storage))
-        }
-        .now_or_never()
-        .expect("Failed to initialize storage")
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -246,7 +228,7 @@ mod tests {
     async fn test_gcs_storage_client() {
         let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
+        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
             .unwrap();
 
