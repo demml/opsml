@@ -43,12 +43,11 @@ type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, Experimen
 ///
 /// * `ExperimentError` - Error initializing the experiment environment
 fn initialize_experiment_environment() -> Result<ExperimentEnvironment, ExperimentError> {
-    let rt = get_runtime();
-    let registries = Arc::new(Mutex::new(CardRegistries::new_with_rt(rt.clone())?));
+    let registries = Arc::new(Mutex::new(CardRegistries::new()?));
 
     // experiment needs its own file system for storing objects independently of registries
     let fs = registries.lock().unwrap().get_fs();
-    Ok((rt, registries, fs))
+    Ok((Arc::clone(&get_runtime()), registries, fs))
 }
 
 /// Get the filename of the python file
