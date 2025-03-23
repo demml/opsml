@@ -250,7 +250,7 @@ impl OpsmlApiClient {
         Ok(response)
     }
 
-    // specific method for multipart uploads (mainly used for localstorageclient)
+    // specific method for multipart uploads (mainly used for localstorageclient and aws)
     pub async fn generate_presigned_url_for_part(
         &mut self,
         path: &str,

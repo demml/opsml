@@ -194,8 +194,6 @@ impl HttpStorageClient {
             })?;
 
             self.api_client
-                .lock()
-                .await
                 .request(
                     Routes::Files,
                     RequestType::Get,
@@ -216,14 +214,7 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Invalid presigned URL: {}", e))
             })?;
 
-            self.api_client
-                .lock()
-                .await
-                .client
-                .get(url)
-                .send()
-                .await
-                .unwrap()
+            self.api_client.client.get(url).send().await.unwrap()
         };
 
         // create buffer to store downloaded data
@@ -269,8 +260,6 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
@@ -309,8 +298,6 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
@@ -349,8 +336,6 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::Multipart,
                 RequestType::Get,
@@ -431,8 +416,6 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
-            .lock()
-            .await
             .request(
                 Routes::Presigned,
                 RequestType::Get,
