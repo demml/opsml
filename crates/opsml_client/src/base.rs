@@ -1,9 +1,8 @@
 use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
-use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
+use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
 use opsml_types::contracts::{PresignedQuery, PresignedUrl};
 
-use futures::FutureExt;
 use reqwest::header;
 use reqwest::multipart::Form;
 use reqwest::Response;
@@ -13,11 +12,8 @@ use reqwest::{
 };
 use serde_json::Value;
 use std::sync::Arc;
-use std::sync::OnceLock;
-use tokio::sync::Mutex;
+use std::sync::RwLock;
 use tracing::{debug, error, instrument};
-
-static API_CLIENT: OnceLock<Arc<Mutex<OpsmlApiClient>>> = OnceLock::new();
 
 const TIMEOUT_SECS: u64 = 30;
 
@@ -54,24 +50,21 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
 #[derive(Debug, Clone)]
 pub struct OpsmlApiClient {
     pub client: Client,
-    settings: OpsmlStorageSettings,
     base_path: String,
+    auth_token: Arc<RwLock<String>>,
 }
 
 impl OpsmlApiClient {
-    pub async fn new(settings: &OpsmlStorageSettings, client: &Client) -> Result<Self, ApiError> {
+    pub async fn new(url: String, client: &Client) -> Result<Self, ApiError> {
         // setup headers
 
-        let mut api_client = Self {
+        let api_client = Self {
             client: client.clone(),
-            settings: settings.clone(),
-            base_path: format!(
-                "{}/{}",
-                settings.api_settings.base_url, settings.api_settings.opsml_dir
-            ),
+            base_path: url,
+            auth_token: Arc::new(RwLock::new(String::new())),
         };
 
-        api_client.get_jwt_token().await.map_err(|e| {
+        api_client.refresh_token().await.map_err(|e| {
             error!("Failed to get JWT token: {}", e);
             ApiError::Error(format!("Failed to get JWT token with error: {}", e))
         })?;
@@ -80,7 +73,7 @@ impl OpsmlApiClient {
     }
 
     #[instrument(skip_all)]
-    async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
+    async fn refresh_token(&self) -> Result<(), ApiError> {
         let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
         debug!("Getting JWT token from {}", url);
 
@@ -95,12 +88,17 @@ impl OpsmlApiClient {
             return Err(ApiError::Error("Unauthorized".to_string()));
         }
 
-        let response = response
+        let token = response
             .json::<JwtToken>()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to parse jwt token with error: {}", e)))?;
 
-        self.settings.api_settings.auth_token = response.token;
+        if let Ok(mut token_guard) = self.auth_token.write() {
+            *token_guard = token.token;
+        } else {
+            error!("Failed to acquire write lock for token update");
+            return Err(ApiError::Error("Failed to update auth token".to_string()));
+        }
 
         Ok(())
     }
@@ -112,7 +110,24 @@ impl OpsmlApiClient {
             .and_then(|h| h.to_str().ok())
             .and_then(|h| h.strip_prefix("Bearer "))
         {
-            self.settings.api_settings.auth_token = new_token.to_string();
+            match self.auth_token.write() {
+                Ok(mut token_guard) => {
+                    *token_guard = new_token.to_string();
+                }
+                Err(e) => {
+                    error!("Failed to acquire write lock for jwt token update: {}", e);
+                }
+            }
+        }
+    }
+
+    fn get_current_token(&self) -> String {
+        match self.auth_token.read() {
+            Ok(token_guard) => token_guard.clone(),
+            Err(e) => {
+                error!("Failed to acquire read lock for token: {}", e);
+                "".to_string()
+            }
         }
     }
 
@@ -138,7 +153,7 @@ impl OpsmlApiClient {
                 self.client
                     .get(url)
                     .headers(headers)
-                    .bearer_auth(&self.settings.api_settings.auth_token)
+                    .bearer_auth(&self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -150,7 +165,7 @@ impl OpsmlApiClient {
                 .post(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.settings.api_settings.auth_token)
+                .bearer_auth(&self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -161,7 +176,7 @@ impl OpsmlApiClient {
                 .put(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.settings.api_settings.auth_token)
+                .bearer_auth(&self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -176,7 +191,7 @@ impl OpsmlApiClient {
                 self.client
                     .delete(url)
                     .headers(headers)
-                    .bearer_auth(&self.settings.api_settings.auth_token)
+                    .bearer_auth(&self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -218,7 +233,7 @@ impl OpsmlApiClient {
             .client
             .post(format!("{}/files/multipart", self.base_path))
             .multipart(form)
-            .bearer_auth(self.settings.api_settings.auth_token)
+            .bearer_auth(&self.get_current_token())
             .send()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
@@ -267,27 +282,11 @@ impl OpsmlApiClient {
 
 pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
     let client = build_http_client(&settings.api_settings)?;
-    OpsmlApiClient::new(settings, &client).await
-}
-
-pub fn get_api_client() -> &'static Arc<Mutex<OpsmlApiClient>> {
-    API_CLIENT.get_or_init(|| {
-        async move {
-            let config = OpsmlConfig::new(None);
-            let settings = config.storage_settings().unwrap();
-            let client = build_api_client(&settings)
-                .await
-                .map_err(|e| {
-                    error!("Failed to create api client: {}", e);
-                    ApiError::Error(format!("Failed to create api client with error: {}", e))
-                })
-                .unwrap();
-
-            Arc::new(Mutex::new(client))
-        }
-        .now_or_never()
-        .expect("Failed to initialize api client")
-    })
+    let url = format!(
+        "{}/{}",
+        settings.api_settings.base_url, settings.api_settings.opsml_dir
+    );
+    OpsmlApiClient::new(url, &client).await
 }
 
 #[cfg(test)]
@@ -313,7 +312,8 @@ mod tests {
         settings.api_settings.base_url = server_url.to_string();
 
         let client = build_http_client(&settings.api_settings).unwrap();
-        OpsmlApiClient::new(&settings, &client).await.unwrap()
+        let url = format!("{}/{}", server_url, settings.api_settings.opsml_dir);
+        OpsmlApiClient::new(url, &client).await.unwrap()
     }
 
     #[tokio::test]
