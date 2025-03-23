@@ -21,16 +21,11 @@ impl HttpFSStorageClient {
         "HttpFSStorageClient"
     }
 
-    pub async fn new(
-        settings: &mut OpsmlStorageSettings,
-        api_client: Option<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
+    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(settings, api_client)
-                .await
-                .map_err(|e| {
-                    StorageError::Error(format!("Failed to create http storage client {}", e))
-                })?,
+            client: HttpStorageClient::new(settings).await.map_err(|e| {
+                StorageError::Error(format!("Failed to create http storage client {}", e))
+            })?,
         })
     }
 

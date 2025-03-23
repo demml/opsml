@@ -1,39 +1,29 @@
 use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
-use opsml_client::{build_api_client, OpsmlApiClient, RequestType, Routes};
+use opsml_client::{build_api_client, get_api_client, OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
-
 use std::io::Write;
 use std::path::Path;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::{error, instrument};
 
 #[derive(Clone)]
 pub struct HttpStorageClient {
-    pub api_client: OpsmlApiClient,
+    pub api_client: Arc<Mutex<OpsmlApiClient>>,
     storage_client: StorageClientEnum,
     pub storage_type: StorageType,
 }
 
 impl HttpStorageClient {
-    pub async fn new(
-        settings: &mut OpsmlStorageSettings,
-        api_client: Option<OpsmlApiClient>,
-    ) -> AnyhowResult<Self> {
-        let mut api_client = match api_client {
-            Some(client) => client,
-            None => build_api_client(settings).await?,
-        };
-
-        let storage_type =
-            Self::get_storage_setting(&mut api_client)
-                .await
-                .context(Colorize::purple(
-                    "Error occurred while getting storage type",
-                ))?;
+    pub async fn new(settings: &mut OpsmlStorageSettings) -> AnyhowResult<Self> {
+        let storage_type = Self::get_storage_setting().await.context(Colorize::purple(
+            "Error occurred while getting storage type",
+        ))?;
 
         // update settings type
         settings.storage_type = storage_type.clone();
@@ -47,7 +37,7 @@ impl HttpStorageClient {
             ))?;
 
         Ok(Self {
-            api_client,
+            api_client: get_api_client().clone(),
             storage_client,
             storage_type,
         })
@@ -63,8 +53,9 @@ impl HttpStorageClient {
     /// # Returns
     ///
     /// * `StorageType` - The storage type
-    #[instrument(skip(client))]
-    async fn get_storage_setting(client: &mut OpsmlApiClient) -> Result<StorageType, StorageError> {
+    #[instrument(skip_all)]
+    async fn get_storage_setting() -> Result<StorageType, StorageError> {
+        let mut client = get_api_client().lock().await;
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .await
@@ -102,6 +93,8 @@ impl HttpStorageClient {
         // need to clone because self is borrowed
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::List,
                 RequestType::Get,
@@ -142,6 +135,8 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::ListInfo,
                 RequestType::Get,
@@ -206,6 +201,8 @@ impl HttpStorageClient {
             })?;
 
             self.api_client
+                .lock()
+                .await
                 .request(
                     Routes::Files,
                     RequestType::Get,
@@ -226,7 +223,14 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Invalid presigned URL: {}", e))
             })?;
 
-            self.api_client.client.get(url).send().await.unwrap()
+            self.api_client
+                .lock()
+                .await
+                .client
+                .get(url)
+                .send()
+                .await
+                .unwrap()
         };
 
         // create buffer to store downloaded data
@@ -272,6 +276,8 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
@@ -310,6 +316,8 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::DeleteFiles,
                 RequestType::Delete,
@@ -348,6 +356,8 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::Multipart,
                 RequestType::Get,
@@ -404,12 +414,7 @@ impl HttpStorageClient {
         // Azure - passes the session_url to AzureMultipartUploader
         let uploader = self
             .storage_client
-            .create_multipart_uploader(
-                lpath,
-                rpath,
-                multipart_session,
-                Some(self.api_client.clone()),
-            )
+            .create_multipart_uploader(lpath, rpath, multipart_session)
             .await
             .map_err(|e| {
                 error!("Failed to create multipart uploader: {}", e);
@@ -433,6 +438,8 @@ impl HttpStorageClient {
 
         let response = self
             .api_client
+            .lock()
+            .await
             .request(
                 Routes::Presigned,
                 RequestType::Get,
