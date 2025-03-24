@@ -1,10 +1,8 @@
 use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
-use futures::FutureExt;
-use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
-use opsml_settings::config::{OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
+use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::get_state;
 use opsml_types::contracts::CompletedUploadParts;
 use opsml_types::contracts::FileInfo;

@@ -14,7 +14,7 @@ use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadPart, CompletedUploadParts, FileInfo};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -304,21 +304,15 @@ impl StorageClient for AWSStorageClient {
         &self.bucket
     }
     async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
-        // create a resuable runtime for client
-        let client = if !settings.client_mode {
-            let creds = AWSCreds::new().await?;
-            Client::new(&creds.config)
-        } else {
-            // set anonymous credentials if client mode is enabled
-            // this is because we want to force the client to use the api client to generate presigned urls
-            let creds = Credentials::new("", "", None, None, "anonymous");
-            let config = Builder::new()
-                .credentials_provider(creds)
-                .behavior_version(BehaviorVersion::latest())
-                .build();
+        // set anonymous credentials if client mode is enabled
+        // this is because we want to force the client to use the api client to generate presigned urls
+        let creds = Credentials::new("", "", None, None, "anonymous");
+        let config = Builder::new()
+            .credentials_provider(creds)
+            .behavior_version(BehaviorVersion::latest())
+            .build();
 
-            Client::from_conf(config)
-        };
+        let client = Client::from_conf(config);
 
         let bucket = settings
             .storage_uri
