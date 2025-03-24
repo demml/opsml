@@ -3,6 +3,7 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
+use aws_sdk_s3::config::http;
 use azure_storage::prelude::*;
 use azure_storage::shared_access_signature::service_sas::BlobSasPermissions;
 use azure_storage_blobs::container::operations::BlobItem;
@@ -11,6 +12,7 @@ use base64::prelude::*;
 use futures::stream::StreamExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
+use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
@@ -55,7 +57,11 @@ pub struct AzureMultipartUpload {
 }
 
 impl AzureMultipartUpload {
-    pub async fn new(signed_url: &str, path: &str) -> Result<Self, StorageError> {
+    pub async fn new(
+        signed_url: &str,
+        path: &str,
+        client: HttpClient,
+    ) -> Result<Self, StorageError> {
         let file = File::open(path)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
@@ -67,8 +73,6 @@ impl AzureMultipartUpload {
         let filename = Path::new(path).file_name().unwrap().to_str().unwrap();
 
         let file_reader = BufReader::new(file);
-
-        let client = HttpClient::new();
 
         Ok(Self {
             client,
@@ -460,6 +464,7 @@ impl AzureStorageClient {
 #[derive(Clone)]
 pub struct AzureFSStorageClient {
     client: AzureStorageClient,
+    http_client: HttpClient,
 }
 
 #[async_trait]
@@ -478,7 +483,11 @@ impl FileSystem for AzureFSStorageClient {
 
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = AzureStorageClient::new(settings).await.unwrap();
-        Self { client }
+        let http_client = HttpClient::new();
+        Self {
+            client,
+            http_client,
+        }
     }
 
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
@@ -630,14 +639,32 @@ impl FileSystem for AzureFSStorageClient {
 
     async fn complete_multipart_upload(
         &self,
-        upload_id: &str,
-        _rpath: &str,
-        _parts: MultipartCompleteParts,
-        cancel: bool,
+        request: CompleteMultipartUpload,
     ) -> Result<(), StorageError> {
-        if cancel {
-            return Err(StorageError::Error("Cancel not supported".to_string()));
-        }
+        let url = format!("{}&comp=blocklist", request.session_url);
+
+        let block_list = match request.parts {
+            MultipartCompleteParts::Azure(parts) => BlockList {
+                blocks: parts
+                    .iter()
+                    .map(|part| {
+                        let block_id = BlockId::new(part.clone());
+                        BlobBlockType::Uncommitted(block_id)
+                    })
+                    .collect(),
+            },
+            _ => return Err(StorageError::Error("Invalid parts type".to_string())),
+        };
+
+        let block_xml = block_list.to_xml();
+
+        self.http_client
+            .put(&url)
+            .header("Content-Type", "application/xml")
+            .body(block_xml)
+            .send()
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to commit block list: {:?}", e)))?;
 
         Ok(())
     }
@@ -654,7 +681,12 @@ impl AzureFSStorageClient {
             .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
             .await?;
 
-        AzureMultipartUpload::new(&signed_url, lpath.to_str().unwrap()).await
+        AzureMultipartUpload::new(
+            &signed_url,
+            lpath.to_str().unwrap(),
+            self.http_client.clone(),
+        )
+        .await
     }
 
     pub async fn create_multipart_upload(&self, rpath: &Path) -> Result<String, StorageError> {
