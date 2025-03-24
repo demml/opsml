@@ -290,18 +290,18 @@ impl StorageClientEnum {
         session_url: &str,
         rpath: &str,
         parts: Option<CompletedUploadParts>,
+        cancel: bool,
     ) -> Result<(), StorageError> {
         match self {
-            StorageClientEnum::Google(client) => Ok(()),
+            StorageClientEnum::Google(client) => {
+                client
+                    .complete_multipart_upload(session_url, rpath, parts, cancel)
+                    .await
+            }
 
             StorageClientEnum::AWS(client) => {
-                // fail if parts is None
-                let parts = parts.ok_or_else(|| {
-                    StorageError::Error("No parts found for complete_multipart_upload".to_string())
-                })?;
-
                 client
-                    .complete_multipart_upload(session_url, rpath, parts)
+                    .complete_multipart_upload(session_url, rpath, parts, cancel)
                     .await
             }
             StorageClientEnum::Local(client) => Ok(()),
