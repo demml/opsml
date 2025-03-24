@@ -196,10 +196,7 @@ impl ExperimentCard {
         };
 
         let files = rt
-            .block_on(async {
-                let mut storage = fs.lock().await;
-                storage.find(&rpath).await
-            })
+            .block_on(async { fs.lock().await.find(&rpath).await })
             .map_err(|e| {
                 error!("Failed to list artifacts: {}", e);
                 OpsmlError::new_err(e.to_string())
@@ -256,14 +253,11 @@ impl ExperimentCard {
         // if rpath has an extension, set recursive to false
         let recursive = rpath.extension().is_none();
 
-        rt.block_on(async {
-            let mut storage = fs.lock().await;
-            storage.get(&lpath, &rpath, recursive).await
-        })
-        .map_err(|e| {
-            error!("Failed to download artifacts: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        rt.block_on(async { fs.lock().await.get(&lpath, &rpath, recursive).await })
+            .map_err(|e| {
+                error!("Failed to download artifacts: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         let decrypt_key = self
             .artifact_key

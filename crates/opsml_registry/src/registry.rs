@@ -14,7 +14,6 @@ use pyo3::prelude::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
-use tokio::runtime::Runtime;
 use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
 
