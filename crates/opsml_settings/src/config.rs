@@ -322,9 +322,7 @@ impl OpsmlConfig {
     ///
     /// `OpsmlConfig`: A new instance of OpsmlConfig
     pub fn new() -> Self {
-        let config = OpsmlConfig::default();
-
-        config
+        OpsmlConfig::default()
     }
 }
 
