@@ -5,16 +5,11 @@ use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::{
-    contracts::{FileInfo, UploadResponse},
-    StorageType,
-};
-use reqwest::multipart::{Form, Part};
+use opsml_types::contracts::CompletedUploadParts;
+use opsml_types::{contracts::FileInfo, StorageType};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use tokio::fs::File as TokioFile;
-use tokio_util::io::ReaderStream;
 use tracing::{debug, error, instrument};
 use walkdir::WalkDir;
 
@@ -40,48 +35,16 @@ impl LocalMultiPartUpload {
     pub async fn upload_file_in_chunks(&self) -> Result<(), StorageError> {
         // if not client mode, copy the file to rpath
 
-        if !self.client_mode {
-            // join client bucket to rpath
-            // create rpath parents if they don't exist
-            debug!("Uploading to {} via server", self.rpath.display());
-            if let Some(parent) = self.rpath.parent() {
-                fs::create_dir_all(parent).map_err(|e| {
-                    StorageError::Error(format!("Failed to create directory: {}", e))
-                })?;
-            }
-
-            fs::copy(&self.lpath, self.rpath.as_path())
-                .map_err(|e| StorageError::Error(format!("Failed to copy file: {}", e)))?;
-        } else {
-            debug!("Uploading to {} via client", self.rpath.display());
-            let client = self.api_client.as_ref().unwrap().clone();
-
-            let file = TokioFile::open(&self.lpath)
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
-
-            let stream = ReaderStream::new(file);
-
-            let part = Part::stream(reqwest::Body::wrap_stream(stream))
-                .file_name(self.rpath.to_str().unwrap().to_string())
-                .mime_str("application/octet-stream")
-                .map_err(|e| StorageError::Error(format!("Failed to create part: {}", e)))?;
-
-            let form = Form::new().part("file", part);
-
-            let response = client
-                .multipart_upload(form)
-                .await
-                .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
-
-            let response = response.json::<UploadResponse>().await.map_err(|e| {
-                StorageError::Error(format!("Failed to parse upload response: {}", e))
-            })?;
-
-            if !response.uploaded {
-                return Err(StorageError::Error("Failed to upload file".to_string()));
-            }
+        // join client bucket to rpath
+        // create rpath parents if they don't exist
+        debug!("Uploading to {} via server", self.rpath.display());
+        if let Some(parent) = self.rpath.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| StorageError::Error(format!("Failed to create directory: {}", e)))?;
         }
+
+        fs::copy(&self.lpath, self.rpath.as_path())
+            .map_err(|e| StorageError::Error(format!("Failed to copy file: {}", e)))?;
 
         Ok(())
     }
@@ -108,7 +71,7 @@ impl StorageClient for LocalStorageClient {
         let bucket = PathBuf::from(settings.storage_uri.as_str());
 
         // bucket should be a dir. Check if it exists. If not, create it
-        if !bucket.exists() && !settings.client_mode {
+        if !bucket.exists() {
             fs::create_dir_all(&bucket)
                 .map_err(|e| {
                     StorageError::Error(format!("Unable to create bucket directory: {}", e))
@@ -373,7 +336,6 @@ impl LocalStorageClient {
 #[derive(Clone)]
 pub struct LocalFSStorageClient {
     client: LocalStorageClient,
-    pub client_mode: bool,
 }
 
 #[async_trait]
@@ -386,10 +348,7 @@ impl FileSystem for LocalFSStorageClient {
     }
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = LocalStorageClient::new(settings).await.unwrap();
-        LocalFSStorageClient {
-            client,
-            client_mode: settings.client_mode,
-        }
+        LocalFSStorageClient { client }
     }
 
     fn storage_type(&self) -> StorageType {
@@ -533,6 +492,16 @@ impl FileSystem for LocalFSStorageClient {
 
         Ok(())
     }
+
+    async fn complete_multipart_upload(
+        &self,
+        _upload_id: &str,
+        _rpath: &str,
+        _parts: Option<CompletedUploadParts>,
+        _cancel: bool,
+    ) -> Result<(), StorageError> {
+        Ok(())
+    }
 }
 
 impl LocalFSStorageClient {
@@ -547,14 +516,11 @@ impl LocalFSStorageClient {
             rpath.display()
         );
 
-        let rpath_buf = if !self.client_mode {
-            self.client.bucket.join(rpath)
-        } else {
-            rpath.to_path_buf()
-        };
-
         self.client
-            .create_multipart_uploader(lpath.to_str().unwrap(), rpath_buf.to_str().unwrap())
+            .create_multipart_uploader(
+                lpath.to_str().unwrap(),
+                self.client.bucket.join(rpath).to_str().unwrap(),
+            )
             .await
     }
 
