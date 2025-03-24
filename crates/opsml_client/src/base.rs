@@ -353,7 +353,7 @@ mod tests {
     #[tokio::test]
     async fn test_api_client_no_auth() {
         let (mut server, server_url) = setup_server().await;
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let _mock = server
             .mock("GET", "/opsml/files")
@@ -390,7 +390,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
@@ -421,7 +421,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
@@ -451,7 +451,7 @@ mod tests {
             .expect(3)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
         let result = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
             .await;
@@ -496,7 +496,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
