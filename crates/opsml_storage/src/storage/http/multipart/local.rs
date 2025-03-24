@@ -2,14 +2,10 @@ use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
 use opsml_types::contracts::UploadResponse;
 use reqwest::multipart::{Form, Part};
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
-use std::time::SystemTime;
 use tokio::fs::File as TokioFile;
 use tokio_util::io::ReaderStream;
-use tracing::{debug, error, instrument};
-use walkdir::WalkDir;
 
 pub struct LocalMultipartUpload {
     lpath: String,
@@ -18,20 +14,19 @@ pub struct LocalMultipartUpload {
 }
 
 impl LocalMultipartUpload {
-    pub fn new(lpath: &Path, rpath: &Path, client: Arc<OpsmlApiClient>) -> Self {
-        LocalMultipartUpload {
+    pub fn new(
+        lpath: &Path,
+        rpath: &Path,
+        client: Arc<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
+        Ok(LocalMultipartUpload {
             lpath: lpath.to_str().unwrap().to_string(),
             rpath: rpath.to_str().unwrap().to_string(),
             client,
-        }
+        })
     }
 
-    pub async fn upload_file_in_chunks(
-        &self,
-        chunk_count: u64,
-        size_of_last_chunk: u64,
-        chunk_size: u64,
-    ) -> Result<(), StorageError> {
+    pub async fn upload_file_in_chunks(&self) -> Result<(), StorageError> {
         let file = TokioFile::open(&self.lpath)
             .await
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
