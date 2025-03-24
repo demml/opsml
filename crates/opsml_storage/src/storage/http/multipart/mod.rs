@@ -3,34 +3,38 @@ pub mod gcs;
 pub mod local;
 pub use aws::S3MultipartUpload;
 pub use gcs::GcsMultipartUpload;
+pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
+use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
 
 pub enum MultiPartUploader {
     S3(S3MultipartUpload),
     Gcs(GcsMultipartUpload),
+    Local(LocalMultipartUpload),
 }
 
 impl MultiPartUploader {
     pub fn new(
         rpath: &Path,
         lpath: &Path,
-        storage_type: &str,
+        storage_type: &StorageType,
         client: Arc<OpsmlApiClient>,
         session_url: String,
     ) -> Result<Self, StorageError> {
         match storage_type {
-            "s3" => {
+            &StorageType::Aws => {
                 S3MultipartUpload::new(lpath, rpath, session_url, client).map(MultiPartUploader::S3)
             }
-            "gcs" => GcsMultipartUpload::new(lpath, rpath, session_url, client)
+            &StorageType::Google => GcsMultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::Gcs),
-            _ => Err(StorageError::Error(format!(
-                "Unsupported storage type: {}",
-                storage_type
-            ))),
+            &StorageType::Local => {
+                LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
+            }
+
+            _ => Err(StorageError::Error("Unsupported storage type".to_string())),
         }
     }
 
@@ -46,6 +50,7 @@ impl MultiPartUploader {
                 gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                     .await
             }
+            MultiPartUploader::Local(local) => local.upload_file_in_chunks().await,
         }
     }
 }
