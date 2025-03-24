@@ -53,17 +53,17 @@ impl FileSystemStorage {
     pub async fn new(
         settings: &mut OpsmlStorageSettings,
         client: Arc<OpsmlApiClient>,
-        model: OpsmlMode,
+        mode: &OpsmlMode,
     ) -> Result<Self, StorageError> {
-        match !settings.client_mode {
-            true => {
-                debug!("Creating FileSystemStorage with StorageClientEnum");
+        match mode {
+            &OpsmlMode::Server => {
+                debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
                 Ok(FileSystemStorage::Server(
                     StorageClientEnum::new(settings).await?,
                 ))
             }
-            _ => {
-                debug!("Creating FileSystemStorage with HttpFSStorageClient");
+            &OpsmlMode::Client => {
+                debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
                 Ok(FileSystemStorage::Client(
                     HttpFSStorageClient::new(client).await?,
                 ))
