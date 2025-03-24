@@ -3947,13 +3947,12 @@ dependencies = [
 name = "opsml-state"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "opsml-client",
  "opsml-error",
  "opsml-settings",
- "opsml-storage",
  "opsml-types",
  "opsml-utils",
- "tokio",
  "tracing",
 ]
 
@@ -3980,6 +3979,7 @@ dependencies = [
  "opsml-colors",
  "opsml-error",
  "opsml-settings",
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "rand 0.9.0",
