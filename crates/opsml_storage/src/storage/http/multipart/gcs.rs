@@ -54,8 +54,8 @@ pub struct GcsMultipartUpload {
 }
 
 impl GcsMultipartUpload {
-    pub fn new(session_url: String, path: &str) -> Result<Self, StorageError> {
-        let file = File::open(path)
+    pub fn new(lpath: &str, session_url: String) -> Result<Self, StorageError> {
+        let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
         let metadata = file
