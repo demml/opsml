@@ -256,12 +256,9 @@ pub async fn complete_multipart_upload(
         ));
     }
 
-    let path = Path::new(&req.path);
-    let parts = req.parts.clone();
-
     let response = state
         .storage_client
-        .complete_multipart_upload(path, session_url, parts)
+        .complete_multipart_upload(session_url, req.pa)
         .await
         .map_err(|e| ServerError::MultipartError(e.to_string()));
 

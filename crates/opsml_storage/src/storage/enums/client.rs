@@ -3,17 +3,17 @@
 use crate::storage::filesystem::FileSystem;
 use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
+use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
+use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
+use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
+use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::{CompletedUploadParts, FileInfo, MultipartCompleteParts};
 use opsml_types::StorageType;
 use std::path::Path;
 use tracing::debug;
-
-use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
-use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
-use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
 
 pub enum MultiPartUploader {
     Google(GoogleMultipartUpload),
@@ -286,23 +286,12 @@ impl StorageClientEnum {
 
     pub async fn complete_multipart_upload(
         &self,
-        session_url: &str,
-        rpath: &str,
-        parts: MultipartCompleteParts,
-        cancel: bool,
+        request: CompleteMultipartUpload,
     ) -> Result<(), StorageError> {
         match self {
-            StorageClientEnum::Google(client) => {
-                client
-                    .complete_multipart_upload(session_url, rpath, parts, cancel)
-                    .await
-            }
+            StorageClientEnum::Google(client) => client.complete_multipart_upload(request).await,
 
-            StorageClientEnum::AWS(client) => {
-                client
-                    .complete_multipart_upload(session_url, rpath, parts, cancel)
-                    .await
-            }
+            StorageClientEnum::AWS(client) => client.complete_multipart_upload(request).await,
             StorageClientEnum::Local(client) => Ok(()),
             StorageClientEnum::Azure(client) => Ok(()),
         }

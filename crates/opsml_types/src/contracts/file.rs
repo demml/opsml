@@ -103,6 +103,7 @@ pub struct CompleteMultipartUpload {
     pub path: String,
     pub session_url: String,
     pub parts: MultipartCompleteParts,
+    pub cancel: bool,
 }
 
 #[derive(Serialize, Deserialize)]
