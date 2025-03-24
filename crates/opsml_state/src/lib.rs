@@ -47,10 +47,16 @@ static INSTANCE: OnceLock<Arc<OpsmlState>> = OnceLock::new();
 pub async fn get_state() -> &'static Arc<OpsmlState> {
     INSTANCE.get_or_init(|| {
         async move {
-            let state = OpsmlState::new().await;
+            let state = OpsmlState::new()
+                .await
+                .map_err(|e| {
+                    error!("Failed to get state: {}", e);
+                    StateError::Error(format!("Failed to get state with error: {}", e))
+                })
+                .unwrap();
             Arc::new(state)
         }
         .now_or_never()
-        .expect("Failed to initialize OpsmlState")
+        .expect("Failed to get state")
     })
 }
