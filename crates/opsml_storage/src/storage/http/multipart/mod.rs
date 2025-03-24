@@ -3,6 +3,7 @@ pub mod azure;
 pub mod gcs;
 pub mod local;
 pub use aws::S3MultipartUpload;
+pub use azure::AzureMultipartUpload;
 pub use gcs::GcsMultipartUpload;
 pub use local::LocalMultipartUpload;
 use opsml_client::OpsmlApiClient;
@@ -15,6 +16,7 @@ pub enum MultiPartUploader {
     S3(S3MultipartUpload),
     Gcs(GcsMultipartUpload),
     Local(LocalMultipartUpload),
+    Azure(AzureMultipartUpload),
 }
 
 impl MultiPartUploader {
@@ -34,6 +36,8 @@ impl MultiPartUploader {
             &StorageType::Local => {
                 LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
             }
+            &StorageType::Azure => AzureMultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::Azure),
 
             _ => Err(StorageError::Error("Unsupported storage type".to_string())),
         }
@@ -52,6 +56,11 @@ impl MultiPartUploader {
                     .await
             }
             MultiPartUploader::Local(local) => local.upload_file_in_chunks().await,
+            MultiPartUploader::Azure(azure) => {
+                azure
+                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                    .await
+            }
         }
     }
 }
