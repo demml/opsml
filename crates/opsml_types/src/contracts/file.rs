@@ -125,6 +125,11 @@ pub struct CompletedUploadPart {
     etag: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CompletedUploadParts {
+    pub parts: Vec<CompletedUploadPart>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct DownloadResponse {
     pub exists: bool,

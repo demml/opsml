@@ -1,7 +1,7 @@
 use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::contracts::{PresignedQuery, PresignedUrl};
+use opsml_types::contracts::{CompletedUploadParts, PresignedQuery, PresignedUrl};
 
 use reqwest::header;
 use reqwest::multipart::Form;
@@ -294,10 +294,18 @@ impl OpsmlApiClient {
         &self,
         parts: CompletedUploadParts,
     ) -> Result<Response, ApiError> {
+        let body = serde_json::to_value(parts).map_err(|e| {
+            ApiError::Error(format!(
+                "Failed to serialize completed upload parts with error: {}",
+                e
+            ))
+        })?;
+
+        let url = format!("{}/{}", self.base_path, Routes::CompleteMultipart);
         let response = self
             .client
-            .post(format!("{}/files/multipart/complete", self.base_path))
-            .json(&parts)
+            .post(url)
+            .json(&body)
             .bearer_auth(&self.get_current_token())
             .send()
             .await
