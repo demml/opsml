@@ -24,45 +24,32 @@ use opsml_types::contracts::{CompleteMultipartUpload, FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::header::CONTENT_LENGTH;
-use serde_json::Value;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
+use std::io::Seek;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::error;
+
 pub struct GcpCreds {
     pub creds: Option<CredentialsFile>,
-    pub project: Option<String>,
-    pub default_creds: bool,
-    pub service_account: Option<Value>,
 }
 
 impl GcpCreds {
     pub async fn new() -> Result<Self, StorageError> {
-        let mut creds = GcpCreds {
-            creds: None,
-            project: None,
-            default_creds: false,
-            service_account: None,
-        };
-        creds
-            .check_model()
-            .await
-            .map_err(|e| StorageError::Error(format!("Unable to check model: {}", e)))?;
+        let creds = Self::build_credentials().await?;
+        let creds = GcpCreds { creds };
+
         Ok(creds)
     }
 
-    async fn check_model(&mut self) -> Result<(), StorageError> {
+    async fn build_credentials() -> Result<Option<CredentialsFile>, StorageError> {
         if let Ok(base64_creds) = env::var("GOOGLE_ACCOUNT_JSON_BASE64") {
-            let cred_string = self
-                .decode_base64(&base64_creds)
-                .map_err(|e| StorageError::Error(format!("Unable to decode base64: {}", e)))?;
-
-            self.creds = Some(
-                CredentialsFile::new_from_str(&cred_string)
+            return Ok(Some(
+                CredentialsFile::new_from_str(&Self::decode_base64_str(&base64_creds)?)
                     .await
                     .map_err(|e| {
                         StorageError::Error(format!(
@@ -70,37 +57,36 @@ impl GcpCreds {
                             e
                         ))
                     })?,
-            );
+            ));
         }
 
-        if let Ok(_service_account_file) = env::var("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        if let Ok(_) = env::var("GOOGLE_APPLICATION_CREDENTIALS_JSON")
             .or_else(|_| env::var("GOOGLE_APPLICATION_CREDENTIALS"))
         {
-            self.creds = Some(CredentialsFile::new().await.map_err(|e| {
+            return Ok(Some(CredentialsFile::new().await.map_err(|e| {
                 StorageError::Error(format!(
                     "Unable to create credentials file from file: {}",
                     e
                 ))
-            })?);
+            })?));
         }
 
-        Ok(())
+        Ok(None)
     }
 
-    fn decode_base64(&mut self, service_base64_creds: &str) -> Result<String, StorageError> {
+    fn decode_base64_str(service_base64_creds: &str) -> Result<String, StorageError> {
         let decoded = BASE64_STANDARD
             .decode(service_base64_creds)
             .map_err(|e| StorageError::Error(format!("Unable to decode base64: {}", e)))?;
-        let decoded_str = String::from_utf8(decoded)
-            .map_err(|e| StorageError::Error(format!("Unable to convert to string: {}", e)))?;
-        Ok(decoded_str)
+
+        String::from_utf8(decoded)
+            .map_err(|e| StorageError::Error(format!("Unable to convert to string: {}", e)))
     }
 }
 
 pub struct GoogleMultipartUpload {
     pub upload_client: ResumableUploadClient,
-    pub upload_status: UploadStatus,
-    file_reader: BufReader<File>,
+    file: File,
     file_size: u64,
 }
 
@@ -118,35 +104,35 @@ impl GoogleMultipartUpload {
 
         let file_size = metadata.len();
 
-        let file_reader = BufReader::new(file);
-
-        Ok(GoogleMultipartUpload {
+        Ok(Self {
             upload_client,
-            upload_status: UploadStatus::NotStarted,
-            file_reader,
+            file,
             file_size,
         })
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
+    pub async fn upload_chunk(
+        &self,
         upload_args: &UploadPartArgs,
-    ) -> Result<(), StorageError> {
+    ) -> Result<UploadStatus, StorageError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
         let size = ChunkSize::new(first_byte, last_byte, Some(self.file_size));
 
+        let mut reader = BufReader::new(&self.file);
+        reader
+            .seek(std::io::SeekFrom::Start(first_byte))
+            .map_err(|e| StorageError::Error(format!("Failed to seek file: {}", e)))?;
+
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
-        let bytes_read = self
-            .file_reader
+        let bytes_read = reader
             .read(&mut buffer)
             .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
 
         buffer.truncate(bytes_read);
 
-        let result = self
-            .upload_client
+        self.upload_client
             .upload_multiple_chunk(buffer, &size)
             .await
             .map_err(|e| {
@@ -154,19 +140,17 @@ impl GoogleMultipartUpload {
                     "Unable to upload multiple chunks to resumable upload: {}",
                     e
                 ))
-            })?;
-
-        self.upload_status = result;
-
-        Ok(())
+            })
     }
 
     pub async fn upload_file_in_chunks(
-        &mut self,
+        &self,
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
     ) -> Result<(), StorageError> {
+        let mut current_status = UploadStatus::NotStarted;
+
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -180,26 +164,21 @@ impl GoogleMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            self.upload_next_chunk(&upload_args).await?;
+            current_status = self.upload_chunk(&upload_args).await?;
         } // extract the range from the result and update the first_byte and last_byte
 
-        self.complete_upload().await?;
+        self.complete_upload(current_status).await?;
 
         Ok(())
 
         // check if enum is Ok
     }
 
-    pub async fn complete_upload(&self) -> Result<(), StorageError> {
-        match self.upload_status {
-            UploadStatus::Ok(_) => {
-                // complete the upload
-                Ok(())
-            }
+    pub async fn complete_upload(&self, status: UploadStatus) -> Result<(), StorageError> {
+        match status {
+            UploadStatus::Ok(_) => Ok(()),
             _ => {
                 error!("Multipart upload failed");
-
-                // Create reqwest client and send DELETE request
                 self.upload_client
                     .clone()
                     .cancel()
@@ -741,7 +720,7 @@ impl FileSystem for GCSFSStorageClient {
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
-                let mut uploader = self
+                let uploader = self
                     .client
                     .create_multipart_uploader(
                         stripped_file_path.to_str().unwrap(),
@@ -752,14 +731,12 @@ impl FileSystem for GCSFSStorageClient {
                 uploader
                     .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                     .await?;
-
-                uploader.complete_upload().await?;
             }
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
 
-            let mut uploader = self
+            let uploader = self
                 .client
                 .create_multipart_uploader(
                     stripped_lpath.to_str().unwrap(),
@@ -770,8 +747,6 @@ impl FileSystem for GCSFSStorageClient {
             uploader
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
-
-            uploader.complete_upload().await?;
         };
 
         Ok(())
