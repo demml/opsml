@@ -1,6 +1,6 @@
 use chrono::Utc;
 use opsml_error::ExperimentError;
-use opsml_registry::enums::OpsmlRegistry;
+use opsml_registry::base::OpsmlRegistry;
 use opsml_types::{cards::HardwareMetricLogger, contracts::HardwareMetricRequest};
 use std::sync::Arc;
 use tokio::sync::{watch, Mutex};

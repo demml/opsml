@@ -5,11 +5,10 @@ use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::base::OpsmlRegistry;
-use opsml_registry::{registry, CardRegistries};
+use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
-use opsml_settings::config::OpsmlConfig;
 use opsml_state::get_state;
-use opsml_storage::{get_storage_client, FileSystemStorage};
+use opsml_storage::FileSystemStorage;
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
@@ -24,11 +23,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, instrument, warn};
-
-type ExperimentRuntime = Arc<tokio::runtime::Runtime>;
-type ExperimentRegistries = CardRegistries;
-type ExperimentStorage = Arc<TokioMutex<FileSystemStorage>>;
-type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, ExperimentStorage);
 
 /// Get the filename of the python file
 ///
@@ -389,7 +383,7 @@ impl Experiment {
     #[pyo3(signature = (repository=None, name=None, code_dir=None, log_hardware=false, experiment_uid=None))]
     #[instrument(skip_all)]
     pub fn start_experiment<'py>(
-        slf: PyRefMut<'py, Self>,
+        mut slf: PyRefMut<'py, Self>,
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
@@ -397,9 +391,10 @@ impl Experiment {
         log_hardware: bool,
         experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
+        let registries = &mut slf.registries;
         let experiment = match experiment_uid {
             Some(uid) => {
-                let card = Experiment::load_experiment(py, uid, slf.registries)?;
+                let card = Experiment::load_experiment(py, uid, registries)?;
                 Experiment::new(
                     py,
                     card.unbind(),
@@ -410,20 +405,13 @@ impl Experiment {
                 )?
             }
             None => {
-                let (card, uid) = Experiment::create_experiment(
-                    py,
-                    repository,
-                    name,
-                    slf.unlock_registries()?,
-                    true,
-                )?;
+                let (card, uid) =
+                    Experiment::create_experiment(py, repository, name, registries, true)?;
 
                 Experiment::new(
                     py,
                     card.unbind(),
                     slf.registries.clone(),
-                    slf.fs.clone(),
-                    slf.rt.clone(),
                     log_hardware,
                     code_dir,
                     uid,
@@ -461,17 +449,19 @@ impl Experiment {
             );
         } else {
             debug!("Exiting experiment");
-            // update card
-            slf.unlock_registries()?
-                .experiment
-                .update_card(slf.experiment.bind(py))?;
+
+            // Bind experiment first to avoid multiple borrows
+            let experiment = slf.experiment.clone_ref(py);
+            let exp = experiment.bind(py);
+
+            // Update experiment card using the cloned reference
+            slf.registries.experiment.update_card(exp)?;
 
             debug!("Stopping hardware queue");
             slf.stop_queue()?;
 
             debug!("Experiment updated");
         }
-
         Ok(false) // Return false to propagate exceptions
     }
 
@@ -484,7 +474,7 @@ impl Experiment {
         timestamp: Option<i64>,
         created_at: Option<NaiveDateTime>,
     ) -> PyResult<()> {
-        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+        let mut registry = self.registries.experiment.registry.clone();
 
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
@@ -508,7 +498,7 @@ impl Experiment {
     }
 
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
-        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+        let mut registry = self.registries.experiment.registry.clone();
 
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
@@ -527,7 +517,7 @@ impl Experiment {
 
     #[pyo3(signature = (name, value))]
     pub fn log_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+        let mut registry = self.registries.experiment.registry.clone();
 
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
@@ -545,7 +535,7 @@ impl Experiment {
     }
 
     pub fn log_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
-        let mut registry = self.registries.lock().unwrap().experiment.registry.clone();
+        let mut registry = self.registries.experiment.registry.clone();
 
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
@@ -631,7 +621,7 @@ impl Experiment {
 
     #[pyo3(signature = (card, version_type = VersionType::Minor, pre_tag = None, build_tag = None, save_kwargs = None))]
     pub fn register_card(
-        &self,
+        &mut self,
         card: &Bound<'_, PyAny>,
         version_type: VersionType,
         pre_tag: Option<String>,
@@ -650,7 +640,7 @@ impl Experiment {
 
         match registry_type {
             RegistryType::Data => {
-                self.unlock_registries()?.data.register_card(
+                self.registries.data.register_card(
                     card,
                     version_type,
                     pre_tag,
@@ -665,7 +655,7 @@ impl Experiment {
                     .call_method1("add_datacard_uid", (datacard_uid,))?;
             }
             RegistryType::Model => {
-                self.unlock_registries()?.model.register_card(
+                self.registries.model.register_card(
                     card,
                     version_type,
                     pre_tag,
@@ -681,7 +671,7 @@ impl Experiment {
             }
 
             RegistryType::Prompt => {
-                self.unlock_registries()?.prompt.register_card(
+                self.registries.prompt.register_card(
                     card,
                     version_type,
                     pre_tag,
