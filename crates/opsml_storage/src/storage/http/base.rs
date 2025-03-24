@@ -68,7 +68,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find(&mut self, path: &str) -> Result<Vec<String>, StorageError> {
+    pub async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -109,7 +109,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find_info(&mut self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
+    pub async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -149,7 +149,7 @@ impl HttpStorageClient {
 
     #[instrument(skip_all)]
     pub async fn get_object(
-        &mut self,
+        &self,
         local_path: &str,
         remote_path: &str,
         _file_size: i64,
@@ -238,7 +238,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn delete_object(&mut self, path: &str) -> Result<bool, StorageError> {
+    pub async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: false,
@@ -278,7 +278,7 @@ impl HttpStorageClient {
         Ok(response.deleted)
     }
 
-    pub async fn delete_objects(&mut self, path: &str) -> Result<bool, StorageError> {
+    pub async fn delete_objects(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: true,
@@ -312,7 +312,7 @@ impl HttpStorageClient {
 
     #[instrument(skip_all)]
     pub async fn create_multipart_upload(
-        &mut self,
+        &self,
         path: &str,
     ) -> Result<MultiPartSession, StorageError> {
         // 1 - create multipart upload request and send to server
@@ -364,7 +364,7 @@ impl HttpStorageClient {
 
     /// Create a multipart uploader based on configured storage type
     pub async fn create_multipart_uploader(
-        &mut self,
+        &self,
         rpath: &Path,
         lpath: &Path,
     ) -> Result<MultiPartUploader, StorageError> {
@@ -387,7 +387,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn generate_presigned_url(&mut self, path: &str) -> Result<String, StorageError> {
+    pub async fn generate_presigned_url(&self, path: &str) -> Result<String, StorageError> {
         let query = PresignedQuery {
             path: path.to_string(),
             ..Default::default()

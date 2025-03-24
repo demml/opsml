@@ -11,9 +11,10 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
 use tokio::sync::Mutex;
+use tracing::error;
 use tracing::{debug, instrument};
 
-static STORAGE: OnceLock<Arc<Mutex<FileSystemStorage>>> = OnceLock::new();
+static mut STORAGE_CLIENT: OnceLock<Arc<FileSystemStorage>> = OnceLock::new();
 
 #[async_trait]
 pub trait FileSystem {
@@ -47,11 +48,11 @@ pub enum FileSystemStorage {
 
 impl FileSystemStorage {
     #[instrument(skip_all)]
-    pub async fn new(mode: &OpsmlMode) -> Result<Self, StorageError> {
-        let state = get_state().await;
+    pub async fn new() -> Result<Self, StorageError> {
+        let state = get_state();
         let settings = state.config.storage_settings()?;
 
-        match mode {
+        match state.mode() {
             &OpsmlMode::Server => {
                 debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
                 Ok(FileSystemStorage::Server(
@@ -81,7 +82,7 @@ impl FileSystemStorage {
         }
     }
 
-    pub async fn find(&mut self, path: &Path) -> Result<Vec<String>, StorageError> {
+    pub async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
         match self {
             FileSystemStorage::Server(client) => client.find(path).await,
             FileSystemStorage::Client(client) => client.find(path).await,
@@ -145,6 +146,24 @@ impl FileSystemStorage {
             FileSystemStorage::Client(client) => client.generate_presigned_url(path).await,
         }
     }
+}
+
+pub fn get_storage_client() -> &'static Arc<FileSystemStorage> {
+    STORAGE_CLIENT.get_or_init(|| {
+        async move {
+            let storage_client = FileSystemStorage::new()
+                .await
+                .map_err(|e| {
+                    error!("Error creating FileSystemStorage: {}", e);
+                    StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
+                })
+                .expect("Failed to initialize FileSystemStorage");
+
+            Arc::new(storage_client)
+        }
+        .now_or_never()
+        .expect("Failed to initialize storage client")
+    })
 }
 
 #[cfg(test)]
@@ -232,7 +251,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_gcs_storage_client() {
-        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
+        let mut client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Google);
@@ -275,7 +294,7 @@ mod tests {
     async fn test_aws_storage_client() {
         set_env_vars();
 
-        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
+        let mut client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Aws);
@@ -315,7 +334,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_client() {
-        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
+        let mut client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Azure);
@@ -365,7 +384,7 @@ mod tests {
     async fn test_local_storage_client() {
         set_env_vars();
 
-        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
+        let mut client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Local);

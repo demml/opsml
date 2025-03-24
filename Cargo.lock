@@ -3843,6 +3843,7 @@ dependencies = [
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
@@ -3953,6 +3954,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
+ "tokio",
  "tracing",
 ]
 
