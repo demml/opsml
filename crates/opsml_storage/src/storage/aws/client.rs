@@ -23,7 +23,7 @@ use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::time::Duration;
-use tracing::error;
+use tracing::{error, instrument};
 
 // Notes:
 // For general compatibility with the Pyo3, Rust and generics, we need to define structs with sync in mind.
@@ -304,15 +304,9 @@ impl StorageClient for AWSStorageClient {
         &self.bucket
     }
     async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
-        // set anonymous credentials if client mode is enabled
-        // this is because we want to force the client to use the api client to generate presigned urls
-        let creds = Credentials::new("", "", None, None, "anonymous");
-        let config = Builder::new()
-            .credentials_provider(creds)
-            .behavior_version(BehaviorVersion::latest())
-            .build();
-
-        let client = Client::from_conf(config);
+        // read creds from env
+        let creds = AWSCreds::new().await?;
+        let client = Client::new(&creds.config);
 
         let bucket = settings
             .storage_uri
@@ -626,9 +620,7 @@ impl AWSStorageClient {
             .key(path)
             .send()
             .await
-            .map_err(|e| {
-                StorageError::Error(format!("Failed to create multipart upload: {}", e))
-            })?;
+            .unwrap();
 
         Ok(response.upload_id.unwrap())
     }
@@ -677,6 +669,7 @@ impl AWSStorageClient {
     /// * `parts` - The completed parts of the upload
     /// * `path` - The path to the object in the bucket
     ///
+    #[instrument(skip_all)]
     pub async fn complete_upload_from_parts(
         &self,
         upload_id: &str,

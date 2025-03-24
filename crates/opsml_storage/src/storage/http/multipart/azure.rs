@@ -10,6 +10,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct AzureMultipartUpload {
     session_url: String,
     file_reader: BufReader<File>,

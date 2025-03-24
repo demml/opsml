@@ -245,7 +245,6 @@ pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<CompleteMultipartUpload>,
-    headers: HeaderMap,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for write access
 
@@ -679,6 +678,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/files/multipart", prefix),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
+            )
+            .route(
+                &format!("{}/files/multipart/complete", prefix),
+                post(complete_multipart_upload),
             )
             .route(&format!("{}/files", prefix), get(download_file))
             .route(

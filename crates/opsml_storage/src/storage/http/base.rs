@@ -13,7 +13,6 @@ use tracing::{error, instrument};
 #[derive(Clone)]
 pub struct HttpStorageClient {
     pub api_client: Arc<OpsmlApiClient>,
-    //storage_client: StorageClientEnum,
     pub storage_type: StorageType,
 }
 
@@ -27,7 +26,6 @@ impl HttpStorageClient {
 
         Ok(Self {
             api_client,
-
             storage_type,
         })
     }
@@ -380,7 +378,7 @@ impl HttpStorageClient {
         MultiPartUploader::new(
             rpath,
             lpath,
-            &StorageType::Google,
+            &self.storage_type,
             self.api_client.clone(),
             multipart_session.session_url,
         )

@@ -90,7 +90,7 @@ pub struct ListFileResponse {
     pub files: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub enum MultipartCompleteParts {
     Aws(CompletedUploadParts),
     Azure(Vec<String>),
@@ -98,7 +98,7 @@ pub enum MultipartCompleteParts {
     None,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct CompleteMultipartUpload {
     pub path: String,
     pub session_url: String,
