@@ -4,8 +4,6 @@ use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_config::SdkConfig;
-use aws_sdk_s3::config::Builder;
-use aws_sdk_s3::config::Credentials;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::primitives::ByteStream;
