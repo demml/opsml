@@ -9,7 +9,6 @@ use opsml_storage::storage::filesystem::get_storage_client;
 use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
-pub use opsml_utils::get_runtime;
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use std::path::PathBuf;
@@ -96,9 +95,9 @@ pub struct CardArgs {
 pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
-    registry: OpsmlRegistry,
-    runtime: Arc<tokio::runtime::Runtime>,
-    fs: Arc<Mutex<FileSystemStorage>>,
+    pub registry: OpsmlRegistry,
+    pub runtime: Arc<tokio::runtime::Runtime>,
+    pub fs: Arc<Mutex<FileSystemStorage>>,
 }
 
 #[pymethods]
@@ -320,7 +319,7 @@ impl CardRegistry {
     async fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
-        fs: &mut Arc<Mutex<FileSystemStorage>>,
+        fs: &Arc<Mutex<FileSystemStorage>>,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
@@ -668,6 +667,8 @@ pub struct CardRegistries {
     pub prompt: CardRegistry,
 
     pub rt: Arc<tokio::runtime::Runtime>,
+
+    pub fs: Arc<Mutex<FileSystemStorage>>,
 }
 
 #[pymethods]
@@ -693,12 +694,16 @@ impl CardRegistries {
         let mut prompt = experiment.clone();
         prompt.update_type(RegistryType::Prompt);
 
+        let rt = experiment.runtime.clone();
+        let fs = experiment.fs.clone();
+
         Ok(Self {
             experiment,
             model,
             data,
             prompt,
-            rt: Arc::clone(&get_runtime()),
+            rt,
+            fs,
         })
     }
 }

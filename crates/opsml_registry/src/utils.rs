@@ -210,7 +210,7 @@ pub async fn download_card<'py>(
 #[instrument(skip_all)]
 pub async fn upload_card_artifacts(
     path: PathBuf,
-    fs: &mut Arc<Mutex<FileSystemStorage>>,
+    fs: &Arc<Mutex<FileSystemStorage>>,
     key: &ArtifactKey,
 ) -> Result<(), RegistryError> {
     // create temp path for saving

@@ -3803,6 +3803,7 @@ dependencies = [
  "opsml-registry",
  "opsml-semver",
  "opsml-settings",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",

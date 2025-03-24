@@ -4,11 +4,12 @@ use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::{ExperimentError, OpsmlError};
-use opsml_registry::enums::{OpsmlRegistry, RegistryArgs};
-use opsml_registry::CardRegistries;
+use opsml_registry::base::OpsmlRegistry;
+use opsml_registry::{registry, CardRegistries};
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_storage::{get_storage, FileSystemStorage};
+use opsml_state::get_state;
+use opsml_storage::{get_storage_client, FileSystemStorage};
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
@@ -18,37 +19,16 @@ use opsml_types::{
     cards::experiment::{Metric, Parameter},
     SaveName,
 };
-use opsml_utils::get_runtime;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, instrument, warn};
 
 type ExperimentRuntime = Arc<tokio::runtime::Runtime>;
-type ExperimentRegistries = Arc<Mutex<CardRegistries>>;
+type ExperimentRegistries = CardRegistries;
 type ExperimentStorage = Arc<TokioMutex<FileSystemStorage>>;
 type ExperimentEnvironment = (ExperimentRuntime, ExperimentRegistries, ExperimentStorage);
-
-/// Initialize the experiment environment
-///
-///
-/// # Returns
-///
-/// * `Arc<tokio::runtime::Runtime>` - The tokio runtime
-/// * `Arc<Mutex<CardRegistries>` - The registries
-/// * `Arc<TokioMutex<FileSystemStorage>>` - The file system storage
-///
-/// # Errors
-///
-/// * `ExperimentError` - Error initializing the experiment environment
-fn initialize_experiment_environment() -> Result<ExperimentEnvironment, ExperimentError> {
-    let registries = Arc::new(Mutex::new(CardRegistries::new()?));
-
-    // experiment needs its own file system for storing objects independently of registries
-    let fs = registries.lock().unwrap().get_fs();
-    Ok((Arc::clone(&get_runtime()), registries, fs))
-}
 
 /// Get the filename of the python file
 ///
@@ -93,11 +73,11 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
-    fs: Arc<tokio::sync::Mutex<FileSystemStorage>>,
-    rt: Arc<tokio::runtime::Runtime>,
+    fs: &Arc<tokio::sync::Mutex<FileSystemStorage>>,
+    rt: &Arc<tokio::runtime::Runtime>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    get_runtime().block_on(async {
+    rt.block_on(async {
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
             Some(path) => (path.to_path_buf(), true),
@@ -123,8 +103,6 @@ fn extract_code(
         // 3. Encrypt the file or directory
         encrypt_directory(&lpath, &encryption_key)?;
 
-        // 4. Save the code to the storage
-        let fs = get_storage().await
         fs.lock().await.put(&lpath, rpath, recursive).await?;
 
         // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
@@ -137,7 +115,7 @@ fn extract_code(
 #[pyclass]
 pub struct Experiment {
     pub experiment: PyObject,
-    pub registries: Arc<Mutex<CardRegistries>>,
+    pub registries: CardRegistries,
     pub fs: Arc<TokioMutex<FileSystemStorage>>,
     pub rt: Arc<tokio::runtime::Runtime>,
     pub hardware_queue: Option<HardwareQueue>,
@@ -151,15 +129,16 @@ impl Experiment {
     pub fn new(
         py: Python,
         experiment: PyObject,
-        registries: Arc<Mutex<CardRegistries>>,
-        fs: Arc<TokioMutex<FileSystemStorage>>,
-        rt: Arc<tokio::runtime::Runtime>,
+        registries: CardRegistries,
         log_hardware: bool,
         code_dir: Option<PathBuf>,
         experiment_uid: String,
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
-        let mut experiment_registry = registries.lock().unwrap().experiment.registry.clone();
+        let fs = registries.fs.clone();
+        let rt = registries.rt.clone();
+
+        let mut experiment_registry = registries.experiment.registry.clone();
 
         let artifact_key = rt.block_on(async {
             experiment_registry
@@ -176,7 +155,7 @@ impl Experiment {
         experiment.artifact_key = Some(artifact_key.clone());
 
         // extract code
-        match extract_code(py, code_dir, fs.clone(), rt.clone(), &artifact_key) {
+        match extract_code(py, code_dir, &fs, &rt, &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
             Err(e) => warn!("Failed to extract code: {}", e),
         };
@@ -185,7 +164,7 @@ impl Experiment {
         let hardware_queue = match log_hardware {
             true => {
                 // clone the experiment registry
-                let registry = registries.lock().unwrap().experiment.registry.clone();
+                let registry = registries.experiment.registry.clone();
                 let arc_reg = Arc::new(TokioMutex::new(registry));
                 let hardware_queue =
                     HardwareQueue::start(rt.clone(), arc_reg, experiment_uid.clone())?;
@@ -207,15 +186,6 @@ impl Experiment {
             uid: experiment_uid,
             artifact_key,
         })
-    }
-
-    fn unlock_registries(&self) -> PyResult<std::sync::MutexGuard<'_, CardRegistries>> {
-        let registries = self.registries.lock().map_err(|e| {
-            error!("Failed to lock registries: {}", e);
-            ExperimentError::Error(e.to_string())
-        })?;
-
-        Ok(registries)
     }
 
     /// Create an experiment
@@ -244,7 +214,7 @@ impl Experiment {
         py: Python<'py>,
         repository: Option<&str>,
         name: Option<&str>,
-        mut registries: std::sync::MutexGuard<'_, CardRegistries>,
+        registries: &mut CardRegistries,
         subexperiment: bool,
     ) -> PyResult<(Bound<'py, PyAny>, String)> {
         let name = name.map(String::from).unwrap_or_else(|| {
@@ -256,7 +226,7 @@ impl Experiment {
         let experiment = Self::initialize_experiment(py, repository, Some(&name), subexperiment)?;
 
         debug!("Registering experiment");
-        let uid = Self::register_experiment(&experiment, &mut registries)?;
+        let uid = Self::register_experiment(&experiment, registries)?;
 
         Ok((experiment, uid))
     }
@@ -314,7 +284,7 @@ impl Experiment {
     #[instrument(skip_all)]
     fn register_experiment(
         experiment: &Bound<'_, PyAny>,
-        registries: &mut std::sync::MutexGuard<'_, CardRegistries>,
+        registries: &mut CardRegistries,
     ) -> PyResult<String> {
         registries
             .experiment
@@ -370,7 +340,7 @@ impl Experiment {
     fn load_experiment<'py>(
         py: Python<'py>,
         experiment_uid: &str,
-        mut registries: std::sync::MutexGuard<'_, CardRegistries>,
+        registries: &mut CardRegistries,
     ) -> PyResult<Bound<'py, PyAny>> {
         // Logic to load the existing experiment using the experiment_id
         let experiment = registries
@@ -429,13 +399,11 @@ impl Experiment {
     ) -> PyResult<Bound<'py, Experiment>> {
         let experiment = match experiment_uid {
             Some(uid) => {
-                let card = Experiment::load_experiment(py, uid, slf.unlock_registries()?)?;
+                let card = Experiment::load_experiment(py, uid, slf.registries)?;
                 Experiment::new(
                     py,
                     card.unbind(),
                     slf.registries.clone(),
-                    slf.fs.clone(),
-                    slf.rt.clone(),
                     false,
                     code_dir, // we can always revisit, but it doesn't make sense to log hardware for a completed experiment
                     uid.to_string(),
@@ -772,38 +740,29 @@ pub fn start_experiment<'py>(
 
     // runtime should be shared across all registries and all child experiments to prevent deadlocks
 
-    let (rt, registries, fs) = initialize_experiment_environment()?;
+    let mut registries = CardRegistries::new()?;
     debug!("Experiment environment initialized");
 
     let active_experiment = match experiment_uid {
         Some(uid) => {
-            let experiment = Experiment::load_experiment(py, uid, registries.lock().unwrap())?;
+            let experiment = Experiment::load_experiment(py, uid, &mut registries)?;
             Experiment::new(
                 py,
                 experiment.unbind(),
                 registries,
-                fs,
-                rt,
                 false,
                 None,
                 uid.to_string(),
             )?
         }
         None => {
-            let (experiment, uid) = Experiment::create_experiment(
-                py,
-                repository,
-                name,
-                registries.lock().unwrap(),
-                false,
-            )?;
+            let (experiment, uid) =
+                Experiment::create_experiment(py, repository, name, &mut registries, false)?;
 
             Experiment::new(
                 py,
                 experiment.unbind(),
                 registries,
-                fs,
-                rt,
                 log_hardware,
                 code_dir,
                 uid,
@@ -820,18 +779,14 @@ pub fn get_experiment_metrics(
     experiment_uid: &str,
     names: Option<Vec<String>>,
 ) -> PyResult<Metrics> {
-    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
-
     let metric_request = GetMetricRequest {
         experiment_uid: experiment_uid.to_string(),
         names: names.unwrap_or_default(),
     };
 
-    let metrics = rt.block_on(async {
-        let config = OpsmlConfig::default();
-        let registry_args = RegistryArgs::from_config(&config).await?;
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment, registry_args).await?;
-
+    let state = get_state();
+    let metrics = state.runtime.block_on(async {
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_metrics(&metric_request).await
     })?;
 
@@ -844,18 +799,14 @@ pub fn get_experiment_parameters(
     experiment_uid: &str,
     names: Option<Vec<String>>,
 ) -> PyResult<Parameters> {
-    let rt = Arc::new(tokio::runtime::Runtime::new().unwrap());
-
     let param_request = GetParameterRequest {
         experiment_uid: experiment_uid.to_string(),
         names: names.unwrap_or_default(),
     };
 
-    let parameters = rt.block_on(async {
-        let config = OpsmlConfig::default();
-        let registry_args = RegistryArgs::from_config(&config).await?;
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment, registry_args).await?;
-
+    let state = get_state();
+    let parameters = state.runtime.block_on(async {
+        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_parameters(&param_request).await
     })?;
 
