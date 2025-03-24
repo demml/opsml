@@ -50,6 +50,7 @@ impl fmt::Display for ChunkSize {
     }
 }
 
+#[derive(Debug)]
 pub struct GcsMultipartUpload {
     session_url: String,
     file_reader: BufReader<File>,

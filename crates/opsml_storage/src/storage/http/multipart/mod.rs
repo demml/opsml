@@ -12,6 +12,7 @@ use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub enum MultiPartUploader {
     S3(S3MultipartUpload),
     Gcs(GcsMultipartUpload),

@@ -10,6 +10,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct S3MultipartUpload {
     upload_id: String,
     rpath: String,
@@ -120,7 +121,7 @@ impl S3MultipartUpload {
             path: self.rpath.clone(),
             session_url: self.upload_id.clone(),
             parts,
-            ..Default::default()
+            cancel: false,
         };
 
         let response = self

@@ -714,8 +714,6 @@ impl ModelInterface {
             // get file name
             let filename = filepath.file_name().unwrap().to_str().unwrap();
 
-            println!("Loading drift profile: {:?}", &filepath);
-
             let drift_type_str = filename.split('-').next().unwrap().to_lowercase();
             let drift_type = DriftType::from_value(&drift_type_str);
 

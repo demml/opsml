@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tokio::fs::File as TokioFile;
 use tokio_util::io::ReaderStream;
 
+#[derive(Debug)]
 pub struct LocalMultipartUpload {
     lpath: String,
     rpath: String,
