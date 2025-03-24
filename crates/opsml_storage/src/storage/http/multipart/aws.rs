@@ -1,7 +1,9 @@
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
-use opsml_types::contracts::{CompletedUploadPart, CompletedUploadParts, UploadResponse};
+use opsml_types::contracts::{
+    CompleteMultipartUpload, CompletedUploadPart, CompletedUploadParts, UploadResponse,
+};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -63,10 +65,10 @@ impl S3MultipartUpload {
 
         if response.status().is_success() {
             // Get ETag from response headers
-            if let Some(etag) = response.headers().get("ETag") {
+            if let Some(e_tag) = response.headers().get("ETag") {
                 self.completed_parts.push(CompletedUploadPart {
                     part_number,
-                    etag: etag.to_str().unwrap().replace("\"", ""),
+                    e_tag: e_tag.to_str().unwrap().replace("\"", ""),
                 });
                 Ok(())
             } else {
@@ -117,9 +119,15 @@ impl S3MultipartUpload {
             parts: self.completed_parts.clone(),
         };
 
+        let request = CompleteMultipartUpload {
+            path: self.rpath.clone(),
+            session_url: self.upload_id.clone(),
+            parts: Some(completed_parts),
+        };
+
         let response = self
             .client
-            .complete_multipart_upload(completed_parts)
+            .complete_multipart_upload(request)
             .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
