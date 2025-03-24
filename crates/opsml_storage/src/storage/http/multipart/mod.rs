@@ -1,5 +1,6 @@
 pub mod aws;
 pub mod gcs;
+pub mod local;
 pub use aws::S3MultipartUpload;
 pub use gcs::GcsMultipartUpload;
 use opsml_client::OpsmlApiClient;
@@ -22,9 +23,10 @@ impl MultiPartUploader {
     ) -> Result<Self, StorageError> {
         match storage_type {
             "s3" => {
-                S3MultipartUpload::new(rpath, lpath, session_url, client).map(MultiPartUploader::S3)
+                S3MultipartUpload::new(lpath, rpath, session_url, client).map(MultiPartUploader::S3)
             }
-            "gcs" => GcsMultipartUpload::new(lpath, session_url).map(MultiPartUploader::Gcs),
+            "gcs" => GcsMultipartUpload::new(lpath, rpath, session_url, client)
+                .map(MultiPartUploader::Gcs),
             _ => Err(StorageError::Error(format!(
                 "Unsupported storage type: {}",
                 storage_type
