@@ -38,7 +38,8 @@ pub trait FileSystem {
         &self,
         upload_id: &str,
         rpath: &str,
-        parts: CompletedUploadParts,
+        parts: Option<CompletedUploadParts>,
+        cancel: bool,
     ) -> Result<(), StorageError>;
 }
 
