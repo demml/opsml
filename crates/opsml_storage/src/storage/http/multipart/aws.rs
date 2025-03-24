@@ -1,21 +1,17 @@
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
-use opsml_types::contracts::{CompletedUploadPart, UploadResponse};
-use reqwest::Client;
-use serde::Serialize;
+use opsml_types::contracts::{CompletedUploadPart, CompletedUploadParts, UploadResponse};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::sync::Arc;
 
 pub struct S3MultipartUpload {
     upload_id: String,
-    bucket: String,
     key: String,
     file_reader: BufReader<File>,
     file_size: u64,
     completed_parts: Vec<CompletedUploadPart>,
-    api_url: String,
     client: Arc<OpsmlApiClient>,
 }
 
@@ -39,12 +35,10 @@ impl S3MultipartUpload {
         Ok(Self {
             client,
             upload_id,
-            bucket,
             key,
             file_reader,
             file_size,
             completed_parts: Vec::new(),
-            api_url,
         })
     }
 
@@ -69,9 +63,9 @@ impl S3MultipartUpload {
         if response.status().is_success() {
             // Get ETag from response headers
             if let Some(etag) = response.headers().get("ETag") {
-                self.completed_parts.push(CompletedPart {
-                    PartNumber: part_number,
-                    ETag: etag.to_str().unwrap().replace("\"", ""),
+                self.completed_parts.push(CompletedUploadPart {
+                    part_number,
+                    etag: etag.to_str().unwrap().replace("\"", ""),
                 });
                 Ok(())
             } else {
@@ -112,16 +106,26 @@ impl S3MultipartUpload {
             part_number += 1;
         }
 
-        self.complete_upload().await
+        self.complete_upload().await?;
+
+        Ok(())
     }
 
     async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+        let completed_parts = CompletedUploadParts {
+            parts: self.completed_parts.clone(),
+        };
+
         let response = self
             .client
-            .complete_multipart_upload(&self.completed_parts)
+            .complete_multipart_upload(completed_parts)
             .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
-        Ok(response)
+        let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+            StorageError::Error(format!("Failed to parse complete upload response: {}", e))
+        })?;
+
+        Ok(uploaded)
     }
 }

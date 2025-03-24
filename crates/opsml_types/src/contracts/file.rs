@@ -119,10 +119,10 @@ pub struct UploadResponse {
     pub message: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct CompletedUploadPart {
-    part_number: i32,
-    etag: String,
+    pub part_number: i32,
+    pub etag: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
