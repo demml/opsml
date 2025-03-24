@@ -20,9 +20,10 @@ use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{FileInfo, UploadPartArgs};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
+use reqwest::header::CONTENT_LENGTH;
 use serde_json::Value;
 use std::env;
 use std::fs::File;
@@ -31,7 +32,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-
+use tracing::error;
 pub struct GcpCreds {
     pub creds: Option<CredentialsFile>,
     pub project: Option<String>,
@@ -190,15 +191,26 @@ impl GoogleMultipartUpload {
         // check if enum is Ok
     }
 
-    pub async fn complete_upload(&mut self) -> Result<(), StorageError> {
+    pub async fn complete_upload(&self) -> Result<(), StorageError> {
         match self.upload_status {
             UploadStatus::Ok(_) => {
                 // complete the upload
                 Ok(())
             }
-            _ => Err(StorageError::Error(
-                "Failed to upload file in chunks".to_string(),
-            )),
+            _ => {
+                error!("Multipart upload failed");
+
+                // Create reqwest client and send DELETE request
+                self.upload_client
+                    .clone()
+                    .cancel()
+                    .await
+                    .map_err(|e| StorageError::Error(format!("Failed to cancel upload: {}", e)))?;
+
+                Err(StorageError::Error(
+                    "Failed to upload file in chunks".to_string(),
+                ))
+            }
         }
     }
 }
@@ -223,16 +235,12 @@ impl StorageClient for GoogleStorageClient {
 
         let config: Result<ClientConfig, StorageError> = if creds.creds.is_none() {
             // if using in client_mode, default to anonymous
-            let config = if settings.client_mode {
-                ClientConfig::default().anonymous()
-            } else {
-                let config = ClientConfig::default().with_auth().await;
+            let config = ClientConfig::default().with_auth().await;
 
-                // default to anonymous if unable to create client with auth
-                match config {
-                    Ok(config) => config,
-                    Err(_) => ClientConfig::default().anonymous(),
-                }
+            // default to anonymous if unable to create client with auth
+            let config = match config {
+                Ok(config) => config,
+                Err(_) => ClientConfig::default().anonymous(),
             };
 
             Ok(config)
@@ -745,6 +753,8 @@ impl FileSystem for GCSFSStorageClient {
                 uploader
                     .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                     .await?;
+
+                uploader.complete_upload().await?;
             }
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
@@ -761,9 +771,42 @@ impl FileSystem for GCSFSStorageClient {
             uploader
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
+
+            uploader.complete_upload().await?;
         };
 
         Ok(())
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        upload_id: &str,
+        _rpath: &str,
+        _parts: Option<CompletedUploadParts>,
+        cancel: bool,
+    ) -> Result<(), StorageError> {
+        match cancel {
+            true => {
+                let http_client = reqwest::Client::new();
+
+                let response = http_client
+                    .delete(upload_id)
+                    .header(CONTENT_LENGTH, 0)
+                    .send()
+                    .await
+                    .map_err(|e| StorageError::Error(format!("Failed to cancel upload: {}", e)))?;
+
+                if !response.status().is_success() {
+                    return Err(StorageError::Error(format!(
+                        "Failed to cancel upload: {}",
+                        response.status()
+                    )));
+                } else {
+                    Ok(())
+                }
+            }
+            false => Ok(()),
+        }
     }
 }
 

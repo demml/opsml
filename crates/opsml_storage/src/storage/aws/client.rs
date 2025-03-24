@@ -898,8 +898,13 @@ impl FileSystem for S3FStorageClient {
         &self,
         upload_id: &str,
         rpath: &str,
-        parts: CompletedUploadParts,
+        parts: Option<CompletedUploadParts>,
+        _cancel: bool,
     ) -> Result<(), StorageError> {
+        let parts = parts.ok_or_else(|| {
+            StorageError::Error("Parts must be provided to complete multipart upload".to_string())
+        })?;
+
         self.client
             .complete_upload_from_parts(upload_id, parts, rpath)
             .await

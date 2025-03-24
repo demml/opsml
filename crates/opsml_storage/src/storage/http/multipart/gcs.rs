@@ -1,11 +1,15 @@
+use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
+use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
+use opsml_types::contracts::UploadResponse;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
 use reqwest::Client;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct ChunkSize {
@@ -48,14 +52,20 @@ impl fmt::Display for ChunkSize {
 }
 
 pub struct GcsMultipartUpload {
-    client: Client,
     session_url: String,
     file_reader: BufReader<File>,
     file_size: u64,
+    rpath: String,
+    client: Arc<OpsmlApiClient>,
 }
 
 impl GcsMultipartUpload {
-    pub fn new(lpath: &Path, session_url: String) -> Result<Self, StorageError> {
+    pub fn new(
+        lpath: &Path,
+        rpath: &Path,
+        session_url: String,
+        client: Arc<OpsmlApiClient>,
+    ) -> Result<Self, StorageError> {
         let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
@@ -67,10 +77,11 @@ impl GcsMultipartUpload {
         let file_reader = BufReader::new(file);
 
         Ok(GcsMultipartUpload {
-            client: Client::new(),
+            client,
             session_url,
             file_reader,
             file_size,
+            rpath: rpath.to_str().unwrap().to_string(),
         })
     }
 
@@ -93,6 +104,7 @@ impl GcsMultipartUpload {
 
         // Upload the chunk with content-range header
         let response = self
+            .client
             .client
             .put(&self.session_url)
             .header(CONTENT_RANGE, size.to_string())
@@ -136,5 +148,25 @@ impl GcsMultipartUpload {
         }
 
         Ok(())
+    }
+
+    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+        let request = CompleteMultipartUpload {
+            path: self.rpath.clone(),
+            session_url: self.session_url.clone(),
+            parts: None,
+        };
+
+        let response = self
+            .client
+            .complete_multipart_upload(request)
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+
+        let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+            StorageError::Error(format!("Failed to parse complete upload response: {}", e))
+        })?;
+
+        Ok(uploaded)
     }
 }
