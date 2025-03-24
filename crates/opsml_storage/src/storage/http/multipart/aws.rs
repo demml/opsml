@@ -126,6 +126,7 @@ impl S3MultipartUpload {
             path: self.rpath.clone(),
             session_url: self.upload_id.clone(),
             parts,
+            ..Default::default()
         };
 
         let response = self

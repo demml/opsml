@@ -143,16 +143,47 @@ impl GcsMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            self.upload_next_chunk(&upload_args).await?;
+            // if error, cancel upload
+            self.upload_next_chunk(&upload_args).await;
+
+            // if error, cancel upload
+            match self.upload_next_chunk(&upload_args).await {
+                Ok(_) => (),
+                Err(e) => {
+                    self.cancel_upload().await?;
+                    return Err(e);
+                }
+            }
         }
 
         Ok(())
     }
 
-    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    //async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    //    let request = CompleteMultipartUpload {
+    //        path: self.rpath.clone(),
+    //        session_url: self.session_url.clone(),
+    //        ..Default::default()
+    //    };
+    //
+    //    let response = self
+    //        .client
+    //        .complete_multipart_upload(request)
+    //        .await
+    //        .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+    //
+    //    let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+    //        StorageError::Error(format!("Failed to parse complete upload response: {}", e))
+    //    })?;
+    //
+    //    Ok(uploaded)
+    //}
+
+    async fn cancel_upload(&self) -> Result<UploadResponse, StorageError> {
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
+            cancel: true,
             ..Default::default()
         };
 
