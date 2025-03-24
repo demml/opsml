@@ -1,6 +1,7 @@
 use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
+use futures::FutureExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::get_state;
@@ -13,8 +14,6 @@ use std::sync::OnceLock;
 use tokio::sync::Mutex;
 use tracing::error;
 use tracing::{debug, instrument};
-
-static mut STORAGE_CLIENT: OnceLock<Arc<FileSystemStorage>> = OnceLock::new();
 
 #[async_trait]
 pub trait FileSystem {
@@ -89,7 +88,7 @@ impl FileSystemStorage {
         }
     }
 
-    pub async fn find_info(&mut self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
+    pub async fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
         match self {
             FileSystemStorage::Server(client) => client.find_info(path).await,
             FileSystemStorage::Client(client) => client.find_info(path).await,
@@ -97,7 +96,7 @@ impl FileSystemStorage {
     }
 
     pub async fn get(
-        &mut self,
+        &self,
         lpath: &Path,
         rpath: &Path,
         recursive: bool,
@@ -109,7 +108,7 @@ impl FileSystemStorage {
     }
 
     pub async fn put(
-        &mut self,
+        &self,
         lpath: &Path,
         rpath: &Path,
         recursive: bool,
@@ -120,14 +119,14 @@ impl FileSystemStorage {
         }
     }
 
-    pub async fn rm(&mut self, path: &Path, recursive: bool) -> Result<(), StorageError> {
+    pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         match self {
             FileSystemStorage::Server(client) => client.rm(path, recursive).await,
             FileSystemStorage::Client(client) => client.rm(path, recursive).await,
         }
     }
 
-    pub async fn exists(&mut self, path: &Path) -> Result<bool, StorageError> {
+    pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         match self {
             FileSystemStorage::Server(client) => client.exists(path).await,
             FileSystemStorage::Client(client) => client.exists(path).await,
@@ -135,7 +134,7 @@ impl FileSystemStorage {
     }
 
     pub async fn generate_presigned_url(
-        &mut self,
+        &self,
         path: &Path,
         expiration: u64,
     ) -> Result<String, StorageError> {
@@ -148,7 +147,9 @@ impl FileSystemStorage {
     }
 }
 
-pub fn get_storage_client() -> &'static Arc<FileSystemStorage> {
+static STORAGE_CLIENT: OnceLock<Arc<Mutex<FileSystemStorage>>> = OnceLock::new();
+
+pub fn get_storage_client() -> &'static Arc<Mutex<FileSystemStorage>> {
     STORAGE_CLIENT.get_or_init(|| {
         async move {
             let storage_client = FileSystemStorage::new()
@@ -159,7 +160,7 @@ pub fn get_storage_client() -> &'static Arc<FileSystemStorage> {
                 })
                 .expect("Failed to initialize FileSystemStorage");
 
-            Arc::new(storage_client)
+            Arc::new(Mutex::new(storage_client))
         }
         .now_or_never()
         .expect("Failed to initialize storage client")
@@ -251,7 +252,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_gcs_storage_client() {
-        let mut client = FileSystemStorage::new().await.unwrap();
+        let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Google);
@@ -294,7 +295,7 @@ mod tests {
     async fn test_aws_storage_client() {
         set_env_vars();
 
-        let mut client = FileSystemStorage::new().await.unwrap();
+        let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Aws);
@@ -334,7 +335,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_client() {
-        let mut client = FileSystemStorage::new().await.unwrap();
+        let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Azure);
@@ -384,7 +385,7 @@ mod tests {
     async fn test_local_storage_client() {
         set_env_vars();
 
-        let mut client = FileSystemStorage::new().await.unwrap();
+        let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Local);

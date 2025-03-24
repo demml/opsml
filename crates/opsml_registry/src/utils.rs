@@ -1,4 +1,4 @@
-use crate::enums::OpsmlRegistry;
+use crate::base::OpsmlRegistry;
 use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::RegistryError;
