@@ -119,6 +119,12 @@ pub struct UploadResponse {
     pub message: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CompletedUploadPart {
+    part_number: i32,
+    etag: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct DownloadResponse {
     pub exists: bool,

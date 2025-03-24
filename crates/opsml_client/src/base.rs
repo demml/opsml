@@ -292,8 +292,18 @@ impl OpsmlApiClient {
     // specific method for completing multipart uploads (used for aws)
     pub async fn complete_multipart_upload(
         &self,
-        session_url: &str,
-
+        parts: CompletedUploadParts,
+    ) -> Result<Response, ApiError> {
+        let response = self
+            .client
+            .post(format!("{}/files/multipart/complete", self.base_path))
+            .json(&parts)
+            .bearer_auth(&self.get_current_token())
+            .send()
+            .await
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+        Ok(response)
+    }
 }
 
 pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {

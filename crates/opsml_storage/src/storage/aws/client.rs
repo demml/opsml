@@ -860,24 +860,21 @@ impl S3FStorageClient {
         &self,
         rpath: &Path,
         lpath: &Path,
-        session_url: Option<String>,
-        bucket: Option<String>,
     ) -> Result<AWSMulitPartUpload, StorageError> {
-        let upload_id = match session_url {
-            Some(session_url) => session_url,
-            None => {
-                self.client
-                    .create_multipart_upload(rpath.to_str().unwrap())
-                    .await?
-            }
-        };
+        let upload_id = self
+            .client
+            .create_multipart_upload(rpath.to_str().unwrap())
+            .await?;
 
-        let bucket = match bucket {
-            Some(bucket) => bucket,
-            None => self.client.bucket().await.to_string(),
-        };
+        let bucket = self.client.bucket().await.to_string();
 
-        AWSMulitPartUpload::new(&bucket, lpath.to_str().unwrap(), rpath.to_str().unwrap()).await
+        AWSMulitPartUpload::new(
+            &bucket,
+            lpath.to_str().unwrap(),
+            rpath.to_str().unwrap(),
+            &upload_id,
+        )
+        .await
     }
 
     pub async fn generate_presigned_url_for_part(

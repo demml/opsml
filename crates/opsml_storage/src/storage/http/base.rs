@@ -1,15 +1,13 @@
-use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
+use crate::storage::http::multipart::MultiPartUploader;
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
-use opsml_client::{build_api_client, get_api_client, OpsmlApiClient, RequestType, Routes};
+use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
-use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::{error, instrument};
 
 #[derive(Clone)]
@@ -386,20 +384,7 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
-        // 2 create multipart uploader from url and api client
-        // GCS - resumes resumable upload session given the session url
-        // AWS - passes the session_url to AwsMUltipartUploaader
-        // Azure - passes the session_url to AzureMultipartUploader
-        let uploader = self
-            .storage_client
-            .create_multipart_uploader(lpath, rpath, multipart_session)
-            .await
-            .map_err(|e| {
-                error!("Failed to create multipart uploader: {}", e);
-                StorageError::Error(format!("Failed to create multipart uploader: {}", e))
-            })?;
-
-        Ok(uploader)
+        MultiPartUploader::new(multipart_session.session_url, rpath, "gcs")
     }
 
     #[instrument(skip_all)]

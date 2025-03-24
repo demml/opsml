@@ -54,11 +54,7 @@ pub struct AzureMultipartUpload {
 }
 
 impl AzureMultipartUpload {
-    pub async fn new(
-        signed_url: &str,
-        client: Option<HttpClient>,
-        path: &str,
-    ) -> Result<Self, StorageError> {
+    pub async fn new(signed_url: &str, path: &str) -> Result<Self, StorageError> {
         let file = File::open(path)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
@@ -71,10 +67,7 @@ impl AzureMultipartUpload {
 
         let file_reader = BufReader::new(file);
 
-        let client = match client {
-            Some(client) => client,
-            None => HttpClient::new(),
-        };
+        let client = HttpClient::new();
 
         Ok(Self {
             client,
@@ -617,7 +610,7 @@ impl FileSystem for AzureFSStorageClient {
                 let remote_path = stripped_rpath.join(relative_path);
 
                 let mut uploader = self
-                    .create_multipart_uploader(&stripped_file_path, &remote_path, None, None)
+                    .create_multipart_uploader(&stripped_file_path, &remote_path)
                     .await?;
 
                 uploader
@@ -629,7 +622,7 @@ impl FileSystem for AzureFSStorageClient {
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
 
             let mut uploader = self
-                .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None, None)
+                .create_multipart_uploader(&stripped_lpath, &stripped_rpath)
                 .await?;
 
             uploader
@@ -646,19 +639,13 @@ impl AzureFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-        session_url: Option<String>,
-        api_client: Option<HttpClient>,
     ) -> Result<AzureMultipartUpload, StorageError> {
-        let signed_url = match session_url {
-            Some(url) => url,
-            None => {
-                self.client
-                    .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
-                    .await?
-            }
-        };
+        let signed_url = self
+            .client
+            .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
+            .await?;
 
-        AzureMultipartUpload::new(&signed_url, api_client, lpath.to_str().unwrap()).await
+        AzureMultipartUpload::new(&signed_url, lpath.to_str().unwrap()).await
     }
 
     pub async fn create_multipart_upload(&self, rpath: &Path) -> Result<String, StorageError> {
