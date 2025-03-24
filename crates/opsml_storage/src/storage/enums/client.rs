@@ -6,7 +6,7 @@ use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::contracts::{CompletedUploadParts, FileInfo};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo, MultipartCompleteParts};
 use opsml_types::StorageType;
 use std::path::Path;
 use tracing::debug;
@@ -288,7 +288,7 @@ impl StorageClientEnum {
         &self,
         session_url: &str,
         rpath: &str,
-        parts: Option<CompletedUploadParts>,
+        parts: MultipartCompleteParts,
         cancel: bool,
     ) -> Result<(), StorageError> {
         match self {

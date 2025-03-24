@@ -20,7 +20,7 @@ use google_cloud_storage::sign::SignedURLMethod;
 use google_cloud_storage::sign::SignedURLOptions;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadParts, FileInfo, UploadPartArgs};
+use opsml_types::contracts::{FileInfo, MultipartCompleteParts, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::header::CONTENT_LENGTH;
@@ -782,7 +782,7 @@ impl FileSystem for GCSFSStorageClient {
         &self,
         upload_id: &str,
         _rpath: &str,
-        _parts: Option<CompletedUploadParts>,
+        _parts: MultipartCompleteParts,
         cancel: bool,
     ) -> Result<(), StorageError> {
         match cancel {
