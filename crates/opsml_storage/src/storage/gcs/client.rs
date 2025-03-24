@@ -175,7 +175,6 @@ impl GoogleMultipartUpload {
             };
 
             let upload_args = UploadPartArgs {
-                presigned_url: None,
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,

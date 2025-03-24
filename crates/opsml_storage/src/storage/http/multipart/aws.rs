@@ -14,7 +14,6 @@ pub struct S3MultipartUpload {
     upload_id: String,
     rpath: String,
     file_reader: BufReader<File>,
-    file_size: u64,
     completed_parts: Vec<CompletedUploadPart>,
     client: Arc<OpsmlApiClient>,
 }
@@ -29,11 +28,6 @@ impl S3MultipartUpload {
         let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
-        let file_size = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?
-            .len();
-
         let file_reader = BufReader::new(file);
 
         Ok(Self {
@@ -41,7 +35,7 @@ impl S3MultipartUpload {
             upload_id,
             rpath: rpath.to_str().unwrap().to_string(),
             file_reader,
-            file_size,
+
             completed_parts: Vec::new(),
         })
     }

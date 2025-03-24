@@ -137,14 +137,10 @@ impl GcsMultipartUpload {
             };
 
             let upload_args = UploadPartArgs {
-                presigned_url: Some(self.session_url.clone()),
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
             };
-
-            // if error, cancel upload
-            self.upload_next_chunk(&upload_args).await;
 
             // if error, cancel upload
             match self.upload_next_chunk(&upload_args).await {
