@@ -1,7 +1,7 @@
-use opsml_client::{build_api_client, ClientRegistry, OpsmlApiClient};
+use opsml_client::ClientRegistry;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
+use opsml_settings::config::OpsmlMode;
 use opsml_state::get_state;
 use opsml_types::contracts::{
     Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
