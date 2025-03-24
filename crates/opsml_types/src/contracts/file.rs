@@ -90,6 +90,13 @@ pub struct ListFileResponse {
     pub files: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Default)]
+pub struct CompleteMultipartUpload {
+    pub path: String,
+    pub session_url: String,
+    pub parts: Option<CompletedUploadParts>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ListFileInfoResponse {
     pub files: Vec<FileInfo>,

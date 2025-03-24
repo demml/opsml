@@ -240,6 +240,62 @@ pub async fn generate_presigned_url(
     Ok(Json(PresignedUrl { url }))
 }
 
+#[instrument(skip_all)]
+pub async fn complete_multipart_upload(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<CompleteMultipartQuery>,
+    headers: HeaderMap,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+    // check for write access
+
+    if !perms.has_write_permission("") {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let path = Path::new(&params.path);
+    let session_url = params.session_url.as_ref().ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Missing session_uri" })),
+        )
+    })?;
+
+    let parts = params.parts.clone();
+
+    let response = state
+        .storage_client
+        .complete_multipart_upload(path, session_url, parts)
+        .await
+        .map_err(|e| ServerError::MultipartError(e.to_string()));
+
+    let response = match response {
+        Ok(response) => response,
+        Err(e) => {
+            error!("Failed to complete multipart upload: {}", e);
+            return Err(internal_server_error(
+                e,
+                "Failed to complete multipart upload",
+            ));
+        }
+    };
+
+    let sql_client = state.sql_client.clone();
+    let rpath = params.path.clone();
+    tokio::spawn(async move {
+        if let Err(e) =
+            log_operation(&headers, &Operation::Create.to_string(), &rpath, sql_client).await
+        {
+            error!("Failed to insert artifact key: {}", e);
+        }
+    });
+
+    Ok(Json(response))
+}
+
 // this is for local storage only
 #[instrument(skip_all)]
 pub async fn upload_multipart(
