@@ -5,7 +5,7 @@ use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::CompletedUploadParts;
+use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::{contracts::FileInfo, StorageType};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -497,7 +497,7 @@ impl FileSystem for LocalFSStorageClient {
         &self,
         _upload_id: &str,
         _rpath: &str,
-        _parts: Option<CompletedUploadParts>,
+        _parts: MultipartCompleteParts,
         _cancel: bool,
     ) -> Result<(), StorageError> {
         Ok(())

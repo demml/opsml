@@ -4,8 +4,8 @@ use async_trait::async_trait;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::get_state;
-use opsml_types::contracts::CompletedUploadParts;
 use opsml_types::contracts::FileInfo;
+use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
@@ -38,7 +38,7 @@ pub trait FileSystem {
         &self,
         upload_id: &str,
         rpath: &str,
-        parts: Option<CompletedUploadParts>,
+        parts: MultipartCompleteParts,
         cancel: bool,
     ) -> Result<(), StorageError>;
 }

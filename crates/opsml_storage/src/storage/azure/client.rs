@@ -11,6 +11,7 @@ use base64::prelude::*;
 use futures::stream::StreamExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
+use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
@@ -191,13 +192,7 @@ impl StorageClient for AzureStorageClient {
 
     async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
         // Get Azure credentials (anonymous if client mode, else use AzureCreds)
-        let creds = match settings.client_mode {
-            false => AzureCreds::new().await?,
-            true => AzureCreds {
-                account: "anonymous".to_string(),
-                creds: StorageCredentials::anonymous(),
-            },
-        };
+        let creds = AzureCreds::new().await?;
 
         let client = BlobServiceClient::new(creds.account, creds.creds);
 
@@ -629,6 +624,20 @@ impl FileSystem for AzureFSStorageClient {
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
         };
+
+        Ok(())
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        upload_id: &str,
+        _rpath: &str,
+        _parts: MultipartCompleteParts,
+        cancel: bool,
+    ) -> Result<(), StorageError> {
+        if cancel {
+            return Err(StorageError::Error("Cancel not supported".to_string()));
+        }
 
         Ok(())
     }

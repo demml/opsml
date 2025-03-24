@@ -14,7 +14,7 @@ use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadParts, FileInfo};
+use opsml_types::contracts::{FileInfo, MultipartCompleteParts};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -680,10 +680,19 @@ impl AWSStorageClient {
     pub async fn complete_upload_from_parts(
         &self,
         upload_id: &str,
-        parts: CompletedUploadParts,
+        parts: MultipartCompleteParts,
         path: &str,
     ) -> Result<(), StorageError> {
         // convert the parts to CompletedPart
+        let parts = match parts {
+            MultipartCompleteParts::Aws(parts) => parts,
+            _ => {
+                return Err(StorageError::Error(
+                    "Invalid parts type for AWS storage".to_string(),
+                ))
+            }
+        };
+
         let upload_parts = parts
             .parts
             .iter()
@@ -898,13 +907,9 @@ impl FileSystem for S3FStorageClient {
         &self,
         upload_id: &str,
         rpath: &str,
-        parts: Option<CompletedUploadParts>,
+        parts: MultipartCompleteParts,
         _cancel: bool,
     ) -> Result<(), StorageError> {
-        let parts = parts.ok_or_else(|| {
-            StorageError::Error("Parts must be provided to complete multipart upload".to_string())
-        })?;
-
         self.client
             .complete_upload_from_parts(upload_id, parts, rpath)
             .await
