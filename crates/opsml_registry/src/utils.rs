@@ -64,7 +64,6 @@ pub fn card_from_string<'py>(
     interface: Option<&Bound<'py, PyAny>>,
     key: ArtifactKey,
     fs: &mut Arc<Mutex<FileSystemStorage>>,
-    rt: &Arc<tokio::runtime::Runtime>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let card = match key.registry_type {
         RegistryType::Model => {
@@ -76,7 +75,6 @@ pub fn card_from_string<'py>(
 
             card.artifact_key = Some(key);
             card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
 
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
@@ -93,7 +91,6 @@ pub fn card_from_string<'py>(
 
             card.artifact_key = Some(key);
             card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
 
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
@@ -109,7 +106,6 @@ pub fn card_from_string<'py>(
 
             card.artifact_key = Some(key);
             card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -158,7 +154,6 @@ pub async fn download_card<'py>(
     py: Python<'py>,
     key: ArtifactKey,
     fs: &mut Arc<Mutex<FileSystemStorage>>,
-    rt: &Arc<tokio::runtime::Runtime>,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let decryption_key = key.get_decrypt_key().map_err(|e| {
@@ -187,7 +182,7 @@ pub async fn download_card<'py>(
         RegistryError::Error("Failed to read card json".to_string())
     })?;
 
-    let card = card_from_string(py, json_string, interface, key, fs, rt)?;
+    let card = card_from_string(py, json_string, interface, key, fs)?;
 
     Ok(card)
 }

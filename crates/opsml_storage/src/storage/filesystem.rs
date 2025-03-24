@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use futures::FutureExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::get_state;
+use opsml_state::{get_api_client, get_state};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -60,8 +60,9 @@ impl FileSystemStorage {
             }
             &OpsmlMode::Client => {
                 debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
+
                 Ok(FileSystemStorage::Client(
-                    HttpFSStorageClient::new(state.api_client.clone()).await?,
+                    HttpFSStorageClient::new(get_api_client().await).await?,
                 ))
             }
         }
@@ -252,6 +253,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_gcs_storage_client() {
+        set_env_vars();
         let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
@@ -263,6 +265,7 @@ mod tests {
         let rpath = Path::new(&dirname);
 
         // put the file
+
         client.put(lpath, rpath, true).await.unwrap();
 
         // check if the file exists
@@ -280,14 +283,13 @@ mod tests {
         // download the files
         let new_path = uuid::Uuid::new_v4().to_string();
         let new_path = Path::new(&new_path);
-
         client.get(new_path, rpath, true).await.unwrap();
 
         // cleanup
         std::fs::remove_dir_all(&dirname).unwrap();
         std::fs::remove_dir_all(new_path).unwrap();
-
         client.rm(rpath, true).await.unwrap();
+
         unset_env_vars();
     }
 
