@@ -2,6 +2,7 @@ use opsml_client::{build_api_client, ClientRegistry, OpsmlApiClient};
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlStorageSettings};
+use opsml_state::get_state;
 use opsml_types::contracts::{
     Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
@@ -14,49 +15,6 @@ use opsml_types::{
     },
 };
 use tracing::{debug, instrument};
-
-#[derive(Debug, Clone)]
-pub struct ClientRegistryArgs {
-    pub client: OpsmlApiClient,
-}
-
-#[derive(Debug, Clone)]
-pub struct ServerRegistryArgs {
-    pub storage_settings: OpsmlStorageSettings,
-    pub database_settings: DatabaseSettings,
-}
-
-#[derive(Debug, Clone)]
-pub enum RegistryArgs {
-    Client(ClientRegistryArgs),
-    Server(Box<ServerRegistryArgs>),
-}
-
-impl RegistryArgs {
-    pub fn api_client(&self) -> Option<&OpsmlApiClient> {
-        match self {
-            Self::Client(client_registry_args) => Some(&client_registry_args.client),
-            _ => None,
-        }
-    }
-
-    pub async fn from_config(config: &OpsmlConfig) -> Result<Self, RegistryError> {
-        let storage_settings = config.storage_settings()?;
-
-        let args = match config.client_mode {
-            true => {
-                let client = build_api_client(&storage_settings).await?;
-                RegistryArgs::Client(ClientRegistryArgs { client })
-            }
-            false => RegistryArgs::Server(Box::new(ServerRegistryArgs {
-                storage_settings,
-                database_settings: config.database_settings.clone(),
-            })),
-        };
-
-        Ok(args)
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
@@ -79,33 +37,34 @@ impl OpsmlRegistry {
         }
     }
     #[instrument(skip_all)]
-    pub async fn new(
-        registry_type: RegistryType,
-        registry_args: RegistryArgs,
-    ) -> Result<Self, RegistryError> {
-        match registry_args {
-            RegistryArgs::Client(client_registry_args) => {
-                debug!("Creating client registry");
-                let client_registry =
-                    ClientRegistry::new(registry_type, client_registry_args.client).await?;
+    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
+        let state = get_state();
+
+        match state.mode() {
+            OpsmlMode::Client => {
+                let api_client = state.api_client().clone();
+                let client_registry = ClientRegistry::new(registry_type, api_client).await?;
                 Ok(Self::ClientRegistry(client_registry))
             }
-            #[cfg(feature = "server")]
-            RegistryArgs::Server(server_registry_args) => {
-                debug!("Creating server registry");
-                let server_registry = crate::server::registry::server_logic::ServerRegistry::new(
-                    registry_type,
-                    server_registry_args.storage_settings,
-                    server_registry_args.database_settings,
-                )
-                .await?;
-                Ok(Self::ServerRegistry(server_registry))
+            OpsmlMode::Server => {
+                #[cfg(feature = "server")]
+                {
+                    let server_registry =
+                        crate::server::registry::server_logic::ServerRegistry::new(
+                            registry_type,
+                            state.config.storage_settings,
+                            state.config.database_settings,
+                        )
+                        .await?;
+                    Ok(Self::ServerRegistry(server_registry))
+                }
+                #[cfg(not(feature = "server"))]
+                {
+                    Err(RegistryError::Error(
+                        "Server feature not enabled".to_string(),
+                    ))
+                }
             }
-
-            #[cfg(not(feature = "server"))]
-            RegistryArgs::Server(_) => Err(RegistryError::Error(
-                "Server feature not enabled".to_string(),
-            )),
         }
     }
 

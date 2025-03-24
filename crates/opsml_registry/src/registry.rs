@@ -1,12 +1,13 @@
-use crate::enums::OpsmlRegistry;
-use crate::enums::RegistryArgs;
+use crate::base::OpsmlRegistry;
+use crate::base::RegistryArgs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlConfig;
-use opsml_storage::{get_storage, FileSystemStorage};
+use opsml_state::get_state;
+use opsml_storage::FileSystemStorage;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 pub use opsml_utils::get_runtime;
@@ -69,19 +70,13 @@ pub fn initialize_registry_components(
     registry_type: RegistryType,
 ) -> Result<(OpsmlRegistry, Arc<Mutex<FileSystemStorage>>, Arc<Runtime>), RegistryError> {
     // get config and storage settings
-    let config = OpsmlConfig::default();
-    let mut storage_settings = config.storage_settings()?;
+    let state = get_state();
 
-    let runtime = get_runtime();
-    let runtime_clone = runtime.clone();
+    let (registry, storage) = state.runtime.block_on(async {
+        let registry = OpsmlRegistry::new().await?;
+        let storage = get_storage().await;
 
-    runtime.block_on(async {
-        let registry_args = RegistryArgs::from_config(&config).await?;
-
-        let registry = OpsmlRegistry::new(registry_type, registry_args.clone()).await?;
-        let storage = get_storage(&mut storage_settings, registry_args.api_client().cloned()).await;
-
-        Ok((registry, storage.clone(), runtime_clone))
+        Ok((registry, storage.clone()))
     })
 }
 
@@ -100,7 +95,7 @@ pub struct CardRegistry {
     table_name: String,
     pub registry: OpsmlRegistry,
     runtime: Arc<tokio::runtime::Runtime>,
-    pub fs: Arc<Mutex<FileSystemStorage>>,
+    pub fs: Arc<FileSystemStorage>,
 }
 
 #[pymethods]

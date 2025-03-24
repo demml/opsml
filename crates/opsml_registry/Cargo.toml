@@ -17,6 +17,7 @@ opsml-types = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
 opsml-sql = { workspace = true, optional = true }
+opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-utils = { workspace = true }
 pyo3 = { workspace = true }

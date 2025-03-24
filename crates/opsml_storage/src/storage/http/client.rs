@@ -29,16 +29,16 @@ impl HttpFSStorageClient {
         })
     }
 
-    pub async fn find(&mut self, path: &Path) -> Result<Vec<String>, StorageError> {
+    pub async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
         self.client.find(path.to_str().unwrap()).await
     }
 
-    pub async fn find_info(&mut self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
+    pub async fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
         self.client.find_info(path.to_str().unwrap()).await
     }
 
     pub async fn get(
-        &mut self,
+        &self,
         lpath: &Path,
         rpath: &Path,
         recursive: bool,
@@ -55,7 +55,7 @@ impl HttpFSStorageClient {
                 let file_path = PathBuf::from(name);
                 let relative_path = file_path.relative_path(rpath)?;
                 let local_path = lpath.join(relative_path);
-                let mut cloned_client = self.client.clone();
+                let cloned_client = self.client.clone();
 
                 let task = tokio::task::spawn(async move {
                     cloned_client
@@ -88,7 +88,7 @@ impl HttpFSStorageClient {
         Ok(())
     }
 
-    pub async fn rm(&mut self, path: &Path, recursive: bool) -> Result<(), StorageError> {
+    pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         if recursive {
             self.client.delete_objects(path.to_str().unwrap()).await?;
         } else {
@@ -98,14 +98,14 @@ impl HttpFSStorageClient {
         Ok(())
     }
 
-    pub async fn exists(&mut self, path: &Path) -> Result<bool, StorageError> {
+    pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         let objects = self.client.find(path.to_str().unwrap()).await?;
 
         Ok(!objects.is_empty())
     }
 
     pub async fn put(
-        &mut self,
+        &self,
         lpath: &Path,
         rpath: &Path,
         recursive: bool,
@@ -131,7 +131,7 @@ impl HttpFSStorageClient {
                 let stripped_rpath_clone = rpath_clone.clone();
 
                 let stripped_file_path = file.clone();
-                let mut cloned_client = self.client.clone();
+                let cloned_client = self.client.clone();
 
                 let task = tokio::spawn(async move {
                     let relative_path = file.relative_path(&stripped_lpath_clone)?;
@@ -176,7 +176,7 @@ impl HttpFSStorageClient {
         Ok(())
     }
 
-    pub async fn generate_presigned_url(&mut self, path: &Path) -> Result<String, StorageError> {
+    pub async fn generate_presigned_url(&self, path: &Path) -> Result<String, StorageError> {
         self.client
             .generate_presigned_url(path.to_str().unwrap())
             .await
