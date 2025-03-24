@@ -288,21 +288,24 @@ impl StorageClientEnum {
     pub async fn complete_multipart_upload(
         &self,
         session_url: &str,
-        rpath: &Path,
+        rpath: &str,
         parts: Option<CompletedUploadParts>,
     ) -> Result<(), StorageError> {
         match self {
             StorageClientEnum::Google(client) => Ok(()),
 
             StorageClientEnum::AWS(client) => {
-                client.complete_multipart_upload(session_url, parts).await
+                // fail if parts is None
+                let parts = parts.ok_or_else(|| {
+                    StorageError::Error("No parts found for complete_multipart_upload".to_string())
+                })?;
+
+                client
+                    .complete_multipart_upload(session_url, rpath, parts)
+                    .await
             }
-            StorageClientEnum::Local(client) => {
-                client.complete_multipart_upload(session_url, parts).await
-            }
-            StorageClientEnum::Azure(client) => {
-                client.complete_multipart_upload(session_url, parts).await
-            }
+            StorageClientEnum::Local(client) => Ok(()),
+            StorageClientEnum::Azure(client) => Ok(()),
         }
     }
 }
