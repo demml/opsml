@@ -1,11 +1,11 @@
 use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
+use opsml_types::contracts::{CompletedUploadPart, UploadResponse};
 use reqwest::Client;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{BufReader, Read};
-use std::path::Path;
 use std::sync::Arc;
 
 pub struct S3MultipartUpload {
@@ -14,21 +14,13 @@ pub struct S3MultipartUpload {
     key: String,
     file_reader: BufReader<File>,
     file_size: u64,
-    completed_parts: Vec<CompletedPart>,
+    completed_parts: Vec<CompletedUploadPart>,
     api_url: String,
     client: Arc<OpsmlApiClient>,
 }
 
-#[derive(Debug, Serialize)]
-struct CompletedPart {
-    PartNumber: i32,
-    ETag: String,
-}
-
 impl S3MultipartUpload {
     pub fn new(
-        api_url: String,
-        bucket: String,
         key: String,
         upload_id: String,
         path: &str,
@@ -123,54 +115,13 @@ impl S3MultipartUpload {
         self.complete_upload().await
     }
 
-    async fn complete_upload(&self) -> Result<(), StorageError> {
+    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
         let response = self
             .client
-            .post(&format!(
-                "{}/complete-upload?bucket={}&key={}&uploadId={}",
-                self.api_url, self.bucket, self.key, self.upload_id
-            ))
-            .json(&self.completed_parts)
-            .send()
+            .complete_multipart_upload(&self.completed_parts)
             .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
-        if response.status().is_success() {
-            Ok(())
-        } else {
-            Err(StorageError::Error("Failed to complete upload".to_string()))
-        }
+        Ok(response)
     }
-}
-
-// Usage example:
-pub async fn upload_file(
-    api_url: &str,
-    bucket: &str,
-    key: &str,
-    local_path: &str,
-) -> Result<(), StorageError> {
-    // First request upload ID from server
-    let client = Client::new();
-    let response = client
-        .post(&format!(
-            "{}/start-upload?bucket={}&key={}",
-            api_url, bucket, key
-        ))
-        .send()
-        .await?;
-
-    let upload_id = response.text().await?;
-
-    // Create uploader
-    let mut uploader = S3MultipartUpload::new(
-        api_url.to_string(),
-        bucket.to_string(),
-        key.to_string(),
-        upload_id,
-        local_path,
-    )?;
-
-    // Upload file in chunks
-    uploader.upload_file_in_chunks(5 * 1024 * 1024).await // 5MB chunks
 }

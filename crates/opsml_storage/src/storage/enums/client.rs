@@ -271,14 +271,7 @@ impl StorageClientEnum {
             }
 
             StorageClientEnum::AWS(client) => {
-                let uploader = client
-                    .create_multipart_uploader(
-                        rpath,
-                        lpath,
-                        Some(multipart_session.session_url),
-                        multipart_session.bucket,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(rpath, lpath).await?;
                 Ok(MultiPartUploader::AWS(uploader))
             }
             StorageClientEnum::Local(client) => {
@@ -287,20 +280,7 @@ impl StorageClientEnum {
                 Ok(MultiPartUploader::Local(uploader))
             }
             StorageClientEnum::Azure(client) => {
-                let api_client = if let Some(api_client) = api_client {
-                    Some(api_client.client)
-                } else {
-                    None
-                };
-
-                let uploader = client
-                    .create_multipart_uploader(
-                        lpath,
-                        rpath,
-                        Some(multipart_session.session_url),
-                        api_client,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Azure(uploader))
             }
         }
