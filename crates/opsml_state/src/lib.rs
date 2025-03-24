@@ -15,8 +15,12 @@ pub struct OpsmlState {
 
 impl OpsmlState {
     async fn new() -> Result<Self, StateError> {
-        let config = OpsmlConfig::new(None);
-        let settings = config.storage_settings().unwrap();
+        let config = OpsmlConfig::new();
+
+        let settings = config.storage_settings().map_err(|e| {
+            error!("Failed to get storage settings: {}", e);
+            StateError::Error(format!("Failed to get storage settings with error: {}", e))
+        })?;
 
         // Initialize API client
         let api_client = build_api_client(&settings).await.map_err(|e| {
@@ -32,23 +36,15 @@ impl OpsmlState {
             StateError::Error(format!("Failed to get storage settings with error: {}", e))
         })?;
 
-        let storage = FileSystemStorage::new(&mut settings, &api_client)
+        let storage = FileSystemStorage::new(&mut settings, &api_client, &config.mode)
             .await
             .expect("Failed to create file system storage");
         let storage = Arc::new(Mutex::new(storage));
 
-        // Initialize mode
-        let mode =
-            if OpsmlConfig::is_using_client(&env::var("OPSML_TRACKING_URI").unwrap_or_default()) {
-                OpsmlMode::Client
-            } else {
-                OpsmlMode::Server
-            };
-
         Self {
             api_client,
             storage,
-            mode,
+            mode: config.mode,
         }
     }
 
