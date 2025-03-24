@@ -5,6 +5,7 @@ use futures::FutureExt;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
+use opsml_state::get_state;
 use opsml_types::contracts::CompletedUploadParts;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -50,11 +51,9 @@ pub enum FileSystemStorage {
 
 impl FileSystemStorage {
     #[instrument(skip_all)]
-    pub async fn new(
-        settings: &mut OpsmlStorageSettings,
-        client: Arc<OpsmlApiClient>,
-        mode: &OpsmlMode,
-    ) -> Result<Self, StorageError> {
+    pub async fn new(mode: &OpsmlMode) -> Result<Self, StorageError> {
+        let state = get_state().await;
+        let settings = state.config.storage_settings().unwrap();
         match mode {
             &OpsmlMode::Server => {
                 debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
@@ -237,7 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_gcs_storage_client() {
-        let config = OpsmlConfig::new(Some(true));
+        let config = OpsmlConfig::new();
 
         let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
             .await
