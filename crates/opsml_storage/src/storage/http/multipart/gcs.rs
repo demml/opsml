@@ -5,6 +5,7 @@ use reqwest::Client;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
+use std::path::Path;
 
 #[derive(Clone, Debug)]
 pub struct ChunkSize {
@@ -54,7 +55,7 @@ pub struct GcsMultipartUpload {
 }
 
 impl GcsMultipartUpload {
-    pub fn new(lpath: &str, session_url: String) -> Result<Self, StorageError> {
+    pub fn new(lpath: &Path, session_url: String) -> Result<Self, StorageError> {
         let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 

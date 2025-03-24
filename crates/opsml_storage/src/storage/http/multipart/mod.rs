@@ -4,6 +4,7 @@ pub use aws::S3MultipartUpload;
 pub use gcs::GcsMultipartUpload;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
+use std::path::Path;
 use std::sync::Arc;
 
 pub enum MultiPartUploader {
@@ -13,11 +14,11 @@ pub enum MultiPartUploader {
 
 impl MultiPartUploader {
     pub fn new(
-        session_url: String,
-        rpath: &str,
-        lpath: &str,
+        rpath: &Path,
+        lpath: &Path,
         storage_type: &str,
         client: Arc<OpsmlApiClient>,
+        session_url: String,
     ) -> Result<Self, StorageError> {
         match storage_type {
             "s3" => {
