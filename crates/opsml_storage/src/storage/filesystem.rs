@@ -2,10 +2,10 @@ use crate::storage::enums::client::StorageClientEnum;
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
 use futures::FutureExt;
-use opsml_client::{get_api_client, OpsmlApiClient};
+use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
-
-use opsml_settings::config::{get_opsml_mode, OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
+use opsml_settings::config::{OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
+use opsml_types::contracts::CompletedUploadParts;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
@@ -34,6 +34,13 @@ pub trait FileSystem {
         path: &Path,
         expiration: u64,
     ) -> Result<String, StorageError>;
+
+    async fn complete_multipart_upload(
+        &self,
+        upload_id: &str,
+        rpath: &str,
+        parts: CompletedUploadParts,
+    ) -> Result<(), StorageError>;
 }
 
 pub enum FileSystemStorage {
@@ -43,9 +50,13 @@ pub enum FileSystemStorage {
 
 impl FileSystemStorage {
     #[instrument(skip_all)]
-    pub async fn new(settings: &mut OpsmlStorageSettings) -> Result<Self, StorageError> {
-        match get_opsml_mode() {
-            OpsmlMode::Server => {
+    pub async fn new(
+        settings: &mut OpsmlStorageSettings,
+        client: Arc<OpsmlApiClient>,
+        model: OpsmlMode,
+    ) -> Result<Self, StorageError> {
+        match !settings.client_mode {
+            true => {
                 debug!("Creating FileSystemStorage with StorageClientEnum");
                 Ok(FileSystemStorage::Server(
                     StorageClientEnum::new(settings).await?,
@@ -54,7 +65,7 @@ impl FileSystemStorage {
             _ => {
                 debug!("Creating FileSystemStorage with HttpFSStorageClient");
                 Ok(FileSystemStorage::Client(
-                    HttpFSStorageClient::new(settings).await?,
+                    HttpFSStorageClient::new(client).await?,
                 ))
             }
         }

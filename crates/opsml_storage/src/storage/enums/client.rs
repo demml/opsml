@@ -7,7 +7,7 @@ use anyhow::{Context, Result as AnyhowResult};
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::contracts::{FileInfo, MultiPartSession};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo, MultiPartSession};
 use opsml_types::StorageType;
 use std::path::Path;
 use tracing::debug;
@@ -262,7 +262,6 @@ impl StorageClientEnum {
         &self,
         lpath: &Path,
         rpath: &Path,
-        multipart_session: MultiPartSession,
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
@@ -282,6 +281,27 @@ impl StorageClientEnum {
             StorageClientEnum::Azure(client) => {
                 let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Azure(uploader))
+            }
+        }
+    }
+
+    pub async fn complete_multipart_upload(
+        &self,
+        session_url: &str,
+        rpath: &Path,
+        parts: Option<CompletedUploadParts>,
+    ) -> Result<(), StorageError> {
+        match self {
+            StorageClientEnum::Google(client) => Ok(()),
+
+            StorageClientEnum::AWS(client) => {
+                client.complete_multipart_upload(session_url, parts).await
+            }
+            StorageClientEnum::Local(client) => {
+                client.complete_multipart_upload(session_url, parts).await
+            }
+            StorageClientEnum::Azure(client) => {
+                client.complete_multipart_upload(session_url, parts).await
             }
         }
     }
