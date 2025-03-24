@@ -337,7 +337,7 @@ mod tests {
     }
 
     async fn setup_client(server_url: String) -> OpsmlApiClient {
-        let config = OpsmlConfig::new(None);
+        let config = OpsmlConfig::new();
         let mut settings = config.storage_settings().unwrap();
 
         // set up some auth
