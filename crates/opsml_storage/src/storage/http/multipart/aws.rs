@@ -20,8 +20,8 @@ pub struct S3MultipartUpload {
 
 impl S3MultipartUpload {
     pub fn new(
-        rpath: &Path,
         lpath: &Path,
+        rpath: &Path,
         upload_id: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, StorageError> {

@@ -238,7 +238,7 @@ impl OpsmlApiClient {
     }
 
     // specific method for multipart uploads (mainly used for localstorageclient)
-    pub async fn multipart_upload(self, form: Form) -> Result<Response, ApiError> {
+    pub async fn multipart_upload(&self, form: Form) -> Result<Response, ApiError> {
         let response = self
             .client
             .post(format!("{}/files/multipart", self.base_path))
