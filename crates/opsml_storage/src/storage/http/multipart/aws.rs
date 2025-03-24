@@ -2,7 +2,8 @@ use bytes::Bytes;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
 use opsml_types::contracts::{
-    CompleteMultipartUpload, CompletedUploadPart, CompletedUploadParts, UploadResponse,
+    CompleteMultipartUpload, CompletedUploadPart, CompletedUploadParts, MultipartCompleteParts,
+    UploadResponse,
 };
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -119,10 +120,12 @@ impl S3MultipartUpload {
             parts: self.completed_parts.clone(),
         };
 
+        let parts = MultipartCompleteParts::Aws(completed_parts);
+
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.upload_id.clone(),
-            parts: Some(completed_parts),
+            parts,
         };
 
         let response = self

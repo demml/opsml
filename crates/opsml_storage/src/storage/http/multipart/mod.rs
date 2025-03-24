@@ -1,4 +1,5 @@
 pub mod aws;
+pub mod azure;
 pub mod gcs;
 pub mod local;
 pub use aws::S3MultipartUpload;
