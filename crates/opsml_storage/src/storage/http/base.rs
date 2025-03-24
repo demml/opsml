@@ -380,7 +380,7 @@ impl HttpStorageClient {
         MultiPartUploader::new(
             rpath,
             lpath,
-            "gcs",
+            &StorageType::Google,
             self.api_client.clone(),
             multipart_session.session_url,
         )
