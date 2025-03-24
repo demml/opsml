@@ -19,7 +19,7 @@ pub struct AzureMultipartUpload {
 }
 
 impl AzureMultipartUpload {
-    pub async fn new(
+    pub fn new(
         lpath: &Path,
         rpath: &Path,
         session_url: String,
@@ -60,6 +60,8 @@ impl AzureMultipartUpload {
 
             self.upload_next_chunk(&upload_args).await?;
         }
+
+        self.complete_upload().await?;
 
         Ok(())
     }
