@@ -256,34 +256,20 @@ pub async fn complete_multipart_upload(
         ));
     }
 
-    let response = state
+    state
         .storage_client
-        .complete_multipart_upload(session_url, req.pa)
+        .complete_multipart_upload(req)
         .await
-        .map_err(|e| ServerError::MultipartError(e.to_string()));
-
-    let response = match response {
-        Ok(response) => response,
-        Err(e) => {
+        .map_err(|e| ServerError::MultipartError(e.to_string()))
+        .map_err(|e| {
             error!("Failed to complete multipart upload: {}", e);
-            return Err(internal_server_error(
-                e,
-                "Failed to complete multipart upload",
-            ));
-        }
-    };
+            internal_server_error(e, "Failed to complete multipart upload")
+        })?;
 
-    let sql_client = state.sql_client.clone();
-    let rpath = params.path.clone();
-    tokio::spawn(async move {
-        if let Err(e) =
-            log_operation(&headers, &Operation::Create.to_string(), &rpath, sql_client).await
-        {
-            error!("Failed to insert artifact key: {}", e);
-        }
-    });
-
-    Ok(Json(response))
+    Ok(Json(UploadResponse {
+        uploaded: true,
+        message: "".to_string(),
+    }))
 }
 
 // this is for local storage only
