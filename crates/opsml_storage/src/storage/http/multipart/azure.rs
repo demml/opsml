@@ -2,6 +2,7 @@ use base64::prelude::*;
 use opsml_client::OpsmlApiClient;
 use opsml_error::StorageError;
 use opsml_types::contracts::CompleteMultipartUpload;
+use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::UploadPartArgs;
 use opsml_types::contracts::UploadResponse;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
@@ -16,13 +17,15 @@ pub struct AzureMultipartUpload {
     file_reader: BufReader<File>,
     file_size: u64,
     client: Arc<OpsmlApiClient>,
-    pub block_parts: Vec<String>,
-    pub filename: String,
+    block_parts: Vec<String>,
+    filename: String,
+    rpath: String,
 }
 
 impl AzureMultipartUpload {
     pub async fn new(
         lpath: &Path,
+        rpath: &Path,
         session_url: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, StorageError> {
@@ -45,6 +48,7 @@ impl AzureMultipartUpload {
             file_reader,
             file_size,
             filename: filename.to_string(),
+            rpath: rpath.to_str().unwrap().to_string(),
         })
     }
 
@@ -118,7 +122,14 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub async fn complete_upload(&self) -> Result<(), StorageError> {
+    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+        let parts = MultipartCompleteParts::Azure(self.block_parts.clone());
+        let request = CompleteMultipartUpload {
+            path: self.rpath.clone(),
+            session_url: self.session_url.clone(),
+            parts,
+        };
+
         let response = self
             .client
             .complete_multipart_upload(request)
@@ -128,4 +139,7 @@ impl AzureMultipartUpload {
         let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
             StorageError::Error(format!("Failed to parse complete upload response: {}", e))
         })?;
+
+        Ok(uploaded)
+    }
 }

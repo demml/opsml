@@ -153,7 +153,7 @@ impl GcsMultipartUpload {
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
-            parts: None,
+            ..Default::default()
         };
 
         let response = self
