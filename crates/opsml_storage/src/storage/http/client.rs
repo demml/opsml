@@ -3,7 +3,6 @@ use crate::storage::base::PathExt;
 use crate::storage::http::base::HttpStorageClient;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
-use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use opsml_utils::FileUtils;
