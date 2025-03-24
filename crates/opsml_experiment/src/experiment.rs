@@ -21,6 +21,7 @@ use opsml_types::{
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::runtime::Runtime;
 use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, instrument, warn};
 
@@ -68,10 +69,9 @@ fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
     fs: &Arc<tokio::sync::Mutex<FileSystemStorage>>,
-    rt: &Arc<tokio::runtime::Runtime>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    rt.block_on(async {
+    get_state().start_runtime().block_on(async {
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
             Some(path) => (path.to_path_buf(), true),
@@ -111,7 +111,6 @@ pub struct Experiment {
     pub experiment: PyObject,
     pub registries: CardRegistries,
     pub fs: Arc<TokioMutex<FileSystemStorage>>,
-    pub rt: Arc<tokio::runtime::Runtime>,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
     artifact_key: ArtifactKey,
@@ -130,11 +129,10 @@ impl Experiment {
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
         let fs = registries.fs.clone();
-        let rt = registries.rt.clone();
 
         let mut experiment_registry = registries.experiment.registry.clone();
 
-        let artifact_key = rt.block_on(async {
+        let artifact_key = get_state().start_runtime().block_on(async {
             experiment_registry
                 .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
                 .await
@@ -145,11 +143,10 @@ impl Experiment {
         // the card must be usable after the experiment is finished (downloading artifacts, etc.)
         let mut experiment: ExperimentCard = experiment.extract(py)?;
         experiment.fs = Some(fs.clone());
-        experiment.rt = Some(rt.clone());
         experiment.artifact_key = Some(artifact_key.clone());
 
         // extract code
-        match extract_code(py, code_dir, &fs, &rt, &artifact_key) {
+        match extract_code(py, code_dir, &fs, &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
             Err(e) => warn!("Failed to extract code: {}", e),
         };
@@ -160,8 +157,12 @@ impl Experiment {
                 // clone the experiment registry
                 let registry = registries.experiment.registry.clone();
                 let arc_reg = Arc::new(TokioMutex::new(registry));
-                let hardware_queue =
-                    HardwareQueue::start(rt.clone(), arc_reg, experiment_uid.clone())?;
+                let new_rt = Arc::new(Runtime::new().map_err(|e| {
+                    error!("Failed to create runtime: {}", e);
+                    ExperimentError::Error(e.to_string())
+                })?);
+
+                let hardware_queue = HardwareQueue::start(new_rt, arc_reg, experiment_uid.clone())?;
                 Some(hardware_queue)
             }
 
@@ -175,7 +176,6 @@ impl Experiment {
             })?,
             registries,
             fs,
-            rt,
             hardware_queue,
             uid: experiment_uid,
             artifact_key,
@@ -487,7 +487,8 @@ impl Experiment {
             }],
         };
 
-        self.rt
+        get_state()
+            .start_runtime()
             .block_on(async { registry.insert_metrics(&metric_request).await })
             .map_err(|e| {
                 error!("Failed to insert metric: {}", e);
@@ -505,7 +506,8 @@ impl Experiment {
             metrics,
         };
 
-        self.rt
+        get_state()
+            .start_runtime()
             .block_on(async { registry.insert_metrics(&metric_request).await })
             .map_err(|e| {
                 error!("Failed to insert metric: {}", e);
@@ -524,7 +526,8 @@ impl Experiment {
             parameters: vec![Parameter::new(name, value)?],
         };
 
-        self.rt
+        get_state()
+            .start_runtime()
             .block_on(async { registry.insert_parameters(&param_request).await })
             .map_err(|e| {
                 error!("Failed to insert metric: {}", e);
@@ -542,7 +545,8 @@ impl Experiment {
             parameters,
         };
 
-        self.rt
+        get_state()
+            .start_runtime()
             .block_on(async { registry.insert_parameters(&param_request).await })
             .map_err(|e| {
                 error!("Failed to insert metric: {}", e);
@@ -588,7 +592,7 @@ impl Experiment {
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
 
-        self.rt.block_on(async {
+        get_state().start_runtime().block_on(async {
             self.fs.lock().await.put(&path, &rpath, false).await?;
             Ok::<(), ExperimentError>(())
         })?;
@@ -604,7 +608,7 @@ impl Experiment {
 
         let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
 
-        self.rt.block_on(async {
+        get_state().start_runtime().block_on(async {
             self.fs.lock().await.put(&path, &rpath, true).await?;
             Ok::<(), ExperimentError>(())
         })?;
@@ -774,8 +778,7 @@ pub fn get_experiment_metrics(
         names: names.unwrap_or_default(),
     };
 
-    let state = get_state();
-    let metrics = state.runtime.block_on(async {
+    let metrics = get_state().start_runtime().block_on(async {
         let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_metrics(&metric_request).await
     })?;
@@ -794,8 +797,7 @@ pub fn get_experiment_parameters(
         names: names.unwrap_or_default(),
     };
 
-    let state = get_state();
-    let parameters = state.runtime.block_on(async {
+    let parameters = get_state().start_runtime().block_on(async {
         let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_parameters(&param_request).await
     })?;
