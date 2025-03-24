@@ -28,16 +28,16 @@ impl MultiPartUploader {
         client: Arc<OpsmlApiClient>,
         session_url: String,
     ) -> Result<Self, StorageError> {
-        match storage_type {
-            &StorageType::Aws => {
+        match *storage_type {
+            StorageType::Aws => {
                 S3MultipartUpload::new(lpath, rpath, session_url, client).map(MultiPartUploader::S3)
             }
-            &StorageType::Google => GcsMultipartUpload::new(lpath, rpath, session_url, client)
+            StorageType::Google => GcsMultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::Gcs),
-            &StorageType::Local => {
+            StorageType::Local => {
                 LocalMultipartUpload::new(lpath, rpath, client).map(MultiPartUploader::Local)
             }
-            &StorageType::Azure => AzureMultipartUpload::new(lpath, rpath, session_url, client)
+            StorageType::Azure => AzureMultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::Azure),
         }
     }

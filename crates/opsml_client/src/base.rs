@@ -163,7 +163,7 @@ impl OpsmlApiClient {
                 self.client
                     .get(url)
                     .headers(headers)
-                    .bearer_auth(&self.get_current_token())
+                    .bearer_auth(self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -175,7 +175,7 @@ impl OpsmlApiClient {
                 .post(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.get_current_token())
+                .bearer_auth(self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -186,7 +186,7 @@ impl OpsmlApiClient {
                 .put(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.get_current_token())
+                .bearer_auth(self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -201,7 +201,7 @@ impl OpsmlApiClient {
                 self.client
                     .delete(url)
                     .headers(headers)
-                    .bearer_auth(&self.get_current_token())
+                    .bearer_auth(self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -243,7 +243,7 @@ impl OpsmlApiClient {
             .client
             .post(format!("{}/files/multipart", self.base_path))
             .multipart(form)
-            .bearer_auth(&self.get_current_token())
+            .bearer_auth(self.get_current_token())
             .send()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
@@ -306,7 +306,7 @@ impl OpsmlApiClient {
             .client
             .post(url)
             .json(&body)
-            .bearer_auth(&self.get_current_token())
+            .bearer_auth(self.get_current_token())
             .send()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;

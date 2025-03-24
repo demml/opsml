@@ -51,14 +51,14 @@ impl FileSystemStorage {
         let state = get_state();
         let settings = state.config.storage_settings()?;
 
-        match state.mode() {
-            &OpsmlMode::Server => {
+        match *state.mode() {
+            OpsmlMode::Server => {
                 debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
                 Ok(FileSystemStorage::Server(
                     StorageClientEnum::new(&settings).await?,
                 ))
             }
-            &OpsmlMode::Client => {
+            OpsmlMode::Client => {
                 debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
 
                 Ok(FileSystemStorage::Client(

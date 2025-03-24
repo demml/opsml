@@ -209,7 +209,7 @@ impl CardRegistry {
                 Self::verify_and_register_card(
                     card,
                     &mut self.registry,
-                    &mut self.fs,
+                    &self.fs,
                     version_type,
                     pre_tag,
                     build_tag,
@@ -305,7 +305,7 @@ impl CardRegistry {
 
                 let tmp_path = Self::save_card(card, &self.registry_type).await?;
 
-                upload_card_artifacts(tmp_path, &mut self.fs, &key).await?;
+                upload_card_artifacts(tmp_path, &self.fs, &key).await?;
 
                 Ok(())
             })
