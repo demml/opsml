@@ -337,6 +337,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_client() {
+        set_env_vars();
         let client = FileSystemStorage::new().await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
