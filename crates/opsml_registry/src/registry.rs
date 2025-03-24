@@ -653,6 +653,7 @@ impl CardRegistry {
 }
 
 #[pyclass]
+#[derive(Clone)]
 pub struct CardRegistries {
     #[pyo3(get)]
     pub experiment: CardRegistry,
