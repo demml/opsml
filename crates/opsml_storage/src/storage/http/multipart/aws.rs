@@ -4,6 +4,7 @@ use opsml_error::StorageError;
 use opsml_types::contracts::{CompletedUploadPart, CompletedUploadParts, UploadResponse};
 use std::fs::File;
 use std::io::{BufReader, Read};
+use std::path::Path;
 use std::sync::Arc;
 
 pub struct S3MultipartUpload {
@@ -17,8 +18,8 @@ pub struct S3MultipartUpload {
 
 impl S3MultipartUpload {
     pub fn new(
-        rpath: &str,
-        lpath: &str,
+        rpath: &Path,
+        lpath: &Path,
         upload_id: String,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, StorageError> {
@@ -35,7 +36,7 @@ impl S3MultipartUpload {
         Ok(Self {
             client,
             upload_id,
-            rpath: rpath.to_string(),
+            rpath: rpath.to_str().unwrap().to_string(),
             file_reader,
             file_size,
             completed_parts: Vec::new(),

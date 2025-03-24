@@ -19,21 +19,15 @@ pub struct HttpStorageClient {
 
 impl HttpStorageClient {
     pub async fn new(api_client: Arc<OpsmlApiClient>) -> AnyhowResult<Self> {
-        let storage_type = Self::get_storage_setting().await.context(Colorize::purple(
-            "Error occurred while getting storage type",
-        ))?;
-
-        // get storage client (options are gcs, aws, azure and local)
-        //let storage_client = StorageClientEnum::new(settings)
-        //    .await
-        //    .map_err(|e| StorageError::Error(format!("Failed to create storage client: {}", e)))
-        //    .context(Colorize::green(
-        //        "Error occurred while creating storage client",
-        //    ))?;
+        let storage_type = Self::get_storage_setting(api_client.clone())
+            .await
+            .context(Colorize::purple(
+                "Error occurred while getting storage type",
+            ))?;
 
         Ok(Self {
-            api_client: api_client,
-            //storage_client,
+            api_client,
+
             storage_type,
         })
     }
@@ -49,8 +43,7 @@ impl HttpStorageClient {
     ///
     /// * `StorageType` - The storage type
     #[instrument(skip_all)]
-    async fn get_storage_setting() -> Result<StorageType, StorageError> {
-        let mut client = get_api_client().lock().await;
+    async fn get_storage_setting(client: Arc<OpsmlApiClient>) -> Result<StorageType, StorageError> {
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .await
@@ -384,7 +377,13 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
-        MultiPartUploader::new(multipart_session.session_url, rpath, "gcs")
+        MultiPartUploader::new(
+            rpath,
+            lpath,
+            "gcs",
+            self.api_client.clone(),
+            multipart_session.session_url,
+        )
     }
 
     #[instrument(skip_all)]
