@@ -31,4 +31,19 @@ impl MultiPartUploader {
             ))),
         }
     }
+
+    pub async fn upload_file_in_chunks(
+        &mut self,
+        chunk_count: u64,
+        size_of_last_chunk: u64,
+        chunk_size: u64,
+    ) -> Result<(), StorageError> {
+        match self {
+            MultiPartUploader::S3(s3) => s3.upload_file_in_chunks(chunk_size as usize).await,
+            MultiPartUploader::Gcs(gcs) => {
+                gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
+                    .await
+            }
+        }
+    }
 }
