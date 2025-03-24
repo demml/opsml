@@ -266,9 +266,7 @@ impl StorageClientEnum {
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, Some(multipart_session.session_url))
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Google(uploader))
             }
 
