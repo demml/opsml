@@ -15,7 +15,7 @@ use aws_sdk_s3::Client;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadParts, FileInfo};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo, UploadResponse};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -25,6 +25,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::str;
 use std::time::Duration;
+use time::error;
+use tracing::error;
 
 // Notes:
 // For general compatibility with the Pyo3, Rust and generics, we need to define structs with sync in mind.
@@ -277,9 +279,14 @@ impl AWSMulitPartUpload {
             self.upload_next_chunk(&upload_args).await?;
         } // extract the range from the result and update the first_byte and last_byte
 
-        self.complete_upload().await?;
-
-        Ok(())
+        match self.complete_upload().await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Failed to complete upload: {}. Aborting", e);
+                self.abort_multipart_upload().await?;
+                Err(e)
+            }
+        }
 
         // check if enum is Ok
     }
@@ -702,7 +709,7 @@ impl AWSStorageClient {
                 .set_parts(Some(upload_parts))
                 .build();
 
-        let _complete_multipart_upload_res = self
+        let _upload_response = self
             .client
             .complete_multipart_upload()
             .bucket(&self.bucket)
