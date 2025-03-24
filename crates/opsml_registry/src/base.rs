@@ -1,7 +1,7 @@
 use opsml_client::{build_api_client, ClientRegistry, OpsmlApiClient};
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlStorageSettings};
+use opsml_settings::config::{DatabaseSettings, OpsmlConfig, OpsmlMode, OpsmlStorageSettings};
 use opsml_state::get_state;
 use opsml_types::contracts::{
     Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
@@ -49,11 +49,19 @@ impl OpsmlRegistry {
             OpsmlMode::Server => {
                 #[cfg(feature = "server")]
                 {
+                    let settings = state.config.storage_settings().map_err(|e| {
+                        debug!("Failed to get storage settings: {}", e);
+                        RegistryError::Error(format!(
+                            "Failed to get storage settings with error: {}",
+                            e
+                        ))
+                    })?;
+                    let db_settings = state.config.database_settings.clone();
                     let server_registry =
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
-                            state.config.storage_settings,
-                            state.config.database_settings,
+                            settings,
+                            db_settings,
                         )
                         .await?;
                     Ok(Self::ServerRegistry(server_registry))
