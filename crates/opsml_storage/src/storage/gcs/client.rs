@@ -581,12 +581,8 @@ impl GoogleStorageClient {
         &self,
         lpath: &str,
         rpath: &str,
-        session_url: Option<String>,
     ) -> Result<GoogleMultipartUpload, StorageError> {
-        let resumable_upload_client = match session_url {
-            Some(url) => self.client.get_resumable_upload(url),
-            None => self.create_multipart_upload(rpath).await?,
-        };
+        let resumable_upload_client = self.create_multipart_upload(rpath).await?;
         let client = GoogleMultipartUpload::new(resumable_upload_client, lpath).await?;
         Ok(client)
     }
@@ -743,7 +739,6 @@ impl FileSystem for GCSFSStorageClient {
                     .create_multipart_uploader(
                         stripped_file_path.to_str().unwrap(),
                         remote_path.to_str().unwrap(),
-                        None,
                     )
                     .await?;
 
@@ -760,7 +755,6 @@ impl FileSystem for GCSFSStorageClient {
                 .create_multipart_uploader(
                     stripped_lpath.to_str().unwrap(),
                     stripped_rpath.to_str().unwrap(),
-                    None,
                 )
                 .await?;
 
@@ -778,14 +772,9 @@ impl GCSFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-        session_url: Option<String>,
     ) -> Result<GoogleMultipartUpload, StorageError> {
         self.client
-            .create_multipart_uploader(
-                lpath.to_str().unwrap(),
-                rpath.to_str().unwrap(),
-                session_url,
-            )
+            .create_multipart_uploader(lpath.to_str().unwrap(), rpath.to_str().unwrap())
             .await
     }
 

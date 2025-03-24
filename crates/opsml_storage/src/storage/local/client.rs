@@ -22,31 +22,14 @@ use walkdir::WalkDir;
 pub struct LocalMultiPartUpload {
     pub lpath: PathBuf,
     pub rpath: PathBuf,
-    client_mode: bool,
-    api_client: Option<OpsmlApiClient>,
     pub filename: String,
 }
 
 impl LocalMultiPartUpload {
-    pub async fn new(
-        lpath: &str,
-        rpath: &str,
-        client_mode: bool,
-        api_client: Option<OpsmlApiClient>,
-    ) -> Result<Self, StorageError> {
-        // if client_mode, api_client should be Some
-        if client_mode && api_client.is_none() {
-            // raise storage error
-            return Err(StorageError::Error(
-                "API client must be provided in client mode".to_string(),
-            ));
-        }
-
+    pub async fn new(lpath: &str, rpath: &str) -> Result<Self, StorageError> {
         Ok(Self {
             lpath: PathBuf::from(lpath),
             rpath: PathBuf::from(rpath),
-            client_mode,
-            api_client,
             filename: Path::new(lpath)
                 .file_name()
                 .unwrap()
@@ -384,10 +367,8 @@ impl LocalStorageClient {
         &self,
         lpath: &str,
         rpath: &str,
-        client_mode: bool,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
-        LocalMultiPartUpload::new(lpath, rpath, client_mode, api_client).await
+        LocalMultiPartUpload::new(lpath, rpath).await
     }
 }
 #[derive(Clone)]
@@ -538,14 +519,14 @@ impl FileSystem for LocalFSStorageClient {
                 let remote_path = stripped_rpath_clone.join(relative_path);
 
                 let uploader = self
-                    .create_multipart_uploader(&stripped_file_path, &remote_path, None)
+                    .create_multipart_uploader(&stripped_file_path, &remote_path)
                     .await?;
 
                 uploader.upload_file_in_chunks().await?;
             }
         } else {
             let uploader = self
-                .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None)
+                .create_multipart_uploader(&stripped_lpath, &stripped_rpath)
                 .await?;
 
             uploader.upload_file_in_chunks().await?;
@@ -560,7 +541,6 @@ impl LocalFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<LocalMultiPartUpload, StorageError> {
         debug!(
             "Creating multipart uploader for {} -> {}",
@@ -575,12 +555,7 @@ impl LocalFSStorageClient {
         };
 
         self.client
-            .create_multipart_uploader(
-                lpath.to_str().unwrap(),
-                rpath_buf.to_str().unwrap(),
-                self.client_mode,
-                api_client,
-            )
+            .create_multipart_uploader(lpath.to_str().unwrap(), rpath_buf.to_str().unwrap())
             .await
     }
 

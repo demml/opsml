@@ -94,7 +94,10 @@ impl S3MultipartUpload {
     }
 
     async fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
-        self.op
+        self.client
+            .generate_presigned_url_for_part(&self.key, &self.upload_id, part_number)
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to get presigned URL: {}", e)))
     }
 
     pub async fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), StorageError> {

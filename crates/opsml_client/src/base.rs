@@ -250,9 +250,9 @@ impl OpsmlApiClient {
         Ok(response)
     }
 
-    // specific method for multipart uploads (mainly used for localstorageclient and aws)
+    // specific method for multipart uploads (mainly used for aws)
     pub async fn generate_presigned_url_for_part(
-        &mut self,
+        &self,
         path: &str,
         session_url: &str,
         part_number: i32,
@@ -288,6 +288,12 @@ impl OpsmlApiClient {
 
         Ok(response.url)
     }
+
+    // specific method for completing multipart uploads (used for aws)
+    pub async fn complete_multipart_upload(
+        &self,
+        session_url: &str,
+
 }
 
 pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
