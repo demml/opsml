@@ -3,7 +3,6 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{
