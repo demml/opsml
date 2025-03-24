@@ -39,8 +39,6 @@ impl MultiPartUploader {
             }
             &StorageType::Azure => AzureMultipartUpload::new(lpath, rpath, session_url, client)
                 .map(MultiPartUploader::Azure),
-
-            _ => Err(StorageError::Error("Unsupported storage type".to_string())),
         }
     }
 
