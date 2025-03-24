@@ -1,3 +1,4 @@
+use crate::storage::aws::types::UploadPartArgs;
 use crate::storage::base::{get_files, PathExt, StorageClient};
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
@@ -14,7 +15,7 @@ use aws_sdk_s3::Client;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{FileInfo, UploadPartArgs};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -77,6 +78,7 @@ pub struct AWSMulitPartUpload {
     upload_parts: Vec<CompletedPart>,
     pub file_size: u64,
     pub filename: String,
+    pub http_client: HttpClient,
 }
 
 impl AWSMulitPartUpload {
@@ -106,6 +108,8 @@ impl AWSMulitPartUpload {
             .to_string_lossy()
             .to_string();
 
+        let http_client = HttpClient::new();
+
         Ok(Self {
             client,
             bucket: bucket.to_string(),
@@ -115,6 +119,7 @@ impl AWSMulitPartUpload {
             upload_parts: Vec::new(),
             file_size,
             filename,
+            http_client,
         })
     }
 
@@ -233,8 +238,7 @@ impl AWSMulitPartUpload {
             )
             .await?;
 
-        let presigned_url = upload_args.presigned_url.as_ref().unwrap();
-        self.upload_part_with_presigned_url(&part_number, body, presigned_url)
+        self.upload_part_with_presigned_url(&part_number, body, &upload_args.presigned_url)
             .await?;
 
         Ok(true)
@@ -254,9 +258,7 @@ impl AWSMulitPartUpload {
                 chunk_size
             };
 
-            let part_number = (chunk_index + 1) as i32;
-
-            generate_presigned_url_for_part(
+            let presigned_url = generate_presigned_url_for_part(
                 &self.bucket,
                 (chunk_index + 1) as i32,
                 &self.rpath,
@@ -266,7 +268,7 @@ impl AWSMulitPartUpload {
             .await?;
 
             let upload_args = UploadPartArgs {
-                presigned_url: Some(presigned_url),
+                presigned_url,
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
@@ -667,6 +669,52 @@ impl AWSStorageClient {
 
         Ok(presigned_request.uri().to_string())
     }
+
+    /// Helper function to complete an upload from parts
+    /// This is use by the server to complete a client multipart upload
+    ///
+    /// # Arguments
+    ///
+    /// * `upload_id` - The upload id of the multipart upload
+    /// * `parts` - The completed parts of the upload
+    /// * `path` - The path to the object in the bucket
+    ///
+    pub async fn complete_upload_from_parts(
+        &self,
+        upload_id: &str,
+        parts: CompletedUploadParts,
+        path: &str,
+    ) -> Result<(), StorageError> {
+        // convert the parts to CompletedPart
+        let upload_parts = parts
+            .parts
+            .iter()
+            .map(|part| {
+                CompletedPart::builder()
+                    .e_tag(part.e_tag.clone())
+                    .part_number(part.part_number)
+                    .build()
+            })
+            .collect();
+
+        let completed_multipart_upload: CompletedMultipartUpload =
+            CompletedMultipartUpload::builder()
+                .set_parts(Some(upload_parts))
+                .build();
+
+        let _complete_multipart_upload_res = self
+            .client
+            .complete_multipart_upload()
+            .bucket(&self.bucket)
+            .key(path)
+            .multipart_upload(completed_multipart_upload)
+            .upload_id(upload_id)
+            .send()
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
+
+        Ok(())
+    }
 }
 
 // For both python and rust, we need to define 2 structs: one for rust that supports async and one for python that does not
@@ -886,29 +934,6 @@ impl S3FStorageClient {
         self.client
             .generate_presigned_url_for_part(part_number, path.to_str().unwrap(), upload_id)
             .await
-    }
-
-    pub async fn complete_multipart_upload(
-        &self,
-        parts: CompletedUploadParts,
-    ) -> Result<(), StorageError> {
-        let completed_multipart_upload: CompletedMultipartUpload =
-            CompletedMultipartUpload::builder()
-                .set_parts(Some(self.upload_parts.clone()))
-                .build();
-
-        let _complete_multipart_upload_res = self
-            .client
-            .complete_multipart_upload()
-            .bucket(&self.bucket)
-            .key(&self.rpath)
-            .multipart_upload(completed_multipart_upload)
-            .upload_id(&self.upload_id)
-            .send()
-            .await
-            .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
-
-        Ok(())
     }
 }
 
