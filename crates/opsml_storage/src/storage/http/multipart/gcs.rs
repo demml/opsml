@@ -4,7 +4,6 @@ use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::UploadPartArgs;
 use opsml_types::contracts::UploadResponse;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
-use reqwest::Client;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
