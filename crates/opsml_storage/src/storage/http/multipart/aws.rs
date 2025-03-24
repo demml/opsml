@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 pub struct S3MultipartUpload {
     upload_id: String,
-    key: String,
+    rpath: String,
     file_reader: BufReader<File>,
     file_size: u64,
     completed_parts: Vec<CompletedUploadPart>,
@@ -17,12 +17,12 @@ pub struct S3MultipartUpload {
 
 impl S3MultipartUpload {
     pub fn new(
-        key: String,
+        rpath: &str,
+        lpath: &str,
         upload_id: String,
-        path: &str,
         client: Arc<OpsmlApiClient>,
     ) -> Result<Self, StorageError> {
-        let file = File::open(path)
+        let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
         let file_size = file
@@ -35,7 +35,7 @@ impl S3MultipartUpload {
         Ok(Self {
             client,
             upload_id,
-            key,
+            rpath: rpath.to_string(),
             file_reader,
             file_size,
             completed_parts: Vec::new(),
@@ -81,7 +81,7 @@ impl S3MultipartUpload {
 
     async fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
         self.client
-            .generate_presigned_url_for_part(&self.key, &self.upload_id, part_number)
+            .generate_presigned_url_for_part(&self.rpath, &self.upload_id, part_number)
             .await
             .map_err(|e| StorageError::Error(format!("Failed to get presigned URL: {}", e)))
     }
