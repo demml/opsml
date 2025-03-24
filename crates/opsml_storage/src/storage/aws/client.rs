@@ -12,10 +12,9 @@ use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::primitives::Length;
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
-use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadParts, FileInfo, UploadResponse};
+use opsml_types::contracts::{CompletedUploadParts, FileInfo};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -23,9 +22,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use std::str;
 use std::time::Duration;
-use time::error;
 use tracing::error;
 
 // Notes:
