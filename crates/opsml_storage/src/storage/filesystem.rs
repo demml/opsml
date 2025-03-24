@@ -53,18 +53,19 @@ impl FileSystemStorage {
     #[instrument(skip_all)]
     pub async fn new(mode: &OpsmlMode) -> Result<Self, StorageError> {
         let state = get_state().await;
-        let settings = state.config.storage_settings().unwrap();
+        let settings = state.config.storage_settings()?;
+
         match mode {
             &OpsmlMode::Server => {
                 debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
                 Ok(FileSystemStorage::Server(
-                    StorageClientEnum::new(settings).await?,
+                    StorageClientEnum::new(&settings).await?,
                 ))
             }
             &OpsmlMode::Client => {
                 debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
                 Ok(FileSystemStorage::Client(
-                    HttpFSStorageClient::new(client).await?,
+                    HttpFSStorageClient::new(state.api_client.clone()).await?,
                 ))
             }
         }
@@ -154,7 +155,6 @@ impl FileSystemStorage {
 mod tests {
     use super::*;
 
-    use opsml_settings::config::OpsmlConfig;
     use rand::distr::Alphanumeric;
     use rand::rng;
     use rand::Rng;
@@ -236,11 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_gcs_storage_client() {
-        let config = OpsmlConfig::new();
-
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap())
-            .await
-            .unwrap();
+        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Google);
@@ -282,11 +278,8 @@ mod tests {
     #[tokio::test]
     async fn test_aws_storage_client() {
         set_env_vars();
-        let config = OpsmlConfig::new(Some(true));
 
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
-            .await
-            .unwrap();
+        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Aws);
@@ -326,11 +319,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_client() {
-        let config = OpsmlConfig::new(Some(true));
-
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
-            .await
-            .unwrap();
+        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Azure);
@@ -380,11 +369,7 @@ mod tests {
     async fn test_local_storage_client() {
         set_env_vars();
 
-        let config = OpsmlConfig::new(Some(true));
-
-        let mut client = FileSystemStorage::new(&mut config.storage_settings().unwrap(), None)
-            .await
-            .unwrap();
+        let mut client = FileSystemStorage::new(&OpsmlMode::Client).await.unwrap();
 
         assert_eq!(client.name(), "HttpFSStorageClient");
         assert_eq!(client.storage_type(), StorageType::Local);
