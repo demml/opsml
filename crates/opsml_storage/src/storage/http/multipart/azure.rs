@@ -5,8 +5,6 @@ use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::UploadPartArgs;
 use opsml_types::contracts::UploadResponse;
-use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE};
-use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -15,10 +13,8 @@ use std::sync::Arc;
 pub struct AzureMultipartUpload {
     session_url: String,
     file_reader: BufReader<File>,
-    file_size: u64,
     client: Arc<OpsmlApiClient>,
     block_parts: Vec<String>,
-    filename: String,
     rpath: String,
 }
 
@@ -32,13 +28,6 @@ impl AzureMultipartUpload {
         let file = File::open(lpath)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
-        let metadata = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
-
-        let file_size = metadata.len();
-        let filename = Path::new(lpath).file_name().unwrap().to_str().unwrap();
-
         let file_reader = BufReader::new(file);
 
         Ok(Self {
@@ -46,8 +35,6 @@ impl AzureMultipartUpload {
             session_url: session_url.to_string(),
             block_parts: Vec::new(),
             file_reader,
-            file_size,
-            filename: filename.to_string(),
             rpath: rpath.to_str().unwrap().to_string(),
         })
     }
@@ -66,7 +53,6 @@ impl AzureMultipartUpload {
             };
 
             let upload_args = UploadPartArgs {
-                presigned_url: Some(self.session_url.clone()),
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
@@ -122,12 +108,13 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    pub async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
         let parts = MultipartCompleteParts::Azure(self.block_parts.clone());
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
             parts,
+            ..Default::default()
         };
 
         let response = self

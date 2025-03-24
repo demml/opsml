@@ -3,7 +3,6 @@ use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
-use aws_sdk_s3::config::http;
 use azure_storage::prelude::*;
 use azure_storage::shared_access_signature::service_sas::BlobSasPermissions;
 use azure_storage_blobs::container::operations::BlobItem;
@@ -98,7 +97,6 @@ impl AzureMultipartUpload {
             };
 
             let upload_args = UploadPartArgs {
-                presigned_url: None,
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
