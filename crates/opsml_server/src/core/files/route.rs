@@ -244,7 +244,7 @@ pub async fn generate_presigned_url(
 pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<CompleteMultipartQuery>,
+    Json(req): Json<CompleteMultipartUpload>,
     headers: HeaderMap,
 ) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
     // check for write access
@@ -256,15 +256,8 @@ pub async fn complete_multipart_upload(
         ));
     }
 
-    let path = Path::new(&params.path);
-    let session_url = params.session_url.as_ref().ok_or_else(|| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "Missing session_uri" })),
-        )
-    })?;
-
-    let parts = params.parts.clone();
+    let path = Path::new(&req.path);
+    let parts = req.parts.clone();
 
     let response = state
         .storage_client

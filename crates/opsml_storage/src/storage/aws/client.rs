@@ -14,7 +14,7 @@ use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 use aws_sdk_s3::Client;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
-use opsml_types::contracts::{CompletedUploadParts, FileInfo};
+use opsml_types::contracts::{CompletedUploadPart, CompletedUploadParts, FileInfo};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
 use reqwest::Client as HttpClient;
@@ -898,6 +898,17 @@ impl FileSystem for S3FStorageClient {
         };
 
         Ok(())
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        upload_id: &str,
+        rpath: &str,
+        parts: CompletedUploadParts,
+    ) -> Result<(), StorageError> {
+        self.client
+            .complete_upload_from_parts(upload_id, parts, rpath)
+            .await
     }
 }
 

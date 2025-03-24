@@ -457,4 +457,24 @@ impl From<PyErr> for CryptError {
     }
 }
 
+#[derive(Error, Debug, Deserialize, Serialize)]
+pub enum StateError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<StateError> for PyErr {
+    fn from(err: StateError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+impl From<PyErr> for StateError {
+    fn from(err: PyErr) -> Self {
+        StateError::Error(err.to_string())
+    }
+}
+
 create_exception!(opsml_error, OpsmlError, PyException);

@@ -1,7 +1,6 @@
 use base64::prelude::*;
 use opsml_error::StorageError;
 use opsml_types::{SqlType, StorageType};
-use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use rusty_logging::logger::{LoggingConfig, WriteLevel};
 use rusty_logging::LogLevel;
@@ -10,15 +9,13 @@ use std::default::Default;
 use std::env;
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::sync::OnceLock;
 use tracing::warn;
 
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum OpsmlMode {
     Client,
     Server,
 }
-
-static OPSML_MODE: OnceLock<OpsmlMode> = OnceLock::new();
 
 /// ApiSettings for use with ApiClient
 #[pyclass]
@@ -33,38 +30,24 @@ pub struct ApiSettings {
 }
 
 /// StorageSettings for used with all storage clients
-#[pyclass]
 #[derive(Debug, Clone)]
 pub struct OpsmlStorageSettings {
-    #[pyo3(get)]
     pub storage_uri: String,
-
-    #[pyo3(get)]
-    pub client_mode: bool,
-
-    #[pyo3(get)]
     pub api_settings: ApiSettings,
-
-    #[pyo3(get)]
     pub storage_type: StorageType,
-
     pub encryption_key: Vec<u8>,
 }
 
-#[pymethods]
 impl OpsmlStorageSettings {
     /// Create a new OpsmlStorageSettings instance
     ///
     /// # Returns
     ///
     /// `OpsmlStorageSettings`: A new instance of OpsmlStorageSettings
-    #[new]
-    #[pyo3(signature = (storage_uri="./opsml_registries", client_mode=false))]
-    pub fn new(storage_uri: &str, client_mode: bool) -> Self {
+    pub fn new(storage_uri: &str) -> Self {
         OpsmlStorageSettings {
             encryption_key: vec![],
             storage_uri: storage_uri.to_string(),
-            client_mode,
             api_settings: ApiSettings {
                 base_url: "".to_string(),
                 opsml_dir: "".to_string(),
@@ -79,7 +62,6 @@ impl OpsmlStorageSettings {
 }
 
 /// DatabaseSettings for used with all database clients
-#[pyclass]
 #[derive(Debug, Clone, Serialize)]
 pub struct DatabaseSettings {
     pub connection_uri: String,
@@ -87,7 +69,6 @@ pub struct DatabaseSettings {
     pub sql_type: SqlType,
 }
 
-#[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct AuthSettings {
     pub jwt_secret: String,
@@ -98,7 +79,6 @@ pub struct AuthSettings {
     pub scouter_secret: String,
 }
 
-#[pyclass]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
     pub server_uri: String,
@@ -110,7 +90,6 @@ pub struct ScouterSettings {
 /// OpsmlConfig for use with both server and client implementations
 /// OpsmlConfig is the main primary configuration struct for the Opsml system
 /// Based on provided env variables, it will be used to determine if opsml is running in client or server mode.
-#[pyclass]
 #[derive(Debug, Clone, Serialize)]
 pub struct OpsmlConfig {
     pub app_name: String,
@@ -123,8 +102,8 @@ pub struct OpsmlConfig {
     pub scouter_settings: ScouterSettings,
     pub auth_settings: AuthSettings,
     pub database_settings: DatabaseSettings,
-    pub client_mode: bool,
     pub logging_config: LoggingConfig,
+    pub mode: OpsmlMode,
 }
 
 impl Default for OpsmlConfig {
@@ -143,7 +122,7 @@ impl Default for OpsmlConfig {
             )
         });
 
-        let using_client = OpsmlConfig::is_using_client(&opsml_tracking_uri);
+        let mode = OpsmlConfig::get_mode(&opsml_tracking_uri);
 
         // set scouter settings
         let scouter_settings = ScouterSettings {
@@ -158,7 +137,7 @@ impl Default for OpsmlConfig {
         // set auth settings
         let auth_settings = AuthSettings {
             jwt_secret: env::var("OPSML_ENCRYPT_SECRET").unwrap_or_else(|_| {
-                if !using_client {
+                if mode == OpsmlMode::Server {
                     warn!(
                         "Using default secret for encryption 
                         This is not recommended for production use."
@@ -167,7 +146,7 @@ impl Default for OpsmlConfig {
                 generate_default_secret()
             }),
             refresh_secret: env::var("OPSML_REFRESH_SECRET").unwrap_or_else(|_| {
-                if !using_client {
+                if mode == OpsmlMode::Server {
                     warn!(
                         "Using default secret for refreshing. 
                         This is not recommended for production use."
@@ -176,7 +155,7 @@ impl Default for OpsmlConfig {
                 generate_default_secret()
             }),
             scouter_secret: env::var("OPSML_SCOUTER_SECRET").unwrap_or_else(|_| {
-                if !using_client {
+                if mode == OpsmlMode::Server {
                     warn!(
                         "Using default secret for scouter. 
                         This is not recommended for production use."
@@ -216,7 +195,7 @@ impl Default for OpsmlConfig {
             app_name: "opsml".to_string(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             app_version: env!("CARGO_PKG_VERSION").to_string(),
-            opsml_storage_uri: OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, using_client),
+            opsml_storage_uri: OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &mode),
             opsml_tracking_uri,
 
             opsml_proxy_root: "opsml-root:/".to_string(),
@@ -226,7 +205,7 @@ impl Default for OpsmlConfig {
             database_settings,
             scouter_settings,
             auth_settings,
-            client_mode: using_client,
+            mode,
             logging_config,
         }
     }
@@ -245,8 +224,8 @@ fn generate_default_secret() -> String {
 }
 
 impl OpsmlConfig {
-    pub fn set_opsml_storage_uri(opsml_storage_uri: String, using_client: bool) -> String {
-        if using_client {
+    pub fn set_opsml_storage_uri(opsml_storage_uri: String, mode: &OpsmlMode) -> String {
+        if mode == &OpsmlMode::Client {
             return opsml_storage_uri;
         }
 
@@ -267,24 +246,28 @@ impl OpsmlConfig {
         }
     }
 
-    pub fn is_using_client(opsml_tracking_uri: &str) -> bool {
-        opsml_tracking_uri.to_lowercase().trim().starts_with("http")
+    pub fn get_mode(opsml_tracking_uri: &str) -> OpsmlMode {
+        match opsml_tracking_uri.to_lowercase().trim().starts_with("http") {
+            true => OpsmlMode::Client,
+            false => OpsmlMode::Server,
+        }
     }
 
     pub fn storage_root(&self) -> String {
-        if !self.client_mode {
-            let storage_uri_lower = self.opsml_storage_uri.to_lowercase();
-            if let Some(stripped) = storage_uri_lower.strip_prefix("gs://") {
-                stripped.to_string()
-            } else if let Some(stripped) = storage_uri_lower.strip_prefix("s3://") {
-                stripped.to_string()
-            } else if let Some(stripped) = storage_uri_lower.strip_prefix("az://") {
-                stripped.to_string()
-            } else {
-                storage_uri_lower
+        match self.mode {
+            OpsmlMode::Client => self.opsml_proxy_root.clone(),
+            OpsmlMode::Server => {
+                let storage_uri_lower = self.opsml_storage_uri.to_lowercase();
+                if let Some(stripped) = storage_uri_lower.strip_prefix("gs://") {
+                    stripped.to_string()
+                } else if let Some(stripped) = storage_uri_lower.strip_prefix("s3://") {
+                    stripped.to_string()
+                } else if let Some(stripped) = storage_uri_lower.strip_prefix("az://") {
+                    stripped.to_string()
+                } else {
+                    storage_uri_lower
+                }
             }
-        } else {
-            self.opsml_proxy_root.clone()
         }
     }
 
@@ -319,7 +302,6 @@ impl OpsmlConfig {
                 .decode(self.auth_settings.jwt_secret.clone())
                 .map_err(|e| StorageError::Error(e.to_string()))?,
             storage_uri: self.opsml_storage_uri.clone(),
-            client_mode: self.client_mode,
             storage_type: self.get_storage_type(),
             api_settings: ApiSettings {
                 base_url: self.opsml_tracking_uri.clone(),
@@ -333,27 +315,16 @@ impl OpsmlConfig {
     }
 }
 
-#[pymethods]
 impl OpsmlConfig {
     /// Create a new OpsmlConfig instance
     ///
     /// # Returns
     ///
     /// `OpsmlConfig`: A new instance of OpsmlConfig
-    #[new]
-    #[pyo3(signature = (client_mode=None))]
-    pub fn new(client_mode: Option<bool>) -> Self {
-        let mut config = OpsmlConfig::default();
-
-        if let Some(client_mode) = client_mode {
-            config.client_mode = client_mode;
-        }
+    pub fn new() -> Self {
+        let config = OpsmlConfig::default();
 
         config
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
     }
 }
 
@@ -379,19 +350,19 @@ mod tests {
     #[test]
     fn test_set_opsml_storage_uri() {
         let opsml_storage_uri = "gs://test-bucket".to_string();
-        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, false);
+        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &OpsmlMode::Server);
         assert_eq!(result, "gs://test-bucket");
 
         let opsml_storage_uri = "s3://test-bucket".to_string();
-        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, false);
+        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &OpsmlMode::Server);
         assert_eq!(result, "s3://test-bucket");
 
         let opsml_storage_uri = "az://test-bucket".to_string();
-        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, false);
+        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &OpsmlMode::Server);
         assert_eq!(result, "az://test-bucket");
 
         let opsml_storage_uri = "./test-bucket".to_string();
-        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, false);
+        let result = OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &OpsmlMode::Server);
         assert_eq!(
             result,
             Path::new("./test-bucket")
@@ -411,13 +382,13 @@ mod tests {
             opsml_tracking_uri: "sqlite:///opsml.db".to_string(),
             ..Default::default()
         };
-        assert!(opsml_config.client_mode);
+        assert!(opsml_config.mode == OpsmlMode::Server);
 
         let opsml_config = OpsmlConfig {
             opsml_tracking_uri: "http://localhost:5000".to_string(),
             ..Default::default()
         };
-        assert!(!opsml_config.client_mode);
+        assert!(opsml_config.mode == OpsmlMode::Client);
 
         cleanup();
     }
