@@ -11,7 +11,7 @@ use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
-use tokio::sync::OnceCell;
+use tokio::sync::{Mutex, OnceCell};
 use tracing::error;
 use tracing::{debug, instrument};
 
@@ -181,43 +181,44 @@ impl StorageClientManager {
         }
     }
 
-    pub async fn get_client(&self) -> &Arc<FileSystemStorage> {
+    pub async fn create_storage_client(&self) -> Result<Arc<FileSystemStorage>, StorageError> {
+        FileSystemStorage::new().await.map(Arc::new).map_err(|e| {
+            error!("Error creating FileSystemStorage: {}", e);
+            StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
+        })
+    }
+
+    pub async fn get_client(&self) -> Arc<FileSystemStorage> {
         self.client
             .get_or_init(|| async {
-                let storage_client = FileSystemStorage::new()
+                Self::create_storage_client(self)
                     .await
-                    .map_err(|e| {
-                        error!("Error creating FileSystemStorage: {}", e);
-                        StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
-                    })
-                    .expect("Failed to initialize FileSystemStorage");
-
-                Arc::new(storage_client)
+                    .expect("Failed to create storage client")
             })
             .await
+            .clone()
+    }
+
+    pub fn reset(&mut self) {
+        self.client = OnceCell::new();
     }
 }
 
 // Global static instance with interior mutability
-static STORAGE_MANAGER: std::sync::Mutex<StorageClientManager> =
-    std::sync::Mutex::new(StorageClientManager::new());
+static STORAGE_MANAGER: Mutex<StorageClientManager> = Mutex::const_new(StorageClientManager::new());
 
 // Public interface
 pub async fn storage_client() -> Arc<FileSystemStorage> {
-    STORAGE_MANAGER
-        .lock()
-        .expect("Failed to acquire lock")
-        .get_client()
-        .await
-        .clone()
+    STORAGE_MANAGER.lock().await.get_client().await
 }
 
+// this is only used in tests to reset state
 pub fn reset_storage_client() -> Result<(), StorageError> {
-    let manager = StorageClientManager::new();
-    let _ = STORAGE_MANAGER
-        .lock()
-        .map_err(|e| StorageError::Error(format!("Failed to acquire lock: {}", e)))
-        .map(|mut guard| *guard = manager)?;
+    app_state().start_runtime().block_on(async {
+        let mut manager = STORAGE_MANAGER.lock().await;
+        manager.reset();
+    });
+
     Ok(())
 }
 

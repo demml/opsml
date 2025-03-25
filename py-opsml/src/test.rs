@@ -182,7 +182,7 @@ impl OpsmlTestServer {
     }
 }
 
-// create context manage that can be use in server test to cleanup resources
+// create context manager that can be use in server test to cleanup resources
 
 #[pyclass]
 pub struct OpsmlServerContext {}
@@ -195,8 +195,12 @@ impl OpsmlServerContext {
     }
 
     fn __enter__(&self) -> PyResult<()> {
-        app_state().reset_config()?;
-        reset_storage_client()?;
+        #[cfg(feature = "server")]
+        {
+            app_state().reset_config()?;
+            reset_storage_client()?;
+        }
+
         self.cleanup()?;
         Ok(())
     }
