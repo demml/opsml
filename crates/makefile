@@ -16,15 +16,15 @@ test.storage.local.client:
 
 .PHONY: test.storage.gcs.server
 test.storage.gcs.server:
-	cargo test -p opsml-storage test_gcs_storage_server -- --nocapture
+	cargo test -p opsml-storage test_gcs_storage_server -- --nocapture --test-threads 1
 
 .PHONY: test.storage.aws.server
 test.storage.aws.server:
-	cargo test -p opsml-storage test_aws_storage_server -- --nocapture
+	cargo test -p opsml-storage test_aws_storage_server -- --nocapture --test-threads 1
 
 .PHONY: test.storage.azure.server
 test.storage.azure.server:
-	cargo test -p opsml-storage test_azure_storage_server -- --nocapture
+	cargo test -p opsml-storage test_azure_storage_server -- --nocapture --test-threads 1
 
 .PHONY: test.storage.local.server
 test.storage.local.server:
