@@ -1,5 +1,5 @@
 use crate::HardwareQueue;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use names::Generator;
 use opsml_cards::ExperimentCard;
 use opsml_crypt::{decrypt_directory, encrypt_directory};
@@ -467,7 +467,7 @@ impl Experiment {
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
-        created_at: Option<NaiveDateTime>,
+        created_at: Option<DateTime<Utc>>,
     ) -> PyResult<()> {
         let mut registry = self.registries.experiment.registry.clone();
 

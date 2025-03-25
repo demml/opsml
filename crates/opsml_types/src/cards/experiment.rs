@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::TypeError;
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
@@ -22,7 +22,7 @@ pub struct Metric {
     pub timestamp: Option<i64>,
 
     #[pyo3(get)]
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: Option< DateTime<Utc>>,
 }
 
 #[pymethods]
@@ -34,7 +34,7 @@ impl Metric {
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
-        created_at: Option<NaiveDateTime>,
+        created_at: Option< DateTime<Utc>>,
     ) -> Self {
         Self {
             name,

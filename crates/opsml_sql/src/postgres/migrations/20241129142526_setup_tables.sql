@@ -1,7 +1,7 @@
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_data_registry (
     uid TEXT PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env TEXT DEFAULT 'development',
     name TEXT,
     repository TEXT,

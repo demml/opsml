@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_types::contracts::{Card, PromptCardClientRecord};
 use opsml_types::{cards::BaseArgs, RegistryType, SaveName, Suffix};
@@ -51,7 +51,7 @@ pub struct PromptCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
+    pub created_at:  DateTime<Utc>,
 
     #[pyo3(get)]
     pub is_card: bool,

@@ -1,4 +1,5 @@
-use chrono::{NaiveDateTime, Timelike};
+use chrono::Timelike;
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
 use opsml_error::error::UtilError;
 use pyo3::exceptions::PyValueError;
@@ -93,7 +94,7 @@ pub fn is_valid_uuid4(uid: &str) -> Result<bool, UtilError> {
 pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
     const YEAR_MONTH_DATE: &str = "%Y-%m-%d";
 
-    // Parse the date string into a NaiveDateTime
+    // Parse the date string into a  DateTime<Utc>
     let converted_date = NaiveDateTime::parse_from_str(max_date, YEAR_MONTH_DATE)
         .map_err(|_| UtilError::DateError)?;
 
@@ -106,7 +107,7 @@ pub fn get_epoch_time_to_search(max_date: &str) -> Result<i64, UtilError> {
         .with_second(59)
         .ok_or(UtilError::DateError)?;
 
-    // Convert NaiveDateTime to timestamp in microseconds
+    // Convert  DateTime<Utc> to timestamp in microseconds
     let timestamp = max_date.and_utc().timestamp() * 1_000_000;
 
     Ok(timestamp)
@@ -120,8 +121,8 @@ pub fn get_utc_timestamp() -> i64 {
     chrono::Utc::now().timestamp()
 }
 
-pub fn get_utc_datetime() -> NaiveDateTime {
-    chrono::Utc::now().naive_utc()
+pub fn get_utc_datetime() -> DateTime<Utc> {
+    Utc::now() // Returns DateTime<Utc> directly
 }
 
 pub struct PyHelperFuncs {}
