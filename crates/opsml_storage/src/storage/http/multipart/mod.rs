@@ -42,7 +42,7 @@ impl MultiPartUploader {
         }
     }
 
-    pub async fn upload_file_in_chunks(
+    pub fn upload_file_in_chunks(
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
