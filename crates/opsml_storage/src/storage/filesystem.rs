@@ -11,7 +11,6 @@ use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::OnceLock;
-use tokio::sync::Mutex;
 use tracing::error;
 use tracing::{debug, instrument};
 
@@ -148,9 +147,9 @@ impl FileSystemStorage {
     }
 }
 
-static STORAGE_CLIENT: OnceLock<Arc<Mutex<FileSystemStorage>>> = OnceLock::new();
+static STORAGE_CLIENT: OnceLock<Arc<FileSystemStorage>> = OnceLock::new();
 
-pub fn get_storage_client() -> &'static Arc<Mutex<FileSystemStorage>> {
+pub fn get_storage_client() -> &'static Arc<FileSystemStorage> {
     STORAGE_CLIENT.get_or_init(|| {
         async move {
             let storage_client = FileSystemStorage::new()
@@ -161,7 +160,7 @@ pub fn get_storage_client() -> &'static Arc<Mutex<FileSystemStorage>> {
                 })
                 .expect("Failed to initialize FileSystemStorage");
 
-            Arc::new(Mutex::new(storage_client))
+            Arc::new(storage_client)
         }
         .now_or_never()
         .expect("Failed to initialize storage client")

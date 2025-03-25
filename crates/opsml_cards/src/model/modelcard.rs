@@ -123,7 +123,7 @@ pub struct ModelCard {
 
     pub rt: Option<Arc<tokio::runtime::Runtime>>,
 
-    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
+    pub fs: Option<Arc<FileSystemStorage>>,
 
     pub artifact_key: Option<ArtifactKey>,
 
