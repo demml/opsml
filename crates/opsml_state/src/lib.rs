@@ -102,7 +102,6 @@ pub async fn get_api_client() -> &'static Arc<OpsmlApiClient> {
 
             // Initialize API client
             let api_client = build_api_client(&settings)
-                .await
                 .map_err(|e| {
                     error!("Failed to create api client: {}", e);
                     StateError::Error(format!("Failed to create api client with error: {}", e))
