@@ -4558,6 +4558,8 @@ dependencies = [
  "opsml-semver",
  "opsml-server",
  "opsml-settings",
+ "opsml-state",
+ "opsml-storage",
  "opsml-types",
  "opsml-utils",
  "potato-head",

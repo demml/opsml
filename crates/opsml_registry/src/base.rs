@@ -39,8 +39,9 @@ impl OpsmlRegistry {
     #[instrument(skip_all)]
     pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
         let state = app_state();
+        let mode = state.mode()?;
 
-        match state.mode() {
+        match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().await.clone();
                 let client_registry = ClientRegistry::new(registry_type, api_client).await?;
@@ -49,14 +50,15 @@ impl OpsmlRegistry {
             OpsmlMode::Server => {
                 #[cfg(feature = "server")]
                 {
-                    let settings = state.config.storage_settings().map_err(|e| {
+                    let config = state.config()?;
+                    let settings = config.storage_settings().map_err(|e| {
                         error!("Failed to get storage settings: {}", e);
                         RegistryError::Error(format!(
                             "Failed to get storage settings with error: {}",
                             e
                         ))
                     })?;
-                    let db_settings = state.config.database_settings.clone();
+                    let db_settings = config.database_settings.clone();
                     let server_registry =
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,

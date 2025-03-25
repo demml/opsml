@@ -32,6 +32,9 @@ pub enum StorageError {
 
     #[error("Unauthorized: {0}")]
     PermissionDenied(String),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<StorageError> for PyErr {
@@ -273,6 +276,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<RegistryError> for PyErr {

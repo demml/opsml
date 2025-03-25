@@ -4,6 +4,7 @@ use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;
 use std::sync::Arc;
 use std::sync::OnceLock;
+use std::sync::RwLock;
 use tokio::runtime::Runtime;
 use tokio::sync::OnceCell;
 use tracing::error;
@@ -11,13 +12,13 @@ use tracing::error;
 //    pub api_client: Arc<OpsmlApiClient>,
 
 pub struct OpsmlState {
-    pub config: OpsmlConfig,
+    pub config: RwLock<OpsmlConfig>,
     pub runtime: Arc<Runtime>,
 }
 
 impl OpsmlState {
     fn new() -> Result<Self, StateError> {
-        let config = OpsmlConfig::new();
+        let config = RwLock::new(OpsmlConfig::new());
 
         let runtime = Arc::new(Runtime::new().map_err(|e| {
             error!("Failed to create runtime: {}", e);
@@ -27,12 +28,39 @@ impl OpsmlState {
         Ok(Self { config, runtime })
     }
 
-    pub fn config(&self) -> &OpsmlConfig {
-        &self.config
+    pub fn config(&self) -> Result<OpsmlConfig, StateError> {
+        self.config
+            .read()
+            .map_err(|e| StateError::Error(format!("Failed to read config: {}", e)))
+            .map(|config| config.clone())
     }
 
-    pub fn mode(&self) -> &OpsmlMode {
-        &self.config.mode
+    pub fn mode(&self) -> Result<OpsmlMode, StateError> {
+        self.config
+            .read()
+            .map_err(|e| StateError::Error(format!("Failed to read config: {}", e)))
+            .map(|config| config.mode.clone())
+    }
+
+    pub fn update_config<F>(&self, f: F) -> Result<(), StateError>
+    where
+        F: FnOnce(&mut OpsmlConfig),
+    {
+        let mut config = self
+            .config
+            .write()
+            .map_err(|e| StateError::Error(format!("Failed to write config: {}", e)))?;
+        f(&mut config);
+        Ok(())
+    }
+
+    pub fn reset_config(&self) -> Result<(), StateError> {
+        let mut config = self
+            .config
+            .write()
+            .map_err(|e| StateError::Error(format!("Failed to write config: {}", e)))?;
+        *config = OpsmlConfig::new();
+        Ok(())
     }
 
     pub fn start_runtime(&self) -> Arc<Runtime> {
@@ -62,7 +90,7 @@ pub async fn get_api_client() -> &'static Arc<OpsmlApiClient> {
     API_CLIENT
         .get_or_init(|| async {
             let state = app_state();
-            let config = state.config();
+            let config = state.config().unwrap();
 
             let settings = config
                 .storage_settings()
