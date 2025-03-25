@@ -14,7 +14,7 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 #[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
@@ -42,7 +42,7 @@ impl OpsmlRegistry {
 
         match state.mode() {
             OpsmlMode::Client => {
-                let api_client = get_api_client().await;
+                let api_client = get_api_client().await.clone();
                 let client_registry = ClientRegistry::new(registry_type, api_client).await?;
                 Ok(Self::ClientRegistry(client_registry))
             }

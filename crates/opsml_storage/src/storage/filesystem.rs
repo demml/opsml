@@ -1,7 +1,8 @@
+#[cfg(feature = "server")]
 use crate::storage::enums::client::StorageClientEnum;
+
 use crate::storage::http::client::HttpFSStorageClient;
 use async_trait::async_trait;
-use futures::FutureExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
 use opsml_state::{app_state, get_api_client};
@@ -10,7 +11,7 @@ use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
 use std::sync::Arc;
-use std::sync::OnceLock;
+use tokio::sync::OnceCell;
 use tracing::error;
 use tracing::{debug, instrument};
 
@@ -40,7 +41,9 @@ pub trait FileSystem {
 }
 
 pub enum FileSystemStorage {
+    #[cfg(feature = "server")]
     Server(StorageClientEnum),
+
     Client(HttpFSStorageClient),
 }
 
@@ -52,16 +55,25 @@ impl FileSystemStorage {
 
         match *state.mode() {
             OpsmlMode::Server => {
-                debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
-                Ok(FileSystemStorage::Server(
-                    StorageClientEnum::new(&settings).await?,
-                ))
+                #[cfg(feature = "server")]
+                {
+                    debug!("Creating FileSystemStorage with StorageClientEnum for server storage");
+                    return Ok(FileSystemStorage::Server(
+                        StorageClientEnum::new(&settings).await?,
+                    ));
+                }
+                #[cfg(not(feature = "server"))]
+                {
+                    return Err(StorageError::Error(
+                        "Server mode requires the 'server' feature to be enabled".to_string(),
+                    ));
+                }
             }
             OpsmlMode::Client => {
                 debug!("Creating FileSystemStorage with HttpFSStorageClient for client storage");
 
                 Ok(FileSystemStorage::Client(
-                    HttpFSStorageClient::new(get_api_client().await).await?,
+                    HttpFSStorageClient::new(get_api_client().await.clone()).await?,
                 ))
             }
         }
@@ -69,6 +81,7 @@ impl FileSystemStorage {
 
     pub fn name(&self) -> &str {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.name(),
             FileSystemStorage::Client(client) => client.name(),
         }
@@ -76,6 +89,7 @@ impl FileSystemStorage {
 
     pub fn storage_type(&self) -> StorageType {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.storage_type(),
             FileSystemStorage::Client(client) => client.storage_type(),
         }
@@ -83,6 +97,7 @@ impl FileSystemStorage {
 
     pub async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.find(path).await,
             FileSystemStorage::Client(client) => client.find(path).await,
         }
@@ -90,6 +105,7 @@ impl FileSystemStorage {
 
     pub async fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.find_info(path).await,
             FileSystemStorage::Client(client) => client.find_info(path).await,
         }
@@ -102,6 +118,7 @@ impl FileSystemStorage {
         recursive: bool,
     ) -> Result<(), StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.get(lpath, rpath, recursive).await,
             FileSystemStorage::Client(client) => client.get(lpath, rpath, recursive).await,
         }
@@ -114,6 +131,7 @@ impl FileSystemStorage {
         recursive: bool,
     ) -> Result<(), StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.put(lpath, rpath, recursive).await,
             FileSystemStorage::Client(client) => client.put(lpath, rpath, recursive).await,
         }
@@ -121,6 +139,7 @@ impl FileSystemStorage {
 
     pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.rm(path, recursive).await,
             FileSystemStorage::Client(client) => client.rm(path, recursive).await,
         }
@@ -128,6 +147,7 @@ impl FileSystemStorage {
 
     pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.exists(path).await,
             FileSystemStorage::Client(client) => client.exists(path).await,
         }
@@ -139,6 +159,7 @@ impl FileSystemStorage {
         expiration: u64,
     ) -> Result<String, StorageError> {
         match self {
+            #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => {
                 client.generate_presigned_url(path, expiration).await
             }
@@ -147,11 +168,11 @@ impl FileSystemStorage {
     }
 }
 
-static STORAGE_CLIENT: OnceLock<Arc<FileSystemStorage>> = OnceLock::new();
+static STORAGE_CLIENT: OnceCell<Arc<FileSystemStorage>> = OnceCell::const_new();
 
-pub fn storage_client() -> &'static Arc<FileSystemStorage> {
-    STORAGE_CLIENT.get_or_init(|| {
-        async move {
+pub async fn storage_client() -> &'static Arc<FileSystemStorage> {
+    STORAGE_CLIENT
+        .get_or_init(|| async {
             let storage_client = FileSystemStorage::new()
                 .await
                 .map_err(|e| {
@@ -161,10 +182,8 @@ pub fn storage_client() -> &'static Arc<FileSystemStorage> {
                 .expect("Failed to initialize FileSystemStorage");
 
             Arc::new(storage_client)
-        }
-        .now_or_never()
-        .expect("Failed to initialize storage client")
-    })
+        })
+        .await
 }
 
 #[cfg(test)]

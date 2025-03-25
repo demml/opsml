@@ -355,13 +355,14 @@ impl DataCard {
 
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
         let rt = app_state().start_runtime();
-        let fs = storage_client();
 
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
         rt.block_on(async {
-            fs.get(lpath, &uri, true)
+            storage_client()
+                .await
+                .get(lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 

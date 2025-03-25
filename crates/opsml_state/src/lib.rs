@@ -58,7 +58,7 @@ pub fn app_state() -> &'static OpsmlState {
 
 static API_CLIENT: OnceCell<Arc<OpsmlApiClient>> = OnceCell::const_new();
 
-pub async fn get_api_client() -> Arc<OpsmlApiClient> {
+pub async fn get_api_client() -> &'static Arc<OpsmlApiClient> {
     API_CLIENT
         .get_or_init(|| async {
             let state = app_state();
@@ -84,5 +84,4 @@ pub async fn get_api_client() -> Arc<OpsmlApiClient> {
             Arc::new(api_client)
         })
         .await
-        .clone()
 }

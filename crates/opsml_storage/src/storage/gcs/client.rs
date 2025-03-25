@@ -60,8 +60,9 @@ impl GcpCreds {
             ));
         }
 
-        if let Ok(_) = env::var("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        if env::var("GOOGLE_APPLICATION_CREDENTIALS_JSON")
             .or_else(|_| env::var("GOOGLE_APPLICATION_CREDENTIALS"))
+            .is_ok()
         {
             return Ok(Some(CredentialsFile::new().await.map_err(|e| {
                 StorageError::Error(format!(
