@@ -10,7 +10,7 @@ use opsml_types::{
     contracts::{FileInfo, UploadResponse},
     StorageType,
 };
-use reqwest::multipart::{Form, Part};
+use reqwest::blocking::multipart::{Form, Part};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -89,7 +89,6 @@ impl LocalMultiPartUpload {
 
             let response = client
                 .multipart_upload(form)
-                .await
                 .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
             let response = response.json::<UploadResponse>().await.map_err(|e| {
