@@ -1,11 +1,10 @@
 use crate::storage::http::multipart::MultiPartUploader;
 use anyhow::{Context, Result as AnyhowResult};
-use bytes::BytesMut;
 use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{error, instrument};
@@ -17,12 +16,10 @@ pub struct HttpStorageClient {
 }
 
 impl HttpStorageClient {
-    pub async fn new(api_client: Arc<OpsmlApiClient>) -> AnyhowResult<Self> {
-        let storage_type = Self::get_storage_setting(api_client.clone())
-            .await
-            .context(Colorize::purple(
-                "Error occurred while getting storage type",
-            ))?;
+    pub fn new(api_client: Arc<OpsmlApiClient>) -> AnyhowResult<Self> {
+        let storage_type = Self::get_storage_setting(api_client.clone()).context(
+            Colorize::purple("Error occurred while getting storage type"),
+        )?;
 
         Ok(Self {
             api_client,
@@ -41,10 +38,9 @@ impl HttpStorageClient {
     ///
     /// * `StorageType` - The storage type
     #[instrument(skip_all)]
-    async fn get_storage_setting(client: Arc<OpsmlApiClient>) -> Result<StorageType, StorageError> {
+    fn get_storage_setting(client: Arc<OpsmlApiClient>) -> Result<StorageType, StorageError> {
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
-            .await
             .map_err(|e| {
                 let error = Colorize::alert(&format!("Failed to get storage settings: {}", e));
                 error!("{}", error);
@@ -53,7 +49,6 @@ impl HttpStorageClient {
 
         let settings = response
             .json::<StorageSettings>()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to parse storage response: {}", e)))?;
 
         // convert Value to Vec<String>
@@ -66,7 +61,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
+    pub fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -86,13 +81,12 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| {
                 error!("Failed to get files: {}", e);
                 StorageError::Error(format!("Failed to get files: {}", e))
             })?;
 
-        let response = response.json::<ListFileResponse>().await.map_err(|e| {
+        let response = response.json::<ListFileResponse>().map_err(|e| {
             error!("Failed to parse list file response: {}", e);
             StorageError::Error(format!("Failed to parse list file response: {}", e))
         })?;
@@ -107,7 +101,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
+    pub fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -126,13 +120,12 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| {
                 error!("Failed to get files: {}", e);
                 StorageError::Error(format!("Failed to get files: {}", e))
             })?;
 
-        let response = response.json::<ListFileInfoResponse>().await.map_err(|e| {
+        let response = response.json::<ListFileInfoResponse>().map_err(|e| {
             error!("Failed to parse file info response: {}", e);
             StorageError::Error(format!("Failed to parse file info response: {}", e))
         })?;
@@ -146,7 +139,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn get_object(
+    pub fn get_object(
         &self,
         local_path: &str,
         remote_path: &str,
@@ -169,10 +162,10 @@ impl HttpStorageClient {
         })?;
 
         // generate presigned url for downloading the object
-        let presigned_url = self.generate_presigned_url(remote_path).await?;
+        let presigned_url = self.generate_presigned_url(remote_path)?;
 
         // download the object
-        let mut response = if self.storage_type == StorageType::Local {
+        let response = if self.storage_type == StorageType::Local {
             let query = DownloadFileQuery {
                 path: remote_path.to_string(),
             };
@@ -190,7 +183,6 @@ impl HttpStorageClient {
                     Some(query_string),
                     None,
                 )
-                .await
                 .map_err(|e| {
                     error!("Failed to get file: {}", e);
                     StorageError::Error(format!("Failed to get file: {}", e))
@@ -203,32 +195,26 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Invalid presigned URL: {}", e))
             })?;
 
-            self.api_client.client.get(url).send().await.unwrap()
+            self.api_client.client.get(url).send().unwrap()
         };
 
         // create buffer to store downloaded data
-        let mut buffer = BytesMut::with_capacity(DOWNLOAD_CHUNK_SIZE);
+        let mut reader = response;
+        let mut buffer = vec![0; DOWNLOAD_CHUNK_SIZE];
 
-        // download the object in chunks
-        while let Some(chunk) = response.chunk().await.map_err(|e| {
-            error!("Failed to get chunk from response: {}", e);
-            StorageError::Error(format!("Failed to get chunk from response: {}", e))
-        })? {
-            buffer.extend_from_slice(&chunk);
-            if buffer.len() >= DOWNLOAD_CHUNK_SIZE {
-                file.write_all(&buffer).map_err(|e| {
-                    error!("Failed to write chunk: {}", e);
-                    StorageError::Error(format!("Failed to write chunk: {}", e))
-                })?;
-                buffer.clear();
+        loop {
+            let bytes_read = reader.read(&mut buffer).map_err(|e| {
+                error!("Failed to read from response: {}", e);
+                StorageError::Error(format!("Failed to read from response: {}", e))
+            })?;
+
+            if bytes_read == 0 {
+                break;
             }
-        }
 
-        // Write any remaining data in the buffer
-        if !buffer.is_empty() {
-            file.write_all(&buffer).map_err(|e| {
-                error!("Failed to write remaining data: {}", e);
-                StorageError::Error(format!("Failed to write remaining data: {}", e))
+            file.write_all(&buffer[..bytes_read]).map_err(|e| {
+                error!("Failed to write chunk: {}", e);
+                StorageError::Error(format!("Failed to write chunk: {}", e))
             })?;
         }
 
@@ -236,7 +222,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
+    pub fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: false,
@@ -256,13 +242,12 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| {
                 error!("Failed to delete file: {}", e);
                 StorageError::Error(format!("Failed to delete file: {}", e))
             })?;
 
-        let response = response.json::<DeleteFileResponse>().await.map_err(|e| {
+        let response = response.json::<DeleteFileResponse>().map_err(|e| {
             error!("Failed to parse delete response: {}", e);
             StorageError::Error(format!("Failed to parse delete response: {}", e))
         })?;
@@ -276,7 +261,7 @@ impl HttpStorageClient {
         Ok(response.deleted)
     }
 
-    pub async fn delete_objects(&self, path: &str) -> Result<bool, StorageError> {
+    pub fn delete_objects(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: true,
@@ -294,12 +279,10 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to delete file: {}", e)))?;
 
         let response = response
             .json::<DeleteFileResponse>()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to parse delete response: {}", e)))?;
 
         //let response = serde_json::from_value::<DeleteFileResponse>(val)
@@ -309,10 +292,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn create_multipart_upload(
-        &self,
-        path: &str,
-    ) -> Result<MultiPartSession, StorageError> {
+    pub fn create_multipart_upload(&self, path: &str) -> Result<MultiPartSession, StorageError> {
         // 1 - create multipart upload request and send to server
         let query = MultiPartQuery {
             path: path.to_string(),
@@ -332,7 +312,6 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| {
                 error!("Failed to create multipart upload: {}", e);
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
@@ -342,13 +321,12 @@ impl HttpStorageClient {
         if response.status().is_client_error() {
             let error_resp = response
                 .json::<PermissionDenied>()
-                .await
                 .map_err(|e| StorageError::Error(e.to_string()))?;
             return Err(StorageError::PermissionDenied(error_resp.error));
         }
 
         // deserialize response into MultiPartSession
-        let session = response.json::<MultiPartSession>().await.map_err(|e| {
+        let session = response.json::<MultiPartSession>().map_err(|e| {
             error!("Failed to parse multipart response: {}", e);
             StorageError::Error(e.to_string())
         })?;
@@ -361,7 +339,7 @@ impl HttpStorageClient {
     }
 
     /// Create a multipart uploader based on configured storage type
-    pub async fn create_multipart_uploader(
+    pub fn create_multipart_uploader(
         &self,
         rpath: &Path,
         lpath: &Path,
@@ -369,7 +347,6 @@ impl HttpStorageClient {
         // 1 get session url from server
         let multipart_session = self
             .create_multipart_upload(rpath.to_str().unwrap())
-            .await
             .map_err(|e| {
                 error!("Failed to create multipart upload: {}", e);
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
@@ -385,7 +362,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn generate_presigned_url(&self, path: &str) -> Result<String, StorageError> {
+    pub fn generate_presigned_url(&self, path: &str) -> Result<String, StorageError> {
         let query = PresignedQuery {
             path: path.to_string(),
             ..Default::default()
@@ -405,13 +382,12 @@ impl HttpStorageClient {
                 Some(query_string),
                 None,
             )
-            .await
             .map_err(|e| {
                 error!("Failed to generate presigned url: {}", e);
                 StorageError::Error(format!("Failed to generate presigned url: {}", e))
             })?;
 
-        let response = response.json::<PresignedUrl>().await.map_err(|e| {
+        let response = response.json::<PresignedUrl>().map_err(|e| {
             error!("Failed to parse presigned response: {}", e);
             StorageError::Error(format!("Failed to parse presigned response: {}", e))
         })?;
