@@ -6,7 +6,6 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 use std::sync::RwLock;
 use tokio::runtime::Runtime;
-use tokio::sync::OnceCell;
 use tracing::error;
 
 //    pub api_client: Arc<OpsmlApiClient>,
@@ -66,6 +65,13 @@ impl OpsmlState {
     pub fn start_runtime(&self) -> Arc<Runtime> {
         self.runtime.clone()
     }
+
+    pub fn block_on<F, T>(&self, future: F) -> T
+    where
+        F: std::future::Future<Output = T>,
+    {
+        self.runtime.block_on(future)
+    }
 }
 
 // Global instance
@@ -84,31 +90,29 @@ pub fn app_state() -> &'static OpsmlState {
     })
 }
 
-static API_CLIENT: OnceCell<Arc<OpsmlApiClient>> = OnceCell::const_new();
+static API_CLIENT: OnceLock<Arc<OpsmlApiClient>> = OnceLock::new();
 
-pub async fn get_api_client() -> &'static Arc<OpsmlApiClient> {
-    API_CLIENT
-        .get_or_init(|| async {
-            let state = app_state();
-            let config = state.config().unwrap();
+pub fn get_api_client() -> &'static Arc<OpsmlApiClient> {
+    API_CLIENT.get_or_init(|| {
+        let state = app_state();
+        let config = state.config().unwrap();
 
-            let settings = config
-                .storage_settings()
-                .map_err(|e| {
-                    error!("Failed to get storage settings: {}", e);
-                    StateError::Error(format!("Failed to get storage settings with error: {}", e))
-                })
-                .expect("Failed to get storage settings");
+        let settings = config
+            .storage_settings()
+            .map_err(|e| {
+                error!("Failed to get storage settings: {}", e);
+                StateError::Error(format!("Failed to get storage settings with error: {}", e))
+            })
+            .expect("Failed to get storage settings");
 
-            // Initialize API client
-            let api_client = build_api_client(&settings)
-                .map_err(|e| {
-                    error!("Failed to create api client: {}", e);
-                    StateError::Error(format!("Failed to create api client with error: {}", e))
-                })
-                .expect("Failed to create api client");
+        // Initialize API client
+        let api_client = build_api_client(&settings)
+            .map_err(|e| {
+                error!("Failed to create api client: {}", e);
+                StateError::Error(format!("Failed to create api client with error: {}", e))
+            })
+            .expect("Failed to create api client");
 
-            Arc::new(api_client)
-        })
-        .await
+        Arc::new(api_client)
+    })
 }
