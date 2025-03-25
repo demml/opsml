@@ -1,4 +1,3 @@
-use crate::storage::aws::types::UploadPartArgs;
 use crate::storage::base::{get_files, PathExt, StorageClient};
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
@@ -67,15 +66,20 @@ pub async fn generate_presigned_url_for_part(
 }
 
 pub struct AWSMulitPartUpload {
-    pub bucket: String,
-    pub client: Client,
-    pub rpath: String,
-    pub lpath: String,
-    pub upload_id: String,
-    upload_parts: Vec<CompletedPart>,
-    pub file_size: u64,
-    pub filename: String,
-    pub http_client: HttpClient,
+    bucket: String,
+    client: Client,
+    rpath: String,
+    lpath: String,
+    upload_id: String,
+    file_size: u64,
+    filename: String,
+    http_client: HttpClient,
+}
+
+#[derive(Clone)]
+pub struct UploadPart {
+    e_tag: String,
+    part_number: i32,
 }
 
 impl AWSMulitPartUpload {
@@ -85,27 +89,14 @@ impl AWSMulitPartUpload {
         rpath: &str,
         upload_id: &str,
     ) -> Result<Self, StorageError> {
-        // create a resuable runtime for the multipart upload
-
         let creds = AWSCreds::new().await?;
         let client = Client::new(&creds.config);
-
-        let file = File::open(lpath)
-            .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
-
-        let metadata = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
-
-        let file_size = metadata.len();
-
+        let file_size = Self::get_file_size(lpath)?;
         let filename = Path::new(lpath)
             .file_name()
             .unwrap()
             .to_string_lossy()
             .to_string();
-
-        let http_client = HttpClient::new();
 
         Ok(Self {
             client,
@@ -113,28 +104,31 @@ impl AWSMulitPartUpload {
             rpath: rpath.to_string(),
             lpath: lpath.to_string(),
             upload_id: upload_id.to_string(),
-            upload_parts: Vec::new(),
             file_size,
             filename,
-            http_client,
+            http_client: HttpClient::new(),
         })
+    }
+
+    fn get_file_size(path: &str) -> Result<u64, StorageError> {
+        let metadata = std::fs::metadata(path)
+            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
+        Ok(metadata.len())
     }
 
     /// Generate a presigned url for a part in the multipart upload
     /// This needs to be a non-self method because it is called from both client or server
-    pub async fn upload_part_with_presigned_url(
-        &mut self,
-        part_number: &i32,
+    pub async fn upload_part(
+        &self,
+        part_number: i32,
         body: ByteStream,
         presigned_url: &str,
-    ) -> Result<bool, StorageError> {
-        // collect the ByteStream
+    ) -> Result<UploadPart, StorageError> {
         let body = body
             .collect()
             .await
             .map_err(|e| StorageError::Error(format!("Failed to collect ByteStream: {}", e)))?;
 
-        // convert to bytes::Bytes
         let response = self
             .http_client
             .put(presigned_url)
@@ -144,21 +138,15 @@ impl AWSMulitPartUpload {
             .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
         if response.status().is_success() {
-            self.upload_parts.push(
-                CompletedPart::builder()
-                    .e_tag(
-                        response
-                            .headers()
-                            .get("ETag")
-                            .unwrap()
-                            .to_str()
-                            .unwrap()
-                            .to_string(),
-                    )
-                    .part_number(*part_number)
-                    .build(),
-            );
-            Ok(true)
+            let e_tag = response
+                .headers()
+                .get("ETag")
+                .ok_or_else(|| StorageError::Error("Missing ETag header".to_string()))?
+                .to_str()
+                .map_err(|e| StorageError::Error(format!("Invalid ETag header: {}", e)))?
+                .to_string();
+
+            Ok(UploadPart { e_tag, part_number })
         } else {
             Err(StorageError::Error(format!(
                 "Failed to upload part: {}",
@@ -167,14 +155,22 @@ impl AWSMulitPartUpload {
         }
     }
 
-    pub async fn complete_upload(&self) -> Result<(), StorageError> {
-        let completed_multipart_upload: CompletedMultipartUpload =
-            CompletedMultipartUpload::builder()
-                .set_parts(Some(self.upload_parts.clone()))
-                .build();
+    pub async fn complete_upload(&self, parts: Vec<UploadPart>) -> Result<(), StorageError> {
+        let completed_parts: Vec<CompletedPart> = parts
+            .into_iter()
+            .map(|part| {
+                CompletedPart::builder()
+                    .e_tag(part.e_tag)
+                    .part_number(part.part_number)
+                    .build()
+            })
+            .collect();
 
-        let _complete_multipart_upload_res = self
-            .client
+        let completed_multipart_upload = CompletedMultipartUpload::builder()
+            .set_parts(Some(completed_parts))
+            .build();
+
+        self.client
             .complete_multipart_upload()
             .bucket(&self.bucket)
             .key(&self.rpath)
@@ -219,34 +215,13 @@ impl AWSMulitPartUpload {
         Ok(stream)
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
-        upload_args: &UploadPartArgs,
-    ) -> Result<bool, StorageError> {
-        let path = Path::new(&self.lpath);
-        let part_number = (upload_args.chunk_index + 1) as i32;
-
-        let body = self
-            .get_next_chunk(
-                path,
-                upload_args.chunk_size,
-                upload_args.chunk_index,
-                upload_args.this_chunk_size,
-            )
-            .await?;
-
-        self.upload_part_with_presigned_url(&part_number, body, &upload_args.presigned_url)
-            .await?;
-
-        Ok(true)
-    }
-
     pub async fn upload_file_in_chunks(
-        &mut self,
+        &self,
         chunk_count: u64,
         size_of_last_chunk: u64,
     ) -> Result<(), StorageError> {
         let chunk_size = std::cmp::min(self.file_size, UPLOAD_CHUNK_SIZE as u64);
+        let mut upload_parts = Vec::new();
 
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
@@ -264,17 +239,22 @@ impl AWSMulitPartUpload {
             )
             .await?;
 
-            let upload_args = UploadPartArgs {
-                presigned_url,
-                chunk_size,
-                chunk_index,
-                this_chunk_size: this_chunk,
-            };
+            let path = Path::new(&self.lpath);
+            let body = ByteStream::read_from()
+                .path(path)
+                .offset(chunk_index * chunk_size)
+                .length(Length::Exact(this_chunk))
+                .build()
+                .await
+                .map_err(|e| StorageError::Error(format!("Failed to get next chunk: {}", e)))?;
 
-            self.upload_next_chunk(&upload_args).await?;
-        } // extract the range from the result and update the first_byte and last_byte
+            let part = self
+                .upload_part((chunk_index + 1) as i32, body, &presigned_url)
+                .await?;
+            upload_parts.push(part);
+        }
 
-        match self.complete_upload().await {
+        match self.complete_upload(upload_parts).await {
             Ok(_) => Ok(()),
             Err(e) => {
                 error!("Failed to complete upload: {}. Aborting", e);
@@ -282,8 +262,6 @@ impl AWSMulitPartUpload {
                 Err(e)
             }
         }
-
-        // check if enum is Ok
     }
 }
 
@@ -862,7 +840,7 @@ impl FileSystem for S3FStorageClient {
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
-                let mut uploader = self
+                let uploader = self
                     .client
                     .create_multipart_uploader(
                         stripped_file_path.to_str().unwrap(),
@@ -878,7 +856,7 @@ impl FileSystem for S3FStorageClient {
             let (chunk_count, size_of_last_chunk, _) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64).unwrap();
 
-            let mut uploader = self
+            let uploader = self
                 .client
                 .create_multipart_uploader(
                     stripped_lpath.to_str().unwrap(),
