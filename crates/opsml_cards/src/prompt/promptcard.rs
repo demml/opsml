@@ -51,7 +51,7 @@ pub struct PromptCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at:  DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 
     #[pyo3(get)]
     pub is_card: bool,

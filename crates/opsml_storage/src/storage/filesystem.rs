@@ -225,7 +225,7 @@ pub fn reset_storage_client() -> Result<(), StorageError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;
     use rand::rng;
     use rand::Rng;
@@ -250,7 +250,7 @@ mod tests {
     }
 
     pub fn create_nested_data() -> String {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
         let chunk_size = (1024 * 1024 * 2) as u64;
 
         // create a temporary directory
@@ -280,7 +280,7 @@ mod tests {
     }
 
     fn _create_single_file(chunk_size: &u64) -> String {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
 
         // create a temporary directory
         let dir_name = format!("temp_test_dir_{}", &rand_name);
@@ -335,7 +335,7 @@ mod tests {
         assert_eq!(files.len(), 2);
 
         // download the files
-        let new_path = uuid::Uuid::new_v4().to_string();
+        let new_path = create_uuid7();
         let new_path = Path::new(&new_path);
         client.get(new_path, rpath, true).await.unwrap();
 
@@ -377,7 +377,7 @@ mod tests {
         assert_eq!(files.len(), 2);
 
         // download the files
-        let new_path = uuid::Uuid::new_v4().to_string();
+        let new_path = create_uuid7();
         let new_path = Path::new(&new_path);
 
         client.get(new_path, rpath, true).await.unwrap();
@@ -418,7 +418,7 @@ mod tests {
         assert_eq!(files.len(), 2);
         //
         //// download the files
-        let new_path = uuid::Uuid::new_v4().to_string();
+        let new_path = create_uuid7();
         let new_path = Path::new(&new_path);
 
         client.get(new_path, rpath, true).await.unwrap();
@@ -468,7 +468,7 @@ mod tests {
         assert_eq!(files.len(), 2);
         //
         //// download the files
-        let new_path = uuid::Uuid::new_v4().to_string();
+        let new_path = create_uuid7();
         let new_path = Path::new(&new_path);
 
         client.get(new_path, rpath, true).await.unwrap();
