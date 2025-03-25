@@ -10,7 +10,8 @@ use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use std::path::Path;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, RwLock};
+
 use tracing::error;
 use tracing::{debug, instrument};
 
@@ -185,13 +186,13 @@ impl FileSystemStorage {
 
 #[derive(Default)]
 pub struct StorageClientManager {
-    client: OnceLock<Arc<FileSystemStorage>>,
+    client: RwLock<Option<Arc<FileSystemStorage>>>,
 }
 
 impl StorageClientManager {
     pub const fn new() -> Self {
         Self {
-            client: OnceLock::new(),
+            client: RwLock::new(None),
         }
     }
 
@@ -202,44 +203,49 @@ impl StorageClientManager {
         })
     }
 
-    pub fn get_client(&self) -> Arc<FileSystemStorage> {
-        self.client
-            .get_or_init(|| {
-                Self::create_storage_client(self).expect("Failed to create storage client")
-            })
-            .clone()
+    pub fn get_client(&self) -> Result<Arc<FileSystemStorage>, StorageError> {
+        // Try to read first
+        if let Ok(guard) = self.client.read() {
+            if let Some(client) = guard.as_ref() {
+                return Ok(client.clone());
+            }
+        }
+
+        // If no client exists, create one
+        let new_client = Arc::new(FileSystemStorage::new().map_err(|e| {
+            error!("Error creating FileSystemStorage: {}", e);
+            StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
+        })?);
+
+        if let Ok(mut guard) = self.client.write() {
+            if guard.is_none() {
+                *guard = Some(new_client.clone());
+            }
+            return Ok(guard.as_ref().unwrap().clone());
+        }
+
+        // Fallback in case of poisoned lock
+        Ok(new_client)
     }
 
-    pub fn reset(&mut self) {
-        self.client = OnceLock::new();
+    pub fn reset(&self) {
+        if let Ok(mut guard) = self.client.write() {
+            *guard = None;
+        }
     }
 }
 
-// Global static instance with interior mutability
-static STORAGE_MANAGER: Mutex<StorageClientManager> = Mutex::new(StorageClientManager::new());
+// Global static instance
+static STORAGE_MANAGER: StorageClientManager = StorageClientManager::new();
 
 // Public interface
 pub fn storage_client() -> Result<Arc<FileSystemStorage>, StorageError> {
-    let cloned = STORAGE_MANAGER
-        .lock()
-        .map_err(|e| {
-            error!("Failed to lock storage manager: {}", e);
-            StorageError::Error(format!("Failed to lock storage manager: {}", e))
-        })?
-        .get_client()
-        .clone();
-
-    Ok(cloned)
+    STORAGE_MANAGER.get_client()
 }
 
 // this is only used in tests to reset state
 pub fn reset_storage_client() -> Result<(), StorageError> {
-    let mut manager = STORAGE_MANAGER.lock().map_err(|e| {
-        error!("Failed to lock storage manager: {}", e);
-        StorageError::Error(format!("Failed to lock storage manager: {}", e))
-    })?;
-    manager.reset();
-
+    STORAGE_MANAGER.reset();
     Ok(())
 }
 
