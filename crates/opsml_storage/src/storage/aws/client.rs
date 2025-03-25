@@ -17,7 +17,7 @@ use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
-use reqwest::Client as HttpClient;
+use reqwest::blocking::Client as HttpClient;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -144,7 +144,6 @@ impl AWSMulitPartUpload {
             .put(presigned_url)
             .body(body.into_bytes())
             .send()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
         if response.status().is_success() {
@@ -255,7 +254,6 @@ impl AWSMulitPartUpload {
                 let mut client = self.api_client.as_ref().unwrap().clone();
                 client
                     .generate_presigned_url_for_part(&self.rpath, &self.upload_id, part_number)
-                    .await
                     .map_err(|e| {
                         StorageError::Error(format!("Failed to generate presigned url: {}", e))
                     })?
