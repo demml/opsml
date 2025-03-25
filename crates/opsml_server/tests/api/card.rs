@@ -841,14 +841,14 @@ async fn test_opsml_server_card_get_card() {
 
     // Create a test card with some data
     let card_request = CreateCardRequest {
-        card: Card::Data(DataCardClientRecord {
+        card: Card::Model(ModelCardClientRecord {
             name: "name".to_string(),
             repository: "space".to_string(),
             version: "1.0.0".to_string(),
             tags: vec!["test".to_string()],
-            ..DataCardClientRecord::default()
+            ..ModelCardClientRecord::default()
         }),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
         version_request: card_version_request,
     };
 
@@ -880,7 +880,7 @@ async fn test_opsml_server_card_get_card() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -940,7 +940,7 @@ async fn test_opsml_server_card_get_readme() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();

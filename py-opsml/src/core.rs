@@ -1,9 +1,7 @@
 use opsml_error::error::OpsmlError;
 use opsml_interfaces::{base::ExtraMetadata, Feature, FeatureSchema, OnnxSchema};
 use opsml_semver::VersionType;
-use opsml_settings::config::{ApiSettings, OpsmlConfig, OpsmlStorageSettings};
 use opsml_types::{CommonKwargs, InterfaceType, SaveName, SaverPath, StorageType, Suffix};
-use opsml_utils::FileUtils;
 use pyo3::prelude::*;
 use rusty_logging::{LogLevel, LoggingConfig, RustyLogger};
 
@@ -16,9 +14,6 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // opsml_errors
     m.add("OpsmlError", m.py().get_type::<OpsmlError>())?;
-
-    // opsml_settings
-    m.add_class::<OpsmlConfig>()?;
 
     m.add_class::<ExtraMetadata>()?;
 
@@ -38,9 +33,5 @@ pub fn core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // opsml_storage
     m.add_class::<StorageType>()?;
 
-    // opsml_utils
-    m.add_class::<FileUtils>()?;
-    m.add_class::<ApiSettings>()?;
-    m.add_class::<OpsmlStorageSettings>()?;
     Ok(())
 }
