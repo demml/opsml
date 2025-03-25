@@ -52,7 +52,7 @@ pub enum FileSystemStorage {
 /// solely on the StorageClientEnum for storage operations. Given the non-async support of Pyo3 and python's
 /// non-default async support, the happy path is to enable sync only calls from the client to the server when used in
 /// client mode (HttpsFSStorageClient). If the user opts to put their local code into server mode, then
-/// server FileSystemStorage calls will make user of the app_state.runtime in order to interact with the StorageClientEnum.
+/// server FileSystemStorage calls will make use of the app_state.runtime in order to interact with the StorageClientEnum.
 ///
 impl FileSystemStorage {
     #[cfg(feature = "server")]
