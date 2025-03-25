@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS opsml_data_registry (
 -- ModelSchema
 CREATE TABLE IF NOT EXISTS opsml_model_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS opsml_model_registry (
 -- RunSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_registry (
 -- AuditSchema
 CREATE TABLE IF NOT EXISTS opsml_audit_registry (
     uid VARCHAR(64) PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     app_env VARCHAR(32) DEFAULT 'development',
     name VARCHAR(128),
     repository VARCHAR(128),
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
     value FLOAT,
     step INT,
     timestamp BIGINT,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     idx SERIAL PRIMARY KEY
 );
 
@@ -103,14 +103,14 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
     experiment_uid VARCHAR(64),
     name VARCHAR(128),
     value JSONB,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     idx SERIAL PRIMARY KEY
 );
 
 -- HardwareSchema
 CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     experiment_uid VARCHAR(64) NOT NULL,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     cpu_percent_utilization REAL,
     cpu_percent_per_core JSONB, -- JSONB is not supported in SQLite, use TEXT to store JSON strings
     free_memory BIGINT,
@@ -126,7 +126,7 @@ CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hard
 
 CREATE TABLE IF NOT EXISTS opsml_users (
     id SERIAL PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT (TIMEZONE('utc', NOW())),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
     active BOOLEAN DEFAULT TRUE,
     username VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
