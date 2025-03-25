@@ -41,13 +41,9 @@ impl S3MultipartUpload {
         })
     }
 
-    pub async fn upload_part(
-        &mut self,
-        part_number: i32,
-        chunk: Bytes,
-    ) -> Result<(), StorageError> {
+    pub fn upload_part(&mut self, part_number: i32, chunk: Bytes) -> Result<(), StorageError> {
         // First get presigned URL for this part from server
-        let presigned_url = self.get_upload_url(part_number).await?;
+        let presigned_url = self.get_upload_url(part_number)?;
 
         // Upload chunk using presigned URL
         let response = self
@@ -56,7 +52,6 @@ impl S3MultipartUpload {
             .put(&presigned_url)
             .body(chunk)
             .send()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to upload part: {}", e)))?;
 
         if response.status().is_success() {
@@ -78,14 +73,13 @@ impl S3MultipartUpload {
         }
     }
 
-    async fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
+    fn get_upload_url(&self, part_number: i32) -> Result<String, StorageError> {
         self.client
             .generate_presigned_url_for_part(&self.rpath, &self.upload_id, part_number)
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to get presigned URL: {}", e)))
     }
 
-    pub async fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), StorageError> {
+    pub fn upload_file_in_chunks(&mut self, chunk_size: usize) -> Result<(), StorageError> {
         let mut buffer = vec![0; chunk_size];
         let mut part_number = 1;
 
@@ -100,17 +94,17 @@ impl S3MultipartUpload {
             }
 
             let chunk = Bytes::copy_from_slice(&buffer[..bytes_read]);
-            self.upload_part(part_number, chunk).await?;
+            self.upload_part(part_number, chunk)?;
 
             part_number += 1;
         }
 
-        self.complete_upload().await?;
+        self.complete_upload()?;
 
         Ok(())
     }
 
-    async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
         let completed_parts = CompletedUploadParts {
             parts: self.completed_parts.clone(),
         };
@@ -127,10 +121,9 @@ impl S3MultipartUpload {
         let response = self
             .client
             .complete_multipart_upload(request)
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
-        let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+        let uploaded = response.json::<UploadResponse>().map_err(|e| {
             StorageError::Error(format!("Failed to parse complete upload response: {}", e))
         })?;
 

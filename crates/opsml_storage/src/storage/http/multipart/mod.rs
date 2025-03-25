@@ -49,16 +49,13 @@ impl MultiPartUploader {
         chunk_size: u64,
     ) -> Result<(), StorageError> {
         match self {
-            MultiPartUploader::S3(s3) => s3.upload_file_in_chunks(chunk_size as usize).await,
+            MultiPartUploader::S3(s3) => s3.upload_file_in_chunks(chunk_size as usize),
             MultiPartUploader::Gcs(gcs) => {
                 gcs.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await
             }
-            MultiPartUploader::Local(local) => local.upload_file_in_chunks().await,
+            MultiPartUploader::Local(local) => local.upload_file_in_chunks(),
             MultiPartUploader::Azure(azure) => {
-                azure
-                    .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                    .await
+                azure.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
             }
         }
     }
