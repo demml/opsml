@@ -44,8 +44,8 @@ impl OpsmlState {
 static INSTANCE: OnceLock<OpsmlState> = OnceLock::new();
 
 // Global accessor
-// Then modify your get_state() to use this runtime
-pub fn get_state() -> &'static OpsmlState {
+// Then modify your app_state() to use this runtime
+pub fn app_state() -> &'static OpsmlState {
     INSTANCE.get_or_init(|| {
         OpsmlState::new()
             .map_err(|e| {
@@ -61,7 +61,7 @@ static API_CLIENT: OnceCell<Arc<OpsmlApiClient>> = OnceCell::const_new();
 pub async fn get_api_client() -> Arc<OpsmlApiClient> {
     API_CLIENT
         .get_or_init(|| async {
-            let state = get_state();
+            let state = app_state();
             let config = state.config();
 
             let settings = config

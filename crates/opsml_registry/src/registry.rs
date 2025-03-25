@@ -4,17 +4,13 @@ use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_state::get_state;
-use opsml_storage::storage::filesystem::get_storage_client;
-use opsml_storage::FileSystemStorage;
+use opsml_state::app_state;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
 use std::path::PathBuf;
-use std::sync::Arc;
 use tempfile::TempDir;
-use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
 
 /// Extract registry type from a PyAny object
@@ -65,20 +61,18 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryT
 /// * `RegistryError` - Error
 pub fn initialize_registry_components(
     registry_type: RegistryType,
-) -> Result<(OpsmlRegistry, Arc<Mutex<FileSystemStorage>>), RegistryError> {
-    let runtime = get_state().start_runtime();
+) -> Result<OpsmlRegistry, RegistryError> {
+    let runtime = app_state().start_runtime();
 
-    let (registry, storage) = runtime.block_on(async {
+    let registry = runtime.block_on(async {
         let registry = OpsmlRegistry::new(registry_type)
             .await
             .map_err(|e| RegistryError::Error(format!("Failed to create registry: {}", e)))?;
 
-        let storage = get_storage_client().clone();
-
-        Ok::<_, RegistryError>((registry, storage))
+        Ok::<_, RegistryError>(registry)
     })?;
 
-    Ok((registry, storage))
+    Ok(registry)
 }
 
 pub struct CardArgs {
@@ -95,7 +89,6 @@ pub struct CardRegistry {
     registry_type: RegistryType,
     table_name: String,
     pub registry: OpsmlRegistry,
-    pub fs: Arc<Mutex<FileSystemStorage>>,
 }
 
 #[pymethods]
@@ -116,14 +109,13 @@ impl CardRegistry {
         let registry_type = extract_registry_type(registry_type)?;
 
         // Create a new tokio runtime for the registry (needed for async calls)
-        let (registry, fs) = initialize_registry_components(registry_type.clone())
+        let registry = initialize_registry_components(registry_type.clone())
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(&registry_type).to_string(),
             registry,
-            fs,
         })
     }
 
@@ -179,7 +171,7 @@ impl CardRegistry {
             registry_type: self.registry_type.clone(),
         };
 
-        let cards = get_state()
+        let cards = app_state()
             .start_runtime()
             .block_on(async { self.registry.list_cards(query_args).await })
             .map_err(|e| {
@@ -203,13 +195,12 @@ impl CardRegistry {
         debug!("Registering card");
 
         // Wrap all operations in a single block_on to handle async operations
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async {
                 Self::verify_and_register_card(
                     card,
                     &mut self.registry,
-                    &self.fs,
                     version_type,
                     pre_tag,
                     build_tag,
@@ -245,7 +236,7 @@ impl CardRegistry {
         }
 
         // Wrap all operations in a single block_on to handle async operations
-        let card = get_state()
+        let card = app_state()
             .start_runtime()
             .block_on(async {
                 // 1. Load the card // download the card from storage
@@ -262,7 +253,7 @@ impl CardRegistry {
                     })
                     .await?;
 
-                download_card(py, key, &mut self.fs, interface).await
+                download_card(py, key, interface).await
             })
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
@@ -276,7 +267,7 @@ impl CardRegistry {
 
         check_if_card(card)?;
 
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async {
                 // update card
@@ -297,7 +288,7 @@ impl CardRegistry {
     pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
         debug!("Updating card");
         check_if_card(card)?;
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async {
                 // update card
@@ -305,7 +296,7 @@ impl CardRegistry {
 
                 let tmp_path = Self::save_card(card, &self.registry_type).await?;
 
-                upload_card_artifacts(tmp_path, &self.fs, &key).await?;
+                upload_card_artifacts(tmp_path, &key).await?;
 
                 Ok(())
             })
@@ -319,7 +310,6 @@ impl CardRegistry {
     async fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
-        fs: &Arc<Mutex<FileSystemStorage>>,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
@@ -352,7 +342,7 @@ impl CardRegistry {
 
         // Save artifacts
         debug!("Uploading card artifacts");
-        upload_card_artifacts(tmp_path, fs, &create_response.key).await?;
+        upload_card_artifacts(tmp_path, &create_response.key).await?;
 
         debug!("Successfully registered card");
         Ok(())
@@ -635,12 +625,11 @@ impl CardRegistry {
 
 impl CardRegistry {
     pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
-        let (registry, fs) = initialize_registry_components(registry_type.clone())?;
+        let registry = initialize_registry_components(registry_type.clone())?;
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
-            fs,
         })
     }
 
@@ -665,8 +654,6 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub prompt: CardRegistry,
-
-    pub fs: Arc<Mutex<FileSystemStorage>>,
 }
 
 #[pymethods]
@@ -692,21 +679,11 @@ impl CardRegistries {
         let mut prompt = experiment.clone();
         prompt.update_type(RegistryType::Prompt);
 
-        let fs = experiment.fs.clone();
-
         Ok(Self {
             experiment,
             model,
             data,
             prompt,
-            fs,
         })
-    }
-}
-
-impl CardRegistries {
-    // helper for accessing the file system storage
-    pub fn get_fs(&self) -> Arc<Mutex<FileSystemStorage>> {
-        self.experiment.fs.clone()
     }
 }

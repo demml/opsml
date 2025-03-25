@@ -3725,6 +3725,7 @@ dependencies = [
  "opsml-crypt",
  "opsml-error",
  "opsml-interfaces",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",

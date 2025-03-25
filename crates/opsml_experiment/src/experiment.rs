@@ -7,8 +7,8 @@ use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
-use opsml_state::get_state;
-use opsml_storage::FileSystemStorage;
+use opsml_state::app_state;
+use opsml_storage::storage_client;
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, GetMetricRequest, GetParameterRequest, MetricRequest, ParameterRequest,
@@ -68,10 +68,10 @@ fn get_py_filename(py: Python) -> Result<PathBuf, ExperimentError> {
 fn extract_code(
     py: Python<'_>,
     code_dir: Option<PathBuf>,
-    fs: &Arc<tokio::sync::Mutex<FileSystemStorage>>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    get_state().start_runtime().block_on(async {
+    let fs = storage_client();
+    app_state().start_runtime().block_on(async {
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
             Some(path) => (path.to_path_buf(), true),
@@ -97,7 +97,7 @@ fn extract_code(
         // 3. Encrypt the file or directory
         encrypt_directory(&lpath, &encryption_key)?;
 
-        fs.lock().await.put(&lpath, rpath, recursive).await?;
+        fs.put(&lpath, rpath, recursive).await?;
 
         // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
         decrypt_directory(&lpath, &encryption_key)?;
@@ -110,7 +110,6 @@ fn extract_code(
 pub struct Experiment {
     pub experiment: PyObject,
     pub registries: CardRegistries,
-    pub fs: Arc<TokioMutex<FileSystemStorage>>,
     pub hardware_queue: Option<HardwareQueue>,
     uid: String,
     artifact_key: ArtifactKey,
@@ -128,11 +127,10 @@ impl Experiment {
         experiment_uid: String,
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
-        let fs = registries.fs.clone();
 
         let mut experiment_registry = registries.experiment.registry.clone();
 
-        let artifact_key = get_state().start_runtime().block_on(async {
+        let artifact_key = app_state().start_runtime().block_on(async {
             experiment_registry
                 .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
                 .await
@@ -142,11 +140,10 @@ impl Experiment {
         // a little but of overhead here, but it's necessary
         // the card must be usable after the experiment is finished (downloading artifacts, etc.)
         let mut experiment: ExperimentCard = experiment.extract(py)?;
-        experiment.fs = Some(fs.clone());
         experiment.artifact_key = Some(artifact_key.clone());
 
         // extract code
-        match extract_code(py, code_dir, &fs, &artifact_key) {
+        match extract_code(py, code_dir, &artifact_key) {
             Ok(_) => debug!("Code extracted successfully"),
             Err(e) => warn!("Failed to extract code: {}", e),
         };
@@ -175,7 +172,6 @@ impl Experiment {
                 ExperimentError::Error(e.to_string())
             })?,
             registries,
-            fs,
             hardware_queue,
             uid: experiment_uid,
             artifact_key,
@@ -487,7 +483,7 @@ impl Experiment {
             }],
         };
 
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async { registry.insert_metrics(&metric_request).await })
             .map_err(|e| {
@@ -506,7 +502,7 @@ impl Experiment {
             metrics,
         };
 
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async { registry.insert_metrics(&metric_request).await })
             .map_err(|e| {
@@ -526,7 +522,7 @@ impl Experiment {
             parameters: vec![Parameter::new(name, value)?],
         };
 
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async { registry.insert_parameters(&param_request).await })
             .map_err(|e| {
@@ -545,7 +541,7 @@ impl Experiment {
             parameters,
         };
 
-        get_state()
+        app_state()
             .start_runtime()
             .block_on(async { registry.insert_parameters(&param_request).await })
             .map_err(|e| {
@@ -592,8 +588,8 @@ impl Experiment {
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
 
-        get_state().start_runtime().block_on(async {
-            self.fs.lock().await.put(&path, &rpath, false).await?;
+        app_state().start_runtime().block_on(async {
+            storage_client().put(&path, &rpath, false).await?;
             Ok::<(), ExperimentError>(())
         })?;
 
@@ -608,8 +604,8 @@ impl Experiment {
 
         let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
 
-        get_state().start_runtime().block_on(async {
-            self.fs.lock().await.put(&path, &rpath, true).await?;
+        app_state().start_runtime().block_on(async {
+            storage_client().put(&path, &rpath, true).await?;
             Ok::<(), ExperimentError>(())
         })?;
 
@@ -778,7 +774,7 @@ pub fn get_experiment_metrics(
         names: names.unwrap_or_default(),
     };
 
-    let metrics = get_state().start_runtime().block_on(async {
+    let metrics = app_state().start_runtime().block_on(async {
         let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_metrics(&metric_request).await
     })?;
@@ -797,7 +793,7 @@ pub fn get_experiment_parameters(
         names: names.unwrap_or_default(),
     };
 
-    let parameters = get_state().start_runtime().block_on(async {
+    let parameters = app_state().start_runtime().block_on(async {
         let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
         registry.get_parameters(&param_request).await
     })?;

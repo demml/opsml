@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use futures::FutureExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::{OpsmlMode, OpsmlStorageSettings};
-use opsml_state::{get_api_client, get_state};
+use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::CompleteMultipartUpload;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
@@ -47,7 +47,7 @@ pub enum FileSystemStorage {
 impl FileSystemStorage {
     #[instrument(skip_all)]
     pub async fn new() -> Result<Self, StorageError> {
-        let state = get_state();
+        let state = app_state();
         let settings = state.config.storage_settings()?;
 
         match *state.mode() {
@@ -149,7 +149,7 @@ impl FileSystemStorage {
 
 static STORAGE_CLIENT: OnceLock<Arc<FileSystemStorage>> = OnceLock::new();
 
-pub fn get_storage_client() -> &'static Arc<FileSystemStorage> {
+pub fn storage_client() -> &'static Arc<FileSystemStorage> {
     STORAGE_CLIENT.get_or_init(|| {
         async move {
             let storage_client = FileSystemStorage::new()

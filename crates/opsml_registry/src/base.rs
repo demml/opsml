@@ -2,7 +2,7 @@ use opsml_client::ClientRegistry;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
 use opsml_settings::config::OpsmlMode;
-use opsml_state::{get_api_client, get_state};
+use opsml_state::{app_state, get_api_client};
 use opsml_types::contracts::{
     Card, CardQueryArgs, CreateCardResponse, GetMetricRequest, MetricRequest,
 };
@@ -38,7 +38,7 @@ impl OpsmlRegistry {
     }
     #[instrument(skip_all)]
     pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
-        let state = get_state();
+        let state = app_state();
 
         match state.mode() {
             OpsmlMode::Client => {

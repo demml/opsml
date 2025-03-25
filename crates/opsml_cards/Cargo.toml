@@ -12,6 +12,7 @@ chrono = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
+opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }

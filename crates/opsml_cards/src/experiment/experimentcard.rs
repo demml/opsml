@@ -1,7 +1,8 @@
 use chrono::NaiveDateTime;
 use opsml_crypt::decrypt_directory;
 use opsml_error::{CardError, OpsmlError};
-use opsml_storage::FileSystemStorage;
+use opsml_state::app_state;
+use opsml_storage::storage_client;
 use opsml_types::contracts::{Card, ExperimentCardClientRecord};
 use opsml_types::{
     cards::{BaseArgs, ComputeEnvironment},
@@ -13,8 +14,6 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use serde_json;
 use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::error;
 
 use serde::{
@@ -77,10 +76,6 @@ pub struct ExperimentCard {
     #[pyo3(get)]
     pub opsml_version: String,
 
-    pub rt: Option<Arc<tokio::runtime::Runtime>>,
-
-    pub fs: Option<Arc<FileSystemStorage>>,
-
     pub artifact_key: Option<ArtifactKey>,
 
     #[pyo3(get)]
@@ -119,8 +114,6 @@ impl ExperimentCard {
             uid: base_args.3,
             tags,
             registry_type: RegistryType::Experiment,
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -186,8 +179,8 @@ impl ExperimentCard {
 
     #[pyo3(signature = (path=None))]
     pub fn list_artifacts(&self, path: Option<PathBuf>) -> PyResult<Vec<String>> {
-        let rt = self.rt.as_ref().unwrap();
-        let fs = self.fs.as_ref().unwrap();
+        let rt = app_state().start_runtime();
+        let fs = storage_client();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         let rpath = match path {
@@ -195,12 +188,10 @@ impl ExperimentCard {
             Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
-        let files = rt
-            .block_on(async { fs.lock().await.find(&rpath).await })
-            .map_err(|e| {
-                error!("Failed to list artifacts: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let files = rt.block_on(async { fs.find(&rpath).await }).map_err(|e| {
+            error!("Failed to list artifacts: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path
@@ -225,8 +216,8 @@ impl ExperimentCard {
         path: Option<PathBuf>,
         lpath: Option<PathBuf>,
     ) -> PyResult<()> {
-        let rt = self.rt.as_ref().unwrap();
-        let fs = self.fs.as_ref().unwrap();
+        let rt = app_state().start_runtime();
+        let fs = storage_client();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         // if lpath is None, download to "artifacts" directory
@@ -253,7 +244,7 @@ impl ExperimentCard {
         // if rpath has an extension, set recursive to false
         let recursive = rpath.extension().is_none();
 
-        rt.block_on(async { fs.lock().await.get(&lpath, &rpath, recursive).await })
+        rt.block_on(async { fs.get(&lpath, &rpath, recursive).await })
             .map_err(|e| {
                 error!("Failed to download artifacts: {}", e);
                 OpsmlError::new_err(e.to_string())
@@ -424,8 +415,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                     uid,
                     tags,
                     registry_type,
-                    rt: None,
-                    fs: None,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -471,8 +460,6 @@ impl FromPyObject<'_> for ExperimentCard {
         let app_env = ob.getattr("app_env")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let subexperiment = ob.getattr("subexperiment")?.extract()?;
-        let rt = None;
-        let fs = None;
         let artifact_key = None;
         let opsml_version = ob.getattr("opsml_version")?.extract()?;
 
@@ -488,8 +475,6 @@ impl FromPyObject<'_> for ExperimentCard {
             app_env,
             created_at,
             subexperiment,
-            rt,
-            fs,
             artifact_key,
             is_card: true,
             opsml_version,
