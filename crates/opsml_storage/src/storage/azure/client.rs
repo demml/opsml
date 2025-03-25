@@ -11,6 +11,8 @@ use base64::prelude::*;
 use futures::stream::StreamExt;
 use opsml_error::error::StorageError;
 use opsml_settings::config::OpsmlStorageSettings;
+use opsml_types::contracts::CompleteMultipartUpload;
+use opsml_types::contracts::MultipartCompleteParts;
 use opsml_types::contracts::{FileInfo, UploadPartArgs};
 use opsml_types::{StorageType, DOWNLOAD_CHUNK_SIZE, UPLOAD_CHUNK_SIZE};
 use opsml_utils::FileUtils;
@@ -19,6 +21,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
+use std::io::Seek;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use time::{Duration, OffsetDateTime};
@@ -45,53 +48,43 @@ impl AzureCreds {
 }
 
 pub struct AzureMultipartUpload {
-    pub client: HttpClient,
+    client: HttpClient,
     pub signed_url: String,
-    pub block_parts: Vec<BlobBlockType>,
-    file_reader: BufReader<File>,
-    pub file_size: u64,
-    pub filename: String,
+    file: File,
+}
+
+pub struct UploadState {
+    block_parts: Vec<BlobBlockType>,
+    bytes_uploaded: u64,
 }
 
 impl AzureMultipartUpload {
     pub async fn new(
         signed_url: &str,
-        client: Option<HttpClient>,
         path: &str,
+        client: HttpClient,
     ) -> Result<Self, StorageError> {
         let file = File::open(path)
             .map_err(|e| StorageError::Error(format!("Failed to open file: {}", e)))?;
 
-        let metadata = file
-            .metadata()
-            .map_err(|e| StorageError::Error(format!("Failed to get file metadata: {}", e)))?;
-
-        let file_size = metadata.len();
-        let filename = Path::new(path).file_name().unwrap().to_str().unwrap();
-
-        let file_reader = BufReader::new(file);
-
-        let client = match client {
-            Some(client) => client,
-            None => HttpClient::new(),
-        };
-
         Ok(Self {
             client,
             signed_url: signed_url.to_string(),
-            block_parts: Vec::new(),
-            file_reader,
-            file_size,
-            filename: filename.to_string(),
+            file,
         })
     }
 
     pub async fn upload_file_in_chunks(
-        &mut self,
+        &self,
         chunk_count: u64,
         size_of_last_chunk: u64,
         chunk_size: u64,
     ) -> Result<(), StorageError> {
+        let mut upload_state = UploadState {
+            block_parts: Vec::new(),
+            bytes_uploaded: 0,
+        };
+
         for chunk_index in 0..chunk_count {
             let this_chunk = if chunk_count - 1 == chunk_index {
                 size_of_last_chunk
@@ -100,23 +93,57 @@ impl AzureMultipartUpload {
             };
 
             let upload_args = UploadPartArgs {
-                presigned_url: None,
                 chunk_size,
                 chunk_index,
                 this_chunk_size: this_chunk,
             };
 
-            self.upload_next_chunk(&upload_args).await?;
+            upload_state = self.upload_chunk(&upload_args, upload_state).await?;
         } // extract the range from the result and update the first_byte and last_byte
 
-        self.complete_upload().await?;
+        self.complete_upload(upload_state.block_parts).await?;
 
         Ok(())
 
         // check if enum is Ok
     }
 
-    pub async fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
+    async fn upload_chunk(
+        &self,
+        upload_args: &UploadPartArgs,
+        mut state: UploadState,
+    ) -> Result<UploadState, StorageError> {
+        let buffer = self.read_chunk(upload_args)?;
+        let block_id = format!("{:06}", upload_args.chunk_index);
+
+        self.upload_block(&block_id, &buffer).await?;
+
+        state
+            .block_parts
+            .push(BlobBlockType::Uncommitted(BlockId::new(block_id)));
+        state.bytes_uploaded += buffer.len() as u64;
+
+        Ok(state)
+    }
+
+    fn read_chunk(&self, upload_args: &UploadPartArgs) -> Result<Vec<u8>, StorageError> {
+        let mut reader = BufReader::new(&self.file);
+        let offset = upload_args.chunk_index * upload_args.chunk_size;
+
+        reader
+            .seek(std::io::SeekFrom::Start(offset))
+            .map_err(|e| StorageError::Error(format!("Failed to seek file: {}", e)))?;
+
+        let mut buffer = vec![0; upload_args.this_chunk_size as usize];
+        let bytes_read = reader
+            .read(&mut buffer)
+            .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
+
+        buffer.truncate(bytes_read);
+        Ok(buffer)
+    }
+
+    async fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
         let url = format!(
             "{}&comp=block&blockid={}",
             self.signed_url,
@@ -133,39 +160,11 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
-        upload_args: &UploadPartArgs,
-    ) -> Result<(), StorageError> {
-        let mut buffer = vec![0; upload_args.this_chunk_size as usize];
-        let bytes_read = self
-            .file_reader
-            .read(&mut buffer)
-            .map_err(|e| StorageError::Error(format!("Failed to read file: {}", e)))?;
-
-        buffer.truncate(bytes_read);
-
-        let block_id = format!("{:06}", upload_args.chunk_index);
-
-        self.upload_block(&block_id, &buffer).await.map_err(|e| {
-            StorageError::Error(format!(
-                "Unable to upload multiple chunks to resumable upload: {}",
-                e
-            ))
-        })?;
-
-        let block_id = BlockId::new(block_id);
-        self.block_parts.push(BlobBlockType::Uncommitted(block_id));
-
-        Ok(())
-    }
-
-    pub async fn complete_upload(&self) -> Result<(), StorageError> {
+    async fn complete_upload(&self, block_parts: Vec<BlobBlockType>) -> Result<(), StorageError> {
         let url = format!("{}&comp=blocklist", self.signed_url);
         let block_list = BlockList {
-            blocks: self.block_parts.clone(),
+            blocks: block_parts,
         };
-
         let block_xml = block_list.to_xml();
 
         self.client
@@ -198,13 +197,7 @@ impl StorageClient for AzureStorageClient {
 
     async fn new(settings: &OpsmlStorageSettings) -> Result<Self, StorageError> {
         // Get Azure credentials (anonymous if client mode, else use AzureCreds)
-        let creds = match settings.client_mode {
-            false => AzureCreds::new().await?,
-            true => AzureCreds {
-                account: "anonymous".to_string(),
-                creds: StorageCredentials::anonymous(),
-            },
-        };
+        let creds = AzureCreds::new().await?;
 
         let client = BlobServiceClient::new(creds.account, creds.creds);
 
@@ -472,6 +465,7 @@ impl AzureStorageClient {
 #[derive(Clone)]
 pub struct AzureFSStorageClient {
     client: AzureStorageClient,
+    http_client: HttpClient,
 }
 
 #[async_trait]
@@ -490,7 +484,11 @@ impl FileSystem for AzureFSStorageClient {
 
     async fn new(settings: &OpsmlStorageSettings) -> Self {
         let client = AzureStorageClient::new(settings).await.unwrap();
-        Self { client }
+        let http_client = HttpClient::new();
+        Self {
+            client,
+            http_client,
+        }
     }
 
     async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
@@ -616,8 +614,8 @@ impl FileSystem for AzureFSStorageClient {
                 let relative_path = file.relative_path(&stripped_lpath)?;
                 let remote_path = stripped_rpath.join(relative_path);
 
-                let mut uploader = self
-                    .create_multipart_uploader(&stripped_file_path, &remote_path, None, None)
+                let uploader = self
+                    .create_multipart_uploader(&stripped_file_path, &remote_path)
                     .await?;
 
                 uploader
@@ -628,14 +626,46 @@ impl FileSystem for AzureFSStorageClient {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&stripped_lpath, UPLOAD_CHUNK_SIZE as u64)?;
 
-            let mut uploader = self
-                .create_multipart_uploader(&stripped_lpath, &stripped_rpath, None, None)
+            let uploader = self
+                .create_multipart_uploader(&stripped_lpath, &stripped_rpath)
                 .await?;
 
             uploader
                 .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
                 .await?;
         };
+
+        Ok(())
+    }
+
+    async fn complete_multipart_upload(
+        &self,
+        request: CompleteMultipartUpload,
+    ) -> Result<(), StorageError> {
+        let url = format!("{}&comp=blocklist", request.session_url);
+
+        let block_list = match request.parts {
+            MultipartCompleteParts::Azure(parts) => BlockList {
+                blocks: parts
+                    .iter()
+                    .map(|part| {
+                        let block_id = BlockId::new(part.clone());
+                        BlobBlockType::Uncommitted(block_id)
+                    })
+                    .collect(),
+            },
+            _ => return Err(StorageError::Error("Invalid parts type".to_string())),
+        };
+
+        let block_xml = block_list.to_xml();
+
+        self.http_client
+            .put(&url)
+            .header("Content-Type", "application/xml")
+            .body(block_xml)
+            .send()
+            .await
+            .map_err(|e| StorageError::Error(format!("Failed to commit block list: {:?}", e)))?;
 
         Ok(())
     }
@@ -646,19 +676,18 @@ impl AzureFSStorageClient {
         &self,
         lpath: &Path,
         rpath: &Path,
-        session_url: Option<String>,
-        api_client: Option<HttpClient>,
     ) -> Result<AzureMultipartUpload, StorageError> {
-        let signed_url = match session_url {
-            Some(url) => url,
-            None => {
-                self.client
-                    .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
-                    .await?
-            }
-        };
+        let signed_url = self
+            .client
+            .generate_presigned_url_for_block_upload(rpath.to_str().unwrap(), 600)
+            .await?;
 
-        AzureMultipartUpload::new(&signed_url, api_client, lpath.to_str().unwrap()).await
+        AzureMultipartUpload::new(
+            &signed_url,
+            lpath.to_str().unwrap(),
+            self.http_client.clone(),
+        )
+        .await
     }
 
     pub async fn create_multipart_upload(&self, rpath: &Path) -> Result<String, StorageError> {

@@ -1329,9 +1329,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.16"
+version = "1.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be714c154be609ec7f5dad223a33bf1482fff90472de28f7362806e6d4832b8c"
+checksum = "1fcb57c740ae1daf453ae85f16e37396f672b039e00d9d866e07ddb24e328e3a"
 dependencies = [
  "jobserver",
  "libc",
@@ -3588,9 +3588,9 @@ checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "numpy"
-version = "0.23.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b94caae805f998a07d33af06e6a3891e38556051b8045c615470a71590e13e78"
+checksum = "a7cfbf3f0feededcaa4d289fe3079b03659e85c5b5a177f4ba6fb01ab4fb3e39"
 dependencies = [
  "libc",
  "ndarray",
@@ -3598,6 +3598,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "pyo3",
+ "pyo3-build-config",
  "rustc-hash 2.1.1",
 ]
 
@@ -3724,6 +3725,7 @@ dependencies = [
  "opsml-crypt",
  "opsml-error",
  "opsml-interfaces",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
@@ -3740,6 +3742,7 @@ dependencies = [
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "mockito",
  "opsml-crypt",
  "opsml-error",
@@ -3801,6 +3804,7 @@ dependencies = [
  "opsml-registry",
  "opsml-semver",
  "opsml-settings",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
@@ -3841,6 +3845,7 @@ dependencies = [
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
+ "opsml-state",
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
@@ -3890,7 +3895,7 @@ dependencies = [
  "rand 0.9.0",
  "reqwest",
  "rust-embed",
- "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
+ "rusty-logging",
  "scouter-client",
  "semver",
  "serde",
@@ -3915,7 +3920,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "pyo3",
- "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
+ "rusty-logging",
  "serde",
  "tracing",
 ]
@@ -3942,6 +3947,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-state"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "opsml-client",
+ "opsml-error",
+ "opsml-settings",
+ "opsml-types",
+ "opsml-utils",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-storage"
 version = "0.1.0"
 dependencies = [
@@ -3964,6 +3983,7 @@ dependencies = [
  "opsml-colors",
  "opsml-error",
  "opsml-settings",
+ "opsml-state",
  "opsml-types",
  "opsml-utils",
  "rand 0.9.0",
@@ -4002,6 +4022,7 @@ dependencies = [
  "opsml-semver",
  "opsml-utils",
  "pyo3",
+ "scouter-client",
  "serde",
  "serde_json",
  "sysinfo",
@@ -4021,6 +4042,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "tokio",
  "tracing",
  "uuid",
  "walkdir",
@@ -4421,7 +4443,7 @@ version = "0.2.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
- "zerocopy 0.8.23",
+ "zerocopy 0.8.24",
 ]
 
 [[package]]
@@ -4536,21 +4558,23 @@ dependencies = [
  "opsml-semver",
  "opsml-server",
  "opsml-settings",
+ "opsml-state",
+ "opsml-storage",
  "opsml-types",
  "opsml-utils",
  "potato-head",
  "pyo3",
  "reqwest",
- "rusty-logging 0.4.0 (git+https://github.com/demml/rusty-logger.git?branch=add-serialization)",
+ "rusty-logging",
  "scouter-client",
  "tokio",
 ]
 
 [[package]]
 name = "pyo3"
-version = "0.23.5"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7778bffd85cf38175ac1f545509665d0b9b92a198ca7941f131f85f7a4f9a872"
+checksum = "7f1c6c3591120564d64db2261bec5f910ae454f01def849b9c22835a84695e86"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -4569,9 +4593,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-build-config"
-version = "0.23.5"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94f6cbe86ef3bf18998d9df6e0f3fc1050a8c5efa409bf712e661a4366e010fb"
+checksum = "e9b6c2b34cf71427ea37c7001aefbaeb85886a074795e35f161f5aecc7620a7a"
 dependencies = [
  "once_cell",
  "target-lexicon",
@@ -4579,9 +4603,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-ffi"
-version = "0.23.5"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9f1b4c431c0bb1c8fb0a338709859eed0d030ff6daa34368d3b152a63dfdd8d"
+checksum = "5507651906a46432cdda02cd02dd0319f6064f1374c9147c45b978621d2c3a9c"
 dependencies = [
  "libc",
  "pyo3-build-config",
@@ -4589,9 +4613,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros"
-version = "0.23.5"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbc2201328f63c4710f68abdf653c89d8dbc2858b88c5d88b0ff38a75288a9da"
+checksum = "b0d394b5b4fd8d97d48336bb0dd2aebabad39f1d294edd6bcd2cccf2eefe6f42"
 dependencies = [
  "proc-macro2",
  "pyo3-macros-backend",
@@ -4601,9 +4625,9 @@ dependencies = [
 
 [[package]]
 name = "pyo3-macros-backend"
-version = "0.23.5"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fca6726ad0f3da9c9de093d6f116a93c1a38e417ed73bf138472cf4064f72028"
+checksum = "fd72da09cfa943b1080f621f024d2ef7e2773df7badd51aa30a2be1f8caa7c8e"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -4723,7 +4747,7 @@ checksum = "3779b94aeb87e8bd4e834cee3650289ee9e0d5677f976ecdb6d219e5f4f6cd94"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
- "zerocopy 0.8.23",
+ "zerocopy 0.8.24",
 ]
 
 [[package]]
@@ -5282,27 +5306,9 @@ checksum = "eded382c5f5f786b989652c49544c4877d9f015cc22e145a5ea8ea66c2921cd2"
 
 [[package]]
 name = "rusty-logging"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2ce319ad14d8dc4735b91559d40a99b581697c8f8e8e7bde8a58d24b417e924"
-dependencies = [
- "dynfmt",
- "owo-colors",
- "pyo3",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "time",
- "tracing",
- "tracing-appender",
- "tracing-core",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "rusty-logging"
-version = "0.4.0"
-source = "git+https://github.com/demml/rusty-logger.git?branch=add-serialization#bfcb0eddd5a18f25fcc6a8a210edd47ae9f3f315"
+checksum = "5dae3733e2a93f06d431bfd9d3358eed1948511886b2dc460f705ac4fbacba1e"
 dependencies = [
  "dynfmt",
  "owo-colors",
@@ -5359,7 +5365,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "ndarray",
@@ -5385,7 +5391,7 @@ dependencies = [
 [[package]]
 name = "scouter-contracts"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "pyo3",
@@ -5397,7 +5403,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "futures",
  "pyo3",
@@ -5412,7 +5418,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "cron",
@@ -5438,7 +5444,7 @@ dependencies = [
 [[package]]
 name = "scouter-error"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "pyo3",
  "serde",
@@ -5448,7 +5454,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "futures",
@@ -5457,7 +5463,7 @@ dependencies = [
  "pyo3",
  "rdkafka",
  "reqwest",
- "rusty-logging 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rusty-logging",
  "scouter-contracts",
  "scouter-error",
  "scouter-settings",
@@ -5473,7 +5479,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -5490,7 +5496,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "indicatif",
@@ -5512,7 +5518,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "base64 0.22.1",
  "scouter-error",
@@ -5523,7 +5529,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.4.5"
-source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#669593ab4af90ac1a5072e81d6f96c801ba5ce1f"
+source = "git+https://github.com/demml/scouter.git?branch=opsmlUi#a4f67aaf776ef36f1026e5287525a983a8da8595"
 dependencies = [
  "chrono",
  "colored_json",
@@ -6172,9 +6178,9 @@ dependencies = [
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.16"
+version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
+checksum = "e502f78cdbb8ba4718f566c418c52bc729126ffd16baee5baa718cf25dd5a69a"
 
 [[package]]
 name = "tcp-stream"
@@ -7397,11 +7403,11 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.23"
+version = "0.8.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd97444d05a4328b90e75e503a34bad781f14e28a823ad3557f0750df1ebcbc6"
+checksum = "2586fea28e186957ef732a5f8b3be2da217d65c5969d4b1e17f973ebbe876879"
 dependencies = [
- "zerocopy-derive 0.8.23",
+ "zerocopy-derive 0.8.24",
 ]
 
 [[package]]
@@ -7417,9 +7423,9 @@ dependencies = [
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.23"
+version = "0.8.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6352c01d0edd5db859a63e2605f4ea3183ddbd15e2c4a9e7d32184df75e4f154"
+checksum = "a996a8f63c5c4448cd959ac1bab0aaa3306ccfd060472f85943ee0750f0169be"
 dependencies = [
  "proc-macro2",
  "quote",

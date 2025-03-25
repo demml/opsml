@@ -9,6 +9,7 @@ use opsml_types::{
     RegistryMode, RegistryType,
 };
 use serde::Deserialize;
+use std::sync::Arc;
 use tracing::error;
 use tracing::instrument;
 
@@ -22,7 +23,7 @@ pub struct ErrorResponse {
 #[derive(Debug, Clone)]
 pub struct ClientRegistry {
     registry_type: RegistryType,
-    pub api_client: OpsmlApiClient,
+    pub api_client: Arc<OpsmlApiClient>,
 }
 
 impl ClientRegistry {
@@ -31,7 +32,7 @@ impl ClientRegistry {
     }
     pub fn new(
         registry_type: RegistryType,
-        api_client: OpsmlApiClient,
+        api_client: Arc<OpsmlApiClient>,
     ) -> Result<Self, RegistryError> {
         Ok(Self {
             registry_type,

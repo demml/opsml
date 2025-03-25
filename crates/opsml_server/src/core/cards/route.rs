@@ -2,6 +2,7 @@ use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
+use crate::core::error::internal_server_error;
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
 };
@@ -40,10 +41,7 @@ pub async fn check_card_uid(
         .await
         .map_err(|e| {
             error!("Failed to check if UID exists: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to check if UID exists")
         })?;
 
     Ok(Json(UidResponse { exists }))
@@ -61,10 +59,7 @@ pub async fn get_card_repositories(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
     Ok(Json(RepositoryResponse {
@@ -84,10 +79,7 @@ pub async fn get_registry_stats(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
@@ -113,10 +105,7 @@ pub async fn get_page(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
     Ok(Json(QueryPageResponse { summaries }))
@@ -139,10 +128,7 @@ pub async fn list_cards(
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get unique repository names")
         })?;
 
     // convert to Cards struct
@@ -197,10 +183,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to get next version: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to get next version")
     })?;
     // (2) ------- Insert the card into the database
     let (uid, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
@@ -212,10 +195,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to insert card into db: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to insert card into db")
     })?;
 
     // (3) ------- Create the artifact key for card artifact encryption
@@ -229,10 +209,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to create artifact key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create artifact key")
     })?;
 
     debug!("Card created successfully");
@@ -268,10 +245,7 @@ pub async fn update_card(
         Card::Data(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = DataCardRecord {
@@ -299,10 +273,7 @@ pub async fn update_card(
         Card::Model(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = ModelCardRecord {
@@ -333,10 +304,7 @@ pub async fn update_card(
         Card::Experiment(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = ExperimentCardRecord {
@@ -364,10 +332,7 @@ pub async fn update_card(
         Card::Audit(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = AuditCardRecord {
@@ -395,10 +360,7 @@ pub async fn update_card(
         Card::Prompt(client_card) => {
             let version = Version::parse(&client_card.version).map_err(|e| {
                 error!("Failed to parse version: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(serde_json::json!({})),
-                )
+                internal_server_error(e, "Failed to parse version")
             })?;
 
             let server_card = PromptCardRecord {
@@ -428,10 +390,7 @@ pub async fn update_card(
         .await
         .map_err(|e| {
             error!("Failed to update card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to update card")
         })?;
 
     debug!("Card updated successfully");
@@ -467,10 +426,7 @@ pub async fn delete_card(
     .await
     .map_err(|e| {
         error!("Failed to cleanup artifacts: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to cleanup artifacts")
     })?;
 
     // delete card
@@ -480,10 +436,7 @@ pub async fn delete_card(
         .await
         .map_err(|e| {
             error!("Failed to delete card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to delete card")
         })?;
 
     // need to delete the artifact key and the artifact itself
@@ -503,10 +456,7 @@ pub async fn load_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
 
     Ok(Json(key))
@@ -533,10 +483,7 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card key for loading")
         })?;
 
     // get uid
@@ -544,10 +491,7 @@ pub async fn get_card(
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let tmp_path = tmp_dir.path();
@@ -566,42 +510,27 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get card")
         })?;
 
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to get decryption key")
     })?;
 
     decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
         error!("Failed to decrypt directory: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to decrypt directory")
     })?;
 
     let card = std::fs::read_to_string(lpath).map_err(|e| {
         error!("Failed to read card from file: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to read card from file")
     })?;
 
     let card = serde_json::from_str(&card).map_err(|e| {
         error!("Failed to parse card: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to parse card")
     })?;
 
     Ok(Json(card))
@@ -635,10 +564,7 @@ pub async fn get_readme(
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let lpath = tmp_dir
@@ -674,10 +600,10 @@ pub async fn get_readme(
         }
         Err(e) => {
             error!("Failed to download artifact: {}", e);
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Failed to download artifact: {}", e) })),
-            ))
+            Ok(Json(ReadeMe {
+                readme: "".to_string(),
+                exists: false,
+            }))
         }
     }
 }

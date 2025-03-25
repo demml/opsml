@@ -17,8 +17,6 @@ pub fn queue(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_class::<Feature>()?;
     m.add_class::<Features>()?;
-    m.add_class::<PsiFeatureQueue>()?;
-    m.add_class::<SpcFeatureQueue>()?;
 
     Ok(())
 }

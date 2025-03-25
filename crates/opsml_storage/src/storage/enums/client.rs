@@ -3,18 +3,17 @@
 use crate::storage::filesystem::FileSystem;
 use crate::storage::local::client::{LocalFSStorageClient, LocalMultiPartUpload};
 
-use anyhow::{Context, Result as AnyhowResult};
-use opsml_client::OpsmlApiClient;
-use opsml_error::error::StorageError;
-use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
-use opsml_types::contracts::{FileInfo, MultiPartSession};
-use opsml_types::StorageType;
-use std::path::Path;
-use tracing::debug;
-
 use crate::storage::aws::client::{AWSMulitPartUpload, S3FStorageClient};
 use crate::storage::azure::client::{AzureFSStorageClient, AzureMultipartUpload};
 use crate::storage::gcs::client::{GCSFSStorageClient, GoogleMultipartUpload};
+use anyhow::{Context, Result as AnyhowResult};
+use opsml_error::error::StorageError;
+use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
+use opsml_types::contracts::CompleteMultipartUpload;
+use opsml_types::contracts::FileInfo;
+use opsml_types::StorageType;
+use std::path::Path;
+use tracing::debug;
 
 pub enum MultiPartUploader {
     Google(GoogleMultipartUpload),
@@ -262,53 +261,38 @@ impl StorageClientEnum {
         &self,
         lpath: &Path,
         rpath: &Path,
-        multipart_session: MultiPartSession,
-        api_client: Option<OpsmlApiClient>,
     ) -> Result<MultiPartUploader, StorageError> {
         match self {
             StorageClientEnum::Google(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, Some(multipart_session.session_url))
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Google(uploader))
             }
 
             StorageClientEnum::AWS(client) => {
-                let uploader = client
-                    .create_multipart_uploader(
-                        rpath,
-                        lpath,
-                        Some(multipart_session.session_url),
-                        multipart_session.bucket,
-                        api_client,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(rpath, lpath).await?;
                 Ok(MultiPartUploader::AWS(uploader))
             }
             StorageClientEnum::Local(client) => {
-                let uploader = client
-                    .create_multipart_uploader(lpath, rpath, api_client)
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
 
                 Ok(MultiPartUploader::Local(uploader))
             }
             StorageClientEnum::Azure(client) => {
-                let api_client = if let Some(api_client) = api_client {
-                    Some(api_client.client)
-                } else {
-                    None
-                };
-
-                let uploader = client
-                    .create_multipart_uploader(
-                        lpath,
-                        rpath,
-                        Some(multipart_session.session_url),
-                        api_client,
-                    )
-                    .await?;
+                let uploader = client.create_multipart_uploader(lpath, rpath).await?;
                 Ok(MultiPartUploader::Azure(uploader))
             }
+        }
+    }
+
+    pub async fn complete_multipart_upload(
+        &self,
+        request: CompleteMultipartUpload,
+    ) -> Result<(), StorageError> {
+        match self {
+            StorageClientEnum::Google(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::AWS(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::Local(client) => client.complete_multipart_upload(request).await,
+            StorageClientEnum::Azure(client) => client.complete_multipart_upload(request).await,
         }
     }
 }

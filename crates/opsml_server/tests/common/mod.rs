@@ -15,6 +15,7 @@ use opsml_sql::base::SqlClient;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::*;
 use opsml_types::*;
+use scouter_client::{BinnedCustomMetrics, BinnedPsiFeatureMetrics, SpcDriftFeatures};
 
 use std::{env, vec};
 use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
@@ -54,8 +55,6 @@ async fn setup() {
     };
 
     let client = SqlClientEnum::new(&config).await.unwrap();
-
-    println!("{:?}", std::env::current_dir().unwrap());
 
     // Run the SQL script to populate the database
     let script = std::fs::read_to_string("tests/fixtures/populate_db.sql").unwrap();
@@ -102,22 +101,69 @@ impl ScouterServer {
         // insert profile mock
         server
             .mock("POST", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "Profile created"}"#)
             .create_async()
             .await;
 
-        // update profile mock
         server
             .mock("PUT", "/scouter/profile")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
             .create_async()
             .await;
 
-        // delete user mock
+        server
+            .mock("PUT", "/scouter/profile/status")
+            .match_header("content-type", mockito::Matcher::Any)
+            .match_header("authorization", mockito::Matcher::Any)
+            .match_body(mockito::Matcher::Any)
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .create_async()
+            .await;
+
+        // get spc drift features mock
+        let spc_features = SpcDriftFeatures::default();
+        let spc_features_json = serde_json::to_string(&spc_features).unwrap();
+        server
+            .mock("GET", "/scouter/drift/spc")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(spc_features_json)
+            .create_async()
+            .await;
+
+        // get binned psi feature metrics mock
+        let binned_psi_features = BinnedPsiFeatureMetrics::default();
+        let binned_psi_features_json = serde_json::to_string(&binned_psi_features).unwrap();
+        server
+            .mock("GET", "/scouter/drift/psi")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_psi_features_json)
+            .create_async()
+            .await;
+
+        // get binned custom metrics mock
+        let binned_custom_metrics = BinnedCustomMetrics::default();
+        let binned_custom_metrics_json = serde_json::to_string(&binned_custom_metrics).unwrap();
+        server
+            .mock("GET", "/scouter/drift/custom")
+            .match_query(mockito::Matcher::Any)
+            .with_status(200)
+            .with_body(binned_custom_metrics_json)
+            .create_async()
+            .await;
 
         Self {
             url: server.url(),
@@ -133,6 +179,7 @@ pub struct TestHelper {
     pub repository: String,
     pub version: String,
     pub key: ArtifactKey,
+    pub server: ScouterServer,
 }
 
 impl TestHelper {
@@ -140,11 +187,11 @@ impl TestHelper {
         let scouter_server = ScouterServer::new().await;
 
         // set OPSML_AUTH to true
+        env::set_var("SCOUTER_SERVER_URI", scouter_server.url.clone());
         env::set_var("RUST_LOG", "debug");
         env::set_var("LOG_LEVEL", "debug");
         env::set_var("LOG_JSON", "false");
         env::set_var("OPSML_AUTH", "true");
-        env::set_var("SCOUTER_SERVER_URI", scouter_server.url);
 
         cleanup();
 
@@ -172,6 +219,7 @@ impl TestHelper {
                 encrypted_key: vec![],
                 storage_key: "".to_string(),
             },
+            server: scouter_server,
         }
     }
 
@@ -223,7 +271,7 @@ impl TestHelper {
         let current_dir = std::env::current_dir().unwrap();
 
         let base_path = format!(
-            "opsml_registries/opsml_data_registry/{}/{}/v{}",
+            "opsml_registries/opsml_model_registry/{}/{}/v{}",
             self.repository, self.name, self.version
         );
 
@@ -245,7 +293,7 @@ impl TestHelper {
         joined_path.to_str().unwrap().to_string()
     }
 
-    pub async fn create_card(&mut self) {
+    pub async fn create_modelcard(&mut self) {
         // 1. First create a card so we have something to get
         let card_version_request = CardVersionRequest {
             name: self.name.clone(),
@@ -258,14 +306,14 @@ impl TestHelper {
 
         // Create a test card with some data
         let card_request = CreateCardRequest {
-            card: Card::Data(DataCardClientRecord {
+            card: Card::Model(ModelCardClientRecord {
                 name: self.name.clone(),
                 repository: self.repository.clone(),
                 version: self.version.clone(),
                 tags: vec!["test".to_string()],
-                ..DataCardClientRecord::default()
+                ..ModelCardClientRecord::default()
             }),
-            registry_type: RegistryType::Data,
+            registry_type: RegistryType::Model,
             version_request: card_version_request,
         };
 
