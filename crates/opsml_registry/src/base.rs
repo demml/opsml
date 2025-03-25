@@ -33,19 +33,8 @@ pub enum OpsmlRegistry {
 /// SqlClientEnum.
 ///
 impl OpsmlRegistry {
-    pub fn update_registry_type(&mut self, registry_type: RegistryType) {
-        match self {
-            Self::ClientRegistry(client_registry) => {
-                client_registry.update_registry_type(registry_type);
-            }
-            #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => {
-                server_registry.update_registry_type(registry_type);
-            }
-        }
-    }
     #[instrument(skip_all)]
-    pub async fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
+    pub fn new(registry_type: RegistryType) -> Result<Self, RegistryError> {
         let state = app_state();
         let mode = state.mode()?;
 
@@ -67,13 +56,14 @@ impl OpsmlRegistry {
                         ))
                     })?;
                     let db_settings = config.database_settings.clone();
-                    let server_registry =
+                    let server_registry = state.block_on(async {
                         crate::server::registry::server_logic::ServerRegistry::new(
                             registry_type,
                             settings,
                             db_settings,
                         )
-                        .await?;
+                        .await
+                    })?;
                     Ok(Self::ServerRegistry(server_registry))
                 }
                 #[cfg(not(feature = "server"))]
@@ -103,7 +93,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn list_cards(&mut self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.list_cards(args),
             #[cfg(feature = "server")]
@@ -113,7 +103,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn check_card_uid(&mut self, uid: &str) -> Result<bool, RegistryError> {
+    pub fn check_card_uid(&self, uid: &str) -> Result<bool, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.check_uid_exists(uid),
             #[cfg(feature = "server")]
@@ -124,7 +114,7 @@ impl OpsmlRegistry {
     }
 
     pub fn create_card(
-        &mut self,
+        &self,
         card: Card,
         version: Option<String>,
         version_type: VersionType,
@@ -145,7 +135,7 @@ impl OpsmlRegistry {
     }
 
     pub fn get_artifact_key(
-        &mut self,
+        &self,
         uid: &str,
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
@@ -159,7 +149,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.load_card(args),
             #[cfg(feature = "server")]
@@ -179,7 +169,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn delete_card(&mut self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
+    pub fn delete_card(&self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.delete_card(delete_request),
             #[cfg(feature = "server")]
@@ -189,7 +179,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn update_card(&mut self, card: &Card) -> Result<(), RegistryError> {
+    pub fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.update_card(card),
             #[cfg(feature = "server")]
@@ -200,7 +190,7 @@ impl OpsmlRegistry {
     }
 
     pub fn insert_hardware_metrics(
-        &mut self,
+        &self,
         metrics: HardwareMetricRequest,
     ) -> Result<(), RegistryError> {
         match self {
@@ -214,7 +204,7 @@ impl OpsmlRegistry {
     }
 
     pub fn get_hardware_metrics(
-        &mut self,
+        &self,
         request: &GetHardwareMetricRequest,
     ) -> Result<Vec<HardwareMetrics>, RegistryError> {
         match self {
@@ -226,7 +216,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
+    pub fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.insert_metrics(metrics),
             #[cfg(feature = "server")]
@@ -236,10 +226,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn get_metrics(
-        &mut self,
-        metrics: &GetMetricRequest,
-    ) -> Result<Vec<Metric>, RegistryError> {
+    pub fn get_metrics(&self, metrics: &GetMetricRequest) -> Result<Vec<Metric>, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.get_metrics(metrics),
             #[cfg(feature = "server")]
@@ -249,10 +236,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn insert_parameters(
-        &mut self,
-        parameters: &ParameterRequest,
-    ) -> Result<(), RegistryError> {
+    pub fn insert_parameters(&self, parameters: &ParameterRequest) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.insert_parameters(parameters),
             #[cfg(feature = "server")]
@@ -262,8 +246,8 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn get_parameters(
-        &mut self,
+    pub fn get_parameters(
+        &self,
         parameters: &GetParameterRequest,
     ) -> Result<Vec<Parameter>, RegistryError> {
         match self {

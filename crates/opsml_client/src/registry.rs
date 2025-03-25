@@ -27,9 +27,6 @@ pub struct ClientRegistry {
 }
 
 impl ClientRegistry {
-    pub fn update_registry_type(&mut self, registry_type: RegistryType) {
-        self.registry_type = registry_type;
-    }
     pub fn new(
         registry_type: RegistryType,
         api_client: Arc<OpsmlApiClient>,
@@ -48,7 +45,7 @@ impl ClientRegistry {
         CardTable::from_registry_type(&self.registry_type).to_string()
     }
 
-    pub fn list_cards(&mut self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
+    pub fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
@@ -70,7 +67,7 @@ impl ClientRegistry {
 
     #[instrument(skip_all)]
     pub fn create_card(
-        &mut self,
+        &self,
         card: Card,
         version: Option<String>,
         version_type: VersionType,
@@ -134,7 +131,7 @@ impl ClientRegistry {
         }
     }
 
-    pub fn update_card(&mut self, card: &Card) -> Result<(), RegistryError> {
+    pub fn update_card(&self, card: &Card) -> Result<(), RegistryError> {
         let update_request = UpdateCardRequest {
             card: card.clone(),
             registry_type: self.registry_type.clone(),
@@ -174,7 +171,7 @@ impl ClientRegistry {
         }
     }
 
-    pub fn delete_card(&mut self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
+    pub fn delete_card(&self, delete_request: DeleteCardRequest) -> Result<(), RegistryError> {
         let query_string = serde_qs::to_string(&delete_request)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {e}")))?;
 
@@ -213,7 +210,7 @@ impl ClientRegistry {
     }
 
     #[instrument(skip_all)]
-    pub fn load_card(&mut self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
+    pub fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         let query_string = serde_qs::to_string(&args)
             .map_err(|e| RegistryError::Error(format!("Failed to serialize query args {}", e)))?;
 
@@ -233,7 +230,7 @@ impl ClientRegistry {
         })
     }
 
-    pub fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {
+    pub fn check_uid_exists(&self, uid: &str) -> Result<bool, RegistryError> {
         let uid_request = UidRequest {
             uid: uid.to_string(),
             registry_type: self.registry_type.clone(),
@@ -260,7 +257,7 @@ impl ClientRegistry {
     }
 
     fn artifact_key(
-        &mut self,
+        &self,
         uid: &str,
         registry_type: &RegistryType,
         route: Routes,
@@ -292,7 +289,7 @@ impl ClientRegistry {
     }
 
     pub fn get_artifact_key(
-        &mut self,
+        &self,
         uid: &str,
         registry_type: &RegistryType,
     ) -> Result<ArtifactKey, RegistryError> {
@@ -300,7 +297,7 @@ impl ClientRegistry {
     }
 
     pub fn insert_hardware_metrics(
-        &mut self,
+        &self,
         metrics: &HardwareMetricRequest,
     ) -> Result<(), RegistryError> {
         let body = serde_json::to_value(metrics).map_err(|e| {
@@ -337,7 +334,7 @@ impl ClientRegistry {
     }
 
     pub fn get_hardware_metrics(
-        &mut self,
+        &self,
         metrics: &GetHardwareMetricRequest,
     ) -> Result<Vec<HardwareMetrics>, RegistryError> {
         let query_string = serde_qs::to_string(metrics).map_err(|e| {
@@ -364,7 +361,7 @@ impl ClientRegistry {
         })
     }
 
-    pub fn insert_metrics(&mut self, metrics: &MetricRequest) -> Result<(), RegistryError> {
+    pub fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
         let body = serde_json::to_value(metrics).map_err(|e| {
             error!("Failed to serialize metrics {}", e);
             RegistryError::Error(format!("Failed to serialize metrics {}", e))
@@ -396,10 +393,7 @@ impl ClientRegistry {
         }
     }
 
-    pub fn get_metrics(
-        &mut self,
-        metrics: &GetMetricRequest,
-    ) -> Result<Vec<Metric>, RegistryError> {
+    pub fn get_metrics(&self, metrics: &GetMetricRequest) -> Result<Vec<Metric>, RegistryError> {
         let body = serde_json::to_value(metrics).map_err(|e| {
             error!("Failed to serialize metrics {}", e);
             RegistryError::Error(format!("Failed to serialize metrics {}", e))
@@ -424,10 +418,7 @@ impl ClientRegistry {
             .map_err(|e| RegistryError::Error(format!("Failed to parse metric response {}", e)))
     }
 
-    pub fn insert_parameters(
-        &mut self,
-        parameters: &ParameterRequest,
-    ) -> Result<(), RegistryError> {
+    pub fn insert_parameters(&self, parameters: &ParameterRequest) -> Result<(), RegistryError> {
         let body = serde_json::to_value(parameters).map_err(|e| {
             error!("Failed to serialize parameters {}", e);
             RegistryError::Error(format!("Failed to serialize parameters {}", e))
@@ -462,7 +453,7 @@ impl ClientRegistry {
     }
 
     pub fn get_parameters(
-        &mut self,
+        &self,
         parameters: &GetParameterRequest,
     ) -> Result<Vec<Parameter>, RegistryError> {
         let body = serde_json::to_value(parameters).map_err(|e| {
