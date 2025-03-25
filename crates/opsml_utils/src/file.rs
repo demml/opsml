@@ -5,19 +5,15 @@ use pyo3::prelude::*;
 use std::path::Path;
 use walkdir::WalkDir;
 
-#[pyclass]
 pub struct FileUtils;
 
-#[pymethods]
 impl FileUtils {
-    #[staticmethod]
     pub fn open_file(filepath: &str) -> PyResult<String> {
         // get file name of path
         let path = FileUtils::find_path_to_file(filepath)?;
         std::fs::read_to_string(path).map_err(OpsmlError::new_err)
     }
 
-    #[staticmethod]
     pub fn find_path_to_file(filepath: &str) -> PyResult<String> {
         // get file name of path
         let path = std::path::Path::new(&filepath)
