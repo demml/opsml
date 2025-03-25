@@ -2,12 +2,12 @@ use chrono::{DateTime, Utc};
 use opsml_error::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
+use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::Json};
 use std::env;
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MetricRecord {
@@ -43,7 +43,7 @@ impl MetricRecord {
 impl Default for MetricRecord {
     fn default() -> Self {
         MetricRecord {
-            experiment_uid: Uuid::new_v4().to_string(),
+            experiment_uid: create_uuid7(),
             name: CommonKwargs::Undefined.to_string(),
             value: 0.0,
             step: None,
@@ -74,7 +74,7 @@ impl ParameterRecord {
 impl Default for ParameterRecord {
     fn default() -> Self {
         ParameterRecord {
-            experiment_uid: Uuid::new_v4().to_string(),
+            experiment_uid: create_uuid7(),
             name: CommonKwargs::Undefined.to_string(),
             value: Json(ParameterValue::Int(0)),
         }
@@ -170,7 +170,7 @@ impl DataCardRecord {
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
+        let uid = create_uuid7();
 
         DataCardRecord {
             uid,
@@ -207,7 +207,7 @@ impl DataCardRecord {
 impl Default for DataCardRecord {
     fn default() -> Self {
         DataCardRecord {
-            uid: Uuid::new_v4().to_string(),
+            uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
@@ -270,7 +270,7 @@ impl ModelCardRecord {
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
+        let uid = create_uuid7();
 
         ModelCardRecord {
             uid,
@@ -310,7 +310,7 @@ impl ModelCardRecord {
 impl Default for ModelCardRecord {
     fn default() -> Self {
         ModelCardRecord {
-            uid: Uuid::new_v4().to_string(),
+            uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
@@ -358,7 +358,7 @@ pub struct ExperimentCardRecord {
 impl Default for ExperimentCardRecord {
     fn default() -> Self {
         ExperimentCardRecord {
-            uid: Uuid::new_v4().to_string(),
+            uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
@@ -394,7 +394,7 @@ impl ExperimentCardRecord {
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
+        let uid = create_uuid7();
 
         ExperimentCardRecord {
             uid,
@@ -464,7 +464,7 @@ impl AuditCardRecord {
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
+        let uid = create_uuid7();
 
         AuditCardRecord {
             uid,
@@ -501,7 +501,7 @@ impl AuditCardRecord {
 impl Default for AuditCardRecord {
     fn default() -> Self {
         AuditCardRecord {
-            uid: Uuid::new_v4().to_string(),
+            uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
@@ -554,7 +554,7 @@ impl PromptCardRecord {
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
-        let uid = Uuid::new_v4().to_string();
+        let uid = create_uuid7();
 
         PromptCardRecord {
             uid,
@@ -589,7 +589,7 @@ impl PromptCardRecord {
 impl Default for PromptCardRecord {
     fn default() -> Self {
         PromptCardRecord {
-            uid: Uuid::new_v4().to_string(),
+            uid: create_uuid7(),
             created_at: get_utc_datetime(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             name: CommonKwargs::Undefined.to_string(),
@@ -773,7 +773,7 @@ pub struct HardwareMetricsRecord {
 impl Default for HardwareMetricsRecord {
     fn default() -> Self {
         HardwareMetricsRecord {
-            experiment_uid: Uuid::new_v4().to_string(),
+            experiment_uid: create_uuid7(),
             created_at: get_utc_datetime(),
             cpu_percent_utilization: 0.0,
             cpu_percent_per_core: Json(Vec::new()),

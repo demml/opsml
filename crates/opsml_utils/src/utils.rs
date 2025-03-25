@@ -1,5 +1,5 @@
 use chrono::Timelike;
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
 use opsml_error::error::UtilError;
 use pyo3::exceptions::PyValueError;
@@ -60,7 +60,7 @@ pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<
     Ok(())
 }
 
-/// Check if a string is a valid `UUIDv4`
+/// Check if a string is a valid `UUIDv7`
 ///
 /// # Arguments
 ///
@@ -74,9 +74,9 @@ pub fn validate_name_repository_pattern(name: &str, repository: &str) -> Result<
 ///
 /// This function will return an error if:
 /// - The UUID string cannot be parsed.
-pub fn is_valid_uuid4(uid: &str) -> Result<bool, UtilError> {
+pub fn is_valid_uuidv7(uid: &str) -> Result<bool, UtilError> {
     match Uuid::parse_str(uid) {
-        Ok(uuid) => Ok(uuid.get_version_num() == 4),
+        Ok(uuid) => Ok(uuid.get_version_num() == 7),
         Err(_) => Err(UtilError::UuidError),
     }
 }
@@ -123,6 +123,10 @@ pub fn get_utc_timestamp() -> i64 {
 
 pub fn get_utc_datetime() -> DateTime<Utc> {
     Utc::now() // Returns DateTime<Utc> directly
+}
+
+pub fn create_uuid7() -> String {
+    Uuid::now_v7().to_string()
 }
 
 pub struct PyHelperFuncs {}
