@@ -1,54 +1,31 @@
-use crate::storage::enums::client::{MultiPartUploader, StorageClientEnum};
+use crate::storage::http::multipart::MultiPartUploader;
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::BytesMut;
-use opsml_client::{build_api_client, OpsmlApiClient, RequestType, Routes};
+use opsml_client::{OpsmlApiClient, RequestType, Routes};
 use opsml_colors::Colorize;
 use opsml_error::error::StorageError;
-use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::{contracts::*, StorageType, DOWNLOAD_CHUNK_SIZE};
-
 use std::io::Write;
 use std::path::Path;
+use std::sync::Arc;
 use tracing::{error, instrument};
 
 #[derive(Clone)]
 pub struct HttpStorageClient {
-    pub api_client: OpsmlApiClient,
-    storage_client: StorageClientEnum,
+    pub api_client: Arc<OpsmlApiClient>,
     pub storage_type: StorageType,
 }
 
 impl HttpStorageClient {
-    pub async fn new(
-        settings: &mut OpsmlStorageSettings,
-        api_client: Option<OpsmlApiClient>,
-    ) -> AnyhowResult<Self> {
-        let mut api_client = match api_client {
-            Some(client) => client,
-            None => build_api_client(settings).await?,
-        };
-
-        let storage_type =
-            Self::get_storage_setting(&mut api_client)
-                .await
-                .context(Colorize::purple(
-                    "Error occurred while getting storage type",
-                ))?;
-
-        // update settings type
-        settings.storage_type = storage_type.clone();
-
-        // get storage client (options are gcs, aws, azure and local)
-        let storage_client = StorageClientEnum::new(settings)
+    pub async fn new(api_client: Arc<OpsmlApiClient>) -> AnyhowResult<Self> {
+        let storage_type = Self::get_storage_setting(api_client.clone())
             .await
-            .map_err(|e| StorageError::Error(format!("Failed to create storage client: {}", e)))
-            .context(Colorize::green(
-                "Error occurred while creating storage client",
+            .context(Colorize::purple(
+                "Error occurred while getting storage type",
             ))?;
 
         Ok(Self {
             api_client,
-            storage_client,
             storage_type,
         })
     }
@@ -63,8 +40,8 @@ impl HttpStorageClient {
     /// # Returns
     ///
     /// * `StorageType` - The storage type
-    #[instrument(skip(client))]
-    async fn get_storage_setting(client: &mut OpsmlApiClient) -> Result<StorageType, StorageError> {
+    #[instrument(skip_all)]
+    async fn get_storage_setting(client: Arc<OpsmlApiClient>) -> Result<StorageType, StorageError> {
         let response = client
             .request(Routes::StorageSettings, RequestType::Get, None, None, None)
             .await
@@ -89,7 +66,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find(&mut self, path: &str) -> Result<Vec<String>, StorageError> {
+    pub async fn find(&self, path: &str) -> Result<Vec<String>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -130,7 +107,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn find_info(&mut self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
+    pub async fn find_info(&self, path: &str) -> Result<Vec<FileInfo>, StorageError> {
         let query = ListFileQuery {
             path: path.to_string(),
         };
@@ -170,7 +147,7 @@ impl HttpStorageClient {
 
     #[instrument(skip_all)]
     pub async fn get_object(
-        &mut self,
+        &self,
         local_path: &str,
         remote_path: &str,
         _file_size: i64,
@@ -259,7 +236,7 @@ impl HttpStorageClient {
     }
 
     #[instrument(skip_all)]
-    pub async fn delete_object(&mut self, path: &str) -> Result<bool, StorageError> {
+    pub async fn delete_object(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: false,
@@ -299,7 +276,7 @@ impl HttpStorageClient {
         Ok(response.deleted)
     }
 
-    pub async fn delete_objects(&mut self, path: &str) -> Result<bool, StorageError> {
+    pub async fn delete_objects(&self, path: &str) -> Result<bool, StorageError> {
         let query = DeleteFileQuery {
             path: path.to_string(),
             recursive: true,
@@ -333,7 +310,7 @@ impl HttpStorageClient {
 
     #[instrument(skip_all)]
     pub async fn create_multipart_upload(
-        &mut self,
+        &self,
         path: &str,
     ) -> Result<MultiPartSession, StorageError> {
         // 1 - create multipart upload request and send to server
@@ -385,7 +362,7 @@ impl HttpStorageClient {
 
     /// Create a multipart uploader based on configured storage type
     pub async fn create_multipart_uploader(
-        &mut self,
+        &self,
         rpath: &Path,
         lpath: &Path,
     ) -> Result<MultiPartUploader, StorageError> {
@@ -398,29 +375,17 @@ impl HttpStorageClient {
                 StorageError::Error(format!("Failed to create multipart upload: {}", e))
             })?;
 
-        // 2 create multipart uploader from url and api client
-        // GCS - resumes resumable upload session given the session url
-        // AWS - passes the session_url to AwsMUltipartUploaader
-        // Azure - passes the session_url to AzureMultipartUploader
-        let uploader = self
-            .storage_client
-            .create_multipart_uploader(
-                lpath,
-                rpath,
-                multipart_session,
-                Some(self.api_client.clone()),
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to create multipart uploader: {}", e);
-                StorageError::Error(format!("Failed to create multipart uploader: {}", e))
-            })?;
-
-        Ok(uploader)
+        MultiPartUploader::new(
+            rpath,
+            lpath,
+            &self.storage_type,
+            self.api_client.clone(),
+            multipart_session.session_url,
+        )
     }
 
     #[instrument(skip_all)]
-    pub async fn generate_presigned_url(&mut self, path: &str) -> Result<String, StorageError> {
+    pub async fn generate_presigned_url(&self, path: &str) -> Result<String, StorageError> {
         let query = PresignedQuery {
             path: path.to_string(),
             ..Default::default()

@@ -1,7 +1,7 @@
 use crate::types::{JwtToken, RequestType, Routes};
 use opsml_error::error::ApiError;
 use opsml_settings::config::{ApiSettings, OpsmlStorageSettings};
-use opsml_types::contracts::{PresignedQuery, PresignedUrl};
+use opsml_types::contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl};
 
 use reqwest::header;
 use reqwest::multipart::Form;
@@ -11,6 +11,8 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
+use std::sync::Arc;
+use std::sync::RwLock;
 use tracing::{debug, error, instrument};
 
 const TIMEOUT_SECS: u64 = 30;
@@ -45,27 +47,34 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     Ok(client)
 }
 
+/// Main client for interacting with the OpsML API
+/// This client acquires a JWT token on creation, which is stored in a RwLock
+/// and used for all subsequent requests. All token refreshes are handled on the server side.
+/// That is, if a request fails auth during a request, the server will complete the request
+/// and return a new token if the server refresh token is still valid
+///
+///  Arguments:
+///
+/// - `client`: reqwest client to use for requests
+/// - `url`: base url for the API
+///
 #[derive(Debug, Clone)]
 pub struct OpsmlApiClient {
     pub client: Client,
-    settings: OpsmlStorageSettings,
     base_path: String,
+    auth_token: Arc<RwLock<String>>,
 }
 
 impl OpsmlApiClient {
-    pub async fn new(settings: &OpsmlStorageSettings, client: &Client) -> Result<Self, ApiError> {
+    pub async fn new(url: String, client: &Client) -> Result<Self, ApiError> {
         // setup headers
-
-        let mut api_client = Self {
+        let api_client = Self {
             client: client.clone(),
-            settings: settings.clone(),
-            base_path: format!(
-                "{}/{}",
-                settings.api_settings.base_url, settings.api_settings.opsml_dir
-            ),
+            base_path: url,
+            auth_token: Arc::new(RwLock::new(String::new())),
         };
 
-        api_client.get_jwt_token().await.map_err(|e| {
+        api_client.refresh_token().await.map_err(|e| {
             error!("Failed to get JWT token: {}", e);
             ApiError::Error(format!("Failed to get JWT token with error: {}", e))
         })?;
@@ -74,7 +83,7 @@ impl OpsmlApiClient {
     }
 
     #[instrument(skip_all)]
-    async fn get_jwt_token(&mut self) -> Result<(), ApiError> {
+    async fn refresh_token(&self) -> Result<(), ApiError> {
         let url = format!("{}/{}", self.base_path, Routes::AuthLogin.as_str());
         debug!("Getting JWT token from {}", url);
 
@@ -89,24 +98,46 @@ impl OpsmlApiClient {
             return Err(ApiError::Error("Unauthorized".to_string()));
         }
 
-        let response = response
+        let token = response
             .json::<JwtToken>()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to parse jwt token with error: {}", e)))?;
 
-        self.settings.api_settings.auth_token = response.token;
+        if let Ok(mut token_guard) = self.auth_token.write() {
+            *token_guard = token.token;
+        } else {
+            error!("Failed to acquire write lock for token update");
+            return Err(ApiError::Error("Failed to update auth token".to_string()));
+        }
 
         Ok(())
     }
 
-    async fn update_token_from_response(&mut self, response: &Response) {
+    async fn update_token_from_response(&self, response: &Response) {
         if let Some(new_token) = response
             .headers()
             .get(header::AUTHORIZATION)
             .and_then(|h| h.to_str().ok())
             .and_then(|h| h.strip_prefix("Bearer "))
         {
-            self.settings.api_settings.auth_token = new_token.to_string();
+            match self.auth_token.write() {
+                Ok(mut token_guard) => {
+                    *token_guard = new_token.to_string();
+                }
+                Err(e) => {
+                    error!("Failed to acquire write lock for jwt token update: {}", e);
+                }
+            }
+        }
+    }
+
+    fn get_current_token(&self) -> String {
+        match self.auth_token.read() {
+            Ok(token_guard) => token_guard.clone(),
+            Err(e) => {
+                error!("Failed to acquire read lock for token: {}", e);
+                "".to_string()
+            }
         }
     }
 
@@ -132,7 +163,7 @@ impl OpsmlApiClient {
                 self.client
                     .get(url)
                     .headers(headers)
-                    .bearer_auth(&self.settings.api_settings.auth_token)
+                    .bearer_auth(self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -144,7 +175,7 @@ impl OpsmlApiClient {
                 .post(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.settings.api_settings.auth_token)
+                .bearer_auth(self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -155,7 +186,7 @@ impl OpsmlApiClient {
                 .put(url)
                 .headers(headers)
                 .json(&body_params)
-                .bearer_auth(&self.settings.api_settings.auth_token)
+                .bearer_auth(self.get_current_token())
                 .send()
                 .await
                 .map_err(|e| {
@@ -170,7 +201,7 @@ impl OpsmlApiClient {
                 self.client
                     .delete(url)
                     .headers(headers)
-                    .bearer_auth(&self.settings.api_settings.auth_token)
+                    .bearer_auth(self.get_current_token())
                     .send()
                     .await
                     .map_err(|e| {
@@ -183,7 +214,7 @@ impl OpsmlApiClient {
     }
 
     pub async fn request(
-        &mut self,
+        &self,
         route: Routes,
         request_type: RequestType,
         body_params: Option<Value>,
@@ -207,21 +238,21 @@ impl OpsmlApiClient {
     }
 
     // specific method for multipart uploads (mainly used for localstorageclient)
-    pub async fn multipart_upload(self, form: Form) -> Result<Response, ApiError> {
+    pub async fn multipart_upload(&self, form: Form) -> Result<Response, ApiError> {
         let response = self
             .client
             .post(format!("{}/files/multipart", self.base_path))
             .multipart(form)
-            .bearer_auth(self.settings.api_settings.auth_token)
+            .bearer_auth(self.get_current_token())
             .send()
             .await
             .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
         Ok(response)
     }
 
-    // specific method for multipart uploads (mainly used for localstorageclient)
+    // specific method for multipart uploads (mainly used for aws)
     pub async fn generate_presigned_url_for_part(
-        &mut self,
+        &self,
         path: &str,
         session_url: &str,
         part_number: i32,
@@ -257,11 +288,39 @@ impl OpsmlApiClient {
 
         Ok(response.url)
     }
+
+    // specific method for completing multipart uploads (used for aws)
+    pub async fn complete_multipart_upload(
+        &self,
+        complete_request: CompleteMultipartUpload,
+    ) -> Result<Response, ApiError> {
+        let body = serde_json::to_value(complete_request).map_err(|e| {
+            ApiError::Error(format!(
+                "Failed to serialize completed upload parts with error: {}",
+                e
+            ))
+        })?;
+
+        let url = format!("{}/{}", self.base_path, Routes::CompleteMultipart);
+        let response = self
+            .client
+            .post(url)
+            .json(&body)
+            .bearer_auth(self.get_current_token())
+            .send()
+            .await
+            .map_err(|e| ApiError::Error(format!("Failed to send request with error: {}", e)))?;
+        Ok(response)
+    }
 }
 
 pub async fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
     let client = build_http_client(&settings.api_settings)?;
-    OpsmlApiClient::new(settings, &client).await
+    let url = format!(
+        "{}/{}",
+        settings.api_settings.base_url, settings.api_settings.opsml_dir
+    );
+    OpsmlApiClient::new(url, &client).await
 }
 
 #[cfg(test)]
@@ -278,7 +337,7 @@ mod tests {
     }
 
     async fn setup_client(server_url: String) -> OpsmlApiClient {
-        let config = OpsmlConfig::new(None);
+        let config = OpsmlConfig::new();
         let mut settings = config.storage_settings().unwrap();
 
         // set up some auth
@@ -287,13 +346,14 @@ mod tests {
         settings.api_settings.base_url = server_url.to_string();
 
         let client = build_http_client(&settings.api_settings).unwrap();
-        OpsmlApiClient::new(&settings, &client).await.unwrap()
+        let url = format!("{}/{}", server_url, settings.api_settings.opsml_dir);
+        OpsmlApiClient::new(url, &client).await.unwrap()
     }
 
     #[tokio::test]
     async fn test_api_client_no_auth() {
         let (mut server, server_url) = setup_server().await;
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let _mock = server
             .mock("GET", "/opsml/files")
@@ -330,7 +390,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
@@ -361,7 +421,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
@@ -391,7 +451,7 @@ mod tests {
             .expect(3)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
         let result = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)
             .await;
@@ -436,7 +496,7 @@ mod tests {
             .expect(1)
             .create();
 
-        let mut api_client = setup_client(server_url).await;
+        let api_client = setup_client(server_url).await;
 
         let response = api_client
             .request(Routes::Files, RequestType::Get, None, None, None)

@@ -240,6 +240,37 @@ pub async fn generate_presigned_url(
     Ok(Json(PresignedUrl { url }))
 }
 
+#[instrument(skip_all)]
+pub async fn complete_multipart_upload(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<CompleteMultipartUpload>,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+    // check for write access
+
+    if !perms.has_write_permission("") {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    state
+        .storage_client
+        .complete_multipart_upload(req)
+        .await
+        .map_err(|e| ServerError::MultipartError(e.to_string()))
+        .map_err(|e| {
+            error!("Failed to complete multipart upload: {}", e);
+            internal_server_error(e, "Failed to complete multipart upload")
+        })?;
+
+    Ok(Json(UploadResponse {
+        uploaded: true,
+        message: "".to_string(),
+    }))
+}
+
 // this is for local storage only
 #[instrument(skip_all)]
 pub async fn upload_multipart(
@@ -647,6 +678,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/files/multipart", prefix),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
+            )
+            .route(
+                &format!("{}/files/multipart/complete", prefix),
+                post(complete_multipart_upload),
             )
             .route(&format!("{}/files", prefix), get(download_file))
             .route(

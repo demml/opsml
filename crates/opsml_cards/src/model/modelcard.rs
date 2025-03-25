@@ -7,12 +7,14 @@ use opsml_interfaces::{
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
     TaskType,
 };
+
+use opsml_state::app_state;
+use opsml_storage::storage_client;
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -25,8 +27,6 @@ use serde::{
 };
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::{debug, error};
 
 fn interface_from_metadata<'py>(
@@ -121,10 +121,6 @@ pub struct ModelCard {
     #[pyo3(get, set)]
     pub created_at: NaiveDateTime,
 
-    pub rt: Option<Arc<tokio::runtime::Runtime>>,
-
-    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
-
     pub artifact_key: Option<ArtifactKey>,
 
     #[pyo3(get)]
@@ -141,7 +137,6 @@ impl ModelCard {
         interface: &Bound<'_, PyAny>,
         repository: Option<&str>,
         name: Option<&str>,
-
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
@@ -212,8 +207,6 @@ impl ModelCard {
             metadata,
             registry_type: RegistryType::Model,
             to_onnx: to_onnx.unwrap_or(false),
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -504,15 +497,12 @@ impl FromPyObject<'_> for ModelCard {
             interface: Some(interface.into()),
             name,
             repository,
-
             version,
             uid,
             tags,
             metadata,
             registry_type,
             to_onnx,
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env,
             created_at,
@@ -637,8 +627,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                     metadata,
                     registry_type,
                     to_onnx,
-                    rt: None,
-                    fs: None,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -674,14 +662,13 @@ impl ModelCard {
         }
     }
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
-        let rt = self.rt.clone().unwrap();
-        let fs = self.fs.clone().unwrap();
+        let rt = app_state().start_runtime();
 
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
         rt.block_on(async {
-            fs.lock()
+            storage_client()
                 .await
                 .get(lpath, &uri, true)
                 .await
@@ -705,8 +692,7 @@ impl ModelCard {
         preprocessor: bool,
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = self.rt.clone().unwrap();
-        let fs = self.fs.clone().unwrap();
+        let rt = app_state().start_runtime();
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
         let decrypt_key = self.get_decryption_key()?;
 
@@ -721,7 +707,10 @@ impl ModelCard {
                     "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             if onnx && save_metadata.onnx_model_uri.is_some() {
@@ -739,7 +728,10 @@ impl ModelCard {
                     "Downloading onnx model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             if preprocessor {
@@ -753,7 +745,10 @@ impl ModelCard {
                         "Downloading preprocessor: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                         lpath, rpath, recursive
                     );
-                    fs.lock().await.get(&lpath, &rpath, recursive).await?;
+                    storage_client()
+                        .await
+                        .get(&lpath, &rpath, recursive)
+                        .await?;
                 }
             }
 
@@ -767,7 +762,7 @@ impl ModelCard {
                 debug!("Drift profile uri: {:?}", drift_profile_uri);
                 let rpath = uri.join(&drift_profile_uri);
                 let lpath = tmp_path.join(&drift_profile_uri);
-                fs.lock().await.get(&lpath, &rpath, false).await?;
+                storage_client().await.get(&lpath, &rpath, false).await?;
             }
 
             if sample_data && save_metadata.sample_data_uri.is_some() {
@@ -785,7 +780,10 @@ impl ModelCard {
                     "Downloading sample data: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             Ok::<(), CardError>(())

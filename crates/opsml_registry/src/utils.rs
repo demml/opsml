@@ -1,17 +1,15 @@
-use crate::enums::OpsmlRegistry;
+use crate::base::OpsmlRegistry;
 use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_error::error::RegistryError;
-use opsml_storage::FileSystemStorage;
+use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
 use pyo3::prelude::*;
 use pyo3::types::PyString;
 use pyo3::IntoPyObjectExt;
 use std::path::PathBuf;
-use std::sync::Arc;
 use tempfile::TempDir;
-use tokio::sync::Mutex;
 use tracing::{debug, error, instrument};
 
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
@@ -63,8 +61,6 @@ pub fn card_from_string<'py>(
     card_json: String,
     interface: Option<&Bound<'py, PyAny>>,
     key: ArtifactKey,
-    fs: &mut Arc<Mutex<FileSystemStorage>>,
-    rt: &Arc<tokio::runtime::Runtime>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let card = match key.registry_type {
         RegistryType::Model => {
@@ -75,9 +71,6 @@ pub fn card_from_string<'py>(
                 })?;
 
             card.artifact_key = Some(key);
-            card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
-
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -92,9 +85,6 @@ pub fn card_from_string<'py>(
                 })?;
 
             card.artifact_key = Some(key);
-            card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
-
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -108,8 +98,6 @@ pub fn card_from_string<'py>(
             })?;
 
             card.artifact_key = Some(key);
-            card.fs = Some(fs.clone());
-            card.rt = Some(rt.clone());
             card.into_bound_py_any(py).map_err(|e| {
                 error!("Failed to convert card to bound: {}", e);
                 RegistryError::Error(e.to_string())
@@ -157,8 +145,6 @@ pub fn card_from_string<'py>(
 pub async fn download_card<'py>(
     py: Python<'py>,
     key: ArtifactKey,
-    fs: &mut Arc<Mutex<FileSystemStorage>>,
-    rt: &Arc<tokio::runtime::Runtime>,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
     let decryption_key = key.get_decrypt_key().map_err(|e| {
@@ -179,7 +165,7 @@ pub async fn download_card<'py>(
     // add Card.json to tmp_path and rpath
     let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
 
-    fs.lock().await.get(&lpath, &rpath, false).await?;
+    storage_client().await.get(&lpath, &rpath, false).await?;
     decrypt_directory(&tmp_path, &decryption_key)?;
 
     let json_string = std::fs::read_to_string(&lpath).map_err(|e| {
@@ -187,7 +173,7 @@ pub async fn download_card<'py>(
         RegistryError::Error("Failed to read card json".to_string())
     })?;
 
-    let card = card_from_string(py, json_string, interface, key, fs, rt)?;
+    let card = card_from_string(py, json_string, interface, key)?;
 
     Ok(card)
 }
@@ -208,18 +194,14 @@ pub async fn download_card<'py>(
 ///
 /// * `Result<(), RegistryError>` - Result
 #[instrument(skip_all)]
-pub async fn upload_card_artifacts(
-    path: PathBuf,
-    fs: &mut Arc<Mutex<FileSystemStorage>>,
-    key: &ArtifactKey,
-) -> Result<(), RegistryError> {
+pub async fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
     // create temp path for saving
     let encryption_key = key
         .get_decrypt_key()
         .map_err(|e| RegistryError::Error(e.to_string()))?;
 
     encrypt_directory(&path, &encryption_key)?;
-    fs.lock()
+    storage_client()
         .await
         .put(&path, &key.storage_path(), true)
         .await?;
