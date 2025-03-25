@@ -1121,22 +1121,22 @@ mod tests {
             FROM opsml_prompt_registry;
 
             DELETE
-            FROM opsml_experiment_metrics;
+            FROM opsml_experiment_metric;
 
             DELETE
-            FROM opsml_experiment_hardware_metrics;
+            FROM opsml_experiment_hardware_metric;
 
             DELETE
-            FROM opsml_experiment_parameters;
+            FROM opsml_experiment_parameter;
 
             DELETE
-            FROM opsml_users;
+            FROM opsml_user;
 
             DELETE
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operations;
+            FROM opsml_operation;
             "#,
         )
         .fetch_all(pool)
@@ -1754,7 +1754,7 @@ mod tests {
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await
