@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
 
 
 -- MetricSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_metric (
     experiment_uid TEXT,
     name TEXT,
     value FLOAT,
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
 );
 
 -- ParameterSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
+CREATE TABLE IF NOT EXISTS opsml_experiment_parameter (
     experiment_uid TEXT,
     name TEXT,
     value JSONB,
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
 );
 
 -- HardwareSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
     experiment_uid TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     cpu_percent_utilization REAL,
@@ -122,9 +122,9 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     bytes_sent BIGINT,
     idx SERIAL PRIMARY KEY
 );
-CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hardware_metrics (created_at);
+CREATE INDEX idx_experiment_hardware_metrics_created_at ON opsml_experiment_hardware_metric (created_at);
 
-CREATE TABLE IF NOT EXISTS opsml_users (
+CREATE TABLE IF NOT EXISTS opsml_user (
     id SERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     active BOOLEAN DEFAULT TRUE,
@@ -146,13 +146,13 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operations (
+CREATE TABLE IF NOT EXISTS opsml_operation (
     username TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     access_type TEXT NOT NULL,
     access_location TEXT NOT NULL
 );
-CREATE INDEX idx_opsml_operations_created_at ON opsml_operations (created_at);
+CREATE INDEX idx_opsml_operation_created_at ON opsml_operation (created_at);
 
 -- DataSchema
 CREATE TABLE IF NOT EXISTS opsml_prompt_registry (

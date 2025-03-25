@@ -1760,7 +1760,7 @@ mod tests {
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await
