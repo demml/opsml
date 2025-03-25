@@ -3,6 +3,7 @@ use crate::storage::base::PathExt;
 use crate::storage::http::base::HttpStorageClient;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
+use opsml_state::app_state;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use opsml_utils::FileUtils;
@@ -21,30 +22,25 @@ impl HttpFSStorageClient {
         "HttpFSStorageClient"
     }
 
-    pub async fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, StorageError> {
+    pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, StorageError> {
         Ok(HttpFSStorageClient {
-            client: HttpStorageClient::new(api_client).await.map_err(|e| {
+            client: HttpStorageClient::new(api_client).map_err(|e| {
                 StorageError::Error(format!("Failed to create http storage client {}", e))
             })?,
         })
     }
 
-    pub async fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
-        self.client.find(path.to_str().unwrap()).await
+    pub fn find(&self, path: &Path) -> Result<Vec<String>, StorageError> {
+        self.client.find(path.to_str().unwrap())
     }
 
-    pub async fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
-        self.client.find_info(path.to_str().unwrap()).await
+    pub fn find_info(&self, path: &Path) -> Result<Vec<FileInfo>, StorageError> {
+        self.client.find_info(path.to_str().unwrap())
     }
 
-    pub async fn get(
-        &self,
-        lpath: &Path,
-        rpath: &Path,
-        recursive: bool,
-    ) -> Result<(), StorageError> {
+    pub fn get(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
         // list all objects in the path
-        let objects = self.client.find_info(rpath.to_str().unwrap()).await?;
+        let objects = self.client.find_info(rpath.to_str().unwrap())?;
 
         if recursive {
             // Iterate over each object and get it
@@ -58,58 +54,55 @@ impl HttpFSStorageClient {
                 let cloned_client = self.client.clone();
 
                 let task = tokio::task::spawn(async move {
-                    cloned_client
-                        .get_object(
-                            local_path.to_str().unwrap(),
-                            file_path.to_str().unwrap(),
-                            file_info.size,
-                        )
-                        .await?;
+                    cloned_client.get_object(
+                        local_path.to_str().unwrap(),
+                        file_path.to_str().unwrap(),
+                        file_info.size,
+                    )?;
                     Ok::<(), StorageError>(())
                 });
                 tasks.push(task);
             }
 
+            // use runtime here to download all files
+            app_state().start_runtime().block_on(async {
+                let results = futures::future::join_all(tasks).await;
+                // Check for errors
+                for result in results {
+                    result.map_err(|e| StorageError::Error(e.to_string()))??;
+                }
+
+                <Result<(), StorageError>>::Ok(())
+            })?;
             // Await all tasks
-            let results = futures::future::join_all(tasks).await;
-            // Check for errors
-            for result in results {
-                result.map_err(|e| StorageError::Error(e.to_string()))??;
-            }
         } else {
             let file = objects
                 .first()
                 .ok_or(StorageError::Error("No files found".to_string()))?;
             self.client
-                .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap(), file.size)
-                .await?;
+                .get_object(lpath.to_str().unwrap(), rpath.to_str().unwrap(), file.size)?;
         }
 
         Ok(())
     }
 
-    pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
+    pub fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         if recursive {
-            self.client.delete_objects(path.to_str().unwrap()).await?;
+            self.client.delete_objects(path.to_str().unwrap())?;
         } else {
-            self.client.delete_object(path.to_str().unwrap()).await?;
+            self.client.delete_object(path.to_str().unwrap())?;
         }
 
         Ok(())
     }
 
-    pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
-        let objects = self.client.find(path.to_str().unwrap()).await?;
+    pub fn exists(&self, path: &Path) -> Result<bool, StorageError> {
+        let objects = self.client.find(path.to_str().unwrap())?;
 
         Ok(!objects.is_empty())
     }
 
-    pub async fn put(
-        &self,
-        lpath: &Path,
-        rpath: &Path,
-        recursive: bool,
-    ) -> Result<(), StorageError> {
+    pub fn put(&self, lpath: &Path, rpath: &Path, recursive: bool) -> Result<(), StorageError> {
         let lpath_clone = lpath.to_path_buf();
         let rpath_clone = rpath.to_path_buf();
 
@@ -144,13 +137,10 @@ impl HttpFSStorageClient {
 
                     // setup multipart upload based on storage provider
                     let mut uploader = cloned_client
-                        .create_multipart_uploader(&remote_path, &stripped_file_path)
-                        .await?;
+                        .create_multipart_uploader(&remote_path, &stripped_file_path)?;
 
                     debug!("Uploading file: {:?}", stripped_file_path);
-                    uploader
-                        .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                        .await?;
+                    uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
 
                     Ok::<(), StorageError>(())
                 });
@@ -158,27 +148,28 @@ impl HttpFSStorageClient {
                 tasks.push(task);
             }
 
-            let results = futures::future::join_all(tasks).await;
+            // use runtime here to upload all files
+            app_state().start_runtime().block_on(async {
+                let results = futures::future::join_all(tasks).await;
 
-            for result in results {
-                result.map_err(|e| StorageError::Error(e.to_string()))??;
-            }
+                for result in results {
+                    result.map_err(|e| StorageError::Error(e.to_string()))??;
+                }
+
+                <Result<(), StorageError>>::Ok(())
+            })?;
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
 
-            let mut uploader = self.client.create_multipart_uploader(rpath, lpath).await?;
-            uploader
-                .upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)
-                .await?;
+            let mut uploader = self.client.create_multipart_uploader(rpath, lpath)?;
+            uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
         };
 
         Ok(())
     }
 
-    pub async fn generate_presigned_url(&self, path: &Path) -> Result<String, StorageError> {
-        self.client
-            .generate_presigned_url(path.to_str().unwrap())
-            .await
+    pub fn generate_presigned_url(&self, path: &Path) -> Result<String, StorageError> {
+        self.client.generate_presigned_url(path.to_str().unwrap())
     }
 }
