@@ -78,7 +78,7 @@ def pandas_data(example_dataframe) -> PandasData:
     )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def example_dataframe() -> (
     Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]
 ):

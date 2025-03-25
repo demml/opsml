@@ -120,7 +120,7 @@ def test_numpy_interface(tmp_path: Path, numpy_array: NDArray[np.float64]):
 
     metadata = interface.save(save_path)
 
-    assert metadata.save_metadata.data_uri == "data.npy"
+    assert metadata.save_metadata.data_uri == Path("data.npy")
     assert metadata.data_type == DataType.Numpy
 
     with pytest.raises(OpsmlError):

@@ -51,9 +51,10 @@ impl FileSystemStorage {
     #[instrument(skip_all)]
     pub async fn new() -> Result<Self, StorageError> {
         let state = app_state();
-        let settings = state.config.storage_settings()?;
+        let settings = state.config()?.storage_settings()?;
+        let mode = state.mode()?;
 
-        match *state.mode() {
+        match mode {
             OpsmlMode::Server => {
                 #[cfg(feature = "server")]
                 {
@@ -168,22 +169,56 @@ impl FileSystemStorage {
     }
 }
 
-static STORAGE_CLIENT: OnceCell<Arc<FileSystemStorage>> = OnceCell::const_new();
+#[derive(Default)]
+pub struct StorageClientManager {
+    client: OnceCell<Arc<FileSystemStorage>>,
+}
 
-pub async fn storage_client() -> &'static Arc<FileSystemStorage> {
-    STORAGE_CLIENT
-        .get_or_init(|| async {
-            let storage_client = FileSystemStorage::new()
-                .await
-                .map_err(|e| {
-                    error!("Error creating FileSystemStorage: {}", e);
-                    StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
-                })
-                .expect("Failed to initialize FileSystemStorage");
+impl StorageClientManager {
+    pub const fn new() -> Self {
+        Self {
+            client: OnceCell::const_new(),
+        }
+    }
 
-            Arc::new(storage_client)
-        })
+    pub async fn get_client(&self) -> &Arc<FileSystemStorage> {
+        self.client
+            .get_or_init(|| async {
+                let storage_client = FileSystemStorage::new()
+                    .await
+                    .map_err(|e| {
+                        error!("Error creating FileSystemStorage: {}", e);
+                        StorageError::Error(format!("Error creating FileSystemStorage: {}", e))
+                    })
+                    .expect("Failed to initialize FileSystemStorage");
+
+                Arc::new(storage_client)
+            })
+            .await
+    }
+}
+
+// Global static instance with interior mutability
+static STORAGE_MANAGER: std::sync::Mutex<StorageClientManager> =
+    std::sync::Mutex::new(StorageClientManager::new());
+
+// Public interface
+pub async fn storage_client() -> Arc<FileSystemStorage> {
+    STORAGE_MANAGER
+        .lock()
+        .expect("Failed to acquire lock")
+        .get_client()
         .await
+        .clone()
+}
+
+pub fn reset_storage_client() -> Result<(), StorageError> {
+    let manager = StorageClientManager::new();
+    let _ = STORAGE_MANAGER
+        .lock()
+        .map_err(|e| StorageError::Error(format!("Failed to acquire lock: {}", e)))
+        .map(|mut guard| *guard = manager)?;
+    Ok(())
 }
 
 #[cfg(test)]

@@ -3,6 +3,10 @@ use pyo3::prelude::*;
 #[cfg(feature = "server")]
 use opsml_server::{start_server_in_background, stop_server};
 #[cfg(feature = "server")]
+use opsml_state::app_state;
+#[cfg(feature = "server")]
+use opsml_storage::reset_storage_client;
+#[cfg(feature = "server")]
 use std::net::TcpListener as StdTcpListener;
 #[cfg(feature = "server")]
 use std::sync::Arc;
@@ -93,7 +97,7 @@ impl OpsmlTestServer {
                     if response.status() == 200 {
                         self.set_env_vars_for_client()?;
                         println!("Opsml Server started successfully");
-
+                        app_state().reset_config()?;
                         return Ok(());
                     }
                 }
@@ -191,6 +195,8 @@ impl OpsmlServerContext {
     }
 
     fn __enter__(&self) -> PyResult<()> {
+        app_state().reset_config()?;
+        reset_storage_client()?;
         self.cleanup()?;
         Ok(())
     }
