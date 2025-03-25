@@ -14,7 +14,7 @@ use opsml_types::{
         HardwareMetricRequest, ParameterRequest,
     },
 };
-use tracing::instrument;
+use tracing::{error, instrument};
 
 #[derive(Debug, Clone)]
 pub enum OpsmlRegistry {
@@ -50,7 +50,7 @@ impl OpsmlRegistry {
                 #[cfg(feature = "server")]
                 {
                     let settings = state.config.storage_settings().map_err(|e| {
-                        debug!("Failed to get storage settings: {}", e);
+                        error!("Failed to get storage settings: {}", e);
                         RegistryError::Error(format!(
                             "Failed to get storage settings with error: {}",
                             e
@@ -68,6 +68,7 @@ impl OpsmlRegistry {
                 }
                 #[cfg(not(feature = "server"))]
                 {
+                    error!("Server feature not enabled");
                     Err(RegistryError::Error(
                         "Server feature not enabled".to_string(),
                     ))
