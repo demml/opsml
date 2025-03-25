@@ -42,39 +42,6 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> PyResult<RegistryT
     }
 }
 
-/// Initialize registry, file system and tokio runtime
-/// Registry is instantiated on each call
-/// File system is shared across all registries
-/// Tokio runtime is shared across all registries
-///
-///
-/// # Arguments
-///
-/// * `registry_type` - RegistryType
-///
-/// # Returns
-///
-/// * `Result<(OpsmlRegistry, Arc<Mutex<FileSystemStorage>>), RegistryError>` - Result
-///
-/// # Errors
-///
-/// * `RegistryError` - Error
-pub fn initialize_registry_components(
-    registry_type: RegistryType,
-) -> Result<OpsmlRegistry, RegistryError> {
-    let runtime = app_state().start_runtime();
-
-    let registry = runtime.block_on(async {
-        let registry = OpsmlRegistry::new(registry_type)
-            .await
-            .map_err(|e| RegistryError::Error(format!("Failed to create registry: {}", e)))?;
-
-        Ok::<_, RegistryError>(registry)
-    })?;
-
-    Ok(registry)
-}
-
 pub struct CardArgs {
     pub uid: String,
     pub name: String,
@@ -109,7 +76,7 @@ impl CardRegistry {
         let registry_type = extract_registry_type(registry_type)?;
 
         // Create a new tokio runtime for the registry (needed for async calls)
-        let registry = initialize_registry_components(registry_type.clone())
+        let registry = OpsmlRegistry::new(registry_type.clone())
             .map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(Self {
@@ -138,7 +105,7 @@ impl CardRegistry {
     #[pyo3(signature = (uid=None, repository=None, name=None,  version=None, max_date=None, tags=None,  sort_by_timestamp=None, limit=25))]
     #[instrument(skip_all)]
     pub fn list_cards(
-        &mut self,
+        &self,
         uid: Option<String>,
         repository: Option<String>,
         name: Option<String>,
@@ -182,7 +149,7 @@ impl CardRegistry {
     #[pyo3(signature = (card, version_type=VersionType::Minor, pre_tag=None, build_tag=None, save_kwargs=None))]
     #[instrument(skip_all)]
     pub fn register_card(
-        &mut self,
+        &self,
         card: &Bound<'_, PyAny>,
         version_type: VersionType,
         pre_tag: Option<String>,
@@ -194,7 +161,7 @@ impl CardRegistry {
         // Wrap all operations in a single block_on to handle async operations
         Self::verify_and_register_card(
             card,
-            &mut self.registry,
+            &self.registry,
             version_type,
             pre_tag,
             build_tag,
@@ -292,7 +259,7 @@ impl CardRegistry {
     #[instrument(skip_all)]
     fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
-        registry: &mut OpsmlRegistry,
+        registry: &OpsmlRegistry,
         version_type: VersionType,
         pre_tag: Option<String>,
         build_tag: Option<String>,
@@ -301,7 +268,7 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // Verify card for registration
         debug!("Verifying card");
-        verify_card(card, registry_type, registry)?;
+        verify_card(card, registry_type)?;
 
         // Register card
         debug!("Registering card");
@@ -481,7 +448,7 @@ impl CardRegistry {
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
     fn _register_card(
-        registry: &mut OpsmlRegistry,
+        registry: &OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
         version_type: VersionType,
@@ -605,18 +572,12 @@ impl CardRegistry {
 
 impl CardRegistry {
     pub fn rust_new(registry_type: &RegistryType) -> Result<Self, RegistryError> {
-        let registry = initialize_registry_components(registry_type.clone())?;
+        let registry = OpsmlRegistry::new(registry_type.clone())?;
         Ok(Self {
             registry_type: registry_type.clone(),
             table_name: CardTable::from_registry_type(registry_type).to_string(),
             registry,
         })
-    }
-
-    pub fn update_type(&mut self, registry_type: RegistryType) {
-        self.registry_type = registry_type.clone();
-        self.table_name = CardTable::from_registry_type(&registry_type).to_string();
-        self.registry.update_registry_type(registry_type);
     }
 }
 
@@ -648,16 +609,9 @@ impl CardRegistries {
     #[instrument(skip_all)]
     pub fn new() -> PyResult<Self> {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
-
-        // clone experiment to create other registries
-        let mut model = experiment.clone();
-        model.update_type(RegistryType::Model);
-
-        let mut data = experiment.clone();
-        data.update_type(RegistryType::Data);
-
-        let mut prompt = experiment.clone();
-        prompt.update_type(RegistryType::Prompt);
+        let model = CardRegistry::rust_new(&RegistryType::Model)?;
+        let data = CardRegistry::rust_new(&RegistryType::Data)?;
+        let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
 
         Ok(Self {
             experiment,

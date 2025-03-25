@@ -35,11 +35,6 @@ pub mod server_logic {
     }
 
     impl ServerRegistry {
-        pub fn update_registry_type(&mut self, registry_type: RegistryType) {
-            self.registry_type = registry_type.clone();
-            self.table_name = CardTable::from_registry_type(&registry_type);
-        }
-
         pub async fn new(
             registry_type: RegistryType,
             storage_settings: OpsmlStorageSettings,
@@ -66,10 +61,7 @@ pub mod server_logic {
             self.table_name.to_string()
         }
 
-        pub async fn list_cards(
-            &mut self,
-            args: CardQueryArgs,
-        ) -> Result<Vec<Card>, RegistryError> {
+        pub async fn list_cards(&self, args: CardQueryArgs) -> Result<Vec<Card>, RegistryError> {
             let cards = self
                 .sql_client
                 .query_cards(&self.table_name, &args)
@@ -103,7 +95,7 @@ pub mod server_logic {
         }
 
         async fn get_next_version(
-            &mut self,
+            &self,
             name: &str,
             repository: &str,
             version: Option<String>,
@@ -145,7 +137,7 @@ pub mod server_logic {
         }
 
         async fn create_artifact_key(
-            &mut self,
+            &self,
             uid: &str,
             registry_type: &str,
             storage_key: &str,
@@ -175,7 +167,7 @@ pub mod server_logic {
         }
 
         pub async fn create_card(
-            &mut self,
+            &self,
             card: Card,
             version: Option<String>,
             version_type: VersionType,
@@ -452,7 +444,7 @@ pub mod server_logic {
         }
 
         pub async fn delete_card(
-            &mut self,
+            &self,
             delete_request: DeleteCardRequest,
         ) -> Result<(), RegistryError> {
             // get key
@@ -490,17 +482,14 @@ pub mod server_logic {
             Ok(())
         }
 
-        pub async fn load_card(
-            &mut self,
-            args: CardQueryArgs,
-        ) -> Result<ArtifactKey, RegistryError> {
+        pub async fn load_card(&self, args: CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
             self.sql_client
                 .get_card_key_for_loading(&self.table_name, &args)
                 .await
                 .map_err(|e| RegistryError::Error(format!("Failed to list cards {}", e)))
         }
 
-        pub async fn check_uid_exists(&mut self, uid: &str) -> Result<bool, RegistryError> {
+        pub async fn check_uid_exists(&self, uid: &str) -> Result<bool, RegistryError> {
             self.sql_client
                 .check_uid_exists(uid, &self.table_name)
                 .await
@@ -508,7 +497,7 @@ pub mod server_logic {
         }
 
         pub async fn get_artifact_key(
-            &mut self,
+            &self,
             uid: &str,
             registry_type: &RegistryType,
         ) -> Result<ArtifactKey, RegistryError> {
@@ -522,7 +511,7 @@ pub mod server_logic {
         }
 
         pub async fn insert_hardware_metrics(
-            &mut self,
+            &self,
             metrics: &HardwareMetricRequest,
         ) -> Result<(), RegistryError> {
             let created_at = get_utc_datetime();
@@ -549,7 +538,7 @@ pub mod server_logic {
         }
 
         pub async fn get_hardware_metrics(
-            &mut self,
+            &self,
             request: &GetHardwareMetricRequest,
         ) -> Result<Vec<HardwareMetrics>, RegistryError> {
             let records = self
@@ -582,10 +571,7 @@ pub mod server_logic {
             Ok(metrics)
         }
 
-        pub async fn insert_metrics(
-            &mut self,
-            metrics: &MetricRequest,
-        ) -> Result<(), RegistryError> {
+        pub async fn insert_metrics(&self, metrics: &MetricRequest) -> Result<(), RegistryError> {
             let records = metrics
                 .metrics
                 .iter()
@@ -609,7 +595,7 @@ pub mod server_logic {
         }
 
         pub async fn get_metrics(
-            &mut self,
+            &self,
             metrics: &GetMetricRequest,
         ) -> Result<Vec<Metric>, RegistryError> {
             let records = self
@@ -633,7 +619,7 @@ pub mod server_logic {
         }
 
         pub async fn insert_parameters(
-            &mut self,
+            &self,
             parameters: &ParameterRequest,
         ) -> Result<(), RegistryError> {
             let records = parameters
@@ -657,7 +643,7 @@ pub mod server_logic {
         }
 
         pub async fn get_parameters(
-            &mut self,
+            &self,
             parameters: &GetParameterRequest,
         ) -> Result<Vec<Parameter>, RegistryError> {
             let records = self
