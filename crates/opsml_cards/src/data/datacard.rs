@@ -6,7 +6,6 @@ use opsml_interfaces::data::{
     PandasData, PolarsData, SqlData, TorchData,
 };
 use opsml_interfaces::FeatureSchema;
-use opsml_state::app_state;
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
@@ -354,20 +353,12 @@ impl DataCard {
     }
 
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
-        let rt = app_state().start_runtime();
-
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
-        rt.block_on(async {
-            storage_client()
-                .await
-                .get(lpath, &uri, true)
-                .await
-                .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
-
-            Ok::<(), CardError>(())
-        })?;
+        storage_client()?
+            .get(lpath, &uri, true)
+            .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 
         decrypt_directory(lpath, &decrypt_key)?;
 
