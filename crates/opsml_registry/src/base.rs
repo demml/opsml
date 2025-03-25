@@ -113,7 +113,7 @@ impl OpsmlRegistry {
         }
     }
 
-    pub async fn check_card_uid(&mut self, uid: &str) -> Result<bool, RegistryError> {
+    pub fn check_card_uid(&mut self, uid: &str) -> Result<bool, RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => client_registry.check_uid_exists(uid),
             #[cfg(feature = "server")]

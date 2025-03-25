@@ -171,13 +171,10 @@ impl CardRegistry {
             registry_type: self.registry_type.clone(),
         };
 
-        let cards = app_state()
-            .start_runtime()
-            .block_on(async { self.registry.list_cards(query_args).await })
-            .map_err(|e| {
-                error!("Failed to list cards: {}", e);
-                OpsmlError::new_err(e.to_string())
-            })?;
+        let cards = self.registry.list_cards(query_args).map_err(|e| {
+            error!("Failed to list cards: {}", e);
+            OpsmlError::new_err(e.to_string())
+        })?;
 
         Ok(CardList { cards })
     }
@@ -195,21 +192,16 @@ impl CardRegistry {
         debug!("Registering card");
 
         // Wrap all operations in a single block_on to handle async operations
-        app_state()
-            .start_runtime()
-            .block_on(async {
-                Self::verify_and_register_card(
-                    card,
-                    &mut self.registry,
-                    version_type,
-                    pre_tag,
-                    build_tag,
-                    save_kwargs,
-                    &self.registry_type,
-                )
-                .await
-            })
-            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
+        Self::verify_and_register_card(
+            card,
+            &mut self.registry,
+            version_type,
+            pre_tag,
+            build_tag,
+            save_kwargs,
+            &self.registry_type,
+        )
+        .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 
     #[pyo3(signature = (uid=None, repository=None, name=None, version=None, interface=None))]
@@ -236,26 +228,17 @@ impl CardRegistry {
         }
 
         // Wrap all operations in a single block_on to handle async operations
-        let card = app_state()
-            .start_runtime()
-            .block_on(async {
-                // 1. Load the card // download the card from storage
+        let key = self.registry.load_card(CardQueryArgs {
+            uid,
+            name,
+            repository,
+            version,
+            registry_type: self.registry_type.clone(),
+            ..Default::default()
+        })?;
 
-                let key = self
-                    .registry
-                    .load_card(CardQueryArgs {
-                        uid,
-                        name,
-                        repository,
-                        version,
-                        registry_type: self.registry_type.clone(),
-                        ..Default::default()
-                    })
-                    .await?;
-
-                download_card(py, key, interface).await
-            })
-            .map_err(|e| OpsmlError::new_err(e.to_string()))?;
+        let card =
+            download_card(py, key, interface).map_err(|e| OpsmlError::new_err(e.to_string()))?;
 
         Ok(card)
     }
@@ -296,7 +279,7 @@ impl CardRegistry {
 
                 let tmp_path = Self::save_card(card, &self.registry_type).await?;
 
-                upload_card_artifacts(tmp_path, &key).await?;
+                upload_card_artifacts(tmp_path, &key)?;
 
                 Ok(())
             })
@@ -307,7 +290,7 @@ impl CardRegistry {
 impl CardRegistry {
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
-    async fn verify_and_register_card(
+    fn verify_and_register_card(
         card: &Bound<'_, PyAny>,
         registry: &mut OpsmlRegistry,
         version_type: VersionType,
@@ -318,7 +301,7 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         // Verify card for registration
         debug!("Verifying card");
-        verify_card(card, registry_type, registry).await?;
+        verify_card(card, registry_type, registry)?;
 
         // Register card
         debug!("Registering card");
@@ -329,8 +312,7 @@ impl CardRegistry {
             version_type,
             pre_tag,
             build_tag,
-        )
-        .await?;
+        )?;
 
         // Update card attributes
         debug!("Updating card with server response");
@@ -338,11 +320,11 @@ impl CardRegistry {
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
-        let tmp_path = Self::save_card_artifacts(card, save_kwargs, registry_type).await?;
+        let tmp_path = Self::save_card_artifacts(card, save_kwargs, registry_type)?;
 
         // Save artifacts
         debug!("Uploading card artifacts");
-        upload_card_artifacts(tmp_path, &create_response.key).await?;
+        upload_card_artifacts(tmp_path, &create_response.key)?;
 
         debug!("Successfully registered card");
         Ok(())
@@ -410,7 +392,7 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn save_card_artifacts(
+    fn save_card_artifacts(
         card: &Bound<'_, PyAny>,
         save_kwargs: Option<&Bound<'_, PyAny>>,
         registry_type: &RegistryType,
@@ -498,7 +480,7 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn _register_card(
+    fn _register_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
@@ -527,9 +509,8 @@ impl CardRegistry {
             Some(version.clone())
         };
 
-        let response = registry
-            .create_card(registry_card, version, version_type, pre_tag, build_tag)
-            .await?;
+        let response =
+            registry.create_card(registry_card, version, version_type, pre_tag, build_tag)?;
 
         println!(
             "{} - {} - {}/{} - v{}",
@@ -563,7 +544,7 @@ impl CardRegistry {
             registry_type: registry_type.clone(),
         };
 
-        registry.delete_card(delete_request).await?;
+        registry.delete_card(delete_request)?;
 
         println!("{}", Colorize::green("Deleted card"));
         debug!("Successfully deleted card");
@@ -590,7 +571,7 @@ impl CardRegistry {
             })?;
 
         // update card
-        registry.update_card(&registry_card).await.map_err(|e| {
+        registry.update_card(&registry_card).map_err(|e| {
             error!("Failed to update card: {}", e);
             e
         })?;
@@ -603,7 +584,6 @@ impl CardRegistry {
                 registry_type: registry_type.clone(),
                 ..Default::default()
             })
-            .await
             .map_err(|e| {
                 error!("Failed to load card: {}", e);
                 e
