@@ -40,7 +40,7 @@ impl AzureMultipartUpload {
         })
     }
 
-    pub async fn upload_file_in_chunks(
+    pub fn upload_file_in_chunks(
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
@@ -59,15 +59,15 @@ impl AzureMultipartUpload {
                 this_chunk_size: this_chunk,
             };
 
-            self.upload_next_chunk(&upload_args).await?;
+            self.upload_next_chunk(&upload_args)?;
         }
 
-        self.complete_upload().await?;
+        self.complete_upload()?;
 
         Ok(())
     }
 
-    pub async fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
+    pub fn upload_block(&self, block_id: &str, data: &[u8]) -> Result<(), StorageError> {
         let url = format!(
             "{}&comp=block&blockid={}",
             self.session_url,
@@ -79,16 +79,12 @@ impl AzureMultipartUpload {
             .put(&url)
             .body(data.to_vec())
             .send()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to upload block: {:?}", e)))?;
 
         Ok(())
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
-        upload_args: &UploadPartArgs,
-    ) -> Result<(), StorageError> {
+    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), StorageError> {
         let mut buffer = vec![0; upload_args.this_chunk_size as usize];
         let bytes_read = self
             .file_reader
@@ -99,7 +95,7 @@ impl AzureMultipartUpload {
 
         let block_id = format!("{:06}", upload_args.chunk_index);
 
-        self.upload_block(&block_id, &buffer).await.map_err(|e| {
+        self.upload_block(&block_id, &buffer).map_err(|e| {
             StorageError::Error(format!(
                 "Unable to upload multiple chunks to resumable upload: {}",
                 e
@@ -111,7 +107,7 @@ impl AzureMultipartUpload {
         Ok(())
     }
 
-    pub async fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
+    pub fn complete_upload(&self) -> Result<UploadResponse, StorageError> {
         let parts = MultipartCompleteParts::Azure(self.block_parts.clone());
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
@@ -123,10 +119,9 @@ impl AzureMultipartUpload {
         let response = self
             .client
             .complete_multipart_upload(request)
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
-        let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+        let uploaded = response.json::<UploadResponse>().map_err(|e| {
             StorageError::Error(format!("Failed to parse complete upload response: {}", e))
         })?;
 

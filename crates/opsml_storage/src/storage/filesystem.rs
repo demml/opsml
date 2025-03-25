@@ -138,7 +138,7 @@ impl FileSystemStorage {
         }
     }
 
-    pub async fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
+    pub fn rm(&self, path: &Path, recursive: bool) -> Result<(), StorageError> {
         match self {
             #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.rm(path, recursive).await,
@@ -146,7 +146,7 @@ impl FileSystemStorage {
         }
     }
 
-    pub async fn exists(&self, path: &Path) -> Result<bool, StorageError> {
+    pub fn exists(&self, path: &Path) -> Result<bool, StorageError> {
         match self {
             #[cfg(feature = "server")]
             FileSystemStorage::Server(client) => client.exists(path).await,
