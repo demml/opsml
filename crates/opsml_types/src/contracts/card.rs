@@ -4,7 +4,7 @@ use crate::{
     interfaces::{types::DataInterfaceType, ModelType, TaskType},
     DataType, ModelInterfaceType, RegistryType,
 };
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_error::CardError;
 use opsml_semver::VersionType;
@@ -108,7 +108,7 @@ pub struct CardQueryArgs {
 #[pyclass]
 pub struct DataCardClientRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -144,7 +144,7 @@ impl Default for DataCardClientRecord {
 #[pyclass]
 pub struct ModelCardClientRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -187,7 +187,7 @@ impl Default for ModelCardClientRecord {
 #[pyclass]
 pub struct ExperimentCardClientRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -223,7 +223,7 @@ impl Default for ExperimentCardClientRecord {
 #[pyclass]
 pub struct AuditCardClientRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -259,7 +259,7 @@ impl Default for AuditCardClientRecord {
 #[pyclass]
 pub struct PromptCardClientRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -316,7 +316,7 @@ impl Card {
     }
 
     #[getter]
-    pub fn created_at(&self) -> NaiveDateTime {
+    pub fn created_at(&self) -> DateTime<Utc> {
         match self {
             Self::Data(card) => card.created_at,
             Self::Model(card) => card.created_at,
@@ -655,7 +655,7 @@ pub struct CreateCardResponse {
     pub repository: String,
     pub name: String,
     pub app_env: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub key: ArtifactKey,
 }
 

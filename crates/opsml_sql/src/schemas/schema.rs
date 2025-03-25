@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::error::VersionError;
 use opsml_types::cards::{CardTable, ParameterValue};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -16,7 +16,7 @@ pub struct MetricRecord {
     pub value: f64,
     pub step: Option<i32>,
     pub timestamp: Option<i64>,
-    pub created_at: Option<NaiveDateTime>,
+    pub created_at: Option<DateTime<Utc>>,
     pub idx: Option<i32>,
 }
 
@@ -83,7 +83,7 @@ impl Default for ParameterRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct VersionResult {
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub name: String,
     pub repository: String,
     pub major: i32,
@@ -129,15 +129,15 @@ pub struct CardSummary {
     pub name: String,
     pub version: String,
     pub versions: i64,
-    pub updated_at: NaiveDateTime,
-    pub created_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
     pub row_num: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct DataCardRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -231,7 +231,7 @@ impl Default for DataCardRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ModelCardRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -337,7 +337,7 @@ impl Default for ModelCardRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct ExperimentCardRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -431,7 +431,7 @@ impl ExperimentCardRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct AuditCardRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -525,7 +525,7 @@ impl Default for AuditCardRecord {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct PromptCardRecord {
     pub uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub app_env: String,
     pub name: String,
     pub repository: String,
@@ -744,7 +744,7 @@ impl ServerCard {
         }
     }
 
-    pub fn created_at(&self) -> NaiveDateTime {
+    pub fn created_at(&self) -> DateTime<Utc> {
         match self {
             ServerCard::Data(card) => card.created_at,
             ServerCard::Model(card) => card.created_at,
@@ -758,7 +758,7 @@ impl ServerCard {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct HardwareMetricsRecord {
     pub experiment_uid: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub cpu_percent_utilization: f32,
     pub cpu_percent_per_core: Json<Vec<f32>>,
     pub free_memory: i64,
@@ -791,7 +791,7 @@ impl Default for HardwareMetricsRecord {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
     pub id: Option<i32>,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     pub active: bool,
     pub username: String,
     pub password_hash: String,

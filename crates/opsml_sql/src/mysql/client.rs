@@ -17,7 +17,7 @@ use opsml_types::{
 use semver::Version;
 use sqlx::{
     mysql::{MySql, MySqlPoolOptions, MySqlRow},
-    types::chrono::NaiveDateTime,
+    types::chrono::{DateTime, Utc},
     FromRow, Pool, Row,
 };
 
@@ -26,7 +26,7 @@ use tracing::info;
 impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: NaiveDateTime = row.try_get("created_at")?;
+        let created_at: DateTime<Utc> = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;

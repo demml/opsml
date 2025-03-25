@@ -7,7 +7,7 @@ use crate::schemas::schema::{
     QueryStats, ServerCard, User, VersionResult,
 };
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -26,7 +26,7 @@ use tracing::info;
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: NaiveDateTime = row.try_get("created_at")?;
+        let created_at: DateTime<Utc> = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
