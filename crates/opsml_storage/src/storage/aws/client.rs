@@ -70,9 +70,8 @@ pub struct AWSMulitPartUpload {
     client: Client,
     rpath: String,
     lpath: String,
-    upload_id: String,
+    pub upload_id: String,
     file_size: u64,
-    filename: String,
     http_client: HttpClient,
 }
 
@@ -92,11 +91,6 @@ impl AWSMulitPartUpload {
         let creds = AWSCreds::new().await?;
         let client = Client::new(&creds.config);
         let file_size = Self::get_file_size(lpath)?;
-        let filename = Path::new(lpath)
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
 
         Ok(Self {
             client,
@@ -105,7 +99,7 @@ impl AWSMulitPartUpload {
             lpath: lpath.to_string(),
             upload_id: upload_id.to_string(),
             file_size,
-            filename,
+
             http_client: HttpClient::new(),
         })
     }
