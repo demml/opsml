@@ -13,7 +13,7 @@ opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-state = { workspace = true }
-opsml-storage = { workspace = true }
+opsml-storage = { workspace = true}
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 potato-head = { workspace = true }
@@ -23,5 +23,9 @@ serde_json = { workspace = true }
 sysinfo = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+
+[features]
+default = []
+server = ["opsml-storage/server"]
 
 

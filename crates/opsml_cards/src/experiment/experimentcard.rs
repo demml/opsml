@@ -180,7 +180,6 @@ impl ExperimentCard {
     #[pyo3(signature = (path=None))]
     pub fn list_artifacts(&self, path: Option<PathBuf>) -> PyResult<Vec<String>> {
         let rt = app_state().start_runtime();
-        let fs = storage_client();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         let rpath = match path {
@@ -188,10 +187,12 @@ impl ExperimentCard {
             Some(p) => storage_path.join(SaveName::Artifacts).join(p),
         };
 
-        let files = rt.block_on(async { fs.find(&rpath).await }).map_err(|e| {
-            error!("Failed to list artifacts: {}", e);
-            OpsmlError::new_err(e.to_string())
-        })?;
+        let files = rt
+            .block_on(async { storage_client().await.find(&rpath).await })
+            .map_err(|e| {
+                error!("Failed to list artifacts: {}", e);
+                OpsmlError::new_err(e.to_string())
+            })?;
 
         // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path
@@ -217,7 +218,6 @@ impl ExperimentCard {
         lpath: Option<PathBuf>,
     ) -> PyResult<()> {
         let rt = app_state().start_runtime();
-        let fs = storage_client();
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         // if lpath is None, download to "artifacts" directory
@@ -244,7 +244,7 @@ impl ExperimentCard {
         // if rpath has an extension, set recursive to false
         let recursive = rpath.extension().is_none();
 
-        rt.block_on(async { fs.get(&lpath, &rpath, recursive).await })
+        rt.block_on(async { storage_client().await.get(&lpath, &rpath, recursive).await })
             .map_err(|e| {
                 error!("Failed to download artifacts: {}", e);
                 OpsmlError::new_err(e.to_string())

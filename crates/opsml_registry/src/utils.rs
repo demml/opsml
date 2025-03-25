@@ -165,7 +165,7 @@ pub async fn download_card<'py>(
     // add Card.json to tmp_path and rpath
     let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
 
-    storage_client().get(&lpath, &rpath, false).await?;
+    storage_client().await.get(&lpath, &rpath, false).await?;
     decrypt_directory(&tmp_path, &decryption_key)?;
 
     let json_string = std::fs::read_to_string(&lpath).map_err(|e| {
@@ -195,14 +195,16 @@ pub async fn download_card<'py>(
 /// * `Result<(), RegistryError>` - Result
 #[instrument(skip_all)]
 pub async fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
-    let fs = storage_client();
     // create temp path for saving
     let encryption_key = key
         .get_decrypt_key()
         .map_err(|e| RegistryError::Error(e.to_string()))?;
 
     encrypt_directory(&path, &encryption_key)?;
-    fs.put(&path, &key.storage_path(), true).await?;
+    storage_client()
+        .await
+        .put(&path, &key.storage_path(), true)
+        .await?;
 
     debug!("Saved card artifacts to storage");
 

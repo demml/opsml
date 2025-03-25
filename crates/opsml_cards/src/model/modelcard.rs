@@ -663,13 +663,14 @@ impl ModelCard {
     }
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
         let rt = app_state().start_runtime();
-        let fs = storage_client();
 
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
         rt.block_on(async {
-            fs.get(lpath, &uri, true)
+            storage_client()
+                .await
+                .get(lpath, &uri, true)
                 .await
                 .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 
@@ -692,7 +693,6 @@ impl ModelCard {
     ) -> Result<(), CardError> {
         // Create a new tokio runtime for the registry (needed for async calls)
         let rt = app_state().start_runtime();
-        let fs = storage_client();
         let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
         let decrypt_key = self.get_decryption_key()?;
 
@@ -707,7 +707,10 @@ impl ModelCard {
                     "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             if onnx && save_metadata.onnx_model_uri.is_some() {
@@ -725,7 +728,10 @@ impl ModelCard {
                     "Downloading onnx model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             if preprocessor {
@@ -739,7 +745,10 @@ impl ModelCard {
                         "Downloading preprocessor: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                         lpath, rpath, recursive
                     );
-                    fs.get(&lpath, &rpath, recursive).await?;
+                    storage_client()
+                        .await
+                        .get(&lpath, &rpath, recursive)
+                        .await?;
                 }
             }
 
@@ -753,7 +762,7 @@ impl ModelCard {
                 debug!("Drift profile uri: {:?}", drift_profile_uri);
                 let rpath = uri.join(&drift_profile_uri);
                 let lpath = tmp_path.join(&drift_profile_uri);
-                fs.get(&lpath, &rpath, false).await?;
+                storage_client().await.get(&lpath, &rpath, false).await?;
             }
 
             if sample_data && save_metadata.sample_data_uri.is_some() {
@@ -771,7 +780,10 @@ impl ModelCard {
                     "Downloading sample data: lpath-{:?}, rpath-{:?}, recursive-{:?}",
                     lpath, rpath, recursive
                 );
-                fs.get(&lpath, &rpath, recursive).await?;
+                storage_client()
+                    .await
+                    .get(&lpath, &rpath, recursive)
+                    .await?;
             }
 
             Ok::<(), CardError>(())

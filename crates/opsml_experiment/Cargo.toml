@@ -28,4 +28,7 @@ sysinfo = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 
+[features]
+default = []
+server = ["opsml-storage/server"]
 

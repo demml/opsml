@@ -29,4 +29,5 @@ tracing = { workspace = true }
 
 
 [features]
-server = ["opsml-sql", "sqlx", "semver"]
+default = []
+server = ["opsml-sql", "sqlx", "semver", "opsml-storage/server"]

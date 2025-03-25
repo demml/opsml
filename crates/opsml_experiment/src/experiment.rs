@@ -70,7 +70,6 @@ fn extract_code(
     code_dir: Option<PathBuf>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    let fs = storage_client();
     app_state().start_runtime().block_on(async {
         // Attempt to get file
         let (lpath, recursive) = match code_dir {
@@ -97,7 +96,7 @@ fn extract_code(
         // 3. Encrypt the file or directory
         encrypt_directory(&lpath, &encryption_key)?;
 
-        fs.put(&lpath, rpath, recursive).await?;
+        storage_client().await.put(&lpath, rpath, recursive).await?;
 
         // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
         decrypt_directory(&lpath, &encryption_key)?;
@@ -589,7 +588,7 @@ impl Experiment {
         encrypt_directory(&path, &encryption_key)?;
 
         app_state().start_runtime().block_on(async {
-            storage_client().put(&path, &rpath, false).await?;
+            storage_client().await.put(&path, &rpath, false).await?;
             Ok::<(), ExperimentError>(())
         })?;
 
@@ -605,7 +604,7 @@ impl Experiment {
         let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
 
         app_state().start_runtime().block_on(async {
-            storage_client().put(&path, &rpath, true).await?;
+            storage_client().await.put(&path, &rpath, true).await?;
             Ok::<(), ExperimentError>(())
         })?;
 
