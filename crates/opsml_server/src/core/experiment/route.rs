@@ -1,5 +1,5 @@
 /// Route for checking if a card UID exists
-use crate::core::state::AppState;
+use crate::core::{error::internal_server_error, state::AppState};
 use anyhow::{Context, Result};
 use axum::{
     extract::{Query, State},
@@ -40,10 +40,7 @@ pub async fn insert_metrics(
         .await
         .map_err(|e| {
             error!("Failed to insert metric: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to insert metric")
         })?;
 
     Ok(Json(MetricResponse { success: true }))
@@ -60,10 +57,7 @@ pub async fn get_metrics(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get metrics")
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -91,10 +85,7 @@ pub async fn get_metric_names(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get metrics")
         })?;
 
     Ok(Json(names))
@@ -116,10 +107,7 @@ pub async fn insert_parameters(
         .await
         .map_err(|e| {
             error!("Failed to insert parameter: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to insert parameter")
         })?;
 
     Ok(Json(ParameterResponse { success: true }))
@@ -135,10 +123,7 @@ pub async fn get_parameter(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get metrics")
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -179,10 +164,7 @@ pub async fn insert_hardware_metrics(
         .await
         .map_err(|e| {
             error!("Failed to insert hardware metrics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to insert hardware metrics")
         })?;
 
     Ok(Json(HardwareMetricResponse { success: true }))
@@ -198,10 +180,7 @@ pub async fn get_hardware_metrics(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get metrics")
         })?;
 
     // map to the HardwareMetrics struct

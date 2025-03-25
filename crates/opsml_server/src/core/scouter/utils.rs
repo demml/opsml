@@ -1,8 +1,14 @@
+use crate::core::error::internal_server_error;
 use anyhow::Result;
 use axum::{http::StatusCode, Json};
 use opsml_crypt::encrypt_file;
+use opsml_error::ServerError;
 use opsml_storage::StorageClientEnum;
+use opsml_utils::FileUtils;
+use scouter_client::{DriftProfile, DriftType};
+use std::collections::HashMap;
 use std::path::Path;
+use tracing::debug;
 use tracing::error;
 
 pub fn find_drift_profile(
@@ -35,10 +41,7 @@ pub async fn save_encrypted_profile(
 ) -> Result<(), (StatusCode, Json<serde_json::Value>)> {
     let tempdir = tempfile::tempdir().map_err(|e| {
         error!("Failed to create tempdir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to create tempdir"})),
-        )
+        internal_server_error(e, "Failed to create tempdir")
     })?;
 
     let temp_path = tempdir.path().join(filename);
@@ -46,18 +49,12 @@ pub async fn save_encrypted_profile(
     // Write and encrypt file
     std::fs::write(&temp_path, profile).map_err(|e| {
         error!("Failed to write profile: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to write profile"})),
-        )
+        internal_server_error(e, "Failed to write profile")
     })?;
 
     encrypt_file(&temp_path, encryption_key).map_err(|e| {
         error!("Failed to encrypt file: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({"error": "Failed to encrypt file"})),
-        )
+        internal_server_error(e, "Failed to encrypt file")
     })?;
 
     // Save to storage
@@ -74,4 +71,43 @@ pub async fn save_encrypted_profile(
         })?;
 
     Ok(())
+}
+
+pub fn load_drift_profiles(path: &Path) -> Result<HashMap<DriftType, DriftProfile>, ServerError> {
+    FileUtils::list_files(path)
+        .map_err(|e| {
+            error!("Failed to list files: {}", e);
+            ServerError::Error("Failed to list files".to_string())
+        })?
+        .into_iter()
+        .try_fold(HashMap::new(), |mut acc, filepath| {
+            let filename = filepath
+                .file_name()
+                .and_then(|f| f.to_str())
+                .ok_or_else(|| ServerError::Error("Invalid filename".to_string()))?;
+
+            debug!("Loading drift profile: {:?}", &filepath);
+
+            let drift_type = filename
+                .split('-')
+                .next()
+                .map(str::to_lowercase)
+                .and_then(|s| DriftType::from_value(&s))
+                .ok_or_else(|| {
+                    ServerError::Error(format!("Invalid drift profile file: {}", filename))
+                })?;
+
+            let file = std::fs::read_to_string(&filepath).map_err(|_| {
+                error!("Failed to read file: {}", filename);
+                ServerError::Error("Failed to read file".to_string())
+            })?;
+
+            let profile = DriftProfile::from_str(drift_type.clone(), file).map_err(|e| {
+                error!("Failed to parse drift profile: {}", e);
+                ServerError::Error("Failed to parse drift profile".to_string())
+            })?;
+
+            acc.insert(drift_type, profile);
+            Ok(acc)
+        })
 }

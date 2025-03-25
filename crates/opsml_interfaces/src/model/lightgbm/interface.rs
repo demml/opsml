@@ -220,6 +220,7 @@ impl LightGBMModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().drift_type.clone(),
         );
 
         // save model (needs to be last because we pass self_ to save_model, which takes ownership)

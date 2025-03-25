@@ -34,7 +34,7 @@ use tokio_util::io::ReaderStream;
 use tracing::debug;
 use tracing::{error, info, instrument};
 
-async fn log_operation(
+pub async fn log_operation(
     headers: &HeaderMap,
     access_type: &str,
     access_location: &str,
@@ -109,7 +109,10 @@ pub async fn create_multipart_upload(
         Ok(session_url) => session_url,
         Err(e) => {
             error!("Failed to create multipart upload: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(
+                e,
+                "Failed to create multipart upload",
+            ));
         }
     };
 
@@ -198,7 +201,7 @@ pub async fn generate_presigned_url(
             Ok(url) => url,
             Err(e) => {
                 error!("Failed to generate presigned url: {}", e);
-                return Err(internal_server_error(e));
+                return Err(internal_server_error(e, "Failed to generate presigned url"));
             }
         };
 
@@ -215,7 +218,7 @@ pub async fn generate_presigned_url(
         Ok(url) => url,
         Err(e) => {
             error!("Failed to generate presigned url: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to generate presigned url"));
         }
     };
 
@@ -235,6 +238,37 @@ pub async fn generate_presigned_url(
     });
 
     Ok(Json(PresignedUrl { url }))
+}
+
+#[instrument(skip_all)]
+pub async fn complete_multipart_upload(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<CompleteMultipartUpload>,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<serde_json::Value>)> {
+    // check for write access
+
+    if !perms.has_write_permission("") {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    state
+        .storage_client
+        .complete_multipart_upload(req)
+        .await
+        .map_err(|e| ServerError::MultipartError(e.to_string()))
+        .map_err(|e| {
+            error!("Failed to complete multipart upload: {}", e);
+            internal_server_error(e, "Failed to complete multipart upload")
+        })?;
+
+    Ok(Json(UploadResponse {
+        uploaded: true,
+        message: "".to_string(),
+    }))
 }
 
 // this is for local storage only
@@ -287,7 +321,7 @@ pub async fn list_files(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -320,7 +354,7 @@ pub async fn list_file_info(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -351,7 +385,7 @@ pub async fn file_tree(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -448,7 +482,7 @@ pub async fn get_file_for_ui(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {}", e);
-            return Err(internal_server_error(e));
+            return Err(internal_server_error(e, "Failed to list files"));
         }
     };
 
@@ -475,10 +509,7 @@ pub async fn get_file_for_ui(
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to create temp dir")
     })?;
 
     let lpath = tmp_dir.path().join(file_path.file_name().unwrap());
@@ -494,10 +525,7 @@ pub async fn get_file_for_ui(
     .await
     .map_err(|e| {
         error!("Failed to download artifact: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to download artifact")
     })?;
 
     debug!("Downloaded file to: {}", lpath.display());
@@ -554,7 +582,7 @@ pub async fn delete_file(
 
     //
     if let Err(e) = files {
-        return Err(internal_server_error(e));
+        return Err(internal_server_error(e, "Failed to delete files"));
     }
 
     let sql_client = state.sql_client.clone();
@@ -573,14 +601,17 @@ pub async fn delete_file(
     match exists {
         Ok(exists) => {
             if exists {
-                Err(internal_server_error("Failed to delete file"))
+                Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "error": "Failed to delete file" })),
+                ))
             } else {
                 Ok(Json(DeleteFileResponse { deleted: true }))
             }
         }
         Err(e) => {
             error!("Failed to check if file exists: {}", e);
-            Err(internal_server_error(e))
+            Err(internal_server_error(e, "Failed to check if file exists"))
         }
     }
 }
@@ -609,11 +640,7 @@ pub async fn download_file(
         Ok(file) => file,
         Err(e) => {
             error!("Failed to open file: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "failed": "Failed to open file" })),
-            )
-                .into_response();
+            return internal_server_error(e, "Failed to open file").into_response();
         }
     };
 
@@ -635,7 +662,7 @@ pub async fn get_artifact_key(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({})))
+            internal_server_error(e, "Failed to get artifact key")
         })?;
 
     Ok(Json(key))
@@ -651,6 +678,10 @@ pub async fn get_file_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(
                 &format!("{}/files/multipart", prefix),
                 post(upload_multipart).layer(DefaultBodyLimit::max(MAX_FILE_SIZE)),
+            )
+            .route(
+                &format!("{}/files/multipart/complete", prefix),
+                post(complete_multipart_upload),
             )
             .route(&format!("{}/files", prefix), get(download_file))
             .route(

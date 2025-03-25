@@ -1,3 +1,4 @@
+use crate::core::error::internal_server_error;
 use anyhow::Result;
 /// Route for debugging information
 use axum::{http::StatusCode, Json};
@@ -33,10 +34,7 @@ pub async fn get_user(
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to get user from database")
         })?
         .ok_or_else(|| {
             error!("User not found in database");
