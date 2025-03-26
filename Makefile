@@ -105,3 +105,11 @@ ui.dev:
 
 populate.cards:
 	cd $(PY_DIR) && uv run python -m dev.populate_cards
+
+
+###### CLI Build ######
+CLI_DIR = crates/opsml_cli
+
+.PHONY: build.cli
+build.cli:
+	cd $(CLI_DIR) && ./build_server.sh

@@ -13,7 +13,7 @@ echo "🔨 Building opsml-server..."
 
 # Build the server
 cd "$SERVER_DIR"
-cargo build --release
+cargo build
 
 # Create server directory in CLI if it doesn't exist
 mkdir -p "$TARGET_DIR"

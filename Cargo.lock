@@ -4575,6 +4575,7 @@ name = "py-opsml"
 version = "0.1.0"
 dependencies = [
  "opsml-cards",
+ "opsml-cli",
  "opsml-error",
  "opsml-experiment",
  "opsml-interfaces",
