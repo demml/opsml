@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS opsml_audit_registry (
 );
 
 -- MetricSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_metric (
     experiment_uid VARCHAR(64),
     name VARCHAR(128),
     value FLOAT,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_metrics (
 );
 
 -- ParameterSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
+CREATE TABLE IF NOT EXISTS opsml_experiment_parameter (
     experiment_uid VARCHAR(64),
     name VARCHAR(128),
     value JSON,
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_parameters (
 );
 
 -- HardwareSchema
-CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
+CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metric (
     experiment_uid VARCHAR(64) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     cpu_percent_utilization FLOAT,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS opsml_experiment_hardware_metrics (
     INDEX idx_experiment_uid (experiment_uid)
 );
 
-CREATE TABLE IF NOT EXISTS opsml_users (
+CREATE TABLE IF NOT EXISTS opsml_user (
     id INT AUTO_INCREMENT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     active BOOLEAN DEFAULT TRUE,
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS opsml_artifact_key (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS opsml_operations (
+CREATE TABLE IF NOT EXISTS opsml_operation (
     username VARCHAR(255) NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     access_type VARCHAR(16) NOT NULL,

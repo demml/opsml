@@ -19,8 +19,8 @@ export type CardSummary = {
   name: string;
   version: string;
   versions: number;
-  updated_at: string; // Assuming NaiveDateTime is serialized as a string
-  created_at: string; // Assuming NaiveDateTime is serialized as a string
+  updated_at: string; // Assuming  DateTime<Utc> is serialized as a string
+  created_at: string; // Assuming  DateTime<Utc> is serialized as a string
   row_num: number;
 };
 
