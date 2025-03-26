@@ -3987,6 +3987,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "rand 0.9.0",
+ "rayon",
  "reqwest",
  "serde",
  "serde_json",

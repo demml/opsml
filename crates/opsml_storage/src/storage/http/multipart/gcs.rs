@@ -85,10 +85,7 @@ impl GcsMultipartUpload {
         })
     }
 
-    pub async fn upload_next_chunk(
-        &mut self,
-        upload_args: &UploadPartArgs,
-    ) -> Result<(), StorageError> {
+    pub fn upload_next_chunk(&mut self, upload_args: &UploadPartArgs) -> Result<(), StorageError> {
         let first_byte = upload_args.chunk_index * upload_args.chunk_size;
         let last_byte = first_byte + upload_args.this_chunk_size - 1;
 
@@ -111,7 +108,6 @@ impl GcsMultipartUpload {
             .header(CONTENT_LENGTH, size.size())
             .body(buffer)
             .send()
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to upload chunk: {}", e)))?;
 
         if !response.status().is_success() {
@@ -124,7 +120,7 @@ impl GcsMultipartUpload {
         Ok(())
     }
 
-    pub async fn upload_file_in_chunks(
+    pub fn upload_file_in_chunks(
         &mut self,
         chunk_count: u64,
         size_of_last_chunk: u64,
@@ -144,10 +140,10 @@ impl GcsMultipartUpload {
             };
 
             // if error, cancel upload
-            match self.upload_next_chunk(&upload_args).await {
+            match self.upload_next_chunk(&upload_args) {
                 Ok(_) => (),
                 Err(e) => {
-                    self.cancel_upload().await?;
+                    self.cancel_upload()?;
                     return Err(e);
                 }
             }
@@ -176,7 +172,7 @@ impl GcsMultipartUpload {
     //    Ok(uploaded)
     //}
 
-    async fn cancel_upload(&self) -> Result<UploadResponse, StorageError> {
+    fn cancel_upload(&self) -> Result<UploadResponse, StorageError> {
         let request = CompleteMultipartUpload {
             path: self.rpath.clone(),
             session_url: self.session_url.clone(),
@@ -187,10 +183,9 @@ impl GcsMultipartUpload {
         let response = self
             .client
             .complete_multipart_upload(request)
-            .await
             .map_err(|e| StorageError::Error(format!("Failed to complete upload: {}", e)))?;
 
-        let uploaded = response.json::<UploadResponse>().await.map_err(|e| {
+        let uploaded = response.json::<UploadResponse>().map_err(|e| {
             StorageError::Error(format!("Failed to parse complete upload response: {}", e))
         })?;
 
