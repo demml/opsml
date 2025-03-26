@@ -1,4 +1,4 @@
-use crate::cli::arg::{DownloadCard, LaunchServer, ListCards};
+use crate::cli::arg::{DownloadCard, ListCards};
 
 use clap::command;
 use clap::Parser;
@@ -25,14 +25,6 @@ pub enum Commands {
     ///
     /// opsml-cli download-card --registry model --name model_name --version 1.0.0
     DownloadCard(DownloadCard),
-
-    /// Launch the opsml server
-    ///
-    /// # Example
-    ///
-    /// opsml-cli launch-server
-    ///
-    LaunchServer(LaunchServer),
 
     ///  Show opsml-cli version
     ///

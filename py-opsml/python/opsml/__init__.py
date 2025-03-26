@@ -10,6 +10,7 @@ from .opsml import (  # noqa: F401
     potato_head,
     scouter,
     test,
+    run_opsml_cli,
 )
 
 CardRegistry = card.CardRegistry

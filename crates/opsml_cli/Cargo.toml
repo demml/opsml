@@ -8,7 +8,6 @@ repository = { workspace = true }
 opsml-crypt = { workspace = true }
 opsml-error = { workspace = true }
 opsml-registry = { workspace = true }
-opsml-server = { workspace = true, optional = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
@@ -23,6 +22,3 @@ serde_json = { workspace = true }
 tabled = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
-
-[features]
-server = ["opsml-server"]
