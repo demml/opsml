@@ -6,6 +6,18 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum CliError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    RegistryError(#[from] RegistryError),
+}
+
+#[derive(Error, Debug)]
 pub enum SettingsError {
     #[error("Settings Error: {0}")]
     Error(String),

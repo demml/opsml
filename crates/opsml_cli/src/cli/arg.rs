@@ -1,5 +1,7 @@
 use clap::Args;
-
+use opsml_error::CliError;
+use opsml_types::{contracts::CardQueryArgs, RegistryType};
+use opsml_utils::clean_string;
 #[derive(Args)]
 pub struct ListCards {
     /// Name of the registry (data, model, experiment, prompt etc)
@@ -37,6 +39,36 @@ pub struct ListCards {
     /// ignore release candidate
     #[arg(long = "sort_by_timestamp", default_value = "true")]
     pub sort_by_timestamp: bool,
+}
+
+impl ListCards {
+    pub fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
+        let name = self
+            .name
+            .clone()
+            .map(|name| clean_string(&name))
+            .transpose()?;
+
+        let repository = self
+            .repository
+            .clone()
+            .map(|repository| clean_string(&repository))
+            .transpose()?;
+
+        let registry_type = RegistryType::from_string(&self.registry).unwrap();
+
+        Ok(CardQueryArgs {
+            registry_type,
+            repository,
+            name,
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            limit: self.limit,
+            tags: self.tags.clone(),
+            max_date: self.max_date.clone(),
+            sort_by_timestamp: Some(self.sort_by_timestamp),
+        })
+    }
 }
 
 #[derive(Args)]
