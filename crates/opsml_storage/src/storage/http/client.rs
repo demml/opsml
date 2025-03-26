@@ -3,10 +3,10 @@ use crate::storage::base::PathExt;
 use crate::storage::http::base::HttpStorageClient;
 use opsml_client::OpsmlApiClient;
 use opsml_error::error::StorageError;
-use opsml_state::app_state;
 use opsml_types::contracts::FileInfo;
 use opsml_types::StorageType;
 use opsml_utils::FileUtils;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::debug;
@@ -43,19 +43,20 @@ impl HttpFSStorageClient {
         let objects = self.client.find_info(rpath.to_str().unwrap())?;
 
         if recursive {
-            for file_info in objects {
+            objects.into_par_iter().try_for_each(|file_info| {
                 let name = file_info.name;
                 let file_path = PathBuf::from(name);
                 let relative_path = file_path.relative_path(rpath)?;
                 let local_path = lpath.join(relative_path);
-                let cloned_client = self.client.clone();
 
-                cloned_client.get_object(
+                self.client.get_object(
                     local_path.to_str().unwrap(),
                     file_path.to_str().unwrap(),
                     file_info.size,
                 )?;
-            }
+
+                Ok::<(), StorageError>(())
+            })?;
         } else {
             let file = objects
                 .first()
@@ -96,31 +97,23 @@ impl HttpFSStorageClient {
 
             let files: Vec<PathBuf> = get_files(lpath)?;
 
-            for file in files {
+            files.into_par_iter().try_for_each(|file| {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
                     FileUtils::get_chunk_count(&file, 5 * 1024 * 1024)?;
 
-                let stripped_lpath_clone = lpath_clone.clone();
-                let stripped_rpath_clone = rpath_clone.clone();
+                let relative_path = file.relative_path(&lpath_clone)?;
+                let remote_path = rpath_clone.join(relative_path);
 
-                let stripped_file_path = file.clone();
-                let cloned_client = self.client.clone();
-
-                let relative_path = file.relative_path(&stripped_lpath_clone)?;
-                let remote_path = stripped_rpath_clone.join(relative_path);
-
-                debug!(
-                    "remote_path: {:?}, stripped_path: {:?}",
-                    remote_path, stripped_file_path
-                );
+                debug!("remote_path: {:?}, stripped_path: {:?}", remote_path, file);
 
                 // setup multipart upload based on storage provider
-                let mut uploader =
-                    cloned_client.create_multipart_uploader(&remote_path, &stripped_file_path)?;
+                let mut uploader = self.client.create_multipart_uploader(&remote_path, &file)?;
 
-                debug!("Uploading file: {:?}", stripped_file_path);
+                debug!("Uploading file: {:?}", file);
                 uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
-            }
+
+                Ok::<(), StorageError>(())
+            })?;
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
