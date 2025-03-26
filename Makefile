@@ -109,7 +109,3 @@ populate.cards:
 
 ###### CLI Build ######
 CLI_DIR = crates/opsml_cli
-
-.PHONY: build.cli
-build.cli:
-	cd $(CLI_DIR) && ./build_server.sh
