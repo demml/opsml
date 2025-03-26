@@ -1,13 +1,12 @@
 use crate::cli::arg::DownloadCard;
 use crate::cli::arg::IntoQueryArgs;
+use opsml_colors::Colorize;
 use opsml_crypt::decrypt_directory;
 use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_storage::storage_client;
 use opsml_types::contracts::ArtifactKey;
-use owo_colors::OwoColorize;
 use std::path::PathBuf;
-
 /// Download all artifacts of a card
 ///
 /// # Arguments
@@ -48,10 +47,18 @@ pub fn download_card(args: &DownloadCard) -> Result<(), CliError> {
 
     let key = registry.load_card(query_args)?;
 
+    let names: Vec<&str> = key
+        .storage_key
+        .split('/')
+        .skip(1) // Skip the first element
+        .collect();
+
+    let card_name = format!("{}/{}/{}", names[0], names[1], names[2],);
+
     println!(
-        "Downloading card artifacts from registry: {} for path: {}",
-        args.registry,
-        key.storage_key.to_string().green()
+        "Downloading card artifacts for card {} to path {}",
+        Colorize::purple(&card_name),
+        Colorize::green(&args.write_dir)
     );
 
     download_card_artifacts(&key, &args.write_dir)?;
