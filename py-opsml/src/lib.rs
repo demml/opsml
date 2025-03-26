@@ -1,4 +1,5 @@
 pub mod card;
+pub mod cli;
 pub mod core;
 pub mod data;
 pub mod experiment;
@@ -25,5 +26,8 @@ fn opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // test
     m.add_wrapped(wrap_pymodule!(test::test))?;
+
+    // cli
+    m.add_function(wrap_pyfunction!(cli::run_opsml_cli, m)?)?;
     Ok(())
 }

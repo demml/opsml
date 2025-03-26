@@ -8,6 +8,7 @@ from .opsml import (  # noqa: F401
     experiment,
     model,
     potato_head,
+    run_opsml_cli,
     scouter,
     test,
 )
