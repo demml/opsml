@@ -10,7 +10,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 opsml-cards = { workspace = true }
-opsml-cli = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }
@@ -31,7 +30,7 @@ tokio = { workspace = true, optional = true }
 
 [features]
 default = []
-server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest", "opsml-storage", "opsml-cli/server"]
+server = ["opsml-registry/server", "opsml-server", "tokio", "reqwest", "opsml-storage"]
 
 
 [profile.release]
