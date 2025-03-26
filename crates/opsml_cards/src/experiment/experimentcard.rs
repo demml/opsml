@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::{CardError, OpsmlError};
 use opsml_storage::storage_client;
@@ -67,7 +67,7 @@ pub struct ExperimentCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     #[pyo3(get)]
     pub subexperiment: bool,

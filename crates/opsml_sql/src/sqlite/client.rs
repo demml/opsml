@@ -15,7 +15,7 @@ use opsml_types::{cards::CardTable, contracts::CardQueryArgs, RegistryType};
 use semver::Version;
 use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
-    types::chrono::NaiveDateTime,
+    types::chrono::{DateTime, Utc},
     FromRow, Pool, Row, Sqlite,
 };
 use tracing::{debug, error, info, instrument};
@@ -23,7 +23,7 @@ use tracing::{debug, error, info, instrument};
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: NaiveDateTime = row.try_get("created_at")?;
+        let created_at: DateTime<Utc> = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
@@ -1760,7 +1760,7 @@ mod tests {
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await
