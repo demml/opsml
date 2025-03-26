@@ -14,6 +14,7 @@ opsml-crypt = { workspace = true }
 opsml-registry = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
+opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
@@ -27,4 +28,7 @@ sysinfo = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 
+[features]
+default = []
+server = ["opsml-storage/server"]
 

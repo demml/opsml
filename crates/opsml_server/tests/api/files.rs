@@ -11,7 +11,7 @@ use opsml_types::{contracts::*, RegistryType};
 async fn test_opsml_server_render_file() {
     let mut helper = TestHelper::new().await;
 
-    helper.create_card().await;
+    helper.create_modelcard().await;
     let path = helper.create_files();
 
     let list_query = ListFileQuery { path };
@@ -37,7 +37,7 @@ async fn test_opsml_server_render_file() {
     let file1req = RawFileRequest {
         path: file_tree.files[0].path.clone(),
         uid: helper.key.uid.clone(),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
 
     let request = Request::builder()
@@ -57,7 +57,7 @@ async fn test_opsml_server_render_file() {
     let file2req = RawFileRequest {
         path: file_tree.files[1].path.clone(),
         uid: helper.key.uid.clone(),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
 
     let request = Request::builder()

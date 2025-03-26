@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::ModelInterface;
@@ -7,12 +7,13 @@ use opsml_interfaces::{
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_storage::FileSystemStorage;
 use opsml_types::contracts::{ArtifactKey, Card, ModelCardClientRecord};
 use opsml_types::{
     cards::BaseArgs, DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix,
     TaskType,
 };
+
+use opsml_storage::storage_client;
 use opsml_utils::{create_tmp_path, get_utc_datetime, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -25,9 +26,7 @@ use serde::{
 };
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tracing::{debug, error};
+use tracing::error;
 
 fn interface_from_metadata<'py>(
     py: Python<'py>,
@@ -119,11 +118,7 @@ pub struct ModelCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
-
-    pub rt: Option<Arc<tokio::runtime::Runtime>>,
-
-    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
+    pub created_at: DateTime<Utc>,
 
     pub artifact_key: Option<ArtifactKey>,
 
@@ -141,7 +136,6 @@ impl ModelCard {
         interface: &Bound<'_, PyAny>,
         repository: Option<&str>,
         name: Option<&str>,
-
         version: Option<&str>,
         uid: Option<&str>,
         tags: Option<&Bound<'_, PyList>>,
@@ -212,8 +206,6 @@ impl ModelCard {
             metadata,
             registry_type: RegistryType::Model,
             to_onnx: to_onnx.unwrap_or(false),
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -227,7 +219,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_datacard_uid(&mut self, datacard_uid: Option<&str>) {
+    pub fn set_datacard_uid(&mut self, datacard_uid: Option<String>) {
         self.metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
     }
 
@@ -237,7 +229,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<String>) {
         self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 
@@ -247,7 +239,7 @@ impl ModelCard {
     }
 
     #[setter]
-    pub fn set_auditcard_uid(&mut self, auditcard_uid: Option<&str>) {
+    pub fn set_auditcard_uid(&mut self, auditcard_uid: Option<String>) {
         self.metadata.auditcard_uid = auditcard_uid.map(|s| s.to_string());
     }
 
@@ -504,15 +496,12 @@ impl FromPyObject<'_> for ModelCard {
             interface: Some(interface.into()),
             name,
             repository,
-
             version,
             uid,
             tags,
             metadata,
             registry_type,
             to_onnx,
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env,
             created_at,
@@ -637,8 +626,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                     metadata,
                     registry_type,
                     to_onnx,
-                    rt: None,
-                    fs: None,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -674,126 +661,15 @@ impl ModelCard {
         }
     }
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
-        let rt = self.rt.clone().unwrap();
-        let fs = self.fs.clone().unwrap();
-
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
-        rt.block_on(async {
-            fs.lock()
-                .await
-                .get(lpath, &uri, true)
-                .await
-                .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
-
-            Ok::<(), CardError>(())
-        })?;
+        storage_client()?
+            .get(lpath, &uri, true)
+            .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 
         decrypt_directory(lpath, &decrypt_key)?;
 
-        Ok(())
-    }
-    // # TODO: May use this later
-    fn _download_select_artifacts(
-        &mut self,
-        tmp_path: &Path,
-        model: bool,
-        onnx: bool,
-        drift_profile: bool,
-        sample_data: bool,
-        preprocessor: bool,
-    ) -> Result<(), CardError> {
-        // Create a new tokio runtime for the registry (needed for async calls)
-        let rt = self.rt.clone().unwrap();
-        let fs = self.fs.clone().unwrap();
-        let save_metadata = self.metadata.interface_metadata.save_metadata.clone();
-        let decrypt_key = self.get_decryption_key()?;
-
-        rt.block_on(async {
-            let uri = self.artifact_key.as_ref().unwrap().storage_path();
-
-            if model {
-                let rpath = uri.join(&save_metadata.model_uri);
-                let lpath = tmp_path.join(&save_metadata.model_uri);
-                let recursive = rpath.extension().is_none();
-                debug!(
-                    "Downloading model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
-                    lpath, rpath, recursive
-                );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
-            }
-
-            if onnx && save_metadata.onnx_model_uri.is_some() {
-                let onnx_model_uri = if save_metadata.onnx_model_uri.is_none() {
-                    return Err(CardError::Error("Onnx model uri not found".to_string()));
-                } else {
-                    save_metadata.onnx_model_uri.clone().unwrap()
-                };
-
-                let rpath = uri.join(&onnx_model_uri);
-                let lpath = tmp_path.join(&onnx_model_uri);
-                let recursive = rpath.extension().is_none();
-
-                debug!(
-                    "Downloading onnx model: lpath-{:?}, rpath-{:?}, recursive-{:?}",
-                    lpath, rpath, recursive
-                );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
-            }
-
-            if preprocessor {
-                let preprocessor_map = save_metadata.data_processor_map;
-                for (_, value) in preprocessor_map.iter() {
-                    let rpath = uri.join(&value.uri);
-                    let lpath = tmp_path.join(&value.uri);
-                    let recursive = rpath.extension().is_none();
-
-                    debug!(
-                        "Downloading preprocessor: lpath-{:?}, rpath-{:?}, recursive-{:?}",
-                        lpath, rpath, recursive
-                    );
-                    fs.lock().await.get(&lpath, &rpath, recursive).await?;
-                }
-            }
-
-            if drift_profile && save_metadata.drift_profile_uri.is_some() {
-                let drift_profile_uri = if save_metadata.drift_profile_uri.is_none() {
-                    return Err(CardError::Error("Drift profile uri not found".to_string()));
-                } else {
-                    save_metadata.drift_profile_uri.clone().unwrap()
-                };
-
-                debug!("Drift profile uri: {:?}", drift_profile_uri);
-                let rpath = uri.join(&drift_profile_uri);
-                let lpath = tmp_path.join(&drift_profile_uri);
-                fs.lock().await.get(&lpath, &rpath, false).await?;
-            }
-
-            if sample_data && save_metadata.sample_data_uri.is_some() {
-                let sample_data_uri = if save_metadata.sample_data_uri.is_none() {
-                    return Err(CardError::Error("Sample data uri not found".to_string()));
-                } else {
-                    save_metadata.sample_data_uri.clone().unwrap()
-                };
-
-                let rpath = uri.join(&sample_data_uri);
-                let lpath = tmp_path.join(&sample_data_uri);
-                let recursive = rpath.extension().is_none();
-
-                debug!(
-                    "Downloading sample data: lpath-{:?}, rpath-{:?}, recursive-{:?}",
-                    lpath, rpath, recursive
-                );
-                fs.lock().await.get(&lpath, &rpath, recursive).await?;
-            }
-
-            Ok::<(), CardError>(())
-        })?;
-
-        decrypt_directory(tmp_path, &decrypt_key)?;
-
-        // decrypt
         Ok(())
     }
 }

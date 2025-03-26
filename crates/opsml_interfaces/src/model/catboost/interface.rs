@@ -232,6 +232,7 @@ impl CatBoostModel {
             self_.as_super().interface_type.clone(),
             onnx_session,
             extra,
+            self_.as_super().drift_type.clone(),
         );
 
         // save model

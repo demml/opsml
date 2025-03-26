@@ -59,11 +59,11 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'monitoring'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
           <Activity color="#8059b6"/>
           <span>Monitoring</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => activeTab = 'versions'}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>
         </button>

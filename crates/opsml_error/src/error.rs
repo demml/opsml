@@ -6,6 +6,24 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum CliError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    RegistryError(#[from] RegistryError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
+}
+
+#[derive(Error, Debug)]
 pub enum SettingsError {
     #[error("Settings Error: {0}")]
     Error(String),
@@ -32,6 +50,9 @@ pub enum StorageError {
 
     #[error("Unauthorized: {0}")]
     PermissionDenied(String),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<StorageError> for PyErr {
@@ -273,6 +294,9 @@ pub enum RegistryError {
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
 }
 
 impl From<RegistryError> for PyErr {
@@ -454,6 +478,26 @@ impl From<std::io::Error> for CryptError {
 impl From<PyErr> for CryptError {
     fn from(err: PyErr) -> Self {
         CryptError::Error(err.to_string())
+    }
+}
+
+#[derive(Error, Debug, Deserialize, Serialize)]
+pub enum StateError {
+    #[error("{0}")]
+    Error(String),
+}
+
+impl From<StateError> for PyErr {
+    fn from(err: StateError) -> PyErr {
+        let msg = err.to_string();
+        error!("{}", msg);
+        OpsmlError::new_err(err.to_string())
+    }
+}
+
+impl From<PyErr> for StateError {
+    fn from(err: PyErr) -> Self {
+        StateError::Error(err.to_string())
     }
 }
 

@@ -1,4 +1,4 @@
-pub mod enums;
+pub mod base;
 pub mod registry;
 pub mod server;
 pub mod utils;

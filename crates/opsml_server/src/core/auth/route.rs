@@ -1,4 +1,5 @@
 use crate::core::auth::schema::{Authenticated, LoginRequest, LoginResponse};
+use crate::core::error::internal_server_error;
 use crate::core::state::AppState;
 use crate::core::user::utils::get_user;
 use anyhow::{Context, Result};
@@ -88,10 +89,7 @@ pub async fn api_login_handler(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to generate JWT token")
     })?;
 
     // check if refresh token is already set.
@@ -112,10 +110,7 @@ pub async fn api_login_handler(
         .generate_refresh_token(&user)
         .map_err(|e| {
             error!("Failed to generate refresh token: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to generate refresh token")
         })?;
 
     user.refresh_token = Some(refresh_token);
@@ -123,10 +118,7 @@ pub async fn api_login_handler(
     // set refresh token in db
     state.sql_client.update_user(&user).await.map_err(|e| {
         error!("Failed to set refresh token in database: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to set refresh token in database")
     })?;
 
     // update scouter with new refresh token
@@ -165,10 +157,7 @@ async fn ui_login_handler(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({})),
-        )
+        internal_server_error(e, "Failed to generate JWT token")
     })?;
     let refresh_token = state
         .auth_manager
@@ -260,10 +249,7 @@ pub async fn api_refresh_token_handler(
         // set refresh token in db
         state.sql_client.update_user(&user).await.map_err(|e| {
             error!("Failed to set refresh token in database: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({})),
-            )
+            internal_server_error(e, "Failed to set refresh token in database")
         })?;
 
         Ok(Json(JwtToken { token: jwt_token }))

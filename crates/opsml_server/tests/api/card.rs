@@ -18,7 +18,7 @@ use std::path::PathBuf;
 fn create_card_metadata(key: ArtifactKey) {
     let json = r#"{"name":"name","repository":"space","version":"1.0.0","uid":"550e8400-e29b-41d4-a716-446655440000","app_env":"dev","created_at":"2021-08-01T00:00:00Z"}"#;
     let path = format!(
-        "opsml_registries/opsml_data_registry/{}/{}/v{}",
+        "opsml_registries/opsml_model_registry/{}/{}/v{}",
         "space", "name", "1.0.0"
     );
     std::fs::create_dir_all(path.clone()).unwrap();
@@ -841,14 +841,14 @@ async fn test_opsml_server_card_get_card() {
 
     // Create a test card with some data
     let card_request = CreateCardRequest {
-        card: Card::Data(DataCardClientRecord {
+        card: Card::Model(ModelCardClientRecord {
             name: "name".to_string(),
             repository: "space".to_string(),
             version: "1.0.0".to_string(),
             tags: vec!["test".to_string()],
-            ..DataCardClientRecord::default()
+            ..ModelCardClientRecord::default()
         }),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
         version_request: card_version_request,
     };
 
@@ -880,7 +880,7 @@ async fn test_opsml_server_card_get_card() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -909,14 +909,14 @@ async fn test_opsml_server_card_get_card() {
 async fn test_opsml_server_card_get_readme() {
     let mut helper = TestHelper::new().await;
 
-    helper.create_card().await;
+    helper.create_modelcard().await;
 
     // Create and upload the readme
     let read_me = "This is a test README";
     let create_readme = CreateReadeMe {
         repository: "space".to_string(),
         name: "name".to_string(),
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
         readme: read_me.to_string(),
     };
 
@@ -940,7 +940,7 @@ async fn test_opsml_server_card_get_readme() {
         tags: None,
         limit: None,
         sort_by_timestamp: None,
-        registry_type: RegistryType::Data,
+        registry_type: RegistryType::Model,
     };
     //
     let query_string = serde_qs::to_string(&params).unwrap();

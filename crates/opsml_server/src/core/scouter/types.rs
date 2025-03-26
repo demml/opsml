@@ -1,9 +1,20 @@
-use scouter_client::ProfileRequest;
-use serde::Deserialize;
+use anyhow::Result;
+use axum::{http::StatusCode, Json};
+use scouter_client::BinnedCustomMetrics;
+use scouter_client::{BinnedPsiFeatureMetrics, DriftProfile, DriftType, SpcDriftFeatures};
 
-#[derive(Deserialize, Debug, Clone)]
-pub struct UpdateProfileRequest {
-    pub uid: String,
-    pub repository: String,
-    pub request: ProfileRequest,
-}
+use std::collections::HashMap;
+
+pub type DriftProfileMap = HashMap<DriftType, DriftProfile>;
+pub type ProfileResponse = Json<DriftProfileMap>;
+pub type ReturnError = (StatusCode, Json<serde_json::Value>);
+pub type ProfileResult = Result<ProfileResponse, ReturnError>;
+
+pub type BinnedCustomResponse = Json<BinnedCustomMetrics>;
+pub type BinnedCustomResult = Result<BinnedCustomResponse, ReturnError>;
+
+pub type BinnedPsiResponse = Json<BinnedPsiFeatureMetrics>;
+pub type BinnedPsiResult = Result<BinnedPsiResponse, ReturnError>;
+
+pub type SpcDriftResponse = Json<SpcDriftFeatures>;
+pub type SpcDriftResult = Result<SpcDriftResponse, ReturnError>;

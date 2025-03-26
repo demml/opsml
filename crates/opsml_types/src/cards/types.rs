@@ -28,12 +28,12 @@ impl fmt::Display for CardTable {
             CardTable::Model => "opsml_model_registry",
             CardTable::Experiment => "opsml_experiment_registry",
             CardTable::Audit => "opsml_audit_registry",
-            CardTable::Metrics => "opsml_experiment_metrics",
-            CardTable::HardwareMetrics => "opsml_experiment_hardware_metrics",
-            CardTable::Parameters => "opsml_experiment_parameters",
-            CardTable::Users => "opsml_users",
+            CardTable::Metrics => "opsml_experiment_metric",
+            CardTable::HardwareMetrics => "opsml_experiment_hardware_metric",
+            CardTable::Parameters => "opsml_experiment_parameter",
+            CardTable::Users => "opsml_user",
             CardTable::ArtifactKey => "opsml_artifact_key",
-            CardTable::Operations => "opsml_operations",
+            CardTable::Operations => "opsml_operation",
             CardTable::Prompt => "opsml_prompt_registry",
         };
         write!(f, "{}", table_name)

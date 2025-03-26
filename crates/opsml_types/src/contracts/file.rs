@@ -90,6 +90,22 @@ pub struct ListFileResponse {
     pub files: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub enum MultipartCompleteParts {
+    Aws(CompletedUploadParts),
+    Azure(Vec<String>),
+    #[default]
+    None,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct CompleteMultipartUpload {
+    pub path: String,
+    pub session_url: String,
+    pub parts: MultipartCompleteParts,
+    pub cancel: bool,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct ListFileInfoResponse {
     pub files: Vec<FileInfo>,
@@ -119,6 +135,17 @@ pub struct UploadResponse {
     pub message: String,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct CompletedUploadPart {
+    pub part_number: i32,
+    pub e_tag: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CompletedUploadParts {
+    pub parts: Vec<CompletedUploadPart>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct DownloadResponse {
     pub exists: bool,
@@ -130,7 +157,6 @@ pub struct PermissionDenied {
 }
 
 pub struct UploadPartArgs {
-    pub presigned_url: Option<String>,
     pub chunk_size: u64,
     pub chunk_index: u64,
     pub this_chunk_size: u64,

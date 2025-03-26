@@ -3,7 +3,7 @@ use opsml_error::error::SqlError;
 /// this file contains helper logic for generating sql queries across different databases
 use crate::base::add_version_bounds;
 use opsml_types::{cards::CardTable, contracts::CardQueryArgs};
-use opsml_utils::utils::is_valid_uuid4;
+use opsml_utils::utils::is_valid_uuidv7;
 pub struct SqliteQueryHelper;
 
 impl SqliteQueryHelper {
@@ -290,7 +290,7 @@ impl SqliteQueryHelper {
         // check for uid. If uid is present, we only return that card
         if query_args.uid.is_some() {
             // validate uid
-            is_valid_uuid4(query_args.uid.as_ref().unwrap())
+            is_valid_uuidv7(query_args.uid.as_ref().unwrap())
                 .map_err(|e| SqlError::GeneralError(e.to_string()))?;
         } else {
             // add where clause due to multiple combinations

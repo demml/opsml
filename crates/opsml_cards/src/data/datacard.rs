@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_error::error::{CardError, OpsmlError};
 use opsml_interfaces::data::{
@@ -6,7 +6,7 @@ use opsml_interfaces::data::{
     PandasData, PolarsData, SqlData, TorchData,
 };
 use opsml_interfaces::FeatureSchema;
-use opsml_storage::FileSystemStorage;
+use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, Card, DataCardClientRecord};
 use opsml_types::interfaces::types::DataInterfaceType;
 use opsml_types::{cards::BaseArgs, DataType, RegistryType, SaveName, Suffix};
@@ -15,8 +15,6 @@ use pyo3::types::PyList;
 use pyo3::{prelude::*, IntoPyObjectExt};
 use pyo3::{PyTraverseError, PyVisit};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::error;
 
 use serde::{
@@ -89,11 +87,7 @@ pub struct DataCard {
     pub app_env: String,
 
     #[pyo3(get, set)]
-    pub created_at: NaiveDateTime,
-
-    pub rt: Option<Arc<tokio::runtime::Runtime>>,
-
-    pub fs: Option<Arc<Mutex<FileSystemStorage>>>,
+    pub created_at: DateTime<Utc>,
 
     pub artifact_key: Option<ArtifactKey>,
 
@@ -166,8 +160,6 @@ impl DataCard {
             tags,
             metadata,
             registry_type: RegistryType::Data,
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
@@ -202,7 +194,7 @@ impl DataCard {
     }
 
     #[setter]
-    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<&str>) {
+    pub fn set_experimentcard_uid(&mut self, experimentcard_uid: Option<String>) {
         self.metadata.experimentcard_uid = experimentcard_uid.map(|s| s.to_string());
     }
 
@@ -361,21 +353,12 @@ impl DataCard {
     }
 
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
-        let rt = self.rt.clone().unwrap();
-        let fs = self.fs.clone().unwrap();
-
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
 
-        rt.block_on(async {
-            fs.lock()
-                .await
-                .get(lpath, &uri, true)
-                .await
-                .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
-
-            Ok::<(), CardError>(())
-        })?;
+        storage_client()?
+            .get(lpath, &uri, true)
+            .map_err(|e| CardError::Error(format!("Failed to download artifacts: {}", e)))?;
 
         decrypt_directory(lpath, &decrypt_key)?;
 
@@ -514,8 +497,6 @@ impl<'de> Deserialize<'de> for DataCard {
                     tags,
                     metadata,
                     registry_type,
-                    rt: None,
-                    fs: None,
                     artifact_key: None,
                     app_env,
                     created_at,
@@ -564,8 +545,6 @@ impl FromPyObject<'_> for DataCard {
             tags,
             metadata,
             registry_type,
-            rt: None,
-            fs: None,
             artifact_key: None,
             app_env,
             created_at,

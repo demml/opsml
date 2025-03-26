@@ -538,6 +538,7 @@ impl HuggingFaceModel {
             self_.interface_type.clone(),
             onnx_session,
             HashMap::new(),
+            self_.as_super().drift_type.clone(),
         );
 
         metadata.model_specific_metadata = self_.base_args.model_dump_json();
