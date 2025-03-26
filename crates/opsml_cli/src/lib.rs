@@ -7,9 +7,6 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use owo_colors::OwoColorize;
 
-#[cfg(feature = "server")]
-use crate::actions::server::start_server;
-
 pub const LOGO_TEXT: &str = "
  ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
 ██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██ 
@@ -18,8 +15,8 @@ pub const LOGO_TEXT: &str = "
  ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██ 
 ";
 
-fn main() -> Result<()> {
-    let cli = Cli::parse();
+pub fn run_cli(args: Vec<String>) -> Result<()> {
+    let cli = Cli::parse_from(args.into_iter().skip(1));
 
     match &cli.command {
         Some(Commands::ListCards(args)) => {
@@ -28,12 +25,6 @@ fn main() -> Result<()> {
         }
         Some(Commands::DownloadCard(args)) => {
             download_card(args).context("Failed to download card")?;
-            Ok(())
-        }
-
-        #[cfg(feature = "server")]
-        Some(Commands::LaunchServer(_args)) => {
-            start_server().context("Failed to start server")?;
             Ok(())
         }
 

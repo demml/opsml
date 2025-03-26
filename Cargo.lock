@@ -3748,7 +3748,6 @@ dependencies = [
  "opsml-crypt",
  "opsml-error",
  "opsml-registry",
- "opsml-server",
  "opsml-state",
  "opsml-storage",
  "opsml-types",
@@ -4575,6 +4574,7 @@ name = "py-opsml"
 version = "0.1.0"
 dependencies = [
  "opsml-cards",
+ "opsml-cli",
  "opsml-error",
  "opsml-experiment",
  "opsml-interfaces",
