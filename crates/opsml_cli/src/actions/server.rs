@@ -16,7 +16,8 @@ fn get_server_path() -> Result<PathBuf, CliError> {
     }
 }
 
-fn start_server() -> Result<(), CliError> {
+#[cfg(feature = "server")]
+pub fn start_server() -> Result<(), CliError> {
     let server_path = get_server_path()?;
     let output = Command::new(server_path)
         .output()
