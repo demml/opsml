@@ -15,6 +15,12 @@ pub enum CliError {
 
     #[error(transparent)]
     RegistryError(#[from] RegistryError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+
+    #[error(transparent)]
+    CryptError(#[from] CryptError),
 }
 
 #[derive(Error, Debug)]

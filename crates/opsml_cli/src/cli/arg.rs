@@ -2,6 +2,11 @@ use clap::Args;
 use opsml_error::CliError;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
 use opsml_utils::clean_string;
+
+pub trait IntoQueryArgs {
+    fn into_query_args(&self) -> Result<CardQueryArgs, CliError>;
+}
+
 #[derive(Args)]
 pub struct ListCards {
     /// Name of the registry (data, model, experiment, prompt etc)
@@ -41,8 +46,8 @@ pub struct ListCards {
     pub sort_by_timestamp: bool,
 }
 
-impl ListCards {
-    pub fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
+impl IntoQueryArgs for ListCards {
+    fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
         let name = self
             .name
             .clone()
@@ -96,6 +101,33 @@ pub struct DownloadCard {
     /// Write directory
     #[arg(long = "write-dir", default_value = "artifacts")]
     pub write_dir: String,
+}
+
+impl IntoQueryArgs for DownloadCard {
+    fn into_query_args(&self) -> Result<CardQueryArgs, CliError> {
+        let name = self
+            .name
+            .clone()
+            .map(|name| clean_string(&name))
+            .transpose()?;
+
+        let repository = self
+            .repository
+            .clone()
+            .map(|repository| clean_string(&repository))
+            .transpose()?;
+
+        let registry_type = RegistryType::from_string(&self.registry).unwrap();
+
+        Ok(CardQueryArgs {
+            uid: self.uid.clone(),
+            name,
+            repository,
+            version: self.version.clone(),
+            registry_type,
+            ..Default::default()
+        })
+    }
 }
 
 #[derive(Args)]

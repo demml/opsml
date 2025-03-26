@@ -1,3 +1,4 @@
+use crate::cli::arg::IntoQueryArgs;
 use crate::cli::arg::ListCards;
 use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
