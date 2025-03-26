@@ -40,7 +40,7 @@ pub struct ListCards {
 }
 
 #[derive(Args)]
-pub struct DownloadArtifacts {
+pub struct DownloadCard {
     /// Name of the registry (data, model, experiment, prompt etc)
     #[arg(long = "registry")]
     pub registry: String,
