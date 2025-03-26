@@ -3,6 +3,7 @@ use crate::cli::arg::ListCards;
 use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_types::contracts::CardList;
+use owo_colors::OwoColorize;
 
 /// List cards from a registry and print them as a table
 ///
@@ -18,6 +19,11 @@ use opsml_types::contracts::CardList;
 ///
 /// Result<(), CliError>å
 pub fn list_cards(args: &ListCards) -> Result<(), CliError> {
+    println!(
+        "\nListing cards from {} registry",
+        args.registry.to_string().bold().green()
+    );
+
     // convert to query args
     let query_args = args.into_query_args()?;
 

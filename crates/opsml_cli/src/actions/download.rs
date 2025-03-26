@@ -5,6 +5,7 @@ use opsml_error::CliError;
 use opsml_registry::base::OpsmlRegistry;
 use opsml_storage::storage_client;
 use opsml_types::contracts::ArtifactKey;
+use owo_colors::OwoColorize;
 use std::path::PathBuf;
 
 /// Download all artifacts of a card
@@ -46,6 +47,12 @@ pub fn download_card(args: &DownloadCard) -> Result<(), CliError> {
     let registry = OpsmlRegistry::new(query_args.registry_type.clone())?;
 
     let key = registry.load_card(query_args)?;
+
+    println!(
+        "Downloading card artifacts from registry: {} for path: {}",
+        args.registry,
+        key.storage_key.to_string().green()
+    );
 
     download_card_artifacts(&key, &args.write_dir)?;
 
