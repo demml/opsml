@@ -137,4 +137,3 @@ local_test_db.db
 
 crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
-crates/opsml_cli/src/server/opsml-server
