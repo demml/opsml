@@ -4,7 +4,6 @@ use opsml_colors::Colorize;
 use opsml_error::error::OpsmlError;
 use opsml_error::error::RegistryError;
 use opsml_semver::VersionType;
-use opsml_state::app_state;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
@@ -217,19 +216,7 @@ impl CardRegistry {
 
         check_if_card(card)?;
 
-        app_state()
-            .start_runtime()
-            .block_on(async {
-                // update card
-                Self::_delete_card(&mut self.registry, card, &self.registry_type)
-                    .await
-                    .map_err(|e| {
-                        error!("Failed to delete card: {}", e);
-                        e
-                    })?;
-
-                Ok(())
-            })
+        Self::_delete_card(&mut self.registry, card, &self.registry_type)
             .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
     }
 
@@ -491,7 +478,7 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    async fn _delete_card(
+    fn _delete_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,

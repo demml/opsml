@@ -20,7 +20,6 @@ use opsml_types::{
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
 use tracing::{debug, error, instrument, warn};
 
 /// Get the filename of the python file
