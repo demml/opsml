@@ -3739,6 +3739,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.5.32",
+ "futures",
+ "opsml-state",
+ "opsml-types",
+ "owo-colors",
+ "serde",
+ "serde_json",
+ "tabled",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [

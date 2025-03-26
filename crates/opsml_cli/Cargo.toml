@@ -1,0 +1,20 @@
+[package]
+name = "opsml-cli"
+version = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+opsml-state = { workspace = true }
+opsml-types = { workspace = true }
+
+anyhow = { workspace = true }
+clap = { workspace = true }
+futures = { workspace = true }
+owo-colors = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tabled = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
