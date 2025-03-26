@@ -332,8 +332,8 @@ mod tests {
         std::env::remove_var("OPSML_TRACKING_URI");
     }
 
-    #[tokio::test]
-    async fn test_gcs_storage_client() {
+    #[test]
+    fn test_gcs_storage_client() {
         set_env_vars();
         let client = FileSystemStorage::new().unwrap();
 
@@ -374,8 +374,8 @@ mod tests {
         unset_env_vars();
     }
 
-    #[tokio::test]
-    async fn test_aws_storage_client() {
+    #[test]
+    fn test_aws_storage_client() {
         set_env_vars();
 
         let client = FileSystemStorage::new().unwrap();
@@ -416,8 +416,8 @@ mod tests {
         client.rm(rpath, true).unwrap();
     }
 
-    #[tokio::test]
-    async fn test_azure_storage_client() {
+    #[test]
+    fn test_azure_storage_client() {
         set_env_vars();
         let client = FileSystemStorage::new().unwrap();
 
@@ -465,8 +465,8 @@ mod tests {
         client.rm(rpath, true).unwrap();
     }
 
-    #[tokio::test]
-    async fn test_local_storage_client() {
+    #[test]
+    fn test_local_storage_client() {
         set_env_vars();
 
         let client = FileSystemStorage::new().unwrap();
