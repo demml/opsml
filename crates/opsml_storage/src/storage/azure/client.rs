@@ -702,6 +702,7 @@ mod tests {
     use super::*;
     use opsml_error::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
+    use opsml_utils::create_uuid7;
     use rand::distr::Alphanumeric;
     use rand::rng;
     use rand::Rng;
@@ -727,7 +728,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_server() -> Result<(), StorageError> {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
         let filename = format!("file-{}.txt", rand_name);
 
         let tmp_dir = TempDir::new().unwrap();
@@ -800,7 +801,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_azure_storage_server_trees() -> Result<(), StorageError> {
-        let rand_name = uuid::Uuid::new_v4().to_string();
+        let rand_name = create_uuid7();
 
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
@@ -816,7 +817,7 @@ mod tests {
             std::fs::write(&txt_path, "hello, world").unwrap();
         }
 
-        let new_rand_name = uuid::Uuid::new_v4().to_string();
+        let new_rand_name = create_uuid7();
         let rpath_root = Path::new(&new_rand_name);
 
         if storage_client.exists(rpath_root).await? {
