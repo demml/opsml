@@ -3,9 +3,11 @@ pub mod cli;
 
 use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands};
-use anyhow::{Context, Result};
+use anyhow::Context;
 use clap::Parser;
-use owo_colors::OwoColorize;
+use opsml_colors::Colorize;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const LOGO_TEXT: &str = "
  ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
@@ -15,7 +17,7 @@ pub const LOGO_TEXT: &str = "
  ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██ 
 ";
 
-pub fn run_cli(args: Vec<String>) -> Result<()> {
+pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
     let cli = Cli::parse_from(args.into_iter().skip(1));
 
     match &cli.command {
@@ -29,17 +31,14 @@ pub fn run_cli(args: Vec<String>) -> Result<()> {
         }
 
         Some(Commands::Version) => {
-            println!(
-                "opsml-cli version {}",
-                env!("CARGO_PKG_VERSION").bold().green()
-            );
+            println!("opsml-cli version {}", Colorize::purple(VERSION));
             Ok(())
         }
         Some(Commands::Info) => {
             println!(
                 "\n{}\nopsml-cli version {}\n2025 Demml\n",
-                LOGO_TEXT.green(),
-                env!("CARGO_PKG_VERSION").bold().purple(),
+                Colorize::green(LOGO_TEXT),
+                Colorize::purple(VERSION)
             );
 
             Ok(())

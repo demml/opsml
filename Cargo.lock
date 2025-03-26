@@ -3744,7 +3744,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap 4.5.32",
- "futures",
+ "opsml-colors",
  "opsml-crypt",
  "opsml-error",
  "opsml-registry",
@@ -3752,12 +3752,7 @@ dependencies = [
  "opsml-storage",
  "opsml-types",
  "opsml-utils",
- "owo-colors",
- "serde",
- "serde_json",
  "tabled",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -4573,6 +4568,7 @@ dependencies = [
 name = "py-opsml"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "opsml-cards",
  "opsml-cli",
  "opsml-error",

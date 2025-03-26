@@ -60,7 +60,12 @@ impl IntoQueryArgs for ListCards {
             .map(|repository| clean_string(&repository))
             .transpose()?;
 
-        let registry_type = RegistryType::from_string(&self.registry).unwrap();
+        let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
+            CliError::Error(format!(
+                "Invalid registry type: {}. Error: {}",
+                self.registry, e
+            ))
+        })?;
 
         Ok(CardQueryArgs {
             registry_type,
@@ -117,7 +122,12 @@ impl IntoQueryArgs for DownloadCard {
             .map(|repository| clean_string(&repository))
             .transpose()?;
 
-        let registry_type = RegistryType::from_string(&self.registry).unwrap();
+        let registry_type = RegistryType::from_string(&self.registry).map_err(|e| {
+            CliError::Error(format!(
+                "Invalid registry type: {}. Error: {}",
+                self.registry, e
+            ))
+        })?;
 
         Ok(CardQueryArgs {
             uid: self.uid.clone(),
