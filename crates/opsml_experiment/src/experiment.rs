@@ -7,7 +7,6 @@ use opsml_error::{ExperimentError, OpsmlError};
 use opsml_registry::base::OpsmlRegistry;
 use opsml_registry::CardRegistries;
 use opsml_semver::VersionType;
-use opsml_state::app_state;
 use opsml_storage::storage_client;
 use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{
@@ -21,8 +20,6 @@ use opsml_types::{
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::runtime::Runtime;
-use tokio::sync::Mutex as TokioMutex;
 use tracing::{debug, error, instrument, warn};
 
 /// Get the filename of the python file
@@ -70,39 +67,37 @@ fn extract_code(
     code_dir: Option<PathBuf>,
     artifact_key: &ArtifactKey,
 ) -> Result<(), ExperimentError> {
-    app_state().start_runtime().block_on(async {
-        // Attempt to get file
-        let (lpath, recursive) = match code_dir {
-            Some(path) => (path.to_path_buf(), true),
-            None => (get_py_filename(py)?, false),
-        };
+    // Attempt to get file
+    let (lpath, recursive) = match code_dir {
+        Some(path) => (path.to_path_buf(), true),
+        None => (get_py_filename(py)?, false),
+    };
 
-        // 2. Set rpath based on file or directory
-        let rpath = if lpath.is_file() {
-            &artifact_key
-                .storage_path()
-                .join(SaveName::Artifacts)
-                .join(SaveName::Code)
-                .join(lpath.file_name().unwrap())
-        } else {
-            &artifact_key
-                .storage_path()
-                .join(SaveName::Artifacts)
-                .join(SaveName::Code)
-        };
+    // 2. Set rpath based on file or directory
+    let rpath = if lpath.is_file() {
+        &artifact_key
+            .storage_path()
+            .join(SaveName::Artifacts)
+            .join(SaveName::Code)
+            .join(lpath.file_name().unwrap())
+    } else {
+        &artifact_key
+            .storage_path()
+            .join(SaveName::Artifacts)
+            .join(SaveName::Code)
+    };
 
-        let encryption_key = artifact_key.get_decrypt_key()?;
+    let encryption_key = artifact_key.get_decrypt_key()?;
 
-        // 3. Encrypt the file or directory
-        encrypt_directory(&lpath, &encryption_key)?;
+    // 3. Encrypt the file or directory
+    encrypt_directory(&lpath, &encryption_key)?;
 
-        storage_client().await.put(&lpath, rpath, recursive).await?;
+    storage_client()?.put(&lpath, rpath, recursive)?;
 
-        // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
-        decrypt_directory(&lpath, &encryption_key)?;
+    // 5. Decrypt the file or directory (this is done to ensure the file is not encrypted in the code directory)
+    decrypt_directory(&lpath, &encryption_key)?;
 
-        Ok::<(), ExperimentError>(())
-    })
+    Ok(())
 }
 
 #[pyclass]
@@ -127,13 +122,10 @@ impl Experiment {
     ) -> PyResult<Self> {
         // need artifact key for encryption/decryption
 
-        let mut experiment_registry = registries.experiment.registry.clone();
+        let experiment_registry = &registries.experiment.registry;
 
-        let artifact_key = app_state().start_runtime().block_on(async {
-            experiment_registry
-                .get_artifact_key(&experiment_uid, &RegistryType::Experiment)
-                .await
-        })?;
+        let artifact_key =
+            experiment_registry.get_artifact_key(&experiment_uid, &RegistryType::Experiment)?;
 
         // extract card into ExperimentCard for adding needed fields for use outside of experiment
         // a little but of overhead here, but it's necessary
@@ -152,13 +144,8 @@ impl Experiment {
             true => {
                 // clone the experiment registry
                 let registry = registries.experiment.registry.clone();
-                let arc_reg = Arc::new(TokioMutex::new(registry));
-                let new_rt = Arc::new(Runtime::new().map_err(|e| {
-                    error!("Failed to create runtime: {}", e);
-                    ExperimentError::Error(e.to_string())
-                })?);
-
-                let hardware_queue = HardwareQueue::start(new_rt, arc_reg, experiment_uid.clone())?;
+                let arc_reg = Arc::new(registry);
+                let hardware_queue = HardwareQueue::start(arc_reg, experiment_uid.clone())?;
                 Some(hardware_queue)
             }
 
@@ -386,6 +373,7 @@ impl Experiment {
         log_hardware: bool,
         experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
+        debug!("Starting experiment");
         let registries = &mut slf.registries;
         let experiment = match experiment_uid {
             Some(uid) => {
@@ -469,7 +457,7 @@ impl Experiment {
         timestamp: Option<i64>,
         created_at: Option<NaiveDateTime>,
     ) -> PyResult<()> {
-        let mut registry = self.registries.experiment.registry.clone();
+        let registry = &self.registries.experiment.registry;
 
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
@@ -482,71 +470,59 @@ impl Experiment {
             }],
         };
 
-        app_state()
-            .start_runtime()
-            .block_on(async { registry.insert_metrics(&metric_request).await })
-            .map_err(|e| {
-                error!("Failed to insert metric: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?;
+        registry.insert_metrics(&metric_request).map_err(|e| {
+            error!("Failed to insert metric: {}", e);
+            ExperimentError::Error(e.to_string())
+        })?;
 
         Ok(())
     }
 
     pub fn log_metrics(&self, metrics: Vec<Metric>) -> PyResult<()> {
-        let mut registry = self.registries.experiment.registry.clone();
+        let registry = &self.registries.experiment.registry;
 
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
             metrics,
         };
 
-        app_state()
-            .start_runtime()
-            .block_on(async { registry.insert_metrics(&metric_request).await })
-            .map_err(|e| {
-                error!("Failed to insert metric: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?;
+        registry.insert_metrics(&metric_request).map_err(|e| {
+            error!("Failed to insert metric: {}", e);
+            ExperimentError::Error(e.to_string())
+        })?;
 
         Ok(())
     }
 
     #[pyo3(signature = (name, value))]
     pub fn log_parameter(&self, name: String, value: Bound<'_, PyAny>) -> PyResult<()> {
-        let mut registry = self.registries.experiment.registry.clone();
+        let registry = &self.registries.experiment.registry;
 
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
             parameters: vec![Parameter::new(name, value)?],
         };
 
-        app_state()
-            .start_runtime()
-            .block_on(async { registry.insert_parameters(&param_request).await })
-            .map_err(|e| {
-                error!("Failed to insert metric: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?;
+        registry.insert_parameters(&param_request).map_err(|e| {
+            error!("Failed to insert metric: {}", e);
+            ExperimentError::Error(e.to_string())
+        })?;
 
         Ok(())
     }
 
     pub fn log_parameters(&self, parameters: Vec<Parameter>) -> PyResult<()> {
-        let mut registry = self.registries.experiment.registry.clone();
+        let registry = &self.registries.experiment.registry;
 
         let param_request = ParameterRequest {
             experiment_uid: self.uid.clone(),
             parameters,
         };
 
-        app_state()
-            .start_runtime()
-            .block_on(async { registry.insert_parameters(&param_request).await })
-            .map_err(|e| {
-                error!("Failed to insert metric: {}", e);
-                ExperimentError::Error(e.to_string())
-            })?;
+        registry.insert_parameters(&param_request).map_err(|e| {
+            error!("Failed to insert metric: {}", e);
+            ExperimentError::Error(e.to_string())
+        })?;
 
         Ok(())
     }
@@ -587,10 +563,7 @@ impl Experiment {
         let encryption_key = self.artifact_key.get_decrypt_key()?;
         encrypt_directory(&path, &encryption_key)?;
 
-        app_state().start_runtime().block_on(async {
-            storage_client().await.put(&path, &rpath, false).await?;
-            Ok::<(), ExperimentError>(())
-        })?;
+        storage_client()?.put(&path, &rpath, false)?;
 
         decrypt_directory(&path, &encryption_key)?;
 
@@ -603,10 +576,7 @@ impl Experiment {
 
         let rpath = self.artifact_key.storage_path().join(SaveName::Artifacts);
 
-        app_state().start_runtime().block_on(async {
-            storage_client().await.put(&path, &rpath, true).await?;
-            Ok::<(), ExperimentError>(())
-        })?;
+        storage_client()?.put(&path, &rpath, true)?;
 
         decrypt_directory(&path, &encryption_key)?;
 
@@ -773,10 +743,8 @@ pub fn get_experiment_metrics(
         names: names.unwrap_or_default(),
     };
 
-    let metrics = app_state().start_runtime().block_on(async {
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
-        registry.get_metrics(&metric_request).await
-    })?;
+    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+    let metrics = registry.get_metrics(&metric_request)?;
 
     Ok(Metrics { metrics })
 }
@@ -792,10 +760,9 @@ pub fn get_experiment_parameters(
         names: names.unwrap_or_default(),
     };
 
-    let parameters = app_state().start_runtime().block_on(async {
-        let mut registry = OpsmlRegistry::new(RegistryType::Experiment).await?;
-        registry.get_parameters(&param_request).await
-    })?;
+    let registry = OpsmlRegistry::new(RegistryType::Experiment)?;
+
+    let parameters = registry.get_parameters(&param_request)?;
 
     Ok(Parameters { parameters })
 }
