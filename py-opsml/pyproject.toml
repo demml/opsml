@@ -149,5 +149,12 @@ module-name = "opsml.opsml"
 bindings = 'pyo3'
 features = ["pyo3/extension-module"]
 
+[[tool.maturin.bins]]
+name = "opsml-cli"
+path = "../crates/opsml_cli/src/main.rs"
+
 [tool.uv]
 package = false
+
+[project.scripts]
+opsml-cli = "opsml.cli:main"
