@@ -445,8 +445,6 @@ impl Experiment {
             slf.stop_queue()?;
 
             debug!("Experiment updated");
-
-            error!("reached the end")
         }
         Ok(false) // Return false to propagate exceptions
     }
