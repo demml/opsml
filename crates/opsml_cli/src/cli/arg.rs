@@ -3,6 +3,7 @@ use opsml_error::CliError;
 use opsml_types::{contracts::CardQueryArgs, RegistryType};
 use opsml_utils::clean_string;
 
+#[allow(clippy::wrong_self_convention)]
 pub trait IntoQueryArgs {
     fn into_query_args(&self) -> Result<CardQueryArgs, CliError>;
 }
