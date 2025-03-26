@@ -9,7 +9,9 @@ name = "opsml"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+anyhow = { workspace = true }
 opsml-cards = { workspace = true }
+opsml-cli = { workspace = true }
 opsml-error = { workspace = true }
 opsml-interfaces = { workspace = true }
 opsml-registry = { workspace = true }

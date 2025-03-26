@@ -3739,6 +3739,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.5.32",
+ "opsml-colors",
+ "opsml-crypt",
+ "opsml-error",
+ "opsml-registry",
+ "opsml-state",
+ "opsml-storage",
+ "opsml-types",
+ "opsml-utils",
+ "tabled",
+]
+
+[[package]]
 name = "opsml-client"
 version = "0.1.0"
 dependencies = [
@@ -4551,7 +4568,9 @@ dependencies = [
 name = "py-opsml"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "opsml-cards",
+ "opsml-cli",
  "opsml-error",
  "opsml-experiment",
  "opsml-interfaces",

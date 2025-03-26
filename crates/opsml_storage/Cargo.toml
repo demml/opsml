@@ -44,6 +44,7 @@ uuid = { workspace = true }
 walkdir = { workspace = true }
 
 [features]
+default = []
 server = ["aws-config", "aws-sdk-s3", "azure_identity", "azure_storage", "azure_storage_blobs", "google-cloud-auth", "google-cloud-storage"]
 
 [dev-dependencies]
