@@ -238,19 +238,13 @@ impl CardRegistry {
     pub fn update_card<'py>(&mut self, card: &Bound<'_, PyAny>) -> PyResult<()> {
         debug!("Updating card");
         check_if_card(card)?;
-        app_state()
-            .start_runtime()
-            .block_on(async {
-                // update card
-                let key = Self::_update_card(&mut self.registry, card, &self.registry_type).await?;
+        let key = Self::_update_card(&mut self.registry, card, &self.registry_type)?;
 
-                let tmp_path = Self::save_card(card, &self.registry_type).await?;
+        let tmp_path = Self::save_card(card, &self.registry_type)?;
 
-                upload_card_artifacts(tmp_path, &key)?;
+        upload_card_artifacts(tmp_path, &key)?;
 
-                Ok(())
-            })
-            .map_err(|e: RegistryError| OpsmlError::new_err(e.to_string()))
+        Ok(())
     }
 }
 
@@ -405,7 +399,7 @@ impl CardRegistry {
     ///
     /// * `Result<(), RegistryError>` - Result
     #[instrument(skip_all)]
-    async fn save_card(
+    fn save_card(
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
@@ -520,7 +514,7 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    async fn _update_card(
+    fn _update_card(
         registry: &mut OpsmlRegistry,
         card: &Bound<'_, PyAny>,
         registry_type: &RegistryType,

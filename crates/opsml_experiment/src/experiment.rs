@@ -20,6 +20,7 @@ use opsml_types::{
 use pyo3::{prelude::*, IntoPyObjectExt};
 use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::runtime::Runtime;
 use tracing::{debug, error, instrument, warn};
 
 /// Get the filename of the python file
@@ -373,6 +374,7 @@ impl Experiment {
         log_hardware: bool,
         experiment_uid: Option<&str>,
     ) -> PyResult<Bound<'py, Experiment>> {
+        debug!("Starting experiment");
         let registries = &mut slf.registries;
         let experiment = match experiment_uid {
             Some(uid) => {
@@ -443,6 +445,8 @@ impl Experiment {
             slf.stop_queue()?;
 
             debug!("Experiment updated");
+
+            error!("reached the end")
         }
         Ok(false) // Return false to propagate exceptions
     }

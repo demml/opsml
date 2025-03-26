@@ -43,9 +43,6 @@ impl HttpFSStorageClient {
         let objects = self.client.find_info(rpath.to_str().unwrap())?;
 
         if recursive {
-            // Iterate over each object and get it
-            let mut tasks = Vec::new();
-
             for file_info in objects {
                 let name = file_info.name;
                 let file_path = PathBuf::from(name);
@@ -53,28 +50,12 @@ impl HttpFSStorageClient {
                 let local_path = lpath.join(relative_path);
                 let cloned_client = self.client.clone();
 
-                let task = tokio::task::spawn(async move {
-                    cloned_client.get_object(
-                        local_path.to_str().unwrap(),
-                        file_path.to_str().unwrap(),
-                        file_info.size,
-                    )?;
-                    Ok::<(), StorageError>(())
-                });
-                tasks.push(task);
+                cloned_client.get_object(
+                    local_path.to_str().unwrap(),
+                    file_path.to_str().unwrap(),
+                    file_info.size,
+                )?;
             }
-
-            // use runtime here to download all files
-            app_state().start_runtime().block_on(async {
-                let results = futures::future::join_all(tasks).await;
-                // Check for errors
-                for result in results {
-                    result.map_err(|e| StorageError::Error(e.to_string()))??;
-                }
-
-                <Result<(), StorageError>>::Ok(())
-            })?;
-            // Await all tasks
         } else {
             let file = objects
                 .first()
@@ -114,7 +95,6 @@ impl HttpFSStorageClient {
             }
 
             let files: Vec<PathBuf> = get_files(lpath)?;
-            let mut tasks = Vec::new();
 
             for file in files {
                 let (chunk_count, size_of_last_chunk, chunk_size) =
@@ -126,38 +106,21 @@ impl HttpFSStorageClient {
                 let stripped_file_path = file.clone();
                 let cloned_client = self.client.clone();
 
-                let task = tokio::spawn(async move {
-                    let relative_path = file.relative_path(&stripped_lpath_clone)?;
-                    let remote_path = stripped_rpath_clone.join(relative_path);
+                let relative_path = file.relative_path(&stripped_lpath_clone)?;
+                let remote_path = stripped_rpath_clone.join(relative_path);
 
-                    debug!(
-                        "remote_path: {:?}, stripped_path: {:?}",
-                        remote_path, stripped_file_path
-                    );
+                debug!(
+                    "remote_path: {:?}, stripped_path: {:?}",
+                    remote_path, stripped_file_path
+                );
 
-                    // setup multipart upload based on storage provider
-                    let mut uploader = cloned_client
-                        .create_multipart_uploader(&remote_path, &stripped_file_path)?;
+                // setup multipart upload based on storage provider
+                let mut uploader =
+                    cloned_client.create_multipart_uploader(&remote_path, &stripped_file_path)?;
 
-                    debug!("Uploading file: {:?}", stripped_file_path);
-                    uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
-
-                    Ok::<(), StorageError>(())
-                });
-
-                tasks.push(task);
+                debug!("Uploading file: {:?}", stripped_file_path);
+                uploader.upload_file_in_chunks(chunk_count, size_of_last_chunk, chunk_size)?;
             }
-
-            // use runtime here to upload all files
-            app_state().start_runtime().block_on(async {
-                let results = futures::future::join_all(tasks).await;
-
-                for result in results {
-                    result.map_err(|e| StorageError::Error(e.to_string()))??;
-                }
-
-                <Result<(), StorageError>>::Ok(())
-            })?;
         } else {
             let (chunk_count, size_of_last_chunk, chunk_size) =
                 FileUtils::get_chunk_count(&lpath_clone, 5 * 1024 * 1024)?;
