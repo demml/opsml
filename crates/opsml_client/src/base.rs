@@ -35,10 +35,12 @@ pub fn build_http_client(settings: &ApiSettings) -> Result<Client, ApiError> {
     );
 
     let client_builder = Client::builder().timeout(std::time::Duration::from_secs(TIMEOUT_SECS));
+
     let client = client_builder
         .default_headers(headers)
         .build()
         .map_err(|e| ApiError::Error(format!("Failed to create client with error: {}", e)))?;
+
     Ok(client)
 }
 
@@ -301,6 +303,7 @@ impl OpsmlApiClient {
 
 pub fn build_api_client(settings: &OpsmlStorageSettings) -> Result<OpsmlApiClient, ApiError> {
     let client = build_http_client(&settings.api_settings)?;
+
     let url = format!(
         "{}/{}",
         settings.api_settings.base_url, settings.api_settings.opsml_dir
