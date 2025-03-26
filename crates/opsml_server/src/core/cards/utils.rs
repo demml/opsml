@@ -7,7 +7,7 @@ use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
 use opsml_types::{contracts::*, RegistryType};
 use semver::Version;
-use sqlx::types::chrono::NaiveDateTime;
+use sqlx::types::chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tracing::{error, instrument};
 
@@ -73,7 +73,7 @@ pub async fn insert_card_into_db(
     card: Card,
     version: Version,
     table: &CardTable,
-) -> Result<(String, String, String, String, NaiveDateTime), ApiError> {
+) -> Result<(String, String, String, String, DateTime<Utc>), ApiError> {
     // match on registry type
     let card = match card {
         Card::Data(client_card) => {

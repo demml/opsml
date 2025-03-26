@@ -7,7 +7,7 @@ use crate::schemas::schema::{
     QueryStats, ServerCard, User, VersionResult,
 };
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use opsml_error::error::SqlError;
 use opsml_semver::VersionValidator;
 use opsml_settings::config::DatabaseSettings;
@@ -26,7 +26,7 @@ use tracing::info;
 impl FromRow<'_, PgRow> for User {
     fn from_row(row: &PgRow) -> Result<Self, sqlx::Error> {
         let id: Option<i32> = row.try_get("id")?;
-        let created_at: NaiveDateTime = row.try_get("created_at")?;
+        let created_at: DateTime<Utc> = row.try_get("created_at")?;
         let active: bool = row.try_get("active")?;
         let username: String = row.try_get("username")?;
         let password_hash: String = row.try_get("password_hash")?;
@@ -1084,25 +1084,25 @@ mod tests {
             FROM opsml_audit_registry;
 
             DELETE
-            FROM opsml_experiment_metrics;
+            FROM opsml_experiment_metric;
 
             DELETE
-            FROM opsml_experiment_hardware_metrics;
+            FROM opsml_experiment_hardware_metric;
 
             DELETE
-            FROM opsml_experiment_parameters;
+            FROM opsml_experiment_parameter;
 
             DELETE
             FROM opsml_prompt_registry;
 
             DELETE
-            FROM opsml_users;
+            FROM opsml_user;
 
             DELETE
             FROM opsml_artifact_key;
 
             DELETE
-            FROM opsml_operations;
+            FROM opsml_operation;
             "#,
         )
         .fetch_all(pool)
@@ -1715,7 +1715,7 @@ mod tests {
             .unwrap();
 
         // check if the operation was inserted
-        let query = r#"SELECT username  FROM opsml_operations WHERE username = 'guest';"#;
+        let query = r#"SELECT username  FROM opsml_operation WHERE username = 'guest';"#;
         let result: String = sqlx::query_scalar(query)
             .fetch_one(&client.pool)
             .await
