@@ -1,11 +1,12 @@
 pub mod actions;
 pub mod cli;
 
-use crate::actions::list_cards;
+use crate::actions::{download_card, list_cards};
 use crate::cli::{Cli, Commands};
 
 use anyhow::{Context, Result};
 use clap::Parser;
+
 use owo_colors::OwoColorize;
 
 fn main() -> Result<()> {
@@ -16,8 +17,8 @@ fn main() -> Result<()> {
             list_cards(args).context("Failed to list cards")?;
             Ok(())
         }
-        Some(Commands::DownloadCard(download_card)) => {
-            println!("Downloading card: {:#?}", download_card);
+        Some(Commands::DownloadCard(args)) => {
+            download_card(args).context("Failed to download card")?;
             Ok(())
         }
         Some(Commands::LaunchServer(launch_server)) => {
