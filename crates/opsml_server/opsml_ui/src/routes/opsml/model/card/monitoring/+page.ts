@@ -1,13 +1,15 @@
 export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
+import { getScreenSize } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
 } from "$lib/components/monitoring/util";
-import { DriftType } from "$lib/components/monitoring/types";
+import { DriftType, TimeInterval } from "$lib/components/monitoring/types";
+import { getLatestMetrics } from "$lib/components/monitoring/util";
 
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
@@ -32,7 +34,12 @@ export const load: PageLoad = async ({ parent }) => {
   let currentName: string = currentNames[0];
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
 
-  // latestMetrics = await getLatestMetrics(profiles);
+  // get latest metrics
+  let latestMetrics = await getLatestMetrics(
+    profiles,
+    TimeInterval.SixHours,
+    getScreenSize()
+  );
 
   return {
     profiles,
@@ -42,5 +49,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentDriftType,
     currentProfile,
     currentConfig,
+    latestMetrics,
   };
 };
