@@ -11,6 +11,11 @@ import {
   type DriftRequest,
 } from "./types";
 import { RegistryType } from "$lib/utils";
+import {
+  samplePsiMetrics,
+  sampleSpcMetrics,
+  sampleCustomMetrics,
+} from "./example";
 
 export type DriftProfile = {
   Spc: SpcDriftProfile;
@@ -117,4 +122,16 @@ export async function getLatestMetrics(
   await Promise.all(requests);
 
   return driftMap;
+}
+
+export async function getLatestMetricsExample(
+  profiles: DriftProfileResponse,
+  time_interval: TimeInterval,
+  max_data_points: number
+): Promise<BinnedDriftMap> {
+  return {
+    [DriftType.Spc]: sampleSpcMetrics,
+    [DriftType.Psi]: samplePsiMetrics,
+    [DriftType.Custom]: sampleCustomMetrics,
+  };
 }

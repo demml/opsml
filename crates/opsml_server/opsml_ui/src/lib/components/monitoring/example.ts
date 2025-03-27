@@ -84,8 +84,6 @@ const sampleCustomMetrics: BinnedCustomMetrics = {
   },
 };
 
-export default sampleCustomMetrics;
-
 const sampleSpcMetrics: BinnedSpcFeatureMetrics = {
   features: {
     numeric_feature_1: {
@@ -142,4 +140,4 @@ const samplePsiMetrics: BinnedPsiFeatureMetrics = {
   },
 };
 
-export { sampleSpcMetrics, samplePsiMetrics };
+export { sampleSpcMetrics, samplePsiMetrics, sampleCustomMetrics };
