@@ -1,7 +1,7 @@
 export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getScreenSize } from "$lib/utils";
+import { getMaxDataPoints } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import {
   getDriftProfiles,
@@ -36,12 +36,13 @@ export const load: PageLoad = async ({ parent }) => {
   );
   let currentName: string = currentNames[0];
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
+  let maxDataPoints = getMaxDataPoints();
 
   // get latest metrics
   let latestMetrics = await getLatestMetricsExample(
     profiles,
     TimeInterval.SixHours,
-    getScreenSize()
+    maxDataPoints
   );
 
   let currentMetricData = getCurrentMetricData(
@@ -49,8 +50,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentDriftType,
     currentName
   );
-
-  console.log("currentMetricData", currentMetricData);
 
   return {
     profiles,
@@ -62,5 +61,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentConfig,
     latestMetrics,
     currentMetricData,
+    maxDataPoints,
   };
 };
