@@ -91,7 +91,7 @@ PY_DIR = py-opsml
 ui.update.deps:
 	cd $(UI_DIR) && pnpm update
 
-.PHONY: ui.install
+.PHONY: ui.install.deps
 install.ui.deps:
 	cd $(UI_DIR) && pnpm install
 
@@ -105,7 +105,3 @@ ui.dev:
 
 populate.cards:
 	cd $(PY_DIR) && uv run python -m dev.populate_cards
-
-
-###### CLI Build ######
-CLI_DIR = crates/opsml_cli
