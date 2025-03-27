@@ -15,12 +15,14 @@
   // props
   let { 
     availableDriftTypes, 
-    currentDriftType = $bindable(),
+    currentDriftType,
     currentTimeInterval = $bindable(),
     currentName = $bindable(),
-    currentNames = $bindable(),
-    currentConfig = $bindable(),
+    currentNames,
+    currentConfig,
     handleDriftTypeChange,
+    handleNameChange,
+    handleTimeChange,
   } = $props<{
     availableDriftTypes: DriftType[];
     currentDriftType: DriftType;
@@ -29,10 +31,32 @@
     currentNames: string[];
     currentConfig: DriftConfigType;
     handleDriftTypeChange: (driftType: DriftType) => void;
+    handleNameChange: (name: string) => void;
+    handleTimeChange: (timeInterval: TimeInterval) => void;
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
   let driftConfig = $state(currentConfig);
+  let previousName = $state(currentName);
+  let previousTimeInterval = $state(currentTimeInterval);
+
+
+  // Effect for handling a name change from the dropdown
+  $effect(() => {
+    if (currentName && currentName !== previousName) {
+      previousName = currentName;
+      handleNameChange(currentName);
+    }
+  });
+
+  // Effect for handling a time interval change from the dropdown
+  $effect(() => {
+    if (currentTimeInterval && currentTimeInterval !== previousTimeInterval) {
+      previousTimeInterval = currentTimeInterval;
+      handleTimeChange(currentTimeInterval);
+    }
+  });
+
   
 
 </script>
