@@ -7,17 +7,26 @@
   import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedCustomMetric, BinnedCustomMetricStats  } from '$lib/components/monitoring/types';
   import Pill from '../utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
-  import { onMount } from 'svelte';
+  import { type DriftConfigType } from './util';
+  import CustomAlertPill from './CustomAlertPill.svelte';
+  import { getCustomAlertCondition, type CustomDriftProfile, type CustomMetricDriftConfig } from './custom';
+  import { type DriftProfile } from './util';
+
+
   let { 
-    metricData = $bindable(),
-    currentDriftType = $bindable(),
-    currentName = $bindable(),
-    currentTimeInterval = $bindable(),
+    metricData,
+    currentDriftType,
+    currentName,
+    currentTimeInterval,
+    currentConfig,
+    currentProfile,
   } = $props<{
     metricData: MetricData;
     currentDriftType: DriftType;
     currentName: string;
     currentTimeInterval: TimeInterval;
+    currentConfig: DriftConfigType;
+    currentProfile: DriftProfile;
 
   }>();
 
@@ -56,6 +65,17 @@
       <Pill key="Key" value={currentName} />
       <Pill key="drift" value={currentDriftType} />
       <Pill key="Time Window" value={currentTimeInterval} />
+
+      {#if currentConfig && currentDriftType === DriftType.Custom}
+        {@const alertInfo = getCustomAlertCondition(currentConfig as CustomMetricDriftConfig, currentName)}
+        {@const metricValue = (currentProfile as DriftProfile).Custom.metrics[currentName]}
+        {#if alertInfo}
+          <CustomAlertPill 
+            value={metricValue}
+            alertInfo={alertInfo}
+           />
+        {/if}
+      {/if}
     </div>
 
     <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>

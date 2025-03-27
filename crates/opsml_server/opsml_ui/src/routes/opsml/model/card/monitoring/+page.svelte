@@ -79,7 +79,6 @@
     currentNames = getProfileFeatures(currentDriftType, currentProfile);
     currentName = currentNames[0];
     currentConfig = getProfileConfig(currentDriftType, currentProfile);
-
     currentMetricData = getCurrentMetricData(
       latestMetrics,
       currentDriftType,
@@ -145,6 +144,8 @@
             currentDriftType={currentDriftType}
             currentName={currentName}
             currentTimeInterval={currentTimeInterval}
+            currentConfig={currentConfig}
+            currentProfile={currentProfile}
           />
         {:else}
           <div class="flex items-center justify-center h-full text-gray-500">
