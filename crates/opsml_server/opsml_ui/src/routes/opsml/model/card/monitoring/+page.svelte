@@ -9,7 +9,8 @@
   import { getMaxDataPoints, debounce } from '$lib/utils';
   import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
- 
+  import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/monitoring/util';
+
  
   let { data }: PageProps = $props();
 
@@ -23,29 +24,11 @@
   let latestMetrics: BinnedDriftMap = $state(data.latestMetrics);
   let currentMetricData: MetricData = $state(data.currentMetricData);
   let currentMaxDataPoints: number = $state(data.maxDataPoints);
+  let currentConfig: DriftConfigType = $state(data.currentConfig);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
   let currentTimeInterval: TimeInterval = $state(TimeInterval.SixHours);
-  let isTimeDropdownOpen = $state(false);
-  let isFeatureDropdownOpen = $state(false);
-
-
-  // Effects
-  
-  // Refresh data
-  $effect(() => {
-    console.log('Metric name changed:', currentName);
-    // get new data
-    // if profile data has already been gotten for drifty_type, feature and interval, then do nothing
-  });
-
-  // Notify of profile change
-  $effect(() => {
-    console.log('Profile changed:', currentProfile);
-    // get new data
-    // if profile data has already been gotten for drifty_type, feature and interval, then do nothing
-  });
 
   // check current screen size
   // if screen size has changed, call getScreenSize()
@@ -81,6 +64,25 @@
     window.removeEventListener('resize', debouncedCheckScreenSize);
   });
 
+  function handleDriftTypeChange(drift_type: DriftType) {
+    currentDriftType = drift_type;
+    currentProfile = profiles[drift_type];
+    currentNames = getProfileFeatures(currentDriftType, currentProfile);
+    currentName = currentNames[0];
+    currentConfig = getProfileConfig(currentDriftType, currentProfile);
+
+    currentMetricData = getCurrentMetricData(
+      latestMetrics,
+      currentDriftType,
+      currentName
+    );
+
+ 
+    console.log('currentMetricData', currentMetricData);
+  }
+
+
+
 
  </script>
  
@@ -91,15 +93,12 @@
     <div class="h-fit">
       <Header
             availableDriftTypes={drift_types}
-            bind:currentDriftType={currentDriftType}
-            profiles={profiles}
-            bind:currentProfile={currentProfile}
-            isTimeDropdownOpen={isTimeDropdownOpen}
-            bind:currentTimeInterval={currentTimeInterval}
-            isFeatureDropdownOpen={isFeatureDropdownOpen}
-            bind:currentName={currentName}
-            bind:currentNames={currentNames}
-            currentConfig={data.currentConfig}
+            currentDriftType={currentDriftType}
+            currentTimeInterval={currentTimeInterval}
+            currentName={currentName}
+            currentNames={currentNames}
+            currentConfig={currentConfig}
+            {handleDriftTypeChange}
       /> 
     </div>
 
@@ -109,10 +108,10 @@
       {#if currentName && latestMetrics}
         {#if currentMetricData}
           <VizBody
-            bind:metricData={currentMetricData}
-            bind:currentDriftType={currentDriftType}
-            bind:currentName={currentName}
-            bind:currentTimeInterval={currentTimeInterval}
+            metricData={currentMetricData}
+            currentDriftType={currentDriftType}
+            currentName={currentName}
+            currentTimeInterval={currentTimeInterval}
           />
         {:else}
           <div class="flex items-center justify-center h-full text-gray-500">

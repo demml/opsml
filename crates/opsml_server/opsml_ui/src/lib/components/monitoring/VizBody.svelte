@@ -12,13 +12,14 @@
     currentDriftType = $bindable(),
     currentName = $bindable(),
     currentTimeInterval = $bindable(),
+
   } = $props<{
     metricData: MetricData;
     currentDriftType: DriftType;
     currentName: string;
     currentTimeInterval: TimeInterval;
-  }>();
 
+  }>();
 
   // state
   let resetZoom: boolean = $state(false);
@@ -26,7 +27,6 @@
   let resetZoomClicked = () => {
     resetZoom = !resetZoom;
   }
-
 
   // Helper to get y-values based on drift type
   function getYValues(metricData: MetricData): number[] {
@@ -55,6 +55,7 @@
   <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
     <div class="flex flex-row flex-wrap gap-2 items-center">
       <Pill key="Key" value={currentName} />
+      <Pill key="drift" value={currentDriftType} />
       <Pill key="Time Window" value={currentTimeInterval} />
     </div>
 

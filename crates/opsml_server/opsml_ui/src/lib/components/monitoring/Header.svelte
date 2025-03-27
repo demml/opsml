@@ -16,37 +16,24 @@
   let { 
     availableDriftTypes, 
     currentDriftType = $bindable(),
-    profiles, 
-    currentProfile = $bindable(),
-    isTimeDropdownOpen,
     currentTimeInterval = $bindable(),
-    isFeatureDropdownOpen,
     currentName = $bindable(),
     currentNames = $bindable(),
-    currentConfig,
+    currentConfig = $bindable(),
+    handleDriftTypeChange,
   } = $props<{
     availableDriftTypes: DriftType[];
     currentDriftType: DriftType;
-    profiles: DriftProfileResponse;
-    currentProfile: DriftProfile;
-    isTimeDropdownOpen: boolean;
     currentTimeInterval: TimeInterval;
-    isFeatureDropdownOpen: boolean;
     currentName: string;
     currentNames: string[];
     currentConfig: DriftConfigType;
+    handleDriftTypeChange: (driftType: DriftType) => void;
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
   let driftConfig = $state(currentConfig);
-
-  async function changeProfile(drift_type: DriftType) {
-    currentProfile = profiles[drift_type];
-    currentDriftType = drift_type;
-    currentNames = getProfileFeatures(currentDriftType, currentProfile);
-    currentName = currentNames[0];
-    driftConfig = getProfileConfig(currentDriftType, currentProfile);
-  }
+  
 
 </script>
 
@@ -62,7 +49,7 @@
               ">{drift_type}</div>
             </button>
           {:else}
-            <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => changeProfile(drift_type)}>
+            <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg" onclick={() => handleDriftTypeChange(drift_type)}>
               <div class="text-black">{drift_type}</div>
             </button>
           {/if}
