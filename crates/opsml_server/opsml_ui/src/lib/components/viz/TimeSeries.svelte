@@ -4,18 +4,23 @@
   import { Chart } from 'chart.js/auto';
   import { createTimeSeriesChart } from './timeseries';
   import 'chartjs-adapter-date-fns';
+  import zoomPlugin from 'chartjs-plugin-zoom';
+  import annotationPlugin from 'chartjs-plugin-annotation';
+  import 'chartjs-adapter-date-fns';
+  import { Filler } from 'chart.js';
 
-  
   let { 
     timestamps = $bindable(), 
     values = $bindable(),
     label = $bindable(),
     yLabel = $bindable(),
+    resetZoom = $bindable(),
   } = $props<{
     timestamps: string[];
     values: number[];
     label: string;
     yLabel: string;
+    resetZoom: boolean;
   }>();
 
 
@@ -23,6 +28,10 @@
 
     let canvas: HTMLCanvasElement;
     let chart: Chart;
+
+    Chart.register(zoomPlugin);
+    Chart.register(annotationPlugin);
+    Chart.register(Filler);
 
     function initChart() {
       const dates = timestamps.map((ts: string | number | Date) => new Date(ts));
@@ -34,6 +43,18 @@
       
       chart = new Chart(canvas, config);
     }
+
+
+    // reset zoom effect
+    $effect(() => {
+    if (resetZoom && chart) {
+      const zoomPlugin = chart.options.plugins?.zoom;
+      if (zoomPlugin) {
+        chart.resetZoom();
+        resetZoom = false;
+      }
+    }
+  });
 
     $effect(() => {
       if (canvas && timestamps.length && values.length) {

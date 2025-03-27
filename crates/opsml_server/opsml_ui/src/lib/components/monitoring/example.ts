@@ -6,12 +6,14 @@ import type {
 
 const sampleCustomMetrics: BinnedCustomMetrics = {
   metrics: {
-    accuracy: {
-      metric: "accuracy",
+    custom: {
+      metric: "custom",
       created_at: [
-        "2024-03-26T10:00:00",
-        "2024-03-26T11:00:00",
-        "2024-03-26T12:00:00",
+        "2025-03-25 00:43:59",
+        "2025-03-26 10:00:00",
+        "2025-03-27 11:00:00",
+        "2025-03-28 12:00:00",
+        "2025-03-29 12:00:00",
       ],
       stats: [
         {
@@ -26,6 +28,16 @@ const sampleCustomMetrics: BinnedCustomMetrics = {
         },
         {
           avg: 0.96,
+          lower_bound: 0.93,
+          upper_bound: 0.99,
+        },
+        {
+          avg: 0.9,
+          lower_bound: 0.93,
+          upper_bound: 0.99,
+        },
+        {
+          avg: 0.4,
           lower_bound: 0.93,
           upper_bound: 0.99,
         },

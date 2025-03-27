@@ -19,7 +19,7 @@
     profiles, 
     currentProfile = $bindable(),
     isTimeDropdownOpen,
-    currentInterval = $bindable(),
+    currentTimeInterval = $bindable(),
     isFeatureDropdownOpen,
     currentName = $bindable(),
     currentNames = $bindable(),
@@ -30,7 +30,7 @@
     profiles: DriftProfileResponse;
     currentProfile: DriftProfile;
     isTimeDropdownOpen: boolean;
-    currentInterval: TimeInterval;
+    currentTimeInterval: TimeInterval;
     isFeatureDropdownOpen: boolean;
     currentName: string;
     currentNames: string[];
@@ -76,7 +76,7 @@
         </div>
 
         <Dropdown 
-          bind:selectedValue={currentInterval}
+          bind:selectedValue={currentTimeInterval}
           values={timeIntervals}
         />
       </div>
