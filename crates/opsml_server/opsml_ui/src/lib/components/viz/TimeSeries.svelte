@@ -1,6 +1,6 @@
 
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { Chart } from 'chart.js/auto';
   import { createTimeSeriesChart } from './timeseries';
   import 'chartjs-adapter-date-fns';
@@ -10,10 +10,10 @@
   import { Filler } from 'chart.js';
 
   let { 
-    timestamps = $bindable(), 
-    values = $bindable(),
-    label = $bindable(),
-    yLabel = $bindable(),
+    timestamps, 
+    values,
+    label,
+    yLabel,
     resetZoom = $bindable(),
   } = $props<{
     timestamps: string[];
@@ -24,8 +24,6 @@
   }>();
 
 
-
-
     let canvas: HTMLCanvasElement;
     let chart: Chart;
 
@@ -34,9 +32,11 @@
     Chart.register(Filler);
 
     function initChart() {
+
       const dates = timestamps.map((ts: string | number | Date) => new Date(ts));
       const config = createTimeSeriesChart(dates, values, label, yLabel);
-      
+
+      console.log(chart);
       if (chart) {
         chart.destroy();
       }
@@ -47,26 +47,29 @@
 
     // reset zoom effect
     $effect(() => {
-    if (resetZoom && chart) {
-      const zoomPlugin = chart.options.plugins?.zoom;
-      if (zoomPlugin) {
-        chart.resetZoom();
-        resetZoom = false;
-      }
-    }
-  });
-
-    $effect(() => {
-      if (canvas && timestamps.length && values.length) {
-        initChart();
+      if (resetZoom && chart) {
+        const zoomPlugin = chart.options.plugins?.zoom;
+        if (zoomPlugin) {
+          chart.resetZoom();
+          resetZoom = false;
+        }
       }
     });
+
 
     onMount(() => {
-      if (timestamps.length && values.length) {
-        initChart();
+      if (chart) {
+        chart.destroy();
       }
+
+      initChart();
     });
+
+    onDestroy(() => {
+    if (chart) {
+      chart.destroy();
+    }
+  });
   </script>
 
   <div class="w-full h-[400px]">

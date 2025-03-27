@@ -7,12 +7,12 @@
   import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedCustomMetric, BinnedCustomMetricStats  } from '$lib/components/monitoring/types';
   import Pill from '../utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
+  import { onMount } from 'svelte';
   let { 
     metricData = $bindable(),
     currentDriftType = $bindable(),
     currentName = $bindable(),
     currentTimeInterval = $bindable(),
-
   } = $props<{
     metricData: MetricData;
     currentDriftType: DriftType;
@@ -30,22 +30,21 @@
 
   // Helper to get y-values based on drift type
   function getYValues(metricData: MetricData): number[] {
-    if (!metricData) return [];
+  if (!metricData) return [];
     
-    switch (currentDriftType) {
-      case DriftType.Spc:
-        return (metricData as SpcDriftFeature).values;
-      case DriftType.Psi:
-        return (metricData as BinnedPsiMetric).psi;
-      case DriftType.Custom:
-        return (metricData as BinnedCustomMetric).stats.map(
-          (stat: BinnedCustomMetricStats) => stat.avg
-        );
-      default:
-        return [];
-    }
+  switch (currentDriftType) {
+    case DriftType.Spc:
+      return [...(metricData as SpcDriftFeature).values];
+    case DriftType.Psi:
+      return [...(metricData as BinnedPsiMetric).psi];
+    case DriftType.Custom:
+      return [...(metricData as BinnedCustomMetric).stats.map(
+        (stat: BinnedCustomMetricStats) => stat.avg
+      )];
+    default:
+      return [];
   }
-
+}
 
 </script>
 
@@ -64,11 +63,29 @@
     </button>
   </div>
 
-  <TimeSeries
-    timestamps={metricData.created_at}
-    values={getYValues(metricData)}
-    label={currentName}
-    yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
-    bind:resetZoom={resetZoom}
-  />
+  {#if currentDriftType === DriftType.Psi}
+      <TimeSeries
+        timestamps={metricData.created_at}
+        values={getYValues(metricData)}
+        label={currentName}
+        yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
+        bind:resetZoom={resetZoom}
+      />
+
+
+  {:else if currentDriftType === DriftType.Custom}
+    <TimeSeries
+        timestamps={metricData.created_at}
+        values={getYValues(metricData)}
+        label={currentName}
+        yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
+        bind:resetZoom={resetZoom}
+      />
+
+  {:else}
+    <div class="text-sm text-gray-500">SPC values are binned into 10 bins</div>
+  {/if}
+ 
+
+
 </div>
