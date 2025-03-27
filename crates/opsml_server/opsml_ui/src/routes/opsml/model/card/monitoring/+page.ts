@@ -28,7 +28,7 @@ export const load: PageLoad = async ({ parent }) => {
     })
     .sort();
 
-  let currentDriftType = keys[1];
+  let currentDriftType = keys[0];
   let currentProfile = profiles[currentDriftType];
   let currentNames: string[] = getProfileFeatures(
     currentDriftType,

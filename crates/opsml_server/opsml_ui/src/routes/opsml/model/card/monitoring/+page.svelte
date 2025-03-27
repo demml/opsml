@@ -87,6 +87,31 @@
     );
   }
 
+  function handleNameChange(name: string) {
+    currentName = name;
+    currentMetricData = getCurrentMetricData(
+      latestMetrics,
+      currentDriftType,
+      currentName
+    );
+  }
+
+  async function handleTimeChange(timeInterval: TimeInterval) {
+    currentTimeInterval = timeInterval;
+    latestMetrics = await getLatestMetricsExample(
+          profiles,
+          currentTimeInterval,
+          currentMaxDataPoints  
+        );
+
+    currentMetricData = getCurrentMetricData(
+        latestMetrics,
+        currentDriftType,
+        currentName
+      );
+  }
+
+
   
 
 
@@ -100,11 +125,13 @@
       <Header
             availableDriftTypes={drift_types}
             currentDriftType={currentDriftType}
-            currentTimeInterval={currentTimeInterval}
-            currentName={currentName}
+            bind:currentTimeInterval={currentTimeInterval}
+            bind:currentName={currentName}
             currentNames={currentNames}
             currentConfig={currentConfig}
             {handleDriftTypeChange}
+            {handleNameChange}
+            {handleTimeChange}
       /> 
     </div>
 
