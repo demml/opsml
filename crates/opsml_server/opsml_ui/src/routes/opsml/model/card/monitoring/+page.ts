@@ -9,7 +9,10 @@ import {
   getProfileFeatures,
 } from "$lib/components/monitoring/util";
 import { DriftType, TimeInterval } from "$lib/components/monitoring/types";
-import { getLatestMetrics } from "$lib/components/monitoring/util";
+import {
+  getLatestMetricsExample,
+  getCurrentMetricData,
+} from "$lib/components/monitoring/util";
 
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
@@ -35,11 +38,19 @@ export const load: PageLoad = async ({ parent }) => {
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
 
   // get latest metrics
-  let latestMetrics = await getLatestMetrics(
+  let latestMetrics = await getLatestMetricsExample(
     profiles,
     TimeInterval.SixHours,
     getScreenSize()
   );
+
+  let currentMetricData = getCurrentMetricData(
+    latestMetrics,
+    currentDriftType,
+    currentName
+  );
+
+  console.log("currentMetricData", currentMetricData);
 
   return {
     profiles,
@@ -50,5 +61,6 @@ export const load: PageLoad = async ({ parent }) => {
     currentProfile,
     currentConfig,
     latestMetrics,
+    currentMetricData,
   };
 };

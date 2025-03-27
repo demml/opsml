@@ -9,6 +9,7 @@ import {
   TimeInterval,
   type BinnedDriftMap,
   type DriftRequest,
+  type MetricData,
 } from "./types";
 import { RegistryType } from "$lib/utils";
 import {
@@ -134,4 +135,27 @@ export async function getLatestMetricsExample(
     [DriftType.Psi]: samplePsiMetrics,
     [DriftType.Custom]: sampleCustomMetrics,
   };
+}
+
+// Funcs
+// Helper function to get current metric data
+export function getCurrentMetricData(
+  latestMetrics: BinnedDriftMap,
+  currentDriftType: DriftType,
+  currentName: string
+): MetricData {
+  if (!latestMetrics || !currentDriftType || !currentName) return null;
+
+  switch (currentDriftType) {
+    case DriftType.Spc:
+      return latestMetrics[DriftType.Spc]?.features[currentName] as MetricData;
+    case DriftType.Psi:
+      return latestMetrics[DriftType.Psi]?.features[currentName] as MetricData;
+    case DriftType.Custom:
+      return latestMetrics[DriftType.Custom]?.metrics[
+        currentName
+      ] as MetricData;
+    default:
+      return null;
+  }
 }

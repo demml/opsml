@@ -59,7 +59,7 @@ export function hasOpsGenieConfig(config: AlertDispatchConfig): boolean {
   return config.OpsGenie !== undefined;
 }
 
-interface SpcDriftFeature {
+export interface SpcDriftFeature {
   created_at: string[]; // Array of ISO datetime strings
   values: number[]; // Array of floating point numbers
 }
@@ -68,7 +68,7 @@ export interface BinnedSpcFeatureMetrics {
   features: { [key: string]: SpcDriftFeature }; // Map of string to SpcDriftFeature
 }
 
-interface BinnedPsiMetric {
+export interface BinnedPsiMetric {
   created_at: string[]; // Array of ISO datetime strings
   psi: number[]; // Array of PSI values
   overall_psi: number; // Single PSI value
@@ -79,13 +79,13 @@ export interface BinnedPsiFeatureMetrics {
   features: { [key: string]: BinnedPsiMetric }; // Map of feature name to BinnedPsiMetric
 }
 
-interface BinnedCustomMetricStats {
+export interface BinnedCustomMetricStats {
   avg: number;
   lower_bound: number;
   upper_bound: number;
 }
 
-interface BinnedCustomMetric {
+export interface BinnedCustomMetric {
   metric: string;
   created_at: string[]; // Array of ISO datetime strings
   stats: BinnedCustomMetricStats[];
@@ -111,3 +111,9 @@ export type DriftMetrics = {
 };
 
 export interface BinnedDriftMap extends Partial<DriftMetrics> {}
+
+export type MetricData =
+  | SpcDriftFeature
+  | BinnedPsiMetric
+  | BinnedCustomMetric
+  | null;

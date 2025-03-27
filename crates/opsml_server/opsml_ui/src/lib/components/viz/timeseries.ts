@@ -1,5 +1,6 @@
 import type { ChartConfiguration } from "chart.js";
 import "chartjs-plugin-zoom";
+import { format } from "date-fns";
 
 interface ChartjsLineDataset {
   label: string;
@@ -13,12 +14,12 @@ interface ChartjsLineDataset {
 // Generate an array of colors with optional alpha
 function generateColors(count: number, alpha: number = 1): string[] {
   const colors = [
-    `rgba(54, 162, 235, ${alpha})`, // blue
-    `rgba(255, 99, 132, ${alpha})`, // red
-    `rgba(75, 192, 192, ${alpha})`, // green
-    `rgba(255, 206, 86, ${alpha})`, // yellow
-    `rgba(153, 102, 255, ${alpha})`, // purple
-    `rgba(255, 159, 64, ${alpha})`, // orange
+    `rgba(163, 135, 239, ${alpha})`, // primary-500
+    `rgba(95, 214, 141, ${alpha})`, // secondary-500
+    `rgba(135, 170, 240, ${alpha})`, // tertiary-500
+    `rgba(253, 220, 90, ${alpha})`, // success-500
+    `rgba(249, 178, 94, ${alpha})`, // warning-500
+    `rgba(254, 108, 107, ${alpha})`, // error-500
   ];
 
   return Array(count)
@@ -39,6 +40,11 @@ export function buildTimeChart(
   y_label: string,
   showLegend: boolean = false
 ): ChartConfiguration {
+  const timeRange =
+    x.length > 1 ? Math.abs(x[x.length - 1].getTime() - x[0].getTime()) : 0;
+  const dayInMs = 24 * 60 * 60 * 1000;
+  const isMultiDay = timeRange > dayInMs;
+
   return {
     type: "line",
     data: {
@@ -58,9 +64,9 @@ export function buildTimeChart(
             mode: "xy",
             drag: {
               enabled: true,
-              borderColor: "rgb(54, 162, 235)",
+              borderColor: "rgb(	163, 135, 239)",
               borderWidth: 1,
-              backgroundColor: "rgba(54, 162, 235, 0.3)",
+              backgroundColor: "rgba(163, 135, 239, 0.3)",
             },
           },
         },
@@ -75,24 +81,81 @@ export function buildTimeChart(
       scales: {
         x: {
           type: "time",
+          border: {
+            display: true,
+            width: 2,
+            color: "rgb(0, 0, 0)", // You can adjust color as needed
+          },
           time: {
             displayFormats: {
-              hour: "HH:mm",
+              millisecond: "HH:mm",
+              second: "HH:mm",
               minute: "HH:mm",
-              second: "HH:mm:ss",
+              hour: "HH:mm",
+              day: "MM/dd HH:mm",
+              week: "MM/dd HH:mm",
+              month: "MM/dd HH:mm",
+              quarter: "MM/dd HH:mm",
+              year: "MM/dd HH:mm",
             },
           },
-          title: { display: true, text: x_label },
+          grid: {
+            display: true,
+            color: "rgba(0, 0, 0, 0.1)",
+            tickLength: 8,
+            drawTicks: true,
+          },
+          title: {
+            display: true,
+            text: x_label,
+            color: "rgb(0,0,0)", // gray-600
+            font: {
+              size: 16,
+            },
+          },
           ticks: {
-            maxTicksLimit: 30,
+            maxTicksLimit: isMultiDay ? 12 : 25,
+            color: "rgb(0,0,0)", // gray-600
+            font: {
+              size: 14,
+            },
+            callback: function (value) {
+              const date = new Date(value);
+              if (isMultiDay) {
+                return format(date, "MM/dd HH:mm");
+              }
+              return format(date, "HH:mm");
+            },
           },
         },
         y: {
-          title: { display: true, text: y_label },
+          title: {
+            display: true,
+            text: y_label,
+            color: "rgb(0,0,0)", // gray-600
+            font: {
+              size: 16,
+            },
+          },
           ticks: {
-            maxTicksLimit: 30,
+            maxTicksLimit: 10,
+            color: "rgb(0,0,0)", // gray-600
+            font: {
+              size: 14,
+            },
+          },
+          border: {
+            display: true,
+            width: 2,
+            color: "rgb(0, 0, 0)", // You can adjust color as needed
           },
           grace: "0%",
+          grid: {
+            display: true,
+            color: "rgba(0, 0, 0, 0.1)",
+            tickLength: 8,
+            drawTicks: true,
+          },
         },
       },
       layout: {
@@ -114,7 +177,7 @@ export function createTimeSeriesChart(
       data: y,
       borderColor: generateColors(1)[0],
       backgroundColor: generateColors(1, 0.2)[0],
-      pointRadius: 2,
+      pointRadius: 4,
       fill: true,
     },
   ];
