@@ -50,7 +50,7 @@ export function delay(fn: any, ms: number) {
   };
 }
 
-export function getScreenSize(): number {
+export function getMaxDataPoints(): number {
   if (window.innerWidth < 640) {
     return 100;
   } else if (window.innerWidth < 768) {
@@ -64,4 +64,15 @@ export function getScreenSize(): number {
   } else {
     return 1000;
   }
+}
+
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: number;
+  return (...args: Parameters<T>) => {
+    window.clearTimeout(timeout);
+    timeout = window.setTimeout(() => func(...args), wait);
+  };
 }

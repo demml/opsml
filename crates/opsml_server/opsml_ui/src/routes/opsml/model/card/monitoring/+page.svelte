@@ -6,8 +6,9 @@
   import { TimeInterval } from '$lib/components/monitoring/types';
   import VizBody from '$lib/components/monitoring/VizBody.svelte';
   import Header from '$lib/components/monitoring/Header.svelte';
-  import TimeSeries from '$lib/components/viz/TimeSeries.svelte';
-  import { onMount } from 'svelte';
+  import { getMaxDataPoints, debounce } from '$lib/utils';
+  import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/monitoring/util';
+  import { onMount, onDestroy } from 'svelte';
  
  
   let { data }: PageProps = $props();
@@ -21,6 +22,7 @@
   let currentProfile: DriftProfile = $state(data.currentProfile);
   let latestMetrics: BinnedDriftMap = $state(data.latestMetrics);
   let currentMetricData: MetricData = $state(data.currentMetricData);
+  let currentMaxDataPoints: number = $state(data.maxDataPoints);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
@@ -43,6 +45,40 @@
     console.log('Profile changed:', currentProfile);
     // get new data
     // if profile data has already been gotten for drifty_type, feature and interval, then do nothing
+  });
+
+  // check current screen size
+  // if screen size has changed, call getScreenSize()
+  // update currentScreenSize
+  // call getLatestMetricsExample() with new screen size
+
+  async function checkScreenSize() {
+    const newMaxDataPoints = getMaxDataPoints();
+      if (newMaxDataPoints !== currentMaxDataPoints) {
+        currentMaxDataPoints = newMaxDataPoints;
+        latestMetrics = await getLatestMetricsExample(
+          profiles,
+          currentTimeInterval,
+          currentMaxDataPoints  
+        );
+
+        currentMetricData = getCurrentMetricData(
+            latestMetrics,
+            currentDriftType,
+            currentName
+          );
+        console.log('updated');
+      }
+    }
+
+  const debouncedCheckScreenSize = debounce(checkScreenSize, 800);
+
+  onMount(() => {
+    window.addEventListener('resize', debouncedCheckScreenSize);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('resize', debouncedCheckScreenSize);
   });
 
 
