@@ -16,8 +16,11 @@ export enum RoutePaths {
 
   // scouter
   DRIFT_PROFILE_UI = "/opsml/api/scouter/profile/ui",
+  SPC_DRIFT = "/opsml/api/scouter/drift/spc",
+  PSI_DRIFT = "/opsml/api/scouter/drift/psi",
+  CUSTOM_DRIFT = "/opsml/api/scouter/drift/custom",
 
-  // everything below is old
+  // everything below is old and may be removed
 
   REGISTER = "/opsml/auth/register",
   UPDATE = "/opsml/auth/update",

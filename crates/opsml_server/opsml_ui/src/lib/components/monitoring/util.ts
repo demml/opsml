@@ -4,7 +4,12 @@ import type { ModelCard } from "../card/card_interfaces/modelcard";
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi";
 import type { CustomDriftProfile, CustomMetricDriftConfig } from "./custom";
-import { DriftType } from "./types";
+import {
+  DriftType,
+  TimeInterval,
+  type BinnedDriftMap,
+  type DriftRequest,
+} from "./types";
 import { RegistryType } from "$lib/utils";
 
 export type DriftProfile = {
@@ -64,4 +69,52 @@ export function getProfileConfig(
       : profile.Spc.config;
 
   return variables;
+}
+
+export async function getLatestMetrics(
+  profiles: DriftProfileResponse,
+  time_interval: TimeInterval,
+  max_data_points: number
+): Promise<BinnedDriftMap> {
+  const driftMap: BinnedDriftMap = {};
+
+  // Create an array of promises
+  const requests = Object.entries(profiles).map(
+    async ([driftType, profile]) => {
+      const config = getProfileConfig(driftType as DriftType, profile);
+
+      const request: DriftRequest = {
+        name: config.name,
+        repository: config.repository,
+        version: config.version,
+        time_interval: time_interval,
+        max_data_points: max_data_points,
+        drift_type: driftType as DriftType,
+      };
+
+      // Determine route based on drift type
+      const route = (() => {
+        switch (driftType) {
+          case DriftType.Custom:
+            return RoutePaths.CUSTOM_DRIFT;
+          case DriftType.Psi:
+            return RoutePaths.PSI_DRIFT;
+          case DriftType.Spc:
+            return RoutePaths.SPC_DRIFT;
+          default:
+            throw new Error(`Unsupported drift type: ${driftType}`);
+        }
+      })();
+
+      // Make the request and store result in driftMap
+      const response = await opsmlClient.post(route, request);
+      const data = await response.json();
+      driftMap[driftType as DriftType] = data;
+    }
+  );
+
+  // Wait for all requests to complete
+  await Promise.all(requests);
+
+  return driftMap;
 }
