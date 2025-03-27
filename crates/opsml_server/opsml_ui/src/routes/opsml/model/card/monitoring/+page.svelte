@@ -63,7 +63,7 @@
       }
     }
 
-  const debouncedCheckScreenSize = debounce(checkScreenSize, 800);
+  const debouncedCheckScreenSize = debounce(checkScreenSize, 400);
 
   onMount(() => {
     window.addEventListener('resize', debouncedCheckScreenSize);
@@ -85,8 +85,6 @@
       currentDriftType,
       currentName
     );
-
-
   }
 
   

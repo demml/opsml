@@ -63,17 +63,7 @@
     </button>
   </div>
 
-  {#if currentDriftType === DriftType.Psi}
-      <TimeSeries
-        timestamps={metricData.created_at}
-        values={getYValues(metricData)}
-        label={currentName}
-        yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
-        bind:resetZoom={resetZoom}
-      />
-
-
-  {:else if currentDriftType === DriftType.Custom}
+  {#key metricData}
     <TimeSeries
         timestamps={metricData.created_at}
         values={getYValues(metricData)}
@@ -81,10 +71,8 @@
         yLabel={currentDriftType === DriftType.Psi ? 'PSI Value' : 'Value'}
         bind:resetZoom={resetZoom}
       />
+  {/key}
 
-  {:else}
-    <div class="text-sm text-gray-500">SPC values are binned into 10 bins</div>
-  {/if}
  
 
 
