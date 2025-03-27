@@ -32,6 +32,8 @@ export const load: PageLoad = async ({ parent }) => {
   let currentName: string = currentNames[0];
   let currentConfig = getProfileConfig(currentDriftType, currentProfile);
 
+  // latestMetrics = await getLatestMetrics(profiles);
+
   return {
     profiles,
     keys,
