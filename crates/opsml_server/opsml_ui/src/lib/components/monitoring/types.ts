@@ -104,10 +104,10 @@ export interface DriftRequest {
   drift_type: DriftType;
 }
 
-export interface BinnedDriftMap {
-  // can be any of the BinnedSpcFeatureMetrics, BinnedPsiFeatureMetrics, or BinnedCustomMetrics
-  [key: DriftType]:
-    | BinnedSpcFeatureMetrics
-    | BinnedPsiFeatureMetrics
-    | BinnedCustomMetrics;
-}
+export type DriftMetrics = {
+  [DriftType.Spc]: BinnedSpcFeatureMetrics;
+  [DriftType.Psi]: BinnedPsiFeatureMetrics;
+  [DriftType.Custom]: BinnedCustomMetrics;
+};
+
+export interface BinnedDriftMap extends Partial<DriftMetrics> {}
