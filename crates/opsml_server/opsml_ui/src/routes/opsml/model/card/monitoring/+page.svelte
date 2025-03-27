@@ -29,6 +29,16 @@
   // Vars
   let drift_types: DriftType[] = data.keys;
   let currentTimeInterval: TimeInterval = $state(TimeInterval.SixHours);
+  
+  let chartState = $derived({
+    driftType: currentDriftType,
+    name: currentName,
+    timeInterval: currentTimeInterval,
+    metricData: currentMetricData,
+    timestamp: Date.now() // Force updates
+  });
+
+ 
 
   // check current screen size
   // if screen size has changed, call getScreenSize()
@@ -50,7 +60,6 @@
             currentDriftType,
             currentName
           );
-        console.log('updated');
       }
     }
 
@@ -77,11 +86,10 @@
       currentName
     );
 
- 
-    console.log('currentMetricData', currentMetricData);
+
   }
 
-
+  
 
 
  </script>
