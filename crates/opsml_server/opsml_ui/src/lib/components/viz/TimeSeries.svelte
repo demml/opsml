@@ -35,8 +35,6 @@
 
       const dates = timestamps.map((ts: string | number | Date) => new Date(ts));
       const config = createTimeSeriesChart(dates, values, label, yLabel);
-
-      console.log(chart);
       if (chart) {
         chart.destroy();
       }
