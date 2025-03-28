@@ -53,8 +53,15 @@ export const load: PageLoad = async ({ parent }) => {
     currentName
   );
 
-  let alertRequest = DriftALer;
-  let alerts = getDriftAlerts;
+  let currentAlerts = await getDriftAlerts(
+    currentConfig.repository,
+    currentConfig.name,
+    currentConfig.version,
+    TimeInterval.SixHours,
+    true
+  );
+
+  console.log("currentAlerts", currentAlerts);
 
   return {
     profiles,
@@ -67,5 +74,6 @@ export const load: PageLoad = async ({ parent }) => {
     latestMetrics,
     currentMetricData,
     maxDataPoints,
+    currentAlerts,
   };
 };

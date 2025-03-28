@@ -3,6 +3,7 @@ import type {
   BinnedPsiFeatureMetrics,
   BinnedSpcFeatureMetrics,
 } from "./types";
+import type { Alert } from "$lib/components/monitoring/alert/types";
 
 const sampleCustomMetrics: BinnedCustomMetrics = {
   metrics: {
@@ -168,3 +169,106 @@ const samplePsiMetrics: BinnedPsiFeatureMetrics = {
 };
 
 export { sampleSpcMetrics, samplePsiMetrics, sampleCustomMetrics };
+
+export const sampleAlerts: Alert[] = [
+  {
+    created_at: "2024-03-28 10:30:00",
+    name: "credit_model",
+    repository: "models",
+    version: "1.0.0",
+    feature: "income",
+    alert: { type: "drift_detected", message: "PSI value exceeded threshold" },
+    id: 1,
+    status: "active",
+  },
+  {
+    created_at: "2024-03-28 09:45:00",
+    name: "fraud_detection",
+    repository: "models",
+    version: "2.1.0",
+    feature: "transaction_amount",
+    alert: { type: "spc_violation", message: "Value outside control limits" },
+    id: 2,
+    status: "resolved",
+  },
+  {
+    created_at: "2024-03-28 09:00:00",
+    name: "customer_churn",
+    repository: "ml_models",
+    version: "1.2.3",
+    feature: "usage_frequency",
+    alert: { type: "custom_metric", message: "Metric below threshold" },
+    id: 3,
+    status: "active",
+  },
+  {
+    created_at: "2024-03-27 23:15:00",
+    name: "recommendation_engine",
+    repository: "recsys",
+    version: "3.0.1",
+    feature: "user_engagement",
+    alert: { type: "drift_detected", message: "Distribution shift detected" },
+    id: 4,
+    status: "pending",
+  },
+  {
+    created_at: "2024-03-27 22:30:00",
+    name: "credit_model",
+    repository: "models",
+    version: "1.0.0",
+    feature: "debt_ratio",
+    alert: { type: "spc_violation", message: "Consecutive points above mean" },
+    id: 5,
+    status: "active",
+  },
+  {
+    created_at: "2024-03-27 21:45:00",
+    name: "fraud_detection",
+    repository: "models",
+    version: "2.1.0",
+    feature: "ip_velocity",
+    alert: { type: "psi_threshold", message: "PSI above 0.2" },
+    id: 6,
+    status: "investigating",
+  },
+  {
+    created_at: "2024-03-27 20:00:00",
+    name: "price_optimization",
+    repository: "pricing",
+    version: "1.1.0",
+    feature: "demand_forecast",
+    alert: { type: "custom_metric", message: "Accuracy below target" },
+    id: 7,
+    status: "resolved",
+  },
+  {
+    created_at: "2024-03-27 19:15:00",
+    name: "customer_churn",
+    repository: "ml_models",
+    version: "1.2.3",
+    feature: "support_tickets",
+    alert: { type: "drift_detected", message: "Significant feature drift" },
+    id: 8,
+    status: "active",
+  },
+  {
+    created_at: "2024-03-27 18:30:00",
+    name: "recommendation_engine",
+    repository: "recsys",
+    version: "3.0.1",
+    feature: "click_through_rate",
+    alert: { type: "spc_violation", message: "Point beyond 3 sigma" },
+    id: 9,
+    status: "resolved",
+  },
+  {
+    created_at: "2024-03-27 17:45:00",
+    name: "price_optimization",
+    repository: "pricing",
+    version: "1.1.0",
+    feature: "competitor_prices",
+    alert: { type: "custom_metric", message: "Data freshness warning" },
+    id: 10,
+    status: "active",
+  },
+];
