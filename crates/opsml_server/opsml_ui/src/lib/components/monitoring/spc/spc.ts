@@ -14,7 +14,7 @@ export enum AlertZone {
 }
 
 export interface SpcAlertRule {
-  rule: String;
+  rule: string;
   zones_to_monitor: AlertZone[];
 }
 

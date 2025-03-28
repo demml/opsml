@@ -162,3 +162,18 @@ export function getCurrentMetricData(
       return null;
   }
 }
+
+// Type guard functions to determine config type
+export function isCustomConfig(
+  config: DriftConfigType
+): config is CustomMetricDriftConfig {
+  return config.drift_type === DriftType.Custom;
+}
+
+export function isPsiConfig(config: DriftConfigType): config is PsiDriftConfig {
+  return config.drift_type === DriftType.Psi;
+}
+
+export function isSpcConfig(config: DriftConfigType): config is SpcDriftConfig {
+  return config.drift_type === DriftType.Spc;
+}
