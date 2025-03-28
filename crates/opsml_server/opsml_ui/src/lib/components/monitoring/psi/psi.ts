@@ -3,7 +3,7 @@ import {
   AlertDispatchType,
   type FeatureMap,
   type AlertDispatchConfig,
-} from "./types";
+} from "../types";
 
 export interface PsiDriftProfile {
   features: Record<string, PsiFeatureDriftProfile>;

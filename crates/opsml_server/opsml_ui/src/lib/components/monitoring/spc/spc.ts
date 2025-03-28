@@ -3,7 +3,7 @@ import {
   AlertDispatchType,
   type FeatureMap,
   type AlertDispatchConfig,
-} from "./types";
+} from "../types";
 
 export enum AlertZone {
   Zone1 = "Zone 1",

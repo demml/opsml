@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "./types";
-  import type { CustomMetricAlertConfig, CustomMetricDriftConfig } from "./custom";
-  import Pill from "../utils/Pill.svelte";
-  import UpdateCustomConfigModal from "./UpdatecCustomConfigModal.svelte";
+  import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
+  import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
+  import Pill from "../../utils/Pill.svelte";
+  import UpdatePsiConfigModal from "./UpdatePsiConfigModal.svelte";
 
   // props
   let { 
     config,
     alertConfig,
   } = $props<{
-    config: CustomMetricDriftConfig;
-    alertConfig: CustomMetricAlertConfig;
+    config: PsiDriftConfig;
+    alertConfig: PsiAlertConfig;
   }>();
 
   
@@ -20,10 +20,7 @@
   <div class="flex flex-row gap-2">
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} />
-    {#if config.sample}
-      <Pill key="Sample size" value={config.sample_size} />
-    {/if}
-   
+    <Pill key="Sample size" value={alertConfig.psi_threshold} />
   </div>
 
   <div class="flex flex-row gap-2">
@@ -45,7 +42,7 @@
   </div>
   <div class="flex flex-row justify-end gap-2">
 
-    <UpdateCustomConfigModal config={config} alertConfig={alertConfig} />
+    <UpdatePsiConfigModal config={config} alertConfig={alertConfig} />
 
   </div>
 </div>

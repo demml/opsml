@@ -1,4 +1,4 @@
-import { DriftType, type AlertDispatchConfig } from "./types";
+import { DriftType, type AlertDispatchConfig } from "../types";
 
 export enum AlertThreshold {
   Below = "Below",
