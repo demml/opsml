@@ -3,15 +3,18 @@
   import type { SpcAlertConfig, SpcDriftConfig } from "./spc";
   import Pill from "../../utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
+  import type { DriftProfile } from "../util";
 ;
 
   // props
   let { 
     config,
     alertConfig,
+    profile,
   } = $props<{
     config: SpcDriftConfig;
     alertConfig: SpcAlertConfig;
+    profile: DriftProfile;
   }>();
 
   
@@ -45,6 +48,10 @@
     {/if}
   </div>
   <div class="flex flex-row justify-end gap-2">
-    <UpdateModal config={config} driftType={config.drift_type}/>
+    <UpdateModal 
+      config={config} 
+      driftType={config.drift_type}
+      profile={profile}
+      />
   </div>
 </div>
