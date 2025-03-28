@@ -200,3 +200,25 @@ export async function updateDriftProfile(
   );
   return (await response.json()) as UpdateResponse;
 }
+
+export function timeIntervalToDateTime(interval: TimeInterval): string {
+  const now = new Date();
+  const minutesMap: Record<TimeInterval, number> = {
+    [TimeInterval.FiveMinutes]: 5,
+    [TimeInterval.FifteenMinutes]: 15,
+    [TimeInterval.ThirtyMinutes]: 30,
+    [TimeInterval.OneHour]: 60,
+    [TimeInterval.ThreeHours]: 180,
+    [TimeInterval.SixHours]: 360,
+    [TimeInterval.TwelveHours]: 720,
+    [TimeInterval.TwentyFourHours]: 1440,
+    [TimeInterval.TwoDays]: 2880,
+    [TimeInterval.FiveDays]: 7200,
+  };
+
+  const minutes = minutesMap[interval];
+  const past = new Date(now.getTime() - minutes * 60000);
+
+  // Format to YYYY-MM-DD HH:MM:SS
+  return past.toISOString().replace("T", " ").slice(0, 19);
+}
