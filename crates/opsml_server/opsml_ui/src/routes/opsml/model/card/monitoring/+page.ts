@@ -14,7 +14,6 @@ import {
   getCurrentMetricData,
 } from "$lib/components/monitoring/util";
 import { getDriftAlerts } from "$lib/components/monitoring/alert/utils";
-import type DriftAlertRequest from "$lib/components/monitoring/alert/types";
 
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
