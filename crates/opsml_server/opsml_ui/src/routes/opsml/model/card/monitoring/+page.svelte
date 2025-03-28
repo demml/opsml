@@ -10,7 +10,9 @@
   import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/monitoring/util';
-  import AlertModal from '$lib/components/monitoring/alert/AlertModal.svelte';
+  import type { Alert } from '$lib/components/monitoring/alert/types';
+  import { getDriftAlerts } from '$lib/components/monitoring/alert/utils';
+  import AlertTable from '$lib/components/monitoring/alert/AlertTable.svelte';
 
  
   let { data }: PageProps = $props();
@@ -26,20 +28,11 @@
   let currentMetricData: MetricData = $state(data.currentMetricData);
   let currentMaxDataPoints: number = $state(data.maxDataPoints);
   let currentConfig: DriftConfigType = $state(data.currentConfig);
+  let currentAlerts: Alert[] = $state(data.currentAlerts);
 
   // Vars
   let drift_types: DriftType[] = data.keys;
   let currentTimeInterval: TimeInterval = $state(TimeInterval.SixHours);
-  
-  let chartState = $derived({
-    driftType: currentDriftType,
-    name: currentName,
-    timeInterval: currentTimeInterval,
-    metricData: currentMetricData,
-    timestamp: Date.now() // Force updates
-  });
-
- 
 
   // check current screen size
   // if screen size has changed, call getScreenSize()
@@ -117,6 +110,14 @@
         currentDriftType,
         currentName
       );
+
+    currentAlerts = await getDriftAlerts(
+      currentConfig.repository,
+      currentConfig.name,
+      currentConfig.version,
+      currentTimeInterval,
+      true
+    );
   }
 
   async function acknowledgeAlert(id: string) {
@@ -174,10 +175,14 @@
       {/if}
     </div>
 
-    <!-- Row 3: 1 column -->
-    <div class="bg-white p-4 rounded-lg shadow h-[400px]">
-      <h2 class="text-lg font-semibold mb-2">Row 3</h2>
-      <div class="text-black">Content for row 3</div>
+    <!-- Row 3: 1 column  alerts -->
+    <div class="rounded-lg shadow bg-slate-100 h-[500px]">
+      <div class="h-full">
+        <AlertTable
+          alerts={currentAlerts}
+          acknowledgeAlert={acknowledgeAlert}
+        />
+      </div>
     </div>
 
 
