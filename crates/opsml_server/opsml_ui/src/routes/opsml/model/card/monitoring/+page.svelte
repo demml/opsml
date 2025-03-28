@@ -10,6 +10,7 @@
   import { getLatestMetricsExample, getCurrentMetricData } from '$lib/components/monitoring/util';
   import { onMount, onDestroy } from 'svelte';
   import { getProfileFeatures, getProfileConfig, type DriftConfigType } from '$lib/components/monitoring/util';
+  import AlertModal from '$lib/components/monitoring/alert/AlertModal.svelte';
 
  
   let { data }: PageProps = $props();
@@ -116,6 +117,11 @@
         currentDriftType,
         currentName
       );
+  }
+
+  async function acknowledgeAlert(id: string) {
+    console.log("Acknowledge alert with id: ", id);
+    // Call API to acknowledge alert
   }
 
 
