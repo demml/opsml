@@ -1,17 +1,12 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import type { CustomMetricAlertConfig, CustomMetricDriftConfig } from './custom';
+  import type { PsiAlertConfig, PsiDriftConfig } from './psi';
   import { z } from 'zod';
 
-  function stringToBoolean(str: string): boolean {
-      return str
-          .toLowerCase() === 'true';
-  }
-
+ 
   const configSchema = z.object({
     schedule: z.string().default('0 0 0 * * *'),
-    sample: z.coerce.boolean().default(true),
-    sample_size: z.coerce.number().default(25),
+    psi_threshold: z.coerce.number(),
   });
 
   type ConfigSchema = z.infer<typeof configSchema>;
@@ -20,16 +15,15 @@
     config = $bindable(),
     alertConfig = $bindable(),
   } = $props<{
-    config: CustomMetricDriftConfig
-    alertConfig: CustomMetricAlertConfig
+    config: PsiDriftConfig
+    alertConfig: PsiAlertConfig
   }>();
   
     let openState = $state(false);
     let errors = $state<Partial<Record<keyof ConfigSchema, string>>>({});
  
     let schedule = $state(alertConfig.schedule);
-    let sample = $state(config.sample);
-    let sampleSize = $state(config.sample_size);
+    let psi_threshold = $state(alertConfig.psi_threshold);
   
     function modalClose() {
         openState = false;
@@ -40,15 +34,13 @@
     try {
       configSchema.parse({
         schedule,
-        sample,
-        sample_size: Number(sampleSize)
+        psi_threshold
       });
 
       errors = {};
  
 
-      config.sample = stringToBoolean(sample);
-      config.sample_size = Number(sampleSize);
+      alertConfig.psi_threshold = psi_threshold;
       alertConfig.schedule = schedule;
       return true;
 
@@ -76,8 +68,7 @@
 
     const formData = {
       schedule,
-      sample,
-      sample_size: Number(sampleSize)
+      psi_threshold,
     };
 
     console.log('Valid config:', formData);
@@ -118,29 +109,17 @@
           {/if}
         </label>
   
-        <label class="text-surface-950">Sample
+        <label class="text-surface-950">Psi Threshold
           <input
             class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
             type="text" 
-            placeholder={sample}
-            bind:value={sample}
+            placeholder={psi_threshold}
+            bind:value={psi_threshold}
           />
-          {#if errors.sample}
-            <span class="text-red-500 text-sm">{errors.sample}</span>
-          {/if}
+        
         </label>
 
-        <label class="text-surface-950">Sample Size
-          <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-            type="text" 
-            placeholder={sampleSize}
-            bind:value={sampleSize}
-          />
-          {#if errors.sample_size}
-            <span class="text-red-500 text-sm">{errors.sample_size}</span>
-          {/if}
-        </label>
+       
       </div>
 
       <footer class="flex justify-end gap-4 p-2">

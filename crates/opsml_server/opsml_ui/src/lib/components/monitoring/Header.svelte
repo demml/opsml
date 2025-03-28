@@ -5,12 +5,12 @@
   import { TimeInterval } from '$lib/components/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
-  import CustomConfig from "./CustomConfig.svelte";
-  import PsiConfig from "./PsiConfig.svelte";
-  import SpcConfig from "./SpcConfig.svelte";
-  import type { CustomMetricDriftConfig } from "./custom";
-  import type { PsiDriftConfig } from "./psi";
-  import type { SpcDriftConfig } from "./spc";
+  import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
+  import PsiConfig from "./psi/PsiConfigHeader.svelte";
+  import SpcConfig from "./spc/SpcConfig.svelte";
+  import type { CustomMetricDriftConfig } from "./custom/custom";
+  import type { PsiDriftConfig } from "./psi/psi";
+  import type { SpcDriftConfig } from "./spc/spc";
 
   // props
   let { 
@@ -107,7 +107,7 @@
 
   <div class="bg-white p-4 rounded-lg shadow md:col-span-4 border-2 border-primary-800">
     {#if currentDriftType === DriftType.Custom}
-      <CustomConfig 
+      <CustomConfigHeader 
         config={driftConfig} 
         alertConfig={driftConfig.alert_config}
       />

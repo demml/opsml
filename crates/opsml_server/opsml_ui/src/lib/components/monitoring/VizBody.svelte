@@ -8,8 +8,8 @@
   import Pill from '../utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import { type DriftConfigType } from './util';
-  import CustomAlertPill from './CustomAlertPill.svelte';
-  import { getCustomAlertCondition, type CustomDriftProfile, type CustomMetricDriftConfig } from './custom';
+  import CustomAlertPill from './custom/CustomAlertPill.svelte';
+  import { getCustomAlertCondition, type CustomDriftProfile, type CustomMetricDriftConfig } from './custom/custom';
   import { type DriftProfile } from './util';
 
 

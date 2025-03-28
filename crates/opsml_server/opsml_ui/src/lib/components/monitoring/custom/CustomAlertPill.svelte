@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { type AlertConditionInfo } from './custom';
-    import Pill from '../utils/Pill.svelte';
+    import Pill from '../../utils/Pill.svelte';
   
     let { 
       value,
@@ -11,9 +11,7 @@
       alertInfo: AlertConditionInfo
     }>();
   
-  
   </script>
-
 
 {#if alertInfo}
     <Pill key="Baseline" value={value} />  
