@@ -74,11 +74,19 @@
   });
 
   function handleDriftTypeChange(drift_type: DriftType) {
+    console.log("Drift type changed to: ", drift_type);
+
     currentDriftType = drift_type;
     currentProfile = profiles[drift_type];
+
     currentNames = getProfileFeatures(currentDriftType, currentProfile);
     currentName = currentNames[0];
+
     currentConfig = getProfileConfig(currentDriftType, currentProfile);
+
+    console.log("Current config: ", JSON.stringify(currentConfig, null, 2));
+
+
     currentMetricData = getCurrentMetricData(
       latestMetrics,
       currentDriftType,

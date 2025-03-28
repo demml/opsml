@@ -6,6 +6,8 @@
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
+  import PsiConfigHeader from "./psi/PsiConfigHeader.svelte";
+  import SpcConfigHeader from "./spc/SpcConfigHeader.svelte";
 
 
   // props
@@ -34,7 +36,6 @@
   }>();
 
   let timeIntervals = Object.values(TimeInterval);
-  let driftConfig = $state(currentConfig);
   let previousName = $state(currentName);
   let previousTimeInterval = $state(currentTimeInterval);
 
@@ -54,6 +55,8 @@
       handleTimeChange(currentTimeInterval);
     }
   });
+
+
 
   
 
@@ -106,8 +109,22 @@
   <div class="bg-white p-4 rounded-lg shadow md:col-span-4 border-2 border-primary-800">
     {#if currentDriftType === DriftType.Custom}
       <CustomConfigHeader 
-        config={driftConfig} 
-        alertConfig={driftConfig.alert_config}
+        config={currentConfig} 
+        alertConfig={currentConfig.alert_config}
+        profile={currentProfile}
+      />
+
+    {:else if currentDriftType === DriftType.Psi}
+      <PsiConfigHeader 
+        config={currentConfig} 
+        alertConfig={currentConfig.alert_config}
+        profile={currentProfile}
+      />
+
+    {:else if currentDriftType === DriftType.Spc}
+      <SpcConfigHeader
+        config={currentConfig} 
+        alertConfig={currentConfig.alert_config}
         profile={currentProfile}
       />
     {/if}

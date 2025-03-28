@@ -3,6 +3,7 @@
   import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
   import Pill from "../../utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
+  import type { DriftProfile } from "../util";
 
   // props
   let { 
@@ -15,6 +16,8 @@
     profile: DriftProfile;
   }>();
 
+    console.log("alertConfig", JSON.stringify(alertConfig, null, 2));
+
   
   </script>
 
@@ -22,7 +25,7 @@
   <div class="flex flex-row gap-2">
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} />
-    <Pill key="Sample size" value={alertConfig.psi_threshold} />
+    <Pill key="Psi Threshold" value={alertConfig.psi_threshold} />
   </div>
 
   <div class="flex flex-row gap-2">

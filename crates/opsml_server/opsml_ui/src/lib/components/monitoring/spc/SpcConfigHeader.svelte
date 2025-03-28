@@ -21,10 +21,11 @@
   </script>
 
 <div class="grid grid-cols-1 gap-2 w-full h-auto">
-  <div class="flex flex-row gap-2">
+  <div class="flex flex-row flex-wrap gap-2">
     <div class="items-center text-lg mr-2 font-bold text-primary-800">Config:</div>
     <Pill key="Schedule" value={alertConfig.schedule} />
-    <Pill key="Rule" value={alertConfig.rule} />
+    <Pill key="Rule" value={alertConfig.rule.rule} />
+    <Pill key="Zones" value={alertConfig.rule.zones_to_monitor} />
     {#if config.sample}
       <Pill key="Sample size" value={config.sample_size} />
     {/if}
