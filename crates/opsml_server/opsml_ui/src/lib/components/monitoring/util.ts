@@ -13,6 +13,8 @@ import {
   type BinnedDriftMap,
   type DriftRequest,
   type MetricData,
+  type UpdateProfileRequest,
+  type UpdateResponse,
 } from "./types";
 import { RegistryType } from "$lib/utils";
 import {
@@ -64,6 +66,17 @@ export function getProfileFeatures(
       : profile.Spc.features;
 
   return Object.keys(variables).sort();
+}
+
+export function extractProfile(
+  profile: DriftProfile,
+  drift_type: DriftType
+): SpcDriftProfile | PsiDriftProfile | CustomDriftProfile {
+  return drift_type === DriftType.Custom
+    ? profile.Custom
+    : drift_type === DriftType.Psi
+    ? profile.Psi
+    : profile.Spc;
 }
 
 export function getProfileConfig(
@@ -176,4 +189,14 @@ export function isPsiConfig(config: DriftConfigType): config is PsiDriftConfig {
 
 export function isSpcConfig(config: DriftConfigType): config is SpcDriftConfig {
   return config.drift_type === DriftType.Spc;
+}
+
+export async function updateDriftProfile(
+  updateRequest: UpdateProfileRequest
+): Promise<UpdateResponse> {
+  const response = await opsmlClient.put(
+    RoutePaths.DRIFT_PROFILE,
+    updateRequest
+  );
+  return (await response.json()) as UpdateResponse;
 }

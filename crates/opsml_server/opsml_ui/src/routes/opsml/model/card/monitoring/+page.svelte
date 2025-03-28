@@ -128,6 +128,7 @@
             bind:currentName={currentName}
             currentNames={currentNames}
             currentConfig={currentConfig}
+            currentProfile={currentProfile}
             {handleDriftTypeChange}
             {handleNameChange}
             {handleTimeChange}

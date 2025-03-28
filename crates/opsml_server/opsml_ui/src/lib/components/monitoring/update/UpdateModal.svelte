@@ -5,8 +5,8 @@
   import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole  } from './schema';
   import type {SpcConfigParams, PsiConfigParams, ConfigParams, CustomConfigParams, ConsoleConfigSchema} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
-  import type { DriftConfigType } from '../util';
-  import { isSpcConfig, isCustomConfig, isPsiConfig } from '../util';
+  import type { DriftConfigType, DriftProfile } from '../util';
+  import { isSpcConfig, isCustomConfig, isPsiConfig, updateDriftProfile, extractProfile } from '../util';
   import { DriftType } from '../types';
   import CustomFields from './CustomFields.svelte';
   import SpcFields from './SpcFields.svelte';
@@ -18,6 +18,8 @@
   import Console from './dispatch/Console.svelte';
   import type { SlackDispatchConfig,  OpsGenieDispatchConfig, ConsoleDispatchConfig} from '../types';
   import { hasSlackConfig, hasOpsGenieConfig } from '../types';
+  import { type UpdateProfileRequest } from '../types';
+
 
   function getDispatchType(): string {
     
@@ -31,11 +33,14 @@
   }
 
   let { 
+    
       config = $bindable(), 
-      driftType= $bindable() 
+      driftType= $bindable(),
+      profile= $bindable(),
     } = $props<{
       config: DriftConfigType,
       driftType: DriftType
+      profile: DriftProfile
     }>();
 
   // props
@@ -179,15 +184,39 @@ function validateDispatchForm(): boolean {
     
   }
 
-  function updateConfig(event: Event) {
+  async function updateConfig(event: Event) {
     event.preventDefault();
 
     if (!validateForm() || !validateDispatchForm()) {
       return;
     }
 
-    console.log('Valid config:');
-    console.log(JSON.stringify(configParams, null, 2));
+    console.log("updating")
+    // implement post request to update config
+    const matchedProfile = extractProfile(profile, driftType);
+
+    console.log('Matched profile:', matchedProfile);
+
+    matchedProfile.config = {
+      ...matchedProfile.config,
+      ...configParams
+    };
+
+    let request: UpdateProfileRequest = {
+      uid: profile.config.uid,
+      request: {
+        repository: matchedProfile.config.repository,
+        profile: JSON.stringify(matchedProfile),
+        drift_type: driftType,
+      }
+    };
+
+ 
+
+    //let response = await updateDriftProfile(request);
+   
+  
+
     modalClose();
 
     
@@ -210,7 +239,7 @@ function validateDispatchForm(): boolean {
       
 
     const newDispatchConfig = {
-      ...configParams.dispatch_config,
+   
       [dispatchType]: {
         // @ts-ignore
         ...configParams.dispatch_config[dispatchType],
