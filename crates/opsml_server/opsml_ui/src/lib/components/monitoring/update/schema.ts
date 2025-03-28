@@ -96,32 +96,32 @@ export type ConfigParams =
 // Function to get appropriate params based on config type
 export function getConfigParams(config: DriftConfigType): ConfigParams {
   if (isCustomConfig(config)) {
-    return $state<CustomConfigParams>({
+    return {
       schedule: config.alert_config.schedule,
       sample: config.sample,
       sample_size: config.sample_size,
       dispatch_config: config.alert_config.dispatch_config,
-    });
+    };
   }
 
   if (isPsiConfig(config)) {
-    return $state<PsiConfigParams>({
+    return {
       schedule: config.alert_config.schedule,
       psi_threshold: config.alert_config.psi_threshold,
       dispatch_config: config.alert_config.dispatch_config,
       features_to_monitor: config.alert_config.features_to_monitor,
-    });
+    };
   }
 
   if (isSpcConfig(config)) {
-    return $state<SpcConfigParams>({
+    return {
       schedule: config.alert_config.schedule,
       sample: config.sample,
       sample_size: config.sample_size,
       rule: config.alert_config.rule.rule,
       dispatch_config: config.alert_config.dispatch_config,
       features_to_monitor: config.alert_config.features_to_monitor,
-    });
+    };
   }
 
   throw new Error(`Unknown config type`);
