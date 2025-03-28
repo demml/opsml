@@ -2,6 +2,7 @@
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
   import type { SpcAlertConfig, SpcDriftConfig } from "./spc";
   import Pill from "../../utils/Pill.svelte";
+  import UpdateModal from "../update/UpdateModal.svelte";
 ;
 
   // props
@@ -44,7 +45,6 @@
     {/if}
   </div>
   <div class="flex flex-row justify-end gap-2">
-
-
+    <UpdateModal config={config} driftType={config.drift_type}/>
   </div>
 </div>

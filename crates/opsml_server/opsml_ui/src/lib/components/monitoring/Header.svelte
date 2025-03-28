@@ -1,16 +1,12 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { getProfileConfig, getProfileFeatures, type DriftConfigType, type DriftProfile, type DriftProfileResponse } from "./util";
+  import { type DriftConfigType } from "./util";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
   import { KeySquare } from 'lucide-svelte';
   import CustomConfigHeader from "./custom/CustomConfigHeader.svelte";
-  import PsiConfig from "./psi/PsiConfigHeader.svelte";
-  import SpcConfig from "./spc/SpcConfig.svelte";
-  import type { CustomMetricDriftConfig } from "./custom/custom";
-  import type { PsiDriftConfig } from "./psi/psi";
-  import type { SpcDriftConfig } from "./spc/spc";
+
 
   // props
   let { 

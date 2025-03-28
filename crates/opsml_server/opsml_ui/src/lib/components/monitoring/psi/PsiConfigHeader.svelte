@@ -2,7 +2,7 @@
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
   import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
   import Pill from "../../utils/Pill.svelte";
-  import UpdatePsiConfigModal from "./UpdatePsiConfigModal.svelte";
+  import UpdateModal from "../update/UpdateModal.svelte";
 
   // props
   let { 
@@ -42,7 +42,7 @@
   </div>
   <div class="flex flex-row justify-end gap-2">
 
-    <UpdatePsiConfigModal config={config} alertConfig={alertConfig} />
+    <UpdateModal config={config} driftType={config.drift_type}/>
 
   </div>
 </div>

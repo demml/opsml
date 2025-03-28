@@ -2,8 +2,7 @@
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
   import type { CustomMetricAlertConfig, CustomMetricDriftConfig } from "./custom";
   import Pill from "../../utils/Pill.svelte";
-  import UpdateCustomConfigModal from "./UpdatecCustomConfigModal.svelte";
-
+  import UpdateModal from "../update/UpdateModal.svelte";
   // props
   let { 
     config,
@@ -45,7 +44,7 @@
   </div>
   <div class="flex flex-row justify-end gap-2">
 
-    <UpdateCustomConfigModal config={config} alertConfig={alertConfig} />
+    <UpdateModal config={config} driftType={config.drift_type}/>
 
   </div>
 </div>

@@ -4,8 +4,8 @@
     selectedValue = $bindable(), 
     values = $bindable()
   } = $props<{
-    selectedValue: String;
-    values: String[];
+    selectedValue: string;
+    values: string[];
   }>();
 
 
