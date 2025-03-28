@@ -8,9 +8,11 @@
   let { 
     config,
     alertConfig,
+    profile,
   } = $props<{
     config: PsiDriftConfig;
     alertConfig: PsiAlertConfig;
+    profile: DriftProfile;
   }>();
 
   
@@ -41,8 +43,10 @@
     {/if}
   </div>
   <div class="flex flex-row justify-end gap-2">
-
-    <UpdateModal config={config} driftType={config.drift_type}/>
-
+    <UpdateModal 
+      config={config} 
+      driftType={config.drift_type}
+      profile={profile}
+      />
   </div>
 </div>
