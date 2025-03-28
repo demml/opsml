@@ -32,6 +32,10 @@ export const spcConfigSchema = z.object({
   features_to_monitor: z.array(z.string()).default([]),
 });
 
+export const consoleSchema = z.object({
+  enabled: z.coerce.boolean().default(false),
+});
+
 export const slackSchema = z.object({
   channel: z.string(),
 });
@@ -61,6 +65,7 @@ export type ValidationResult<T> = {
 
 export type SlackConfigSchema = z.infer<typeof slackSchema>;
 export type OpsGenieConfigSchema = z.infer<typeof opsGenieSchema>;
+export type ConsoleConfigSchema = z.infer<typeof consoleSchema>;
 export type CustomConfigSchema = z.infer<typeof customConfigSchema>;
 export type PsiConfigSchema = z.infer<typeof psiConfigSchema>;
 export type SpcConfigSchema = z.infer<typeof spcConfigSchema>;
@@ -158,6 +163,39 @@ export function validateSlack(
   }
 }
 
+export function validateConsole(
+  enabled: boolean
+): ValidationResult<ConsoleConfigSchema> {
+  try {
+    const validData = consoleSchema.parse({
+      enabled: enabled,
+    });
+    return {
+      success: true,
+      data: validData,
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors = error.errors.reduce<
+        Record<keyof ConsoleConfigSchema, string>
+      >((acc, curr) => {
+        const path = curr.path[0] as keyof ConsoleConfigSchema;
+        acc[path] = curr.message;
+        return acc;
+      }, {} as Record<keyof ConsoleConfigSchema, string>);
+
+      return {
+        success: false,
+        errors,
+      };
+    }
+    return {
+      success: false,
+      errors: { enabled: "Unexpected validation error" },
+    };
+  }
+}
+
 export function validateOpsGenie(
   team: string,
   priority: string
@@ -201,9 +239,11 @@ export function validateCustomConfig(
   try {
     const validData = customConfigSchema.parse({
       schedule,
-      sample,
-      sample_size,
+      sample: sample,
+      sample_size: Number(sample_size),
     });
+
+    console.log("Valid data:", validData);
     return {
       success: true,
       data: validData,
