@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DriftType } from "./types";
-  import { type DriftConfigType } from "./util";
+  import { type DriftConfigType, type DriftProfile, type DriftProfileResponse } from "./util";
   import { Clock } from 'lucide-svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
@@ -16,6 +16,7 @@
     currentName = $bindable(),
     currentNames,
     currentConfig,
+    currentProfile,
     handleDriftTypeChange,
     handleNameChange,
     handleTimeChange,
@@ -26,6 +27,7 @@
     currentName: string;
     currentNames: string[];
     currentConfig: DriftConfigType;
+    currentProfile: DriftProfile;
     handleDriftTypeChange: (driftType: DriftType) => void;
     handleNameChange: (name: string) => void;
     handleTimeChange: (timeInterval: TimeInterval) => void;
@@ -106,6 +108,7 @@
       <CustomConfigHeader 
         config={driftConfig} 
         alertConfig={driftConfig.alert_config}
+        profile={currentProfile}
       />
     {/if}
   </div>

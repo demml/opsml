@@ -243,7 +243,6 @@ export function validateCustomConfig(
       sample_size: Number(sample_size),
     });
 
-    console.log("Valid data:", validData);
     return {
       success: true,
       data: validData,

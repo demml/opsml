@@ -1,3 +1,5 @@
+import { string } from "zod";
+
 export enum AlertDispatchType {
   Slack = "Slack",
   Console = "Console",
@@ -117,3 +119,19 @@ export type MetricData =
   | BinnedPsiMetric
   | BinnedCustomMetric
   | null;
+
+export interface ProfileRequest {
+  repository: string;
+  drift_type: DriftType;
+  profile: string;
+}
+
+export interface UpdateProfileRequest {
+  uid: string;
+  request: ProfileRequest;
+}
+
+export type UpdateResponse = {
+  uid: string;
+  status: string;
+};
