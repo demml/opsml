@@ -9,6 +9,9 @@
   import type { DriftConfigType } from '../util';
   import { isSpcConfig, isCustomConfig, isPsiConfig } from '../util';
   import { DriftType } from '../types';
+  import CustomFields from './CustomFields.svelte';
+  import SpcFields from './SpcFields.svelte';
+  import PsiFields from './PsiFields.svelte';
 
 
   function stringToBoolean(str: string): boolean {
@@ -33,7 +36,7 @@
   let customErrors = $state<Partial<Record<keyof CustomConfigSchema, string>>>({});
   let psiErrors = $state<Partial<Record<keyof PsiConfigSchema, string>>>({});
   let spcErrors = $state<Partial<Record<keyof SpcConfigParams, string>>>({});
-  let configParams = getConfigParams(config);
+  let configParams = $state(getConfigParams(config));
   
 
     function modalClose() {
@@ -113,8 +116,7 @@
       return;
     }
 
- 
-    console.log('Valid config:', formData);
+    console.log('Valid config:');
     // TODO: Handle form submission
     modalClose();
   }
@@ -139,53 +141,18 @@
         <header class="text-xl font-bold text-primary-800 mb-2">Update Config</header> 
         <p class="mb-4 text-left text-surface-950">Update the following config elements</p>
   
-        <!-- Input Grid -->
-        <div class="grid grid-cols-1 gap-3 ">
-          <label class="text-surface-950">
-            Schedule
-            <input
-              class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-              type="text" 
-              placeholder={schedule}
-              bind:value={schedule}
-            />
-            {#if errors.schedule}
-              <span class="text-red-500 text-sm">{errors.schedule}</span>
-            {/if}
-          </label>
-    
-          <label class="text-surface-950">
-            Sample
-            <input
-              class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-              type="text" 
-              placeholder={sample}
-              bind:value={sample}
-            />
-            {#if errors.sample}
-              <span class="text-red-500 text-sm">{errors.sample}</span>
-            {/if}
-          </label>
-  
-          <label class="text-surface-950">
-            Sample Size
-            <input
-              class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-              type="text" 
-              placeholder={sampleSize}
-              bind:value={sampleSize}
-            />
-            {#if errors.sample_size}
-              <span class="text-red-500 text-sm">{errors.sample_size}</span>
-            {/if}
-          </label>
-        </div>
-      </div>
+        {#if driftType === DriftType.Spc}
+          <SpcFields bind:params={configParams as SpcConfigParams} bind:errors={spcErrors} />
+        {:else if driftType === DriftType.Psi}
+          <PsiFields bind:params={configParams as PsiConfigParams} bind:errors={psiErrors} />
+        {:else if driftType === DriftType.Custom}
+          <CustomFields bind:params={configParams as CustomConfigParams} bind:errors={customErrors} />
+        {/if}
   
       <!-- Right Column -->
       <div class="border-l-2 border-primary-500 pl-2 h-full overflow-visible">
         <div class="h-full overflow-visible">
-          <UpdateDispatch dispatchConfig={alertConfig.dispatch_config} />
+          <UpdateDispatch bind:dispatchConfig={configParams.dispatch_config} />
         </div>
       </div>
     </div>

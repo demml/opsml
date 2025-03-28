@@ -26,8 +26,7 @@
     type OpsGenieConfigSchema = z.infer<typeof opsGenieSchema>;
   
     let { 
-      dispatchConfig,
-      
+      dispatchConfig= $bindable(),
     } = $props<{
       dispatchConfig: AlertDispatchConfig
     }>();
