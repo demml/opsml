@@ -26,7 +26,7 @@ use crate::core::scouter::types::{
     BinnedCustomResult, BinnedPsiResult, ProfileResult, SpcDriftResult,
 };
 use scouter_client::{
-    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftRequest, ProfileRequest,
+    BinnedCustomMetrics, BinnedPsiFeatureMetrics, DriftAlertRequest, DriftRequest, ProfileRequest,
     ProfileStatusRequest, SpcDriftFeatures,
 };
 use serde_json::json;
@@ -430,6 +430,49 @@ pub async fn get_profiles_for_ui(
     Ok(Json(profiles))
 }
 
+/// Get drift alerts
+
+pub async fn get_drift_alerts(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<DriftAlertRequest>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    if !perms.has_read_permission() {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(json!({ "error": "Permission denied" })),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {}", e);
+        internal_server_error(e, "Failed to exchange token for scouter")
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {}", e);
+        internal_server_error(e, "Failed to serialize query string")
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Alerts,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get drift alerts: {}", e);
+            internal_server_error(e, "Failed to get drift alerts")
+        })?;
+
+    return_response(response).await
+}
+
 pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -451,6 +494,7 @@ pub async fn get_scouter_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 &format!("{}/scouter/drift/custom", prefix),
                 get(get_custom_drift),
             )
+            .route(&format!("{}/scouter/alerts", prefix), get(get_drift_alerts))
     }));
 
     match result {
