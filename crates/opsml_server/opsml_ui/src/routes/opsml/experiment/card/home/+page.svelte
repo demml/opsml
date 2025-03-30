@@ -5,7 +5,7 @@
   import type { ExperimentCard } from '$lib/components/card/card_interfaces/experimentcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
-  import Metadata from '$lib/components/card/model/Metadata.svelte';
+  import Metadata from '$lib/components/card/experiment/Metadata.svelte';
 
 
   let { data }: PageProps = $props();
@@ -53,7 +53,7 @@
 
     
     <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-[50%] min-h-fit">
-      <Metadata metadata={metadata} savedata={metadata.metadata.interface_metadata.save_metadata} />
+      <Metadata metadata={metadata} />
     </div>
   </div>
 </div>
