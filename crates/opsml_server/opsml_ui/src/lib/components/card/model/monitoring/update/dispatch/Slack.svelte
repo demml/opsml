@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type AlertDispatchConfig,  type SlackDispatchConfig } from '$lib/components/monitoring/types';
+  import { type AlertDispatchConfig,  type SlackDispatchConfig } from '$lib/components/card/model/monitoring/types';
   import Dropdown from '$lib/components/utils/Dropdown.svelte';
 
     let { 

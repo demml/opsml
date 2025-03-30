@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BinnedDriftMap, MetricData  } from '$lib/components/monitoring/types';
+  import type { BinnedDriftMap, MetricData  } from '$lib/components/card/model/monitoring/types';
   import { DriftType } from '$lib/components/card/model/monitoring/types';
   import type { DriftProfile, DriftProfileResponse } from '$lib/components/card/model/monitoring/util';
   import type { PageProps } from './$types';

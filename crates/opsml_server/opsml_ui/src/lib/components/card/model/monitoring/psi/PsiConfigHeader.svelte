@@ -1,7 +1,7 @@
 <script lang="ts">
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../types";
   import type { PsiAlertConfig, PsiDriftConfig } from "./psi";
-  import Pill from "../../utils/Pill.svelte";
+  import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { DriftProfile } from "../util";
 
