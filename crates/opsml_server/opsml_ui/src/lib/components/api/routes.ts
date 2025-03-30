@@ -22,6 +22,11 @@ export enum RoutePaths {
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
   DRIFT_ALERT = "/opsml/api/scouter/alerts",
 
+  // Experiment
+  EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
+  EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
+  EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
+
   // everything below is old and may be removed
 
   REGISTER = "/opsml/auth/register",
@@ -35,7 +40,7 @@ export enum RoutePaths {
   DATACARD = "/opsml/data/card",
   RUNCARD = "/opsml/run/card",
   METRICS = "/opsml/metrics",
-  PARAMETERS = "/opsml/parameters",
+
   GRAPHS = "/opsml/runs/graphs",
   REPOSITORIES = "/opsml/cards/repositories",
   FILE_EXISTS = "/opsml/files/exists",
