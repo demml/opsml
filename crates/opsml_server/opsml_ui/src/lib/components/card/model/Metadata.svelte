@@ -1,9 +1,9 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { DataProcessor, ModelCard, ModelInterfaceSaveMetadata } from "../card/card_interfaces/modelcard";
+  import type { DataProcessor, ModelCard, ModelInterfaceSaveMetadata } from "$lib/components/card/card_interfaces/modelcard";
   import { Info, Diamond, Tags, CheckCheck, Database } from 'lucide-svelte';
-  import CodeModal from "../card/CodeModal.svelte";
+  import CodeModal from "../CodeModal.svelte";
   import { use } from "marked";
 
 let {

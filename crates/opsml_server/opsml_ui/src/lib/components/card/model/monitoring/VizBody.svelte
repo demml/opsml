@@ -1,11 +1,11 @@
 
 <script lang="ts">
-  import TimeSeries from '../viz/TimeSeries.svelte';
+  import TimeSeries from '$lib/components/viz/TimeSeries.svelte';
   import 'chartjs-adapter-date-fns';
   import { DriftType } from '$lib/components/monitoring/types';
   import 'chartjs-adapter-date-fns';
   import type { MetricData, SpcDriftFeature, BinnedPsiMetric, BinnedCustomMetric, BinnedCustomMetricStats  } from '$lib/components/monitoring/types';
-  import Pill from '../utils/Pill.svelte';
+  import Pill from '$lib/components/utils/Pill.svelte';
   import { TimeInterval } from '$lib/components/monitoring/types';
   import { type DriftConfigType } from './util';
   import CustomAlertPill from './custom/CustomAlertPill.svelte';
