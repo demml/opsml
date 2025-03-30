@@ -6,18 +6,18 @@ import { getCardMetadata, getUID } from "$lib/components/card/utils";
 
 // @ts-ignore
 import type { LayoutServerLoad } from "./$types";
-import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 import { getCardReadMe } from "$lib/components/readme/util";
+import type { ExperimentCard } from "$lib/components/card/card_interfaces/experimentcard";
 
 // @ts-ignore
 export const load: LayoutServerLoad = async ({ url }) => {
-  console.log("loading layout");
+  console.log("loading experiment");
   await opsmlClient.validateAuth(true);
 
-  let registry = RegistryType.Model;
+  let registry = RegistryType.Experiment;
   let uid = await getUID(url, registry);
 
-  let metadata = (await getCardMetadata(uid, registry)) as ModelCard;
+  let metadata = (await getCardMetadata(uid, registry)) as ExperimentCard;
 
   let readme = await getCardReadMe(
     metadata.name,
