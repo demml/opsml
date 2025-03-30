@@ -5,7 +5,7 @@
   import type { ExperimentCard } from '$lib/components/card/card_interfaces/experimentcard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
-  import Metadata from '$lib/components/model/Metadata.svelte';
+  import Metadata from '$lib/components/card/model/Metadata.svelte';
 
 
   let { data }: PageProps = $props();
