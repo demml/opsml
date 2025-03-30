@@ -7,13 +7,16 @@ import {
   getDriftProfiles,
   getProfileConfig,
   getProfileFeatures,
-} from "$lib/components/monitoring/util";
-import { DriftType, TimeInterval } from "$lib/components/monitoring/types";
+} from "$lib/components/card/model/monitoring/util";
+import {
+  DriftType,
+  TimeInterval,
+} from "$lib/components/card/model/monitoring/types";
 import {
   getLatestMetricsExample,
   getCurrentMetricData,
-} from "$lib/components/monitoring/util";
-import { getDriftAlerts } from "$lib/components/monitoring/alert/utils";
+} from "$lib/components/card/model/monitoring/util";
+import { getDriftAlerts } from "$lib/components/card/model/monitoring/alert/utils";
 
 export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);

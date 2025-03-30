@@ -1,7 +1,7 @@
 
 <script lang="ts">
     import { type AlertConditionInfo } from './custom';
-    import Pill from '../../utils/Pill.svelte';
+    import Pill from '$lib/components/utils/Pill.svelte';
   
     let { 
       value,
