@@ -1,11 +1,12 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ExperimentCard, ComputeEnvironment} from "$lib/components/card/card_interfaces/experimentcard";
-  import { Info, Diamond, Tags, CheckCheck, Database } from 'lucide-svelte';
+  import type { ExperimentCard } from "$lib/components/card/card_interfaces/experimentcard";
+  import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
-
+  import { formatBytes } from "$lib/components/files/utils";
+  import { HardDrive } from 'lucide-svelte';
 
 let {
     metadata,
@@ -44,16 +45,13 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
 
 
   <div class="flex flex-col space-y-1 text-base">
-    <Pill key="Created By" value={metadata.created_by} />
+    <Pill key="Created At" value={metadata.created_at} />
     <Pill key="ID" value={metadata.uid} />
     <Pill key="Repository" value={metadata.repository} />
     <Pill key="Name" value={metadata.name} />
     <Pill key="Version" value={metadata.version} />
-    <Pill key="OpsML Version" value={metadata.metadata.interface_metadata.opsml_version} />
+    <Pill key="OpsML Version" value={metadata.opsml_version} />
 
-    {#if  metadata.metadata.interface_metadata.onnx_session !== undefined}
-      <Pill key="Onnx Version" value={metadata.metadata.interface_metadata.onnx_session.schema.onnx_version} />
-    {/if}
   </div>
 
   {#if metadata.uids.datacard_uids || metadata.uids.modelcard_uids ||  metadata.uids.promptcard_uids ||  metadata.uids.experimentcard_uids}
@@ -136,14 +134,14 @@ experimentcard = registry.load_card(uid="${metadata.uid}")
   {/if}
 
   <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-    <CheckCheck color="#8059b6" />
-    <header class="pl-2 text-primary-900 text-lg font-bold">Compute Env</header>
+    <HardDrive color="#8059b6" />
+    <header class="pl-2 text-primary-900 text-lg font-bold">Compute Environment</header>
   </div>
 
   <div class="flex flex-col space-y-1 text-base">
     <Pill key="CPU Count" value={metadata.compute_environment.cpu_count} />
-    <Pill key="Total Memory" value={metadata.compute_environment.total_memory} />
-    <Pill key="Total Swap" value={metadata.compute_environment.total_swap} />
+    <Pill key="Total Memory" value={formatBytes(metadata.compute_environment.total_memory)} />
+    <Pill key="Total Swap" value={formatBytes(metadata.compute_environment.total_swap)} />
     <Pill key="System" value={metadata.compute_environment.system} />
     <Pill key="OS Version" value={metadata.compute_environment.os_version} />
     <Pill key="Hostname" value={metadata.compute_environment.hostname} />

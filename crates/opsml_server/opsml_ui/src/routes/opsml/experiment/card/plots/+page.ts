@@ -13,7 +13,7 @@ export const load: PageLoad = async ({ parent }) => {
 
   const { metadata } = await parent();
 
-  // get metrics and parameters
+  // get metric names, parameters and versions
   let metricNames = await getCardMetricNames(metadata.uid);
   let parameters = await getCardParameters(metadata.uid);
   let cardVersions = await getCardVersions(
@@ -21,8 +21,6 @@ export const load: PageLoad = async ({ parent }) => {
     metadata.name,
     metadata.version
   );
-
-  // get metadata for other other experiments
 
   return { metadata, metricNames, parameters, cardVersions };
 };

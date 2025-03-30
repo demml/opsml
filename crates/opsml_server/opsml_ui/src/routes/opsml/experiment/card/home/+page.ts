@@ -7,6 +7,7 @@ export const load: PageLoad = async ({ parent }) => {
   await opsmlClient.validateAuth(true);
 
   const { metadata, registry, readme, registryPath } = await parent();
+  console.log(JSON.stringify(metadata));
 
   return { metadata, registry, readme, registryPath };
 };

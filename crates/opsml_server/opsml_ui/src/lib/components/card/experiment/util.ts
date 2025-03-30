@@ -2,7 +2,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type { Metric, Parameter } from "../card_interfaces/experimentcard";
 import { type CardQueryArgs } from "$lib/components/api/schema";
-import type { Card } from "$lib/components/home/types";
+import type { BaseCard, Card } from "$lib/components/home/types";
 import { RegistryType } from "$lib/utils";
 
 export interface GetMetricRequest {
@@ -20,16 +20,16 @@ export interface GetParameterRequest {
 }
 
 // Get the metric names for a given experiment
-export async function getCardMetricNames(uid: string): Promise<String[]> {
+export async function getCardMetricNames(uid: string): Promise<string[]> {
   const request: GetMetricNamesRequest = {
     experiment_uid: uid,
   };
 
-  const response = await opsmlClient.post(
+  const response = await opsmlClient.get(
     RoutePaths.EXPERIMENT_METRIC_NAMES,
     request
   );
-  return (await response.json()) as String[];
+  return (await response.json()) as string[];
 }
 
 export async function getCardParameters(uid: string): Promise<Parameter[]> {
@@ -79,7 +79,7 @@ export async function getCardVersions(
   repository: string,
   name: string,
   currentVersion: string
-): Promise<Card[]> {
+): Promise<BaseCard[]> {
   const params: CardQueryArgs = {
     registry_type: RegistryType.Experiment,
     name: name,
@@ -90,9 +90,16 @@ export async function getCardVersions(
   const response = await opsmlClient.get(RoutePaths.LIST_CARDS, params);
   const cards = (await response.json()) as Card[];
 
-  // filter out the current version
-  const filteredCards = cards.filter((card) => card.version !== currentVersion);
+  // extract data from the card and filter out the current version
+  const filteredCardData = cards
+    .filter(
+      (card) =>
+        card.data.version &&
+        card.data.version.trim().toLowerCase() !==
+          currentVersion.trim().toLowerCase()
+    )
+    .map((card) => card.data);
 
   // @ts-ignore
-  return filteredCards;
+  return filteredCardData;
 }
