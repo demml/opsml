@@ -6,7 +6,7 @@
   import type { Experiment, PlotType } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import { type GroupedMetrics } from "./types";
-  import LineChart from "$lib/components/viz/LineChart.svelte";
+  import Chart from "$lib/components/viz/Chart.svelte";
 
     let { 
       groupedMetrics,
@@ -46,7 +46,12 @@
 
   {#key groupedMetrics}
     <div class="flex-1"> <!-- Added wrapper with flex-1 -->
-      <LineChart {groupedMetrics} yLabel="Value" bind:resetZoom={resetZoom}/>
+      <Chart 
+        {groupedMetrics} 
+          yLabel="Value" 
+          {plotType}
+          bind:resetZoom={resetZoom}
+      />
     </div>
   {/key}
 

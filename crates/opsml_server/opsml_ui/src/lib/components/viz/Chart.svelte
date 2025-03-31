@@ -1,23 +1,24 @@
 
 <script lang="ts">
-
+  // This chart supports both bar and line charts
   import { onMount, onDestroy } from 'svelte';
   import { Chart } from 'chart.js/auto';
-  import 'chartjs-adapter-date-fns';
   import zoomPlugin from 'chartjs-plugin-zoom';
   import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
-  import { type GroupedMetrics } from '../card/experiment/types';
-  import { createLineChart } from './linechart';
+  import { PlotType, type GroupedMetrics } from '../card/experiment/types';
+  import { createLineChart, createBarChart } from './chart';
 
   let { 
     groupedMetrics,
     yLabel,
+    plotType,
     resetZoom = $bindable(),
   } = $props<{
     groupedMetrics: GroupedMetrics;
     yLabel: string;
+    plotType: PlotType;
     resetZoom: boolean;
   }>();
 
@@ -30,8 +31,12 @@
     Chart.register(Filler);
 
     function initChart() {
+      console.log('Plotting chart with type:', plotType);
+      let config = plotType === PlotType.Line 
+      ? createLineChart(groupedMetrics, yLabel)
+      : createBarChart(groupedMetrics, yLabel);
 
-      const config = createLineChart( groupedMetrics, yLabel);
+      console.log('Chart config:', JSON.stringify(config, null, 2));
   
       if (chart) {
         chart.destroy();

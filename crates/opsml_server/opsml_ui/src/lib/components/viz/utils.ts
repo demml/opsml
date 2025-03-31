@@ -7,6 +7,14 @@ export interface ChartjsLineDataset {
   fill: boolean;
 }
 
+export interface ChartjsBarDataset {
+  label: string;
+  data: number[];
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+}
+
 // Generate an array of colors with optional alpha
 export function generateColors(count: number, alpha: number = 1): string[] {
   const colors = [
