@@ -11,6 +11,8 @@
   import { PlotType, type Experiment, type GroupedMetrics } from "$lib/components/card/experiment/types";
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
   import { getGroupedMetrics } from "$lib/components/card/experiment/util";
+  import Dropdown from "$lib/components/utils/Dropdown.svelte";
+  import Plot from "$lib/components/card/model/monitoring/Plot.svelte";
 
   let { data }: PageProps = $props();
 
@@ -92,7 +94,7 @@
     <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow max-h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
       <div class="mb-4 sticky top-0 bg-surface-50 z-10">
-        <div class="flex flex-row justify-between pt-2 pb-3">
+        <div class="flex flex-row justify-between pt-2 pb-1">
           <div class="flex flex-row">
             <div class="self-center" aria-label="Time Interval">
               <CircleDot color="#8059b6"/>
@@ -103,6 +105,19 @@
             <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
           </div>
         </div>
+
+        <div class="flex flex-row pb-2">
+          <div class="text-primary-800 self-center text-lg">Plot Type:</div>
+          <div class="ml-2 self-center">
+            <Dropdown  
+              bind:selectedValue={plotType} 
+              values={[PlotType.Bar, PlotType.Line]}
+              width='w-32'
+              py="py-1"
+            />
+          </div>
+        </div>
+
         <div class="flex flex-row gap-1 items-center">
           <div class="mr-1">
             <Search color="#5948a3" />

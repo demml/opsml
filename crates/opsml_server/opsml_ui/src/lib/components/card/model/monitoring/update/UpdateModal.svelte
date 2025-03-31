@@ -303,6 +303,8 @@ function validateDispatchForm(): boolean {
             <Dropdown 
                   bind:selectedValue={dispatchType}
                   bind:values={dispatchOptions}
+                  width='w-48'
+                  py="py-2"
             />
           </div>
 
