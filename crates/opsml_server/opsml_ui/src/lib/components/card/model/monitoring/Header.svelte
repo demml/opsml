@@ -90,6 +90,8 @@
         <Dropdown 
           bind:selectedValue={currentTimeInterval}
           values={timeIntervals}
+          width='w-48'
+          py="py-2"
         />
       </div>
 
@@ -101,6 +103,8 @@
         <Dropdown 
           bind:selectedValue={currentName}
           bind:values={currentNames}
+          width='w-48'
+          py="py-2"
         />
       </div>
     </div>
