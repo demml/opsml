@@ -1,6 +1,6 @@
 import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
-import type { ModelCard } from "../card/card_interfaces/modelcard";
+import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc/spc";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi/psi";
 import type {

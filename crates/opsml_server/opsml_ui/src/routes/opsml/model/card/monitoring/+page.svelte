@@ -126,9 +126,6 @@
   }
 
 
-  
-
-
  </script>
  
  <div class="mx-auto w-11/12 pb-10 flex justify-center">

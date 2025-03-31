@@ -4,6 +4,8 @@ import type { Metric, Parameter } from "../card_interfaces/experimentcard";
 import { type CardQueryArgs } from "$lib/components/api/schema";
 import type { BaseCard, Card } from "$lib/components/home/types";
 import { RegistryType } from "$lib/utils";
+import { promise } from "zod";
+import type { MetricData } from "$lib/components/viz/linechart";
 
 export interface GetMetricRequest {
   experiment_uid: string;
@@ -102,4 +104,49 @@ export async function getCardVersions(
 
   // @ts-ignore
   return filteredCardData;
+}
+
+export async function processCardMetrics(
+  card: BaseCard,
+  selectedMetrics: string[],
+  metricData: MetricData
+): Promise<void> {
+  // get grouped metrics
+
+  const metrics = await getCardMetrics(card.uid, selectedMetrics);
+  const parsedMetrics = parseMetricsToMap(metrics);
+
+  for (const [metricName, metricArray] of parsedMetrics.entries()) {
+    if (!metricData[metricName]) {
+      metricData[metricName] = {
+        x: metricArray.map((m) => m.step ?? metricArray.indexOf(m)), // use step if available, fallback to index
+        y: {},
+      };
+    }
+
+    // Sort metrics by step to ensure correct ordering
+    const sortedMetrics = [...metricArray].sort(
+      (a, b) => (a.step ?? 0) - (b.step ?? 0)
+    );
+
+    metricData[metricName].y[card.name] = sortedMetrics.map((m) => m.value);
+  }
+}
+
+export async function preparePlotData(
+  currentCard: BaseCard,
+  selectedMetrics: string[],
+  selectedCards: BaseCard[]
+): Promise<MetricData> {
+  const metricData: MetricData = {};
+
+  // Process current card metrics
+  await processCardMetrics(currentCard, selectedMetrics, metricData);
+
+  // Process selected cards metrics
+  for (const card of selectedCards) {
+    await processCardMetrics(card, selectedMetrics, metricData);
+  }
+
+  return metricData;
 }

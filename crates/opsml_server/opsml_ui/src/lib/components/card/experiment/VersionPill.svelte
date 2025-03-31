@@ -15,16 +15,13 @@
   </script>
   
 {#if active}
-  <button class="inline-flex items-stretch overflow-hidden rounded-lg border-2 border-primary-700 w-fit" onclick={() => setActive(card)}>
-    <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic flex items-center justify-center">{card.version}</div> 
-      <div class="px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950 flex items-center justify-center">
-        {card.created_at}
-  </button>
+  <label class="flex items-center space-x-2">
+    <input class="checkbox bg-primary-500 h-5 w-5 border-1 border-black rounded-none" type="checkbox" checked onchange={() => setActive(card)}/>
+    <p class="text-black">{card.version}</p>
+  </label>
 {:else}
-<button class="inline-flex items-stretch overflow-hidden rounded-lg bg-parimary-500 shadow shadow-hover border-2 border-black w-fit" onclick={() => setActive(card)}>
-  <div class="border-r border-primary-70 px-2 text-primary-950 bg-primary-100 italic flex items-center justify-center">{card.version}</div> 
-    <div class="px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950 flex items-center justify-center">
-      {card.created_at}
-    </div>
-  </button>
+<label class="flex items-center space-x-2">
+  <input class="checkbox h-5 w-5 bg-white h-5 w-5 border-1 border-black rounded-none" type="checkbox" onchange={() => setActive(card)}/>
+  <p class="text-black">{card.version}</p>
+</label>
 {/if}

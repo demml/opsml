@@ -64,18 +64,33 @@
     });
   }
 
+  async function plotMetrics() {
+    // handle the plot button click
+    console.log('Plotting metrics:', selectedMetrics);
+    console.log('Selected parameters:', selectedParameters);
+    console.log('Selected card versions:', selectedCardVersions);
+  }
+
 
 
   </script>
-  
 <div class="mx-auto w-11/12 pt-4 pb-10 flex justify-center">
-  <div class="grid grid-cols-2 md:grid-cols-6 gap-4 w-full">
-    <div class="col-span-1 md:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow">
+  <div class="grid grid-cols-2 md:grid-cols-8 gap-4 w-full">
+
+    <!-- Left Column-->
+    <div class="col-span-1 md:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow max-h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
-      <div class="mb-4">
-        <div class="flex flex-row items-center pt-2 pb-2">
-          <CircleDot color="#8059b6"/>
-          <header class="pl-2 text-primary-800 text-2xl font-bold">Search {currentTab}</header>
+      <div class="mb-4 sticky top-0 bg-surface-50 z-10">
+        <div class="flex flex-row justify-between pt-2 pb-3">
+          <div class="flex flex-row">
+            <div class="self-center" aria-label="Time Interval">
+              <CircleDot color="#8059b6"/>
+            </div>
+            <header class="pl-2 text-primary-800 text-2xl self-center font-bold">Search {currentTab}</header>
+          </div>
+          <div class="flex flex-row">
+            <button type="button" class="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 self-center" onclick={plotMetrics}>Plot</button>
+          </div>
         </div>
         <div class="flex flex-row gap-1 items-center">
           <div class="mr-1">
@@ -90,49 +105,56 @@
           />
         </div>
       </div>
-      <div class="h-1/3">
-        <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-          <List fill="#8059b6"/>
-          <header class="pl-2 text-primary-900 text-lg font-bold">Items</header>
-        </div>
-        <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
-          <!-- Iterate of available entities -->
-          {#each filteredEntities as entity}
-            {#if currentTab === 'metrics'}
-              {#if selectedMetrics.includes(entity)}
-                <button class="chip bg-slate-100 border-primary-800 border-2 text-primary-800 border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
-              {:else}
-                <button class="chip text-black bg-primary-500 shadow-small shadow-hover-small border-black border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
+      <!-- card versions -->
+      <div class="flex-1">
+        <div class="mb-4">
+          <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+            <List color="#8059b6"/>
+            <header class="pl-2 text-primary-900 text-lg font-bold">Items</header>
+          </div>
+          <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
+            <!-- Iterate of available entities -->
+            {#each filteredEntities as entity}
+              {#if currentTab === 'metrics'}
+                {#if selectedMetrics.includes(entity)}
+                  <button class="chip bg-slate-100 border-primary-800 border-2 text-primary-800 border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
+                {:else}
+                  <button class="chip text-black bg-primary-500 shadow-small shadow-hover-small border-black border-1 lg:text-base" onclick={() => selectMetric(entity)}>{entity}</button>
+                {/if}
               {/if}
-            {/if}
-            {#if currentTab === 'parameters'}
-              {#if selectedParameters.includes(entity)}
-                <button class="chip bg-slate-100 border-primary-800 border-2 text-primary-800 border-1" onclick={() => selectParameter(entity)}>{entity}</button>
-              {:else}
-                <button class="chip text-black bg-primary-500 shadow-small shadow-hover-small border-black border-1" onclick={() => selectParameter(entity)}>{entity}</button>
+              {#if currentTab === 'parameters'}
+                {#if selectedParameters.includes(entity)}
+                  <button class="chip bg-slate-100 border-primary-800 border-2 text-primary-800 border-1" onclick={() => selectParameter(entity)}>{entity}</button>
+                {:else}
+                  <button class="chip text-black bg-primary-500 shadow-small shadow-hover-small border-black border-1" onclick={() => selectParameter(entity)}>{entity}</button>
+                {/if}
               {/if}
-            {/if}
-          {/each}
+            {/each}
+          </div>
         </div>
-        <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-          <List fill="#8059b6"/>
-          <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
-        </div>
-        <h3 class="pl-2 text-primary-900 text-lg text-black">Select previous version to compare metrics</h3>
-        <div class="flex flex-col space-y-1 pl-2 pt-4 pb-4 gap-1 overflow-auto">
-          {#each availableCards as card}
-            {#if selectedCardVersions.includes(card)}
-              <VersionPill {card} active={true} setActive={selectCardVersion}/>
-            {:else}
-              <VersionPill {card} active={false} setActive={selectCardVersion}/>
-            {/if}
-          {/each}
+
+        <div class="mb-4">
+          <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+            <List color="#8059b6"/>
+            <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
+          </div>
+          <h3 class="pl-2 text-primary-900 text-lg text-black">Select previous version to compare metrics</h3>
+          <div class="flex flex-col space-y-1 pl-2 pt-4 pb-4 gap-1 overflow-auto">
+            {#each availableCards as card}
+              {#if selectedCardVersions.includes(card)}
+                <VersionPill {card} active={true} setActive={selectCardVersion}/>
+              {:else}
+                <VersionPill {card} active={false} setActive={selectCardVersion}/>
+              {/if}
+            {/each}
+          </div>
         </div>
       </div>
-      
+
     </div>
-    <div class="col-span-1 md:col-span-4 gap-1 p-4 flex flex-col rounded-base border-black border-2 shadow bg-primary-500 min-h-screen">
-      hello
+    <div class="col-span-1 md:col-span-6 gap-4 w-full">
+      <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+      </div>
     </div>
   </div>
 </div>

@@ -76,6 +76,12 @@ impl RegistryType {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub enum PlotType {
+    Line,
+    Bar,
+}
+
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum StorageType {

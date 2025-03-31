@@ -11,8 +11,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "eslint .",
-		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "vitest"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.7",
