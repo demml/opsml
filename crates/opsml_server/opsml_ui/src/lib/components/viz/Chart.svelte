@@ -35,8 +35,6 @@
       let config = plotType === PlotType.Line 
       ? createLineChart(groupedMetrics, yLabel)
       : createBarChart(groupedMetrics, yLabel);
-
-      console.log('Chart config:', JSON.stringify(config, null, 2));
   
       if (chart) {
         chart.destroy();

@@ -191,11 +191,8 @@ function validateDispatchForm(): boolean {
       return;
     }
 
-    console.log("updating")
     // implement post request to update config
     const matchedProfile = extractProfile(profile, driftType);
-
-    console.log('Matched profile:', matchedProfile);
 
     matchedProfile.config = {
       ...matchedProfile.config,

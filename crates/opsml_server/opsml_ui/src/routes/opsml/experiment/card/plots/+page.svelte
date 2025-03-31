@@ -71,8 +71,6 @@
       alert('Please select at least one metric to plot.');
       return;
     }
-
-    console.log("plot type", plotType);
     
     // add current experiment to selected experiments
     let currentExperiment: Experiment = {

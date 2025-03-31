@@ -19,6 +19,10 @@
 
   let convertedMarkdown: string = $state('')
 
+  function isImage(mimeType: string): boolean {
+    return mimeType.startsWith('image/');
+  }
+
   onMount(async () => {
     if (file.suffix === 'md') {
       convertedMarkdown = await convertMarkdown(file.content);
@@ -31,7 +35,15 @@
 
 
 <div class="w-full">
-  {#if file.suffix === 'md'}
+  {#if isImage(file.mime_type)}
+    <div class="flex justify-center p-4">
+      <img 
+        src={`data:${file.mime_type};base64,${file.content}`} 
+        alt="File preview"
+        class="max-w-full h-auto rounded-lg shadow-lg"
+      />
+    </div>
+  {:else if file.suffix === 'md'}
     <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11">
       {@html convertedMarkdown}
     </div>

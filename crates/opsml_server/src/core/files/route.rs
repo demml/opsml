@@ -530,14 +530,19 @@ pub async fn get_file_for_ui(
 
     debug!("Downloaded file to: {}", lpath.display());
 
-    let content = std::fs::read_to_string(&lpath).unwrap_or_default();
     let mime_type = mime_guess::from_path(&lpath).first_or_octet_stream();
 
-    // if mime image the base64 encode the content
     let content = if mime_type.type_() == mime::IMAGE {
-        BASE64_STANDARD.encode(&content)
+        let bytes = std::fs::read(&lpath).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?;
+        BASE64_STANDARD.encode(&bytes)
     } else {
-        content
+        std::fs::read_to_string(&lpath).map_err(|e| {
+            error!("Failed to read file: {}", e);
+            internal_server_error(e, "Failed to read file")
+        })?
     };
 
     Ok(Json(RawFile {
