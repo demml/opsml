@@ -12,7 +12,8 @@
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
   import { getGroupedMetrics } from "$lib/components/card/experiment/util";
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
-  import Plot from "$lib/components/card/model/monitoring/Plot.svelte";
+  import ParameterTable from "$lib/components/card/experiment/ParameterTable.svelte";
+  import { ChartNoAxesColumn } from 'lucide-svelte';
 
   let { data }: PageProps = $props();
 
@@ -23,6 +24,8 @@
   let groupedMetrics: GroupedMetrics | undefined = $state();
   let plotType: PlotType = $state(PlotType.Line);
   let plot: boolean = $state(false);
+  let parameters = $state(data.parameters);
+  let parameterOpen: boolean = $state(false);
 
   // search setup
   let searchQuery = $state('');
@@ -82,6 +85,10 @@
     plot = true;
   }
 
+  function setOpenParameterTable(open: boolean) {
+    parameterOpen = open;
+  }
+
 
 
   </script>
@@ -89,9 +96,9 @@
   <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full">
 
     <!-- Left Column-->
-    <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow max-h-[calc(100vh-200px)] overflow-y-auto">
+    <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">
       <!-- Top Section -->
-      <div class="mb-4 sticky top-0 bg-surface-50 z-10">
+      <div class="mb-4 sticky top-0 z-10">
         <div class="flex flex-row justify-between pt-2 pb-1">
           <div class="flex flex-row">
             <div class="self-center" aria-label="Time Interval">
@@ -129,7 +136,7 @@
           />
         </div>
       </div>
-      <!-- card versions -->
+      <!-- Metrics and Experiments -->
       <div class="flex-1">
         <div class="mb-4">
           <div class="flex flex-row items-center mb-1 border-b-2 border-black">
@@ -156,7 +163,7 @@
             <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
           </div>
           <p class="pl-2 text-base lg:text-lg text-black">Select previous version to compare metrics</p>
-          <div class="flex flex-col space-y-1 pl-2 pt-4 pb-4 gap-1 overflow-auto">
+          <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
             {#each recentExperiments as experiment}
               {#if selectedExperiments.includes(experiment)}
                 <ExperimentPill {experiment} active={true} setActive={selectExperiment}/>
@@ -167,24 +174,47 @@
           </div>
         </div>
       </div>
-
     </div>
+
+
+    <!-- 2nd column -->
     <div class="col-span-1 lg:col-span-6 gap-4 w-full">
-      <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[600px]">
-      {#if plot}
-        {#if groupedMetrics}
-          <VizBody {groupedMetrics} {selectedMetrics} {plotType} />
+
+      <!-- Metrics plot -->
+      <div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[600px] mb-4">
+
+        <div class="flex flex-row">
+          <div class="self-center" aria-label="Metric Plot">
+            <ChartNoAxesColumn color="#8059b6"/>
+          </div>
+          <header class="pl-2 text-primary-800 text-xl lg:text-2xl self-center font-bold">Metrics</header>
+        </div>
+
+        {#if plot}
+          {#if groupedMetrics}
+            <VizBody {groupedMetrics} {selectedMetrics} {plotType} />
+          {:else}
+            <div class="flex items-center justify-center h-full text-gray-500">
+              No data available for selected metric
+            </div>
+          {/if}
         {:else}
           <div class="flex items-center justify-center h-full text-gray-500">
-            No data available for selected metric
+            Select a metric to view data
           </div>
         {/if}
-      {:else}
-        <div class="flex items-center justify-center h-full text-gray-500">
-          Select a metric to view data
-        </div>
-      {/if}
       </div>
+
+ 
+      <div class="bg-white p-2 border-2 border-black rounded-lg shadow w-96 isolate">
+        <ParameterTable
+          parameters={parameters}
+          open={parameterOpen}
+          setOpen={setOpenParameterTable}
+        />
+      </div>
+  
+
     </div>
   </div>
 </div>
