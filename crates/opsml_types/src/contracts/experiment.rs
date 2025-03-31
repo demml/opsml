@@ -1,5 +1,4 @@
 use crate::cards::{HardwareMetrics, Metric, Parameter};
-use crate::types::PlotType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -24,10 +23,15 @@ impl GetMetricRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Experiment {
+    pub uid: String,
+    pub version: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UiMetricRequest {
-    pub experiment_uids: Vec<String>,
+    pub experiments: Vec<Experiment>,
     pub metric_names: Vec<String>,
-    pub plot_type: PlotType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

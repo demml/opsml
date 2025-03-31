@@ -4,11 +4,12 @@ use axum::{
     http::{header, Request, StatusCode},
 };
 use http_body_util::BodyExt; // for `collect`
+use opsml_server::core::experiment::types::GroupedMetric;
 use opsml_types::{
     cards::{HardwareMetrics, Metric, Parameter, ParameterValue},
     contracts::*,
 };
-
+use std::collections::HashMap;
 #[tokio::test]
 async fn test_opsml_server_experiment_routes() {
     let helper = TestHelper::new().await;
@@ -205,4 +206,140 @@ async fn test_opsml_server_experiment_routes() {
     assert_eq!(metrics.len(), 1);
 
     helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_opsml_server_grouped_experiment_metrics() {
+    let helper = TestHelper::new().await;
+    let experiment_uid1 = "550e8400-e29b-41d4-a716-446655440000".to_string();
+
+    let request = MetricRequest {
+        experiment_uid: experiment_uid1.clone(),
+        metrics: vec![
+            Metric {
+                name: "metric1".to_string(),
+                value: 1.0,
+                step: Some(1),
+                ..Default::default()
+            },
+            Metric {
+                name: "metric1".to_string(),
+                value: 2.0,
+                step: Some(2),
+                ..Default::default()
+            },
+            Metric {
+                name: "metric2".to_string(),
+                value: 1.0,
+                ..Default::default()
+            },
+        ],
+    };
+
+    let body = serde_json::to_string(&request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/experiment/metrics")
+        .method("PUT")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let experiment_uid2 = "550e8401-e29b-41d4-a716-446655440000".to_string();
+
+    let request = MetricRequest {
+        experiment_uid: experiment_uid2.clone(),
+        metrics: vec![
+            Metric {
+                name: "metric1".to_string(),
+                value: 1.0,
+                step: Some(1),
+                ..Default::default()
+            },
+            Metric {
+                name: "metric1".to_string(),
+                value: 2.0,
+                step: Some(2),
+                ..Default::default()
+            },
+            Metric {
+                name: "metric2".to_string(),
+                value: 1.0,
+                ..Default::default()
+            },
+        ],
+    };
+
+    let body = serde_json::to_string(&request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/experiment/metrics")
+        .method("PUT")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // experiment 3
+    let experiment_uid3 = "550e8402-e29b-41d4-a716-446655440000".to_string();
+
+    let request = MetricRequest {
+        experiment_uid: experiment_uid3.clone(),
+        metrics: vec![Metric {
+            name: "metric3".to_string(),
+            value: 1.0,
+            ..Default::default()
+        }],
+    };
+
+    let body = serde_json::to_string(&request).unwrap();
+
+    let request = Request::builder()
+        .uri("/opsml/api/experiment/metrics")
+        .method("PUT")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = UiMetricRequest {
+        experiments: vec![
+            Experiment {
+                uid: experiment_uid1.clone(),
+                version: "1".to_string(),
+            },
+            Experiment {
+                uid: experiment_uid2.clone(),
+                version: "1".to_string(),
+            },
+            Experiment {
+                uid: experiment_uid3.clone(),
+                version: "2".to_string(),
+            },
+        ],
+        metric_names: vec!["metric1".to_string(), "metric2".to_string()],
+    };
+
+    let request = Request::builder()
+        .uri("/opsml/api/experiment/metrics/grouped") // should be post
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let metrics: HashMap<String, Vec<GroupedMetric>> = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(metrics.len(), 2);
+    assert_eq!(metrics["metric1"].len(), 2);
 }
