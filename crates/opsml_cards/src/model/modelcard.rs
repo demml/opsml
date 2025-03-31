@@ -124,6 +124,9 @@ pub struct ModelCard {
 
     #[pyo3(get)]
     pub is_card: bool,
+
+    #[pyo3(get)]
+    pub opsml_version: String,
 }
 
 #[pymethods]
@@ -210,6 +213,7 @@ impl ModelCard {
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             created_at: get_utc_datetime(),
             is_card: true,
+            opsml_version: env!("CARGO_PKG_VERSION").to_string(),
         })
     }
 
@@ -491,6 +495,7 @@ impl FromPyObject<'_> for ModelCard {
         let to_onnx = ob.getattr("to_onnx")?.extract()?;
         let created_at = ob.getattr("created_at")?.extract()?;
         let app_env = ob.getattr("app_env")?.extract()?;
+        let opsml_version = ob.getattr("opsml_version")?.extract()?;
 
         Ok(ModelCard {
             interface: Some(interface.into()),
@@ -506,6 +511,7 @@ impl FromPyObject<'_> for ModelCard {
             app_env,
             created_at,
             is_card: true,
+            opsml_version,
         })
     }
 }
@@ -530,6 +536,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             AppEnv,
             CreatedAt,
             IsCard,
+            OpsmlVersion,
         }
 
         struct ModelCardVisitor;
@@ -557,6 +564,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let mut app_env = None;
                 let mut created_at = None;
                 let mut is_card = None;
+                let mut opsml_version = None;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -598,6 +606,9 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::IsCard => {
                             is_card = Some(map.next_value()?);
                         }
+                        Field::OpsmlVersion => {
+                            opsml_version = Some(map.next_value()?);
+                        }
                     }
                 }
 
@@ -615,6 +626,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                 let created_at =
                     created_at.ok_or_else(|| de::Error::missing_field("created_at"))?;
                 let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
+                let opsml_version =
+                    opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
 
                 Ok(ModelCard {
                     interface,
@@ -630,6 +643,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     app_env,
                     created_at,
                     is_card,
+                    opsml_version,
                 })
             }
         }
@@ -647,6 +661,7 @@ impl<'de> Deserialize<'de> for ModelCard {
             "app_env",
             "created_at",
             "is_card",
+            "opsml_version",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
     }
