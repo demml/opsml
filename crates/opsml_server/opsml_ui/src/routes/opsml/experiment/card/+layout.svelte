@@ -36,7 +36,7 @@
 
 </script>
 
-<div>
+<div class="min-h-screen flex flex-col">
   <div class="pt-20 m500:pt-14 lg:pt-[100px] border-b bg-slate-100">
     <div class="flex flex-col mx-auto flex w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center text-xl">

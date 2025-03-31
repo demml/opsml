@@ -1,24 +1,26 @@
 import type { ChartConfiguration } from "chart.js";
 import "chartjs-plugin-zoom";
-import { format } from "date-fns";
 import {
   generateColors,
   handleResize,
   type ChartjsLineDataset,
 } from "$lib/components/viz/utils";
+// ...existing code...
 
-export function buildTimeChart(
-  x: Date[],
+export interface MetricData {
+  [metricName: string]: {
+    x: number[];
+    y: { [experimentName: string]: number[] };
+  };
+}
+
+export function buildLineChart(
+  x: number[],
   datasets: ChartjsLineDataset[],
   x_label: string,
   y_label: string,
   showLegend: boolean = false
 ): ChartConfiguration {
-  const timeRange =
-    x.length > 1 ? Math.abs(x[x.length - 1].getTime() - x[0].getTime()) : 0;
-  const dayInMs = 24 * 60 * 60 * 1000;
-  const isMultiDay = timeRange > dayInMs;
-
   return {
     type: "line",
     data: {
@@ -38,7 +40,7 @@ export function buildTimeChart(
             mode: "xy",
             drag: {
               enabled: true,
-              borderColor: "rgb(	163, 135, 239)",
+              borderColor: "rgb(163, 135, 239)",
               borderWidth: 1,
               backgroundColor: "rgba(163, 135, 239, 0.3)",
             },
@@ -54,24 +56,11 @@ export function buildTimeChart(
       maintainAspectRatio: false,
       scales: {
         x: {
-          type: "time",
+          type: "linear",
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)", // You can adjust color as needed
-          },
-          time: {
-            displayFormats: {
-              millisecond: "HH:mm",
-              second: "HH:mm",
-              minute: "HH:mm",
-              hour: "HH:mm",
-              day: "MM/dd HH:mm",
-              week: "MM/dd HH:mm",
-              month: "MM/dd HH:mm",
-              quarter: "MM/dd HH:mm",
-              year: "MM/dd HH:mm",
-            },
+            color: "rgb(0, 0, 0)",
           },
           grid: {
             display: true,
@@ -82,23 +71,16 @@ export function buildTimeChart(
           title: {
             display: true,
             text: x_label,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 16,
             },
           },
           ticks: {
-            maxTicksLimit: isMultiDay ? 12 : 25,
-            color: "rgb(0,0,0)", // gray-600
+            maxTicksLimit: 10,
+            color: "rgb(0,0,0)",
             font: {
               size: 14,
-            },
-            callback: function (value) {
-              const date = new Date(value);
-              if (isMultiDay) {
-                return format(date, "MM/dd HH:mm");
-              }
-              return format(date, "HH:mm");
             },
           },
         },
@@ -106,14 +88,14 @@ export function buildTimeChart(
           title: {
             display: true,
             text: y_label,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 16,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)", // gray-600
+            color: "rgb(0,0,0)",
             font: {
               size: 14,
             },
@@ -121,7 +103,7 @@ export function buildTimeChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)", // You can adjust color as needed
+            color: "rgb(0, 0, 0)",
           },
           grace: "0%",
           grid: {
@@ -139,22 +121,33 @@ export function buildTimeChart(
   };
 }
 
-export function createTimeSeriesChart(
-  x: Date[],
-  y: number[],
-  label: string,
+export function createLineChart(
+  metricData: MetricData,
+  x_label: string,
   y_label: string
 ): ChartConfiguration {
-  const datasets: ChartjsLineDataset[] = [
-    {
-      label,
-      data: y,
-      borderColor: generateColors(1)[0],
-      backgroundColor: generateColors(1, 0.2)[0],
-      pointRadius: 4,
-      fill: true,
-    },
-  ];
+  const datasets: ChartjsLineDataset[] = [];
 
-  return buildTimeChart(x, datasets, "Time", y_label, false);
+  // For each metric
+  Object.entries(metricData).forEach(([metricName, data], metricIndex) => {
+    // For each experiment in that metric
+    Object.entries(data.y).forEach(([expName, yValues], expIndex) => {
+      datasets.push({
+        label: `${metricName} - ${expName}`,
+        data: yValues,
+        borderColor:
+          generateColors(1)[
+            metricIndex * Object.keys(data.y).length + expIndex
+          ],
+        backgroundColor: "transparent",
+        pointRadius: 4,
+        fill: false,
+      });
+    });
+  });
+
+  // Use x values from first metric (assuming all metrics share same x values)
+  const xValues = Object.values(metricData)[0].x;
+
+  return buildLineChart(xValues, datasets, x_label, y_label, true);
 }
