@@ -2,9 +2,10 @@
   import { onMount } from 'svelte';
   import type { LayoutProps } from './$types';
   import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, BookOpenText, Columns2 } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
+
 
   function getLastPartOfPath(path: string): string {
     const parts = path.split("/");
@@ -59,17 +60,19 @@
           <FolderTree color="#8059b6"/>
           <span>Files</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('monitoring')}>
-          <Activity color="#8059b6"/>
-          <span>Monitoring</span>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'splits' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('splits')}>
+          <Columns2 color="#8059b6"/>
+          <span>Splits</span>
+        </button>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'profile' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('profile')}>
+          <BookOpenText color="#8059b6" fill="#8059b6"/>
+          <span>Profile</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>
         </button>
       </div>
-
-
 
     </div>
   </div>

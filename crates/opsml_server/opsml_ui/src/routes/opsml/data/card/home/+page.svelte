@@ -2,14 +2,14 @@
   // version $props() in +page.svelte
 
   import { goto } from '$app/navigation';
-  import type { ModelCard } from '$lib/components/card/card_interfaces/modelcard';
+  import type { DataCard } from '$lib/components/card/card_interfaces/datacard';
   import type { PageProps } from './$types';
   import CardReadMe from '$lib/components/card/CardReadMe.svelte';
-  import Metadata from '$lib/components/card/model/Metadata.svelte';
+  import Metadata from '$lib/components/card/data/Metadata.svelte';
 
 
   let { data }: PageProps = $props();
-  let metadata: ModelCard = data.metadata;
+  let metadata: DataCard = data.metadata;
 
   function navigateToReadMe() {
       // navigate to readme
@@ -53,7 +53,7 @@
 
     
     <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-[50%] min-h-fit">
-      <Metadata metadata={metadata} savedata={metadata.metadata.interface_metadata.save_metadata} />
+      <Metadata metadata={metadata} />
     </div>
   </div>
 </div>
