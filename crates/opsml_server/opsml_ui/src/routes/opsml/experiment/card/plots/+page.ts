@@ -4,7 +4,7 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import {
   getCardMetricNames,
   getCardParameters,
-  getCardVersions,
+  getRecentExperiments,
 } from "$lib/components/card/experiment/util";
 import type { PageLoad } from "./$types";
 
@@ -13,14 +13,14 @@ export const load: PageLoad = async ({ parent }) => {
 
   const { metadata } = await parent();
 
-  // get metric names, parameters and versions
+  // get metric names, parameters
   let metricNames = await getCardMetricNames(metadata.uid);
   let parameters = await getCardParameters(metadata.uid);
-  let cardVersions = await getCardVersions(
+  let recentExperiments = await getRecentExperiments(
     metadata.repository,
     metadata.name,
     metadata.version
   );
 
-  return { metadata, metricNames, parameters, cardVersions };
+  return { metadata, metricNames, parameters, recentExperiments };
 };

@@ -24,6 +24,7 @@ export enum RoutePaths {
 
   // Experiment
   EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
+  EXPERIMENT_GROUPED_METRICS = "/opsml/api/experiment/metrics/grouped",
   EXPERIMENT_METRIC_NAMES = "/opsml/api/experiment/metrics/names",
   EXPERIMENT_PARAMETERS = "/opsml/api/experiment/parameters",
 

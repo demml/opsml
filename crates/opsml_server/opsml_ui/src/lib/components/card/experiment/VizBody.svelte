@@ -2,18 +2,19 @@
 <script lang="ts">
   import type { BaseCard } from "$lib/components/home/types";
   import { onMount } from "svelte";
-  import { getCardMetrics } from "./util";
-  import type { PlotType } from "./types";
+  import { getCardMetrics, getGroupedMetrics } from "./util";
+  import type { Experiment, PlotType } from "./types";
+  import Pill from "$lib/components/utils/Pill.svelte";
+  import { type GroupedMetrics } from "./types";
+  import LineChart from "$lib/components/viz/LineChart.svelte";
 
     let { 
-      currentCard,
+      groupedMetrics,
       selectedMetrics,
-      selectedCards,
       plotType,
     } = $props<{
-      currentCard: BaseCard;
+      groupedMetrics: GroupedMetrics;
       selectedMetrics: string[];
-      selectedCards: BaseCard[];
       plotType: PlotType;
     }>();
   
@@ -24,15 +25,32 @@
       resetZoom = !resetZoom;
     }
 
-    onMount(async () => {
-      // Set the initial value of resetZoom to false
-      resetZoom = false;
-      let metrics = await getCardMetrics(currentCard.uid, selectedMetrics);
-    });
 
   </script>
 
 
-<div class="bg-white p-4 border-2 border-black rounded-lg shadow h-[500px]">
+<div class="flex flex-col h-full">
+  <div class="items-center text-xl mr-2 font-bold text-primary-800">Recent Metrics</div>
+
+  <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
+    <div class="flex flex-row flex-wrap gap-2 items-center">
+      {#each selectedMetrics as metric}
+        <Pill key="metric" value={metric} />
+      {/each}
+    </div>
+
+    <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+      <div class="text-black">Reset Zoom</div>
+    </button>
+  </div>
+
+  {#key groupedMetrics}
+    <div class="flex-1"> <!-- Added wrapper with flex-1 -->
+      <LineChart {groupedMetrics} yLabel="Value" bind:resetZoom={resetZoom}/>
+    </div>
+  {/key}
+
+ 
+
+
 </div>
-  
