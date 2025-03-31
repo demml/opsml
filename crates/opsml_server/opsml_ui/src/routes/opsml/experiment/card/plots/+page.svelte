@@ -62,16 +62,14 @@
   }
 
   async function plotMetrics() {
-    // handle the plot button click
-    console.log('Plotting metrics:', selectedMetrics);
-
+  
     // if selectedMetrics is empty, return
     if (selectedMetrics.length === 0) {
       alert('Please select at least one metric to plot.');
       return;
     }
 
-  
+    console.log("plot type", plotType);
     
     // add current experiment to selected experiments
     let currentExperiment: Experiment = {

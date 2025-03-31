@@ -4,19 +4,22 @@ import {
   generateColors,
   handleResize,
   type ChartjsLineDataset,
+  type ChartjsBarDataset,
 } from "$lib/components/viz/utils";
 import type { GroupedMetrics } from "../card/experiment/types";
 import { buildTimeChart } from "./timeseries";
 
-export function buildLineChart(
-  x: number[],
-  datasets: ChartjsLineDataset[],
+export function buildChart(
+  x: string[] | number[],
+  datasets: (ChartjsLineDataset | ChartjsBarDataset)[],
   x_label: string,
   y_label: string,
-  showLegend: boolean = false
+  showLegend: boolean = false,
+  chartType: "line" | "bar" = "line"
 ): ChartConfiguration {
-  return {
-    type: "line",
+  const baseConfig = {
+    //@ts-ignore
+    type: chartType,
     data: {
       labels: x,
       datasets,
@@ -72,7 +75,7 @@ export function buildLineChart(
       maintainAspectRatio: false,
       scales: {
         x: {
-          type: "linear",
+          type: chartType === "bar" ? "category" : "linear",
           border: {
             display: true,
             width: 2,
@@ -135,6 +138,8 @@ export function buildLineChart(
       },
     },
   };
+
+  return baseConfig as ChartConfiguration;
 }
 
 export function createLineChart(
@@ -142,32 +147,39 @@ export function createLineChart(
   y_label: string
 ): ChartConfiguration {
   const datasets: ChartjsLineDataset[] = [];
-  let totalExperiments = 0;
+
+  const uniqueVersions = new Set(
+    Object.values(metricData)
+      .flat()
+      .map((metric) => metric.version)
+  );
+
+  // Generate colors based on number of unique experiments
+  const colors = generateColors(uniqueVersions.size, 1.0);
+
+  // Create version to color index mapping
+  const versionColorMap = new Map(
+    Array.from(uniqueVersions).map((version, index) => [version, index])
+  );
 
   // For each metric name
-  Object.entries(metricData).forEach(
-    ([metricName, groupedMetrics], metricIndex) => {
-      // For each experiment's grouped metrics
-      groupedMetrics.forEach((metric, experimentIndex) => {
-        const colorIndex = totalExperiments + experimentIndex;
-        const color = generateColors(1)[colorIndex];
+  Object.entries(metricData).forEach(([metricName, groupedMetrics]) => {
+    // For each experiment's grouped metrics
+    groupedMetrics.forEach((metric) => {
+      const colorIndex = versionColorMap.get(metric.version) ?? 0;
 
-        datasets.push({
-          label: `${metricName} - ${metric.version}`,
-          data: Array.from(metric.value),
-          borderColor: color,
-          backgroundColor: "transparent",
-          pointRadius: 2,
-          fill: false,
-
-          //@ts-ignore
-          tension: 0.4,
-        });
+      datasets.push({
+        label: `${metricName} - ${metric.version}`,
+        data: Array.from(metric.value),
+        borderColor: colors[colorIndex],
+        backgroundColor: "transparent",
+        pointRadius: 2,
+        fill: false,
+        //@ts-ignore
+        tension: 0.4,
       });
-
-      totalExperiments += groupedMetrics.length;
-    }
-  );
+    });
+  });
 
   // Get first non-empty metric data for x-axis values
   const firstMetric = Object.values(metricData)[0]?.[0];
@@ -191,5 +203,50 @@ export function createLineChart(
     const xAsDate = xValues.map((x) => new Date(x));
     return buildTimeChart(xAsDate, datasets, effectiveXLabel, y_label, true);
   }
-  return buildLineChart(xValues, datasets, effectiveXLabel, y_label, true);
+  return buildChart(xValues, datasets, effectiveXLabel, y_label, true);
+}
+
+export function createBarChart(
+  metricData: GroupedMetrics,
+  y_label: string
+): ChartConfiguration {
+  const datasets: ChartjsBarDataset[] = [];
+  const metricNames = Object.keys(metricData);
+
+  const uniqueVersions = new Set(
+    Object.values(metricData)
+      .flat()
+      .map((metric) => metric.version)
+  );
+
+  const borderColors = generateColors(uniqueVersions.size, 1.0);
+  const backgroundColors = generateColors(uniqueVersions.size, 0.5);
+
+  const versionColorMap = new Map(
+    Array.from(uniqueVersions).map((version, index) => [version, index])
+  );
+
+  // For each metric name
+  Array.from(uniqueVersions).forEach((version) => {
+    const values: number[] = [];
+
+    // For each metric, find the value for this version
+    metricNames.forEach((metricName) => {
+      const metric = metricData[metricName].find((m) => m.version === version);
+      const value = metric ? Array.from(metric.value).pop() ?? 0 : 0;
+      values.push(value);
+    });
+
+    const colorIndex = versionColorMap.get(version) ?? 0;
+
+    datasets.push({
+      label: version,
+      data: values,
+      backgroundColor: backgroundColors[colorIndex],
+      borderColor: borderColors[colorIndex],
+      borderWidth: 2,
+    });
+  });
+
+  return buildChart(metricNames, datasets, "Experiments", y_label, true, "bar");
 }
