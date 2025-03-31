@@ -5,14 +5,8 @@ import {
   handleResize,
   type ChartjsLineDataset,
 } from "$lib/components/viz/utils";
-// ...existing code...
-
-export interface MetricData {
-  [metricName: string]: {
-    x: number[];
-    y: { [experimentName: string]: number[] };
-  };
-}
+import type { GroupedMetrics } from "../card/experiment/types";
+import { buildTimeChart } from "./timeseries";
 
 export function buildLineChart(
   x: number[],
@@ -29,6 +23,21 @@ export function buildLineChart(
     },
     options: {
       plugins: {
+        tooltip: {
+          cornerRadius: 1,
+          backgroundColor: "rgba(255, 255, 255, 1)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: 1,
+          enabled: true,
+          titleColor: "rgb(0, 0, 0)",
+          titleFont: {
+            size: 16,
+          },
+          bodyColor: "rgb(0, 0, 0)",
+          bodyFont: {
+            size: 16,
+          },
+        },
         //@ts-ignore
         zoom: {
           pan: {
@@ -49,8 +58,15 @@ export function buildLineChart(
         legend: {
           display: showLegend,
           position: "bottom",
+          labels: {
+            font: {
+              size: 16, // Increase legend font size (in pixels)
+            },
+            color: "rgb(0, 0, 0)",
+          },
         },
       },
+
       responsive: true,
       onResize: handleResize,
       maintainAspectRatio: false,
@@ -122,32 +138,58 @@ export function buildLineChart(
 }
 
 export function createLineChart(
-  metricData: MetricData,
-  x_label: string,
+  metricData: GroupedMetrics,
   y_label: string
 ): ChartConfiguration {
   const datasets: ChartjsLineDataset[] = [];
+  let totalExperiments = 0;
 
-  // For each metric
-  Object.entries(metricData).forEach(([metricName, data], metricIndex) => {
-    // For each experiment in that metric
-    Object.entries(data.y).forEach(([expName, yValues], expIndex) => {
-      datasets.push({
-        label: `${metricName} - ${expName}`,
-        data: yValues,
-        borderColor:
-          generateColors(1)[
-            metricIndex * Object.keys(data.y).length + expIndex
-          ],
-        backgroundColor: "transparent",
-        pointRadius: 4,
-        fill: false,
+  // For each metric name
+  Object.entries(metricData).forEach(
+    ([metricName, groupedMetrics], metricIndex) => {
+      // For each experiment's grouped metrics
+      groupedMetrics.forEach((metric, experimentIndex) => {
+        const colorIndex = totalExperiments + experimentIndex;
+        const color = generateColors(1)[colorIndex];
+
+        datasets.push({
+          label: `${metricName} - ${metric.version}`,
+          data: Array.from(metric.value),
+          borderColor: color,
+          backgroundColor: "transparent",
+          pointRadius: 2,
+          fill: false,
+
+          //@ts-ignore
+          tension: 0.4,
+        });
       });
-    });
-  });
 
-  // Use x values from first metric (assuming all metrics share same x values)
-  const xValues = Object.values(metricData)[0].x;
+      totalExperiments += groupedMetrics.length;
+    }
+  );
 
-  return buildLineChart(xValues, datasets, x_label, y_label, true);
+  // Get first non-empty metric data for x-axis values
+  const firstMetric = Object.values(metricData)[0]?.[0];
+
+  // Try steps first, then timestamp, then fallback to array indices
+  const xValues = Array.from(
+    firstMetric?.step ??
+      firstMetric?.timestamp ??
+      Array.from({ length: firstMetric?.value.length ?? 0 }, (_, i) => i)
+  );
+
+  // Adjust x-axis label based on what we're using
+  const effectiveXLabel = firstMetric?.step
+    ? "Step"
+    : firstMetric?.timestamp
+    ? "Time"
+    : "Index";
+
+  // Build the line chart configuration if effectiveXLabel is Time
+  if (effectiveXLabel === "Time") {
+    const xAsDate = xValues.map((x) => new Date(x));
+    return buildTimeChart(xAsDate, datasets, effectiveXLabel, y_label, true);
+  }
+  return buildLineChart(xValues, datasets, effectiveXLabel, y_label, true);
 }

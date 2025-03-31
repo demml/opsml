@@ -1,25 +1,22 @@
 
 <script lang="ts">
+
   import { onMount, onDestroy } from 'svelte';
   import { Chart } from 'chart.js/auto';
-  import { createLineChart } from './linechart';
   import 'chartjs-adapter-date-fns';
   import zoomPlugin from 'chartjs-plugin-zoom';
   import annotationPlugin from 'chartjs-plugin-annotation';
+  import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
+  import { type GroupedMetrics } from '../card/experiment/types';
+  import { createLineChart } from './linechart';
 
   let { 
-    xValues, 
-    yValues,
-    labels,
-    xLabel,
+    groupedMetrics,
     yLabel,
     resetZoom = $bindable(),
   } = $props<{
-    xValues: number[];
-    yValues: number[][] | number[],
-    labels: string[] | string,
-    xLabel: string;
+    groupedMetrics: GroupedMetrics;
     yLabel: string;
     resetZoom: boolean;
   }>();
@@ -34,7 +31,8 @@
 
     function initChart() {
 
-      const config = createLineChart(xValues, yValues, labels, xLabel, yLabel);
+      const config = createLineChart( groupedMetrics, yLabel);
+  
       if (chart) {
         chart.destroy();
       }
@@ -70,6 +68,6 @@
   });
   </script>
 
-  <div class="w-full h-[400px]">
+  <div class="w-full h-full">
     <canvas bind:this={canvas}></canvas>
   </div>
