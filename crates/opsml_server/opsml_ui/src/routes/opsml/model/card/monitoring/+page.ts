@@ -63,8 +63,6 @@ export const load: PageLoad = async ({ parent }) => {
     true
   );
 
-  console.log("currentAlerts", currentAlerts);
-
   return {
     profiles,
     keys,
