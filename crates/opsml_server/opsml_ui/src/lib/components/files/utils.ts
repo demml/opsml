@@ -2,6 +2,11 @@ import { opsmlClient } from "$lib/components/api/client.svelte";
 import { RoutePaths } from "$lib/components/api/routes";
 import type { FileTreeResponse, RawFile } from "./types";
 import { AcceptableSuffix } from "./types";
+import Highlight, { LineNumbers } from "svelte-highlight";
+import json from "svelte-highlight/languages/json";
+import python from "svelte-highlight/languages/python";
+import yaml from "svelte-highlight/languages/yaml";
+import sql from "svelte-highlight/languages/sql";
 
 export async function getFileTree(path: string): Promise<FileTreeResponse> {
   const params = {
@@ -72,4 +77,9 @@ export async function getRawFile(
 function splitViewPath(path: string): string[] {
   let splitPath = path.split("/");
   return splitPath;
+}
+
+export function formatJson(jsonString: string): string {
+  let newJson = JSON.stringify(JSON.parse(jsonString), null, 2);
+  return newJson;
 }
