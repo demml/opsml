@@ -86,10 +86,10 @@ pub async fn get_grouped_metrics(
 ) -> Result<Json<HashMap<String, Vec<GroupedMetric>>>, (StatusCode, Json<serde_json::Value>)> {
     let mut metric_data: HashMap<String, Vec<GroupedMetric>> = HashMap::new();
 
-    for experiment_uid in req.experiment_uids {
+    for experiment in req.experiments {
         let metrics = state
             .sql_client
-            .get_experiment_metric(&experiment_uid, &req.metric_names)
+            .get_experiment_metric(&experiment.uid, &req.metric_names)
             .await
             .map_err(|e| {
                 error!("Failed to get metrics: {}", e);
@@ -106,7 +106,8 @@ pub async fn get_grouped_metrics(
 
         for (metric_name, metric_records) in grouped_by_name {
             let grouped_metric = GroupedMetric {
-                uid: experiment_uid.clone(),
+                uid: experiment.uid.clone(),
+                version: experiment.version.clone(),
                 value: metric_records.iter().map(|m| m.value).collect(),
                 step: if metric_records.iter().any(|m| m.step.is_some()) {
                     Some(
