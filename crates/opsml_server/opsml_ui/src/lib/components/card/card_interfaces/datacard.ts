@@ -144,4 +144,5 @@ export interface DataCard {
   app_env: string;
   created_at: string; // ISO datetime string
   is_card: boolean;
+  opsml_version: string;
 }
