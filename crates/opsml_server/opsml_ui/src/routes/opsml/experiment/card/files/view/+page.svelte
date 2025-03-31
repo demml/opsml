@@ -7,7 +7,6 @@
   let { data }: PageProps = $props();
 
 </script>
-rawFile, viewPath, splitPath
 
 <FileViewPage
   file={data.rawFile}
