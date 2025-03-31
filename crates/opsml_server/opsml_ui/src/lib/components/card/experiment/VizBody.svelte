@@ -29,8 +29,7 @@
   </script>
 
 
-<div class="flex flex-col h-full">
-  <div class="items-center text-xl mr-2 font-bold text-primary-800">Recent Metrics</div>
+<div class="flex flex-col h-full pb-4">
 
   <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full">
     <div class="flex flex-row flex-wrap gap-2 items-center">
