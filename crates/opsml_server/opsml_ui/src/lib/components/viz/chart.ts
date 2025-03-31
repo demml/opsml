@@ -124,7 +124,8 @@ export function buildChart(
             width: 2,
             color: "rgb(0, 0, 0)",
           },
-          grace: "0%",
+          grace: "10%",
+          padding: { top: 10 },
           grid: {
             display: true,
             color: "rgba(0, 0, 0, 0.1)",
