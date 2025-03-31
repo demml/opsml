@@ -431,7 +431,6 @@ pub async fn get_profiles_for_ui(
 }
 
 /// Get drift alerts
-
 pub async fn get_drift_alerts(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
