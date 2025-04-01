@@ -251,3 +251,23 @@ export function createGroupedBarChart(
 
   return buildChart(metricNames, datasets, "Experiments", y_label, true, "bar");
 }
+
+export function createBarChart(
+  x: string[] | number[],
+  y: number[],
+  label: string,
+  x_label: string,
+  y_label: string
+): ChartConfiguration {
+  const datasets: ChartjsBarDataset[] = [
+    {
+      label,
+      data: y,
+      borderColor: generateColors(1)[0],
+      backgroundColor: generateColors(1, 0.2)[0],
+      borderWidth: 2,
+    },
+  ];
+
+  return buildChart(x, datasets, x_label, y_label, true, "bar");
+}
