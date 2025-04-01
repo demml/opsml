@@ -4,6 +4,7 @@
   import type { DataProfile, FeatureProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import NumericStats from "./NumericStats.svelte";
+  import StringStats from "./StringStats.svelte";
 
   let { 
     features,
@@ -47,11 +48,10 @@
           {/if}
         </div>
 
-        {#if !featureProfile.numeric_stats}
-          <!--String Stats-->
-        
-        {:else}
+        {#if featureProfile.numeric_stats}
           <NumericStats numericData={featureProfile.numeric_stats} />
+        {:else if featureProfile.string_stats}
+          <StringStats stringData={featureProfile.string_stats} />
         {/if}
       </div>
   {/each}
