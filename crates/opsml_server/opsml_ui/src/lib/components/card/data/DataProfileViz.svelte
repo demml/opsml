@@ -36,7 +36,7 @@
 
   {#each features as feature}
     {@const featureProfile: FeatureProfile = profile.features[feature]}
-      <div class="bg-white p-4 border-2 border-black rounded-lg shadow">
+      <div class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto">
         <div class="flex flex-row flex-wrap gap-2 items-center">
           <Pill key="Name" value={featureProfile.id} />
           <Pill key="Created At" value={featureProfile.timestamp} />

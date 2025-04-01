@@ -57,13 +57,6 @@
     }
   }
 
-  async function filterEntities() {
-    // filter the entities based on the search query
-    filteredEntities = availableEntities.filter((entity: string) => {
-      return entity.toLowerCase().includes(searchQuery.toLowerCase());
-    });
-  }
-
   async function plotMetrics() {
   
     // if selectedMetrics is empty, return
@@ -130,7 +123,6 @@
             type="text"
             bind:value={searchQuery}
             placeholder="Search..."
-            oninput={filterEntities}
           />
         </div>
       </div>
