@@ -101,23 +101,23 @@
 
       <!-- Bottom Section -->
       <div class="h-1/3">
-      <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
-        <!-- Add your tags or other content here -->
-        {#if searchQuery && filteredSpaces.length == 0}
-          <p class="text-black">No repositories found</p>
-        {:else if filteredSpaces.length > 0}
-          {#each filteredSpaces as space}
+        <div class="space-y-2 flex flex-wrap pl-2 pt-4 pb-4 gap-1 overflow-y-scroll">
+          <!-- Add your tags or other content here -->
+          {#if searchQuery && filteredSpaces.length == 0}
+            <p class="text-black">No repositories found</p>
+          {:else if filteredSpaces.length > 0}
+            {#each filteredSpaces as space}
 
-            {#if activeSpace === space}
-              <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
-            {:else}
-              <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
-            {/if}
-          
-          {/each}
-        {/if}
+              {#if activeSpace === space}
+                <button class="chip text-black bg-primary-300 border-black border-1 reverse-shadow-small reverse-shadow-hover-small lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
+              {:else}
+                <button class="chip text-black border-black border-1 shadow-small shadow-hover-small bg-surface-50 lg:text-base" onclick={() => setActiveRepo(space)}>{space}</button>
+              {/if}
+            
+            {/each}
+          {/if}
+        </div>
       </div>
-    </div>
     </div>
 
     <!-- Right column -->

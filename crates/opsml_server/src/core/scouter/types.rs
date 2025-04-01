@@ -8,7 +8,7 @@ use std::collections::HashMap;
 pub type DriftProfileMap = HashMap<DriftType, DriftProfile>;
 pub type ProfileResponse = Json<DriftProfileMap>;
 pub type ReturnError = (StatusCode, Json<serde_json::Value>);
-pub type ProfileResult = Result<ProfileResponse, ReturnError>;
+pub type DriftProfileResult = Result<ProfileResponse, ReturnError>;
 
 pub type BinnedCustomResponse = Json<BinnedCustomMetrics>;
 pub type BinnedCustomResult = Result<BinnedCustomResponse, ReturnError>;
