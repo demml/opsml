@@ -3,6 +3,8 @@
     let { children } = $props();
 </script>
 
-<div class="bg-surface-50">
+<div class="h-screen flex flex-col bg-surface-50">
+  <div class="flex-1 overflow-auto">
     {@render children()}
+  </div>
 </div>

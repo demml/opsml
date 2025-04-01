@@ -10,7 +10,9 @@
 
 </script>
 
-<CardsSearch 
-  selectedSpace={selectedSpace}
-  page={page}
-/>
+<div class="mx-auto w-9/12 pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center px-4">
+  <CardsSearch 
+    selectedSpace={selectedSpace}
+    page={page}
+  />
+</div>
