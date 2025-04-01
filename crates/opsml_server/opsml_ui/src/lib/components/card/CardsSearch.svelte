@@ -78,7 +78,7 @@
 
 </script>
 
-<div class="mx-auto w-11/12 pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
+<div class="mx-auto w-9/12 pt-20 pb-10 m500:pt-14 lg:pt-[100px] flex justify-center">
   <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full">
     <!-- Left column -->
     <div class="col-span-1 md:col-span-2 bg-slate-100 p-4 flex flex-col rounded-base border-black border-2 shadow h-[400px]">

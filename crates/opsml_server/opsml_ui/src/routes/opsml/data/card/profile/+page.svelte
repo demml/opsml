@@ -1,37 +1,29 @@
 <script lang="ts">
-  import DataProfile from "$lib/components/card/data/DataProfile.svelte";
+  import DataProfileViz from "$lib/components/card/data/DataProfileViz.svelte";
   import { Accordion } from '@skeletonlabs/skeleton-svelte';
   import { CirclePlus, Plus, Minus } from 'lucide-svelte';
+  import type {DataProfile} from "$lib/components/card/data/types";
   let { data }: PageProps = $props();
 
-  let dataProfile: DataProfile = $state(data.dataProfile);
-
-  let lorem = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut`;
-  let value = $state(['club']);
+  let dataProfile: DataProfile | undefined = $state(data.dataProfile);
+  let featureNames: string[] = $state(data.featureNames);
 
 </script>
 
-<div class="mx-auto w-11/12 pb-10 flex justify-center pt-4">
-
-  <Accordion {value} onValueChange={(e) => (value = e.value)} multiple>
-      {#snippet iconOpen()}<Minus size={20} strokeWidth={3} color="#8059b6"/>{/snippet}
-      {#snippet iconClosed()}<Plus size={20} strokeWidth={3} color="#8059b6"/>{/snippet}
-    <Accordion.Item 
-      value="feature" 
-      base="bg-surface-50 rounded-base border-black border-2 shadow"
-      controlHover="none"
-      >
-      <!-- Control -->
-   
-      {#snippet control()}
-        <div class="flex flex-row items-center text-primary-800 text-xl">
-          Blah
-        </div>
-      {/snippet}
-      <!-- Panel -->
-      {#snippet panel()}
-      {lorem}
-      {/snippet}
-    </Accordion.Item> 
-  </Accordion>
+<div class="h-screen flex flex-col justify-center items-center">
+  {#if dataProfile}
+    <div class="flex-1 w-9/12 pb-10 pt-4">
+      <DataProfileViz
+        features={featureNames}
+        profile={dataProfile}
+      />
+    </div>
+  {:else}
+  <div class="h-64 w-96 z-10 mx-auto rounded-2xl bg-slate-100 border shadow p-4 flex flex-col justify-center items-center">
+    <h1 class="pt-1 text-center text-3xl font-bold text-primary-800">No Data Profile Found!</h1>
+    <div class="mb-8 grid grid-cols-1 gap-3">
+      <p class="mb-1 text-black text-center overflow-x-scroll">A data profile was not saved with the current DataCard</p>
+    </div>
+  </div>
+  {/if}
 </div>

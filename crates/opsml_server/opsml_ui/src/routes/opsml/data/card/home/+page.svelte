@@ -19,7 +19,7 @@
 </script>
 
 
-<div class="mx-auto w-11/12 pb-10 flex justify-center min-h-screen">
+<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto">
   <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full pt-4">
 
     {#if data.readme.exists}
@@ -52,7 +52,7 @@
 
 
     
-    <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-[50%] min-h-fit">
+    <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-auto">
       <Metadata 
         metadata={metadata} 
         interfaceMetadata={metadata.metadata.interface_metadata}
