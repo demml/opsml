@@ -25,7 +25,6 @@
     
 
     onMount(() => {
-      console.log('metadata', JSON.stringify(saveMetadata, null, 2));
       useCardContent = `from opsml import CardRegistry
 
 # load the card

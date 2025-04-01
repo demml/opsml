@@ -31,7 +31,6 @@
     Chart.register(Filler);
 
     function initChart() {
-      console.log('Plotting chart with type:', plotType);
       let config = plotType === PlotType.Line 
       ? createLineChart(groupedMetrics, yLabel)
       : createGroupedBarChart(groupedMetrics, yLabel);

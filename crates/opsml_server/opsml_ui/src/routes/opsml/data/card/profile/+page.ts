@@ -17,8 +17,6 @@ export const load: PageLoad = async ({ parent }) => {
     ? await getDataProfile(metadata)
     : undefined;
 
-  console.log("dataProfile", JSON.stringify(dataProfile));
-
   // get sorted feature anmes from dataProfile.features
   let featureNames: string[] = [];
 

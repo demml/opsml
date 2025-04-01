@@ -23,8 +23,6 @@ export async function getDataProfile(card: DataCard): Promise<DataProfile> {
     card.repository
   }/${card.name}/v${card.version}/${dataProfileUri}`;
 
-  console.log("dataProfileUri", profilePath);
-
   let rawFile = await getRawFile(profilePath, card.uid, RegistryType.Data);
 
   return loadDataProfile(rawFile.content);
