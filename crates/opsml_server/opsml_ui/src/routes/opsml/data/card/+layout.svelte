@@ -51,7 +51,6 @@
       </h1>
 
       <div class="flex flex-row gap-x-8 text-black text-lg pl-4 h-10 mb-2">
-
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'home' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('home')}>
           <IdCard color="#8059b6"/>
           <span>Card</span>
@@ -59,10 +58,6 @@
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('files')}>
           <FolderTree color="#8059b6"/>
           <span>Files</span>
-        </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'splits' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('splits')}>
-          <Columns2 color="#8059b6"/>
-          <span>Splits</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'profile' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('profile')}>
           <BookOpenText color="#8059b6"/>

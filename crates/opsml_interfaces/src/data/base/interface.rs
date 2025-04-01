@@ -505,14 +505,13 @@ impl DataInterface {
     /// * `PyResult<PathBuf>` - Path to saved drift profile
     #[instrument(skip_all)]
     pub fn save_data_profile(&self, path: &Path) -> PyResult<PathBuf> {
-        let profile_save_path = path
-            .join(SaveName::DataProfile)
-            .with_extension(Suffix::Json);
+        let profile_path = PathBuf::from(SaveName::DataProfile).with_extension(Suffix::Json);
+        let profile_save_path = path.join(profile_path.clone());
         self.data_profile
             .as_ref()
             .unwrap()
             .save_to_json(Some(profile_save_path.clone()))?;
 
-        Ok(profile_save_path)
+        Ok(profile_path)
     }
 }

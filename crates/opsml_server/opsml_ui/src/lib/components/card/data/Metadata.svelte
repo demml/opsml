@@ -25,7 +25,7 @@
     
 
     onMount(() => {
-      console.log('schema', JSON.stringify(interfaceMetadata.schema.items, null, 2));
+      console.log('metadata', JSON.stringify(saveMetadata, null, 2));
       useCardContent = `from opsml import CardRegistry
 
 # load the card
