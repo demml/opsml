@@ -16,8 +16,6 @@
     profile: DriftProfile;
   }>();
 
-    console.log("alertConfig", JSON.stringify(alertConfig, null, 2));
-
   
   </script>
 
