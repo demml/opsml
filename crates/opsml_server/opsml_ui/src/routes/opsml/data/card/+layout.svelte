@@ -37,9 +37,10 @@
 
 </script>
 
-<div>
-  <div class="pt-20 m500:pt-14 lg:pt-[100px] border-b bg-slate-100">
-    <div class="flex flex-col mx-auto flex w-11/12 justify-start">
+<div class="h-screen flex flex-col">
+  <!-- Subnav Header -->
+  <div class="flex-none pt-20 m500:pt-14 lg:pt-[85px] border-b bg-slate-100">
+    <div class="flex flex-col mx-auto w-11/12 justify-start">
       <h1 class="flex flex-row flex-wrap items-center text-xl">
         <div class="group flex flex-none items-center">
           <a class="font-semibold text-black hover:text-secondary-500" href="/opsml/{registry}?repository={repository}">{repository}</a>
@@ -68,8 +69,11 @@
           <span>Versions</span>
         </button>
       </div>
-
     </div>
   </div>
-  {@render children()}
+
+  <!-- Child Content -->
+  <div class="flex-1 overflow-auto">
+    {@render children()}
+  </div>
 </div>

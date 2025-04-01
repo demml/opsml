@@ -29,3 +29,7 @@ export async function getDataProfile(card: DataCard): Promise<DataProfile> {
 
   return loadDataProfile(rawFile.content);
 }
+
+export function getSortedFeatureNames(dataProfile: DataProfile): string[] {
+  return Object.keys(dataProfile.features).sort();
+}

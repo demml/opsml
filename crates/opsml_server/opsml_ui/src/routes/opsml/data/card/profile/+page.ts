@@ -1,7 +1,10 @@
 export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getDataProfile } from "$lib/components/card/data/utils";
+import {
+  getDataProfile,
+  getSortedFeatureNames,
+} from "$lib/components/card/data/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent }) => {
@@ -16,5 +19,12 @@ export const load: PageLoad = async ({ parent }) => {
 
   console.log("dataProfile", JSON.stringify(dataProfile));
 
-  return { dataProfile };
+  // get sorted feature anmes from dataProfile.features
+  let featureNames: string[] = [];
+
+  if (dataProfile) {
+    featureNames = getSortedFeatureNames(dataProfile);
+  }
+
+  return { dataProfile, featureNames };
 };
