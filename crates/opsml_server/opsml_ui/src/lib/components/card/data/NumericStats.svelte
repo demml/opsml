@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { NumericStats } from "./types";
+  import HistChart from "$lib/components/viz/HistChart.svelte";
 
 
 let { 
@@ -8,12 +9,17 @@ let {
   numericData: NumericStats;
 }>();
 
+  let resetZoom: boolean = $state(false);
+  
+  let resetZoomClicked = () => {
+    resetZoom = !resetZoom;
+  }
 
 </script>
 
-<div class="grid grid-cols-5 gap-x-2 min-w-max h-auto pt-2">
-  <div class="col-span-1">
-    <div class="flex flex-row justify-between items-center p-2">
+<div class="grid grid-cols-1 xl:grid-cols-6 gap-2 min-w-max h-auto pt-2">
+  <div class="col-span-1 md:col-span-2 h-[350px] flex items-center">
+    <div class="flex flex-row flex-wrap justify-center gap-2 items-center p-2 w-full">
 
       <!-- General stats -->
       <div class="flex flex-col gap-1 border-2 border-black rounded-lg bg-surface-50">
@@ -62,6 +68,24 @@ let {
       </div>
     </div>
 
+  </div>
+  <div class="col-span-1 xl:col-span-4 w-full h-[350px]">
+
+    <div class="flex flex-row flex-wrap pb-1 items-center justify-between w-full">
+      <div class="flex items-center justify-center">
+        <div class="font-bold text-primary-950">Distribution</div>
+      </div>
+      <button class="btn flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
+        <div class="text-black">Reset Zoom</div>
+      </button>
+    </div>
+
+    <div class="h-[320px]">
+      <HistChart 
+        histData={numericData.histogram}
+        bind:resetZoom={resetZoom}
+      />
+    </div>
 
   </div>
 </div>

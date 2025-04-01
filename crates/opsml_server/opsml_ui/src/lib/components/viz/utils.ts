@@ -36,3 +36,63 @@ export function handleResize(chart: any) {
     chart.resize();
   }
 }
+
+export const tooltip = {
+  cornerRadius: 1,
+  backgroundColor: "rgba(255, 255, 255, 1)",
+  borderColor: "rgb(0, 0, 0)",
+  borderWidth: 1,
+  enabled: true,
+  titleColor: "rgb(0, 0, 0)",
+  titleFont: {
+    size: 16,
+  },
+  bodyColor: "rgb(0, 0, 0)",
+  bodyFont: {
+    size: 16,
+  },
+};
+
+export const zoom = {
+  pan: {
+    enabled: true,
+    mode: "xy",
+    modifierKey: "ctrl",
+  },
+  zoom: {
+    mode: "xy",
+    drag: {
+      enabled: true,
+      borderColor: "rgb(163, 135, 239)",
+      borderWidth: 1,
+      backgroundColor: "rgba(163, 135, 239, 0.3)",
+    },
+  },
+};
+
+export function getLegend(
+  showLegend: boolean = true,
+  position: "top" | "bottom" | "left" | "right" = "bottom"
+) {
+  return {
+    display: showLegend,
+    position: position,
+    labels: {
+      font: {
+        size: 16, // Increase legend font size (in pixels)
+      },
+      color: "rgb(0, 0, 0)",
+    },
+  };
+}
+
+export function getPlugins(
+  showLegend: boolean = true,
+  position: "top" | "bottom" | "left" | "right" = "bottom"
+) {
+  return {
+    tooltip,
+    zoom,
+    legend: getLegend(showLegend, position),
+  };
+}
