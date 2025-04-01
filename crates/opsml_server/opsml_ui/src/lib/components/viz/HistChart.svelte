@@ -8,7 +8,6 @@
   import { Filler } from 'chart.js';
   import type { Histogram } from '../card/data/types';
   import { createHistogramViz } from './hist';
-  import ChartDataLabels from 'chartjs-plugin-datalabels';
   let { 
     histData,
     resetZoom = $bindable(),
@@ -23,7 +22,6 @@
 
     Chart.register(zoomPlugin);
     Chart.register(Filler);
-    Chart.unregister(ChartDataLabels);
 
     function initChart() {
       let config = createHistogramViz(histData);

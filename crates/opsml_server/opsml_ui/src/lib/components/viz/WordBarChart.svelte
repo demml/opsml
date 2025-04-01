@@ -7,7 +7,6 @@
   import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
   import type { WordStats } from '../card/data/types';
-  import ChartDataLabels from 'chartjs-plugin-datalabels';
   import { createWordBarChart } from '../card/data/utils';
   
   let { 
@@ -24,7 +23,6 @@
 
     Chart.register(zoomPlugin);
     Chart.register(Filler);
-    Chart.unregister(ChartDataLabels);
 
     function initChart() {
       let config =createWordBarChart(wordStats);
