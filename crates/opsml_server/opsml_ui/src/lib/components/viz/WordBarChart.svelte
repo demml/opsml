@@ -4,21 +4,16 @@
   import { onMount, onDestroy } from 'svelte';
   import { Chart } from 'chart.js/auto';
   import zoomPlugin from 'chartjs-plugin-zoom';
-  import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
-  import { PlotType, type GroupedMetrics } from '../card/experiment/types';
-  import { createLineChart, createGroupedBarChart } from './chart';
-
+  import type { WordStats } from '../card/data/types';
+  import ChartDataLabels from 'chartjs-plugin-datalabels';
+  import { createWordBarChart } from '../card/data/utils';
   let { 
-    groupedMetrics,
-    yLabel,
-    plotType,
+    wordStats,
     resetZoom = $bindable(),
   } = $props<{
-    groupedMetrics: GroupedMetrics;
-    yLabel: string;
-    plotType: PlotType;
+    wordStats: WordStats;
     resetZoom: boolean;
   }>();
 
@@ -27,14 +22,11 @@
     let chart: Chart;
 
     Chart.register(zoomPlugin);
-    Chart.register(annotationPlugin);
     Chart.register(Filler);
+    Chart.unregister(ChartDataLabels);
 
     function initChart() {
-      console.log('Plotting chart with type:', plotType);
-      let config = plotType === PlotType.Line 
-      ? createLineChart(groupedMetrics, yLabel)
-      : createGroupedBarChart(groupedMetrics, yLabel);
+      let config =createWordBarChart(wordStats);
   
       if (chart) {
         chart.destroy();

@@ -207,7 +207,7 @@ export function createLineChart(
   return buildChart(xValues, datasets, effectiveXLabel, y_label, true);
 }
 
-export function createBarChart(
+export function createGroupedBarChart(
   metricData: GroupedMetrics,
   y_label: string
 ): ChartConfiguration {
@@ -250,4 +250,24 @@ export function createBarChart(
   });
 
   return buildChart(metricNames, datasets, "Experiments", y_label, true, "bar");
+}
+
+export function createBarChart(
+  x: string[] | number[],
+  y: number[],
+  label: string,
+  x_label: string,
+  y_label: string
+): ChartConfiguration {
+  const datasets: ChartjsBarDataset[] = [
+    {
+      label,
+      data: y,
+      borderColor: generateColors(1)[0],
+      backgroundColor: generateColors(1, 0.2)[0],
+      borderWidth: 2,
+    },
+  ];
+
+  return buildChart(x, datasets, x_label, y_label, true, "bar");
 }
