@@ -3,6 +3,7 @@
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
   import type { DataProfile, FeatureProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
+  import NumericStats from "./NumericStats.svelte";
 
   let { 
     features,
@@ -32,7 +33,7 @@
       />
     </div>
   </div>
-  
+
   {#each features as feature}
     {@const featureProfile: FeatureProfile = profile.features[feature]}
       <div class="bg-white p-4 border-2 border-black rounded-lg shadow">
@@ -42,9 +43,16 @@
           {#if !featureProfile.numeric_stats}
             <Pill key="Type" value="Categorical"/>
           {:else}
-            <Pill key="Type" value="Numerical"/>
+            <Pill key="Type" value="Numeric"/>
           {/if}
         </div>
+
+        {#if !featureProfile.numeric_stats}
+          <!--String Stats-->
+        
+        {:else}
+          <NumericStats numericData={featureProfile.numeric_stats} />
+        {/if}
       </div>
   {/each}
 </div>
