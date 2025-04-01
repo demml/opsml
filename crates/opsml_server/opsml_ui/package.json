@@ -69,6 +69,6 @@
 		"markdown-it": "^14.1.0",
 		"marked": "^15.0.7",
 		"marked-highlight": "^2.2.1",
-		"svelte-highlight": "^7.8.2"
+		"svelte-highlight": "^7.8.3"
 	}
 }
