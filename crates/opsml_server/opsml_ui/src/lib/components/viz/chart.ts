@@ -207,7 +207,7 @@ export function createLineChart(
   return buildChart(xValues, datasets, effectiveXLabel, y_label, true);
 }
 
-export function createBarChart(
+export function createGroupedBarChart(
   metricData: GroupedMetrics,
   y_label: string
 ): ChartConfiguration {
