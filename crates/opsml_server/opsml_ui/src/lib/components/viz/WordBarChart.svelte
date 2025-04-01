@@ -9,6 +9,7 @@
   import type { WordStats } from '../card/data/types';
   import ChartDataLabels from 'chartjs-plugin-datalabels';
   import { createWordBarChart } from '../card/data/utils';
+  
   let { 
     wordStats,
     resetZoom = $bindable(),
@@ -40,6 +41,7 @@
     $effect(() => {
       if (resetZoom && chart) {
         const zoomPlugin = chart.options.plugins?.zoom;
+        
         if (zoomPlugin) {
           chart.resetZoom();
           resetZoom = false;

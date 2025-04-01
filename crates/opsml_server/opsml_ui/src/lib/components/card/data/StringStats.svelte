@@ -1,14 +1,13 @@
 <script lang="ts">
-    import type { NumericStats, StringStats } from "./types";
-    import HistChart from "$lib/components/viz/HistChart.svelte";
+  import type { NumericStats, StringStats } from "./types";
+  import HistChart from "$lib/components/viz/HistChart.svelte";
   import WordBarChart from "$lib/components/viz/WordBarChart.svelte";
-  
+
   
   let { 
-    numericData,
     stringData
   } = $props<{
-    numericData: NumericStats;
+
     stringData: StringStats;
   }>();
   

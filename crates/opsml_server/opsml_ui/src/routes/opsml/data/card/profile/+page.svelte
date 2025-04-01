@@ -1,7 +1,5 @@
 <script lang="ts">
   import DataProfileViz from "$lib/components/card/data/DataProfileViz.svelte";
-  import { Accordion } from '@skeletonlabs/skeleton-svelte';
-  import { CirclePlus, Plus, Minus } from 'lucide-svelte';
   import type {DataProfile} from "$lib/components/card/data/types";
   let { data }: PageProps = $props();
 
