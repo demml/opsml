@@ -20,6 +20,6 @@
         {type}
     </div>
     <div class="px-1.5 bg-surface-50 border-surface-300 hover:bg-gradient-to-b from-surface-50 to-surface-100 text-primary-950 flex items-center justify-center">
-        {number.toString()}
+        {shape.toString()}
     </div>
   </div>

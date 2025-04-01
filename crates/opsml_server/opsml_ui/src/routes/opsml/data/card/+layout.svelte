@@ -65,7 +65,7 @@
           <span>Splits</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'profile' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('profile')}>
-          <BookOpenText color="#8059b6" fill="#8059b6"/>
+          <BookOpenText color="#8059b6"/>
           <span>Profile</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>

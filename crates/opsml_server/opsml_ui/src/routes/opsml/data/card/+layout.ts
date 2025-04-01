@@ -14,7 +14,7 @@ export const load: LayoutServerLoad = async ({ url }) => {
   console.log("loading layout");
   await opsmlClient.validateAuth(true);
 
-  let registry = RegistryType.Model;
+  let registry = RegistryType.Data;
   let uid = await getUID(url, registry);
 
   let metadata = (await getCardMetadata(uid, registry)) as DataCard;
