@@ -20,7 +20,7 @@ export const load: PageLoad = async ({ parent, params }) => {
   let basePath = `${tableName}/${metadata.repository}/${metadata.name}/v${metadata.version}`;
 
   // join all but the last element of the slugs to get the previous path without final "/"
-  let previousPath = `/opsml/model/card/files/${slugs
+  let previousPath = `/opsml/${registryPath}/card/files/${slugs
     .slice(0, slugs.length - 1)
     .join("/")}`.replace(/\/$/, "");
 

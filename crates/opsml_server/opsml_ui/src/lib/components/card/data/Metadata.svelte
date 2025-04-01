@@ -8,27 +8,31 @@
   import { Braces, CheckCheck } from 'lucide-svelte';
   import FeaturePill from "./FeaturePill.svelte";
   import { type Feature } from "$lib/components/card/card_interfaces/datacard";
+  import FeatureTable from "../FeatureTable.svelte";
 
   let {
       metadata,
+      interfaceMetadata,
+      saveMetadata,
     } = $props<{
       metadata: DataCard;
+      interfaceMetadata: DataInterfaceMetadata;
+      saveMetadata: DataInterfaceSaveMetadata;
     }>();
 
 
     let useCardContent = $state('');
-    let interfaceData: DataInterfaceMetadata = $state(metadata.metadata.interface_metadata);
-    let saveMetadata: DataInterfaceSaveMetadata = $state(metadata.metadata.interface_metadata.save_metadata);
     
 
     onMount(() => {
+      console.log('schema', JSON.stringify(interfaceMetadata.schema.items, null, 2));
       useCardContent = `from opsml import CardRegistry
 
-  # load the card
-  registry = CardRegistry('data')
-  datacard = registry.load_card(uid="${metadata.uid}")
-  `;
-    })
+# load the card
+registry = CardRegistry('data')
+datacard = registry.load_card(uid="${metadata.uid}")
+`;
+  })
 
 </script>
 
@@ -54,7 +58,7 @@
     <Pill key="Repository" value={metadata.repository} />
     <Pill key="Name" value={metadata.name} />
     <Pill key="Version" value={metadata.version} />
-    <Pill key="Interface Type" value={interfaceData.interface_type} />
+    <Pill key="Interface Type" value={interfaceMetadata.interface_type} />
     <Pill key="OpsML Version" value={metadata.opsml_version} />
 
   </div>
@@ -94,23 +98,16 @@
     </div>
   {/if}
 
-  {#if metadata.metadata.schema?.items && Object.keys(metadata.metadata.schema.items).length > 0}
+  {#if interfaceMetadata.schema?.items && Object.keys(interfaceMetadata.schema.items).length > 0}
     <div class="flex flex-row items-center mb-1 border-b-2 border-black">
       <Braces color="#8059b6" />
       <header class="pl-2 text-primary-900 text-lg font-bold">Feature Schema</header>
     </div>
 
-    <div class="flex flex-col space-y-1 text-base text-black">(name, type, shape)</div>
-
-    <div class="flex flex-col space-y-1 text-base">
-      {#each Object.entries(metadata.metadata.schema.items) as [name, feature]}
-        <FeaturePill 
-          key={name} 
-          type={(feature as Feature).feature_type} 
-          shape={(feature as Feature).shape} 
-        />
-      {/each}
+    <div>
+      <FeatureTable schema={interfaceMetadata.schema}  />
     </div>
+
   {/if}
 
 
@@ -120,23 +117,19 @@
   </div>
 
   <div class="flex flex-wrap gap-1">
-    {#if saveMetadata.sql_uri}
+    {#if saveMetadata?.sql_uri}
       <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-sm w-fit px-2 text-primary-900">
         SQL
       </div>
     {/if}
-
-    {#if saveMetadata.data_profile_uri}
+  
+    {#if saveMetadata?.data_profile_uri}
       <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-sm w-fit px-2 text-primary-900">
         Data Profile
       </div>
     {/if}
   </div>
 
-  {#if interfaceData.data_splits.splits.length > 0}
-    <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border-2 border-primary-800 text-sm w-fit px-2 text-primary-900">
-      Data Splits
-    </div>
-  {/if}
+
 
 </div>

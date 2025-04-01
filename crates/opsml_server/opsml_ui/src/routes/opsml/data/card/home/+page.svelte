@@ -53,7 +53,11 @@
 
     
     <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-[50%] min-h-fit">
-      <Metadata metadata={metadata} />
+      <Metadata 
+        metadata={metadata} 
+        interfaceMetadata={metadata.metadata.interface_metadata}
+        saveMetadata={metadata.metadata.interface_metadata.save_metadata}
+        />
     </div>
   </div>
 </div>
