@@ -667,8 +667,8 @@ impl SqlClient for MySqlClient {
     ) -> Result<Vec<CardSummary>, SqlError> {
         let query = MySQLQueryHelper::get_query_page_query(table, sort_by);
 
-        let lower_bound = page * 30;
-        let upper_bound = lower_bound + 30;
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
 
         let records: Vec<CardSummary> = sqlx::query_as(&query)
             .bind(repository) // 1st ? in versions_cte
@@ -699,13 +699,11 @@ impl SqlClient for MySqlClient {
     ) -> Result<Vec<VersionSummary>, SqlError> {
         let query = MySQLQueryHelper::get_version_page_query(table);
 
-        let lower_bound = page * 30;
-        let upper_bound = lower_bound + 30;
+        let lower_bound = (page * 30) - 30;
+        let upper_bound = page * 30;
 
         let records: Vec<VersionSummary> = sqlx::query_as(&query)
             .bind(repository)
-            .bind(repository)
-            .bind(name)
             .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)

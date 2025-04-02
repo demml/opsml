@@ -204,7 +204,7 @@ impl MySQLQueryHelper {
             created_at,
             CAST(row_num AS SIGNED) AS row_num
             FROM joined 
-            WHERE row_num BETWEEN ? AND ?
+            WHERE row_num > ? AND row_num <= ?
             ORDER BY updated_at DESC;",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
@@ -220,10 +220,10 @@ impl MySQLQueryHelper {
                     name, 
                     version, 
                     created_at,
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
-                WHERE (? IS NULL OR repository = ?)
-                AND (? IS NULL OR name LIKE ?)
+                WHERE repository = ?
+                AND  name = ?
             )", table
         );
 
@@ -236,7 +236,7 @@ impl MySQLQueryHelper {
             created_at,
             CAST(row_num AS SIGNED) AS row_num
             FROM versions
-            WHERE row_num BETWEEN ? AND ?
+            WHERE row_num > ? AND row_num <= ?
             ORDER BY created_at DESC",
             versions_cte
         );

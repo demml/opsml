@@ -1,7 +1,7 @@
 export const ssr = false;
 
 import { opsmlClient } from "$lib/components/api/client.svelte";
-import { getVersions } from "$lib/components/card/utils";
+import { getRegistryStats, getVersionPage } from "$lib/components/card/utils";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = async ({ parent }) => {
@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ parent }) => {
   const { metadata, registry } = await parent();
 
   // get metric names, parameters
-  let versionPage = await getVersions(
+  let versionPage = await getVersionPage(
     registry,
     metadata.repository,
     metadata.name
@@ -18,5 +18,11 @@ export const load: PageLoad = async ({ parent }) => {
 
   console.log("versionPage", JSON.stringify(versionPage));
 
-  return { versionPage };
+  let versionStats = await getRegistryStats(
+    registry,
+    metadata.name,
+    metadata.repository
+  );
+
+  return { registry, versionPage, versionStats };
 };

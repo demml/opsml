@@ -159,7 +159,7 @@ export async function getCardMetadata(
   return await response.json();
 }
 
-export async function getVersions(
+export async function getVersionPage(
   registry_type: RegistryType,
   repository?: string,
   name?: string,
