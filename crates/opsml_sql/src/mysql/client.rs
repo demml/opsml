@@ -1522,6 +1522,13 @@ mod tests {
             .unwrap();
 
         assert_eq!(stats.nbr_names, 2); // for Model1 and Model10
+
+        let stats = client
+            .query_stats(&CardTable::Model, Some("Model1"), Some("repo1"))
+            .await
+            .unwrap();
+
+        assert_eq!(stats.nbr_names, 1); // for Model1
     }
 
     #[tokio::test]
