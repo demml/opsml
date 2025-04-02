@@ -13,6 +13,8 @@ import type {
   Experiment,
   UiMetricRequest,
   GetHardwareMetricRequest,
+  HardwareMetrics,
+  UiHardwareMetrics,
 } from "./types";
 
 // Get the metric names for a given experiment
@@ -116,14 +118,38 @@ export async function getGroupedMetrics(
   return (await response.json()) as GroupedMetrics;
 }
 
-export async function getHardwareMetrics(uid: string): Promise<Metric[]> {
+/**
+ * Extract all hardware metrics with timestamps in a single pass for UI rendering
+ * Converts network bytes to kilobytes
+ */
+export function extractAllHardwareMetrics(metrics: HardwareMetrics[]): {
+  created_at: string[];
+  cpuUtilization: number[];
+  usedPercentMemory: number[];
+  networkKbRecv: number[];
+  networkKbSent: number[];
+} {
+  return {
+    created_at: metrics.map((m) => m.created_at),
+    cpuUtilization: metrics.map((m) => m.cpu.cpu_percent_utilization),
+    usedPercentMemory: metrics.map((m) => m.memory.used_percent_memory),
+    networkKbRecv: metrics.map((m) => m.network.bytes_recv / 1024),
+    networkKbSent: metrics.map((m) => m.network.bytes_sent / 1024),
+  };
+}
+
+export async function getHardwareMetrics(
+  uid: string
+): Promise<UiHardwareMetrics> {
   const request: GetHardwareMetricRequest = {
     experiment_uid: uid,
   };
 
-  const response = await opsmlClient.post(
+  const response = await opsmlClient.get(
     RoutePaths.EXPERIMENT_METRICS,
     request
   );
-  return (await response.json()) as Metric[];
+  let metrics = (await response.json()) as HardwareMetrics[];
+
+  return extractAllHardwareMetrics(metrics);
 }

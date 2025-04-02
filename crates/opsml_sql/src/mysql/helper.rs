@@ -220,6 +220,7 @@ impl MySQLQueryHelper {
                 FROM {}
                 WHERE 1=1
                 AND (? IS NULL OR name LIKE ? OR repository LIKE ?)
+                AND (? IS NULL OR repository = ?)
                 ",
             table
         );

@@ -97,11 +97,18 @@ impl SqlClient for SqlClientEnum {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        repository: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::Sqlite(client) => client.query_stats(table, search_term).await,
-            SqlClientEnum::MySql(client) => client.query_stats(table, search_term).await,
+            SqlClientEnum::Postgres(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.query_stats(table, search_term, repository).await
+            }
         }
     }
 
@@ -930,7 +937,10 @@ mod tests {
     async fn test_enum_query_stats() {
         let client = get_client().await;
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
@@ -938,7 +948,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 

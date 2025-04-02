@@ -233,6 +233,7 @@ impl SqliteQueryHelper {
                 FROM {}
                 WHERE 1=1
                 AND (?1 IS NULL OR name LIKE ?1 OR repository LIKE ?1)
+                AND (?2 IS NULL OR repository = ?2) 
                 ",
             table
         );

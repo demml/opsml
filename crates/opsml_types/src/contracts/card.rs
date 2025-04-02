@@ -52,6 +52,7 @@ pub struct RepositoryResponse {
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
+    pub repository: Option<String>,
 }
 
 // RegistryStatsResponse is sourced from sql schema

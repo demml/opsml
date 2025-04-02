@@ -75,7 +75,11 @@ pub async fn get_registry_stats(
     let table = CardTable::from_registry_type(&params.registry_type);
     let stats = state
         .sql_client
-        .query_stats(&table, params.search_term.as_deref())
+        .query_stats(
+            &table,
+            params.search_term.as_deref(),
+            params.repository.as_deref(),
+        )
         .await
         .map_err(|e| {
             error!("Failed to get unique repository names: {}", e);

@@ -626,6 +626,7 @@ impl SqlClient for MySqlClient {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        repository: Option<&str>,
     ) -> Result<QueryStats, SqlError> {
         let query = MySQLQueryHelper::get_query_stats_query(table);
 
@@ -633,6 +634,8 @@ impl SqlClient for MySqlClient {
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{}%", term)))
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(repository)
+            .bind(repository)
             .fetch_one(&self.pool)
             .await
             .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
@@ -1503,7 +1506,10 @@ mod tests {
         sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
 
         // query stats
-        let stats = client.query_stats(&CardTable::Model, None).await.unwrap();
+        let stats = client
+            .query_stats(&CardTable::Model, None, None)
+            .await
+            .unwrap();
 
         assert_eq!(stats.nbr_names, 10);
         assert_eq!(stats.nbr_versions, 10);
@@ -1511,7 +1517,7 @@ mod tests {
 
         // query stats with search term
         let stats = client
-            .query_stats(&CardTable::Model, Some("Model1"))
+            .query_stats(&CardTable::Model, Some("Model1"), None)
             .await
             .unwrap();
 

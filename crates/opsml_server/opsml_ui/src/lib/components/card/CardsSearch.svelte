@@ -10,8 +10,9 @@
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 
   
-  let { selectedSpace, page } = $props<{
-    selectedSpace: string | null;
+  let { selectedSpace, page, selectedName } = $props<{
+    selectedSpace: string | undefined;
+    selectedName: string | undefined;
     page: RegistryPageReturn;
   }>();
  
@@ -19,8 +20,8 @@
   let totalPages = $state(0);
 
   let searchQuery = $state('');
-  let artifactSearchQuery = $state('');
-  let activeSpace = $state<string | undefined>(undefined);
+  let artifactSearchQuery = $state(selectedName || '');
+  let activeSpace = $state<string | undefined>(selectedSpace);
   let filteredSpaces = $state<string[]>([]);
   let availableSpaces = page.spaces;
 
@@ -31,12 +32,8 @@
 
 
   onMount(() => {
+  
     filteredSpaces = page.spaces;
-
-    if (selectedSpace) {
-      activeSpace = selectedSpace;
-    }
-
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
 
   });
