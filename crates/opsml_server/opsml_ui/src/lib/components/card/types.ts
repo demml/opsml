@@ -1,20 +1,25 @@
 import type { RegistryType } from "$lib/utils";
 
-export type RepositoryResponse = {
+export interface RegistryStatsRequest {
+  registry_type: RegistryType;
+  search_term?: string;
+  repository?: string;
+}
+export interface RepositoryResponse {
   repositories: string[];
-};
+}
 
-export type QueryStats = {
+export interface QueryStats {
   nbr_names: number;
   nbr_repositories: number;
   nbr_versions: number;
-};
+}
 
-export type RegistryStatsResponse = {
+export interface RegistryStatsResponse {
   stats: QueryStats;
-};
+}
 
-export type CardSummary = {
+export interface CardSummary {
   repository: string;
   name: string;
   version: string;
@@ -22,11 +27,11 @@ export type CardSummary = {
   updated_at: string; // Assuming  DateTime<Utc> is serialized as a string
   created_at: string; // Assuming  DateTime<Utc> is serialized as a string
   row_num: number;
-};
+}
 
-export type QueryPageResponse = {
+export interface QueryPageResponse {
   summaries: CardSummary[];
-};
+}
 
 export interface RegistryPageReturn {
   spaces: string[];
