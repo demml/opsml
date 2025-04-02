@@ -5,7 +5,6 @@
   import Pill from "$lib/components/utils/Pill.svelte";
   import NumericStats from "./NumericStats.svelte";
   import StringStats from "./StringStats.svelte";
-  import { onMount } from "svelte";
 
   let { 
     features,
@@ -59,7 +58,7 @@
 
     {#each features as feature}
       {@const featureProfile: FeatureProfile = profile.features[feature]}
-        <div id="feature-{feature}" class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto scroll-mt-4">
+        <div id="feature-{feature}" class="bg-white p-4 border-2 border-black rounded-lg shadow overflow-x-auto scroll-mt-16">
           <div class="flex flex-row flex-wrap gap-2 items-center">
             <Pill key="Name" value={featureProfile.id} />
             <Pill key="Created At" value={featureProfile.timestamp} />
