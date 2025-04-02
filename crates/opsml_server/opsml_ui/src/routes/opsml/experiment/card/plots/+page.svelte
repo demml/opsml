@@ -83,8 +83,8 @@
 
 
   </script>
-<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto">
-  <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full">
+<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
+  <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
     <div class="col-span-1 lg:col-span-2 bg-surface-50 p-4 flex flex-col rounded-base border-black border-2 shadow h-[calc(100vh-200px)] overflow-y-auto">

@@ -19,7 +19,7 @@
 </script>
 
 <div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-4 w-full pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-6 gap-4 w-full pt-4 items-start">
 
     {#if data.readme.exists}
       <div class="col-span-1 md:col-span-4 gap-1 flex flex-col rounded-base border-black border-3 shadow bg-surface-50 w-full">
@@ -51,7 +51,7 @@
 
 
     
-    <div class="col-span-1 md:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary h-auto">
+    <div class="col-span-1 lg:col-span-2 bg-primary-200 p-4 flex flex-col rounded-base bg-surface-50 border-primary-800 border-3 shadow-primary min-w-112 max-h-[800px] overflow-y-auto self-start">
       <Metadata metadata={metadata} />
     </div>
   </div>
