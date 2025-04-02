@@ -137,3 +137,4 @@ crates/opsml_server/opsml_ui/site/*
 !crates/opsml_server/opsml_ui/site/.gitkeep
 pnpm-lock.yaml
 package.json
+_opsml.db

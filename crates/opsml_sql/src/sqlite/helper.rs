@@ -224,6 +224,39 @@ impl SqliteQueryHelper {
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    repository, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                FROM {}
+                WHERE (?1 IS NULL OR repository = ?1)
+                AND (?2 IS NULL OR name LIKE ?2)
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            repository,
+            name,
+            version,
+            created_at,
+            row_num
+            FROM versions
+            WHERE row_num BETWEEN ?3 AND ?4
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 

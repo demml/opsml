@@ -1,6 +1,6 @@
 use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
-    ServerCard, User,
+    ServerCard, User, VersionSummary,
 };
 use async_trait::async_trait;
 use opsml_error::error::SqlError;
@@ -355,4 +355,13 @@ pub trait SqlClient: Sized {
         storage_path: &str,
         registry_type: &str,
     ) -> Result<Option<ArtifactKey>, SqlError>;
+
+    /// Get all versions of a card
+    async fn version_page(
+        &self,
+        page: i32,
+        repository: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError>;
 }
