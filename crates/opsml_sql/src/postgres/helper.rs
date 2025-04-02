@@ -260,7 +260,7 @@ impl PostgresQueryHelper {
                     ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
                 WHERE repository = $1
-                AND name LIKE = $2
+                AND name = $2
             )", table
         );
 

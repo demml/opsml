@@ -223,7 +223,7 @@ impl MySQLQueryHelper {
                     ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
                 WHERE repository = ?
-                AND  name = ?
+                AND name = ?
             )", table
         );
 
