@@ -126,7 +126,7 @@
       </div>
       <h2 class="font-bold text-primary-800 text-xl">Artifacts</h2>
     </div>
-    <div class="flex flex-row gap-1 items-center">
+    <div class="flex flex-row flex-wrap gap-1 items-center">
       <div>
         <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_names} artifacts</span>
       </div>
@@ -136,9 +136,9 @@
       <div>
         <span class="badge text-base text-primary-800 border-black border-1 shadow-small bg-surface-50">{registryStats.stats.nbr_repositories} spaces</span>
       </div>
-      <div class="ml-1 md:w-full">
+      <div class="ml-1 w-full md:w-auto lg:flex-1">
         <input
-          class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
+          class="input w-full text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-1 border-black border-2 h-9"
           type="text"
           bind:value={artifactSearchQuery}
           placeholder="Search artifacts"
@@ -146,7 +146,7 @@
         />
       </div>
     </div>
-    <div class="pt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div class="pt-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
       {#each registryPage.summaries as summary}
         <CardPage
           repository={summary.repository}

@@ -17,6 +17,8 @@ import type {
   UiHardwareMetrics,
 } from "./types";
 
+const BYTES_TO_MB = 1024 * 1024;
+
 // Get the metric names for a given experiment
 export async function getCardMetricNames(uid: string): Promise<string[]> {
   const request: GetMetricNamesRequest = {
@@ -123,18 +125,18 @@ export async function getGroupedMetrics(
  * Converts network bytes to kilobytes
  */
 export function extractAllHardwareMetrics(metrics: HardwareMetrics[]): {
-  created_at: string[];
+  createdAt: string[];
   cpuUtilization: number[];
   usedPercentMemory: number[];
-  networkKbRecv: number[];
-  networkKbSent: number[];
+  networkMbRecv: number[];
+  networkMbSent: number[];
 } {
   return {
-    created_at: metrics.map((m) => m.created_at),
+    createdAt: metrics.map((m) => m.created_at),
     cpuUtilization: metrics.map((m) => m.cpu.cpu_percent_utilization),
     usedPercentMemory: metrics.map((m) => m.memory.used_percent_memory),
-    networkKbRecv: metrics.map((m) => m.network.bytes_recv / 1024),
-    networkKbSent: metrics.map((m) => m.network.bytes_sent / 1024),
+    networkMbRecv: metrics.map((m) => m.network.bytes_recv / BYTES_TO_MB),
+    networkMbSent: metrics.map((m) => m.network.bytes_sent / BYTES_TO_MB),
   };
 }
 
@@ -145,10 +147,7 @@ export async function getHardwareMetrics(
     experiment_uid: uid,
   };
 
-  const response = await opsmlClient.get(
-    RoutePaths.EXPERIMENT_METRICS,
-    request
-  );
+  const response = await opsmlClient.get(RoutePaths.HARDWARE_METRICS, request);
   let metrics = (await response.json()) as HardwareMetrics[];
 
   return extractAllHardwareMetrics(metrics);

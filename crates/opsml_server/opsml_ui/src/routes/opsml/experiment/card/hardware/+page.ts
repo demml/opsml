@@ -12,7 +12,5 @@ export const load: PageLoad = async ({ parent }) => {
   // get metric names, parameters
   let hardwareMetrics = await getHardwareMetrics(metadata.uid);
 
-  console.log("hardwareMetrics", hardwareMetrics);
-
   return { hardwareMetrics };
 };

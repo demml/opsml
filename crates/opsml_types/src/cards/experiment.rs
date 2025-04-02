@@ -281,7 +281,7 @@ impl MemoryMetricLogger {
         let total = self.system.total_memory() as i64;
         let used = self.system.used_memory() as i64;
         let available = self.system.available_memory() as i64;
-        let used_percent_memory = used as f64 / total as f64;
+        let used_percent_memory = used as f64 / total as f64 * 100.0;
 
         MemoryMetrics {
             free_memory: free,

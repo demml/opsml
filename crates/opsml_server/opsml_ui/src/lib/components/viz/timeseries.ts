@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import {
   generateColors,
   handleResize,
+  tooltip,
   type ChartjsLineDataset,
 } from "$lib/components/viz/utils";
 
@@ -19,6 +20,12 @@ export function buildTimeChart(
   const dayInMs = 24 * 60 * 60 * 1000;
   const isMultiDay = timeRange > dayInMs;
 
+  const maxY = Math.max(
+    ...datasets.flatMap((dataset) =>
+      Array.isArray(dataset.data) ? (dataset.data as number[]) : []
+    )
+  );
+
   return {
     type: "line",
     data: {
@@ -27,6 +34,7 @@ export function buildTimeChart(
     },
     options: {
       plugins: {
+        tooltip: tooltip,
         //@ts-ignore
         zoom: {
           pan: {
@@ -103,6 +111,7 @@ export function buildTimeChart(
           },
         },
         y: {
+          suggestedMax: maxY * 1.1,
           title: {
             display: true,
             text: y_label,
@@ -123,7 +132,6 @@ export function buildTimeChart(
             width: 2,
             color: "rgb(0, 0, 0)", // You can adjust color as needed
           },
-          grace: "0%",
           grid: {
             display: true,
             color: "rgba(0, 0, 0, 0.1)",

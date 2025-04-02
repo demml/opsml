@@ -69,9 +69,9 @@ export interface NetworkRates {
 }
 
 export interface UiHardwareMetrics {
-  created_at: string[];
+  createdAt: string[];
   cpuUtilization: number[];
   usedPercentMemory: number[];
-  networkKbRecv: number[];
-  networkKbSent: number[];
+  networkMbRecv: number[];
+  networkMbSent: number[];
 }
