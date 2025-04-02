@@ -126,6 +126,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: None,
+        repository: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();
@@ -145,6 +146,7 @@ async fn test_opsml_server_card_stats_and_query() {
     let params = RegistryStatsRequest {
         registry_type: RegistryType::Model,
         search_term: Some("Model1".to_string()),
+        repository: None,
     };
 
     let query_string = serde_qs::to_string(&params).unwrap();

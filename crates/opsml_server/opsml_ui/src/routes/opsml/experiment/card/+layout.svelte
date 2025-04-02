@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import type { LayoutProps } from './$types';
   import { getRegistryTypeLowerCase } from '$lib/utils';
-  import { IdCard, FolderTree, Activity, Tag } from 'lucide-svelte';
+  import { IdCard, FolderTree, Activity, Tag, ChartColumnDecreasing } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
@@ -19,6 +19,10 @@
     activeTab = tab;
     goto(`/opsml/${registry}/card/${activeTab}?repository=${repository}&name=${name}&version=${version}`);
   };
+
+  function navigateToVersionPage() {
+    goto(`/opsml/${registry}?space=${repository}&name=${name}`);
+  }
 
   let { data, children }: LayoutProps = $props();
 
@@ -60,10 +64,14 @@
           <span>Files</span>
         </button>
         <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'plots' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('plots')}>
-          <Activity color="#8059b6"/>
+          <ChartColumnDecreasing color="#8059b6"/>
           <span>Plots</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'hardware' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('hardware')}>
+          <Activity color="#8059b6"/>
+          <span>Hardware</span>
+        </button>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateToVersionPage()}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>
         </button>

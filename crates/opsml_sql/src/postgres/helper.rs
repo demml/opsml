@@ -250,13 +250,14 @@ impl PostgresQueryHelper {
     }
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
-            "SELECT 
+            "SELECT
             COALESCE(CAST(COUNT(DISTINCT name) AS INTEGER), 0) AS nbr_names, 
             COALESCE(CAST(COUNT(major) AS INTEGER), 0) AS nbr_versions, 
             COALESCE(CAST(COUNT(DISTINCT repository) AS INTEGER), 0) AS nbr_repositories 
             FROM {}
             WHERE 1=1
-            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)",
+            AND ($1 IS NULL OR name LIKE $1 OR repository LIKE $1)
+            AND ($2 IS NULL OR name = $2 OR repository = $2)",
             table
         );
 

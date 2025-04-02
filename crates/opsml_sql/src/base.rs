@@ -83,6 +83,7 @@ pub trait SqlClient: Sized {
         &self,
         table: &CardTable,
         search_term: Option<&str>,
+        repository: Option<&str>,
     ) -> Result<QueryStats, SqlError>;
 
     async fn query_page(
