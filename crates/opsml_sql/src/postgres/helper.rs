@@ -241,7 +241,7 @@ impl PostgresQueryHelper {
         let combined_query = format!(
             "{}{}{}{} 
             SELECT * FROM joined 
-            WHERE row_num BETWEEN $4 AND $5
+            WHERE row_num > $4 AND row_num <= $5
             ORDER BY updated_at DESC",
             versions_cte, stats_cte, filtered_versions_cte, joined_cte
         );
@@ -257,10 +257,10 @@ impl PostgresQueryHelper {
                     name, 
                     version, 
                     created_at,
-                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC, major DESC, minor DESC, patch DESC) AS row_num
                 FROM {}
-                WHERE ($1 IS NULL OR repository = $1)
-                AND ($2 IS NULL OR name LIKE $2)
+                WHERE repository = $1
+                AND name LIKE = $2
             )", table
         );
 
@@ -273,7 +273,7 @@ impl PostgresQueryHelper {
             created_at,
             row_num
             FROM versions
-            WHERE row_num BETWEEN $3 AND $4
+            WHERE row_num > $3 AND row_num <= $4
             ORDER BY created_at DESC",
             versions_cte
         );
