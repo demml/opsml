@@ -6,6 +6,7 @@ import type {
   RepositoryResponse,
   RegistryStatsResponse,
   RegistryPageReturn,
+  RegistryStatsRequest,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -20,17 +21,16 @@ export async function getSpaces(
 
 export async function getRegistryStats(
   registry_type: RegistryType,
-  searchTerm?: string
+  searchTerm?: string,
+  repository?: string
 ): Promise<RegistryStatsResponse> {
-  let params: { registry_type: RegistryType; search_term?: string } = {
+  let request: RegistryStatsRequest = {
     registry_type: registry_type,
+    search_term: searchTerm,
+    repository: repository,
   };
 
-  if (searchTerm) {
-    params["search_term"] = searchTerm as string;
-  }
-
-  const response = await opsmlClient.get(RoutePaths.GET_STATS, params);
+  const response = await opsmlClient.get(RoutePaths.GET_STATS, request);
   return await response.json();
 }
 
@@ -78,7 +78,7 @@ export async function setupRegistryPage(
 ): Promise<RegistryPageReturn> {
   const [spaces, registryStats, registryPage] = await Promise.all([
     getSpaces(registry_type),
-    getRegistryStats(registry_type, name),
+    getRegistryStats(registry_type, name, space),
     getRegistryPage(registry_type, undefined, space, name),
   ]);
 
