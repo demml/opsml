@@ -83,7 +83,7 @@
 
 
   </script>
-<div class="flex-1 mx-auto w-9/12 pb-10 flex justify-center overflow-auto px-4">
+<div class="flex-1 mx-auto w-10/12 pb-10 flex justify-center overflow-auto px-4">
   <div class="grid grid-cols-1 lg:grid-cols-8 gap-4 w-full pt-4 ">
 
     <!-- Left Column-->
@@ -152,7 +152,7 @@
             <List color="#8059b6"/>
             <header class="pl-2 text-primary-900 text-lg font-bold">Previous Versions</header>
           </div>
-          <p class="pl-2 text-base lg:text-lg text-black">Select previous version to compare metrics</p>
+          <p class="pl-2 text-black">Select previous version to compare metrics</p>
           <div class="grid grid-cols-3 gap-2 pl-2 pt-4 pb-4 overflow-auto">
             {#each recentExperiments as experiment}
               {#if selectedExperiments.includes(experiment)}

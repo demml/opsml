@@ -5,6 +5,7 @@ use crate::schemas::schema::{
     CardResults, CardSummary, HardwareMetricsRecord, MetricRecord, ParameterRecord, QueryStats,
     ServerCard, User,
 };
+use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
@@ -135,6 +136,26 @@ impl SqlClient for SqlClientEnum {
                 client
                     .query_page(sort_by, page, search_term, repository, table)
                     .await
+            }
+        }
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        repository: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.version_page(page, repository, name, table).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.version_page(page, repository, name, table).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.version_page(page, repository, name, table).await
             }
         }
     }
@@ -980,6 +1001,13 @@ mod tests {
         // query page
         let results = client
             .query_page("name", 0, None, Some("repo3"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+
+        let results = client
+            .version_page(0, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 

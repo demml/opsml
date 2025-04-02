@@ -4,7 +4,7 @@ use crate::postgres::helper::PostgresQueryHelper;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-    QueryStats, ServerCard, User, VersionResult,
+    QueryStats, ServerCard, User, VersionResult, VersionSummary,
 };
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -654,6 +654,30 @@ impl SqlClient for PostgresClient {
             .bind(repository)
             .bind(search_term)
             .bind(search_term.map(|term| format!("%{}%", term)))
+            .bind(lower_bound)
+            .bind(upper_bound)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| SqlError::QueryError(format!("{}", e)))?;
+
+        Ok(records)
+    }
+
+    async fn version_page(
+        &self,
+        page: i32,
+        repository: Option<&str>,
+        name: Option<&str>,
+        table: &CardTable,
+    ) -> Result<Vec<VersionSummary>, SqlError> {
+        let query = PostgresQueryHelper::get_version_page_query(table);
+
+        let lower_bound = page * 30;
+        let upper_bound = lower_bound + 30;
+
+        let records: Vec<VersionSummary> = sqlx::query_as(&query)
+            .bind(repository)
+            .bind(name)
             .bind(lower_bound)
             .bind(upper_bound)
             .fetch_all(&self.pool)
@@ -1516,6 +1540,23 @@ mod tests {
         // query page
         let results = client
             .query_page("name", 0, None, Some("repo4"), &CardTable::Model)
+            .await
+            .unwrap();
+
+        assert_eq!(results.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_postgres_version_page() {
+        let client = db_client().await;
+
+        // Run the SQL script to populate the database
+        let script = std::fs::read_to_string("tests/populate_postgres_test.sql").unwrap();
+        sqlx::raw_sql(&script).execute(&client.pool).await.unwrap();
+
+        // query page
+        let results = client
+            .version_page(0, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 

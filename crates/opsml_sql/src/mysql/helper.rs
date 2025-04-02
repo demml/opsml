@@ -211,6 +211,39 @@ impl MySQLQueryHelper {
 
         combined_query
     }
+
+    pub fn get_version_page_query(table: &CardTable) -> String {
+        let versions_cte = format!(
+            "WITH versions AS (
+                SELECT 
+                    repository, 
+                    name, 
+                    version, 
+                    created_at,
+                    ROW_NUMBER() OVER (PARTITION BY repository, name ORDER BY created_at DESC) AS row_num
+                FROM {}
+                WHERE (? IS NULL OR repository = ?)
+                AND (? IS NULL OR name LIKE ?)
+            )", table
+        );
+
+        let query = format!(
+            "{}
+            SELECT
+            repository,
+            name,
+            version,
+            created_at,
+            CAST(row_num AS SIGNED) AS row_num
+            FROM versions
+            WHERE row_num BETWEEN ? AND ?
+            ORDER BY created_at DESC",
+            versions_cte
+        );
+
+        query
+    }
+
     pub fn get_query_stats_query(table: &CardTable) -> String {
         let base_query = format!(
             "SELECT 
