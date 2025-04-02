@@ -711,7 +711,7 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             )
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
             .route(
-                &format!("{}/card/registry/page/version", prefix),
+                &format!("{}/card/registry/version/page", prefix),
                 get(get_version_page),
             )
             .route(&format!("{}/card/list", prefix), get(list_cards))
