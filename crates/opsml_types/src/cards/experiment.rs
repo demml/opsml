@@ -341,6 +341,7 @@ impl Default for NetworkRateLogger {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct HardwareMetrics {
+    pub created_at: DateTime<Utc>,
     pub cpu: CPUMetrics,
     pub memory: MemoryMetrics,
     pub network: NetworkRates,
@@ -363,6 +364,7 @@ impl HardwareMetricLogger {
 
     pub fn get_metrics(&mut self) -> HardwareMetrics {
         HardwareMetrics {
+            created_at: Utc::now(),
             cpu: self.cpu_logger.get_metrics(),
             memory: self.memory_logger.get_metrics(),
             network: self.network_logger.get_metrics(),

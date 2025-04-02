@@ -248,6 +248,7 @@ pub async fn get_hardware_metrics(
     let metrics = metrics
         .into_iter()
         .map(|m| HardwareMetrics {
+            created_at: m.created_at,
             cpu: CPUMetrics {
                 cpu_percent_utilization: m.cpu_percent_utilization,
                 cpu_percent_per_core: m.cpu_percent_per_core.to_vec(),

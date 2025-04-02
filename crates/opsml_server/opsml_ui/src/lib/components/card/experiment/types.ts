@@ -38,3 +38,7 @@ export interface GroupedMetric {
 export interface GroupedMetrics {
   [metricName: string]: GroupedMetric[];
 }
+
+export interface GetHardwareMetricRequest {
+  experiment_uid: string;
+}
