@@ -24,9 +24,21 @@ export interface CardSummary {
   name: string;
   version: string;
   versions: number;
-  updated_at: string; // Assuming  DateTime<Utc> is serialized as a string
-  created_at: string; // Assuming  DateTime<Utc> is serialized as a string
+  updated_at: string;
+  created_at: string;
   row_num: number;
+}
+
+export interface VersionSummary {
+  repository: string;
+  name: string;
+  version: string;
+  created_at: string;
+  row_num: number;
+}
+
+export interface VersionPageResponse {
+  summaries: VersionSummary[];
 }
 
 export interface QueryPageResponse {
@@ -38,4 +50,11 @@ export interface RegistryPageReturn {
   registry_type: RegistryType;
   registryStats: RegistryStatsResponse;
   registryPage: QueryPageResponse;
+}
+
+export interface VersionPageRequest {
+  registry_type: RegistryType;
+  repository?: string;
+  name?: string;
+  page?: number;
 }
