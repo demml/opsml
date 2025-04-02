@@ -20,10 +20,6 @@
     goto(`/opsml/${registry}/card/${activeTab}?repository=${repository}&name=${name}&version=${version}`);
   };
 
-  function navigateToVersionPage() {
-    goto(`/opsml/${registry}?space=${repository}&name=${name}`);
-  }
-
   let { data, children }: LayoutProps = $props();
 
   let activeTab = $state(getLastPartOfPath(page.url.pathname));
@@ -71,7 +67,7 @@
           <Activity color="#8059b6"/>
           <span>Hardware</span>
         </button>
-        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateToVersionPage()}>
+        <button class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3" onclick={() => navigateTab('versions')}>
           <Tag color="#8059b6" fill="#8059b6"/>
           <span>Versions</span>
         </button>

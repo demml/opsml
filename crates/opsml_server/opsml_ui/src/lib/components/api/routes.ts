@@ -5,6 +5,7 @@ export enum RoutePaths {
   LIST_SPACES = "/opsml/api/card/repositories",
   GET_STATS = "/opsml/api/card/registry/stats",
   GET_REGISTRY_PAGE = "/opsml/api/card/registry/page",
+  GET_VERSION_PAGE = "/opsml/api/card/registry/version/page",
 
   ERROR = "/opsml/error",
   HOME = "/opsml/home",

@@ -7,6 +7,8 @@ import type {
   RegistryStatsResponse,
   RegistryPageReturn,
   RegistryStatsRequest,
+  VersionPageResponse,
+  VersionPageRequest,
 } from "$lib/components/card/types";
 import type { CardQueryArgs } from "../api/schema";
 import { type Card } from "$lib/components/home/types";
@@ -154,5 +156,22 @@ export async function getCardMetadata(
   };
 
   const response = await opsmlClient.get(RoutePaths.METADATA, params);
+  return await response.json();
+}
+
+export async function getVersions(
+  registry_type: RegistryType,
+  repository?: string,
+  name?: string,
+  page?: number
+): Promise<VersionPageResponse> {
+  const params: VersionPageRequest = {
+    registry_type: registry_type,
+    repository: repository,
+    name: name,
+    page: page,
+  };
+
+  const response = await opsmlClient.get(RoutePaths.GET_VERSION_PAGE, params);
   return await response.json();
 }
