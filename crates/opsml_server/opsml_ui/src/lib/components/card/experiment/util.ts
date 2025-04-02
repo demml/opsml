@@ -12,6 +12,7 @@ import type {
   GroupedMetrics,
   Experiment,
   UiMetricRequest,
+  GetHardwareMetricRequest,
 } from "./types";
 
 // Get the metric names for a given experiment
@@ -113,4 +114,16 @@ export async function getGroupedMetrics(
   );
 
   return (await response.json()) as GroupedMetrics;
+}
+
+export async function getHardwareMetrics(uid: string): Promise<Metric[]> {
+  const request: GetHardwareMetricRequest = {
+    experiment_uid: uid,
+  };
+
+  const response = await opsmlClient.post(
+    RoutePaths.EXPERIMENT_METRICS,
+    request
+  );
+  return (await response.json()) as Metric[];
 }
