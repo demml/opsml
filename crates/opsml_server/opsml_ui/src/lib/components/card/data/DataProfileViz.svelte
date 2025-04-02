@@ -54,7 +54,7 @@
   </div>
 
 
-  <div class="grid grid-cols-1 gap-4 w-full pt-18">
+  <div class="grid grid-cols-1 gap-4 w-full pt-18 px-4">
 
     {#each features as feature}
       {@const featureProfile: FeatureProfile = profile.features[feature]}
