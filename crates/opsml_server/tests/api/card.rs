@@ -10,7 +10,7 @@ use opsml_types::*;
 
 use opsml_crypt::encrypt_file;
 use opsml_server::core::cards::schema::{
-    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use std::path::PathBuf;
 
@@ -212,6 +212,31 @@ async fn test_opsml_server_card_stats_and_query() {
     let page_response: QueryPageResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(page_response.summaries.len(), 1);
+
+    // test getting version page
+    let args = VersionPageRequest {
+        registry_type: RegistryType::Model,
+        repository: Some("repo1".to_string()),
+        name: Some("Model1".to_string()),
+        page: None,
+    };
+    let query_string = serde_qs::to_string(&args).unwrap();
+
+    let request = Request::builder()
+        .uri(format!(
+            "/opsml/api/card/registry/version/page?{}",
+            query_string
+        ))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let version_page_response: VersionPageResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(version_page_response.summaries.len(), 1);
 
     helper.cleanup();
 }
