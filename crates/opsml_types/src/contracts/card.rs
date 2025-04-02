@@ -66,6 +66,14 @@ pub struct QueryPageRequest {
     pub page: Option<i32>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct VersionPageRequest {
+    pub registry_type: RegistryType,
+    pub repository: Option<String>,
+    pub name: Option<String>,
+    pub page: Option<i32>,
+}
+
 // QueryPageResponse is sourced from sql schema
 
 #[derive(Debug, Serialize, Deserialize)]

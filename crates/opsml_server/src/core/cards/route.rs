@@ -1,5 +1,5 @@
 use crate::core::cards::schema::{
-    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse,
+    CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
 use crate::core::cards::utils::{cleanup_artifacts, get_next_version, insert_card_into_db};
 use crate::core::error::internal_server_error;
@@ -113,6 +113,29 @@ pub async fn get_page(
         })?;
 
     Ok(Json(QueryPageResponse { summaries }))
+}
+
+pub async fn get_version_page(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<VersionPageRequest>,
+) -> Result<Json<VersionPageResponse>, (StatusCode, Json<serde_json::Value>)> {
+    let table = CardTable::from_registry_type(&params.registry_type);
+    let page = params.page.unwrap_or(0);
+    let summaries = state
+        .sql_client
+        .version_page(
+            page,
+            params.repository.as_deref(),
+            params.name.as_deref(),
+            &table,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get unique repository names: {}", e);
+            internal_server_error(e, "Failed to get unique repository names")
+        })?;
+
+    Ok(Json(VersionPageResponse { summaries }))
 }
 
 pub async fn list_cards(
@@ -687,6 +710,10 @@ pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
                 get(get_registry_stats),
             )
             .route(&format!("{}/card/registry/page", prefix), get(get_page))
+            .route(
+                &format!("{}/card/registry/page/version", prefix),
+                get(get_version_page),
+            )
             .route(&format!("{}/card/list", prefix), get(list_cards))
             .route(&format!("{}/card/create", prefix), post(create_card))
             .route(&format!("{}/card/load", prefix), get(load_card))
