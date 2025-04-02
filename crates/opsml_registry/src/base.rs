@@ -189,17 +189,24 @@ impl OpsmlRegistry {
         }
     }
 
-    pub fn insert_hardware_metrics(
+    pub async fn insert_hardware_metrics(
         &self,
         metrics: HardwareMetricRequest,
     ) -> Result<(), RegistryError> {
         match self {
             Self::ClientRegistry(client_registry) => {
-                client_registry.insert_hardware_metrics(&metrics)
+                // Clone the client_registry to avoid lifetime issues
+                let client_registry = client_registry.clone();
+                app_state()
+                    .runtime
+                    .spawn_blocking(move || client_registry.insert_hardware_metrics(&metrics))
+                    .await
+                    .map_err(|e| RegistryError::Error(format!("Task join error: {}", e)))?
             }
             #[cfg(feature = "server")]
-            Self::ServerRegistry(server_registry) => app_state()
-                .block_on(async { server_registry.insert_hardware_metrics(&metrics).await }),
+            Self::ServerRegistry(server_registry) => {
+                server_registry.insert_hardware_metrics(&metrics).await
+            }
         }
     }
 
