@@ -16,8 +16,8 @@
     page: RegistryPageReturn;
   }>();
  
-  let currentPage = $state(0);
-  let totalPages = $state(0);
+  let currentPage = $state(1);
+  let totalPages = $state(1);
 
   let searchQuery = $state('');
   let artifactSearchQuery = $state(selectedName || '');
@@ -47,9 +47,9 @@
       activeSpace = space;
     }
 
-    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, 0);
+    registryPage = await getRegistryPage(registryType, undefined, activeSpace, undefined, 1);
     registryStats = await getRegistryStats(registryType, activeSpace);
-    currentPage = 0;
+    currentPage = 1;
     totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
@@ -61,9 +61,9 @@
 	}
 
   const searchPage = async function () {
-  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 0);
+  registryPage = await getRegistryPage(registryType, undefined, activeSpace, artifactSearchQuery, 1);
   registryStats = await getRegistryStats(registryType, artifactSearchQuery, activeSpace);
-  currentPage = 0;
+  currentPage = 1;
   totalPages = Math.ceil(registryStats.stats.nbr_names / 30);
   }
 
@@ -162,18 +162,18 @@
 
     <div class="flex justify-center pt-4 gap-2">
 
-      {#if currentPage > 0}
+      {#if currentPage > 1}
         <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
           <ArrowLeft color="#5948a3"/>
         </button>
       {/if}
       
       <div class="flex bg-surface-50 border-black border-2 text-center items-center rounded-base px-2 shadow-small h-9">
-        <span class="text-primary-800 mr-1">{currentPage + 1}</span>
+        <span class="text-primary-800 mr-1">{currentPage}</span>
         <span class="text-primary-400">of {totalPages}</span>
       </div>
 
-      {#if currentPage < totalPages - 1}
+      {#if currentPage < totalPages }
         <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
           <ArrowRight color="#5948a3"/>
         </button>

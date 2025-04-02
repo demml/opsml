@@ -96,7 +96,7 @@ pub async fn get_page(
 ) -> Result<Json<QueryPageResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
     let sort_by = params.sort_by.as_deref().unwrap_or("updated_at");
-    let page = params.page.unwrap_or(0);
+    let page = params.page.unwrap_or(1);
     let summaries = state
         .sql_client
         .query_page(
@@ -120,7 +120,7 @@ pub async fn get_version_page(
     Query(params): Query<VersionPageRequest>,
 ) -> Result<Json<VersionPageResponse>, (StatusCode, Json<serde_json::Value>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
-    let page = params.page.unwrap_or(0);
+    let page = params.page.unwrap_or(1);
     let summaries = state
         .sql_client
         .version_page(
