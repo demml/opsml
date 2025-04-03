@@ -984,7 +984,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Data)
+            .query_page("name", 1, None, None, &CardTable::Data)
             .await
             .unwrap();
 
@@ -992,7 +992,7 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, None, &CardTable::Model)
+            .query_page("name", 1, None, None, &CardTable::Model)
             .await
             .unwrap();
 
@@ -1000,14 +1000,14 @@ mod tests {
 
         // query page
         let results = client
-            .query_page("name", 0, None, Some("repo3"), &CardTable::Model)
+            .query_page("name", 1, None, Some("repo3"), &CardTable::Model)
             .await
             .unwrap();
 
         assert_eq!(results.len(), 1);
 
         let results = client
-            .version_page(0, Some("repo1"), Some("Model1"), &CardTable::Model)
+            .version_page(1, Some("repo1"), Some("Model1"), &CardTable::Model)
             .await
             .unwrap();
 
