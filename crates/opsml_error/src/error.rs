@@ -6,6 +6,12 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum EventError {
+    #[error("{0}")]
+    Error(String),
+}
+
+#[derive(Error, Debug)]
 pub enum CliError {
     #[error("{0}")]
     Error(String),

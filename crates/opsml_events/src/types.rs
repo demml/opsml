@@ -40,7 +40,7 @@ pub fn create_audit_record(
         error_message: None,
         metadata,
         registry_type,
-        route,
+        route: route.to_string(),
     }
 }
 
