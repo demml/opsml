@@ -1144,7 +1144,7 @@ mod tests {
 
     use super::*;
 
-    use opsml_types::{contracts::Operation, RegistryType, SqlType};
+    use opsml_types::{RegistryType, SqlType};
     use opsml_utils::utils::get_utc_datetime;
     use std::env;
 

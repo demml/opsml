@@ -3,10 +3,10 @@ use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
 
-use crate::types::AuditEvent;
+use opsml_types::contracts::AuditEvent;
 
-use opsml_error::error::ServerError;
-use opsml_sql::enums::client::SqlClientEnum;
+use opsml_error::error::EventError;
+use opsml_sql::{base::SqlClient, enums::client::SqlClientEnum};
 
 use tracing::{debug, instrument};
 
@@ -16,14 +16,15 @@ use tracing::error;
 
 #[instrument(skip_all)]
 pub async fn log_audit_event(
-    record: AuditEvent,
+    event: AuditEvent,
     sql_client: Arc<SqlClientEnum>,
-) -> Result<(), ServerError> {
-    debug!("Logging audit event: {:?}", record);
+) -> Result<(), EventError> {
+    debug!("Logging audit event: {:?}", event);
 
-    //sql_client
-    //.insert_operation(username, access_type, access_location)
-    //.await?;
+    sql_client.insert_audit_event(event).await.map_err(|e| {
+        error!("Failed to log audit event: {}", e);
+        EventError::Error("Failed to log audit event".to_string())
+    })?;
 
     Ok(())
 }
